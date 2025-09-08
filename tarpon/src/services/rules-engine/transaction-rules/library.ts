@@ -536,7 +536,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
-        'Recent 7-day total amount is > 2 standard deviations above 30-day baseline.',
+        'A customer who typically processes $50,000 weekly suddenly processes $500,000 in one week, potentially indicating money laundering or business email compromise.',
       tags: ['DYNAMIC'],
     }
   },
@@ -561,7 +561,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
-        'Recent 30-day transaction count is > 2 standard deviations above 90-day baseline.',
+        'An account that normally makes 5-10 transactions monthly suddenly executes 200 transactions in 30 days, suggesting possible smurfing or account takeover.',
       tags: ['DYNAMIC'],
     }
   },
@@ -586,7 +586,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
-        'Avg txn value over last 30 days > 2 std dev above 90-day baseline.',
+        'A retail business that usually processes $25 average transactions starts processing $2,500 average amounts, potentially indicating trade-based money laundering or invoice fraud.',
       tags: ['DYNAMIC'],
     }
   },
@@ -611,7 +611,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.AnomalyDetection],
       typologies: [RuleTypology.Structuring, RuleTypology.UnusualBehaviour],
       sampleUseCases:
-        'Share of round-number txns in last 30 days > 2 std dev above 90-day baseline.',
+        'A customer whose transactions are typically varied amounts ($127.43, $89.76) suddenly makes 80% of transactions in round numbers ($100, $500, $1,000), suggesting possible structuring to avoid reporting thresholds.',
       tags: ['DYNAMIC'],
     }
   },

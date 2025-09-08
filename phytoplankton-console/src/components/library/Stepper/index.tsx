@@ -46,10 +46,10 @@ export function StepperSteps(
       {steps.map((step, i) => {
         const isPassed = i < stepIndex;
         const isActive = active === step.key;
-        const { isUnfilled, isInvalid, isDisabled } = step;
+        const { isUnfilled, isInvalid, isDisabled, isOptional, title, description, key } = step;
         return (
           <div
-            key={step.key}
+            key={key}
             className={cn(s.step, {
               [s.isPassed]: isPassed,
               [s.isActive]: isActive,
@@ -59,7 +59,7 @@ export function StepperSteps(
             })}
             onClick={() => {
               if (!isDisabled) {
-                onChange(step.key);
+                onChange(key);
               }
             }}
             data-cy="step-prop"
@@ -70,16 +70,17 @@ export function StepperSteps(
             </div>
             <div>
               <div className={s.stepTitle}>
-                {step.title}
-                {step.isOptional ? (
-                  <span className={s.optional} data-cy="optional-span">
-                    {'\xa0-\xa0optional'}
-                  </span>
-                ) : (
-                  <span className={s.required}>{'\xa0*'}</span>
-                )}
+                {title}
+                {!isDisabled &&
+                  (isOptional ? (
+                    <span className={s.optional} data-cy="optional-span">
+                      {'\xa0-\xa0optional'}
+                    </span>
+                  ) : (
+                    <span className={s.required}>{'\xa0*'}</span>
+                  ))}
               </div>
-              <div className={s.stepDescription}>{step.description}</div>
+              <div className={s.stepDescription}>{description}</div>
             </div>
           </div>
         );

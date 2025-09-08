@@ -112,6 +112,7 @@ function RiskBasedThresholds(props: Props) {
             </NestedForm>
             <NestedForm<FormValues> name={'riskLevelActions'}>
               <InputField<any>
+                hideLabel={rule.tags?.includes('DYNAMIC')}
                 name={riskLevel}
                 label={'Rule actions'}
                 description={`Select the action to perform if this rule is hit for ${
@@ -184,13 +185,18 @@ function RiskBasedThresholds(props: Props) {
     settings,
     defaultInitialValues.riskLevelParameters,
     rule.type,
+    rule.tags,
   ]);
 
   return (
     <>
       <StepHeader
-        title={'Risk-based thresholds'}
-        description={'Configure risk-based thresholds & actions that are specific to this rule'}
+        title={rule.tags?.includes('DYNAMIC') ? 'Rule actions' : 'Risk-based thresholds'}
+        description={
+          rule.tags?.includes('DYNAMIC')
+            ? 'Select the action to perform if this rule is hit for users'
+            : 'Configure risk-based thresholds & actions that are specific to this rule'
+        }
         tooltip={
           'Rules utilize CRA risk levels and they are automatically adjusted for manual overrides.'
         }
