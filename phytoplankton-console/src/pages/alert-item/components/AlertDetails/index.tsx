@@ -116,7 +116,7 @@ function AlertDetails(props: Props) {
               }}
               isDisabled={isDisabled}
             >
-              Restore
+              Re-open
             </Button>
           )}
         </>

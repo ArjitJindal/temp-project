@@ -1318,7 +1318,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
               }}
               isDisabled={isDisabled}
             >
-              Restore
+              Re-open
             </Button>
           )}
         </>
