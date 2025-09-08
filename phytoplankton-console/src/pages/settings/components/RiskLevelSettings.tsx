@@ -15,56 +15,7 @@ interface TableItem {
   levelAlias: string | undefined;
 }
 
-interface ExternalState {
-  handleSaveAlias: (level: RiskLevel) => void;
-  savingLevel: RiskLevel | null;
-  newLevelToAlias: Map<RiskLevel | undefined, string>;
-  savedLevelToAlias: Map<RiskLevel | undefined, string>;
-}
-
 const helper = new ColumnHelper<TableItem>();
-
-const columns = helper.list([
-  helper.simple({
-    key: 'level',
-    title: 'Level',
-    defaultWidth: 100,
-  }),
-  helper.simple({
-    key: 'levelAlias',
-    title: 'Alias',
-    tooltip:
-      'Allows you to add a name that will overwrite the default Risk level displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
-    type: STRING,
-    defaultWidth: 200,
-    defaultEditState: true,
-  }),
-  helper.display({
-    title: 'Action',
-    enableResizing: false,
-    render: (item, context) => {
-      const { handleSaveAlias, savingLevel, newLevelToAlias, savedLevelToAlias } =
-        context.external as ExternalState;
-      return (
-        <Button
-          type="PRIMARY"
-          onClick={() => {
-            handleSaveAlias(item.level);
-          }}
-          isDisabled={
-            !!savingLevel ||
-            newLevelToAlias.get(item.level) === undefined ||
-            (savedLevelToAlias.get(item.level) || '') === (newLevelToAlias.get(item.level) || '')
-          }
-          isLoading={item.level === savingLevel}
-          requiredResources={['write:::settings/risk-scoring/risk-levels-alias/*']}
-        >
-          Update
-        </Button>
-      );
-    },
-  }),
-]);
 
 export const RiskLevelSettings: React.FC = () => {
   const settings = useSettings();
@@ -140,12 +91,50 @@ export const RiskLevelSettings: React.FC = () => {
     [newLevelToAlias],
   );
 
-  const externalState: ExternalState = {
-    savingLevel,
-    newLevelToAlias,
-    handleSaveAlias,
-    savedLevelToAlias,
-  };
+  const columns = useMemo(
+    () =>
+      helper.list([
+        helper.simple({
+          key: 'level',
+          title: 'Level',
+          defaultWidth: 100,
+        }),
+        helper.simple({
+          key: 'levelAlias',
+          title: 'Alias',
+          tooltip:
+            'Allows you to add a name that will overwrite the default Risk level displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
+          type: STRING,
+          defaultWidth: 200,
+          defaultEditState: true,
+        }),
+        helper.display({
+          title: 'Action',
+          enableResizing: false,
+          render: (item) => {
+            return (
+              <Button
+                type="PRIMARY"
+                onClick={() => {
+                  handleSaveAlias(item.level);
+                }}
+                isDisabled={
+                  !!savingLevel ||
+                  newLevelToAlias.get(item.level) === undefined ||
+                  (savedLevelToAlias.get(item.level) || '') ===
+                    (newLevelToAlias.get(item.level) || '')
+                }
+                isLoading={item.level === savingLevel}
+                requiredResources={['write:::settings/risk-scoring/risk-levels-alias/*']}
+              >
+                Update
+              </Button>
+            );
+          },
+        }),
+      ]),
+    [savingLevel, newLevelToAlias, savedLevelToAlias, handleSaveAlias],
+  );
 
   return (
     <SettingsCard
@@ -169,7 +158,6 @@ export const RiskLevelSettings: React.FC = () => {
           setting: false,
           download: false,
         }}
-        externalState={externalState}
       />
     </SettingsCard>
   );

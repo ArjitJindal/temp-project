@@ -17,13 +17,7 @@ interface TableItem {
   stateAlias: string | undefined;
 }
 
-interface ExternalState {
-  newStateToAlias: Map<TransactionState, string>;
-  savedStateToAlias: Map<TransactionState | undefined, string>;
-  savingState: TransactionState | null;
-  onUpdateAlias: (state: TransactionState, newAlias: string) => void;
-  onSaveAlias: (state: TransactionState) => void;
-}
+// externalState removed
 
 const columnHelper = new ColumnHelper<TableItem>();
 
@@ -49,13 +43,11 @@ export const TransactionStateSettings: React.FC = () => {
           tooltip:
             'Allows you to add a name that will overwrite the default Transaction state displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
           defaultWidth: 200,
-          render: (item, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { newStateToAlias, onUpdateAlias } = externalState;
+          render: (item) => {
             return (
               <TextInput
                 value={newStateToAlias.get(item.state) ?? item.stateAlias}
-                onChange={(newValue) => onUpdateAlias(item.state, newValue || '')}
+                onChange={(newValue) => handleUpdateAlias(item.state, newValue || '')}
                 isDisabled={!permissions}
               />
             );
@@ -64,13 +56,11 @@ export const TransactionStateSettings: React.FC = () => {
         columnHelper.display({
           title: 'Action',
           enableResizing: false,
-          render: (item, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { newStateToAlias, savingState, savedStateToAlias, onSaveAlias } = externalState;
+          render: (item) => {
             return (
               <Button
                 type="PRIMARY"
-                onClick={() => onSaveAlias(item.state)}
+                onClick={() => handleSaveAlias(item.state)}
                 isDisabled={
                   !!savingState ||
                   newStateToAlias.get(item.state) === undefined ||
@@ -86,7 +76,14 @@ export const TransactionStateSettings: React.FC = () => {
           },
         }),
       ]),
-    [permissions],
+    [
+      permissions,
+      newStateToAlias,
+      savingState,
+      savedStateToAlias,
+      handleSaveAlias,
+      handleUpdateAlias,
+    ],
   );
   const [savingState, setSavingState] = useState<TransactionState | null>(null);
   const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
@@ -182,13 +179,6 @@ export const TransactionStateSettings: React.FC = () => {
     [stateToAlias],
   );
 
-  const externalState: ExternalState = {
-    newStateToAlias,
-    savingState,
-    savedStateToAlias,
-    onUpdateAlias: handleUpdateAlias,
-    onSaveAlias: handleSaveAlias,
-  };
   return (
     <SettingsCard
       title="Transaction state alias"
@@ -203,7 +193,6 @@ export const TransactionStateSettings: React.FC = () => {
           items: tableData,
         }}
         toolsOptions={false}
-        externalState={externalState}
       />
     </SettingsCard>
   );

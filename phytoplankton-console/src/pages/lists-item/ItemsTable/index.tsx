@@ -82,15 +82,7 @@ interface Props {
   setIsFlatFileProgressLoading: (isLoading: boolean) => void;
 }
 
-type ExternalState = {
-  editUserData: StatePair<ExistedTableItemData | null>;
-  newUserData: StatePair<NewTableItemData>;
-  isEditUserLoading: StatePair<boolean>;
-  isUserDeleteLoading: StatePair<boolean>;
-  onAdd: () => void;
-  onSave: () => void;
-  onDelete: (userId: string) => void;
-};
+// ExternalState removed
 
 const helper = new ColumnHelper<TableItem>();
 
@@ -248,12 +240,8 @@ export default function ItemsTable(props: Props) {
     }
   }, [isNewUserValid, newUserData, listId, api, listType]);
 
-  const [isEditUserLoading, setEditUserLoading] = useState(false);
-
   const handleSaveItem = () => {
     if (isEditUserDataValid && editUserData) {
-      setEditUserLoading(true);
-
       const payload: DefaultApiPostWhiteListItemRequest = {
         listId,
         ListItem: {
@@ -272,17 +260,12 @@ export default function ItemsTable(props: Props) {
         })
         .catch((e) => {
           message.fatal(`Unable to save user! ${getErrorMessage(e)}`, e);
-        })
-        .finally(() => {
-          setEditUserLoading(false);
         });
     }
   };
 
-  const [isUserDeleteLoading, setEditDeleteLoading] = useState(false);
   const handleDeleteUser = useCallback(
     (userId: string) => {
-      setEditDeleteLoading(true);
       const promise =
         listType === 'WHITELIST'
           ? api.deleteWhiteListItem({ listId, key: userId })
@@ -294,9 +277,6 @@ export default function ItemsTable(props: Props) {
         })
         .catch((e) => {
           message.fatal(`Unable to delete user from list! ${getErrorMessage(e)}`, e);
-        })
-        .finally(() => {
-          setEditDeleteLoading(false);
         });
     },
     [api, listId, listType],
@@ -342,28 +322,15 @@ export default function ItemsTable(props: Props) {
           ? await api.getWhiteListItems(payload)
           : await api.getBlacklistItems(payload);
 
-      const data: TableItem[] = [
-        ...response.items.map(
-          ({ key, metadata }): TableItem => ({
-            rowKey: key,
-            type: 'EXISTED',
-            value: key,
-            reason: metadata?.reason ?? '',
-            meta: metadata ?? {},
-          }),
-        ),
-        ...(filterKeys == null
-          ? [
-              {
-                rowKey: 'NEW',
-                type: 'NEW' as const,
-                value: [],
-                reason: '',
-                meta: {},
-              },
-            ]
-          : []),
-      ];
+      const data: TableItem[] = response.items.map(
+        ({ key, metadata }): TableItem => ({
+          rowKey: key,
+          type: 'EXISTED',
+          value: key,
+          reason: metadata?.reason ?? '',
+          meta: metadata ?? {},
+        }),
+      );
       return {
         ...response,
         items: data,
@@ -371,16 +338,6 @@ export default function ItemsTable(props: Props) {
       };
     },
   );
-
-  const externalState: ExternalState = {
-    editUserData: [editUserData, setEditUserData],
-    newUserData: [newUserData, setNewUserData],
-    isEditUserLoading: [isEditUserLoading, setEditUserLoading],
-    isUserDeleteLoading: [isUserDeleteLoading, setEditDeleteLoading],
-    onAdd: handleAddItem,
-    onSave: handleSaveItem,
-    onDelete: handleDeleteUser,
-  };
 
   const extraFilters = useExtraFilters(listSubtype);
 
@@ -392,7 +349,11 @@ export default function ItemsTable(props: Props) {
     isEditUserValid: isEditUserDataValid,
     requiredWriteResources,
     listHeaderRes,
+    newUserDataState: [newUserData, setNewUserData],
+    onDelete: handleDeleteUser,
   });
+
+  // externalState no longer used; kept locally for in-file helpers only
 
   return (
     <AsyncResourceRenderer resource={listHeaderRes}>
@@ -411,7 +372,26 @@ export default function ItemsTable(props: Props) {
               onChangeParams={setParams}
               queryResults={listResult}
               fitHeight
-              externalState={externalState}
+              createRow={{
+                item: {
+                  rowKey: 'NEW',
+                  type: 'NEW' as const,
+                  value: [],
+                  reason: '',
+                  meta: {},
+                },
+                visible: filterKeys == null,
+                position: 'BOTTOM',
+                onSubmit: () => handleAddItem(),
+              }}
+              rowEditing={{
+                onSave: (_id, edited) => {
+                  const item = edited as ExistedTableItemData;
+                  setEditUserData(item);
+                  handleSaveItem();
+                },
+                onCancel: () => setEditUserData(null),
+              }}
               extraFilters={extraFilters}
               extraTools={[
                 () => <Button onClick={() => setIsImportModalOpen(true)}>Import CSV</Button>,
@@ -465,6 +445,8 @@ function useColumns(options: {
   isEditUserValid: boolean;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
   requiredWriteResources: Resource[];
+  newUserDataState: StatePair<NewTableItemData>;
+  onDelete: (userId: string) => void;
 }): TableColumn<TableItem>[] {
   const {
     listSubtype,
@@ -474,6 +456,8 @@ function useColumns(options: {
     isEditUserValid,
     requiredWriteResources,
     listHeaderRes,
+    newUserDataState,
+    onDelete,
   } = options;
   const settings = useSettings();
   const listHeader = getOr(listHeaderRes, null);
@@ -504,9 +488,7 @@ function useColumns(options: {
             type: {
               render: (value, context) => {
                 const { item: entity } = context;
-                const externalState: ExternalState = context.external as ExternalState;
-                const [newUserData, setNewUserData] = externalState.newUserData;
-                const [editUserData, setEditUserData] = externalState.editUserData;
+                const [newUserData, setNewUserData] = newUserDataState;
                 const columnName = column.key || '';
 
                 if (entity.type === 'NEW') {
@@ -526,15 +508,16 @@ function useColumns(options: {
                     isAddUserLoading,
                     columnName,
                   );
-                } else if (editUserData?.value === entity.value) {
+                } else if (context.rowApi?.isEditing) {
                   return renderInputForColumnType(
                     column.type,
-                    editUserData.meta[columnName] || '',
+                    (context.rowApi.getDraft() as ExistedTableItemData).meta[columnName] || '',
                     (newValue) => {
-                      setEditUserData({
-                        ...editUserData,
-                        meta: { ...editUserData.meta, [columnName]: newValue },
-                      });
+                      const draft = context.rowApi?.getDraft() as ExistedTableItemData;
+                      context.rowApi?.setDraft?.({
+                        ...draft,
+                        meta: { ...draft.meta, [columnName]: newValue },
+                      } as any);
                     },
                     false,
                     columnName,
@@ -556,33 +539,29 @@ function useColumns(options: {
           title: 'Actions',
           defaultWidth: 170,
           render: (entity, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [editUserData, setEditUserData] = externalState.editUserData;
-            const [isEditUserLoading] = externalState.isEditUserLoading;
-            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-            const { onAdd, onSave, onDelete } = externalState;
+            const rowApi = context.rowApi;
             if (entity.type === 'NEW') {
               return (
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
                     isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid || !!editUserData}
-                    onClick={onAdd}
+                    isDisabled={!isNewUserValid}
+                    onClick={() => rowApi?.save?.()}
                   >
                     Add
                   </Button>
                 </div>
               );
             } else if (entity.type === 'EXISTED') {
-              if (editUserData?.value === entity.value) {
+              if (rowApi?.isEditing) {
                 return (
                   <div className={s.actions}>
                     <Button
                       size="SMALL"
                       type="PRIMARY"
-                      onClick={onSave}
-                      isDisabled={isEditUserLoading || !isEditUserValid}
+                      onClick={() => rowApi?.save?.()}
+                      isDisabled={!isEditUserValid}
                       requiredResources={requiredWriteResources}
                     >
                       Save
@@ -590,10 +569,7 @@ function useColumns(options: {
                     <Button
                       size="SMALL"
                       type="SECONDARY"
-                      isDisabled={isEditUserLoading}
-                      onClick={() => {
-                        setEditUserData(null);
-                      }}
+                      onClick={() => rowApi?.cancelEdit?.()}
                       requiredResources={requiredWriteResources}
                     >
                       Cancel
@@ -606,15 +582,7 @@ function useColumns(options: {
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isDisabled={isUserDeleteLoading}
-                    onClick={() => {
-                      const editTarget: ExistedTableItemData = {
-                        value: entity.value,
-                        reason: entity.reason,
-                        meta: entity.meta,
-                      };
-                      setEditUserData(editTarget);
-                    }}
+                    onClick={() => rowApi?.startEdit?.()}
                     requiredResources={requiredWriteResources}
                   >
                     Edit
@@ -622,10 +590,7 @@ function useColumns(options: {
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isLoading={isUserDeleteLoading}
-                    onClick={() => {
-                      onDelete(entity.value ?? '');
-                    }}
+                    onClick={() => onDelete(entity.value ?? '')}
                     requiredResources={requiredWriteResources}
                   >
                     Remove
@@ -648,8 +613,7 @@ function useColumns(options: {
             type: {
               render: (value, context) => {
                 const { item: entity } = context;
-                const externalState: ExternalState = context.external as ExternalState;
-                const [newUserData, setNewUserData] = externalState.newUserData;
+                const [newUserData, setNewUserData] = newUserDataState;
 
                 if (entity.type === 'NEW') {
                   return (
@@ -701,35 +665,33 @@ function useColumns(options: {
           type: {
             render: (reason, context) => {
               const { item: entity } = context;
-              const externalState: ExternalState = context.external as ExternalState;
-              const [newUserData, setNewUserData] = externalState.newUserData;
-              const [editUserData, setEditUserData] = externalState.editUserData;
-              const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
+              const rowApi = context.rowApi;
 
               if (entity.type === 'NEW') {
                 return (
                   <FocusRetainingInput
                     uniqueKey="new-reason-input"
                     isDisabled={isAddUserLoading}
-                    value={newUserData.reason}
+                    value={newUserDataState[0].reason}
                     autoFocus
                     onChange={(value) => {
-                      setNewUserData((prevState) => ({
+                      newUserDataState[1]((prevState) => ({
                         ...prevState,
                         reason: value,
                       }));
                     }}
                   />
                 );
-              } else if (entity.value === editUserData?.value) {
+              } else if (rowApi?.isEditing) {
                 return (
                   <FocusRetainingInput
                     uniqueKey={`edit-reason-${entity.value}`}
-                    isDisabled={isUserDeleteLoading}
-                    value={editUserData.reason}
+                    isDisabled={false}
+                    value={(rowApi.getDraft() as ExistedTableItemData).reason}
                     autoFocus
                     onChange={(value) => {
-                      setEditUserData({ ...editUserData, reason: value });
+                      const draft = rowApi.getDraft() as ExistedTableItemData;
+                      rowApi.setDraft({ ...draft, reason: value } as any);
                     }}
                   />
                 );
@@ -743,11 +705,7 @@ function useColumns(options: {
           title: 'Actions',
           defaultWidth: 170,
           render: (entity, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [editUserData, setEditUserData] = externalState.editUserData;
-            const [isEditUserLoading] = externalState.isEditUserLoading;
-            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-            const { onAdd, onSave, onDelete } = externalState;
+            const rowApi = context.rowApi;
             if (entity.type === 'NEW') {
               return (
                 <div className={s.actions}>
@@ -755,7 +713,7 @@ function useColumns(options: {
                     type="PRIMARY"
                     isLoading={isAddUserLoading}
                     isDisabled={!isNewUserValid}
-                    onClick={onAdd}
+                    onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
                     Add
@@ -763,26 +721,19 @@ function useColumns(options: {
                 </div>
               );
             } else if (entity.type === 'EXISTED') {
-              if (editUserData?.value === entity.value) {
+              if (rowApi?.isEditing) {
                 return (
                   <div className={s.actions}>
                     <Button
                       size="SMALL"
                       type="PRIMARY"
-                      onClick={onSave}
-                      isDisabled={isEditUserLoading || !isEditUserValid}
+                      onClick={() => rowApi?.save?.()}
+                      isDisabled={!isEditUserValid}
                       requiredResources={requiredWriteResources}
                     >
                       Save
                     </Button>
-                    <Button
-                      size="SMALL"
-                      type="SECONDARY"
-                      isDisabled={isEditUserLoading}
-                      onClick={() => {
-                        setEditUserData(null);
-                      }}
-                    >
+                    <Button size="SMALL" type="SECONDARY" onClick={() => rowApi?.cancelEdit?.()}>
                       Cancel
                     </Button>
                   </div>
@@ -793,15 +744,7 @@ function useColumns(options: {
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isDisabled={isUserDeleteLoading}
-                    onClick={() => {
-                      const editTarget: ExistedTableItemData = {
-                        value: entity.value,
-                        reason: entity.reason,
-                        meta: entity.meta,
-                      };
-                      setEditUserData(editTarget);
-                    }}
+                    onClick={() => rowApi?.startEdit?.()}
                     requiredResources={requiredWriteResources}
                   >
                     Edit
@@ -809,10 +752,7 @@ function useColumns(options: {
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isLoading={isUserDeleteLoading}
-                    onClick={() => {
-                      onDelete(entity.value ?? '');
-                    }}
+                    onClick={() => onDelete(entity.value ?? '')}
                     requiredResources={requiredWriteResources}
                   >
                     Remove
@@ -834,6 +774,8 @@ function useColumns(options: {
     settings,
     existingCountryCodes,
     listHeader?.metadata?.columns,
+    newUserDataState,
+    onDelete,
   ]);
 }
 

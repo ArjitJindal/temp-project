@@ -6,14 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { ExpandedState } from '@tanstack/table-core';
 import { sortBy } from 'lodash';
-import React, {
-  SetStateAction,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DEFAULT_COLUMN_WRAP_MODE,
   EXPAND_COLUMN,
@@ -43,7 +36,7 @@ import {
   isSimpleColumn,
   setByFieldAccessor,
 } from '../types';
-import { ExternalStateContext } from './externalState';
+// ExternalStateContext removed
 import s from './index.module.less';
 import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
 import { StatePair, Updater, applyUpdater } from '@/utils/state';
@@ -128,6 +121,10 @@ export function useTanstackTable<
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
   onExpandedMetaChange?: (meta: { isAllExpanded: boolean }) => void;
+  meta?: {
+    onEdit?: ((rowKey: string, newValue: Item) => void | Promise<void>) | undefined;
+    getRowApi?: (row: TanTable.Row<TableRow<Item>>) => any;
+  };
 }): TanTable.Table<TableRow<Item>> {
   const {
     dataRes,
@@ -143,6 +140,7 @@ export function useTanstackTable<
     isSortable,
     defaultSorting,
     onExpandedMetaChange,
+    meta,
   } = options;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
@@ -381,6 +379,7 @@ export function useTanstackTable<
   const table = TanTable.useReactTable<TableRow<Item>>({
     meta: {
       onEdit,
+      ...(meta ?? {}),
     },
     data: preparedData,
     columns: allColumns,
@@ -504,7 +503,7 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
   const onEdit = props.table.options.meta.onEdit;
   const value: Value = props.getValue();
   const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
-  const externalState = useContext(ExternalStateContext);
+  // external state removed
 
   const columnDataType = {
     ...UNKNOWN,
@@ -527,7 +526,8 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
     value: value,
     item: props.row.original.content,
     edit: editContext,
-    external: externalState?.value ?? null,
+    external: undefined,
+    rowApi: props.table.options.meta?.getRowApi?.(props.cell.row),
   };
 
   return (
@@ -547,7 +547,7 @@ function DerivedColumnCellComponent<Item extends object>(props: CellComponentPro
   };
 
   const columnValue = column.value(props.row.original.content);
-  const externalState = useContext(ExternalStateContext);
+  // external state removed
   const editContext = useEditContext<unknown>(
     false, // derived columns doesn't support editing
     props.row.original.content,
@@ -557,7 +557,8 @@ function DerivedColumnCellComponent<Item extends object>(props: CellComponentPro
     value: columnValue,
     item: props.row.original.content,
     edit: editContext,
-    external: externalState?.value ?? null,
+    external: undefined,
+    rowApi: props.table.options.meta?.getRowApi?.(props.cell.row),
   };
   return (
     <div className={s.columnCellComponentContainer} key={`${props.row.id}-${columnValue}`}>
@@ -572,7 +573,7 @@ function DisplayColumnCellComponent<Item extends object>(props: CellComponentPro
   const { column, rowKey } = props.column.columnDef.meta;
   const id = applyFieldAccessor(props.row.original.content, rowKey);
   const onEdit = props.table.options.meta.onEdit;
-  const externalState = useContext(ExternalStateContext);
+  // external state removed
   const editContext = useEditContext<Item>(
     (onEdit != null && column.defaultEditState) ?? false,
     props.row.original.content,
@@ -586,7 +587,8 @@ function DisplayColumnCellComponent<Item extends object>(props: CellComponentPro
       {column.render(props.row.original.content, {
         item: props.row.original.content,
         edit: editContext,
-        external: externalState?.value ?? null,
+        external: undefined,
+        rowApi: props.table.options.meta?.getRowApi?.(props.cell.row),
       })}
     </div>
   );

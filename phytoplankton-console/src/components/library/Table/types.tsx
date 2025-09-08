@@ -21,17 +21,27 @@ export interface EditContext<T> {
 export interface ItemContext<Item> {
   item: Item;
   edit: EditContext<Item>;
-  external: unknown;
+  rowApi?: RowEditApi<Item>;
 }
 
 export interface CellContext<Value, Item> {
   value: Value;
   item: Item;
-  external?: unknown;
+  rowApi?: RowEditApi<Item>;
 }
 
 export interface CellEditContext<Value, Item> extends CellContext<Value, Item> {
   edit: EditContext<Value | undefined>;
+}
+
+export interface RowEditApi<Item> {
+  isEditing: boolean;
+  isCreateRow?: boolean;
+  getDraft: () => Item;
+  setDraft: (newValue: Item) => void;
+  startEdit: () => void;
+  cancelEdit: () => void;
+  save: () => void | Promise<void>;
 }
 
 /*

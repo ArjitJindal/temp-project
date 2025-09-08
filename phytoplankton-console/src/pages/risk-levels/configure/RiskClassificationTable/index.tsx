@@ -1,10 +1,7 @@
 import { RiskClassificationScore, RiskLevel } from '@/apis';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import Table from '@/components/library/Table';
-import {
-  columns,
-  ExternalState,
-} from '@/pages/risk-levels/configure/RiskClassificationTable/consts';
+import { makeColumns } from '@/pages/risk-levels/configure/RiskClassificationTable/consts';
 
 export type State = number[];
 
@@ -52,11 +49,7 @@ export function parseApiState(values: ApiState): State {
 const RiskClassificationTable = (props: Props) => {
   const { state, setState, isDisabled = false } = props;
 
-  const externalState: ExternalState = {
-    state,
-    isDisabled,
-    setState,
-  };
+  const columns = makeColumns({ state, setState, isDisabled });
   return (
     <Table<TableItem>
       rowKey="key"
@@ -68,7 +61,6 @@ const RiskClassificationTable = (props: Props) => {
       }}
       toolsOptions={false}
       showResultsInfo={false}
-      externalState={externalState}
     />
   );
 };

@@ -163,35 +163,29 @@ export default function ChecklistTab(props: Props) {
         id: 'actions',
         title: 'Checklist status',
         defaultWidth: 200,
-        defaultEditState: isStatusEditable,
         render(item, context) {
-          const { edit } = context;
-          if (edit.isEditing) {
-            const [state, setState] = edit.state;
+          const rowApi = context.rowApi;
+          if (rowApi?.isEditing) {
+            const draft = (rowApi.getDraft() as ChecklistItem) ?? item;
             return (
               <Dropdown<ChecklistDoneStatus>
-                disabled={edit.isBusy}
                 options={(['DONE', 'NOT_DONE', 'NOT_APPLICABLE'] as const).map((s) => ({
                   label: humanizeConstant(s),
                   value: s,
                 }))}
                 arrow={'LINE'}
                 bordered
-                selectedKeys={[state.done]}
+                selectedKeys={[draft.done]}
                 onSelect={(e) => {
-                  // Using last item state instead of eit state to sync state between multiple cells
-                  const newState = {
-                    ...item,
-                    done: e.value as ChecklistDoneStatus,
-                  };
-                  setState(newState);
-                  edit.onConfirm(newState);
+                  rowApi.setDraft({ ...draft, done: e.value as ChecklistDoneStatus });
                 }}
                 minWidth={150}
                 writeResources={['write:::case-management/case-overview/*']}
               >
                 <div>
-                  {humanizeConstant(state.done === 'NOT_STARTED' ? 'SELECT_STATUS' : state.done)}
+                  {humanizeConstant(
+                    (draft.done ?? 'NOT_STARTED') === 'NOT_STARTED' ? 'SELECT_STATUS' : draft.done,
+                  )}
                 </div>
               </Dropdown>
             );
@@ -207,9 +201,8 @@ export default function ChecklistTab(props: Props) {
           title: 'QA status',
           id: 'qaStatus',
           defaultWidth: 220,
-          defaultEditState: !alert.ruleQaStatus,
           render: (item, context) => {
-            const { edit } = context;
+            const rowApi = context.rowApi;
             let label = !alert.ruleQaStatus ? 'Select status' : '-';
             switch (item?.qaStatus) {
               case 'PASSED':
@@ -223,8 +216,8 @@ export default function ChecklistTab(props: Props) {
                 break;
               default:
             }
-            if (edit.isEditing) {
-              const [state, setState] = edit.state;
+            if (rowApi?.isEditing) {
+              const draft = (rowApi.getDraft() as ChecklistItem) ?? item;
               return (
                 <Dropdown<ChecklistStatus>
                   options={CHECKLIST_STATUSS.map((s) => ({
@@ -241,16 +234,10 @@ export default function ChecklistTab(props: Props) {
                   arrow={'LINE'}
                   bordered
                   onSelect={(e) => {
-                    // Using last item state instead of eit state to sync state between multiple cells
-                    const newState = {
-                      ...item,
-                      qaStatus: e.value,
-                    };
-                    setState(newState);
-                    edit.onConfirm(newState);
+                    rowApi.setDraft({ ...draft, qaStatus: e.value });
                   }}
                   minWidth={200}
-                  selectedKeys={state?.qaStatus ? [state?.qaStatus] : undefined}
+                  selectedKeys={draft?.qaStatus ? [draft?.qaStatus] : undefined}
                   writeResources={['write:::case-management/qa/*']}
                 >
                   <div>{label}</div>
@@ -273,24 +260,53 @@ export default function ChecklistTab(props: Props) {
         helper.display({
           id: 'comment',
           title: 'Comment',
-          defaultEditState: true,
           render(item, context) {
-            const { edit } = context;
-            const [state, setState] = edit.state;
-            if (edit.isEditing) {
+            const rowApi = context.rowApi;
+            const draft = (rowApi?.getDraft?.() as ChecklistItem) ?? item;
+            if (rowApi?.isEditing) {
               return (
                 <EditableComment
-                  value={state.comment}
+                  value={draft.comment}
                   onChange={(value) => {
-                    setState({ ...item, comment: value });
+                    rowApi?.setDraft?.({ ...draft, comment: value });
                   }}
                   onBlur={() => {
-                    edit.onConfirm();
+                    // keep editing until user saves
                   }}
                 />
               );
             }
             return <div>{item.comment}</div>;
+          },
+        }),
+      );
+      columns.push(
+        helper.display({
+          title: 'Actions',
+          id: 'rowActions',
+          defaultWidth: 160,
+          render: (item, context) => {
+            const rowApi = context.rowApi;
+            const canEdit = isStatusEditable || qaModeSet;
+            if (rowApi?.isEditing) {
+              return (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      rowApi.save?.();
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button onClick={() => rowApi.cancelEdit?.()}>Cancel</button>
+                </div>
+              );
+            }
+            return (
+              <button disabled={!canEdit} onClick={() => rowApi?.startEdit?.()}>
+                Edit
+              </button>
+            );
           },
         }),
       );
@@ -326,25 +342,33 @@ export default function ChecklistTab(props: Props) {
                 toolsOptions={false}
                 innerRef={actionRef}
                 rowHeightMode="AUTO"
-                onEdit={async (rowKey, newItem) => {
-                  const item = items.find((i) => i.id === rowKey);
-                  if (item != null && item.id != null) {
-                    if (newItem.comment != item.comment || newItem.done != item.done) {
-                      await checklistItemChangeMutation.mutateAsync({
-                        item,
-                        changes: {
-                          comment: newItem.comment,
-                          done: newItem.done,
-                        },
-                      });
+                rowEditing={{
+                  mode: 'multiple',
+                  isEditable: () => isStatusEditable || qaModeSet,
+                  onSave: async (rowKey, edited) => {
+                    const item = items.find((i) => i.id === rowKey);
+                    if (item != null && item.id != null) {
+                      const newItem = edited as ChecklistItem;
+                      const promises: Promise<any>[] = [];
+                      if (newItem.comment !== item.comment || newItem.done !== item.done) {
+                        promises.push(
+                          checklistItemChangeMutation.mutateAsync({
+                            item,
+                            changes: { comment: newItem.comment, done: newItem.done },
+                          }),
+                        );
+                      }
+                      if (newItem.qaStatus != null && newItem.qaStatus !== item.qaStatus) {
+                        promises.push(
+                          onQaStatusChange.mutateAsync({
+                            checklistItemIds: [item.id],
+                            status: newItem.qaStatus,
+                          }),
+                        );
+                      }
+                      await Promise.all(promises);
                     }
-                    if (newItem.qaStatus != null && newItem.qaStatus != item.qaStatus) {
-                      await onQaStatusChange.mutateAsync({
-                        checklistItemIds: [item.id],
-                        status: newItem.qaStatus,
-                      });
-                    }
-                  }
+                  },
                 }}
               />
             </Card.Section>

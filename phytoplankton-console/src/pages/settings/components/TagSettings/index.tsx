@@ -8,7 +8,6 @@ import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TextInput from '@/components/library/TextInput';
-import { StatePair } from '@/utils/state';
 import Alert from '@/components/library/Alert';
 import { useHasResources } from '@/utils/user-utils';
 import { ConsoleTag, ConsoleTagTypeEnum } from '@/apis';
@@ -32,33 +31,20 @@ interface NewItem extends CommonItem {
 
 type Item = ExistingItem | NewItem;
 
-interface ExternalState {
-  newStateDetails: StatePair<Item | undefined>;
-  onAdd: (tag: ConsoleTag) => void;
-  canEdit: boolean;
-}
-
 const helper = new ColumnHelper<Item>();
 const columns = helper.list([
   helper.display({
     title: 'Key',
     defaultWidth: 300,
     render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-      const canEdit = externalState.canEdit;
-      if (item.type === 'NEW') {
+      const rowApi = context.rowApi;
+      const draft = (rowApi?.getDraft?.() as Item) ?? item;
+      const canEdit = true;
+      if (rowApi?.isCreateRow) {
         return (
           <TextInput
-            value={newState?.key}
-            onChange={(e) =>
-              setNewState({
-                key: e ?? '',
-                type: 'NEW',
-                rowKey: 'new',
-                tagType: newState?.tagType ?? 'STRING',
-              })
-            }
+            value={draft.key}
+            onChange={(e) => rowApi.setDraft({ ...draft, key: e ?? '' } as Item)}
             isDisabled={!canEdit}
           />
         );
@@ -71,21 +57,16 @@ const columns = helper.list([
     title: 'Type',
     defaultWidth: 300,
     render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
+      const rowApi = context.rowApi;
+      const draft = (rowApi?.getDraft?.() as Item) ?? item;
 
       return (
         <RadioGroup
-          value={newState?.tagType ?? item.tagType}
-          isDisabled={item.type !== 'NEW'}
+          value={draft.tagType}
+          isDisabled={!rowApi?.isCreateRow}
           orientation="HORIZONTAL"
           onChange={(value) => {
-            setNewState({
-              type: 'NEW',
-              rowKey: 'new',
-              key: newState?.key ?? '',
-              tagType: value as ConsoleTagTypeEnum,
-            });
+            rowApi?.setDraft?.({ ...draft, tagType: value as ConsoleTagTypeEnum } as Item);
           }}
           options={[
             { value: 'STRING', label: 'String' },
@@ -99,30 +80,22 @@ const columns = helper.list([
     title: 'Options',
     defaultWidth: 300,
     render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-      const canEdit = externalState.canEdit;
-      if (item.type === 'NEW' && newState?.tagType === 'ENUM') {
+      const rowApi = context.rowApi;
+      const draft = (rowApi?.getDraft?.() as Item) ?? item;
+      const canEdit = true;
+      if (rowApi?.isCreateRow && draft.tagType === 'ENUM') {
         return (
           <Select
             mode="TAGS"
-            isDisabled={item.type !== 'NEW' || !canEdit}
+            isDisabled={!rowApi?.isCreateRow || !canEdit}
             options={
               item.options?.map((option) => ({
                 label: option,
                 value: option,
               })) ?? []
             }
-            value={newState?.options}
-            onChange={(e) => {
-              setNewState({
-                type: 'NEW',
-                rowKey: 'new',
-                key: newState?.key ?? '',
-                tagType: newState?.tagType ?? 'ENUM',
-                options: e ?? [],
-              });
-            }}
+            value={draft.options}
+            onChange={(e) => rowApi?.setDraft?.({ ...draft, options: e ?? [] } as Item)}
           />
         );
       }
@@ -133,25 +106,12 @@ const columns = helper.list([
     title: 'Action',
     defaultWidth: 300,
     render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-      const canEdit = externalState.canEdit;
-      if (item.type === 'NEW') {
+      const rowApi = context.rowApi;
+      const draft = (rowApi?.getDraft?.() as Item) ?? item;
+      const canEdit = true;
+      if (rowApi?.isCreateRow) {
         return (
-          <Button
-            isDisabled={!newState?.key || !canEdit}
-            onClick={() => {
-              if (newState) {
-                externalState.onAdd({
-                  key: newState.key,
-                  createdAt: Date.now(),
-                  type: newState.tagType,
-                  options: newState.tagType === 'ENUM' ? newState.options : undefined,
-                });
-                setNewState(undefined);
-              }
-            }}
-          >
+          <Button isDisabled={!draft?.key || !canEdit} onClick={() => rowApi?.save?.()}>
             Add
           </Button>
         );
@@ -163,23 +123,9 @@ function TagSettings() {
   const settings = useSettings();
   const permissions = useHasResources(['write:::settings/users/tags/*']);
   const mutateTenantSettings = useUpdateTenantSettings();
-  const [newStateDetails, setNewStateDetails] = useState<Item | undefined>();
   const [isMaxTags, setIsMaxTags] = useState(false);
-  const externalState: ExternalState = {
-    canEdit: permissions,
-    newStateDetails: [newStateDetails, setNewStateDetails],
-    onAdd: (tag: ConsoleTag) => {
-      if (settings.consoleTags?.length === 10) {
-        setIsMaxTags(true);
-        return;
-      }
-      mutateTenantSettings.mutate({
-        consoleTags: [...(settings.consoleTags ?? []), tag],
-      });
-    },
-  };
-  const data: Item[] = [
-    ...(settings.consoleTags?.map(
+  const data: Item[] =
+    settings.consoleTags?.map(
       (tag) =>
         ({
           rowKey: tag.key,
@@ -188,14 +134,7 @@ function TagSettings() {
           tagType: tag.type,
           options: tag.type === 'ENUM' ? tag.options : undefined,
         } as ExistingItem),
-    ) ?? []),
-    {
-      rowKey: 'new',
-      key: '',
-      type: 'NEW',
-      tagType: 'STRING',
-    } as NewItem,
-  ];
+    ) ?? [];
 
   return (
     <SettingsCard
@@ -210,7 +149,31 @@ function TagSettings() {
         data={{
           items: data,
         }}
-        externalState={externalState}
+        createRow={{
+          item: { rowKey: 'new', key: '', type: 'NEW', tagType: 'STRING' } as any,
+          visible: permissions,
+          onSubmit: (newTag) => {
+            const tag = newTag as any as Item;
+            if (!tag.key) {
+              return;
+            }
+            if (settings.consoleTags?.length === 10) {
+              setIsMaxTags(true);
+              return;
+            }
+            mutateTenantSettings.mutate({
+              consoleTags: [
+                ...(settings.consoleTags ?? []),
+                {
+                  key: tag.key,
+                  type: tag.tagType,
+                  options: tag.tagType === 'ENUM' ? tag.options : undefined,
+                  createdAt: Date.now(),
+                } as ConsoleTag,
+              ],
+            });
+          },
+        }}
       ></Table>
       {isMaxTags && (
         <Alert type="ERROR">

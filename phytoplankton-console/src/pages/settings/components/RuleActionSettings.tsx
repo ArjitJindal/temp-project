@@ -17,98 +17,35 @@ interface TableItem {
   actionAlias: string | undefined;
 }
 
-interface ExternalState {
-  savingAction: RuleAction | null;
-  newActionToAlias: Map<RuleAction, string>;
-  savedActionToAlias: Map<RuleAction, string>;
-  onUpdateAlias: (action: RuleAction, newAlias: string) => void;
-  onSaveAlias: (action: RuleAction) => void;
-}
+// externalState removed
 
 const columnHelper = new ColumnHelper<TableItem>();
 
 export const RuleActionSettings: React.FC = () => {
   const settings = useSettings();
   const permissions = useHasResources(['write:::settings/rules/rule-action-alias/*']);
-  const columns = useMemo(
-    () =>
-      columnHelper.list([
-        columnHelper.simple({
-          key: 'action',
-          title: 'Action',
-          defaultWidth: 100,
-        }),
-        columnHelper.simple({
-          key: 'description',
-          title: 'Description',
-          defaultWidth: 250,
-        }),
-        columnHelper.display({
-          title: 'Alias',
-          tooltip:
-            'Allows you to add a name that will overwrite the default Action name displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
-          defaultWidth: 200,
-          render: (item, context) => {
-            const externalState = context.external as ExternalState;
-            const { newActionToAlias, onUpdateAlias } = externalState;
-            return (
-              <TextInput
-                value={newActionToAlias.get(item.action) ?? item.actionAlias}
-                onChange={(newValue) => onUpdateAlias(item.action, newValue || '')}
-                isDisabled={!permissions}
-              />
-            );
-          },
-        }),
-        columnHelper.display({
-          title: 'Action',
-          enableResizing: false,
-          render: (item, context) => {
-            const externalState = context.external as ExternalState;
-            const { newActionToAlias, savingAction, savedActionToAlias, onSaveAlias } =
-              externalState;
-            return (
-              <Button
-                type="PRIMARY"
-                onClick={() => onSaveAlias(item.action)}
-                isDisabled={
-                  !!savingAction ||
-                  newActionToAlias.get(item.action) === undefined ||
-                  (savedActionToAlias.get(item.action) || '') ===
-                    (newActionToAlias.get(item.action) || '') ||
-                  !permissions
-                }
-                isLoading={item.action === savingAction}
-                requiredResources={['write:::settings/rules/*']}
-              >
-                Update
-              </Button>
-            );
-          },
-        }),
-      ]),
-    [permissions],
-  );
   const [savingAction, setSavingAction] = useState<RuleAction | null>(null);
+  const [newActionToAlias, setNewActionToAlias] = useState<Map<RuleAction, string>>(new Map());
+  const [commitedActionToAlias, setCommitedActionToAlias] = useState<Map<RuleAction, string>>(
+    new Map(),
+  );
   const actionToAlias = useMemo<Map<RuleAction, string>>(
     () => new Map((settings.ruleActionAliases || []).map((entry) => [entry.action, entry.alias])),
     [settings.ruleActionAliases],
   );
-  const [commitedActionToAlias, setCommitedActionToAlias] = useState<Map<RuleAction, string>>(
-    new Map(),
-  );
+  const mutateTenantSettings = useUpdateTenantSettings();
   const savedActionToAlias = useMemo(
     () => new Map([...actionToAlias, ...commitedActionToAlias]),
     [actionToAlias, commitedActionToAlias],
   );
-  const [newActionToAlias, setNewActionToAlias] = useState<Map<RuleAction, string>>(new Map());
+
   const handleUpdateAlias = useCallback(
     (action: RuleAction, newAlias: string) => {
       setNewActionToAlias(new Map(newActionToAlias).set(action, newAlias.trim()));
     },
     [newActionToAlias],
   );
-  const mutateTenantSettings = useUpdateTenantSettings();
+
   const handleSaveAlias = useCallback(
     async (action: RuleAction) => {
       setSavingAction(action);
@@ -131,6 +68,69 @@ export const RuleActionSettings: React.FC = () => {
     },
     [mutateTenantSettings, newActionToAlias, savedActionToAlias],
   );
+
+  const columns = useMemo(
+    () =>
+      columnHelper.list([
+        columnHelper.simple({
+          key: 'action',
+          title: 'Action',
+          defaultWidth: 100,
+        }),
+        columnHelper.simple({
+          key: 'description',
+          title: 'Description',
+          defaultWidth: 250,
+        }),
+        columnHelper.display({
+          title: 'Alias',
+          tooltip:
+            'Allows you to add a name that will overwrite the default Action name displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
+          defaultWidth: 200,
+          render: (item) => {
+            return (
+              <TextInput
+                value={newActionToAlias.get(item.action) ?? item.actionAlias}
+                onChange={(newValue) => handleUpdateAlias(item.action, newValue || '')}
+                isDisabled={!permissions}
+              />
+            );
+          },
+        }),
+        columnHelper.display({
+          title: 'Action',
+          enableResizing: false,
+          render: (item) => {
+            return (
+              <Button
+                type="PRIMARY"
+                onClick={() => handleSaveAlias(item.action)}
+                isDisabled={
+                  !!savingAction ||
+                  newActionToAlias.get(item.action) === undefined ||
+                  (savedActionToAlias.get(item.action) || '') ===
+                    (newActionToAlias.get(item.action) || '') ||
+                  !permissions
+                }
+                isLoading={item.action === savingAction}
+                requiredResources={['write:::settings/rules/*']}
+              >
+                Update
+              </Button>
+            );
+          },
+        }),
+      ]),
+    [
+      permissions,
+      newActionToAlias,
+      savedActionToAlias,
+      savingAction,
+      handleSaveAlias,
+      handleUpdateAlias,
+    ],
+  );
+
   const tableData = useMemo<TableItem[]>(
     () => [
       {
@@ -152,13 +152,6 @@ export const RuleActionSettings: React.FC = () => {
     [actionToAlias],
   );
 
-  const externalState: ExternalState = {
-    newActionToAlias,
-    savingAction,
-    savedActionToAlias,
-    onUpdateAlias: handleUpdateAlias,
-    onSaveAlias: handleSaveAlias,
-  };
   return (
     <SettingsCard
       title="Rule action alias"
@@ -173,7 +166,6 @@ export const RuleActionSettings: React.FC = () => {
           items: tableData,
         }}
         toolsOptions={false}
-        externalState={externalState}
       />
     </SettingsCard>
   );
