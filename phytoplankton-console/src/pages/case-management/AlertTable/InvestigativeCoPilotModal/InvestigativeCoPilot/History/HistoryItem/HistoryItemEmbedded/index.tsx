@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils';
-import { compact } from 'lodash';
 import { QuestionResponseEmbedded } from '../../../types';
 import { Recommendation } from './Recommendation';
 import * as Card from '@/components/ui/Card';
@@ -26,6 +25,7 @@ import {
   useLinkingState,
   useUserEntityFollow,
 } from '@/pages/users-item/UserDetails/Linking/UserGraph';
+import { SanctionsDetailsEntityType } from '@/apis/models/SanctionsDetailsEntityType';
 
 interface Props {
   item: QuestionResponseEmbedded;
@@ -34,6 +34,7 @@ interface Props {
 export default function HistoryItemEmbedded({ item }: Props) {
   const userId = item.variables?.find((v) => v.name === 'userId')?.value;
   const alertId = item.variables?.find((v) => v.name === 'alertId')?.value;
+  const screeningDetails = item.variables?.find((v) => v.name === 'screeningDetails')?.value;
 
   const linkingState = useLinkingState(userId);
   const handleFollow = useUserEntityFollow(linkingState);
@@ -41,12 +42,14 @@ export default function HistoryItemEmbedded({ item }: Props) {
   if (
     (item.questionId === COPILOT_QUESTIONS.OPEN_HITS ||
       item.questionId === COPILOT_QUESTIONS.CLEARED_HITS) &&
-    typeof alertId === 'string'
+    typeof alertId === 'string' &&
+    typeof screeningDetails === 'string'
   ) {
     return (
       <div>
         <HitsTable
           alertId={alertId}
+          screeningDetails={screeningDetails}
           type={item.questionId === COPILOT_QUESTIONS.OPEN_HITS ? 'OPEN' : 'CLEARED'}
         />
       </div>
@@ -81,7 +84,15 @@ export default function HistoryItemEmbedded({ item }: Props) {
   );
 }
 
-export const HitsTable = ({ alertId, type }: { alertId: string; type: 'OPEN' | 'CLEARED' }) => {
+export const HitsTable = ({
+  alertId,
+  screeningDetails,
+  type,
+}: {
+  alertId: string;
+  screeningDetails: string;
+  type: 'OPEN' | 'CLEARED';
+}) => {
   const api = useApi();
   const alertResponse = useQuery(ALERT_ITEM(alertId), async () => {
     if (!alertId) {
@@ -90,18 +101,32 @@ export const HitsTable = ({ alertId, type }: { alertId: string; type: 'OPEN' | '
     return api.getAlert({ alertId });
   });
   const alertData = getOr(alertResponse.data, null);
-  const [params, setParams] = useState<AllParams<SanctionsHitsTableParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    statuses: [type],
-    searchIds: compact(alertData?.ruleHitMeta?.sanctionsDetails?.map((detail) => detail.searchId)),
-    paymentMethodIds: compact(
-      alertData?.ruleHitMeta?.sanctionsDetails?.map((detail) => detail.hitContext?.paymentMethodId),
-    ),
-  });
-  const openHitsQueryResults = useSanctionHitsQuery(params, alertId);
+
+  const initialParams = useMemo<AllParams<SanctionsHitsTableParams>>(() => {
+    const [auxPaymentMethodId, entityType, searchId] = screeningDetails.split(' ');
+    let paymentMethodId = auxPaymentMethodId;
+    if (auxPaymentMethodId === searchId) {
+      paymentMethodId = '';
+    }
+    return {
+      ...DEFAULT_PARAMS_STATE,
+      statuses: [type],
+      paymentMethodIds: paymentMethodId ? [paymentMethodId] : [],
+      entityType: entityType as SanctionsDetailsEntityType,
+      searchIds: searchId ? [searchId] : [],
+    };
+  }, [type, screeningDetails]);
+
+  const [params, setParams] = useState<AllParams<SanctionsHitsTableParams>>(initialParams);
+
+  const openHitsQueryResults = useSanctionHitsQuery(initialParams, alertId);
   const [selectedSanctionsHitsIds, setSelectedSanctionsHitsIds] = useState<string[]>([]);
   const [isStatusChangeModalVisible, setStatusChangeModalVisible] = useState(false);
   const { changeHitsStatusMutation } = useChangeSanctionsHitsStatusMutation();
+
+  useEffect(() => {
+    setParams(initialParams);
+  }, [initialParams]);
 
   return (
     <>

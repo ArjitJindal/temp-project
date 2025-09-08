@@ -8808,6 +8808,18 @@ components:
           type: array
           items:
             type: string
+        value:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+            required:
+              - label
+              - value
         variableType:
           type: string
           enum:
@@ -8819,6 +8831,7 @@ components:
             - BOOLEAN
             - AUTOCOMPLETE
             - SEARCH
+            - SCREENING_DETAIL_FILTER
     TableHeaders:
       title: TableHeaders
       type: object

@@ -1,18 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Alert, SanctionsDetails, SanctionsHit, SanctionsHitStatus } from '@/apis';
+import { Alert, SanctionsHit, SanctionsHitStatus } from '@/apis';
 import {
   AlertTabs,
   SanctionsHitsTableParams,
   useAlertTabs,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
-import Select from '@/components/library/Select';
 import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { useElementSize } from '@/utils/browser';
-import { isScreeningAlert } from '@/utils/api/alerts';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -57,8 +54,6 @@ export default function AlertDetailsTabs(props: Props) {
 
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
-
-  const sanctionDetails = alert.ruleHitMeta?.sanctionsDetails ?? [];
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
@@ -109,9 +104,6 @@ export default function AlertDetailsTabs(props: Props) {
 
   const isTransactionSelectionEnabled = transactionSelectionActions.length > 0;
 
-  const [selectedItem, setSelectedItem] = useState<SanctionsDetails | undefined>(
-    sanctionDetails[0],
-  );
   const tabItems = useAlertTabs({
     alert: alert,
     caseUserId: caseUserId,
@@ -124,11 +116,7 @@ export default function AlertDetailsTabs(props: Props) {
     transactionSelectionActions: transactionSelectionActions,
     selectionInfo: selectionInfo,
     selectionActions: selectionActions,
-    fitTablesHeight: true,
-    sanctionsDetailsFilter: selectedItem,
-    sanctionsSearchIdFilter: selectedItem?.searchId,
-    entityTypeFilter: selectedItem?.entityType,
-    paymentMethodIdFilter: selectedItem?.hitContext?.paymentMethodId,
+    fitTables: true,
   });
 
   const filteredTabItems = useMemo(() => {
@@ -149,60 +137,6 @@ export default function AlertDetailsTabs(props: Props) {
           { replace: true },
         );
       }}
-      tabBarExtraContent={
-        isScreeningAlert(alert) && (
-          <Select
-            value={
-              (selectedItem?.hitContext?.paymentMethodId ?? selectedItem?.searchId) +
-              ' ' +
-              selectedItem?.entityType
-            }
-            isDisabled={sanctionDetails.length < 2}
-            options={sanctionDetails.map((detailsItem) => ({
-              label: getOptionName(detailsItem),
-              value:
-                (detailsItem.hitContext?.paymentMethodId ?? detailsItem.searchId) +
-                ' ' +
-                detailsItem.entityType,
-            }))}
-            onChange={(value) => {
-              const selectedItem = sanctionDetails.find((item) => {
-                if (
-                  item.hitContext?.paymentMethodId === value?.split(' ')[0] &&
-                  item.entityType === value?.split(' ')[1]
-                ) {
-                  return true;
-                }
-                if (
-                  item.searchId === value?.split(' ')[0] &&
-                  !item.hitContext?.paymentMethodId &&
-                  item.entityType === value?.split(' ')[1]
-                ) {
-                  return true;
-                }
-                return false;
-              });
-              setSelectedItem(selectedItem);
-            }}
-            allowClear={false}
-          />
-        )
-      }
     />
   );
-}
-
-/*
-  Helpers
- */
-
-function getOptionName(details: SanctionsDetails) {
-  let result = details.name;
-  if (details.iban) {
-    result += ` (IBAN: ${details.iban})`;
-  }
-  if (details.entityType) {
-    result += ` (${humanizeConstant(details.entityType)})`;
-  }
-  return result;
 }

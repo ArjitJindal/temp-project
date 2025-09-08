@@ -16,6 +16,7 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
 import { RuleMachineLearningVariable } from '@/@types/openapi-internal/RuleMachineLearningVariable'
+
 export type Variables = {
   [key: string]: (typeof QuestionVariable.prototype)['value']
 }
@@ -33,6 +34,13 @@ export type VariableOptions<V> = {
           tenantId: string,
           search: string
         ) => Promise<string[]> | string[]
+      }
+    | {
+        type: 'SCREENING_DETAIL_FILTER'
+        value: (ctx: InvestigationContext) => {
+          label: string
+          value: string
+        }[]
       }
 }
 

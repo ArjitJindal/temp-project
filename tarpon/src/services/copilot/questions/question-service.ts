@@ -10,6 +10,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { BadRequest } from 'http-errors'
 import { StackConstants } from '@lib/constants'
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { getQuestion, getQuestions, isValidQuestion } from './definitions'
 import { InvestigationRepository } from './investigation-repository'
 import { InvestigationContext, Question, Variables } from './types'
@@ -323,6 +324,10 @@ export class QuestionService {
                 variableType.type === 'AUTOCOMPLETE'
                   ? variableType.options && (await variableType.options(ctx))
                   : undefined,
+              value:
+                variableType.type === 'SCREENING_DETAIL_FILTER'
+                  ? variableType.value && variableType.value(ctx)
+                  : undefined,
             }
           }
         )
@@ -340,6 +345,41 @@ export class QuestionService {
       }),
     }
 
+    if (
+      common.questionId === COPILOT_QUESTIONS.CLEARED_HITS ||
+      common.questionId === COPILOT_QUESTIONS.OPEN_HITS
+    ) {
+      return {
+        ...common,
+        // matching if we can find match some details in the options
+        variables: common.variables.map((v) => {
+          if (v.name === 'screeningDetails') {
+            const options = common.variableOptions.find(
+              (vo) => vo.variableType === 'SCREENING_DETAIL_FILTER'
+            )
+            if (options?.value) {
+              let defaultSanctionDetail = options.value[0]
+              options?.value.forEach((vo) => {
+                if (vo?.label?.toLowerCase().includes(v.value.toLowerCase())) {
+                  defaultSanctionDetail = vo
+                } else if (
+                  vo?.value?.toLowerCase().includes(v.value.toLowerCase())
+                ) {
+                  defaultSanctionDetail = vo
+                }
+              })
+              if (defaultSanctionDetail) {
+                return {
+                  ...v,
+                  value: defaultSanctionDetail.value,
+                }
+              }
+            }
+          }
+          return v
+        }),
+      }
+    }
     if (question.type === 'TABLE') {
       const result = await question.aggregationPipeline(ctx, varObject)
       return {
