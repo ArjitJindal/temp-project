@@ -1,5 +1,5 @@
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useRef, useState } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import { RiskFactorSampleDetails } from '@/apis/models/RiskFactorSampleDetails';
 import { SimulationRiskFactorsSampling } from '@/apis/models/SimulationRiskFactorsSampling';
@@ -92,10 +92,12 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
             <div className={s.samplingDetailsContainer}>
               <div className={s.sampleProperty}>
                 <P variant="m" grey>
-                  User sampling type
+                  {firstLetterUpper(settings.userAlias)} sampling type
                 </P>
                 <P variant="m" fontWeight="medium">
-                  {iteration.samplingType === 'RANDOM' ? 'Random sample' : 'All users'}
+                  {iteration.samplingType === 'RANDOM'
+                    ? 'Random sample'
+                    : `All ${settings.userAlias}s`}
                 </P>
               </div>
               <div className={s.sampleProperty}>
@@ -108,7 +110,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
               </div>
               <div className={s.sampleProperty}>
                 <P variant="m" grey>
-                  User Ids included
+                  {firstLetterUpper(settings.userAlias)} Ids included
                 </P>
                 <P variant="m" fontWeight="medium">
                   {iteration.sampleDetails?.userIds?.join(', ') ?? '-'}
@@ -158,7 +160,9 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
             description: notEmpty,
             samplingType: notEmpty,
             sampleDetails: (values) =>
-              values?.userCount == null ? 'User limit cannot be empty' : null,
+              values?.userCount == null
+                ? `${firstLetterUpper(settings.userAlias)} limit cannot be empty`
+                : null,
           }}
           alwaysShowErrors={alwaysShowErrors}
           onSubmit={(values, state) => {
@@ -204,7 +208,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
               </InputField>
               <InputField<FormValues, 'samplingType'>
                 name={'samplingType'}
-                label={`${humanizeAuto(settings.userAlias ?? 'User')} sampling type`}
+                label={`${firstLetterUpper(settings.userAlias)} sampling type`}
                 labelProps={{ required: true }}
               >
                 {(inputProps) => (
@@ -266,7 +270,9 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                     <div className={s.scoreRange}>
                       <InputField<FormValues['sampleDetails'], 'userRiskRange'>
                         name="userRiskRange"
-                        label="User risk score range to include in the sample"
+                        label={`${firstLetterUpper(
+                          settings.userAlias,
+                        )} risk score range to include in the sample`}
                         labelProps={{ required: { value: false, showHint: true } }}
                       >
                         {(inputProps) => (
@@ -302,7 +308,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                       </span>
                     </div>
                     <InputField<FormValues['sampleDetails'], 'userIds'>
-                      label={'User IDs to include in the sample'}
+                      label={`${firstLetterUpper(settings.userAlias)} IDs to include in the sample`}
                       name="userIds"
                       labelProps={{ required: { value: false, showHint: true } }}
                     >
@@ -310,7 +316,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                         <UserIdsSelect
                           mode="TAGS"
                           {...inputProps}
-                          placeholder="Search for user ID"
+                          placeholder={`Search for ${settings.userAlias} ID`}
                         />
                       )}
                     </InputField>
