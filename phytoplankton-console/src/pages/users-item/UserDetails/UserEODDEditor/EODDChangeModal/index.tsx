@@ -17,8 +17,11 @@ import {
   USERS_ITEM,
 } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
+import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
+import { WorkflowChangesStrategy } from '@/utils/api/workflows';
 
 interface Props {
+  res: AsyncResource;
   isVisible: boolean;
   onClose: () => void;
   title: string;
@@ -35,7 +38,7 @@ const DEFAULT_INITIAL_VALUES: FormValues = {
 };
 
 export default function EODDChangeModal(props: Props) {
-  const { title, isVisible, onClose, onConfirm } = props;
+  const { res, title, isVisible, onClose, onConfirm } = props;
   const [formState, setFormState] = useState<{ values: FormValues; isValid: boolean }>({
     values: DEFAULT_INITIAL_VALUES,
     isValid: false,
@@ -53,6 +56,12 @@ export default function EODDChangeModal(props: Props) {
         if (formState.isValid) {
           onConfirm(formState.values);
         }
+      }}
+      okProps={{
+        isDisabled: isLoading(res),
+      }}
+      cancelProps={{
+        isDisabled: isLoading(res),
       }}
       writeResources={['write:::users/user-overview/*']}
     >
@@ -90,10 +99,12 @@ export default function EODDChangeModal(props: Props) {
 
 export function useEODDChangeMutation(
   user: InternalConsumerUser | InternalBusinessUser,
-  makeProposal: boolean,
+  changeStrategyRes: AsyncResource<WorkflowChangesStrategy>,
 ) {
   const api = useApi();
   const queryClient = useQueryClient();
+
+  const changeStrategy = getOr(changeStrategyRes, 'DIRECT');
 
   return useMutation(
     async (vars: { formValues: FormValues; comment?: string }) => {
@@ -102,10 +113,12 @@ export function useEODDChangeMutation(
       // Convert the date string to timestamp (number) for the API
       const dateTimestamp = values.eoddDate ? new Date(values.eoddDate).getTime() : 0;
 
-      if (makeProposal) {
-        const dismissLoading = message.loading('Creating a proposal...');
+      if (changeStrategy !== 'DIRECT') {
+        const dismissLoading = message.loading(
+          changeStrategy === 'AUTO_APPROVE' ? 'Updating EODD...' : 'Creating a proposal...',
+        );
         try {
-          if (!comment) {
+          if (changeStrategy === 'APPROVE' && !comment) {
             throw new Error(`Comment is required here`);
           }
           await api.postUserApprovalProposal({
@@ -117,11 +130,13 @@ export function useEODDChangeMutation(
                   value: dateTimestamp,
                 },
               ],
-              comment: comment,
+              comment: comment ?? '',
             },
           });
-          await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
-          await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));
+          if (changeStrategy === 'APPROVE') {
+            await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
+            await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));
+          }
         } finally {
           dismissLoading();
         }
@@ -153,7 +168,7 @@ export function useEODDChangeMutation(
     },
     {
       onSuccess: async () => {
-        if (makeProposal) {
+        if (changeStrategy === 'APPROVE') {
           message.success('Change proposal created successfully');
           await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
           await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));

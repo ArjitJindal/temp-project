@@ -12,8 +12,8 @@ import { AsyncResource, getOr, isLoading, isSuccess } from '@/utils/asyncResourc
 import Skeleton from '@/components/library/Skeleton';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
-  useUserFieldChainDefined,
   useUserFieldChangesPendingApprovals,
+  useUserFieldChangesStrategy,
 } from '@/utils/api/workflows';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
@@ -77,15 +77,14 @@ function HeaderTools(props: {
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const makeProposalRes = useUserFieldChainDefined('eoddDate');
-  const makeProposal = getOr(makeProposalRes, false);
+  const changesStrategyRes = useUserFieldChangesStrategy('eoddDate');
 
   const lockedByPendingProposals =
     !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
 
-  const eoodChangeMutation = useEODDChangeMutation(user, makeProposal);
+  const eoodChangeMutation = useEODDChangeMutation(user, changesStrategyRes);
   return (
-    <Skeleton res={makeProposalRes}>
+    <Skeleton res={changesStrategyRes}>
       {lockedByPendingProposals && !isLoading(pendingProposals) && (
         <PendingApprovalTag
           renderModal={({ isOpen, setIsOpen }) => (
@@ -113,7 +112,7 @@ function HeaderTools(props: {
         text={
           'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
         }
-        skipConfirm={!makeProposal}
+        skipConfirm={getOr(changesStrategyRes, 'DIRECT') !== 'APPROVE'}
         res={eoodChangeMutation.dataResource}
         commentRequired={true}
         onConfirm={async ({ args, comment }) => {
@@ -122,13 +121,14 @@ function HeaderTools(props: {
             comment,
           });
           setModalVisible(false);
-          if (!makeProposal) {
+          if (getOr(changesStrategyRes, 'DIRECT') !== 'APPROVE') {
             setNewUserEODDDate(args.eoddDate);
           }
         }}
       >
         {({ onClick }) => (
           <EODDChangeModal
+            res={eoodChangeMutation.dataResource}
             isVisible={modalVisible}
             user={user}
             onConfirm={(formValues): void => {

@@ -23,8 +23,9 @@ import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Confirm from '@/components/utils/Confirm';
 import { USER_CHANGES_PROPOSALS, USER_CHANGES_PROPOSALS_BY_ID } from '@/utils/queries/keys';
 import {
-  useUserFieldChainDefined,
+  WorkflowChangesStrategy,
   useUserFieldChangesPendingApprovals,
+  useUserFieldChangesStrategy,
 } from '@/utils/api/workflows';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
@@ -83,9 +84,7 @@ const getInitialValue = (user: InternalConsumerUser) => {
 export default function ScreeningDetails(props: Props) {
   const { user, columns = 1 } = props;
   const [isOpen, setIsOpen] = useState(false);
-  // const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
-  const makeProposalRes = useUserFieldChainDefined('PepStatus');
-  const makeProposal = getOr(makeProposalRes, false);
+  const proposalChangesStrategyRes = useUserFieldChangesStrategy('PepStatus');
 
   const api = useApi();
   const formRef = useRef(null);
@@ -123,11 +122,12 @@ export default function ScreeningDetails(props: Props) {
     FormValues,
     unknown,
     {
+      changesStrategy: WorkflowChangesStrategy;
       formValues: FormValues;
       comment?: string;
     }
   >(
-    async ({ formValues, comment }) => {
+    async ({ changesStrategy, formValues, comment }) => {
       if (pepValidationResult !== null) {
         return screeningDetails;
       }
@@ -140,8 +140,8 @@ export default function ScreeningDetails(props: Props) {
         sanctionsStatus: formValues.sanctionsStatus,
       };
 
-      if (makeProposal) {
-        if (!comment) {
+      if (changesStrategy !== 'DIRECT') {
+        if (changesStrategy === 'APPROVE' && !comment) {
           throw new Error(`Comment is required here`);
         }
         await api.postUserApprovalProposal({
@@ -153,7 +153,7 @@ export default function ScreeningDetails(props: Props) {
                 value: updates,
               },
             ],
-            comment: comment,
+            comment: comment ?? '',
           },
         });
         await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
@@ -167,8 +167,8 @@ export default function ScreeningDetails(props: Props) {
       return formValues;
     },
     {
-      onSuccess: (formValues) => {
-        if (makeProposal) {
+      onSuccess: (formValues, { changesStrategy }) => {
+        if (changesStrategy === 'APPROVE') {
           message.success('Approval request submitted successfully', {
             details: 'It needs to be approved before the changes are applied',
           });
@@ -290,11 +290,12 @@ export default function ScreeningDetails(props: Props) {
           text={
             'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
           }
-          skipConfirm={!makeProposal}
+          skipConfirm={getOr(proposalChangesStrategyRes, 'DIRECT') !== 'APPROVE'}
           res={userUpdateMutation.dataResource}
           commentRequired={true}
           onConfirm={({ args, comment }) => {
             userUpdateMutation.mutate({
+              changesStrategy: getOr(proposalChangesStrategyRes, 'DIRECT'),
               formValues: args,
               comment,
             });
@@ -319,7 +320,8 @@ export default function ScreeningDetails(props: Props) {
                 isDisabled:
                   pepValidationResult !== null ||
                   !formState.isValid ||
-                  isLoading(userUpdateMutation.dataResource),
+                  isLoading(userUpdateMutation.dataResource) ||
+                  isLoading(proposalChangesStrategyRes),
               }}
               cancelProps={{
                 isDisabled: isLoading(userUpdateMutation.dataResource),
@@ -342,7 +344,10 @@ export default function ScreeningDetails(props: Props) {
                   <ScreeningDetailsUpdateForm
                     size="L"
                     updatePepValidationResult={updatePepValidationResult}
-                    isLoading={isLoading(userUpdateMutation.dataResource)}
+                    isLoading={
+                      isLoading(userUpdateMutation.dataResource) ||
+                      isLoading(proposalChangesStrategyRes)
+                    }
                   />
                 </Form>
               </div>

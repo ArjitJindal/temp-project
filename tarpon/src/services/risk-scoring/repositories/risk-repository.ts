@@ -820,7 +820,7 @@ export class RiskRepository {
     id: string
     version: number
   }): Promise<number> {
-    // Use a single UpdateItem operation with a condition to update all items
+    // Use a single UpdateItem operation with a condition to update existing items only
     // where workflowRef doesn't match the new workflow reference
     const updateInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -832,7 +832,7 @@ export class RiskRepository {
       UpdateExpression:
         'SET workflowRef = :newWorkflowRef, approvalStep = :newApprovalStep',
       ConditionExpression:
-        'attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion',
+        'attribute_exists(PartitionKeyID) AND (attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion)',
       ExpressionAttributeValues: {
         ':newWorkflowRef': newWorkflowRef,
         ':newApprovalStep': 0,

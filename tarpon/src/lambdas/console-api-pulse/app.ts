@@ -68,20 +68,6 @@ export const riskClassificationHandler = lambdaApi({
       }
     )
 
-    handlers.registerPostPulseRiskClassificationWorkflowAction(
-      async (ctx, request) => {
-        // Check if approval workflows feature is enabled
-        if (!hasFeature('APPROVAL_WORKFLOWS')) {
-          throw new BadRequest('Approval workflows feature is not enabled')
-        }
-
-        const response = await riskService.workflowApproveRiskLevelChange(
-          request.RiskClassificationApprovalRequest.action
-        )
-        return response.result
-      }
-    )
-
     handlers.registerGetPulseRiskClassificationWorkflowProposal(
       async (_ctx, _request) => {
         // Check if approval workflows feature is enabled
@@ -104,17 +90,6 @@ export const riskClassificationHandler = lambdaApi({
           request.RiskClassificationApprovalRequest.action
         )
         return response.result
-      }
-    )
-
-    handlers.registerGetPulseRiskClassificationWorkflowProposal(
-      async (_ctx, _request) => {
-        // Check if approval workflows feature is enabled
-        if (!hasFeature('APPROVAL_WORKFLOWS')) {
-          throw new BadRequest('Approval workflows feature is not enabled')
-        }
-
-        return await riskService.workflowGetPendingRiskLevelChange()
       }
     )
 

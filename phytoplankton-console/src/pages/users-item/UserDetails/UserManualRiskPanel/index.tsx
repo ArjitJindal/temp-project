@@ -35,8 +35,9 @@ import { useHasResources } from '@/utils/user-utils';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
-  useUserFieldChainDefined,
   useUserFieldChangesPendingApprovals,
+  useUserFieldChangesStrategy,
+  WorkflowChangesStrategy,
 } from '@/utils/api/workflows';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
@@ -66,7 +67,7 @@ export default function UserManualRiskPanel(props: Props) {
   const [syncTrigger, setSyncTrigger] = useState(0);
   useEffect(() => {
     let isCanceled = false;
-    setSyncState(loading());
+    setSyncState((syncState) => loading(getOr(syncState, null)));
     api
       .getPulseRiskAssignment({ userId })
       .then((result) => {
@@ -96,10 +97,8 @@ export default function UserManualRiskPanel(props: Props) {
       drsScore && drsScore.length ? drsScore[drsScore.length - 1].drsScore : defaultRiskScore,
     ) ?? undefined;
 
-  const makeProposalCraRes = useUserFieldChainDefined('Cra');
-  const makeProposalCraLockRes = useUserFieldChainDefined('CraLock');
-  const makeProposalCra = getOr(makeProposalCraRes, false);
-  const makeProposalCraLock = getOr(makeProposalCraLockRes, false);
+  const craChangesStrategyRes = useUserFieldChangesStrategy('Cra');
+  const craLockChangesStrategyRes = useUserFieldChangesStrategy('CraLock');
 
   const pendingProposals = useUserFieldChangesPendingApprovals(userId, ['CraLock', 'Cra']);
 
@@ -107,20 +106,24 @@ export default function UserManualRiskPanel(props: Props) {
     unknown,
     unknown,
     {
+      changesStrategy: WorkflowChangesStrategy;
       isUpdatable: boolean;
       comment?: string;
     }
   >(async (vars) => {
+    const { changesStrategy } = vars;
     if (!canUpdateManualRiskLevel) {
       message.warn('You are not authorized to update the manual risk level');
       return;
     }
-
-    if (makeProposalCraLock) {
-      if (!vars.comment) {
+    if (changesStrategy !== 'APPROVE') {
+      setSyncState((syncState) => loading(getOr(syncState, null)));
+    }
+    if (changesStrategy === 'APPROVE' || changesStrategy === 'AUTO_APPROVE') {
+      if (changesStrategy === 'APPROVE' && !vars.comment) {
         throw new Error(`Comment is required`);
       }
-      await api.postUserApprovalProposal({
+      const approvalResponse = await api.postUserApprovalProposal({
         userId: userId,
         UserApprovalUpdateRequest: {
           proposedChanges: [
@@ -129,102 +132,112 @@ export default function UserManualRiskPanel(props: Props) {
               value: vars.isUpdatable,
             },
           ],
-          comment: vars.comment,
+          comment: vars.comment ?? '',
         },
       });
-      await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
-      await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(userId));
-      return;
-    }
 
-    setSyncState(loading(getOr(syncState, null)));
-
-    try {
-      const response = await api.pulseManualRiskAssignment({
-        userId: userId,
-        ManualRiskAssignmentPayload: {
-          riskLevel: getOr(
-            map(
-              syncState,
-              ({ manualRiskLevel, derivedRiskLevel }) => manualRiskLevel || derivedRiskLevel,
-            ),
-            defaultRiskLevel,
-          ),
-          isUpdatable: vars.isUpdatable,
-        },
-      });
-      const userAlias = firstLetterUpper(settings.userAlias);
-      if (isLocked) {
-        message.success(`${userAlias} risk level unlocked successfully!`);
-        setSyncState(success(response));
+      if (approvalResponse.approvalStatus !== 'APPROVED') {
+        await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
+        await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(userId));
+        return;
       } else {
-        message.success(`${userAlias} risk level locked successfully!`);
-        setSyncState(success(response));
+        setSyncTrigger((x) => x + 1);
       }
-      setIsLocked(!isLocked);
-      await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
-    } catch (e) {
-      console.error(e);
-      setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-      message.fatal('Unable to lock risk level!', e);
+    } else {
+      try {
+        const response = await api.pulseManualRiskAssignment({
+          userId: userId,
+          ManualRiskAssignmentPayload: {
+            riskLevel: getOr(
+              map(
+                syncState,
+                ({ manualRiskLevel, derivedRiskLevel }) => manualRiskLevel || derivedRiskLevel,
+              ),
+              defaultRiskLevel,
+            ),
+            isUpdatable: vars.isUpdatable,
+          },
+        });
+        setSyncState(success(response));
+      } catch (e) {
+        console.error(e);
+        setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
+        message.fatal('Unable to lock risk level!', e);
+      }
     }
+
+    const userAlias = firstLetterUpper(settings.userAlias);
+    if (isLocked) {
+      message.success(`${userAlias} risk level unlocked successfully!`);
+    } else {
+      message.success(`${userAlias} risk level locked successfully!`);
+    }
+    setIsLocked(!isLocked);
+    await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
   });
 
   const changeRiskLevelMutation = useMutation<
     unknown,
     unknown,
     {
+      changesStrategy: WorkflowChangesStrategy;
       newRiskLevel: RiskLevel | undefined;
       comment?: string;
     }
   >(async (vars) => {
-    const { newRiskLevel, comment } = vars;
+    const { changesStrategy, newRiskLevel, comment } = vars;
     if (!canUpdateManualRiskLevel) {
       message.warn('You are not authorized to update the manual risk level');
       return;
     }
-    if (makeProposalCra) {
-      if (!comment) {
-        throw new Error('Comment is required');
-      }
-      await api.postUserApprovalProposal({
-        userId: userId,
-        UserApprovalUpdateRequest: {
-          proposedChanges: [
-            {
-              field: 'Cra',
-              value: newRiskLevel,
-            },
-          ],
-          comment: comment,
-        },
-      });
-      await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
-      await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(userId));
-      return;
+    if (changesStrategy !== 'APPROVE') {
+      setSyncState((syncState) => loading(getOr(syncState, null)));
     }
-    // todo: if approval workflows are enabled, we should show a modal with a confirmation dialog
-    if (!isLocked && newRiskLevel != null) {
-      setSyncState(loading(getOr(syncState, null)));
-      api
-        .pulseManualRiskAssignment({
+
+    try {
+      if (changesStrategy !== 'DIRECT') {
+        if (changesStrategy !== 'AUTO_APPROVE' && !comment) {
+          throw new Error('Comment is required');
+        }
+        const approvalResponse = await api.postUserApprovalProposal({
+          userId: userId,
+          UserApprovalUpdateRequest: {
+            proposedChanges: [
+              {
+                field: 'Cra',
+                value: newRiskLevel,
+              },
+            ],
+            comment: comment ?? '',
+          },
+        });
+        if (approvalResponse.approvalStatus !== 'APPROVED') {
+          await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
+          await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(userId));
+        } else {
+          setSyncTrigger((x) => x + 1);
+        }
+      } else {
+        const response = await api.pulseManualRiskAssignment({
           userId: userId,
           ManualRiskAssignmentPayload: {
             riskLevel: newRiskLevel,
           },
-        })
-        .then(async (response) => {
-          // todo: i18n
-          message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully`);
-          setSyncState(success(response));
-          await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
-        })
-        .catch((e) => {
-          console.error(e);
-          // todo: i18n
-          setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-          message.fatal(`Unable to update ${settings.userAlias} risk level!`, e);
         });
+        setSyncState(success(response));
+      }
+      if (changesStrategy !== 'APPROVE') {
+        message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully`);
+        await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
+      }
+    } catch (e) {
+      console.error(e);
+      if (changesStrategy !== 'APPROVE') {
+        setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
+        message.fatal(`Unable to update ${settings.userAlias} risk level!`, e);
+      } else {
+        message.fatal(`Unable to create a changes proposal!`, e);
+      }
     }
   });
 
@@ -239,7 +252,7 @@ export default function UserManualRiskPanel(props: Props) {
           'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
         }
         res={changeRiskLevelMutation.dataResource}
-        skipConfirm={!makeProposalCra}
+        skipConfirm={getOr(craChangesStrategyRes, 'DIRECT') !== 'APPROVE'}
         commentRequired={true}
         requiredResources={[
           'write:::users/user-overview/*',
@@ -247,6 +260,7 @@ export default function UserManualRiskPanel(props: Props) {
         ]}
         onConfirm={({ comment, args }) => {
           changeRiskLevelMutation.mutate({
+            changesStrategy: getOr(craChangesStrategyRes, 'DIRECT'),
             newRiskLevel: args,
             comment,
           });
@@ -257,7 +271,7 @@ export default function UserManualRiskPanel(props: Props) {
             isDisabled={
               isLocked ||
               isLoading(syncState) ||
-              isLoading(makeProposalCraRes) ||
+              isLoading(craChangesStrategyRes) ||
               isFailed(syncState) ||
               !canUpdateManualRiskLevel ||
               lockedByPendingProposals
@@ -279,7 +293,7 @@ export default function UserManualRiskPanel(props: Props) {
         )}
       </Confirm>
 
-      {isSuccess(queryResult.data) && (
+      {isSuccess(queryResult.data) && isSuccess(craLockChangesStrategyRes) && (
         <Tooltip
           title={
             lockedByPendingProposals
@@ -296,10 +310,14 @@ export default function UserManualRiskPanel(props: Props) {
               'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
             }
             res={lockingAndUnlockingMutation.dataResource}
-            skipConfirm={!makeProposalCraLock}
+            skipConfirm={craLockChangesStrategyRes.value !== 'APPROVE'}
             commentRequired={true}
             onConfirm={({ args: isUpdatable, comment }) => {
-              lockingAndUnlockingMutation.mutate({ isUpdatable, comment });
+              lockingAndUnlockingMutation.mutate({
+                changesStrategy: craLockChangesStrategyRes.value,
+                isUpdatable,
+                comment,
+              });
             }}
             requiredResources={[
               'write:::users/user-overview/*',
@@ -308,8 +326,9 @@ export default function UserManualRiskPanel(props: Props) {
           >
             {({ onClick }) => {
               const isLockBuzy =
+                isLoading(syncState) ||
                 isLoading(lockingAndUnlockingMutation.dataResource) ||
-                isLoading(makeProposalCraLockRes);
+                isLoading(craLockChangesStrategyRes);
               const classNames = cn(s.lockIcon, {
                 [s.isLoading]: isLockBuzy,
                 [s.isDisabled]: lockedByPendingProposals,

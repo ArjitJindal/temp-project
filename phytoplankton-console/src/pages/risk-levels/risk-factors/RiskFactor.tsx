@@ -15,8 +15,8 @@ import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { riskFactorsAtom, riskFactorsEditEnabled, riskFactorsStore } from '@/store/risk-factors';
 import { getOr } from '@/utils/asyncResource';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RISK_FACTOR_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
+import { useRiskFactorsChangesStrategy } from '@/utils/api/workflows';
 
 interface Props {
   type: string;
@@ -40,13 +40,16 @@ export const CustomRiskFactors = (props: Props) => {
   const versionId = getOr(newVersionIdQuery.data, {
     id: '',
   });
-  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+
   const queryClient = useQueryClient();
+
+  const changesStrategyRes = useRiskFactorsChangesStrategy();
+  const changesStrategy = getOr(changesStrategyRes, 'DIRECT');
 
   const saveRiskFactorsMutation = useMutation<void, Error, { comment: string }>(
     async ({ comment }: { comment: string }) => {
-      if (isApprovalWorkflowsEnabled) {
-        if (comment == null) {
+      if (changesStrategy !== 'DIRECT') {
+        if (comment == null && changesStrategy === 'APPROVE') {
           throw new Error(`Comment is required`);
         }
         const riskFactorEntities = riskFactors.getAll();
@@ -58,14 +61,18 @@ export const CustomRiskFactors = (props: Props) => {
                 riskFactorId: entity.id,
               },
               action: 'update',
-              comment: comment,
+              comment: comment ?? '',
             },
           });
         }
-        await queryClient.invalidateQueries(RISK_FACTOR_WORKFLOW_PROPOSAL());
-        message.success('Proposal sent successfully!', {
-          details: 'Changes will take effect after approval',
-        });
+        if (changesStrategy === 'APPROVE') {
+          await queryClient.invalidateQueries(RISK_FACTOR_WORKFLOW_PROPOSAL());
+          message.success('Proposal sent successfully!', {
+            details: 'Changes will take effect after approval',
+          });
+        } else {
+          message.success('Changes applied successfully!');
+        }
       } else {
         await api.putRiskFactors({
           RiskFactorsUpdateRequest: {

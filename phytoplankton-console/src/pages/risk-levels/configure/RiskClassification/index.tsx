@@ -13,11 +13,11 @@ import { useNewVersionId } from '@/utils/version';
 import VersionHistoryFooter from '@/components/VersionHistory/Footer';
 import { useApi } from '@/api';
 import { getOr } from '@/utils/asyncResource';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
+import { useRiskLevelsChangesStrategy } from '@/utils/api/workflows';
 
 type Props = {
   riskValues: RiskClassificationConfig;
@@ -33,13 +33,14 @@ export default function RiskQualification(props: Props) {
   const riskLevelId = getOr(newVersionIdQuery.data, {
     id: '',
   });
-  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
   const [isUpdateEnabled, setIsUpdateEnabled] = useState(false);
   const api = useApi();
   const queryClient = useQueryClient();
 
   const [showProposal, setShowProposal] = useState<boolean>(true);
   const pendingProposalQueryResult = usePendingProposal();
+  const changesStrategyRes = useRiskLevelsChangesStrategy();
+  const changesStrategy = getOr(changesStrategyRes, 'DIRECT');
 
   const versionHistoryMutation = useMutation<RiskClassificationConfig, Error, { comment: string }>(
     async ({ comment }: { comment: string }) => {
@@ -52,12 +53,18 @@ export default function RiskQualification(props: Props) {
     },
     {
       onSuccess: () => {
-        riskValuesRefetch();
+        if (changesStrategy === 'APPROVE') {
+          message.success('Approval proposal created successfully!', {
+            details: 'Your changes need to be approved before applied',
+          });
+          queryClient.invalidateQueries(RISK_CLASSIFICATION_WORKFLOW_PROPOSAL());
+          setState(parseApiState(riskValues.classificationValues));
+        } else {
+          message.success('New settings applied!');
+          riskValuesRefetch();
+          newVersionIdQuery.refetch();
+        }
         setIsUpdateEnabled(false);
-        newVersionIdQuery.refetch();
-        setState(parseApiState(riskValues.classificationValues));
-        setIsUpdateEnabled(false);
-        queryClient.invalidateQueries(RISK_CLASSIFICATION_WORKFLOW_PROPOSAL());
       },
       onError: (error) => {
         message.error(getErrorMessage(error));
@@ -85,7 +92,9 @@ export default function RiskQualification(props: Props) {
             versionId={riskLevelId.id ?? ''}
             isDisabled={!riskValues.classificationValues.length || !isUpdateEnabled}
             footerMessage={`Note that updating risk level would save the configuration as a new version${
-              isApprovalWorkflowsEnabled ? '. Also, updating risk level would require approval' : ''
+              changesStrategy === 'APPROVE'
+                ? '. Also, updating risk level would require approval'
+                : ''
             }.`}
           />
         )

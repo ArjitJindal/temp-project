@@ -110,6 +110,7 @@ import { UserProposedChange } from '@/@types/openapi-internal/UserProposedChange
 import { UserApprovalRequest } from '@/@types/openapi-internal/UserApprovalRequest'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { WorkflowService } from '@/services/workflow'
+import { shouldSkipFirstApprovalStep } from '@/services/workflow/approval-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { RiskService } from '@/services/risk'
@@ -2392,8 +2393,62 @@ export class UserService {
       'user-update-approval',
       workflowId
     )
+
+    // Check if the proposer should skip the first approval step
+    const autoSkipResult = await shouldSkipFirstApprovalStep(
+      createdBy,
+      workflow,
+      this.tenantId,
+      this.dynamoDb
+    )
+
     const timestamp = Date.now()
 
+    if (autoSkipResult.isAutoApproved) {
+      // Single step workflow where proposer is the first approver - auto-approve
+      console.log(
+        `Auto-approving user change for ${userId} - proposer ${createdBy} has first approver role in single-step workflow`
+      )
+
+      const oldUser = await this.userRepository.getUser<
+        UserWithRulesResult | BusinessWithRulesResult
+      >(userId)
+      if (!oldUser) {
+        throw new createError.NotFound('User not found')
+      }
+
+      // Apply all the proposed changes using the same method used in normal approvals
+      await this.applyUserApprovalChanges(userId, oldUser, [proposedChange])
+
+      // Return a mock approval object indicating the change was auto-approved
+      const autoApproval = new UserApproval()
+      autoApproval.id = timestamp
+      autoApproval.userId = userId
+      autoApproval.proposedChanges = [proposedChange]
+      autoApproval.comment = comment
+      autoApproval.workflowRef = { id: workflow.id, version: workflow.version }
+      autoApproval.approvalStatus = 'APPROVED'
+      autoApproval.approvalStep = 0
+      autoApproval.createdAt = timestamp
+      autoApproval.createdBy = createdBy
+
+      return {
+        entities: [
+          {
+            entityId: userId,
+            entityType: 'USER',
+            entitySubtype: 'USER_CHANGE_PROPOSAL',
+            entityAction: 'CREATE',
+            oldImage: undefined,
+            newImage: autoApproval,
+          },
+        ],
+        result: autoApproval,
+        publishAuditLog: () => true,
+      }
+    }
+
+    // Either no auto-skip or multi-step workflow - create pending approval
     const approval: UserApproval = {
       id: timestamp,
       userId,
@@ -2401,7 +2456,7 @@ export class UserService {
       comment,
       workflowRef: { id: workflow.id, version: workflow.version },
       approvalStatus: 'PENDING',
-      approvalStep: 0,
+      approvalStep: autoSkipResult.startingStep,
       createdAt: timestamp,
       createdBy,
     }
@@ -2409,6 +2464,12 @@ export class UserService {
     const savedApproval = await this.userRepository.setPendingUserApproval(
       approval
     )
+
+    if (autoSkipResult.shouldSkip && !autoSkipResult.isAutoApproved) {
+      console.log(
+        `Skipped first approval step for user change ${userId} - proposer ${createdBy} has first approver role, starting at step ${autoSkipResult.startingStep}`
+      )
+    }
 
     return {
       entities: [
