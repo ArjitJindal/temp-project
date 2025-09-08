@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from './index.module.less';
@@ -18,13 +18,11 @@ import {
   SANCTIONS_HITS_SEARCH,
 } from '@/utils/queries/keys';
 import { AllParams, SelectionAction, SelectionInfo } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { getOr, isSuccess, map } from '@/utils/asyncResource';
+import { isSuccess } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
 import {
   Alert,
   SanctionHitStatusUpdateRequest,
-  SanctionsDetails,
   SanctionsDetailsEntityType,
   SanctionsHit,
   SanctionsHitListResponse,
@@ -258,8 +256,6 @@ interface Props {
   selectedTransactionIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   selectedSanctionsHitsIds?: string[];
-  sanctionsSearchIdFilter?: string;
-  paymentMethodIdFilter?: string;
   onSanctionsHitSelect?: (
     alertId: string,
     sanctionsHitsIds: string[],
@@ -270,15 +266,11 @@ interface Props {
   isEmbedded?: boolean;
   selectionInfo?: SelectionInfo;
   selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
-  fitTablesHeight?: boolean;
-  sanctionsDetailsFilter?: SanctionsDetails;
-  entityTypeFilter?: SanctionsDetailsEntityType;
+  fitTables?: boolean;
 }
 
 export function useAlertTabs(props: Props): TabItem[] {
   const {
-    sanctionsSearchIdFilter,
-    paymentMethodIdFilter,
     alert,
     isEmbedded = false,
     caseUserId,
@@ -291,56 +283,10 @@ export function useAlertTabs(props: Props): TabItem[] {
     transactionSelectionActions,
     selectionInfo,
     selectionActions,
-    fitTablesHeight,
-    sanctionsDetailsFilter,
-    entityTypeFilter,
+    fitTables,
   } = props;
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
-
-  const alertId = alert?.alertId ?? '';
-
-  const [openTableParams, setOpenTableParams] = useState<AllParams<SanctionsHitsTableParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    statuses: ['OPEN'],
-  });
-  const [clearedTableParams, setClearedTableParams] = useState<AllParams<SanctionsHitsTableParams>>(
-    {
-      ...DEFAULT_PARAMS_STATE,
-      statuses: ['CLEARED'],
-    },
-  );
-
-  // Data requests
-  const openHitsQueryResults = useSanctionHitsQuery(
-    {
-      ...openTableParams,
-      searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
-      paymentMethodIds: paymentMethodIdFilter ? [paymentMethodIdFilter] : undefined,
-      entityType: entityTypeFilter,
-    },
-    alertId,
-    tabList.includes(AlertTabs.MATCH_LIST),
-  );
-  const clearedHitsQueryResults = useSanctionHitsQuery(
-    {
-      ...clearedTableParams,
-      searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
-      paymentMethodIds: paymentMethodIdFilter ? [paymentMethodIdFilter] : undefined,
-      entityType: entityTypeFilter,
-    },
-    alertId,
-    tabList.includes(AlertTabs.CLEARED_MATCH_LIST),
-  );
-
-  const openHitsCount = getOr(
-    map(openHitsQueryResults.data, (x) => x.count),
-    null,
-  );
-  const clearedHitsCount = getOr(
-    map(clearedHitsQueryResults.data, (x) => x.count),
-    null,
-  );
 
   const api = useApi();
   const settings = useSettings();
@@ -380,14 +326,13 @@ export function useAlertTabs(props: Props): TabItem[] {
             key: tab,
             children: (
               <TransactionsTab
-                fitHeight={fitTablesHeight}
+                fitHeight={fitTables}
                 alert={alert}
                 caseUserId={caseUserId}
                 selectedTransactionIds={selectedTransactionIds}
                 onTransactionSelect={onTransactionSelect}
                 escalatedTransactionIds={escalatedTransactionIds}
                 selectionActions={transactionSelectionActions}
-                sanctionsDetailsFilter={sanctionsDetailsFilter}
               />
             ),
           };
@@ -417,36 +362,12 @@ export function useAlertTabs(props: Props): TabItem[] {
         }
         if (tab === AlertTabs.MATCH_LIST) {
           return {
-            title: 'Human review' + (openHitsCount != null ? ` (${openHitsCount})` : ''),
-            key: tab,
-            children: (
-              <HitsTab
-                fitHeight={fitTablesHeight}
-                alert={alert}
-                params={[openTableParams, setOpenTableParams]}
-                selectedSanctionsHitsIds={selectedSanctionsHitsIds}
-                onSanctionsHitSelect={(sanctionsHitsIds) => {
-                  if (!alert?.alertId) {
-                    return;
-                  }
-                  onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'OPEN');
-                }}
-                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
-                queryResult={openHitsQueryResults}
-                selectionInfo={selectionInfo}
-                selectionActions={selectionActions}
-              />
-            ),
-          };
-        }
-        if (tab === AlertTabs.CLEARED_MATCH_LIST) {
-          return {
-            title: 'Cleared hits' + (clearedHitsCount != null ? ` (${clearedHitsCount})` : ''),
+            title: 'Human review',
             key: tab,
             children: (
               <HitsTab
                 alert={alert}
-                params={[clearedTableParams, setClearedTableParams]}
+                status="OPEN"
                 selectedSanctionsHitsIds={selectedSanctionsHitsIds}
                 onSanctionsHitSelect={(sanctionsHitsIds) => {
                   if (!alert?.alertId) {
@@ -455,9 +376,32 @@ export function useAlertTabs(props: Props): TabItem[] {
                   onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'CLEARED');
                 }}
                 onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
-                queryResult={clearedHitsQueryResults}
                 selectionInfo={selectionInfo}
                 selectionActions={selectionActions}
+                fitHeight={fitTables}
+              />
+            ),
+          };
+        }
+        if (tab === AlertTabs.CLEARED_MATCH_LIST) {
+          return {
+            title: 'Cleared hits',
+            key: tab,
+            children: (
+              <HitsTab
+                alert={alert}
+                status="CLEARED"
+                selectedSanctionsHitsIds={selectedSanctionsHitsIds}
+                onSanctionsHitSelect={(sanctionsHitsIds) => {
+                  if (!alert?.alertId) {
+                    return;
+                  }
+                  onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'CLEARED');
+                }}
+                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+                selectionInfo={selectionInfo}
+                selectionActions={selectionActions}
+                fitHeight={fitTables}
               />
             ),
           };
@@ -568,15 +512,9 @@ export function useAlertTabs(props: Props): TabItem[] {
     transactionSelectionActions,
     tabList,
     caseUserId,
-    openHitsCount,
-    openHitsQueryResults,
     selectedSanctionsHitsIds,
     onSanctionsHitSelect,
-    openTableParams,
     onSanctionsHitsChangeStatus,
-    clearedHitsCount,
-    clearedHitsQueryResults,
-    clearedTableParams,
     alert,
     selectedTransactionIds,
     onTransactionSelect,
@@ -586,8 +524,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     isEntityLinkingEnabled,
     selectionInfo,
     selectionActions,
-    fitTablesHeight,
-    sanctionsDetailsFilter,
+    fitTables,
     handleFollow,
     linkingState,
     isAiForensicsEnabled,

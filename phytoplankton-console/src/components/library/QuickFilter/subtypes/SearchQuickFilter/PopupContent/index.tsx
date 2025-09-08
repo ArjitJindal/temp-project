@@ -74,7 +74,8 @@ export default function PopupContent<T extends ItemType>(props: Props<T>) {
       <div className={s.header}>
         <Select
           options={itemsSelected.map((item) => ({ value: item.value, label: item.label }))}
-          mode="TAGS"
+          mode="MULTIPLE"
+          allowNewOptions
           value={value.map((x) => x.value)}
           onSearch={(searchValue) => setSearch(searchValue)}
           onChange={(newValue) => {

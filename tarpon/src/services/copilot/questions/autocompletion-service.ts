@@ -231,6 +231,48 @@ export class AutocompleteService {
           },
         ],
       },
+      {
+        prompt: 'cleared hits for entityName',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.CLEARED_HITS,
+            variables: [
+              {
+                name: 'screeningDetails',
+                value: 'entityName',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        prompt: 'open hits for entityName',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.OPEN_HITS,
+            variables: [
+              {
+                name: 'screeningDetails',
+                value: 'entityName',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        prompt: 'human review hits for entityName',
+        response: [
+          {
+            questionId: COPILOT_QUESTIONS.OPEN_HITS,
+            variables: [
+              {
+                name: 'screeningDetails',
+                value: 'entityName',
+              },
+            ],
+          },
+        ],
+      },
     ]
 
     const response = await prompt(

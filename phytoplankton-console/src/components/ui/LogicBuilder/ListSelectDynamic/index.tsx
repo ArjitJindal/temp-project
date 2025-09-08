@@ -87,7 +87,8 @@ export const MultiListSelectDynamic = (props: {
 
   return (
     <Select<string>
-      mode="TAGS"
+      mode="MULTIPLE"
+      allowNewOptions
       options={options}
       value={props.value ?? undefined}
       onChange={props.onChange}

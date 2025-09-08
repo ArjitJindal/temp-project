@@ -214,7 +214,7 @@ function RuleDetails(props: Props) {
           {(inputProps) => (
             <Select<RuleLabels>
               options={RULE_LABELS_OPTIONS(isPnb)[ruleNature]}
-              mode="TAGS"
+              mode="MULTIPLE"
               {...inputProps}
               onChange={(value) => {
                 if (value) {

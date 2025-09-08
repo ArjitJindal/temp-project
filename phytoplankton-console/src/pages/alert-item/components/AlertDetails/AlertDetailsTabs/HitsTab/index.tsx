@@ -1,20 +1,22 @@
-import React from 'react';
+import { useState } from 'react';
+import SanctionDetailSelect from '../SanctionDetailSelect';
 import SanctionsHitsTable from '@/components/SanctionsHitsTable';
-import { QueryResult } from '@/utils/queries/types';
-import { CursorPaginatedData } from '@/utils/queries/hooks';
-import { Alert, SanctionsHit, SanctionsHitStatus } from '@/apis';
-import { AllParams, SelectionAction, SelectionInfo } from '@/components/library/Table/types';
-import { StatePair } from '@/utils/state';
-import { SanctionsHitsTableParams } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
+import { Alert, SanctionsDetails, SanctionsHit, SanctionsHitStatus } from '@/apis';
+import {
+  SanctionsHitsTableParams,
+  useSanctionHitsQuery,
+} from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { SelectionInfo } from '@/components/library/Table';
+import { AllParams, SelectionAction } from '@/components/library/Table/types';
 
 interface Props {
   alert?: Alert;
-  params: StatePair<AllParams<SanctionsHitsTableParams>>;
+  status: SanctionsHitStatus;
   selectedSanctionsHitsIds?: string[];
   fitHeight?: boolean;
   onSanctionsHitSelect?: (sanctionsHitsIds: string[]) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
-  queryResult: QueryResult<CursorPaginatedData<SanctionsHit>>;
   selectionInfo?: SelectionInfo;
   selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
 }
@@ -22,8 +24,7 @@ interface Props {
 export default function HitsTab(props: Props) {
   const {
     alert,
-    params,
-    queryResult,
+    status,
     selectedSanctionsHitsIds,
     fitHeight,
     onSanctionsHitSelect,
@@ -31,23 +32,51 @@ export default function HitsTab(props: Props) {
     selectionInfo,
     selectionActions,
   } = props;
-  const [tableParams, setTableParams] = params;
+  const sanctionDetails = alert?.ruleHitMeta?.sanctionsDetails ?? [];
+  const [selectedItem, setSelectedItem] = useState<SanctionsDetails | undefined>(
+    sanctionDetails[0],
+  );
+
+  const [params, setParams] = useState<AllParams<SanctionsHitsTableParams>>(DEFAULT_PARAMS_STATE);
+
+  const queryResult = useSanctionHitsQuery(
+    {
+      ...params,
+      statuses: [status],
+      searchIds: selectedItem?.searchId ? [selectedItem.searchId] : undefined,
+      paymentMethodIds: selectedItem?.hitContext?.paymentMethodId
+        ? [selectedItem.hitContext.paymentMethodId]
+        : undefined,
+      entityType: selectedItem?.entityType,
+    },
+    alert?.alertId,
+  );
+
   return (
-    <SanctionsHitsTable
-      tableRef={null}
-      queryResult={queryResult}
-      hideCleaningReason={true}
-      selectedIds={selectedSanctionsHitsIds}
-      selection={onSanctionsHitSelect != null}
-      params={tableParams}
-      onChangeParams={setTableParams}
-      onSelect={onSanctionsHitSelect}
-      onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
-      alertCreatedAt={alert?.createdTimestamp}
-      selectionInfo={selectionInfo}
-      selectionActions={selectionActions}
-      fitHeight={fitHeight}
-      showComment={true}
-    />
+    <>
+      {selectedItem && (
+        <SanctionDetailSelect
+          sanctionDetails={sanctionDetails}
+          selectedItem={selectedItem}
+          setSelectedItem={setSelectedItem}
+        />
+      )}
+      <SanctionsHitsTable
+        tableRef={null}
+        queryResult={queryResult}
+        hideCleaningReason={true}
+        selectedIds={selectedSanctionsHitsIds}
+        selection={onSanctionsHitSelect != null}
+        onSelect={onSanctionsHitSelect}
+        onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+        alertCreatedAt={alert?.createdTimestamp}
+        selectionInfo={selectionInfo}
+        selectionActions={selectionActions}
+        fitHeight={fitHeight}
+        showComment={true}
+        params={params}
+        onChangeParams={setParams}
+      />
+    </>
   );
 }

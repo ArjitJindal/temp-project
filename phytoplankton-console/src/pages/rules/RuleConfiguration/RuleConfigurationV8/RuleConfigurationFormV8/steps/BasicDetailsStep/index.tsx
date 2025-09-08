@@ -311,7 +311,7 @@ export default function BasicDetailsStep(props: Props) {
               {(inputProps) => (
                 <Select<RuleLabels>
                   options={ruleNature ? RULE_LABELS_OPTIONS(isPnb)[ruleNature] : []}
-                  mode="TAGS"
+                  mode="MULTIPLE"
                   {...inputProps}
                   onChange={(value) => {
                     setRuleLabels(value);

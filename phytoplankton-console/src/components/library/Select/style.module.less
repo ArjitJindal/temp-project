@@ -69,8 +69,12 @@
     }
   }
 
-  &.type-MULTIPLE,
-  &.type-TAGS {
+  &.type-MULTIPLE {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: @figma-vars--primitives-spacing3xs;
+
     &.isSearchEmpty:not(.isFocused):not(.isEmpty):not(.isOpen) {
       .input {
         width: 0;
@@ -86,23 +90,6 @@
         height: 100%;
       }
     }
-  }
-
-  &.type-MULTIPLE {
-    .placeholder {
-      line-height: 2;
-    }
-
-    .selectedOption {
-      line-height: 2;
-    }
-  }
-
-  &.type-TAGS {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: @figma-vars--primitives-spacing3xs;
   }
 
   &.isOpen {
@@ -305,8 +292,7 @@
     }
   }
 
-  &.type-MULTIPLE,
-  &.type-TAGS {
+  &.type-MULTIPLE {
     &.isEmpty {
       .input {
         padding: 0 @h-padding;

@@ -15,5 +15,13 @@ export default function FreeTextEnumInput(props: Props) {
     label: item,
   }));
 
-  return <Select mode="TAGS" options={options ?? []} placeholder="Select" {...props} />;
+  return (
+    <Select
+      mode="MULTIPLE"
+      allowNewOptions
+      options={options ?? []}
+      placeholder="Select"
+      {...props}
+    />
+  );
 }

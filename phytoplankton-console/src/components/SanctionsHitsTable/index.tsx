@@ -80,7 +80,7 @@ export default function SanctionsHitsTable(props: Props) {
     alertCreatedAt,
     showComment,
     selectionInfo,
-    fitHeight = 300,
+    fitHeight,
   } = props;
   const [selectedSearchHit, setSelectedSearchHit] = useState<
     AsyncResource<SanctionsHit | undefined>
@@ -228,8 +228,8 @@ export default function SanctionsHitsTable(props: Props) {
         pagination
         externalHeader={false}
         toolsOptions={false}
-        fitHeight={fitHeight}
         cursor={queryResult.cursor}
+        fitHeight={fitHeight}
       />
       {selectedSearchHit && (
         <SearchResultDetailsDrawer

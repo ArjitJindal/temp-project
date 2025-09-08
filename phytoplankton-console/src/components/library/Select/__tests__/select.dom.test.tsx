@@ -46,107 +46,7 @@ describe('MULTIPLE mode', () => {
     render(
       <RenderSelect
         mode="MULTIPLE"
-        options={[
-          { label: 'First option', value: 'option1' },
-          { label: 'Second option', value: 'option2' },
-          { label: 'Third option', value: 'option3' },
-        ]}
-        placeholder={'Placeholder example'}
-      />,
-    );
-
-    await clickSelector();
-    expectDropdownOpen(true);
-    await clickOptionByText('First option');
-    await clickOptionByText('Third option');
-    await clickOutside();
-    expectDropdownOpen(false);
-    expectValues(['First option', 'Third option']);
-
-    await clickSelector();
-    expectDropdownOpen(true);
-    await clickOptionByText('Third option');
-    await clickOptionByText('Second option');
-    await clickOutside();
-    expectDropdownOpen(false);
-    expectValues(['First option', 'Second option']);
-  });
-  test('Clear values', async () => {
-    render(
-      <RenderSelect
-        mode="MULTIPLE"
-        options={[
-          { label: 'First option', value: 'option1' },
-          { label: 'Second option', value: 'option2' },
-          { label: 'Third option', value: 'option3' },
-        ]}
-        placeholder={'Placeholder example'}
-        allowClear
-      />,
-    );
-
-    await clickSelector();
-    expectDropdownOpen(true);
-    await clickOptionByText('First option');
-    await clickOptionByText('Second option');
-    await clickOptionByText('Third option');
-    await clickOutside();
-    expectDropdownOpen(false);
-    expectValues(['First option', 'Second option', 'Third option']);
-    await clickClear();
-    expectValues([]);
-  });
-  test('Auto split by comma', async () => {
-    render(
-      <RenderSelect
-        mode="MULTIPLE"
-        options={[
-          { label: 'First option', value: 'option1', alternativeLabels: ['aaa', '111'] },
-          { label: 'Second option', value: 'option2', alternativeLabels: ['bbb'] },
-          { label: 'Third option', value: 'option3', alternativeLabels: ['ccc'] },
-        ]}
-        placeholder={'Placeholder example'}
-        allowClear
-      />,
-    );
-    await clickSelector();
-    expectDropdownOpen(true);
-
-    // By option values
-    await typeInSelect('option1;option2; unknown option; option3;');
-    expectValues(['First option', 'Second option', 'Third option']);
-    await clickOutside();
-    expectDropdownOpen(false);
-    await clickClear();
-    expectValues([]);
-
-    // By option labels
-    await clickSelector();
-    expectDropdownOpen(true);
-    await typeInSelect('First option;Second option; unknown option; Third option;');
-    expectValues(['First option', 'Second option', 'Third option']);
-    await clickOutside();
-    expectDropdownOpen(false);
-    await clickClear();
-    expectValues([]);
-
-    // By alternative labels
-    await clickSelector();
-    expectDropdownOpen(true);
-    await typeInSelect('111;bbb; unknown option; ccc;');
-    expectValues(['First option', 'Second option', 'Third option']);
-    await clickOutside();
-    expectDropdownOpen(false);
-    await clickClear();
-    expectValues([]);
-  });
-});
-
-describe('TAGS mode', () => {
-  test('Simple use case', async () => {
-    render(
-      <RenderSelect
-        mode="TAGS"
+        allowNewOptions
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -176,7 +76,8 @@ describe('TAGS mode', () => {
   test('Remove values', async () => {
     render(
       <RenderSelect
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -203,7 +104,8 @@ describe('TAGS mode', () => {
   test('Add non-existed value', async () => {
     render(
       <RenderSelect
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -224,10 +126,11 @@ describe('TAGS mode', () => {
     expectTags([]);
   });
 
-  test('Auto split by comma', async () => {
+  test('Auto split by comma, new options enabled', async () => {
     render(
       <RenderSelect
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         options={[
           { label: 'First option', value: 'option1', alternativeLabels: ['aaa', '111'] },
           { label: 'Second option', value: 'option2', alternativeLabels: ['bbb'] },

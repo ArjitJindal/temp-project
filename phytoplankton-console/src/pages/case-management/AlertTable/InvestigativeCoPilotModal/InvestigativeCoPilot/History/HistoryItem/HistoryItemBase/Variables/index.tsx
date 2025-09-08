@@ -16,6 +16,7 @@ import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { useApi } from '@/api';
 import Checkbox from '@/components/library/Checkbox';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Select from '@/components/library/Select';
 import PopoverV2 from '@/components/ui/PopoverV2';
 import AutoComplete from '@/components/ui/AutoComplete';
 
@@ -60,6 +61,8 @@ export default function Variables(props: Props) {
             const newState = applyUpdater(varsValues, updater);
             setVarsValues(newState);
             setDirty(true);
+            // onConfirm is not being called with new select component
+            onConfirm(newState);
           },
         ]}
         onConfirm={() => {
@@ -190,6 +193,21 @@ function renderInput(
       );
     }
     return <TextInput {...inputProps} />;
+  }
+  if (variable.variableType === 'SCREENING_DETAIL_FILTER') {
+    if (variable.value !== undefined) {
+      return (
+        <Select
+          {...inputProps}
+          options={variable.value?.map((o) => ({
+            value: o.value,
+            label: o.label,
+          }))}
+          isDisabled={variable.value?.length < 2}
+          allowClear={false}
+        />
+      );
+    }
   }
   if (variable.variableType === 'SEARCH') {
     return <Search questionId={questionId} variable={variable} inputProps={inputProps} />;

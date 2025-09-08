@@ -1,10 +1,25 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
+import { humanizeConstant } from '@flagright/lib/utils/humanize'
 import { EmbeddedQuestion } from '../types'
-import { searchAlert } from './common/search'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
 interface HitsTableQuestionProps {
-  alertId: string
+  screeningDetails?: string
+}
+
+function getOptionName(details: SanctionsDetails) {
+  if (!details) {
+    return ''
+  }
+  let result = details.name
+  if (details.iban) {
+    result += ` (IBAN: ${details.iban})`
+  }
+  if (details.entityType) {
+    result += ` (${humanizeConstant(details.entityType)})`
+  }
+  return result
 }
 
 const getHitsTableQuestion = (
@@ -13,12 +28,39 @@ const getHitsTableQuestion = (
   return {
     type: 'EMBEDDED',
     variableOptions: {
-      alertId: { type: 'SEARCH', search: searchAlert },
+      screeningDetails: {
+        type: 'SCREENING_DETAIL_FILTER',
+        value: ({ alert }) => {
+          return (
+            alert.ruleHitMeta?.sanctionsDetails?.map((detail) => ({
+              label: getOptionName(detail),
+              value:
+                // duplicate logic to used same in frotend
+                detail.hitContext?.paymentMethodId ??
+                detail.searchId +
+                  ' ' +
+                  detail.entityType +
+                  ' ' +
+                  detail.searchId,
+            })) ?? []
+          )
+        },
+      },
     },
-    defaults: (ctx) => ({
-      alertId: ctx.alertId,
-    }),
-
+    defaults: ({ alertId, alert }) => {
+      const sanctionDetail = alert.ruleHitMeta?.sanctionsDetails?.at(0)
+      return {
+        alertId: alertId,
+        screeningDetails: sanctionDetail
+          ? sanctionDetail.hitContext?.paymentMethodId ??
+            sanctionDetail.searchId +
+              ' ' +
+              sanctionDetail.entityType +
+              ' ' +
+              sanctionDetail.searchId
+          : undefined,
+      }
+    },
     categories: ['CONSUMER', 'BUSINESS'],
     questionId:
       filterStatus === 'CLEARED'

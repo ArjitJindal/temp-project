@@ -86,7 +86,8 @@ const columns = helper.list([
       if (rowApi?.isCreateRow && draft.tagType === 'ENUM') {
         return (
           <Select
-            mode="TAGS"
+            mode="MULTIPLE"
+            allowNewOptions
             isDisabled={!rowApi?.isCreateRow || !canEdit}
             options={
               item.options?.map((option) => ({

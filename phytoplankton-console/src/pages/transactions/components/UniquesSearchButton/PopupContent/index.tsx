@@ -39,7 +39,8 @@ export default function PopupContent(props: Props) {
         options={uniq(getOr(result.data, []).concat(defaults))
           .filter((key) => key?.length > 0)
           .map((key) => ({ label: humanizeAuto(key), value: key }))}
-        mode="TAGS"
+        mode="MULTIPLE"
+        allowNewOptions
         value={value}
         onChange={(value) => {
           setValue(value);

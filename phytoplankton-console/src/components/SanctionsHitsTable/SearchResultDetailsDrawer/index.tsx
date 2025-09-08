@@ -164,7 +164,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
               onClick={() => onChangeStatus(newStatus)}
             >
               {newStatus === 'CLEARED' && 'Clear'}
-              {newStatus === 'OPEN' && 'Restore'}
+              {newStatus === 'OPEN' && 'Re-open'}
             </Button>
           )}
         </>

@@ -99,7 +99,7 @@ function TooltipRoot(props: Props) {
   });
   const hover = useHover(context, {
     enabled: trigger === 'hover',
-    delay: 300,
+    delay: { open: 300, close: 0 },
   });
   const dismiss = useDismiss(context, {
     ancestorScroll: true,
@@ -119,6 +119,7 @@ function TooltipRoot(props: Props) {
           className={s.iconContainer}
           aria-describedby={tooltipId}
           {...getReferenceProps()}
+          style={{ maxWidth: 'fit-content' }}
         >
           {children}
         </div>

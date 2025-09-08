@@ -39,7 +39,7 @@ export default function NewValueInput(props: Props) {
   }
 
   if (listSubtype === 'STRING' || listSubtype === 'CUSTOM') {
-    return <Select<string> mode={'TAGS'} options={[]} {...rest} />;
+    return <Select<string> mode="MULTIPLE" allowNewOptions options={[]} {...rest} />;
   }
 
   if (is314aEnabled && (listSubtype === '314A_INDIVIDUAL' || listSubtype === '314A_BUSINESS')) {
@@ -158,7 +158,8 @@ function SearchInput(
         label: option.label,
       }))}
       isLoading={isLoading(queryResult.data)}
-      mode="TAGS"
+      mode="MULTIPLE"
+      allowNewOptions
       value={value}
       onChange={(newValue) => {
         onChange?.(newValue ?? []);
@@ -186,6 +187,11 @@ function CountriesInput(props: InputProps<string[]> & { excludeCountries?: Set<s
   }, [excludeCountries]);
 
   return (
-    <Select mode="TAGS" options={filteredOptions} placeholder={`Select countries`} {...restProps} />
+    <Select
+      mode={'MULTIPLE'}
+      options={filteredOptions}
+      placeholder={`Select countries`}
+      {...restProps}
+    />
   );
 }

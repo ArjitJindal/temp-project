@@ -101,6 +101,7 @@ export default function Modal(props: Props) {
   const withTabs = tabs.length > 1;
   return (
     <AntModal
+      focusTriggerAfterClose={false}
       destroyOnClose={destroyOnClose}
       className={cn(
         s.root,

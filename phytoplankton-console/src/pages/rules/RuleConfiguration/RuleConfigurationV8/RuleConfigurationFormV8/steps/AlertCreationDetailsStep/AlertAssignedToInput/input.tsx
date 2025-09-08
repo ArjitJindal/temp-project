@@ -69,7 +69,7 @@ export function AlertAssignedToInput() {
                 value={options.length ? inputProps.value : undefined}
                 placeholder={'Select account(s)'}
                 options={options}
-                mode="TAGS"
+                mode={'MULTIPLE'}
                 {...inputProps}
               />
             )}

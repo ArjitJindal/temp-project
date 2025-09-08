@@ -125,7 +125,7 @@ export default function (): JSX.Element {
               xLabel="size"
               yLabel="mode"
               x={['DEFAULT', 'LARGE'] as const}
-              y={['SINGLE', 'MULTIPLE', 'TAGS', 'DYNAMIC'] as const}
+              y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
             >
               {(size, mode) => (
                 <Component
@@ -188,7 +188,7 @@ export default function (): JSX.Element {
         }}
       >
         {([state, setState]) => (
-          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'TAGS', 'DYNAMIC'] as const}>
+          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}>
             {(_, mode) => (
               <Component<string>
                 mode={mode}
@@ -218,7 +218,7 @@ export default function (): JSX.Element {
             xLabel="isEmpty"
             yLabel="mode"
             x={[true, false] as const}
-            y={['SINGLE', 'MULTIPLE', 'TAGS', 'DYNAMIC'] as const}
+            y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
           >
             {(isEmpty, mode) => (
               <Component
@@ -249,7 +249,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'Error'} initialState={{}}>
         {([state, setState]) => (
-          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'TAGS', 'DYNAMIC'] as const}>
+          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}>
             {(isEmpty, mode) => (
               <Component
                 mode={mode}
@@ -313,26 +313,6 @@ export default function (): JSX.Element {
                 setState((prevState) => ({ ...prevState, value2: newValue }));
               }}
             />
-            <Component
-              isCopyable={true}
-              mode="TAGS"
-              placeholder={'Tags select'}
-              options={[
-                { value: 'option1', label: 'Option #1' },
-                { value: 'option2', label: 'Option #2 with a very, very, very long title' },
-                { value: 'option3', label: 'Option #3' },
-                { value: 'option4', label: 'Option #4' },
-                { value: 'option5', label: 'Option #5' },
-                { value: 'option6', label: 'Option #6' },
-                { value: 'option7', label: 'Option #7' },
-                { value: 'option8', label: 'Option #8' },
-                { value: 'option9', label: 'Option #9' },
-              ]}
-              value={state.value3}
-              onChange={(newValue) => {
-                setState((prevState) => ({ ...prevState, value3: newValue }));
-              }}
-            />
           </>
         )}
       </UseCase>
@@ -342,7 +322,7 @@ export default function (): JSX.Element {
             xLabel={'width'}
             x={[200, '100px', '50%']}
             yLabel="mode"
-            y={['SINGLE', 'MULTIPLE', 'TAGS', 'DYNAMIC'] as const}
+            y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
           >
             {(width, mode) => (
               <Component
@@ -483,7 +463,7 @@ export default function (): JSX.Element {
               xLabel="size"
               yLabel="mode"
               x={['DEFAULT', 'LARGE'] as const}
-              y={['SINGLE', 'MULTIPLE', 'TAGS', 'DYNAMIC'] as const}
+              y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
             >
               {(size, mode) => (
                 <Component

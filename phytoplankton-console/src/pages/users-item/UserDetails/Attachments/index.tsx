@@ -252,7 +252,8 @@ const AttachmentUploadModal = (props: ModalProps) => {
           </div>
           <Label label="Tags">
             <Select
-              mode="TAGS"
+              mode="MULTIPLE"
+              allowNewOptions
               options={[] as Option<string>[]}
               placeholder="Select tags"
               value={tags}

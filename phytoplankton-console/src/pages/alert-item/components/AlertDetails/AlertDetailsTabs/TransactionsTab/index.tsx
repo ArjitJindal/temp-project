@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
+import SanctionDetailSelect from '../SanctionDetailSelect';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
@@ -30,7 +31,6 @@ interface Props {
   escalatedTransactionIds?: string[];
   fitHeight?: boolean;
   selectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
-  sanctionsDetailsFilter?: SanctionsDetails;
 }
 
 export default function TransactionsTab(props: Props) {
@@ -42,13 +42,15 @@ export default function TransactionsTab(props: Props) {
     selectedTransactionIds,
     selectionActions,
     fitHeight,
-    sanctionsDetailsFilter,
   } = props;
+  const sanctionDetails = alert?.ruleHitMeta?.sanctionsDetails ?? [];
   const settings = useSettings();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
-
+  const [sanctionsDetailsFilter, setSanctionsDetailsFilter] = useState<
+    SanctionsDetails | undefined
+  >(sanctionDetails[0]);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
   const mapEntityTypeToTransactionMethod: Partial<
@@ -139,6 +141,14 @@ export default function TransactionsTab(props: Props) {
 
   return (
     <>
+      {sanctionsDetailsFilter && (
+        <SanctionDetailSelect
+          sanctionDetails={sanctionDetails}
+          selectedItem={sanctionsDetailsFilter}
+          setSelectedItem={setSanctionsDetailsFilter}
+          marginBottom
+        />
+      )}
       <TransactionsTable
         escalatedTransactions={escalatedTransactionIds}
         selectedIds={selectedTransactionIds}

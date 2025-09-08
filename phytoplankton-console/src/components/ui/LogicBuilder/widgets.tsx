@@ -457,7 +457,8 @@ const customTextWidget: CoreWidgets['text'] = {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
           <Select<string>
-            mode={'TAGS'}
+            mode={'MULTIPLE'}
+            allowNewOptions={true}
             allowClear={true}
             options={[]}
             value={(props.value as any) ?? undefined}
@@ -676,13 +677,14 @@ function MultiSelectWidget(props: any) {
   return (
     <WidgetWrapper widgetFactoryProps={props}>
       <Select<string | number>
-        mode="TAGS"
+        mode={'MULTIPLE'}
+        allowNewOptions={props.allowCustomValues}
         allowClear={true}
         options={options}
         value={value}
         onChange={(newValue) => {
           props.setValue(
-            isCountryField ? serializeCountries(newValue as string[]) : (newValue as string[]),
+            isCountryField ? serializeCountries(newValue?.map((x) => `${x}`)) : newValue,
           );
         }}
       />
