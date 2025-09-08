@@ -37,7 +37,6 @@ import { useTransactionsQuery } from '@/pages/transactions/utils';
 
 const HIT_RATE_SERIES = 'Hit rate';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate';
-const RULE_UPDATED = 'Rule is edited';
 
 type TimeRange = { afterTimestamp?: number; beforeTimestamp?: number };
 
@@ -184,41 +183,24 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                     : 0,
                   series: FALSE_POSITIVE_RATE_SERIES,
                 })) ?? [];
-              const maxYVal = [...falsePositiveStats, ...executionStats].reduce((max, obj) => {
-                return Math.max(max, obj.yValue);
-              }, 100);
               const ruleInstanceUpdateStats = stats.ruleInstanceUpdateStats ?? [];
-              const ruleUpdatedAtStats =
-                ruleInstanceUpdateStats.flatMap((date) => {
-                  return [
-                    {
-                      xValue: date,
-                      yValue: 0,
-                      series: `${RULE_UPDATED} (${date})`,
-                    },
-                    {
-                      xValue: date,
-                      yValue: maxYVal,
-                      series: `${RULE_UPDATED} (${date})`,
-                    },
-                  ];
-                }) ?? [];
-              const ruleUpdatedColors = ruleInstanceUpdateStats.reduce((acc, date) => {
-                acc[`${RULE_UPDATED} (${date})`] = COLORS_V2_ALERT_WARNING;
-                return acc;
-              }, {});
+              const verticalLines = ruleInstanceUpdateStats.map((date) => ({
+                xValue: date,
+                color: COLORS_V2_ALERT_WARNING,
+                label: 'Rule is edited',
+              }));
               const colors = {
                 [HIT_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_06,
                 [FALSE_POSITIVE_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_10,
-                ...ruleUpdatedColors,
               };
               return (
                 <LineChart
-                  data={success([...executionStats, ...falsePositiveStats, ...ruleUpdatedAtStats])}
+                  data={success([...executionStats, ...falsePositiveStats])}
                   colors={colors}
                   height={275}
                   hideLegend
                   formatY={(value) => `${value}%`}
+                  verticalLines={verticalLines}
                 />
               );
             }}
