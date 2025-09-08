@@ -69,7 +69,7 @@ export default function PopupContent(props: Props) {
       <div className={s.header}>
         <TextInput
           iconRight={search === '' ? <SearchLineIcon className={s.searchIcon} /> : undefined}
-          placeholder={`Search ${settings.userAlias} name or ID`}
+          placeholder={`Search ${settings.userAlias} ${filterType === 'name' ? 'name' : 'ID'}`}
           value={search}
           onChange={(newValue) => setSearch(newValue || '')}
           onEnterKey={() => {

@@ -67,6 +67,7 @@ const extraFilters = (
           filterType="id"
         />
       ),
+      showFilterByDefault: true,
     },
     {
       key: 'userName',
@@ -81,6 +82,7 @@ const extraFilters = (
           filterType="name"
         />
       ),
+      showFilterByDefault: true,
     },
     {
       key: 'parentUserId',

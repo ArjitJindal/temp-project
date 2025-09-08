@@ -318,7 +318,7 @@ export const useCaseAlertFilters = (
     {
       key: 'userName',
       title: `${firstLetterUpper(settings.userAlias)} name`,
-      showFilterByDefault: false,
+      showFilterByDefault: true,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
           title={`${firstLetterUpper(settings.userAlias)} name`}
