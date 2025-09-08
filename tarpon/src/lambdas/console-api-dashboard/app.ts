@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
+import createHttpError, { BadRequest } from 'http-errors'
 import { DashboardStatsRepository } from '../../services/dashboard/repositories/dashboard-stats-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertCurrentUserRole, JWTAuthorizerResult } from '@/@types/jwt'
@@ -162,13 +162,16 @@ export const dashboardStatsHandler = lambdaApi()(
         pageSize,
         page,
       } = request
-      const { userId } = ctx
+      const { tenantId } = ctx
       const dynamoDb = getDynamoDbClientByEvent(event)
       const accountsService = new AccountsService(
         { auth0Domain, useCache: true },
         { dynamoDb }
       )
-      const organization = await accountsService.getAccountTenant(userId)
+      const organization = await accountsService.getTenantById(tenantId)
+      if (!organization) {
+        throw new createHttpError.InternalServerError('Tenant not found')
+      }
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
       )
@@ -196,7 +199,10 @@ export const dashboardStatsHandler = lambdaApi()(
         { auth0Domain, useCache: true },
         { dynamoDb: getDynamoDbClientByEvent(event) }
       )
-      const organization = await accountsService.getAccountTenant(ctx.userId)
+      const organization = await accountsService.getTenantById(ctx.tenantId)
+      if (!organization) {
+        throw new createHttpError.InternalServerError('Tenant not found')
+      }
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
       )
@@ -260,12 +266,15 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardLatestTeamStats(async (ctx, request) => {
       const { scope, pageSize, page } = request
-      const { userId } = ctx
+      const { tenantId } = ctx
       const accountsService = new AccountsService(
         { auth0Domain, useCache: true },
         { dynamoDb: getDynamoDbClientByEvent(event) }
       )
-      const organization = await accountsService.getAccountTenant(userId)
+      const organization = await accountsService.getTenantById(tenantId)
+      if (!organization) {
+        throw new createHttpError.InternalServerError('Tenant not found')
+      }
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
       )
