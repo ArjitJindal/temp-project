@@ -133,7 +133,7 @@ export interface FullColumnDataType<Value, Item = unknown> {
 }
 
 // Simplified variant of a data type which doesn't use parent item
-export type ColumnDataType<Value, Item = unknown> = FullColumnDataType<Value, Item | null>;
+export type ColumnDataType<Value, Item = unknown> = FullColumnDataType<Value, Item>;
 
 export type FieldAccessor<Item> = DeepKeys<Item>;
 export type ValueOf<Accessor> = Accessor extends FieldAccessor<infer Item>
@@ -175,14 +175,14 @@ export interface DataColumn extends BaseColumn {
 export interface SimpleColumn<Item extends object, Accessor extends FieldAccessor<Item>>
   extends DataColumn {
   key: Accessor;
-  type?: FullColumnDataType<NonNullable<DeepValue<Item, Accessor>>, unknown>;
+  type?: FullColumnDataType<NonNullable<DeepValue<Item, Accessor>>, Item>;
   showFilterByDefault?: boolean;
 }
 
 export interface DerivedColumn<Item extends object, Value = unknown> extends DataColumn {
   // value: (item: Item, context: ItemContext<Item>) => Value | undefined;
   value: (item: Item) => Value | undefined;
-  type?: FullColumnDataType<Value, unknown>;
+  type?: FullColumnDataType<Value, Item>;
 }
 
 export type LeafColumn<T extends object> =

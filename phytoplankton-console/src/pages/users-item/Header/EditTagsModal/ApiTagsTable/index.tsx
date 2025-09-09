@@ -38,14 +38,14 @@ function ApiTagsTable(props: Props) {
     helper.simple<'key'>({
       title: 'Key',
       key: 'key',
-      type: STRING as any,
+      type: STRING,
       defaultWidth: 300,
       tooltip: `Use tag keys defined in settings to add new tags for a ${settings.userAlias}.`,
     }),
     helper.simple<'value'>({
       title: 'Value',
       key: 'value',
-      type: STRING as any,
+      type: STRING,
       defaultWidth: 400,
     }),
     helper.display({
@@ -53,7 +53,7 @@ function ApiTagsTable(props: Props) {
       render: (item, context) => {
         const rowApi = context.rowApi;
         if (rowApi?.isCreateRow) {
-          const draft = rowApi.getDraft() as UserTag;
+          const draft = rowApi.getDraft() as Item;
           return (
             <Button
               isDisabled={!draft.key || !draft.value}
@@ -68,13 +68,7 @@ function ApiTagsTable(props: Props) {
           const isEditing = rowApi?.isEditing ?? false;
           return isEditing ? (
             <div className={s.actions}>
-              <Button
-                onClick={() => {
-                  rowApi?.save?.();
-                }}
-              >
-                Save
-              </Button>
+              <Button onClick={() => rowApi?.save?.()}>Save</Button>
               <Button onClick={() => rowApi?.cancelEdit?.()}>Cancel</Button>
             </div>
           ) : (
@@ -105,17 +99,16 @@ function ApiTagsTable(props: Props) {
       type: 'EXISTING',
     })) ?? [];
   return (
-    <Table
+    <Table<Item>
       rowKey="rowKey"
       data={{ items: data }}
       columns={columns}
       toolsOptions={false}
       createRow={{
-        item: { key: '', value: '', isEditable: true, rowKey: 'new' } as any,
+        item: { key: '', value: '', isEditable: true, rowKey: 'new', type: 'NEW' },
         position: 'BOTTOM',
         visible: true,
-        onSubmit: (newTag) => {
-          const draft = newTag as UserTag;
+        onSubmit: (draft: Item) => {
           if (!draft.key || !draft.value) {
             return;
           }
@@ -123,10 +116,9 @@ function ApiTagsTable(props: Props) {
         },
       }}
       rowEditing={{
-        onSave: (_id, edited) => {
-          const e = edited as UserTag;
+        onSave: (_id, edited: Item) => {
           setTags((prev) =>
-            (prev ?? []).map((t) => (t.key === e.key ? { ...t, value: e.value } : t)),
+            (prev ?? []).map((t) => (t.key === edited.key ? { ...t, value: edited.value } : t)),
           );
         },
       }}

@@ -474,8 +474,8 @@ function useColumns(options: {
         (listHeader?.metadata?.columns ?? []).map((column) =>
           helper.simple<`meta.${string}`>({
             title: column.key || '',
-            key: `meta.${column.key || ''}` as any,
-            type: STRING as any,
+            key: `meta.${column.key || ''}` as `meta.${string}`,
+            type: STRING,
           }),
         ) || [];
 
@@ -487,7 +487,8 @@ function useColumns(options: {
           render: (entity, context) => {
             const rowApi = context.rowApi;
             if (rowApi?.isCreateRow) {
-              const draft = (rowApi.getDraft?.() as NewTableItemData) ?? (entity as any);
+              const draft =
+                (rowApi.getDraft?.() as NewTableItemData) ?? (entity as NewTableItemData);
               const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
                 const key = c.key || '';
                 const val = (draft.meta ?? {})[key];
@@ -572,10 +573,10 @@ function useColumns(options: {
                       key={String(isAddUserLoading)}
                       value={draft.value}
                       onChange={(value) => {
-                        rowApi?.setDraft?.({ ...draft, value: value ?? [] } as any);
+                        rowApi?.setDraft?.({ ...draft, value: value ?? [] } as NewTableItemData);
                       }}
                       onChangeMeta={(meta) => {
-                        rowApi?.setDraft?.({ ...draft, meta } as any);
+                        rowApi?.setDraft?.({ ...draft, meta } as NewTableItemData);
                       }}
                       listSubtype={listSubtype}
                       excludeCountries={existingCountryCodes}
@@ -606,7 +607,7 @@ function useColumns(options: {
         helper.simple<'reason'>({
           title: 'Reason for adding to list',
           key: 'reason',
-          type: STRING as any,
+          type: STRING,
         }),
         helper.display({
           title: 'Actions',
@@ -614,7 +615,8 @@ function useColumns(options: {
           render: (entity, context) => {
             const rowApi = context.rowApi;
             if (rowApi?.isCreateRow) {
-              const draft = (rowApi.getDraft?.() as NewTableItemData) ?? (entity as any);
+              const draft =
+                (rowApi.getDraft?.() as NewTableItemData) ?? (entity as NewTableItemData);
               const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
                 const key = c.key || '';
                 const val = (draft.meta ?? {})[key];
