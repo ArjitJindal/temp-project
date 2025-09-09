@@ -1,15 +1,14 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { UseMutationResult } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Resource } from '@flagright/lib/utils';
 import ImportCsvModal from '../ImportCsvModal';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
 import { TableParams } from './types';
 import { useApi } from '@/api';
-import { ColumnType, ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
+import { ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
 import {
   DefaultApiGetWhiteListItemsRequest,
   DefaultApiPostWhiteListItemRequest,
@@ -38,11 +37,7 @@ import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
-import { StatePair } from '@/utils/state';
-import TextInput from '@/components/library/TextInput';
-import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
-import NumberInput from '@/components/library/NumberInput';
-import DatePicker from '@/components/ui/DatePicker';
+import { STRING } from '@/components/library/Table/standardDataTypes';
 import { download } from '@/utils/browser';
 
 interface ExistedTableItemData {
@@ -124,11 +119,7 @@ export default function ItemsTable(props: Props) {
   }, [listHeaderRes, api]);
 
   const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
-  const [newUserData, setNewUserData] = useState<NewTableItemData>({
-    value: [],
-    reason: '',
-    meta: {},
-  });
+  // creation row state managed by Table via rowApi
 
   const requiredWriteResources: Resource[] = useMemo(() => {
     if (listType === 'WHITELIST') {
@@ -190,27 +181,29 @@ export default function ItemsTable(props: Props) {
     return true;
   }, [editUserData, listSubtype, validateMetaFields]);
 
-  const isNewUserValid = useMemo(() => {
-    if (!newUserData) {
-      return false;
-    }
-
-    if (listSubtype === 'CUSTOM') {
-      return validateMetaFields(newUserData.meta);
-    }
-
-    return newUserData.value.length > 0;
-  }, [newUserData, listSubtype, validateMetaFields]);
+  // validation for creation row handled inline using rowApi draft
 
   const [isAddUserLoading, setAddUserLoading] = useState(false);
 
-  const handleAddItem = useCallback(() => {
-    const hideMessage = message.loading('Adding item to a list...');
-
-    if (isNewUserValid) {
+  const handleAddItemFromDraft = useCallback(
+    (newUserData: NewTableItemData) => {
+      const hideMessage = message.loading('Adding item to a list...');
+      const isValid =
+        listSubtype === 'CUSTOM'
+          ? validateMetaFields(newUserData.meta)
+          : (Array.isArray(newUserData.value)
+              ? newUserData.value.length
+              : (newUserData.value as unknown as string | undefined)?.trim()?.length ?? 0) > 0;
+      if (!isValid) {
+        hideMessage();
+        return;
+      }
       setAddUserLoading(true);
+      const values: string[] = Array.isArray(newUserData.value)
+        ? (newUserData.value as string[])
+        : [String(newUserData.value ?? '')];
       Promise.all(
-        newUserData.value.map((itemValue) => {
+        values.map((itemValue) => {
           const payload: DefaultApiPostWhiteListItemRequest = {
             listId,
             ListItem: {
@@ -226,7 +219,6 @@ export default function ItemsTable(props: Props) {
       )
         .then(() => {
           hideMessage();
-          setNewUserData({ value: [], reason: '', meta: {} });
           message.success(`Item added successfully`);
           tableRef.current?.reload();
         })
@@ -237,8 +229,9 @@ export default function ItemsTable(props: Props) {
         .finally(() => {
           setAddUserLoading(false);
         });
-    }
-  }, [isNewUserValid, newUserData, listId, api, listType]);
+    },
+    [listSubtype, validateMetaFields, listId, api, listType],
+  );
 
   const handleSaveItem = () => {
     if (isEditUserDataValid && editUserData) {
@@ -345,11 +338,10 @@ export default function ItemsTable(props: Props) {
     listSubtype,
     listResult,
     isAddUserLoading,
-    isNewUserValid,
     isEditUserValid: isEditUserDataValid,
     requiredWriteResources,
     listHeaderRes,
-    newUserDataState: [newUserData, setNewUserData],
+    isCustomList,
     onDelete: handleDeleteUser,
   });
 
@@ -380,9 +372,9 @@ export default function ItemsTable(props: Props) {
                   reason: '',
                   meta: {},
                 },
-                visible: filterKeys == null,
+                visible: true,
                 position: 'BOTTOM',
-                onSubmit: () => handleAddItem(),
+                onSubmit: (newItem) => handleAddItemFromDraft(newItem as NewTableItemData),
               }}
               rowEditing={{
                 onSave: (_id, edited) => {
@@ -441,22 +433,20 @@ function useColumns(options: {
   listSubtype: ListSubtypeInternal | null;
   listResult: QueryResult<CursorPaginatedData<TableItem>>;
   isAddUserLoading: boolean;
-  isNewUserValid: boolean;
   isEditUserValid: boolean;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
   requiredWriteResources: Resource[];
-  newUserDataState: StatePair<NewTableItemData>;
+  isCustomList: boolean;
   onDelete: (userId: string) => void;
 }): TableColumn<TableItem>[] {
   const {
     listSubtype,
     listResult,
     isAddUserLoading,
-    isNewUserValid,
     isEditUserValid,
     requiredWriteResources,
     listHeaderRes,
-    newUserDataState,
+    isCustomList,
     onDelete,
   } = options;
   const settings = useSettings();
@@ -479,57 +469,13 @@ function useColumns(options: {
   }, [currentItems, listSubtype]);
 
   return useMemo(() => {
-    if (listSubtype === 'CUSTOM') {
+    if (isCustomList) {
       const customColumns =
-        listHeader?.metadata?.columns?.map((column) =>
-          helper.derived({
+        (listHeader?.metadata?.columns ?? []).map((column) =>
+          helper.simple<`meta.${string}`>({
             title: column.key || '',
-            value: (item) => item.meta[column.key || ''] || '',
-            type: {
-              render: (value, context) => {
-                const { item: entity } = context;
-                const [newUserData, setNewUserData] = newUserDataState;
-                const columnName = column.key || '';
-
-                if (entity.type === 'NEW') {
-                  return renderInputForColumnType(
-                    column.type,
-                    newUserData.meta[columnName] || '',
-                    (newValue) => {
-                      setNewUserData((prevState) => ({
-                        ...prevState,
-                        value: prevState.value.length === 0 ? [uuidv4()] : prevState.value,
-                        meta: {
-                          ...prevState.meta,
-                          [columnName]: newValue,
-                        },
-                      }));
-                    },
-                    isAddUserLoading,
-                    columnName,
-                  );
-                } else if (context.rowApi?.isEditing) {
-                  return renderInputForColumnType(
-                    column.type,
-                    (context.rowApi.getDraft() as ExistedTableItemData).meta[columnName] || '',
-                    (newValue) => {
-                      const draft = context.rowApi?.getDraft() as ExistedTableItemData;
-                      context.rowApi?.setDraft?.({
-                        ...draft,
-                        meta: { ...draft.meta, [columnName]: newValue },
-                      } as any);
-                    },
-                    false,
-                    columnName,
-                  );
-                }
-                return (
-                  <>
-                    {column.type === 'DATE' ? dayjs(value).format(YEAR_MONTH_DATE_FORMAT) : value}
-                  </>
-                );
-              },
-            },
+            key: `meta.${column.key || ''}` as any,
+            type: STRING as any,
           }),
         ) || [];
 
@@ -540,65 +486,69 @@ function useColumns(options: {
           defaultWidth: 170,
           render: (entity, context) => {
             const rowApi = context.rowApi;
-            if (entity.type === 'NEW') {
+            if (rowApi?.isCreateRow) {
+              const draft = (rowApi.getDraft?.() as NewTableItemData) ?? (entity as any);
+              const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
+                const key = c.key || '';
+                const val = (draft.meta ?? {})[key];
+                return val != null && String(val).trim() !== '';
+              });
               return (
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
                     isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid}
+                    isDisabled={!isValid}
                     onClick={() => rowApi?.save?.()}
+                    requiredResources={requiredWriteResources}
                   >
                     Add
                   </Button>
                 </div>
               );
-            } else if (entity.type === 'EXISTED') {
-              if (rowApi?.isEditing) {
-                return (
-                  <div className={s.actions}>
-                    <Button
-                      size="SMALL"
-                      type="PRIMARY"
-                      onClick={() => rowApi?.save?.()}
-                      isDisabled={!isEditUserValid}
-                      requiredResources={requiredWriteResources}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      size="SMALL"
-                      type="SECONDARY"
-                      onClick={() => rowApi?.cancelEdit?.()}
-                      requiredResources={requiredWriteResources}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                );
-              }
+            } else if (rowApi?.isEditing) {
               return (
                 <div className={s.actions}>
                   <Button
                     size="SMALL"
-                    type="SECONDARY"
-                    onClick={() => rowApi?.startEdit?.()}
+                    type="PRIMARY"
+                    onClick={() => rowApi?.save?.()}
+                    isDisabled={!isEditUserValid}
                     requiredResources={requiredWriteResources}
                   >
-                    Edit
+                    Save
                   </Button>
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    onClick={() => onDelete(entity.value ?? '')}
+                    onClick={() => rowApi?.cancelEdit?.()}
                     requiredResources={requiredWriteResources}
                   >
-                    Remove
+                    Cancel
                   </Button>
                 </div>
               );
             }
-            return null;
+            return (
+              <div className={s.actions}>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => rowApi?.startEdit?.()}
+                  requiredResources={requiredWriteResources}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => onDelete(String(entity.value ?? ''))}
+                  requiredResources={requiredWriteResources}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
           },
         }),
       ]);
@@ -613,24 +563,19 @@ function useColumns(options: {
             type: {
               render: (value, context) => {
                 const { item: entity } = context;
-                const [newUserData, setNewUserData] = newUserDataState;
 
-                if (entity.type === 'NEW') {
+                const rowApi = context.rowApi;
+                if (rowApi?.isCreateRow) {
+                  const draft = (rowApi?.getDraft?.() as NewTableItemData) ?? entity;
                   return (
                     <NewValueInput
                       key={String(isAddUserLoading)}
-                      value={newUserData.value}
+                      value={draft.value}
                       onChange={(value) => {
-                        setNewUserData((prevState) => ({
-                          ...prevState,
-                          value: value ?? [],
-                        }));
+                        rowApi?.setDraft?.({ ...draft, value: value ?? [] } as any);
                       }}
                       onChangeMeta={(meta) => {
-                        setNewUserData((prevState) => ({
-                          ...prevState,
-                          meta,
-                        }));
+                        rowApi?.setDraft?.({ ...draft, meta } as any);
                       }}
                       listSubtype={listSubtype}
                       excludeCountries={existingCountryCodes}
@@ -658,61 +603,29 @@ function useColumns(options: {
               }),
             ])
           : []),
-        helper.derived<string | string[]>({
+        helper.simple<'reason'>({
           title: 'Reason for adding to list',
-          value: (item) => item.reason,
-
-          type: {
-            render: (reason, context) => {
-              const { item: entity } = context;
-              const rowApi = context.rowApi;
-
-              if (entity.type === 'NEW') {
-                return (
-                  <FocusRetainingInput
-                    uniqueKey="new-reason-input"
-                    isDisabled={isAddUserLoading}
-                    value={newUserDataState[0].reason}
-                    autoFocus
-                    onChange={(value) => {
-                      newUserDataState[1]((prevState) => ({
-                        ...prevState,
-                        reason: value,
-                      }));
-                    }}
-                  />
-                );
-              } else if (rowApi?.isEditing) {
-                return (
-                  <FocusRetainingInput
-                    uniqueKey={`edit-reason-${entity.value}`}
-                    isDisabled={false}
-                    value={(rowApi.getDraft() as ExistedTableItemData).reason}
-                    autoFocus
-                    onChange={(value) => {
-                      const draft = rowApi.getDraft() as ExistedTableItemData;
-                      rowApi.setDraft({ ...draft, reason: value } as any);
-                    }}
-                  />
-                );
-              }
-              return <>{reason}</>;
-            },
-            defaultWrapMode: 'WRAP',
-          },
+          key: 'reason',
+          type: STRING as any,
         }),
         helper.display({
           title: 'Actions',
           defaultWidth: 170,
           render: (entity, context) => {
             const rowApi = context.rowApi;
-            if (entity.type === 'NEW') {
+            if (rowApi?.isCreateRow) {
+              const draft = (rowApi.getDraft?.() as NewTableItemData) ?? (entity as any);
+              const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
+                const key = c.key || '';
+                const val = (draft.meta ?? {})[key];
+                return val != null && String(val).trim() !== '';
+              });
               return (
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
                     isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid}
+                    isDisabled={!isValid}
                     onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
@@ -720,47 +633,44 @@ function useColumns(options: {
                   </Button>
                 </div>
               );
-            } else if (entity.type === 'EXISTED') {
-              if (rowApi?.isEditing) {
-                return (
-                  <div className={s.actions}>
-                    <Button
-                      size="SMALL"
-                      type="PRIMARY"
-                      onClick={() => rowApi?.save?.()}
-                      isDisabled={!isEditUserValid}
-                      requiredResources={requiredWriteResources}
-                    >
-                      Save
-                    </Button>
-                    <Button size="SMALL" type="SECONDARY" onClick={() => rowApi?.cancelEdit?.()}>
-                      Cancel
-                    </Button>
-                  </div>
-                );
-              }
+            } else if (rowApi?.isEditing) {
               return (
                 <div className={s.actions}>
                   <Button
                     size="SMALL"
-                    type="SECONDARY"
-                    onClick={() => rowApi?.startEdit?.()}
+                    type="PRIMARY"
+                    onClick={() => rowApi?.save?.()}
+                    isDisabled={!isEditUserValid}
                     requiredResources={requiredWriteResources}
                   >
-                    Edit
+                    Save
                   </Button>
-                  <Button
-                    size="SMALL"
-                    type="SECONDARY"
-                    onClick={() => onDelete(entity.value ?? '')}
-                    requiredResources={requiredWriteResources}
-                  >
-                    Remove
+                  <Button size="SMALL" type="SECONDARY" onClick={() => rowApi?.cancelEdit?.()}>
+                    Cancel
                   </Button>
                 </div>
               );
             }
-            return null;
+            return (
+              <div className={s.actions}>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => rowApi?.startEdit?.()}
+                  requiredResources={requiredWriteResources}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => onDelete(String(entity.value ?? ''))}
+                  requiredResources={requiredWriteResources}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
           },
         }),
       ].filter(notEmpty),
@@ -768,13 +678,12 @@ function useColumns(options: {
   }, [
     isAddUserLoading,
     isEditUserValid,
-    isNewUserValid,
     listSubtype,
+    isCustomList,
     requiredWriteResources,
     settings,
     existingCountryCodes,
     listHeader?.metadata?.columns,
-    newUserDataState,
     onDelete,
   ]);
 }
@@ -844,128 +753,4 @@ function useExtraFilters(listSubtype: ListSubtypeInternal | null): ExtraFilterPr
       },
     ];
   }, [listSubtype, settings]);
-}
-
-function FocusRetainingInput({
-  value,
-  onChange,
-  isDisabled,
-  autoFocus,
-  uniqueKey,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  isDisabled?: boolean;
-  autoFocus?: boolean;
-  uniqueKey?: string;
-}) {
-  const [inputValue, setInputValue] = useState(value || '');
-  const isTypingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isTypingRef.current && value !== inputValue) {
-      setInputValue(value || '');
-    }
-  }, [value, inputValue]);
-
-  return (
-    <TextInput
-      key={uniqueKey}
-      isDisabled={isDisabled}
-      value={inputValue}
-      autoFocus={autoFocus}
-      onChange={(e) => {
-        isTypingRef.current = true;
-        setInputValue(e || '');
-      }}
-      onBlur={() => {
-        setTimeout(() => {
-          isTypingRef.current = false;
-          onChange(inputValue);
-        }, 50);
-      }}
-    />
-  );
-}
-
-function FocusRetainingNumberInput({
-  value,
-  onChange,
-  isDisabled,
-  uniqueKey,
-}: {
-  value: number | undefined;
-  onChange: (value: number | undefined) => void;
-  isDisabled?: boolean;
-  uniqueKey?: string;
-}) {
-  const [inputValue, setInputValue] = useState<number | undefined>(value);
-  const isTypingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isTypingRef.current && value !== inputValue) {
-      setInputValue(value);
-    }
-  }, [value, inputValue]);
-
-  return (
-    <div onClick={(e) => e.stopPropagation()}>
-      <NumberInput
-        key={uniqueKey}
-        isDisabled={isDisabled}
-        value={inputValue}
-        onChange={(newValue) => {
-          isTypingRef.current = true;
-          setInputValue(newValue);
-        }}
-        onBlur={() => {
-          setTimeout(() => {
-            isTypingRef.current = false;
-            onChange(inputValue);
-          }, 50);
-        }}
-      />
-    </div>
-  );
-}
-
-function renderInputForColumnType<T>(
-  columnType: ColumnType,
-  value: T,
-  onChange: (newValue: T) => void,
-  isDisabled: boolean = false,
-  columnName?: string,
-) {
-  switch (columnType) {
-    case 'NUMBER':
-      return (
-        <FocusRetainingNumberInput
-          uniqueKey={`column-number-${columnName || 'unknown'}`}
-          isDisabled={isDisabled}
-          value={value !== undefined ? Number(value) : undefined}
-          onChange={(val) => onChange(val as T)}
-        />
-      );
-    case 'DATE': {
-      const dateValue = value ? dayjs(value as string) : null;
-      return (
-        <DatePicker
-          disabled={isDisabled}
-          value={dateValue}
-          onChange={(date) => {
-            onChange((date ? date.toISOString() : undefined) as T);
-          }}
-        />
-      );
-    }
-    case 'STRING':
-      return (
-        <FocusRetainingInput
-          uniqueKey={`column-${columnName || 'unknown'}-fallback`}
-          isDisabled={isDisabled}
-          value={value as string}
-          onChange={(val) => onChange(val as T)}
-        />
-      );
-  }
 }

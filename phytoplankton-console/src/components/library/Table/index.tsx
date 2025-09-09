@@ -285,7 +285,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
   }, [isExpandable, renderExpanded, creationRowId, rowKey]);
 
   const table = useTanstackTable<Item, Params>({
-    dataRes: dataRes,
+    dataRes: adaptedDataRes,
     rowKey: rowKey,
     columns: columns,
     params: params,

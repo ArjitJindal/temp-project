@@ -510,7 +510,35 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
     ...column.type,
   } as ColumnDataType<Value, Item>;
 
-  const editContext = useEditContext<Value | undefined>(
+  const rowApi = props.table.options.meta?.getRowApi?.(props.cell.row);
+  const isRowEditing = Boolean(rowApi?.isCreateRow || rowApi?.isEditing);
+  const draftItem: Item = (rowApi?.getDraft?.() as Item) ?? props.row.original.content;
+  const currentValue: Value = isRowEditing
+    ? (applyFieldAccessor(draftItem, column.key as FieldAccessor<Item>) as Value)
+    : value;
+
+  const proxyEditContext = {
+    isEditing: isRowEditing,
+    toggleEditing: () => {},
+    state: [currentValue, (_updater: any) => {}] as any,
+    isBusy: false,
+    onConfirm: async (newValue: Value) => {
+      if (rowApi?.setDraft) {
+        const updated = setByFieldAccessor(draftItem, column.key, newValue as any);
+        rowApi.setDraft(updated as any);
+        return;
+      }
+      if (onEdit) {
+        const newItem = setByFieldAccessor(props.row.original.content, column.key, newValue);
+        const promise = onEdit?.(id as any, newItem as any);
+        if (promise != null && promise instanceof Promise) {
+          await promise;
+        }
+      }
+    },
+  } as EditContext<Value | undefined> as any;
+
+  const legacyEditContext = useEditContext<Value | undefined>(
     (onEdit != null && column.defaultEditState) ?? false,
     value,
     async (newValue) => {
@@ -523,16 +551,16 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
   );
 
   const itemContext = {
-    value: value,
-    item: props.row.original.content,
-    edit: editContext,
+    value: currentValue,
+    item: draftItem,
+    edit: isRowEditing ? proxyEditContext : legacyEditContext,
     external: undefined,
-    rowApi: props.table.options.meta?.getRowApi?.(props.cell.row),
+    rowApi: rowApi,
   };
 
   return (
     <div className={s.columnCellComponentContainer}>
-      {editContext.isEditing && columnDataType.renderEdit
+      {(isRowEditing || legacyEditContext.isEditing) && columnDataType.renderEdit
         ? columnDataType.renderEdit(itemContext)
         : columnDataType.render?.(value, itemContext)}
     </div>
