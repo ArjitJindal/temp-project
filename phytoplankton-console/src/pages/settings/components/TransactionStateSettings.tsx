@@ -17,13 +17,57 @@ interface TableItem {
   stateAlias: string | undefined;
 }
 
-// externalState removed
-
 const columnHelper = new ColumnHelper<TableItem>();
 
 export const TransactionStateSettings: React.FC = () => {
   const settings = useSettings();
   const permissions = useHasResources(['write:::settings/transactions/transaction-state-alias/*']);
+  const mutateTenantSettings = useUpdateTenantSettings();
+
+  const [savingState, setSavingState] = useState<TransactionState | null>(null);
+  const [newStateToAlias, setNewStateToAlias] = useState<Map<TransactionState, string>>(new Map());
+  const [commitedStateToAlias, setCommitedStateToAlias] = useState<
+    Map<TransactionState | undefined, string>
+  >(new Map());
+
+  const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
+    () =>
+      new Map((settings.transactionStateAlias || []).map((entry) => [entry.state, entry.alias])),
+    [settings.transactionStateAlias],
+  );
+
+  const savedStateToAlias = useMemo(
+    () => new Map([...stateToAlias, ...commitedStateToAlias]),
+    [stateToAlias, commitedStateToAlias],
+  );
+  const handleUpdateAlias = useCallback(
+    (state: TransactionState, newAlias: string) => {
+      setNewStateToAlias(new Map(newStateToAlias).set(state, newAlias.trim()));
+    },
+    [newStateToAlias],
+  );
+  const handleSaveAlias = useCallback(
+    async (state: TransactionState) => {
+      setSavingState(state);
+      try {
+        const updatedStateToAlias = new Map(savedStateToAlias).set(
+          state,
+          newStateToAlias.get(state) || '',
+        );
+        const transactionStateAlias = Array.from(updatedStateToAlias.entries())
+          .map((entry) => ({
+            state: entry[0],
+            alias: entry[1],
+          }))
+          .filter((item) => !!item.alias) as TransactionStateAlias[];
+        await mutateTenantSettings.mutateAsync({ transactionStateAlias });
+        setCommitedStateToAlias(updatedStateToAlias);
+      } finally {
+        setSavingState(null);
+      }
+    },
+    [mutateTenantSettings, newStateToAlias, savedStateToAlias],
+  );
 
   const columns = useMemo(
     () =>
@@ -85,49 +129,7 @@ export const TransactionStateSettings: React.FC = () => {
       handleUpdateAlias,
     ],
   );
-  const [savingState, setSavingState] = useState<TransactionState | null>(null);
-  const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
-    () =>
-      new Map((settings.transactionStateAlias || []).map((entry) => [entry.state, entry.alias])),
-    [settings.transactionStateAlias],
-  );
-  const [commitedStateToAlias, setCommitedStateToAlias] = useState<
-    Map<TransactionState | undefined, string>
-  >(new Map());
-  const savedStateToAlias = useMemo(
-    () => new Map([...stateToAlias, ...commitedStateToAlias]),
-    [stateToAlias, commitedStateToAlias],
-  );
-  const [newStateToAlias, setNewStateToAlias] = useState<Map<TransactionState, string>>(new Map());
-  const handleUpdateAlias = useCallback(
-    (state: TransactionState, newAlias: string) => {
-      setNewStateToAlias(new Map(newStateToAlias).set(state, newAlias.trim()));
-    },
-    [newStateToAlias],
-  );
-  const mutateTenantSettings = useUpdateTenantSettings();
-  const handleSaveAlias = useCallback(
-    async (state: TransactionState) => {
-      setSavingState(state);
-      try {
-        const updatedStateToAlias = new Map(savedStateToAlias).set(
-          state,
-          newStateToAlias.get(state) || '',
-        );
-        const transactionStateAlias = Array.from(updatedStateToAlias.entries())
-          .map((entry) => ({
-            state: entry[0],
-            alias: entry[1],
-          }))
-          .filter((item) => !!item.alias) as TransactionStateAlias[];
-        await mutateTenantSettings.mutateAsync({ transactionStateAlias });
-        setCommitedStateToAlias(updatedStateToAlias);
-      } finally {
-        setSavingState(null);
-      }
-    },
-    [mutateTenantSettings, newStateToAlias, savedStateToAlias],
-  );
+
   const tableData = useMemo<TableItem[]>(
     () => [
       {

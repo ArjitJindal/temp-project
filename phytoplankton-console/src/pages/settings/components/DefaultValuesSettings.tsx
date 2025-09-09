@@ -19,8 +19,6 @@ type TableItem = {
   requiredResources: { read: Resource[]; write: Resource[] };
 };
 
-// externalState removed
-
 const DEFAULT_VALUES = {
   currency: 'USD',
 };

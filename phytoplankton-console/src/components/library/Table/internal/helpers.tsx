@@ -503,7 +503,6 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
   const onEdit = props.table.options.meta.onEdit;
   const value: Value = props.getValue();
   const id = applyFieldAccessor(props.row.original.content, rowKey as FieldAccessor<Item>);
-  // external state removed
 
   const columnDataType = {
     ...UNKNOWN,
@@ -575,7 +574,6 @@ function DerivedColumnCellComponent<Item extends object>(props: CellComponentPro
   };
 
   const columnValue = column.value(props.row.original.content);
-  // external state removed
   const editContext = useEditContext<unknown>(
     false, // derived columns doesn't support editing
     props.row.original.content,
@@ -601,7 +599,6 @@ function DisplayColumnCellComponent<Item extends object>(props: CellComponentPro
   const { column, rowKey } = props.column.columnDef.meta;
   const id = applyFieldAccessor(props.row.original.content, rowKey);
   const onEdit = props.table.options.meta.onEdit;
-  // external state removed
   const editContext = useEditContext<Item>(
     (onEdit != null && column.defaultEditState) ?? false,
     props.row.original.content,

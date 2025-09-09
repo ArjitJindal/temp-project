@@ -10,16 +10,105 @@ import { message } from '@/components/library/Message';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { TableRefType } from '@/components/library/Table/types';
+import { TableRefType, ColumnDataType } from '@/components/library/Table/types';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { statusInReview } from '@/utils/case-utils';
 import { ChecklistItem, HydratedChecklist, useAlertChecklist } from '@/utils/checklist-templates';
 import { useQaMode } from '@/utils/qa-mode';
 import { ALERT_CHECKLIST } from '@/utils/queries/keys';
+
 interface Props {
   alert: Alert;
 }
+
+const CHECKLIST_STATUS_TYPE: ColumnDataType<ChecklistDoneStatus, ChecklistItem> = {
+  render: (value) => <>{value === 'NOT_STARTED' ? '-' : humanizeConstant(value ?? '')}</>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <Dropdown<ChecklistDoneStatus>
+        options={(['DONE', 'NOT_DONE', 'NOT_APPLICABLE'] as const).map((s) => ({
+          label: humanizeConstant(s),
+          value: s,
+        }))}
+        arrow={'LINE'}
+        bordered
+        selectedKeys={[state ?? '']}
+        onSelect={(e) => context.edit.onConfirm(e.value)}
+        minWidth={150}
+        writeResources={['write:::case-management/case-overview/*']}
+      >
+        <div>{humanizeConstant(state ?? 'SELECT_STATUS')}</div>
+      </Dropdown>
+    );
+  },
+};
+
+const QA_STATUS_TYPE: ColumnDataType<ChecklistStatus | undefined, ChecklistItem> = {
+  render: (value) => {
+    switch (value) {
+      case 'PASSED':
+        return <>Pass</>;
+      case 'FAILED':
+        return <>Fail</>;
+      case 'NOT_APPLICABLE':
+        return <>Not applicable</>;
+      default:
+        return <>-</>;
+    }
+  },
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <Dropdown<ChecklistStatus>
+        options={CHECKLIST_STATUSS.map((s) => ({
+          label:
+            s === 'NOT_APPLICABLE'
+              ? 'Not applicable'
+              : s === 'PASSED'
+              ? 'Pass'
+              : s === 'FAILED'
+              ? 'Fail'
+              : 'Select status',
+          value: s,
+        }))}
+        arrow={'LINE'}
+        bordered
+        onSelect={(e) => context.edit.onConfirm(e.value)}
+        minWidth={200}
+        selectedKeys={state ? [state] : undefined}
+        writeResources={['write:::case-management/qa/*']}
+      >
+        <div>
+          {state == null
+            ? 'Select status'
+            : state === 'PASSED'
+            ? 'Pass'
+            : state === 'FAILED'
+            ? 'Fail'
+            : state === 'NOT_APPLICABLE'
+            ? 'Not applicable'
+            : '-'}
+        </div>
+      </Dropdown>
+    );
+  },
+};
+
+const COMMENT_TYPE: ColumnDataType<string | undefined, ChecklistItem> = {
+  render: (value) => <div>{value}</div>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <EditableComment
+        value={state}
+        onChange={(value) => context.edit.onConfirm(value)}
+        onBlur={() => {}}
+      />
+    );
+  },
+};
 
 export default function ChecklistTab(props: Props) {
   const { alert } = props;
@@ -159,125 +248,28 @@ export default function ChecklistTab(props: Props) {
         key: 'level',
         title: 'Type',
       }),
-      helper.display({
-        id: 'actions',
+      helper.simple<'done'>({
+        key: 'done',
         title: 'Checklist status',
         defaultWidth: 200,
-        render(item, context) {
-          const rowApi = context.rowApi;
-          if (rowApi?.isEditing) {
-            const draft = (rowApi.getDraft() as ChecklistItem) ?? item;
-            return (
-              <Dropdown<ChecklistDoneStatus>
-                options={(['DONE', 'NOT_DONE', 'NOT_APPLICABLE'] as const).map((s) => ({
-                  label: humanizeConstant(s),
-                  value: s,
-                }))}
-                arrow={'LINE'}
-                bordered
-                selectedKeys={[draft.done]}
-                onSelect={(e) => {
-                  rowApi.setDraft({ ...draft, done: e.value as ChecklistDoneStatus });
-                }}
-                minWidth={150}
-                writeResources={['write:::case-management/case-overview/*']}
-              >
-                <div>
-                  {humanizeConstant(
-                    (draft.done ?? 'NOT_STARTED') === 'NOT_STARTED' ? 'SELECT_STATUS' : draft.done,
-                  )}
-                </div>
-              </Dropdown>
-            );
-          }
-          return <>{item.done === 'NOT_STARTED' ? '-' : humanizeConstant(item.done)}</>;
-        },
+        type: CHECKLIST_STATUS_TYPE as any,
       }),
     ]);
 
     if (qaModeSet) {
       columns.push(
-        helper.display({
+        helper.simple<'qaStatus'>({
           title: 'QA status',
-          id: 'qaStatus',
+          key: 'qaStatus',
           defaultWidth: 220,
-          render: (item, context) => {
-            const rowApi = context.rowApi;
-            let label = !alert.ruleQaStatus ? 'Select status' : '-';
-            switch (item?.qaStatus) {
-              case 'PASSED':
-                label = 'Pass';
-                break;
-              case 'FAILED':
-                label = 'Fail';
-                break;
-              case 'NOT_APPLICABLE':
-                label = 'Not applicable';
-                break;
-              default:
-            }
-            if (rowApi?.isEditing) {
-              const draft = (rowApi.getDraft() as ChecklistItem) ?? item;
-              return (
-                <Dropdown<ChecklistStatus>
-                  options={CHECKLIST_STATUSS.map((s) => ({
-                    label:
-                      s === 'NOT_APPLICABLE'
-                        ? 'Not applicable'
-                        : s === 'PASSED'
-                        ? 'Pass'
-                        : s === 'FAILED'
-                        ? 'Fail'
-                        : 'Select status',
-                    value: s,
-                  }))}
-                  arrow={'LINE'}
-                  bordered
-                  onSelect={(e) => {
-                    rowApi.setDraft({ ...draft, qaStatus: e.value });
-                  }}
-                  minWidth={200}
-                  selectedKeys={draft?.qaStatus ? [draft?.qaStatus] : undefined}
-                  writeResources={['write:::case-management/qa/*']}
-                >
-                  <div>{label}</div>
-                </Dropdown>
-              );
-            }
-            return <>{label}</>;
-          },
+          type: QA_STATUS_TYPE as any,
         }),
       );
-      // columns.push(
-      //   helper.simple({
-      //     key: 'comment',
-      //     title: 'Comment',
-      //     type: LONG_TEXT,
-      //     // defaultEditState: true,
-      //   }),
-      // );
       columns.push(
-        helper.display({
-          id: 'comment',
+        helper.simple<'comment'>({
+          key: 'comment',
           title: 'Comment',
-          render(item, context) {
-            const rowApi = context.rowApi;
-            const draft = (rowApi?.getDraft?.() as ChecklistItem) ?? item;
-            if (rowApi?.isEditing) {
-              return (
-                <EditableComment
-                  value={draft.comment}
-                  onChange={(value) => {
-                    rowApi?.setDraft?.({ ...draft, comment: value });
-                  }}
-                  onBlur={() => {
-                    // keep editing until user saves
-                  }}
-                />
-              );
-            }
-            return <div>{item.comment}</div>;
-          },
+          type: COMMENT_TYPE as any,
         }),
       );
       columns.push(
@@ -313,7 +305,7 @@ export default function ChecklistTab(props: Props) {
     }
 
     return columns;
-  }, [qaModeSet, alert.ruleQaStatus, isStatusEditable]);
+  }, [qaModeSet, isStatusEditable]);
 
   return (
     <AsyncResourceRenderer<HydratedChecklist> resource={checklistQueryResult.data}>

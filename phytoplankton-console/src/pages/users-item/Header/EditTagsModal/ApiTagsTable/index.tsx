@@ -3,10 +3,9 @@ import s from './styles.module.less';
 import { UserTag } from '@/apis';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import TextInput from '@/components/library/TextInput';
 import Button from '@/components/library/Button';
-import Select from '@/components/library/Select';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { STRING } from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   tags: UserTag[] | undefined;
@@ -36,79 +35,17 @@ function ApiTagsTable(props: Props) {
 
   const helper = new ColumnHelper<Item>();
   const columns = helper.list([
-    helper.display({
+    helper.simple<'key'>({
       title: 'Key',
-      tooltip: `Use tag keys defined in settings to add new tags for a ${settings.userAlias}.`,
-      render: (item, context) => {
-        const rowApi = context.rowApi;
-        if (rowApi?.isCreateRow) {
-          const draft = rowApi.getDraft() as UserTag;
-          const availableKeys = (settings.consoleTags ?? [])
-            .filter((tag) => !(tags ?? []).some((t) => t.key === tag.key))
-            .map((tag) => ({ label: tag.key, value: tag.key }));
-          return (
-            <Select
-              mode="SINGLE"
-              value={draft.key}
-              onChange={(e) => rowApi.setDraft({ ...draft, key: e ?? '' })}
-              options={availableKeys}
-            />
-          );
-        } else {
-          return <>{item.key}</>;
-        }
-      },
+      key: 'key',
+      type: STRING as any,
       defaultWidth: 300,
+      tooltip: `Use tag keys defined in settings to add new tags for a ${settings.userAlias}.`,
     }),
-    helper.display({
+    helper.simple<'value'>({
       title: 'Value',
-      render: (item, context) => {
-        const rowApi = context.rowApi;
-        const tagDefs = settings.consoleTags ?? [];
-        if (rowApi?.isCreateRow) {
-          const draft = rowApi.getDraft() as UserTag;
-          const tagDetails = tagDefs.find((t) => t.key === draft.key);
-          return tagDetails?.type === 'ENUM' ? (
-            <Select
-              value={draft.value}
-              mode="SINGLE"
-              options={
-                tagDetails?.options?.map((option) => ({ label: option, value: option })) ?? []
-              }
-              onChange={(e) => rowApi.setDraft({ ...draft, value: e ?? '' })}
-            />
-          ) : (
-            <TextInput
-              value={draft.value}
-              onChange={(e) => rowApi.setDraft({ ...draft, value: e ?? '' })}
-            />
-          );
-        } else {
-          const rowApi = context.rowApi;
-          const draft = (rowApi?.getDraft?.() as UserTag) ?? (item as UserTag);
-          const isEditing = rowApi?.isEditing ?? false;
-          const tagDetails = tagDefs.find((t) => t.key === draft?.key);
-          return isEditing ? (
-            tagDetails?.type === 'ENUM' ? (
-              <Select
-                value={draft.value}
-                mode="SINGLE"
-                options={
-                  tagDetails?.options?.map((option) => ({ label: option, value: option })) ?? []
-                }
-                onChange={(e) => rowApi?.setDraft?.({ ...draft, value: e ?? '' })}
-              />
-            ) : (
-              <TextInput
-                value={draft.value}
-                onChange={(e) => rowApi?.setDraft?.({ ...draft, value: e ?? '' })}
-              />
-            )
-          ) : (
-            <>{item.value}</>
-          );
-        }
-      },
+      key: 'value',
+      type: STRING as any,
       defaultWidth: 400,
     }),
     helper.display({

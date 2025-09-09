@@ -7,12 +7,13 @@ import Button from '@/components/library/Button';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import TextInput from '@/components/library/TextInput';
 import Alert from '@/components/library/Alert';
 import { useHasResources } from '@/utils/user-utils';
 import { ConsoleTag, ConsoleTagTypeEnum } from '@/apis';
 import Select from '@/components/library/Select';
 import RadioGroup from '@/components/ui/RadioGroup';
+import { ColumnDataType } from '@/components/library/Table/types';
+import { STRING } from '@/components/library/Table/standardDataTypes';
 
 interface CommonItem {
   rowKey: string;
@@ -31,77 +32,64 @@ interface NewItem extends CommonItem {
 
 type Item = ExistingItem | NewItem;
 
+const TAG_TYPE: ColumnDataType<ConsoleTagTypeEnum, Item> = {
+  render: (value) => <>{value}</>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <RadioGroup
+        value={state}
+        isDisabled={false}
+        orientation="HORIZONTAL"
+        onChange={(value) => {
+          context.edit.onConfirm(value as ConsoleTagTypeEnum);
+        }}
+        options={[
+          { value: 'STRING', label: 'String' },
+          { value: 'ENUM', label: 'Enum' },
+        ]}
+      />
+    );
+  },
+};
+
+const TAG_OPTIONS: ColumnDataType<string[] | undefined, Item> = {
+  render: (value, { item }) =>
+    (item as Item).tagType === 'ENUM' ? <>{value?.join(', ')}</> : <>-</>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    const draft = context.item as Item;
+    if ((draft as Item).tagType !== 'ENUM') {
+      return <>-</>;
+    }
+    const options = (state ?? []).map((option) => ({ label: option, value: option }));
+    return (
+      <Select
+        mode="MULTIPLE"
+        allowNewOptions
+        isDisabled={false}
+        options={options}
+        value={state}
+        onChange={(newValue) => context.edit.onConfirm(newValue ?? [])}
+      />
+    );
+  },
+};
+
 const helper = new ColumnHelper<Item>();
 const columns = helper.list([
-  helper.display({
-    title: 'Key',
-    defaultWidth: 300,
-    render: (item, context) => {
-      const rowApi = context.rowApi;
-      const draft = (rowApi?.getDraft?.() as Item) ?? item;
-      const canEdit = true;
-      if (rowApi?.isCreateRow) {
-        return (
-          <TextInput
-            value={draft.key}
-            onChange={(e) => rowApi.setDraft({ ...draft, key: e ?? '' } as Item)}
-            isDisabled={!canEdit}
-          />
-        );
-      } else {
-        return <>{item.key}</>;
-      }
-    },
-  }),
-  helper.display({
+  helper.simple<'key'>({ title: 'Key', key: 'key', type: STRING as any, defaultWidth: 300 }),
+  helper.simple<'tagType'>({
     title: 'Type',
+    key: 'tagType',
+    type: TAG_TYPE as any,
     defaultWidth: 300,
-    render: (item, context) => {
-      const rowApi = context.rowApi;
-      const draft = (rowApi?.getDraft?.() as Item) ?? item;
-
-      return (
-        <RadioGroup
-          value={draft.tagType}
-          isDisabled={!rowApi?.isCreateRow}
-          orientation="HORIZONTAL"
-          onChange={(value) => {
-            rowApi?.setDraft?.({ ...draft, tagType: value as ConsoleTagTypeEnum } as Item);
-          }}
-          options={[
-            { value: 'STRING', label: 'String' },
-            { value: 'ENUM', label: 'Enum' },
-          ]}
-        />
-      );
-    },
   }),
-  helper.display({
+  helper.simple<'options'>({
     title: 'Options',
+    key: 'options',
+    type: TAG_OPTIONS as any,
     defaultWidth: 300,
-    render: (item, context) => {
-      const rowApi = context.rowApi;
-      const draft = (rowApi?.getDraft?.() as Item) ?? item;
-      const canEdit = true;
-      if (rowApi?.isCreateRow && draft.tagType === 'ENUM') {
-        return (
-          <Select
-            mode="MULTIPLE"
-            allowNewOptions
-            isDisabled={!rowApi?.isCreateRow || !canEdit}
-            options={
-              item.options?.map((option) => ({
-                label: option,
-                value: option,
-              })) ?? []
-            }
-            value={draft.options}
-            onChange={(e) => rowApi?.setDraft?.({ ...draft, options: e ?? [] } as Item)}
-          />
-        );
-      }
-      return item.tagType === 'ENUM' ? <>{item.options?.join(', ')}</> : <>-</>;
-    },
   }),
   helper.display({
     title: 'Action',

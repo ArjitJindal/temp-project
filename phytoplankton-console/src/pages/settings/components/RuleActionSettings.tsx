@@ -17,8 +17,6 @@ interface TableItem {
   actionAlias: string | undefined;
 }
 
-// externalState removed
-
 const columnHelper = new ColumnHelper<TableItem>();
 
 export const RuleActionSettings: React.FC = () => {
