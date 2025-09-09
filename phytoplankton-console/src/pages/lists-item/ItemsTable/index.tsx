@@ -37,7 +37,7 @@ import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
-import { STRING } from '@/components/library/Table/standardDataTypes';
+import { NUMBER, DATE, STRING } from '@/components/library/Table/standardDataTypes';
 import { download } from '@/utils/browser';
 
 interface ExistedTableItemData {
@@ -475,7 +475,11 @@ function useColumns(options: {
           helper.simple<`meta.${string}`>({
             title: column.key || '',
             key: `meta.${column.key || ''}` as `meta.${string}`,
-            type: STRING,
+            type: (column.type === 'NUMBER'
+              ? NUMBER
+              : column.type === 'DATE'
+              ? DATE
+              : STRING) as any,
           }),
         ) || [];
 
