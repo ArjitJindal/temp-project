@@ -9,6 +9,7 @@ import FinancialDetailsCard from './FinancialDetailsCard';
 import MerchantCategoryCodeCard from './MerchantCategoryCodeCard';
 import TransactionAndPaymentMethodLimits from './TransactionAndPaymentMethodLimits';
 import LinkedEntitiesTable from './LinkedEntitiesTable';
+import MetaData from './MetaData';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
 import { Comment, InternalBusinessUser } from '@/apis';
 import { CommentType } from '@/utils/user-utils';
@@ -26,6 +27,11 @@ export default function LegalEntityDetails(props: Props) {
       <EntityInfoGrid.Cell>
         <GeneralDetailsCard user={user} />
       </EntityInfoGrid.Cell>
+      {user.metaData && (
+        <EntityInfoGrid.Cell>
+          <MetaData user={user} />
+        </EntityInfoGrid.Cell>
+      )}
       <EntityInfoGrid.Cell>
         <EntityInfoGrid.ColumnGroup
           childrens={[
