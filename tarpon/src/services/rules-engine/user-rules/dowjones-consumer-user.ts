@@ -10,6 +10,7 @@ import {
   GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   IS_ACTIVE_SCHEMA,
   PARTIAL_MATCH_SCHEMA,
+  SCREENING_PROFILE_ID_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -41,6 +42,7 @@ export type DowJonesConsumerUserRuleParameters = {
   stopwords?: string[]
   isActive?: boolean
   partialMatch?: boolean
+  screeningProfileId?: string
 }
 
 export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerUserRuleParameters> {
@@ -70,6 +72,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         partialMatch: PARTIAL_MATCH_SCHEMA,
+        screeningProfileId: SCREENING_PROFILE_ID_OPTIONAL_SCHEMA(),
       },
       required: ['fuzzinessRange', 'fuzzinessSetting'],
     }
@@ -86,6 +89,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       stopwords,
       isActive,
       partialMatch,
+      screeningProfileId,
     } = this.parameters
     const user = this.user as User
     if (
@@ -148,6 +152,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         ...getStopwordSettings(stopwords),
         ...getIsActiveParameters(screeningTypes, isActive),
         ...getPartialMatchParameters(partialMatch),
+        ...(screeningProfileId ? { screeningProfileId } : {}),
       },
       hitContext,
       undefined

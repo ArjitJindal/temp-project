@@ -551,7 +551,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       this.pepSourceToEntityCountPerson.set(displayName, currentCount + 1)
     }
     const sourceName = normalizeSource(displayName)
-    this.sourceNameToHash.set(sourceName, generateHashFromString(sourceName))
+    this.sourceNameToHash.set(
+      sourceName,
+      generateHashFromString(sourceName, 16)
+    )
     if (associations.length) {
       await repo.saveAssociations(this.provider(), associations, version)
     }
@@ -972,7 +975,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
                 mediaSources.push({
                   category: category,
                   createdAt: Date.now(),
-                  internalId: generateHashFromString(category),
+                  internalId: generateHashFromString(category, 16),
                 })
               }
             }
@@ -1263,7 +1266,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               mediaSources.push({
                 category: category,
                 createdAt: Date.now(),
-                internalId: generateHashFromString(category),
+                internalId: generateHashFromString(category, 16),
               })
             }
           }
@@ -1452,7 +1455,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           const normalisedSourceName = name ? normalizeSource(name) : undefined
           let internalId: string | undefined
           if (normalisedSourceName) {
-            const hash = generateHashFromString(normalisedSourceName)
+            const hash = generateHashFromString(normalisedSourceName, 16)
             this.sourceNameToHash.set(normalisedSourceName, hash)
             internalId = hash
           }
@@ -1507,7 +1510,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         const displayName = LEVEL_TIER_MAP[occupation.rank]
         const sourceName = normalizeSource(displayName)
-        const internalId = generateHashFromString(sourceName)
+        const internalId = generateHashFromString(sourceName, 16)
 
         // Store the mapping for future use
         this.sourceNameToHash.set(sourceName, internalId)
