@@ -21,24 +21,24 @@ export interface EditContext<T> {
 export interface ItemContext<Item> {
   item: Item;
   edit: EditContext<Item>;
-  rowApi?: RowEditApi<Item>;
+  rowApi?: PublicRowEditApi;
 }
 
 export interface CellContext<Value, Item> {
   value: Value;
   item: Item;
-  rowApi?: RowEditApi<Item>;
+  rowApi?: PublicRowEditApi;
 }
 
 export interface CellEditContext<Value, Item> extends CellContext<Value, Item> {
   edit: EditContext<Value | undefined>;
 }
 
-export interface RowEditApi<Item> {
+export interface PublicRowEditApi {
   isEditing: boolean;
   isCreateRow?: boolean;
-  getDraft: () => Item;
-  setDraft: (newValue: Item) => void;
+  getDraft: () => unknown;
+  setDraft: (newValue: unknown) => void;
   startEdit: () => void;
   cancelEdit: () => void;
   save: () => void | Promise<void>;
@@ -175,14 +175,14 @@ export interface DataColumn extends BaseColumn {
 export interface SimpleColumn<Item extends object, Accessor extends FieldAccessor<Item>>
   extends DataColumn {
   key: Accessor;
-  type?: FullColumnDataType<NonNullable<DeepValue<Item, Accessor>>, Item>;
+  type?: FullColumnDataType<NonNullable<DeepValue<Item, Accessor>>, unknown>;
   showFilterByDefault?: boolean;
 }
 
 export interface DerivedColumn<Item extends object, Value = unknown> extends DataColumn {
   // value: (item: Item, context: ItemContext<Item>) => Value | undefined;
   value: (item: Item) => Value | undefined;
-  type?: FullColumnDataType<Value, Item>;
+  type?: FullColumnDataType<Value, unknown>;
 }
 
 export type LeafColumn<T extends object> =
