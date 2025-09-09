@@ -159,7 +159,38 @@ export default function (): JSX.Element {
           formatSeries={(value) => {
             return `${value} (Series)`;
           }}
-        />{' '}
+        />
+      </UseCase>
+      <UseCase title={'Line with vertical reference lines'}>
+        <LineChart
+          height={height}
+          data={skeletonMode ? loading() : success(LINE_DATA)}
+          colors={uniq(LINE_DATA.map(({ series }) => series)).reduce(
+            (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
+            {},
+          )}
+          formatX={(value) => {
+            return `${value} (X)`;
+          }}
+          formatY={(value) => {
+            return `${value.toFixed(2)} (Y)`;
+          }}
+          formatSeries={(value) => {
+            return `${value} (Series)`;
+          }}
+          verticalLines={[
+            {
+              xValue: dayjs().utc().add(30, 'day').format('YYYY/MM/DD'),
+              color: '#FF6B6B',
+              label: 'Important event 1',
+            },
+            {
+              xValue: dayjs().utc().add(60, 'day').format('YYYY/MM/DD'),
+              color: '#4ECDC4',
+              label: 'Important event 2',
+            },
+          ]}
+        />
       </UseCase>
       <UseCase title={'Stacked column'}>
         {([state, setState]) => (

@@ -16,6 +16,7 @@ import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
 import { CounterRepository } from '../counter/repository'
 import { WorkflowService } from '../workflow'
+import { shouldSkipFirstApprovalStep } from '../workflow/approval-utils'
 import { VersionHistoryService } from '../version-history'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import {
@@ -855,19 +856,69 @@ export class RiskService {
       updatedAt: Date.now(),
     }
 
-    // Create the approval object
+    const proposerId = getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER
+
+    // Check if the proposer should skip the first approval step
+    const autoSkipResult = await shouldSkipFirstApprovalStep(
+      proposerId,
+      workflowDefinition,
+      this.tenantId,
+      this.dynamoDb
+    )
+
+    if (autoSkipResult.isAutoApproved) {
+      // Single step workflow where proposer is the first approver - auto-approve
+      console.log(
+        `Auto-approving risk level change for ${id} - proposer ${proposerId} has first approver role in single-step workflow`
+      )
+
+      // Apply the risk level changes directly
+      await this.createOrUpdateRiskClassificationConfig(
+        riskClassificationConfig.classificationValues,
+        comment
+      )
+
+      // Return a mock approval object indicating the change was auto-approved
+      const autoApproval: RiskClassificationConfigApproval = {
+        riskClassificationConfig,
+        comment,
+        workflowRef,
+        approvalStatus: 'APPROVED',
+        approvalStep: 0,
+        createdAt: Date.now(),
+        createdBy: proposerId,
+      }
+
+      return {
+        entities: [
+          {
+            newImage: autoApproval,
+            entityId: 'RISK_CLASSIFICATION_APPROVAL',
+          },
+        ],
+        result: autoApproval,
+      }
+    }
+
+    // Either no auto-skip or multi-step workflow - create pending approval
     const approval: RiskClassificationConfigApproval = {
       riskClassificationConfig,
       comment,
       workflowRef,
       approvalStatus: 'PENDING',
-      approvalStep: 0,
+      approvalStep: autoSkipResult.startingStep,
       createdAt: Date.now(),
-      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+      createdBy: proposerId,
     }
 
     // Store the pending approval
     await this.riskRepository.setPendingRiskClassificationConfig(approval)
+
+    if (autoSkipResult.shouldSkip && !autoSkipResult.isAutoApproved) {
+      console.log(
+        `Skipped first approval step for risk level change ${id} - proposer ${proposerId} has first approver role, starting at step ${autoSkipResult.startingStep}`
+      )
+    }
 
     return {
       entities: [
@@ -1183,16 +1234,62 @@ export class RiskService {
       updatedAt: Date.now(),
     }
 
-    // Create the approval object
+    const proposerId = getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER
+
+    // Check if the proposer should skip the first approval step
+    const autoSkipResult = await shouldSkipFirstApprovalStep(
+      proposerId,
+      workflowDefinition,
+      this.tenantId,
+      this.dynamoDb
+    )
+
+    if (autoSkipResult.isAutoApproved) {
+      // Single step workflow where proposer is the first approver - auto-approve
+      console.log(
+        `Auto-approving risk factor change for ${riskFactorId} - proposer ${proposerId} has first approver role in single-step workflow`
+      )
+
+      // Perform the appropriate update operation based on the action
+      if (action === 'delete') {
+        await this.deleteRiskFactor(riskFactorId)
+      } else if (action === 'create' || action === 'update') {
+        await this.createOrUpdateRiskFactor(riskFactorConfig, riskFactorId)
+      }
+
+      // Return a mock approval object indicating the change was auto-approved
+      const autoApproval: RiskFactorApproval = {
+        action,
+        riskFactor: riskFactorConfig,
+        comment,
+        workflowRef,
+        approvalStatus: 'APPROVED',
+        approvalStep: 0,
+        createdAt: Date.now(),
+        createdBy: proposerId,
+      }
+
+      return {
+        entities: [
+          {
+            newImage: autoApproval,
+            entityId: 'RISK_FACTORS_APPROVAL',
+          },
+        ],
+        result: autoApproval,
+      }
+    }
+
+    // Either no auto-skip or multi-step workflow - create pending approval
     const approval: RiskFactorApproval = {
       action,
       riskFactor: riskFactorConfig,
       comment,
       workflowRef,
       approvalStatus: 'PENDING',
-      approvalStep: 0,
+      approvalStep: autoSkipResult.startingStep,
       createdAt: Date.now(),
-      createdBy: getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER,
+      createdBy: proposerId,
     }
 
     // Store the pending approval
@@ -1202,6 +1299,12 @@ export class RiskService {
       riskFactorId,
       approval
     )
+
+    if (autoSkipResult.shouldSkip && !autoSkipResult.isAutoApproved) {
+      console.log(
+        `Skipped first approval step for risk factor change ${riskFactorId} - proposer ${proposerId} has first approver role, starting at step ${autoSkipResult.startingStep}`
+      )
+    }
 
     return {
       entities: [

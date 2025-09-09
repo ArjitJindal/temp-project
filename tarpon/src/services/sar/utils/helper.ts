@@ -1,4 +1,5 @@
 import { ReportGenerator } from '../generators'
+import { AuSmrReportGenerator } from '../generators/AU/SMR'
 import { KenyaSARReportGenerator } from '@/services/sar/generators/KE/SAR'
 import { UsSarReportGenerator } from '@/services/sar/generators/US/SAR'
 import { UsCtrReportGenerator } from '@/services/sar/generators/US/CTR'
@@ -10,6 +11,7 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { ReportSubjectType } from '@/@types/openapi-internal/ReportSubjectType'
 
 const reportGenerators = [
+  AuSmrReportGenerator,
   CanadaStrReportGenerator,
   KenyaSARReportGenerator,
   LithuaniaSTRReportGenerator,

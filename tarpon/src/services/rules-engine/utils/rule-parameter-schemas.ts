@@ -906,11 +906,16 @@ export const SCREENING_PROFILE_ID_SCHEMA = (options?: SchemaOptions) =>
         subtype: 'SCREENING_PROFILE_ID',
       },
       {
-        requiredFeatures: ['ACURIS'],
+        requiredFeatures: ['ACURIS', 'DOW_JONES'],
       }
     ),
     title: 'Screening profile',
     description: 'Select the screening profile to be used for the screening',
+  } as const)
+export const SCREENING_PROFILE_ID_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...SCREENING_PROFILE_ID_SCHEMA(options),
+    nullable: true,
   } as const)
 export const IS_ACTIVE_SCHEMA = {
   type: 'boolean',

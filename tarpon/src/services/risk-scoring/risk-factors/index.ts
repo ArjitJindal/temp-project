@@ -173,7 +173,10 @@ import {
 } from './transaction/transaction-type'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
-import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import {
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValuesTargetIterableParameterEnum,
+} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { RiskParameterValueAmountRange } from '@/@types/openapi-internal/RiskParameterValueAmountRange'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -549,12 +552,20 @@ export function createDefaultRiskValues(
 export async function extractParamValues(
   param: RiskFactorParameter,
   riskData: LogicData,
-  type: RiskEntityType
+  type: RiskEntityType,
+  targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum
 ) {
   logger.debug(DERIVED_PARAM_LIST(type === 'TRANSACTION' ? type : 'USER'))
   if (
     !DERIVED_PARAM_LIST(type === 'TRANSACTION' ? type : 'USER').includes(param)
   ) {
+    if (
+      targetIterableParameter &&
+      type === 'BUSINESS' &&
+      riskData.type === 'USER'
+    ) {
+      return riskData.user[param].map((p) => get(p, targetIterableParameter))
+    }
     return get(
       riskData.type === 'TRANSACTION' ? riskData.transaction : riskData.user,
       param

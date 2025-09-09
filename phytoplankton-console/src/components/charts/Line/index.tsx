@@ -7,7 +7,7 @@ import { localPoint } from '@visx/event';
 import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import cn from 'clsx';
 import SeriesTooltip from '../shared/SeriesTooltip';
-import { LineData } from './types';
+import { LineData, VerticalReferenceLine } from './types';
 import s from './index.module.less';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
 import { TooltipData, useColorScale, useScales } from '@/components/charts/Line/helpers';
@@ -36,6 +36,7 @@ interface Props<X extends StringLike, Series extends StringLike> {
   formatX?: Formatter<X>;
   formatY?: Formatter<number>;
   formatSeries?: Formatter<Series>;
+  verticalLines?: VerticalReferenceLine<X>[];
 }
 
 export default function LineChart<X extends StringLike, Series extends StringLike>(
@@ -49,6 +50,7 @@ export default function LineChart<X extends StringLike, Series extends StringLik
     formatX = DEFAULT_FORMATTER,
     formatY = DEFAULT_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
+    verticalLines = [],
   } = props;
 
   const showSkeleton = isLoading(data) && getOr(data, null) == null;
@@ -62,6 +64,12 @@ export default function LineChart<X extends StringLike, Series extends StringLik
     }),
     showSkeleton ? SKELETON_DATA : [],
   );
+
+  const formattedVerticalLines = verticalLines.map((line) => ({
+    xValue: formatX(line.xValue),
+    color: line.color,
+    label: line.label,
+  }));
 
   const colorScale = useColorScale(dataValue, colors);
 
@@ -77,6 +85,7 @@ export default function LineChart<X extends StringLike, Series extends StringLik
           colors={colors}
           showSkeleton={showSkeleton}
           formatY={formatY}
+          verticalLines={formattedVerticalLines}
         />
       )}
       renderLegend={() => (
@@ -93,8 +102,9 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
   paddings?: Paddings;
   showSkeleton?: boolean;
   formatY: (value: number) => string;
+  verticalLines?: VerticalReferenceLine<string>[];
 }) {
-  const { data, size, colors, showSkeleton = false, formatY } = props;
+  const { data, size, colors, showSkeleton = false, formatY, verticalLines = [] } = props;
   const colorScale = useColorScale(data, colors);
   const { scales, paddings } = useScales<X, Series>(data, size, DEFAULT_PADDINGS);
   const { xScale, yScale } = scales;
@@ -149,6 +159,37 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
     zIndex: 9999,
   };
 
+  const tooltipContent =
+    tooltipOpen && tooltipData
+      ? (() => {
+          const verticalLine = verticalLines.find(
+            (line) => line.xValue === tooltipData.xValue.toString(),
+          );
+
+          if (verticalLine && verticalLine.label) {
+            return (
+              <div className={s.verticalLineTooltip}>
+                <div className={s.verticalLineTooltipDate}>{verticalLine.xValue}</div>
+                <div>{verticalLine.label}</div>
+              </div>
+            );
+          }
+
+          return (
+            <SeriesTooltip
+              title={tooltipData.xValue.toString()}
+              items={data
+                .filter((x) => highlightedItems.includes(x.xValue.toString()))
+                .map((x) => ({
+                  color: x.series ? colorScale(x.series) : undefined,
+                  label: x.series?.toString() ?? '',
+                  value: formatY(x.yValue),
+                }))}
+            />
+          );
+        })()
+      : null;
+
   return (
     <>
       <svg
@@ -164,6 +205,42 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
             x={tooltipData ? (xScale(tooltipData.xValue) ?? 0) - 1 : 0}
             height={innerHeight}
           />
+
+          {verticalLines.map((line, index) => {
+            const x = xScale(line.xValue as unknown as X) ?? 0;
+            return (
+              <React.Fragment key={`vertical-line-${index}`}>
+                <line
+                  x1={x}
+                  y1={0}
+                  x2={x}
+                  y2={innerHeight}
+                  stroke={line.color}
+                  strokeWidth={2}
+                  strokeDasharray="5,5"
+                  className={line.label ? s.verticalLineWithLabel : s.verticalLineWithoutLabel}
+                  onMouseEnter={(event) => {
+                    if (line.label) {
+                      const eventSvgCoords = localPoint(event);
+                      if (eventSvgCoords) {
+                        showTooltip({
+                          tooltipData: { xValue: line.xValue as unknown as X },
+                          tooltipTop: eventSvgCoords.y,
+                          tooltipLeft: eventSvgCoords.x,
+                        });
+                      }
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (line.label) {
+                      hideTooltip();
+                    }
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
+
           {Object.entries(lines).map(([key, lineData]) => {
             const stroke = showSkeleton
               ? COLORS_V2_SKELETON_COLOR
@@ -239,16 +316,7 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
           style={tooltipStyles}
           className={s.tooltip}
         >
-          <SeriesTooltip
-            title={tooltipData.xValue.toString()}
-            items={data
-              .filter((x) => highlightedItems.includes(x.xValue.toString()))
-              .map((x) => ({
-                color: x.series ? colorScale(x.series) : undefined,
-                label: x.series?.toString() ?? '',
-                value: formatY(x.yValue),
-              }))}
-          />
+          {tooltipContent}
         </TooltipInPortal>
       )}
     </>

@@ -216,21 +216,23 @@ const RuleConfigurationForm = (
             : []),
         ],
       },
-      ...(!rule?.tags?.includes('DYNAMIC')
-        ? [
-            {
-              key: RULE_PARAMETERS_STEP,
-              title: 'Rule parameters',
-              isUnfilled:
-                validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) !=
-                null,
-              description: 'Configure filters & risk thresholds that are specific to this rule',
-              tabs: isRiskLevelsEnabled
-                ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
-                : [{ key: 'rule_specific_parameters', title: 'Rule-specific parameters' }],
-            },
-          ]
-        : []),
+      {
+        key: RULE_PARAMETERS_STEP,
+        title: 'Rule parameters',
+        isUnfilled:
+          validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
+        description: rule?.tags?.includes('DYNAMIC')
+          ? 'Rule parameters are system managed'
+          : 'Configure filters & risk thresholds that are specific to this rule',
+        tabs: isRiskLevelsEnabled
+          ? [
+              {
+                key: 'risk_based_thresholds',
+                title: rule?.tags?.includes('DYNAMIC') ? 'Rule actions' : 'Risk-based thresholds',
+              },
+            ]
+          : [{ key: 'rule_specific_parameters', title: 'Rule-specific parameters' }],
+      },
     ],
     [
       fieldValidators.basicDetailsStep,
@@ -241,10 +243,10 @@ const RuleConfigurationForm = (
       formState?.ruleParametersStep,
       simulationMode,
       rule?.type,
-      rule?.tags,
       isRiskLevelsEnabled,
       isAlertCreationEnabled,
       settings.userAlias,
+      rule?.tags,
     ],
   );
 
@@ -371,7 +373,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
       ...RULE_PARAMETERS_STEP_INITIAL_VALUES,
     };
     const defaultParams = { ...rule?.defaultParameters };
-    if (useTokenizedDefault) {
+    if (useTokenizedDefault && !rule?.tags?.includes('DYNAMIC')) {
       defaultParams.fuzzinessSetting = 'TOKENIZED_SIMILARITY_MATCHING';
     }
     if (isRiskLevelsEnabled) {
@@ -429,5 +431,6 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
     rule?.defaultParameters,
     rule?.defaultRiskLevelActions,
     rule?.defaultAction,
+    rule?.tags,
   ]);
 }

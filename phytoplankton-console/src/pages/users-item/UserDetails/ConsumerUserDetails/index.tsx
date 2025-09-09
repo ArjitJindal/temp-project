@@ -1,6 +1,7 @@
 import Attachments from '../Attachments';
 import LinkedEntitiesTable from '../BusinessUserDetails/LegalEntityDetails/LinkedEntitiesTable';
 import GeneralDetails from './GeneralDetails';
+import MetaData from './MetaData';
 import LegalDocuments from './LegalDocuments';
 import ContactDetails from '@/pages/users-item/UserDetails/shared/ContactDetailsCard';
 import ExpectedIncome from '@/pages/users-item/UserDetails/shared/ExpectedIncome';
@@ -26,6 +27,11 @@ export default function ConsumerUserDetails(props: Props) {
       <EntityInfoGrid.Cell columnSpan={1}>
         <GeneralDetails user={user} columns={1} />
       </EntityInfoGrid.Cell>
+      {user?.metaData && (
+        <EntityInfoGrid.Cell columnSpan={1}>
+          <MetaData user={user} columns={1} />
+        </EntityInfoGrid.Cell>
+      )}
       <EntityInfoGrid.Cell columnSpan={1}>
         <EntityInfoGrid.ColumnGroup
           columnSpan={1}
@@ -37,36 +43,28 @@ export default function ConsumerUserDetails(props: Props) {
         />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={1}>
-        <EntityInfoGrid.ColumnGroup
-          columnSpan={1}
-          childrens={[
-            <ContactDetails key="contact-details" contactDetails={user.contactDetails} />,
-            <EmploymentDetails key="employment-details" user={user} />,
-          ]}
-        />
+        <ContactDetails key="contact-details" contactDetails={user.contactDetails} />,
+      </EntityInfoGrid.Cell>
+
+      <EntityInfoGrid.Cell columnSpan={1}>
+        <EmploymentDetails key="employment-details" user={user} />,
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={1} maxHeight={350}>
         <Tags tags={user.tags ?? []} />
       </EntityInfoGrid.Cell>
-      <EntityInfoGrid.Cell columnSpan={1}>
-        <EntityInfoGrid.ColumnGroup
-          columnSpan={1}
-          maxHeight={350}
-          childrens={[
-            <Attachments
-              attachments={user.attachments ?? []}
-              userId={user.userId}
-              personId={user.userId}
-              currentUserId={currentUser.userId}
-              personType="CONSUMER"
-              onNewComment={onNewComment}
-              key="attachments"
-            />,
-          ]}
-        />
-      </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={1} maxHeight={350}>
         <LegalDocuments legalDocuments={user.legalDocuments ?? []} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell columnSpan={1}>
+        <Attachments
+          attachments={user.attachments ?? []}
+          userId={user.userId}
+          personId={user.userId}
+          currentUserId={currentUser.userId}
+          personType="CONSUMER"
+          onNewComment={onNewComment}
+          key="attachments"
+        />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={3}>
         <SavedPaymentDetails user={user} />

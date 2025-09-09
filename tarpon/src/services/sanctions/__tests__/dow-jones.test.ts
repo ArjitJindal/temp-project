@@ -294,17 +294,14 @@ This company is to an unknown stake owned by OFAC SDN and UK and Canada and Japa
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Canada Related - Ownership Unknown',
               'Special Interest Entity (SIE) - Sanctions Control and Ownership - Japan Related - Ownership Unknown',
             ],
-            aggregatedSourceIds: [
-              '8d582980699dcce7efdb00d2772aba12c464e082db23a45a09096fc66db12075-CURRENT',
-            ],
+            aggregatedSourceIds: ['8d582980699dcce7-CURRENT'],
             mediaSources: [],
             rawResponse: expect.any(Object),
             sanctionsSources: [
               {
                 category: 'CURRENT',
                 createdAt: expect.any(Number),
-                internalId:
-                  '8d582980699dcce7efdb00d2772aba12c464e082db23a45a09096fc66db12075',
+                internalId: '8d582980699dcce7',
                 name: 'OFAC - Specially Designated National List',
                 sourceName: 'ofac - specially designated national list',
               },
