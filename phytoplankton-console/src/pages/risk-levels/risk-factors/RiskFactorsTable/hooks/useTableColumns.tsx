@@ -188,40 +188,44 @@ export function useTableColumns({
 
             if (isSimulation) {
               return (
-                <RuleStatusSwitch
-                  entity={entity}
-                  isDisabled={!canWriteRiskFactors}
-                  type="RISK_FACTOR"
-                  onToggle={(checked) => {
-                    const updatedRiskFactors = simulationRiskFactorsMap[
-                      scopeToRiskEntityType(selectedSection)
-                    ].map((riskFactor) => {
-                      if (riskFactor.id === entity.id) {
-                        return {
-                          ...riskFactor,
-                          status: checked ? 'ACTIVE' : ('INACTIVE' as RuleInstanceStatus),
-                        };
-                      }
-                      return riskFactor;
-                    });
-                    setSimulationRiskFactorsMap({
-                      ...simulationRiskFactorsMap,
-                      [scopeToRiskEntityType(selectedSection)]: updatedRiskFactors,
-                    });
-                  }}
-                />
+                <div className={s.centeredRuleStatusSwitch}>
+                  <RuleStatusSwitch
+                    entity={entity}
+                    isDisabled={!canWriteRiskFactors}
+                    type="RISK_FACTOR"
+                    onToggle={(checked) => {
+                      const updatedRiskFactors = simulationRiskFactorsMap[
+                        scopeToRiskEntityType(selectedSection)
+                      ].map((riskFactor) => {
+                        if (riskFactor.id === entity.id) {
+                          return {
+                            ...riskFactor,
+                            status: checked ? 'ACTIVE' : ('INACTIVE' as RuleInstanceStatus),
+                          };
+                        }
+                        return riskFactor;
+                      });
+                      setSimulationRiskFactorsMap({
+                        ...simulationRiskFactorsMap,
+                        [scopeToRiskEntityType(selectedSection)]: updatedRiskFactors,
+                      });
+                    }}
+                  />
+                </div>
               );
             } else {
               const riskFactor = riskFactors.getById(entity.id) || entity;
               return (
-                <RuleStatusSwitch
-                  entity={riskFactor}
-                  type="RISK_FACTOR"
-                  isDisabled={!isEditEnabled || mode === 'version-history'}
-                  onToggle={(checked) => {
-                    setRiskFactors({ ...riskFactor, status: checked ? 'ACTIVE' : 'INACTIVE' });
-                  }}
-                />
+                <div className={s.centeredRuleStatusSwitch}>
+                  <RuleStatusSwitch
+                    entity={riskFactor}
+                    type="RISK_FACTOR"
+                    isDisabled={!isEditEnabled || mode === 'version-history'}
+                    onToggle={(checked) => {
+                      setRiskFactors({ ...riskFactor, status: checked ? 'ACTIVE' : 'INACTIVE' });
+                    }}
+                  />
+                </div>
               );
             }
           },
