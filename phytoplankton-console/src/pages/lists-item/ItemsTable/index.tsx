@@ -81,6 +81,20 @@ interface Props {
 
 const helper = new ColumnHelper<TableItem>();
 
+function isNewItem(value: unknown): value is NewTableItem {
+  return typeof value === 'object' && value != null && (value as any).type === 'NEW';
+}
+function isExistedItem(value: unknown): value is ExistedTableItem {
+  return typeof value === 'object' && value != null && (value as any).type === 'EXISTED';
+}
+function isNewDraft(value: unknown): value is NewTableItemData {
+  if (typeof value !== 'object' || value == null) {
+    return false;
+  }
+  const v: any = value;
+  return Array.isArray(v.value) && typeof v.reason === 'string' && typeof v.meta === 'object';
+}
+
 const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
   items: [],
   count: 0,
@@ -374,12 +388,17 @@ export default function ItemsTable(props: Props) {
                 },
                 visible: true,
                 position: 'BOTTOM',
-                onSubmit: (newItem) => handleAddItemFromDraft(newItem as NewTableItemData),
+                onSubmit: (newItem: TableItem) => {
+                  if (isNewItem(newItem)) {
+                    handleAddItemFromDraft(newItem);
+                  }
+                },
               }}
               rowEditing={{
-                onSave: (_id, edited) => {
-                  const item = edited as ExistedTableItemData;
-                  setEditUserData(item);
+                onSave: (_id, edited: TableItem) => {
+                  if (isExistedItem(edited)) {
+                    setEditUserData(edited);
+                  }
                   handleSaveItem();
                 },
                 onCancel: () => setEditUserData(null),
@@ -571,16 +590,21 @@ function useColumns(options: {
 
                 const rowApi = context.rowApi;
                 if (rowApi?.isCreateRow) {
-                  const draft = (rowApi?.getDraft?.() as NewTableItemData) ?? entity;
+                  const maybe = rowApi?.getDraft?.();
+                  const draft: NewTableItemData = isNewDraft(maybe)
+                    ? maybe
+                    : isNewItem(entity)
+                    ? entity
+                    : { value: [], reason: '', meta: {} };
                   return (
                     <NewValueInput
                       key={String(isAddUserLoading)}
                       value={draft.value}
                       onChange={(value) => {
-                        rowApi?.setDraft?.({ ...draft, value: value ?? [] } as NewTableItemData);
+                        rowApi?.setDraft?.({ ...draft, value: value ?? [] });
                       }}
                       onChangeMeta={(meta) => {
-                        rowApi?.setDraft?.({ ...draft, meta } as NewTableItemData);
+                        rowApi?.setDraft?.({ ...draft, meta });
                       }}
                       listSubtype={listSubtype}
                       excludeCountries={existingCountryCodes}
@@ -619,8 +643,12 @@ function useColumns(options: {
           render: (entity, context) => {
             const rowApi = context.rowApi;
             if (rowApi?.isCreateRow) {
-              const draft =
-                (rowApi.getDraft?.() as NewTableItemData) ?? (entity as NewTableItemData);
+              const maybe = rowApi.getDraft?.();
+              const draft: NewTableItemData = isNewDraft(maybe)
+                ? maybe
+                : isNewItem(entity)
+                ? entity
+                : { value: [], reason: '', meta: {} };
               const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
                 const key = c.key || '';
                 const val = (draft.meta ?? {})[key];
