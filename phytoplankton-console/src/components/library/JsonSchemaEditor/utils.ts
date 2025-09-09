@@ -56,7 +56,7 @@ export function getOrderedProps(
     })
     .map(([name, schema]) => ({
       isRequired: schema?.nullable !== true && required?.includes(name),
-      name,
+      name: schema?.name ?? name,
       schema,
     }));
   propertiesOrdered.sort((x, y) => keys.indexOf(x.name) - keys.indexOf(y.name));
