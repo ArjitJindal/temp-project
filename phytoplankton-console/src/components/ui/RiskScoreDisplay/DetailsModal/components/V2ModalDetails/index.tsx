@@ -80,6 +80,22 @@ export interface V2RiskBreakDownTableProps {
 
 export function V2RiskBreakDownTable(props: V2RiskBreakDownTableProps) {
   const { components } = props;
+
+  const processValue = (component: RiskScoreComponent) => {
+    const { parameter, value } = component;
+    if (parameter === 'directors' || parameter === 'shareHolders') {
+      if (Array.isArray(value)) {
+        return value.map((item: any) => {
+          if (item?.generalDetails?.countryOfNationality) {
+            return item.generalDetails.countryOfNationality;
+          }
+          return item;
+        });
+      }
+    }
+    return value;
+  };
+
   return (
     <div className={s.table}>
       <Table<TableRow>
@@ -92,7 +108,7 @@ export function V2RiskBreakDownTable(props: V2RiskBreakDownTableProps) {
           items: components.map((component) => ({
             entityType: component.entityType,
             parameter: component.parameter as RiskFactorParameter,
-            value: component.value,
+            value: processValue(component),
             riskScore: component.score,
             weight: component.weight,
             riskLevel: component.riskLevel,

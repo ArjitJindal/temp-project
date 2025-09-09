@@ -285,7 +285,8 @@ export class RiskScoringV8Service {
     const value = await extractParamValues(
       riskFactor.parameter,
       riskData,
-      riskFactor.type
+      riskFactor.type,
+      riskFactor.targetIterableParameter
     )
     return {
       entityType: riskFactor.type,
