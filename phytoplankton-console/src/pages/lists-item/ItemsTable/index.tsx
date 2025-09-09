@@ -77,8 +77,6 @@ interface Props {
   setIsFlatFileProgressLoading: (isLoading: boolean) => void;
 }
 
-// ExternalState removed
-
 const helper = new ColumnHelper<TableItem>();
 
 function isNewItem(value: unknown): value is NewTableItem {

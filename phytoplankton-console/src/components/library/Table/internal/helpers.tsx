@@ -36,7 +36,6 @@ import {
   isSimpleColumn,
   setByFieldAccessor,
 } from '../types';
-// ExternalStateContext removed
 import s from './index.module.less';
 import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
 import { StatePair, Updater, applyUpdater } from '@/utils/state';

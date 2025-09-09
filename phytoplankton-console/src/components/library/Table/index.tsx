@@ -76,7 +76,6 @@ export interface Props<Item extends object, Params extends object = CommonParams
   onReload?: () => void;
   selectedIds?: string[];
   partiallySelectedIds?: string[];
-  // externalState removed
   selectionInfo?: SelectionInfo;
   expandedRowId?: string;
   emptyText?: string;
@@ -867,14 +866,7 @@ function getSizingProps<Item>(
 export default function <Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
-  const {
-    tableId,
-    extraFilters,
-    columns,
-    partiallySelectedIds,
-    // externalState removed
-    selectionInfo,
-  } = props;
+  const { tableId, extraFilters, columns, partiallySelectedIds, selectionInfo } = props;
 
   return (
     <AdditionalContext.Provider value={{ partiallySelectedIds, selectionInfo }}>
