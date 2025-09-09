@@ -54,15 +54,13 @@ export const RULE_ERROR_COUNT_METRIC: Metric = {
   kind: 'CULMULATIVE',
 }
 
+// NOTE: If you are adding new custom metric make sure you always add it in last of the object
 export const CUSTOM_API_USAGE_METRIC_NAMES = {
   TRANSACTION_COUNT_METRIC_NAME: 'TransactionsCount',
   TRANSACTION_EVENTS_COUNT_METRIC_NAME: 'TransactionEventsCount',
   USERS_COUNT_METRIC_NAME: 'UsersCount',
   USER_EVENTS_COUNT_METRIC_NAME: 'UserEventsCount',
   ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME: 'ActiveRuleInstancesCount',
-  CONSUMER_RISK_FACTOR_COUNT_METRIC_NAME: 'ConsumerRiskFactorCount',
-  BUSINESS_RISK_FACTOR_COUNT_METRIC_NAME: 'BusinessRiskFactorCount',
-  TRANSACTION_RISK_FACTOR_COUNT_METRIC_NAME: 'TransactionRiskFactorCount',
   SANCTIONS_SEARCHES_COUNT_METRIC_NAME: 'SanctionsSearchesCount',
   COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC_NAME:
     'ComplyAdvantageSanctionsSearchesCount',
@@ -74,6 +72,9 @@ export const CUSTOM_API_USAGE_METRIC_NAMES = {
   USERS_SCREENING_COUNT_METRIC_NAME: 'UsersScreeningCount',
   TRANSACTIONS_SCREENING_COUNT_METRIC_NAME: 'TransactionsScreeningCount',
   TENANT_SEATS_COUNT_METRIC_NAME: 'TenantSeatsCount',
+  CONSUMER_RISK_FACTOR_COUNT_METRIC_NAME: 'ConsumerRiskFactorCount',
+  BUSINESS_RISK_FACTOR_COUNT_METRIC_NAME: 'BusinessRiskFactorCount',
+  TRANSACTION_RISK_FACTOR_COUNT_METRIC_NAME: 'TransactionRiskFactorCount',
   ALERTS_OPEN_COUNT_METRIC_NAME: 'AlertsOpenCount',
   ALERTS_CLOSED_COUNT_METRIC_NAME: 'AlertsClosedCount',
   REPORTS_COUNT_METRIC_NAME: 'ReportsCount',
