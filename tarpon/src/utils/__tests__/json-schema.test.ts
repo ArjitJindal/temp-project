@@ -149,7 +149,7 @@ describe('generateJsonSchemaFromEntityClass', () => {
           required: ['addressLines'],
         },
       },
-      required: ['method', 'payId', 'endToEndId'],
+      required: ['method'],
     })
   })
 })
