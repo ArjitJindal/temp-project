@@ -214,7 +214,6 @@
     "@fast-csv/format": "^4.3.5",
     "@fast-csv/parse": "^4.3.6",
     "@flagright/lib": "link:../lib",
-    "@fragaria/address-formatter": "^6.5.0",
     "@linear/sdk": "^38.0.0",
     "@maxmind/geoip2-node": "^5.0.0",
     "@mergeapi/merge-sdk-typescript": "^3.0.10",

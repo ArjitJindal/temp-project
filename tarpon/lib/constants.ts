@@ -1,6 +1,6 @@
 import { Config } from '@flagright/lib/config/config'
 import { siloDataTenants } from '@flagright/lib/constants'
-import { stageAndRegion } from '@flagright/lib/utils'
+import { stageAndRegion } from '@flagright/lib/utils/env'
 
 export function getSuffix(): string {
   let suffix = ''

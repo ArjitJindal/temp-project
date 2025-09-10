@@ -127,6 +127,7 @@ async function main() {
         logLevel: 'warning',
         sourcemap: 'external',
         minifyIdentifiers: false,
+        treeShaking: true,
         external: [
           'aws-sdk',
           // Only mark AWS SDK as external for lambdas, not for fargate

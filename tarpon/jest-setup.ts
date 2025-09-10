@@ -4,7 +4,7 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager'
-import axios from 'axios'
+import fetch from 'node-fetch'
 import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
 import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from './test-resources/mocked-currency-exchange-rates'
 import { CurrencyService } from '@/services/currency'
@@ -57,7 +57,7 @@ module.exports = async function () {
     }
   }
   try {
-    await axios.post(
+    await fetch(
       'http://localhost:8123/?query=CREATE%20DATABASE%20IF%20NOT%20EXISTS%20tarpon_test'
     )
   } catch (e) {

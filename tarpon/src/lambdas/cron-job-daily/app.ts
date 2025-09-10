@@ -2,7 +2,7 @@ import { compact } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'
-import axios from 'axios'
+import fetch from 'node-fetch'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import slackify from 'slackify-markdown'
 import { MongoClient } from 'mongodb'
@@ -322,16 +322,20 @@ export async function updateOncallUsers() {
     { name: 'Customer On Call', groupId: CUSTOMER_ON_CALL_GROUP_ID },
   ]
 
-  const schedulesResponse = await axios.get<
-    { escalation_policy: { name: string }; users: { email: string }[] }[]
-  >(`https://www.zenduty.com/api/account/teams/${ZENDUTY_TEAM_ID}/oncall/`, {
-    headers: { Authorization: `Token ${zendutyKey.apiKey}` },
-  })
+  const schedulesResponse = (await fetch(
+    `https://www.zenduty.com/api/account/teams/${ZENDUTY_TEAM_ID}/oncall/`,
+    {
+      headers: { Authorization: `Token ${zendutyKey.apiKey}` },
+    }
+  ).then((res) => res.json())) as {
+    escalation_policy: { name: string }
+    users: { email: string }[]
+  }[]
 
   const slackUsers = await slackClient.users.list({ limit: 1000 })
 
   for (const { name, groupId } of ONCALL_GROUPS) {
-    const oncallEmails = schedulesResponse.data
+    const oncallEmails = schedulesResponse
       .find((schedule) => schedule.escalation_policy.name === name)
       ?.users.map((user) => user.email)
 

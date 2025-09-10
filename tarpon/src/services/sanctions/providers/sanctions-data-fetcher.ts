@@ -12,7 +12,6 @@ import {
   Search_RequestBody,
   Search_Response,
 } from '@opensearch-project/opensearch/api'
-import { CommonOptions, format } from '@fragaria/address-formatter'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
 import {
@@ -59,6 +58,7 @@ import { ask } from '@/utils/llms'
 import { ModelTier } from '@/utils/llms/base-service'
 import { generateHashFromString } from '@/utils/object'
 import { getContext } from '@/core/utils/context-storage'
+import { formatAddress } from '@/utils/address-formatter'
 
 export const OPENSEARCH_NON_PROJECTED_FIELDS = [
   'rawResponse',
@@ -1195,25 +1195,24 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           userAddress.addressLines?.some((line) => line.trim()) &&
           entityAddress.addressLine?.trim()
         ) {
-          const options: CommonOptions & { output: 'array' } = {
+          const options = {
             abbreviate: true,
-            output: 'array',
           }
 
-          const formattedUserAddress = format(
+          const formattedUserAddress = formatAddress(
             {
-              street: userAddress.addressLines.join(', '),
+              streetAddress: userAddress.addressLines,
               country: entityAddress.country,
             },
             options
-          ).join(', ')
-          const formattedEntityAddress = format(
+          )
+          const formattedEntityAddress = formatAddress(
             {
-              street: entityAddress.addressLine,
+              streetAddress: [entityAddress.addressLine],
               country: entityAddress.country,
             },
             options
-          ).join(', ')
+          )
 
           const percentageSimilarity = token_similarity_sort_ratio(
             sanitizeString(formattedUserAddress),

@@ -1,6 +1,8 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import { cloneDeep, omit, uniq } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import omit from 'lodash/omit'
+import uniq from 'lodash/uniq'
 import { StackConstants } from '../constants'
 import { isValidResource } from '@/services/rbac/utils/permissions'
 

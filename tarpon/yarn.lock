@@ -5364,15 +5364,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fragaria/address-formatter@npm:^6.5.0":
-  version: 6.5.0
-  resolution: "@fragaria/address-formatter@npm:6.5.0"
-  dependencies:
-    mustache: "npm:^4.0.0"
-  checksum: f8b3afd285c11c43809ed0679226c450c414b1df8688998faa61c3e4c1bb43bf2c911a22aaf6c6ef0fd23cab969eaf10bab50ea0dbffcbe9b47b554d6b6f6240
-  languageName: node
-  linkType: hard
-
 "@graphql-typed-document-node/core@npm:^3.1.0":
   version: 3.2.0
   resolution: "@graphql-typed-document-node/core@npm:3.2.0"
@@ -20332,15 +20323,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mustache@npm:^4.0.0":
-  version: 4.2.0
-  resolution: "mustache@npm:4.2.0"
-  bin:
-    mustache: bin/mustache
-  checksum: 6e668bd5803255ab0779c3983b9412b5c4f4f90e822230e0e8f414f5449ed7a137eed29430e835aa689886f663385cfe05f808eb34b16e1f3a95525889b05cd3
-  languageName: node
-  linkType: hard
-
 "mute-stream@npm:0.0.8":
   version: 0.0.8
   resolution: "mute-stream@npm:0.0.8"
@@ -23248,7 +23230,6 @@ __metadata:
     "@fast-csv/format": "npm:^4.3.5"
     "@fast-csv/parse": "npm:^4.3.6"
     "@flagright/lib": "link:../lib"
-    "@fragaria/address-formatter": "npm:^6.5.0"
     "@linear/sdk": "npm:^38.0.0"
     "@maxmind/geoip2-node": "npm:^5.0.0"
     "@mergeapi/merge-sdk-typescript": "npm:^3.0.10"
