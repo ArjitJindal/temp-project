@@ -126,7 +126,8 @@ export async function runSanctionsDataFetchJob(
 
     if (
       provider === SanctionsDataProviders.ACURIS &&
-      job.parameters.entityType
+      job.parameters.entityType &&
+      isOpensearchAvailableInRegion()
     ) {
       await sendBatchJobCommand({
         type: 'SCREENING_PROFILE_DATA_FETCH',
