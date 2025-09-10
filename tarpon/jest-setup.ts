@@ -49,7 +49,7 @@ module.exports = async function () {
       try {
         execSync('docker rm local-dynamodb-test', { stdio: [] })
       } catch (e) {
-        //ignore
+        console.log((e as Error).message)
       }
       exec(
         'docker run --name local-dynamodb-test -p 7999:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb'

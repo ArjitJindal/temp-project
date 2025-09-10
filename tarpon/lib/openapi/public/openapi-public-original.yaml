@@ -4841,6 +4841,14 @@ components:
           $ref: '#/components/schemas/Amount'
         network:
           $ref: '#/components/schemas/WalletNetwork'
+        address:
+          $ref: '#/components/schemas/Address'
+        nationality:
+          $ref: '#/components/schemas/CountryCode'
+        dateOfBirth:
+          type: string
+          pattern: ^(\d{4}-\d{2}-\d{2})*$
+          description: Date of birth of the account holder (YYYY-MM-DD)
       required:
         - method
     WalletNetwork:
