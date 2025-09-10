@@ -126,6 +126,6 @@ export const config: Config = {
     deploy: true,
     dataNodes: 3,
     dataNodeInstanceType: 'm7g.medium.search',
-    volumeSize: 10,
+    volumeSize: 20,
   },
 }

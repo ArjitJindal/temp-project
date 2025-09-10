@@ -16,7 +16,6 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import {
-  deleteDocumentsByVersion,
   deleteIndexAfterDataLoad,
   getOpensearchClient,
   isOpensearchAvailableInRegion,
@@ -125,21 +124,6 @@ export async function runSanctionsDataFetchJob(
       )
     }
 
-    if (runFullLoad) {
-      await Promise.all([
-        client
-          .db()
-          .collection(sanctionsCollectionName)
-          .deleteMany({ version: { $ne: version } }),
-        !aliasName
-          ? deleteDocumentsByVersion(
-              opensearchClient,
-              sanctionsCollectionName,
-              version
-            )
-          : undefined,
-      ])
-    }
     if (
       provider === SanctionsDataProviders.ACURIS &&
       job.parameters.entityType
