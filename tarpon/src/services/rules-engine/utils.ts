@@ -413,15 +413,22 @@ type AsyncRuleRecordTransactionEventBatch = {
   destinationUserId?: string
 }
 
+type UserParameters = {
+  lockCraRiskLevel?: boolean
+  lockKycRiskLevel?: boolean
+}
+
 type AsyncRuleRecordUser = {
   type: 'USER'
   userType: UserType
   user: User | Business
 }
+
 export type AsyncRuleRecordUserBatch = {
   type: 'USER_BATCH'
   userType: UserType
   user: User | Business
+  parameters?: UserParameters
 }
 
 type AsyncRuleRecordUserEvent = {
@@ -435,6 +442,7 @@ export type AsyncRuleRecordUserEventBatch = {
   type: 'USER_EVENT_BATCH'
   userType: UserType
   userEvent: ConsumerUserEvent | BusinessUserEvent
+  parameters?: UserParameters
 }
 
 export type AsyncBatchRecord = (

@@ -140,15 +140,24 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
     updateLogMetadata({ userId: record.user.userId })
     await userRulesEngineService.createAndVerifyUser(
       record.user,
-      record.userType === 'CONSUMER'
+      record.userType === 'CONSUMER',
+      record.parameters
     )
   } else if (type === 'USER_EVENT_BATCH') {
     if (record.userType === 'CONSUMER') {
       updateLogMetadata({ userId: record.userEvent.userId })
-      await userRulesEngineService.verifyConsumerUserEvent(record.userEvent)
+      await userRulesEngineService.verifyConsumerUserEvent(
+        record.userEvent,
+        record.parameters?.lockCraRiskLevel,
+        record.parameters?.lockKycRiskLevel
+      )
     } else {
       updateLogMetadata({ userId: record.userEvent.userId })
-      await userRulesEngineService.verifyBusinessUserEvent(record.userEvent)
+      await userRulesEngineService.verifyBusinessUserEvent(
+        record.userEvent,
+        record.parameters?.lockCraRiskLevel,
+        record.parameters?.lockKycRiskLevel
+      )
     }
   }
 }

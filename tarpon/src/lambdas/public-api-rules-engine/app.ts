@@ -451,6 +451,12 @@ export const userEventsHandler = lambdaApi()(
           batchId,
           request.ConsumerUserEventBatchRequest.data
         )
+      const isDrsUpdatable = request.lockCraRiskLevel
+        ? request.lockCraRiskLevel !== 'true'
+        : undefined
+      const lockKrs = request.lockKycRiskLevel
+        ? request.lockKycRiskLevel === 'true'
+        : undefined
       await sendAsyncRuleTasks(
         validatedUserEvents.map((v) => ({
           type: 'USER_EVENT_BATCH',
@@ -458,6 +464,10 @@ export const userEventsHandler = lambdaApi()(
           userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
           batchId,
+          parameters: {
+            lockCraRiskLevel: isDrsUpdatable,
+            lockKycRiskLevel: lockKrs,
+          },
         }))
       )
       return response

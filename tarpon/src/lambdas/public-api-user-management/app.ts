@@ -170,6 +170,13 @@ export const userHandler = lambdaApi()(
           batchId,
           request.UserBatchRequest.data
         )
+      const isDrsUpdatable = request.lockCraRiskLevel
+        ? request.lockCraRiskLevel !== 'true'
+        : undefined
+      const lockKrs = request.lockKycRiskLevel
+        ? request.lockKycRiskLevel === 'true'
+        : undefined
+
       await sendAsyncRuleTasks(
         validatedUsers.map((v) => ({
           type: 'USER_BATCH',
@@ -177,6 +184,10 @@ export const userHandler = lambdaApi()(
           user: v,
           tenantId,
           batchId,
+          parameters: {
+            lockCraRiskLevel: isDrsUpdatable,
+            lockKycRiskLevel: lockKrs,
+          },
         }))
       )
       return response
