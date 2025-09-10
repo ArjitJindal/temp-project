@@ -4947,6 +4947,9 @@ components:
           type: string
           minLength: 1
           description: Account number
+        routingNumber:
+          type: string
+          description: Routing number of the bank
         accountBalance:
           $ref: '#/components/schemas/Amount'
         accountType:
@@ -6325,6 +6328,9 @@ components:
           type: string
         checkIdentifier:
           type: string
+        routingNumber:
+          type: string
+          description: Routing number of the bank
         name:
           type: string
         deliveryStatus:
