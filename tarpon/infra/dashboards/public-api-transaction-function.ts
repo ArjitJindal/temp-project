@@ -1,8 +1,10 @@
+import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import * as cdk from 'aws-cdk-lib'
 import { CfnDashboard } from 'aws-cdk-lib/aws-cloudwatch'
 
 export const createTransactionFunctionPerformanceDashboard = (
-  stack: cdk.Stack
+  stack: cdk.Stack,
+  region?: FlagrightRegion
 ) => {
   const dashboardBody = {
     variables: [
@@ -94,8 +96,12 @@ export const createTransactionFunctionPerformanceDashboard = (
     ],
   }
 
-  new CfnDashboard(stack, 'tarponPublicApiTransactionFunctionDashboard', {
-    dashboardName: `tarponPublicApiTransactionFunctionDashboard`,
-    dashboardBody: JSON.stringify(dashboardBody),
-  })
+  new CfnDashboard(
+    stack,
+    `tarponPublicApiTransactionFunctionDashboard-${region}`,
+    {
+      dashboardName: `tarponPublicApiTransactionFunctionDashboard-${region}`,
+      dashboardBody: JSON.stringify(dashboardBody),
+    }
+  )
 }
