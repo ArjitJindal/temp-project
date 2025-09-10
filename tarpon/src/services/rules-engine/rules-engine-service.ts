@@ -1634,7 +1634,8 @@ export class RulesEngineService {
           publishMetric(RULE_ERROR_COUNT_METRIC, 1, undefined, {
             aggregateOnNamespace: true,
           })
-          logger.error(
+          // silencing this due to noise on sentry
+          logger.info(
             `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`
           )
         }
