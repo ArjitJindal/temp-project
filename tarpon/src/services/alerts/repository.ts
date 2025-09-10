@@ -1173,7 +1173,9 @@ export class AlertsRepository {
   public async validateAlertsQAStatus(
     alertIds: string[]
   ): Promise<Pick<Alert, 'alertId' | 'ruleChecklist'>[]> {
-    if (isConsoleMigrationEnabled()) {
+    // should read from clickhouse only if the tenant is migrated to CH
+    // as we only update checklist status in dynamo when tenant is migrated
+    if ((await this.isTenantMigratedToDynamo) && isConsoleMigrationEnabled()) {
       const clickhouseRepository = await this.getClickhouseAlertRepository()
       return await clickhouseRepository.validateAlertsQAStatus(alertIds)
     }
@@ -1189,7 +1191,14 @@ export class AlertsRepository {
       .project({ 'alerts.alertId': 1, 'alerts.ruleChecklist': 1 })
       .toArray()
 
-    return result.flatMap((caseItem) => caseItem.alerts ?? [])
+    const alertIdsMap: { [alertId: string]: boolean } = {}
+    alertIds.forEach((a) => (alertIdsMap[a] = true))
+
+    // need to remove other alerts from the case object as case object can have other alerts which are not in alertIds
+    return result.flatMap(
+      (caseItem) =>
+        caseItem.alerts.filter((a) => alertIdsMap[a.alertId ?? '']) ?? []
+    )
   }
 
   public async saveComment(

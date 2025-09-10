@@ -1347,9 +1347,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const isPNB = hasFeature('PNB')
     const isClosing = statusUpdateRequest.alertStatus === 'CLOSED'
     const cascadeCaseUpdates = isPNB && !isClosing ? false : true
-    console.log('externalRequest', externalRequest)
     const userId = externalRequest ? API_USER : getContext()?.user?.id
-    console.log('userId', userId)
     const statusChange: CaseStatusChange = {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER

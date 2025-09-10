@@ -1,6 +1,7 @@
 import { ClickHouseClient } from '@clickhouse/client'
 import { intersection, isEmpty } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { InternalServerError } from 'http-errors'
 import { AlertParams } from './repository'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import {
@@ -22,12 +23,18 @@ import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceA
 import { traceable } from '@/core/xray'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
 import { DefaultApiGetAlertsQaSamplingRequest } from '@/@types/openapi-internal/RequestParameters'
+import { logger } from '@/core/logger'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 export interface AlertClickhouse extends Alert {
   caseStatus?: string
 }
 
 type StatusChanges = {
   statusChanges: CaseStatusChange[]
+}
+
+type ClickhouseAlertResponse = Omit<Alert, 'ruleChecklist'> & {
+  ruleChecklist: string[]
 }
 
 // Note: Do not export this variables as they are not used outside this file
@@ -515,21 +522,38 @@ export class ClickhouseAlertRepository {
    * @param alertIds - The alertIds to validate
    * @returns An array of alerts
    */
+  // need to update this
   async validateAlertsQAStatus(alertIds: string[]) {
     const query = `
     SELECT
       id as alertId,
-      JSONExtractArrayRaw(data, 'ruleChecklist') as ruleChecklist
-    FROM ${ALERTS_TABLE_NAME_CH}
+      JSONExtractArrayRaw(data, 'ruleChecklist') as ruleChecklist 
+    FROM ${ALERTS_TABLE_NAME_CH} FINAL
     WHERE
       alertId IN (${alertIds.map((id) => `'${id}'`).join(',')})
       AND ruleChecklistTemplateId != ''
       AND ruleQaStatus = ''
         `
-    const alerts = await executeClickhouseQuery<Alert[]>(
-      this.clickhouseClient,
-      query
-    )
+    const clickhouseAlerts = await executeClickhouseQuery<
+      ClickhouseAlertResponse[]
+    >(this.clickhouseClient, query)
+    const alerts: Alert[] = []
+    // iterate over element to covert ruleCheckList value to an object
+    try {
+      clickhouseAlerts.forEach((alert) => {
+        const ruleCheckList: ChecklistItemValue[] = []
+        alert?.ruleChecklist?.forEach((checklist) => {
+          ruleCheckList.push(JSON.parse(checklist))
+        })
+        alerts.push({
+          ...alert,
+          ruleChecklist: ruleCheckList,
+        })
+      })
+    } catch (e) {
+      logger.error(`Error while parsing ruleChecklist from clickhouse: ${e}`)
+      throw new InternalServerError('Something went wrong')
+    }
     return alerts
   }
 
@@ -742,7 +766,7 @@ export class ClickhouseAlertRepository {
       FROM ${ALERTS_TABLE_NAME_CH}
       WHERE ruleQueueId = '${ruleQueueId}'
     `
-    const alerts = await executeClickhouseQuery<Alert[]>(
+    const alerts = await executeClickhouseQuery<ClickhouseAlertResponse[]>(
       this.clickhouseClient,
       query
     )
