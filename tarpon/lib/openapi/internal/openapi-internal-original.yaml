@@ -11371,7 +11371,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         files:
           type: array
           items:
