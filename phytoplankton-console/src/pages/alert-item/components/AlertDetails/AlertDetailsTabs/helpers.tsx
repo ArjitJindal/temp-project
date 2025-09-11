@@ -373,7 +373,7 @@ export function useAlertTabs(props: Props): TabItem[] {
                   if (!alert?.alertId) {
                     return;
                   }
-                  onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'CLEARED');
+                  onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'OPEN');
                 }}
                 onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
                 selectionInfo={selectionInfo}
