@@ -1,5 +1,4 @@
 import { COUNTRIES } from '@flagright/lib/constants'
-import uniqBy from 'lodash/uniqBy'
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize'
 import { CommonUserLogicVariable, LogicVariableContext } from './types'
 import { User } from '@/@types/openapi-public/User'
@@ -8,15 +7,12 @@ import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { REPORT_STATUSS } from '@/@types/openapi-internal-custom/ReportStatus'
-import { REPORT_GENERATORS } from '@/services/sar/utils/helper'
+import { SAR_COUNTRIESS } from '@/@types/openapi-internal-custom/SarCountries'
 
-const SAR_REGION_OPTIONS = uniqBy(
-  Array.from(REPORT_GENERATORS.keys()).map((key) => {
-    const country = key.split('-')[0]
-    return { title: COUNTRIES[country], value: country }
-  }),
-  'value'
-)
+const SAR_REGION_OPTIONS = SAR_COUNTRIESS.map((key) => {
+  const country = key.split('-')[0]
+  return { title: COUNTRIES[country], value: country }
+})
 
 const SAR_STATUS_OPTIONS: { title: string; value: ReportStatus }[] =
   REPORT_STATUSS.map((status) => ({

@@ -14,7 +14,16 @@ import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { CaseService } from '../cases'
 import { ReportRepository } from './repositories/report-repository'
-import { REPORT_GENERATORS, UNIMPLEMENTED_GENERATORS } from './utils/helper'
+import { UNIMPLEMENTED_GENERATORS } from './utils/helper'
+import { AuSmrReportGenerator } from './generators/AU/SMR'
+import { CanadaStrReportGenerator } from './generators/CA/STR'
+import { KenyaSARReportGenerator } from './generators/KE/SAR'
+import { LithuaniaSTRReportGenerator } from './generators/LT/STR'
+import { LithuaniaCTRReportGenerator } from './generators/LT/CTR'
+import { UsSarReportGenerator } from './generators/US/SAR'
+import { UsCtrReportGenerator } from './generators/US/CTR'
+import { MalaysianSTRReportGenerator } from './generators/MY/STR'
+import { ReportGenerator } from './generators'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
 import { Report } from '@/@types/openapi-internal/Report'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -42,6 +51,29 @@ import {
 } from '@/utils/audit-log'
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { SAR_COUNTRIESS } from '@/@types/openapi-internal-custom/SarCountries'
+
+const reportGenerators: {
+  [K in (typeof SAR_COUNTRIESS)[number]]: (new () => ReportGenerator)[]
+} = {
+  AU: [AuSmrReportGenerator],
+  CA: [CanadaStrReportGenerator],
+  KE: [KenyaSARReportGenerator],
+  LT: [LithuaniaSTRReportGenerator, LithuaniaCTRReportGenerator],
+  US: [UsSarReportGenerator, UsCtrReportGenerator],
+  MY: [MalaysianSTRReportGenerator],
+}
+
+const REPORT_GENERATORS = new Map<string, ReportGenerator>(
+  Object.values(reportGenerators)
+    .flat()
+    .map((rg) => {
+      const generator = new rg()
+      const type = generator.getType()
+      const id = `${type.countryCode}-${type.type}`
+      return [id, generator]
+    })
+)
 
 // Custom AuditLogReturnData types
 type SarCreationAuditLogReturnData = AuditLogReturnData<
