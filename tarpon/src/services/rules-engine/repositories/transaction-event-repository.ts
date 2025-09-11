@@ -23,7 +23,11 @@ import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTran
 import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
-import { getUpsertSaveDynamoCommand, transactWrite } from '@/utils/dynamodb'
+import {
+  getUpsertSaveDynamoCommand,
+  paginateQuery,
+  transactWrite,
+} from '@/utils/dynamodb'
 
 @traceable
 export class TransactionEventRepository {
@@ -167,8 +171,7 @@ export class TransactionEventRepository {
       this.tenantId,
       transactionId
     ).PartitionKeyID
-
-    const queryInput: QueryCommandInput = {
+    const query = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
       ExpressionAttributeValues: {
@@ -176,9 +179,7 @@ export class TransactionEventRepository {
       },
       ConsistentRead: true,
     }
-
-    const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
-
+    const { Items } = await paginateQuery(this.dynamoDb, query)
     return Items as TransactionEventWithRulesResult[]
   }
 
