@@ -4,7 +4,6 @@ import { BatchJob, BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
 import { getSQSClient } from '@/utils/sns-sqs-client'
-import { handleBatchJob } from '@/core/local-handlers/batch-job'
 
 const sqsClient = getSQSClient()
 
@@ -20,6 +19,7 @@ export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
     jobId: jobId ?? uuidv4(),
   }
   if (envIs('local')) {
+    const { handleBatchJob } = await import('@/core/local-handlers/batch-job')
     await handleBatchJob(jobWithId)
     return
   }

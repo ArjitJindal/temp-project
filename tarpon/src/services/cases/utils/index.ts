@@ -157,6 +157,7 @@ export async function sendActionProcessionTasks(
     const { actionProcessingHandler } = await import(
       '@/core/local-handlers/action-processing'
     )
+
     await actionProcessingHandler(tasks)
     return
   }

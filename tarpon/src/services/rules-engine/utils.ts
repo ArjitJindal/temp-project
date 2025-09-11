@@ -36,8 +36,6 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
 import { isDemoTenant } from '@/utils/tenant'
-import { handleTransactionAggregationTasks } from '@/core/local-handlers/transaction-aggregation'
-import { handleLocalAsyncRuleTasks } from '@/core/local-handlers/async-rules'
 
 export function getSenderKeys(
   tenantId: string,
@@ -366,6 +364,10 @@ export async function sendTransactionAggregationTasks(
   mongoDb: MongoClient
 ) {
   if (envIs('local', 'test')) {
+    const { handleTransactionAggregationTasks } = await import(
+      '@/core/local-handlers/transaction-aggregation'
+    )
+
     await handleTransactionAggregationTasks(messages, dynamoDb, mongoDb)
   } else {
     const finalMessages = [...messages]
@@ -524,6 +526,10 @@ export async function sendAsyncRuleTasks(
   saveBatchEntities: boolean = true
 ): Promise<void> {
   if (envIs('test', 'local')) {
+    const { handleLocalAsyncRuleTasks } = await import(
+      '@/core/local-handlers/async-rules'
+    )
+
     await handleLocalAsyncRuleTasks(tasks, saveBatchEntities)
     return
   }

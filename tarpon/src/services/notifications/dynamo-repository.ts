@@ -17,7 +17,6 @@ import {
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNotificationStatus'
 import { envIs } from '@/utils/env'
-import { handleLocalTarponChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
 
 @traceable
 export class DynamoNotificationRepository {
@@ -68,7 +67,11 @@ export class DynamoNotificationRepository {
 
     await batch.execute()
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, keys)
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, keys)
     }
   }
 
@@ -90,7 +93,11 @@ export class DynamoNotificationRepository {
     await this.dynamoDb.send(command)
 
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
   public async getNotifications(
@@ -211,7 +218,11 @@ export class DynamoNotificationRepository {
       })
       await this.dynamoDb.send(command)
       if (envIs('local') || envIs('test')) {
-        await handleLocalChangeCapture(this.tenantId, [key])
+        const { handleLocalTarponChangeCapture } = await import(
+          '@/core/local-handlers/tarpon'
+        )
+
+        await handleLocalTarponChangeCapture(this.tenantId, [key])
       }
     }
   }

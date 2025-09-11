@@ -25,7 +25,6 @@ import {
 import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import { envIs } from '@/utils/env'
-import { handleLocalTarponChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
 
 @traceable
 export class DynamoBatchJobRepository {
@@ -63,7 +62,11 @@ export class DynamoBatchJobRepository {
 
     await batch.execute()
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, keys)
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, keys)
     }
   }
   public async getJobById(jobId: string): Promise<BatchJobInDb | null> {
@@ -97,7 +100,11 @@ export class DynamoBatchJobRepository {
       })
     )
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
 
@@ -121,7 +128,11 @@ export class DynamoBatchJobRepository {
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Item) as BatchJobInDb
   }
@@ -214,7 +225,11 @@ export class DynamoBatchJobRepository {
       })
     )
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -244,7 +259,11 @@ export class DynamoBatchJobRepository {
     )
 
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -274,7 +293,11 @@ export class DynamoBatchJobRepository {
       })
     )
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -305,7 +328,11 @@ export class DynamoBatchJobRepository {
     )
 
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }

@@ -19,7 +19,6 @@ import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { CRMRecordSearch } from '@/@types/openapi-internal/CRMRecordSearch'
-import { handleLocalTarponChangeCapture } from '@/core/local-handlers/tarpon'
 
 type PrimaryKey = { PartitionKeyID: string; SortKeyID?: string }
 
@@ -57,6 +56,10 @@ export class NangoRepository {
     }
 
     if (process.env.NODE_ENV === 'development') {
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
       await Promise.all(
         keys.map((key) => handleLocalTarponChangeCapture(this.tenantId, [key]))
       )
@@ -207,6 +210,10 @@ export class NangoRepository {
     await this.dynamoDb.send(crmRecord)
 
     if (process.env.NODE_ENV === 'development') {
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
       await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }

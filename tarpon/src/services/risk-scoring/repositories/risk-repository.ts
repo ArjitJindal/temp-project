@@ -84,8 +84,6 @@ import { VersionHistoryTable } from '@/models/version-history'
 import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
-import { handleLocalHammerheadChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
-
 export type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
@@ -221,7 +219,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(`Updated KRS score for user ${userId} to ${score}`)
@@ -266,7 +268,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
     logger.debug(
       `Updated ARS score for transaction ${transactionId} to ${score}`
@@ -359,7 +365,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(
@@ -406,7 +416,11 @@ export class RiskRepository {
     const updatedDrsScore = result.Attributes as DrsScore
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(
@@ -549,7 +563,11 @@ export class RiskRepository {
       { versioned: true }
     )
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
     logger.info(`Manual risk level updated for user ${userId} to ${riskLevel}`)
     return newKrsScoreItem
@@ -592,7 +610,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(`Manual risk level updated for user ${userId} to ${riskLevel}`)
@@ -684,7 +706,11 @@ export class RiskRepository {
       { versioned: true }
     )
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     return averageArsScore
@@ -1125,9 +1151,13 @@ export class RiskRepository {
 
     // Handle local change capture for development
     if (process.env.NODE_ENV === 'development') {
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
       await Promise.all(
         updatedRiskFactors.map((riskFactor) =>
-          handleLocalChangeCapture(
+          handleLocalHammerheadChangeCapture(
             this.tenantId,
             DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id)
           )

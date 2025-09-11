@@ -55,7 +55,6 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { envIs } from '@/utils/env'
 import { removeUndefinedFields } from '@/utils/object'
-import { handleLocalTarponChangeCapture } from '@/core/local-handlers/tarpon'
 
 type caseUpdateOptions = {
   updateCase: boolean
@@ -1907,6 +1906,10 @@ export class DynamoAlertRepository {
     await batch.execute()
     if (envIs('local') || envIs('test')) {
       for (const key of keyLists) {
+        const { handleLocalTarponChangeCapture } = await import(
+          '@/core/local-handlers/tarpon'
+        )
+
         await handleLocalTarponChangeCapture(this.tenantId, [key.key])
       }
     }
@@ -1961,6 +1964,10 @@ export class DynamoAlertRepository {
       await batch.execute()
 
       if (envIs('local') || envIs('test')) {
+        const { handleLocalTarponChangeCapture } = await import(
+          '@/core/local-handlers/tarpon'
+        )
+
         await handleLocalTarponChangeCapture(this.tenantId, [key])
       }
     } else {
