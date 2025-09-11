@@ -16,7 +16,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
-import { useAuth0User } from '@/utils/user-utils';
+import { useAuth0User, useHasMinimumPermission } from '@/utils/user-utils';
 
 interface TableSearchParams extends CommonParams {
   modelId?: string;
@@ -68,6 +68,8 @@ export const MlModelsPage = () => {
       },
     },
   );
+
+  const hasWriteAccess = useHasMinimumPermission(['write:::rules/ai-models/*']);
 
   const columns: TableColumn<RuleMLModel>[] = useMemo((): TableColumn<RuleMLModel>[] => {
     const helper = new ColumnHelper<RuleMLModel>();
@@ -138,6 +140,7 @@ export const MlModelsPage = () => {
             return (
               <Toggle
                 value={enabled}
+                isDisabled={!hasWriteAccess}
                 onChange={(checked) => {
                   updateModelMutation.mutate({
                     ...item,
@@ -150,7 +153,7 @@ export const MlModelsPage = () => {
         },
       }),
     ]);
-  }, [updateModelMutation]);
+  }, [updateModelMutation, hasWriteAccess]);
 
   const actionRef = useRef<TableRefType>(null);
   return (

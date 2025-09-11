@@ -71,6 +71,12 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         actions: ['read'],
         type: 'STATIC',
       },
+      {
+        id: 'ai-models',
+        name: 'AI models',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
     ],
   },
   {

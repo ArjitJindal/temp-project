@@ -157,6 +157,7 @@ function Content(props: { tab: string; hasMachineLearningFeature: boolean }) {
       tabs.push({
         title: 'AI models',
         key: 'ai-detection',
+        minRequiredResources: ['read:::rules/ai-models/*'] as Resource[],
         children: (
           <PageWrapperContentContainer>
             <MlModelsPage />
