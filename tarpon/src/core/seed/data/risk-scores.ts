@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { users } from './users'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'

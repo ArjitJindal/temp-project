@@ -1,4 +1,6 @@
-import { cloneDeep, uniq, uniqBy } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import uniq from 'lodash/uniq'
+import uniqBy from 'lodash/uniqBy'
 import {
   isLatinScript,
   normalize,

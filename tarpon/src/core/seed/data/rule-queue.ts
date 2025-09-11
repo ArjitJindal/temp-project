@@ -1,5 +1,6 @@
 import { v4 as uuid4 } from 'uuid'
-import { cloneDeep, memoize } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import memoize from 'lodash/memoize'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
 import { hasFeature } from '@/core/utils/context'
 

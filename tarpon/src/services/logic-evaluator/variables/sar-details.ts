@@ -1,5 +1,5 @@
 import { COUNTRIES } from '@flagright/lib/constants'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize'
 import { CommonUserLogicVariable, LogicVariableContext } from './types'
 import { User } from '@/@types/openapi-public/User'

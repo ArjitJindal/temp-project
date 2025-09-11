@@ -4,7 +4,9 @@ import {
 } from 'aws-lambda'
 import { hasResources, Resource, shortId } from '@flagright/lib/utils'
 import createHttpError, { BadRequest } from 'http-errors'
-import { isEmpty, isEqual, random } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import random from 'lodash/random'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {

@@ -1,5 +1,5 @@
 import { NotFound, BadRequest } from 'http-errors'
-import { cloneDeep } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
 import { ObjectId } from 'mongodb'
 import { nanoid } from 'nanoid'
 import { CaseService } from '..'

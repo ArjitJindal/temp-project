@@ -1,4 +1,6 @@
-import { isEmpty, mapValues, set } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import mapValues from 'lodash/mapValues'
+import set from 'lodash/set'
 import * as Sentry from '@sentry/aws-serverless'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'

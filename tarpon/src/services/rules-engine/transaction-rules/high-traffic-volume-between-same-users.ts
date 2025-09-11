@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, random, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import random from 'lodash/random'
+import sumBy from 'lodash/sumBy'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionsTotalAmount,

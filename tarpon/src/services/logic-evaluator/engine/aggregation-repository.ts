@@ -11,7 +11,10 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { keyBy, mapValues, pick, uniq } from 'lodash'
+import keyBy from 'lodash/keyBy'
+import mapValues from 'lodash/mapValues'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
 import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {

@@ -10,7 +10,7 @@ import {
   QueryCommandInput,
   NativeAttributeValue,
 } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { BatchJobFilterUtils } from './filter-utils'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

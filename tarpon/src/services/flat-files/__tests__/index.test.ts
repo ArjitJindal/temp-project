@@ -4,7 +4,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { mockClient } from 'aws-sdk-client-mock'
 import { StackConstants } from '@lib/constants'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { FlatFilesService } from '..'
 import {
   getCSVFormattedRow,

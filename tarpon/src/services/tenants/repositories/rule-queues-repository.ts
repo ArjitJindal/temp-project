@@ -1,6 +1,7 @@
 import { MongoClient, AggregationCursor } from 'mongodb'
 
-import { isNil, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { shortId } from '@flagright/lib/utils'
 import {
   paginatePipeline,

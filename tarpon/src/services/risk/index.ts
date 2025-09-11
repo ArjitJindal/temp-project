@@ -7,7 +7,9 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
-import { intersection, padStart, pick } from 'lodash'
+import intersection from 'lodash/intersection'
+import padStart from 'lodash/padStart'
+import pick from 'lodash/pick'
 import {
   RiskLevelApprovalWorkflowMachine,
   RiskFactorsApprovalWorkflowMachine,

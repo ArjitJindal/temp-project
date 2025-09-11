@@ -1,4 +1,6 @@
-import { random, memoize, shuffle } from 'lodash'
+import random from 'lodash/random'
+import memoize from 'lodash/memoize'
+import shuffle from 'lodash/shuffle'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
 import { ConsumerSanctionsSearchSampler } from '../raw-data/sanctions-search'

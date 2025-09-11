@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { getSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'

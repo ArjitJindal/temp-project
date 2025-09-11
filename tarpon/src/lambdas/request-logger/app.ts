@@ -1,5 +1,5 @@
 import { SQSEvent } from 'aws-lambda'
-import { groupBy } from 'lodash'
+import groupBy from 'lodash/groupBy'
 import * as Sentry from '@sentry/aws-serverless'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'

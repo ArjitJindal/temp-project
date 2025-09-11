@@ -1,5 +1,6 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { intersection, isEmpty } from 'lodash'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { InternalServerError } from 'http-errors'
 import { AlertParams } from './repository'

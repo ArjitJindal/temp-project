@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash'
+import sortBy from 'lodash/sortBy'
 import { getCaseRepo, getStatsRepo } from './helpers'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'

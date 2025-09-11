@@ -8,7 +8,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import createHttpError from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
 import { ListData } from '@/@types/openapi-public/ListData'

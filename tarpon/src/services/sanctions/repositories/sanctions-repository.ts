@@ -1,4 +1,4 @@
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { Client } from '@opensearch-project/opensearch'
 import {
   RELATIONSHIP_CODE_TO_NAME,

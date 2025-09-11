@@ -1,4 +1,6 @@
-import { compact, intersection as intersectionFn, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import uniq from 'lodash/uniq'
 import { calculateLevenshteinDistancePercentageForNormalizedStrings } from './search'
 
 export interface FuzzinessOptions {
@@ -327,9 +329,9 @@ function cosineSim(v1: Record<string, number>, v2: Record<string, number>) {
   const keysV1 = Object.keys(v1)
   const keysV2 = Object.keys(v2)
 
-  const intersection = intersectionFn(keysV1, keysV2)
+  const intersectionFn = intersection(keysV1, keysV2)
 
-  const prods = intersection.map(function (x) {
+  const prods = intersectionFn.map(function (x) {
     return v1[x] * v2[x]
   })
   const numerator = prods.reduce(function (acc, x) {

@@ -4,7 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { getContext } from '../utils/context-storage'
 import { userStatements } from '../utils/context'
 import {

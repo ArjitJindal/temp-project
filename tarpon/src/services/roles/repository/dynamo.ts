@@ -6,7 +6,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import {
   getNamespace,
   getNamespacedRoleName,

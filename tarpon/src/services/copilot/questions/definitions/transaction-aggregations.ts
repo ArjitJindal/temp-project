@@ -1,5 +1,5 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
-import { startCase } from 'lodash'
+import startCase from 'lodash/startCase'
 import {
   InvestigationContext,
   TimeseriesQuestion,

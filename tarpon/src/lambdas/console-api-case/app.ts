@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound, BadRequest, Forbidden } from 'http-errors'
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { CaseService } from '../../services/cases'
 import { TransactionService } from '../console-api-transaction/services/transaction-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'

@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { ListData } from '@/@types/openapi-public/ListData'

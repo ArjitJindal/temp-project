@@ -1,4 +1,6 @@
-import { chunk, groupBy, mapValues } from 'lodash'
+import chunk from 'lodash/chunk'
+import groupBy from 'lodash/groupBy'
+import mapValues from 'lodash/mapValues'
 import {
   getAllUsagePlans,
   getTenantIdFromUsagePlanName,

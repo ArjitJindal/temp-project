@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { mapValues } from 'lodash'
+import mapValues from 'lodash/mapValues'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters, TransactionFilters } from '../filters'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'

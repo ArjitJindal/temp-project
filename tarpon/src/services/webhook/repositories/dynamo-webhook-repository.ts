@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'

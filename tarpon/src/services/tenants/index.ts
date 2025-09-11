@@ -22,7 +22,10 @@ import {
   getAllUsagePlans,
   USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
-import { compact, flatten, isEmpty, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import flatten from 'lodash/flatten'
+import isEmpty from 'lodash/isEmpty'
+import uniq from 'lodash/uniq'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'

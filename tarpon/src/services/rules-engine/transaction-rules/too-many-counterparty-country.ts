@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import uniq from 'lodash/uniq'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import TransactionsPatternVelocityBaseRule, {

@@ -1,5 +1,7 @@
 import pMap from 'p-map'
-import { chunk, last, uniqBy } from 'lodash'
+import chunk from 'lodash/chunk'
+import last from 'lodash/last'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient, ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'

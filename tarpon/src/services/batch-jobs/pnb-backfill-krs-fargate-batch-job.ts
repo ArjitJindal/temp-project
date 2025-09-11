@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillKrs } from '@/@types/batch-job'
 import { logger } from '@/core/logger'

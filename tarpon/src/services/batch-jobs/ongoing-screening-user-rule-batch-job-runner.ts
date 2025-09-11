@@ -1,7 +1,7 @@
 import pMap from 'p-map'
 import { Collection, FindCursor, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
 import { getMohaUsersForPNB } from '../rules-engine/pnb-custom-logic'
 import {

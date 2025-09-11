@@ -1,5 +1,5 @@
 import { Readable } from 'stream'
-import { set } from 'lodash'
+import set from 'lodash/set'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { parse } from 'csv-parse'
 import { FlatFileTemplateResponse } from '@/@types/openapi-internal/FlatFileTemplateResponse'

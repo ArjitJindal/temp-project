@@ -1,4 +1,5 @@
-import { difference, uniqBy } from 'lodash'
+import difference from 'lodash/difference'
+import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getPaymentDetailsIdentifiersSubject } from '../logic-evaluator/variables/payment-details'
 import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'

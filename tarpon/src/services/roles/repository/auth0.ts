@@ -1,5 +1,5 @@
 import { BadRequest } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import {
   getNamespacedRoleName,
   getRoleDisplayName,

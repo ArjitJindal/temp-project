@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 
-import { sumBy, mergeWith } from 'lodash'
+import sumBy from 'lodash/sumBy'
+import mergeWith from 'lodash/mergeWith'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {

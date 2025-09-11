@@ -16,7 +16,7 @@ import {
   PutCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'

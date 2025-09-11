@@ -1,4 +1,4 @@
-import { startCase } from 'lodash'
+import startCase from 'lodash/startCase'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'

@@ -6,7 +6,7 @@ import {
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoAlertRepository } from '../alerts/dynamo-repository'
 import {

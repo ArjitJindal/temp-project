@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { CaseRepository } from '../cases/repository'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'

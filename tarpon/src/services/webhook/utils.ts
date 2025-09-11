@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import {
   SecretsManagerWebhookSecrets,
   WebhookDeliveryTask,

@@ -1,4 +1,4 @@
-import { has } from 'lodash'
+import has from 'lodash/has'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { publishAuditLog } from '@/services/audit-log'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'

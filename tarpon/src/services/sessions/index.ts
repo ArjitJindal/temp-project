@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { sortBy } from 'lodash'
+import sortBy from 'lodash/sortBy'
 import * as createError from 'http-errors'
 import { ActiveSession, SessionsRepository } from './repository'
 import { getContext } from '@/core/utils/context-storage'

@@ -1,6 +1,6 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { AccountsService } from '../accounts'
 import { MicroTenantInfo, Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'

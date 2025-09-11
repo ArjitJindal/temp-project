@@ -1,4 +1,8 @@
-import { wrap, reduce, last, sumBy, initial } from 'lodash'
+import wrap from 'lodash/wrap'
+import reduce from 'lodash/reduce'
+import last from 'lodash/last'
+import sumBy from 'lodash/sumBy'
+import initial from 'lodash/initial'
 import { SNSClient } from '@aws-sdk/client-sns'
 import {
   SendMessageBatchCommand,

@@ -8,7 +8,8 @@ import {
   Indices_Create_RequestBody,
 } from '@opensearch-project/opensearch/api'
 import { v4 as uuidv4 } from 'uuid'
-import { chunk, isEqual } from 'lodash'
+import chunk from 'lodash/chunk'
+import isEqual from 'lodash/isEqual'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { backOff } from 'exponential-backoff'
 import {

@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { last } from 'lodash'
+import last from 'lodash/last'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'

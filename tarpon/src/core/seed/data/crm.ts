@@ -3,7 +3,7 @@ import {
   Task,
   Note,
 } from '@mergeapi/merge-sdk-typescript/dist/crm/models'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { users } from './users'
 import {
   CRM_ENGAGEMENTS_SEED,

@@ -1,4 +1,5 @@
-import { get, memoize } from 'lodash'
+import get from 'lodash/get'
+import memoize from 'lodash/memoize'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,

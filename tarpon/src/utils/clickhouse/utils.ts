@@ -6,12 +6,15 @@ import {
   ResponseJSON,
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
-import { chain, get, maxBy, memoize } from 'lodash'
 import { backOff, BackoffOptions } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { ConnectionCredentials, JsonMigrationService } from 'thunder-schema'
+import chain from 'lodash/chain'
+import get from 'lodash/get'
+import maxBy from 'lodash/maxBy'
+import memoize from 'lodash/memoize'
 import { envIs, envIsNot } from '../env'
 import { bulkSendMessages } from '../sns-sqs-client'
 import {

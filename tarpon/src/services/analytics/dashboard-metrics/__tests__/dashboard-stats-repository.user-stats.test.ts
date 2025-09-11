@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
-import { isNil, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { getRiskRepo, getStatsRepo, getUserRepo } from './helpers'
 import dayjs from '@/utils/dayjs'
 import { getTestUser } from '@/test-utils/user-test-utils'

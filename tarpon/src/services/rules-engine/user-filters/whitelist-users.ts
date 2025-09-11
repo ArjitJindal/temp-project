@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { intersection } from 'lodash'
+import intersection from 'lodash/intersection'
 import { UserRuleFilter } from './filter'
 import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'

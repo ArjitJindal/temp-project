@@ -1,4 +1,6 @@
-import { isEmpty, pickBy, zip } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import pickBy from 'lodash/pickBy'
+import zip from 'lodash/zip'
 import { expandCountryGroup } from '@flagright/lib/constants'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'

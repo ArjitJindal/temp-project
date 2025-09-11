@@ -1,5 +1,5 @@
 import { v4 as uuid4 } from 'uuid'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'
 
 export const getChecklistTemplates = memoize(() => {

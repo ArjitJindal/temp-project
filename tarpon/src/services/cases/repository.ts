@@ -10,7 +10,11 @@ import {
   ObjectId,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact, intersection, isEmpty, isNil, omitBy } from 'lodash'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { SLAService, SlaUpdates } from '../sla/sla-service'
 import { AlertsRepository } from '../alerts/repository'

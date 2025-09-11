@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { AddressSampler } from '../samplers/address'
 import { Address } from '@/@types/openapi-public/Address'
 

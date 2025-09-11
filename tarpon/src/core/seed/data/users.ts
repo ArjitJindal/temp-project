@@ -3,7 +3,7 @@ import {
   ListObjectsV2Command,
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getDemoDataS3Prefix } from '@lib/constants'
 import { BUSINESS_USER_SEED, CONSUMER_USER_SEED } from './seeds'
 import {

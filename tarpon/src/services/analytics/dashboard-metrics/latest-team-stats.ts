@@ -1,4 +1,4 @@
-import { difference } from 'lodash'
+import difference from 'lodash/difference'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { updateRoles, withUpdatedAt } from './utils'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'

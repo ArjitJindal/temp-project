@@ -1,5 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact, slice, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import slice from 'lodash/slice'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'

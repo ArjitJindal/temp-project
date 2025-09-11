@@ -1,5 +1,9 @@
 import { Collection, Filter } from 'mongodb'
-import { uniq, maxBy, max, compact, isEmpty } from 'lodash'
+import uniq from 'lodash/uniq'
+import maxBy from 'lodash/maxBy'
+import max from 'lodash/max'
+import compact from 'lodash/compact'
+import isEmpty from 'lodash/isEmpty'
 import { UserRepository } from '../users/repositories/user-repository'
 import { getMongoDbClient, lookupPipelineStage } from '@/utils/mongodb-utils'
 import {

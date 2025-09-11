@@ -1,4 +1,5 @@
-import { isEmpty, uniqBy } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import uniqBy from 'lodash/uniqBy'
 import { mergeRulesForPNB } from '../pnb-custom-logic'
 import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { Tag } from '@/@types/openapi-public/Tag'

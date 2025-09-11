@@ -1,6 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import { InternalServerError } from 'http-errors'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'

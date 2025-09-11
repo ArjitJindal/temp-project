@@ -1,6 +1,6 @@
 import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import * as Sentry from '@sentry/aws-serverless'
 import { ClickhouseAuditLogRepository } from './clickhouse-repository'
 import { traceable } from '@/core/xray'

@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash'
+import sortBy from 'lodash/sortBy'
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

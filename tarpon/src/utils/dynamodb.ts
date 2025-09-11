@@ -4,7 +4,13 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { chunk, isNil, omitBy, wrap, omit, uniqBy, isUndefined } from 'lodash'
+import chunk from 'lodash/chunk'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
+import wrap from 'lodash/wrap'
+import omit from 'lodash/omit'
+import uniqBy from 'lodash/uniqBy'
+import isUndefined from 'lodash/isUndefined'
 import {
   BatchGetCommand,
   BatchGetCommandInput,

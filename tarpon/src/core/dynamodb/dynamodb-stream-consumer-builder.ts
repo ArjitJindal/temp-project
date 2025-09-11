@@ -1,7 +1,8 @@
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { compact, groupBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
 import { StackConstants } from '@lib/constants'
 import { backOff } from 'exponential-backoff'
 import {

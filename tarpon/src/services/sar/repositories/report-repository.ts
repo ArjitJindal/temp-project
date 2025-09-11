@@ -1,5 +1,7 @@
 import { Document, Filter, MongoClient, WithId } from 'mongodb'
-import { chunk, compact, omit } from 'lodash'
+import chunk from 'lodash/chunk'
+import compact from 'lodash/compact'
+import omit from 'lodash/omit'
 import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,

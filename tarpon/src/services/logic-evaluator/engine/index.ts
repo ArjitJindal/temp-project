@@ -1,25 +1,23 @@
 import { AsyncLogicEngine } from 'json-logic-engine'
 import memoizeOne from 'memoize-one'
-import {
-  compact,
-  drop,
-  find,
-  groupBy,
-  isEmpty,
-  isEqual,
-  isUndefined,
-  last,
-  mapValues,
-  memoize,
-  MemoizedFunction,
-  mergeWith,
-  minBy,
-  omit,
-  omitBy,
-  size,
-  sortBy,
-  uniq,
-} from 'lodash'
+import type { MemoizedFunction } from 'lodash'
+import compact from 'lodash/compact'
+import drop from 'lodash/drop'
+import find from 'lodash/find'
+import groupBy from 'lodash/groupBy'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import isUndefined from 'lodash/isUndefined'
+import last from 'lodash/last'
+import mapValues from 'lodash/mapValues'
+import memoize from 'lodash/memoize'
+import mergeWith from 'lodash/mergeWith'
+import minBy from 'lodash/minBy'
+import omit from 'lodash/omit'
+import omitBy from 'lodash/omitBy'
+import size from 'lodash/size'
+import sortBy from 'lodash/sortBy'
+import uniq from 'lodash/uniq'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { INTERNAL_LOGIC_FUNCTIONS, LOGIC_FUNCTIONS } from '../functions'

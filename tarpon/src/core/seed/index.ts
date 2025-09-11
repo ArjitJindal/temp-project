@@ -1,4 +1,6 @@
-import { isEmpty, isEqual, uniq } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import uniq from 'lodash/uniq'
 import { logger } from '../logger'
 import { TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { seedDynamo } from './dynamodb'

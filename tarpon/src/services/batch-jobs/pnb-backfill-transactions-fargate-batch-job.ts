@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillTransactions } from '@/@types/batch-job'
 import { Transaction } from '@/@types/openapi-public/Transaction'

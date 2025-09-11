@@ -1,4 +1,4 @@
-import { keyBy } from 'lodash'
+import keyBy from 'lodash/keyBy'
 import { getTimeLabels } from '../../dashboard/utils'
 import {
   GranularityValuesType,

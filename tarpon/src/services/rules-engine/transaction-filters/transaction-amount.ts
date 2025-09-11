@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {

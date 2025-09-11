@@ -3,7 +3,8 @@ import {
   ListObjectsCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
-import { memoize, orderBy } from 'lodash'
+import memoize from 'lodash/memoize'
+import orderBy from 'lodash/orderBy'
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { AccountsService } from '../accounts'

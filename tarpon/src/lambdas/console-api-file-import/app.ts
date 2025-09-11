@@ -6,7 +6,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { BadRequest } from 'http-errors'
 import { hasFeature } from '@/core/utils/context'
 import { getS3ClientByEvent } from '@/utils/s3'

@@ -1,4 +1,4 @@
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { publishAuditLog } from '../audit-log'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'

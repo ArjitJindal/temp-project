@@ -1,4 +1,4 @@
-import { Omit } from 'lodash'
+import type { Omit } from 'lodash'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'

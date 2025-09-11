@@ -1,5 +1,6 @@
 import { MongoClient, MongoError } from 'mongodb'
-import { chunk, cloneDeep } from 'lodash'
+import chunk from 'lodash/chunk'
+import cloneDeep from 'lodash/cloneDeep'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { logger } from '../logger'
 import { data as krsAndDrsScoreData } from './data/risk-scores'

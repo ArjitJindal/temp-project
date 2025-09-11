@@ -1,13 +1,11 @@
-import {
-  chunk,
-  compact,
-  floor,
-  isEmpty,
-  memoize,
-  range,
-  uniq,
-  uniqBy,
-} from 'lodash'
+import chunk from 'lodash/chunk'
+import compact from 'lodash/compact'
+import floor from 'lodash/floor'
+import isEmpty from 'lodash/isEmpty'
+import memoize from 'lodash/memoize'
+import range from 'lodash/range'
+import uniq from 'lodash/uniq'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'

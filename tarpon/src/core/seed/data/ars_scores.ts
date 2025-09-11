@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getTransactions } from './transactions'
 import { users } from './users'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'

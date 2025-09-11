@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,

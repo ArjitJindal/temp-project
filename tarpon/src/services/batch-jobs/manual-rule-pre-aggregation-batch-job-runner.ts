@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import { getAggVarHash } from '../logic-evaluator/engine/aggregation-repository'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { BatchJobRunner } from './batch-job-runner-base'

@@ -1,5 +1,7 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
-import { isNil, omit, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omit from 'lodash/omit'
+import omitBy from 'lodash/omitBy'
 import { Search_Response } from '@opensearch-project/opensearch/api'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDefaultProviders } from '../utils'

@@ -1,5 +1,8 @@
 import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants'
-import { groupBy, inRange, last, mapValues } from 'lodash'
+import groupBy from 'lodash/groupBy'
+import inRange from 'lodash/inRange'
+import last from 'lodash/last'
+import mapValues from 'lodash/mapValues'
 import memoizeOne from 'memoize-one'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {

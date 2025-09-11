@@ -1,4 +1,5 @@
-import { lowerCase, startCase } from 'lodash'
+import lowerCase from 'lodash/lowerCase'
+import startCase from 'lodash/startCase'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import pluralize from 'pluralize'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'

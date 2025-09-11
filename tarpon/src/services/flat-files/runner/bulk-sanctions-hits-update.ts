@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { FlatFileRunner } from '.'
 import { SanctionsHitUpdate } from '@/@types/openapi-internal/SanctionsHitUpdate'
 import { FlatFileValidationResult } from '@/@types/flat-files'

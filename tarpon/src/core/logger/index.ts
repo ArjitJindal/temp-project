@@ -1,7 +1,8 @@
 import { LeveledLogMethod, createLogger, format, transports } from 'winston'
 import * as SentryLambda from '@sentry/aws-serverless'
 import * as SentryNode from '@sentry/node'
-import { isPlainObject, wrap } from 'lodash'
+import isPlainObject from 'lodash/isPlainObject'
+import wrap from 'lodash/wrap'
 import { getContext } from '../utils/context-storage'
 import { envIs } from '@/utils/env'
 

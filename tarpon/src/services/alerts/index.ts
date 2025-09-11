@@ -2,19 +2,17 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { BadRequest, Forbidden, NotFound } from 'http-errors'
-import {
-  capitalize,
-  isEmpty,
-  omit,
-  startCase,
-  toLower,
-  uniq,
-  isEqual,
-  cloneDeep,
-  difference,
-  uniqBy,
-  compact,
-} from 'lodash'
+import capitalize from 'lodash/capitalize'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
+import startCase from 'lodash/startCase'
+import toLower from 'lodash/toLower'
+import uniq from 'lodash/uniq'
+import isEqual from 'lodash/isEqual'
+import cloneDeep from 'lodash/cloneDeep'
+import difference from 'lodash/difference'
+import uniqBy from 'lodash/uniqBy'
+import compact from 'lodash/compact'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,

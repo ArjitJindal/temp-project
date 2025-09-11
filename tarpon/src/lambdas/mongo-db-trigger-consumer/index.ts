@@ -6,7 +6,9 @@ import {
   Filter,
   FindCursor,
 } from 'mongodb'
-import { Dictionary, groupBy, memoize } from 'lodash'
+import type { Dictionary } from 'lodash'
+import groupBy from 'lodash/groupBy'
+import memoize from 'lodash/memoize'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import * as Sentry from '@sentry/aws-serverless'

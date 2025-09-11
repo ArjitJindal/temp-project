@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
-import { isEmpty, omit } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { LogicEvaluator } from '../logic-evaluator/engine'

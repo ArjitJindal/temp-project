@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { PermissionsAction } from '@/@types/openapi-internal/PermissionsAction'

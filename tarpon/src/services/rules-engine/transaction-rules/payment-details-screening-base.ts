@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import uniqBy from 'lodash/uniqBy'
 import {
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
   ENABLE_PHONETIC_MATCHING_SCHEMA,

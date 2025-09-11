@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { setAccounts } from './samplers/accounts'
 import { AccountsService } from '@/services/accounts'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'

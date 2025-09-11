@@ -6,7 +6,9 @@ import {
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { compact, concat, omit } from 'lodash'
+import compact from 'lodash/compact'
+import concat from 'lodash/concat'
+import omit from 'lodash/omit'
 import {
   createUpdateCaseQueries,
   dynamoKey,

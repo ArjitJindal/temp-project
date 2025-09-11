@@ -11,7 +11,10 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { uniq, isEmpty, uniqBy, groupBy } from 'lodash'
+import uniq from 'lodash/uniq'
+import isEmpty from 'lodash/isEmpty'
+import uniqBy from 'lodash/uniqBy'
+import groupBy from 'lodash/groupBy'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import pMap from 'p-map'
 import { replaceMagicKeyword } from '@flagright/lib/utils'

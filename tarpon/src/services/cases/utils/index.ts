@@ -1,4 +1,4 @@
-import { reverse } from 'lodash'
+import reverse from 'lodash/reverse'
 import { ActionReason } from '@/@types/openapi-internal/ActionReason'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertCreationIntervalDaily } from '@/@types/openapi-internal/AlertCreationIntervalDaily'

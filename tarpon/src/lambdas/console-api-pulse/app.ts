@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { hasResources } from '@flagright/lib/utils'
 import { BadRequest } from 'http-errors'
 import { RiskService } from '@/services/risk'

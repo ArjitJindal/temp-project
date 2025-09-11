@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, uniq, startCase } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import uniq from 'lodash/uniq'
+import startCase from 'lodash/startCase'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
 import { RuleHitResult } from '../rule'

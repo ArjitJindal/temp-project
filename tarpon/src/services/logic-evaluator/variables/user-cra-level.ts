@@ -1,5 +1,5 @@
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { map } from 'lodash'
+import map from 'lodash/map'
 import { humanizeConstant } from '@flagright/lib/utils/humanize'
 import { CommonUserLogicVariable, LogicVariableContext } from './types'
 import { Business } from '@/@types/openapi-public/Business'

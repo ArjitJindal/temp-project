@@ -1,5 +1,7 @@
 import { MongoClient, Document, UpdateFilter, Filter } from 'mongodb'
-import { isNil, omitBy, sum } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
+import sum from 'lodash/sum'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SendMessageBatchRequestEntry, SQSClient } from '@aws-sdk/client-sqs'
 import {

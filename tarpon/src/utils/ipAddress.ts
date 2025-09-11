@@ -1,6 +1,4 @@
-// TODO: once we remove the old IP address, we can remove this function
-
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { AuxiliaryIndexTransaction } from '@/services/rules-engine/repositories/transaction-repository-interface'
 

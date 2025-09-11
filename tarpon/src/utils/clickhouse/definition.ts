@@ -1,4 +1,6 @@
-import { invert, memoize, uniq } from 'lodash'
+import invert from 'lodash/invert'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
 import { MONGO_TABLE_SUFFIX_MAP } from '../mongodb-definitions'
 import {
   userStatsColumns,

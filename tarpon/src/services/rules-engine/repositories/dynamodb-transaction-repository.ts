@@ -1,14 +1,12 @@
-import {
-  chunk,
-  compact,
-  get,
-  isEmpty,
-  omit,
-  pickBy,
-  set,
-  sum,
-  uniq,
-} from 'lodash'
+import chunk from 'lodash/chunk'
+import compact from 'lodash/compact'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
+import pickBy from 'lodash/pickBy'
+import set from 'lodash/set'
+import sum from 'lodash/sum'
+import uniq from 'lodash/uniq'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,

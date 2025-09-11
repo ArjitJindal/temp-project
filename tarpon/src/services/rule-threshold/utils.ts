@@ -1,4 +1,9 @@
-import { compact, fromPairs, isArray, keyBy, sum, sumBy } from 'lodash'
+import compact from 'lodash/compact'
+import fromPairs from 'lodash/fromPairs'
+import isArray from 'lodash/isArray'
+import keyBy from 'lodash/keyBy'
+import sum from 'lodash/sum'
+import sumBy from 'lodash/sumBy'
 import { traverse } from '@flagright/lib/utils'
 import {
   BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX,

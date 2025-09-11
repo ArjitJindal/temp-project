@@ -1,6 +1,12 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { difference, isEmpty, isEqual, omit, pick, uniq, compact } from 'lodash'
+import difference from 'lodash/difference'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
+import compact from 'lodash/compact'
 import { StackConstants } from '@lib/constants'
 import {
   arsScoreEventHandler,

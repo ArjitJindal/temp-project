@@ -10,7 +10,7 @@ import {
 } from 'aws-lambda'
 import { NodeJsRuntimeStreamingBlobPayloadOutputTypes } from '@smithy/types/dist-types/streaming-payload/streaming-blob-payload-output-types'
 import { MongoClient } from 'mongodb'
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'

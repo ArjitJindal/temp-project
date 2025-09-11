@@ -1,17 +1,15 @@
-import {
-  compact,
-  flatten,
-  groupBy,
-  isEmpty,
-  isEqual,
-  last,
-  memoize,
-  minBy,
-  pick,
-  sample,
-  uniq,
-  uniqBy,
-} from 'lodash'
+import compact from 'lodash/compact'
+import flatten from 'lodash/flatten'
+import groupBy from 'lodash/groupBy'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import last from 'lodash/last'
+import memoize from 'lodash/memoize'
+import minBy from 'lodash/minBy'
+import pick from 'lodash/pick'
+import sample from 'lodash/sample'
+import uniq from 'lodash/uniq'
+import uniqBy from 'lodash/uniqBy'
 import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'

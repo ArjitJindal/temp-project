@@ -1,4 +1,7 @@
-import { inRange, mergeWith, random, sumBy } from 'lodash'
+import inRange from 'lodash/inRange'
+import mergeWith from 'lodash/mergeWith'
+import random from 'lodash/random'
+import sumBy from 'lodash/sumBy'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,

@@ -1,4 +1,5 @@
-import { mapValues, uniqBy } from 'lodash'
+import mapValues from 'lodash/mapValues'
+import uniqBy from 'lodash/uniqBy'
 import { RuleHitResult } from '../rule'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { PaymentDetailsScreeningRuleBase } from './payment-details-screening-base'

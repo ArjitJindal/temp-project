@@ -1,5 +1,5 @@
 import { getEditDistance } from '@flagright/lib/utils'
-import { isArray } from 'lodash'
+import isArray from 'lodash/isArray'
 import { TextLogicOperator } from './types'
 import { FUZZINESS_PARAMETER } from './similar-to-words'
 import { removePrefixFromName } from '@/services/rules-engine/utils/transaction-rule-utils'

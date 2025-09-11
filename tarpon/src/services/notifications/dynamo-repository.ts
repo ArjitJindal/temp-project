@@ -5,7 +5,7 @@ import {
   QueryCommandOutput,
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { traceable } from '@/core/xray'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import {

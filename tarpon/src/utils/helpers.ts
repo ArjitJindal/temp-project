@@ -1,5 +1,6 @@
 import { isValidEmail } from '@flagright/lib/utils'
-import { compact, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import uniq from 'lodash/uniq'
 import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
 import { envIs } from './env'
 import { isDemoTenant } from './tenant'

@@ -6,18 +6,16 @@ import {
   FindCursor,
   MongoClient,
 } from 'mongodb'
-import {
-  compact,
-  difference,
-  isEmpty,
-  isNil,
-  keyBy,
-  mapKeys,
-  mapValues,
-  omitBy,
-  pick,
-  uniq,
-} from 'lodash'
+import compact from 'lodash/compact'
+import difference from 'lodash/difference'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import keyBy from 'lodash/keyBy'
+import mapKeys from 'lodash/mapKeys'
+import mapValues from 'lodash/mapValues'
+import omitBy from 'lodash/omitBy'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,

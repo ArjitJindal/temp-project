@@ -1,5 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
-import { compact, groupBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   hasFeature,

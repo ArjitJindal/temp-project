@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest, Forbidden, NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { UserService } from '../../services/users'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'

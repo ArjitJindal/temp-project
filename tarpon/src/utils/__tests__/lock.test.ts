@@ -1,4 +1,4 @@
-import { range } from 'lodash'
+import range from 'lodash/range'
 import { getDynamoDbClient } from '../dynamodb'
 import { acquireLock, releaseLock } from '../lock'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { simpleGit } from 'simple-git'
-import { keyBy } from 'lodash'
+import keyBy from 'lodash/keyBy'
 import { TRANSACTION_RULES } from '..'
 import { RULES_LIBRARY } from '../library'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from '../../user-rules'

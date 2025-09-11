@@ -1,5 +1,7 @@
 import createHttpError from 'http-errors'
-import { compact, groupBy, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'

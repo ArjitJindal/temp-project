@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { getTransactionLogicEntityVariables, getLogicVariableByKey } from '..'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'

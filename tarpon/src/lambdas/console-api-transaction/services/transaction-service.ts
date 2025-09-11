@@ -2,7 +2,7 @@ import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,

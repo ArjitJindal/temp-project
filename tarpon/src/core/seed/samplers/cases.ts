@@ -1,4 +1,6 @@
-import { last, uniq, uniqBy } from 'lodash'
+import last from 'lodash/last'
+import uniq from 'lodash/uniq'
+import uniqBy from 'lodash/uniqBy'
 import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'

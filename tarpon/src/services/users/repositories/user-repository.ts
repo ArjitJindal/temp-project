@@ -23,16 +23,14 @@ import {
   UpdateCommandInput,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-import {
-  get,
-  isEmpty,
-  keyBy,
-  mapValues,
-  mergeWith,
-  omit,
-  set,
-  uniq,
-} from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import keyBy from 'lodash/keyBy'
+import mapValues from 'lodash/mapValues'
+import mergeWith from 'lodash/mergeWith'
+import omit from 'lodash/omit'
+import set from 'lodash/set'
+import uniq from 'lodash/uniq'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import {
   getUsersFilterByRiskLevel,

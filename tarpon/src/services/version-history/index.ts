@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { padStart } from 'lodash'
+import padStart from 'lodash/padStart'
 import { InternalServerError, NotFound } from 'http-errors'
 import { CounterEntity, CounterRepository } from '../counter/repository'
 import { RiskService } from '../risk'

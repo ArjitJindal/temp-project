@@ -16,7 +16,9 @@ import {
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
 
-import { isEmpty, memoize, omit } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import memoize from 'lodash/memoize'
+import omit from 'lodash/omit'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,

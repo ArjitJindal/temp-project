@@ -1,4 +1,4 @@
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { MongoClient } from 'mongodb'

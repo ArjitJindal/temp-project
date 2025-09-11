@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { groupBy, mapValues, mergeWith } from 'lodash'
+import groupBy from 'lodash/groupBy'
+import mapValues from 'lodash/mapValues'
+import mergeWith from 'lodash/mergeWith'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import { MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'

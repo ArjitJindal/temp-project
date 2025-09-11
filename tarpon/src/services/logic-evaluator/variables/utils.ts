@@ -1,11 +1,9 @@
-import {
-  concat,
-  findLastIndex,
-  groupBy,
-  lowerCase,
-  snakeCase,
-  startCase,
-} from 'lodash'
+import concat from 'lodash/concat'
+import findLastIndex from 'lodash/findLastIndex'
+import groupBy from 'lodash/groupBy'
+import lowerCase from 'lodash/lowerCase'
+import snakeCase from 'lodash/snakeCase'
+import startCase from 'lodash/startCase'
 import {
   COUNTRIES,
   COUNTRY_GROUP_LABELS,

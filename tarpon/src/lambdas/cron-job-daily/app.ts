@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'

@@ -1,4 +1,6 @@
-import { groupBy, map, sortBy } from 'lodash'
+import groupBy from 'lodash/groupBy'
+import map from 'lodash/map'
+import sortBy from 'lodash/sortBy'
 import { v4 as uuidv4 } from 'uuid'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { mockClient } from 'aws-sdk-client-mock'

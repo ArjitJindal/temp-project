@@ -1,4 +1,5 @@
-import { countBy, isEmpty } from 'lodash'
+import countBy from 'lodash/countBy'
+import isEmpty from 'lodash/isEmpty'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import pMap from 'p-map'
 import PQueue from 'p-queue'

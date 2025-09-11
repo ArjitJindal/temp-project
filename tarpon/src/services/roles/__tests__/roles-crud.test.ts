@@ -6,7 +6,7 @@ import {
   RoleCreate,
   RoleUpdate,
 } from 'auth0'
-import { remove } from 'lodash'
+import remove from 'lodash/remove'
 import { RoleService } from '..'
 import { Auth0RolesRepository } from '../repository/auth0'
 import {

@@ -1,4 +1,6 @@
-import { last, omit, zipObject } from 'lodash'
+import last from 'lodash/last'
+import omit from 'lodash/omit'
+import zipObject from 'lodash/zipObject'
 import { v4 as uuidv4 } from 'uuid'
 import {
   createUserIfNotExists,

@@ -1,4 +1,4 @@
-import { pick } from 'lodash'
+import pick from 'lodash/pick'
 import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { logger } from '../logger'

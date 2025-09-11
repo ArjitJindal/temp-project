@@ -1,5 +1,6 @@
 import { Filter, MongoClient, ReplaceOneModel } from 'mongodb'
-import { isNil, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDefaultProviders } from '../utils'
 import { withTransaction } from '@/utils/mongodb-utils'

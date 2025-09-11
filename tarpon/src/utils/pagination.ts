@@ -1,4 +1,6 @@
-import { get, isEmpty, isNumber } from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import isNumber from 'lodash/isNumber'
 import { validate as uuidValidate } from 'uuid'
 import {
   Collection,

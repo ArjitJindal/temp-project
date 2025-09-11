@@ -7,7 +7,9 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, omit, sortBy } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
+import sortBy from 'lodash/sortBy'
 import { Filter, MongoClient, WithId } from 'mongodb'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

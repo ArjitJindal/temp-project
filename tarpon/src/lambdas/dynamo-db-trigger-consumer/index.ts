@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { StackConstants } from '@lib/constants'
 import { logger } from '@/core/logger'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'

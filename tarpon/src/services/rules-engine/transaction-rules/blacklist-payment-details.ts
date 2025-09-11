@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardExpiry } from '@/@types/openapi-public/CardExpiry'

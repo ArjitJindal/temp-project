@@ -1,4 +1,4 @@
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import pMap from 'p-map'
 import { logger } from '../logger'
 import { VersionHistoryTable } from '../../models/version-history'

@@ -6,7 +6,8 @@ import {
   S3,
 } from '@aws-sdk/client-s3'
 import { BadRequest, InternalServerError } from 'http-errors'
-import { find, isUndefined } from 'lodash'
+import find from 'lodash/find'
+import isUndefined from 'lodash/isUndefined'
 import { backOff } from 'exponential-backoff'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { logger } from '@/core/logger'

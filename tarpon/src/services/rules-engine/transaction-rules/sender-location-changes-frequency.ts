@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy, uniq } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
+import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'

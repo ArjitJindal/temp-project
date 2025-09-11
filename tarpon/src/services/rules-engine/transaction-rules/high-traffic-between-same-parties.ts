@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,

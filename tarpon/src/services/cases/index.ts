@@ -7,15 +7,13 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
-import {
-  capitalize,
-  compact,
-  difference,
-  isEmpty,
-  isEqual,
-  uniq,
-  uniqBy,
-} from 'lodash'
+import capitalize from 'lodash/capitalize'
+import compact from 'lodash/compact'
+import difference from 'lodash/difference'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import uniq from 'lodash/uniq'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { Upload } from '@aws-sdk/lib-storage'

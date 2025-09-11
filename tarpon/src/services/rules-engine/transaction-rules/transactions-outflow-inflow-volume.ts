@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import {
   COMPARATOR_SCHEMA,
   Comparator,

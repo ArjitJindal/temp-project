@@ -20,7 +20,8 @@ import {
   AnyBulkWriteOperation,
 } from 'mongodb'
 
-import { isEqual, memoize } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import memoize from 'lodash/memoize'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { escapeStringRegexp } from './regex'

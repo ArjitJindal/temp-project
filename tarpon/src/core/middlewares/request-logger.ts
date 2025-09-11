@@ -6,7 +6,7 @@ import {
   Context,
 } from 'aws-lambda'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { logger } from '../logger'
 import { getContext } from '../utils/context-storage'
 import { JWTAuthorizerResult } from '@/@types/jwt'
