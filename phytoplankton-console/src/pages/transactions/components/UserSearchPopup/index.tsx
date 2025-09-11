@@ -15,6 +15,7 @@ interface Props {
   params?: UserSearchParams;
   handleChangeParams?: (params: UserSearchParams) => void;
   onClose?: () => void;
+  filterType?: 'id' | 'name';
 }
 
 export default function UserSearchPopup(props: Props) {
@@ -27,6 +28,7 @@ export default function UserSearchPopup(props: Props) {
     params,
     handleChangeParams,
     onClose,
+    filterType,
   } = props;
   const [visible, setVisible] = useState(false);
 
@@ -51,6 +53,7 @@ export default function UserSearchPopup(props: Props) {
             params={params}
             handleChangeParams={handleChangeParams}
             onClose={onClose}
+            filterType={filterType}
           />
         </div>
       }

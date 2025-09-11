@@ -83,6 +83,7 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
       }}
       params={params}
       handleChangeParams={handleChangeParams}
+      filterType="name"
     >
       <Button style={{ width: '100%' }}>
         {newUserData.userFullName || `Choose ${settings.userAlias}`}
