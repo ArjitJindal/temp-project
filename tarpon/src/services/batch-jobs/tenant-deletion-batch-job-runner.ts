@@ -123,6 +123,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'MIGRATION_PRE_DEPLOYMENT'
   | 'MIGRATION_POST_DEPLOYMENT'
   | 'SECONDARY_QUEUE_TENANTS'
+  | 'CLICKHOUSE_SYNC_CHECKSUM'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
