@@ -73,14 +73,19 @@ export function DownloadButton(props: {
       if (pdfRef?.current) {
         const tableOptions = buildDownloadableTable(data);
         await DownloadAsPDF({
-          pdfRef: pdfRef.current,
           fileName,
           tableOptions: tableOptions ? [tableOptions] : [],
           reportTitle: tableTitle,
         });
+        message.success('Data export finished', {
+          details: 'Download should start in a moment.',
+        });
       } else {
         if (data && data.length) {
           download(fileName, data);
+          message.success('Data export finished', {
+            details: 'Download should start in a moment.',
+          });
         } else {
           message.info('Nothing to download');
         }
@@ -90,9 +95,6 @@ export function DownloadButton(props: {
     } finally {
       setLoading(false);
       hideMessage && hideMessage();
-      message.success('Data export finished', {
-        details: 'Download should start in a moment.',
-      });
     }
   }, [onDownload]);
   return (
