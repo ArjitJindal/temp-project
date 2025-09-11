@@ -877,52 +877,7 @@ export class AlertsRepository {
       ],
     })
 
-    if (alertConditions.length > 0) {
-      pipeline.push({
-        $match: {
-          alerts: {
-            $elemMatch: {
-              $and: replaceMagicKeyword(alertConditions, 'alerts.', ''),
-            },
-          },
-        },
-      })
-      if (options?.enablePerformanceWorkaround) {
-        pipeline.push({
-          $addFields: {
-            alerts: {
-              $filter: {
-                input: '$alerts',
-                as: 'alert',
-                cond: convertQueryToAggregationExpression({
-                  $and: replaceMagicKeyword(
-                    alertConditions,
-                    'alerts.',
-                    'alert.'
-                  ),
-                }),
-              },
-            },
-          },
-        })
-      }
-    }
-
-    if (!options?.countOnly && sortStage) {
-      pipeline.push(sortStage)
-    }
-
-    if (options?.extraAlertsFilterConditions?.length) {
-      pipeline.push({
-        $match: {
-          $and: options.extraAlertsFilterConditions,
-        },
-      })
-      alertConditions.push(...options.extraAlertsFilterConditions)
-    }
-
-    // compute the age of the alert dynamically
-    pipeline.push({
+    const alertAgeCalculation = {
       $addFields: {
         alerts: {
           $map: {
@@ -955,7 +910,56 @@ export class AlertsRepository {
           },
         },
       },
-    })
+    }
+    if (alertConditions.length > 0) {
+      pipeline.push({
+        $match: {
+          alerts: {
+            $elemMatch: {
+              $and: replaceMagicKeyword(alertConditions, 'alerts.', ''),
+            },
+          },
+        },
+      })
+
+      if (options?.enablePerformanceWorkaround) {
+        pipeline.push({
+          $addFields: {
+            alerts: {
+              $filter: {
+                input: '$alerts',
+                as: 'alert',
+                cond: convertQueryToAggregationExpression({
+                  $and: replaceMagicKeyword(
+                    alertConditions,
+                    'alerts.',
+                    'alert.'
+                  ),
+                }),
+              },
+            },
+          },
+        })
+      }
+      pipeline.push(alertAgeCalculation)
+    }
+
+    if (!options?.countOnly && sortStage) {
+      pipeline.push(sortStage)
+    }
+
+    if (options?.extraAlertsFilterConditions?.length) {
+      pipeline.push({
+        $match: {
+          $and: options.extraAlertsFilterConditions,
+        },
+      })
+      alertConditions.push(...options.extraAlertsFilterConditions)
+    }
+    if (!options?.enablePerformanceWorkaround) {
+      // compute the age of the alert dynamically
+      pipeline.push(alertAgeCalculation)
+    }
 
     pipeline.push({
       $unwind: {
