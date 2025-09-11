@@ -1147,12 +1147,8 @@ export class UserRepository {
         { $set: updateWithoutId },
         { session: options?.session }
       ),
+      this.updateUniqueTags(userToSave?.tags),
     ]
-
-    // Skip updateUniqueTags for gocardless tenant
-    if (this.tenantId !== '4c9cdf0251') {
-      promises.push(this.updateUniqueTags(userToSave?.tags))
-    }
 
     await Promise.all(promises)
 

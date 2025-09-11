@@ -168,11 +168,8 @@ export class MongoDbTransactionRepository
         { $set: payload },
         { session: options?.session }
       ),
+      this.updateUniqueTransactionTags(transaction),
     ]
-    // Skip updateUniqueTransactionTags for gocardless tenant
-    if (this.tenantId !== '4c9cdf0251') {
-      promises.push(this.updateUniqueTransactionTags(transaction))
-    }
     await Promise.all(promises)
 
     return internalTransaction
