@@ -25,6 +25,7 @@ import {
 import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import { envIs } from '@/utils/env'
+import { handleLocalTarponChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
 
 @traceable
 export class DynamoBatchJobRepository {
@@ -434,17 +435,5 @@ export class DynamoBatchJobRepository {
 
     const result = await this.dynamoDb.send(new QueryCommand(queryParams))
     return (result.Items?.length ?? 0) > 0
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
   }
 }

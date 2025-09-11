@@ -30,7 +30,6 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-
 import { AlertParams, AlertsRepository } from './repository'
 import { API_USER, FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { Alert } from '@/@types/openapi-internal/Alert'

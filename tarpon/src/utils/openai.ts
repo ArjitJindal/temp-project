@@ -20,6 +20,8 @@ import { LLMLogObject } from './llms'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context-storage'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { handleLocalTarponChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
+
 let openai: OpenAI | null = null
 
 export enum ModelVersion {
@@ -142,6 +144,7 @@ export async function linkGPTRequestDynamoDB(
   }
 
   await batch.execute()
+
   if (envIs('local') || envIs('test')) {
     await handleLocalChangeCapture(tenantId, keys)
   }
@@ -169,17 +172,5 @@ export async function getGPTRequestLogById(
     )
     const item = await collection.findOne({ _id: new ObjectId(id) })
     return item
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
   }
 }

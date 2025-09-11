@@ -169,16 +169,11 @@ export class DynamoDbTransactionRepository
     )
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await Promise.all(
-        primaryKeys
-          .filter((primaryKey) => primaryKey !== undefined)
-          .map((primaryKey) =>
-            localTarponChangeCaptureHandler(this.tenantId, primaryKey)
-          )
-      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, primaryKeys)
     }
 
     return transactions.map(({ transaction }) => transaction)
@@ -211,10 +206,11 @@ export class DynamoDbTransactionRepository
       })
     )
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
   }
 

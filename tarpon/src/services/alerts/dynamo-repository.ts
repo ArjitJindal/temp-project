@@ -11,8 +11,6 @@ import concat from 'lodash/concat'
 import omit from 'lodash/omit'
 import {
   createUpdateCaseQueries,
-  dynamoKey,
-  dynamoKeyList,
   generateDynamoConsumerMessage,
   transactWriteWithClickhouse,
 } from '../case-alerts-common/utils'
@@ -36,7 +34,11 @@ import {
   BatchWriteRequestInternal,
 } from '@/utils/dynamodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
+import {
+  DynamoConsumerMessage,
+  dynamoKey,
+  dynamoKeyList,
+} from '@/@types/dynamo'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { logger } from '@/core/logger'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
@@ -53,21 +55,13 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { envIs } from '@/utils/env'
 import { removeUndefinedFields } from '@/utils/object'
+import { handleLocalTarponChangeCapture } from '@/core/local-handlers/tarpon'
+
 type caseUpdateOptions = {
   updateCase: boolean
   caseUpdateFields: Record<string, any>
 }
 
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-
-  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'TARPON')
-}
 @traceable
 export class DynamoAlertRepository {
   private readonly tenantId: string
@@ -1913,7 +1907,7 @@ export class DynamoAlertRepository {
     await batch.execute()
     if (envIs('local') || envIs('test')) {
       for (const key of keyLists) {
-        await handleLocalChangeCapture(this.tenantId, key.key)
+        await handleLocalTarponChangeCapture(this.tenantId, [key.key])
       }
     }
   }
@@ -1967,7 +1961,7 @@ export class DynamoAlertRepository {
       await batch.execute()
 
       if (envIs('local') || envIs('test')) {
-        await handleLocalChangeCapture(this.tenantId, key)
+        await handleLocalTarponChangeCapture(this.tenantId, [key])
       }
     } else {
       logger.warn('Sampling ID is required')

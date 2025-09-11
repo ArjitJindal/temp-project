@@ -12,7 +12,7 @@ import { logger } from '@/core/logger'
 import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
-import { handleWebhookDeliveryTask } from '@/lambdas/webhook-deliverer/utils'
+import { handleLocalWebhookDelivery } from '@/core/local-handlers/webhook-delivery'
 
 const LOCAL_SECRET_KEY = 'test-secret'
 
@@ -127,7 +127,8 @@ async function sendWebhookTasksToWebhooks<T extends object = object>(
       logger.info(`Sending ${entries.length} webhooks to local queue`)
       await Promise.all(
         entries.map((entry) =>
-          handleWebhookDeliveryTask(
+          handleLocalWebhookDelivery(
+            tenantId,
             JSON.parse(entry.MessageBody as string) as WebhookDeliveryTask
           )
         )

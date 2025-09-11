@@ -11,6 +11,7 @@ import { envIs } from './env'
 
 let localChangeHandlerEnabled = false
 let localChangeHandlerDisabled = false
+
 export function disableLocalChangeHandler() {
   localChangeHandlerEnabled = false
   localChangeHandlerDisabled = true
@@ -41,7 +42,7 @@ export function runLocalChangeHandler(): boolean {
   )
 }
 
-export function createKinesisStreamEvent<T>(
+function createKinesisStreamEvent<T>(
   partitionKeyId: string,
   sortKeyId: string | undefined,
   oldItem: T | undefined,

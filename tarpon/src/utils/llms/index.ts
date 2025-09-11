@@ -14,6 +14,7 @@ import { LLMOptions, Message } from './base-service'
 import { LLMProvider } from '@/@types/openapi-internal/LLMProvider'
 import { tenantSettings } from '@/core/utils/context'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { handleLocalTarponChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
 
 export type LLMLogObject = {
   _id: string | ObjectId
@@ -88,18 +89,6 @@ export async function linkLLMRequestDynamoDB(
   await batch.execute()
   if (envIs('local') || envIs('test')) {
     await handleLocalChangeCapture(tenantId, keys)
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
   }
 }
 

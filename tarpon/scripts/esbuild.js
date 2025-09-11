@@ -25,6 +25,8 @@ const IGNORED = [
   'SyntheticsLogger',
   'superagent-proxy',
   'highlight.js',
+  '@/core/local-handlers/*',
+  '@/utils/local-dynamodb-change-handler',
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)

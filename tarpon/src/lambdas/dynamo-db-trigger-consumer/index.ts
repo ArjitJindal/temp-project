@@ -4,13 +4,7 @@ import { StackConstants } from '@lib/constants'
 import { logger } from '@/core/logger'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
 import { batchGet } from '@/utils/dynamodb'
-import { dynamoKeyList } from '@/services/case-alerts-common/utils'
-
-export interface DynamoConsumerMessage {
-  tenantId: string
-  tableName: string
-  items: dynamoKeyList
-}
+import { DynamoConsumerMessage } from '@/@types/dynamo'
 
 export class DynamoDbConsumer {
   dynamoDb: DynamoDBDocumentClient

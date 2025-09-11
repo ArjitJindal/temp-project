@@ -20,11 +20,11 @@ const handleLocalChangeCapture = async (
   tenantId: string,
   primaryKeys: { PartitionKeyID: string; SortKeyID?: string }[]
 ) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
+  const { handleLocalTarponChangeCapture } = await import(
+    '@/core/local-handlers/tarpon'
   )
   for (const key of primaryKeys) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
+    await handleLocalTarponChangeCapture(tenantId, [key])
   }
 }
 

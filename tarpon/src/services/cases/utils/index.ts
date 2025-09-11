@@ -155,18 +155,9 @@ export async function sendActionProcessionTasks(
 ) {
   if (envIs('local', 'test')) {
     const { actionProcessingHandler } = await import(
-      '@/lambdas/action-processing/app'
+      '@/core/local-handlers/action-processing'
     )
-    if (
-      envIs('local') ||
-      process.env.__ACTION_PROCESSING_ENABLED__ === 'true'
-    ) {
-      await actionProcessingHandler({
-        Records: tasks.map((task) => ({
-          body: JSON.stringify(task),
-        })),
-      })
-    }
+    await actionProcessingHandler(tasks)
     return
   }
   const sqsClient = getSQSClient()

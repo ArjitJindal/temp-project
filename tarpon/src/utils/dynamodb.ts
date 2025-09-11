@@ -56,8 +56,10 @@ import { logger } from '@/core/logger'
 import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { handleLocalDynamoDbTrigger } from '@/core/local-handlers/dynamo-db-trigger'
+import { DynamoConsumerMessage } from '@/@types/dynamo'
+
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
 export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []
@@ -1064,18 +1066,7 @@ export async function sendMessageToDynamoDbConsumer(
     return
   }
   if (envIs('local') || envIs('test')) {
-    // Direct processing for local/test environments
-    const { dynamoDbTriggerQueueConsumerHandler } = await import(
-      '@/lambdas/dynamo-db-trigger-consumer/app'
-    )
-    await dynamoDbTriggerQueueConsumerHandler({
-      Records: [
-        {
-          body: JSON.stringify(message),
-        },
-      ],
-    })
-    return
+    await handleLocalDynamoDbTrigger(message)
   }
   logger.debug('Sending message to DynamoDb consumer', {
     message,

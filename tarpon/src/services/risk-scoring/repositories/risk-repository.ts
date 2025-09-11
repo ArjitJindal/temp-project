@@ -84,6 +84,7 @@ import { VersionHistoryTable } from '@/models/version-history'
 import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { handleLocalHammerheadChangeCapture as handleLocalChangeCapture } from '@/core/local-handlers/tarpon'
 
 export type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
 
@@ -1546,17 +1547,6 @@ export class RiskRepository {
 }
 
 /** Kinesis Util */
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-
-  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'HAMMERHEAD')
-}
 
 /**
  * Version history
