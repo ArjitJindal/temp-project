@@ -11,10 +11,11 @@ import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { ConnectionCredentials, JsonMigrationService } from 'thunder-schema'
-import chain from 'lodash/chain'
 import get from 'lodash/get'
 import maxBy from 'lodash/maxBy'
 import memoize from 'lodash/memoize'
+import map from 'lodash/map'
+import groupBy from 'lodash/groupBy'
 import { envIs, envIsNot } from '../env'
 import { bulkSendMessages } from '../sns-sqs-client'
 import {
@@ -747,10 +748,9 @@ export function getSortedData<T>({
   groupByField: string
   groupBySortField: string
 }): T[] {
-  const items = chain(data)
-    .groupBy(groupByField)
-    .map((group) => maxBy(group, groupBySortField))
-    .value() as T[]
+  const items = map(groupBy(data, groupByField), (group) =>
+    maxBy(group, groupBySortField)
+  ) as T[]
   const sortDirection = sortOrder === 'ascend' ? 1 : -1
   const sortedItems = items.sort(
     (a, b) => sortDirection * (get(a, sortField) - get(b, sortField))
