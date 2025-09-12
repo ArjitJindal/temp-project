@@ -16,12 +16,11 @@ interface DeleteUserProps {
   user: FlagrightAuth0User;
   accounts: Account[];
   onSuccess: () => void;
-  isDisabled: (item: Account) => boolean;
   setDeletedUserId: (id: string) => void;
 }
 
 export function DeleteUser(props: DeleteUserProps) {
-  const { isDisabled, item, user, accounts, onSuccess, setDeletedUserId } = props;
+  const { item, user, accounts, onSuccess, setDeletedUserId } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [reassignTo, setReassignTo] = useState<string | null>(null);
   const api = useApi();
@@ -122,7 +121,7 @@ export function DeleteUser(props: DeleteUserProps) {
             testName="accounts-delete-button"
             type="TETRIARY"
             onClick={onClick}
-            isDisabled={isDisabled(item)}
+            isDisabled={item.blocked || item.id === user.userId}
             icon={<DeleteOutlined />}
           >
             Delete
@@ -138,7 +137,7 @@ export function DeleteUser(props: DeleteUserProps) {
         testName="accounts-delete-button"
         type="TETRIARY"
         onClick={handleDelete}
-        isDisabled={isDisabled(item)}
+        isDisabled={item.blocked || item.id === user.userId}
         icon={<DeleteOutlined />}
         requiredResources={['write:::accounts/overview/*']}
       >

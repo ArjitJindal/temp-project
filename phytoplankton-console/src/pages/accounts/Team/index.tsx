@@ -6,7 +6,6 @@ import { DeleteUser } from '../components/DeleteUser';
 import { ResetUserMfa } from '../components/ResetUserMfa';
 import s from './index.module.less';
 import {
-  isAtLeast,
   parseUserRole,
   useAccountsQueryResult,
   useAuth0User,
@@ -429,9 +428,6 @@ export default function Team() {
                   invalidateUsers();
                   accountsResult.refetch();
                 }}
-                isDisabled={(item) =>
-                  item.blocked || item.id === user.userId || !isAtLeast(user, UserRole.ADMIN)
-                }
               />
               <DeleteUser
                 item={item}
@@ -442,7 +438,6 @@ export default function Team() {
                   accountsResult.refetch();
                 }}
                 setDeletedUserId={setDeletedUserId}
-                isDisabled={(item) => item.blocked || item.id === user.userId}
               />
             </div>
           );
