@@ -161,6 +161,9 @@ function txEntityVariableWithoutDirection(variables: LogicVariable[]) {
     if (!variable.key.startsWith('origin')) {
       return [variable]
     }
+    if (variable.key.startsWith('originFundsInfo')) {
+      return [variable]
+    }
 
     // Add one more direction-less variable for variables with direction
     let updatedKey = variable.key.replace(/^origin/, '')
