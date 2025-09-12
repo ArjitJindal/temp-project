@@ -3,12 +3,14 @@ import {
   GetObjectTaggingCommand,
   GetObjectTaggingCommandOutput,
   HeadObjectCommand,
+  PutObjectCommand,
   S3,
 } from '@aws-sdk/client-s3'
 import { BadRequest, InternalServerError } from 'http-errors'
 import find from 'lodash/find'
 import isUndefined from 'lodash/isUndefined'
 import { backOff } from 'exponential-backoff'
+import { getFlatFileErrorRecordS3Key } from '@flagright/lib/utils'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { logger } from '@/core/logger'
 import { MAX_FILE_SIZE_BYTES } from '@/core/constants'
@@ -159,5 +161,39 @@ export class S3Service {
       ...file,
       bucket: this.s3Config.documentBucketName,
     }))
+  }
+
+  public async copyFlatFilesToPermanentBucket(
+    files: FileInfo[]
+  ): Promise<FileInfo[]> {
+    if (envIs('test')) {
+      return files
+    }
+    const s3Files = await this.copyFilesToPermanentBucket(files)
+
+    // creating the errors file when staring the flat file import batch job
+    // this way when we complete the import we can directly write to this s3key with errored records we don't need to store s3Key for errored recrod
+    // as it can dervied from original file s3Key
+    const errorFiles = s3Files.map((file) => ({
+      s3Key: getFlatFileErrorRecordS3Key(file.s3Key),
+    }))
+
+    for (const file of errorFiles) {
+      const putObjectCommand = new PutObjectCommand({
+        Bucket: this.s3Config.documentBucketName,
+        Key: file.s3Key,
+      })
+      try {
+        await this.s3.send(putObjectCommand)
+      } catch (error) {
+        if (
+          (error as any)?.name === 'NoSuchKey' ||
+          (error as any)?.name === 'AccessDenied'
+        ) {
+          throw new BadRequest('Invalid s3Key in files')
+        }
+      }
+    }
+    return s3Files
   }
 }

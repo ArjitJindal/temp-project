@@ -134,7 +134,7 @@ export class ListService {
         throw new Error('No columns found in the file')
       }
 
-      const files = await s3Service.copyFilesToPermanentBucket([fileInfo])
+      const files = await s3Service.copyFlatFilesToPermanentBucket([fileInfo])
 
       await sendBatchJobCommand({
         tenantId: this.tenantId,
@@ -625,7 +625,7 @@ export class ListService {
     file: FileInfo
   ): Promise<ListImportResponse> {
     const s3Service = new S3Service(this.s3 as S3, this.s3Config as S3Config)
-    const files = await s3Service.copyFilesToPermanentBucket([file])
+    const files = await s3Service.copyFlatFilesToPermanentBucket([file])
     await sendBatchJobCommand({
       tenantId: this.tenantId,
       type: 'FLAT_FILES_VALIDATION',

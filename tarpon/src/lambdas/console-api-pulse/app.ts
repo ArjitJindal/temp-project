@@ -248,7 +248,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         tmpBucketName: TMP_BUCKET,
         documentBucketName: DOCUMENT_BUCKET,
       })
-      const fileInfo = await s3Service.copyFilesToPermanentBucket([file])
+      const fileInfo = await s3Service.copyFlatFilesToPermanentBucket([file])
       await sendBatchJobCommand({
         tenantId,
         type: 'FLAT_FILES_VALIDATION',

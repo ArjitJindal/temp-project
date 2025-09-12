@@ -238,7 +238,7 @@ describe('FlatFilesService', () => {
         'validate CSV file import for $type',
         ({ schema, type, seeder }) => {
           it(`should save ${type} users to database`, async () => {
-            const s3Key = `test-${uuidv4()}.csv`
+            const s3Key = `${TEST_TENANT_ID}/test-${uuidv4()}.csv`
             const user1 = seeder()
             const user2 = seeder()
             const mockStream = await createMockCSVStream([user1, user2], schema)
@@ -279,7 +279,7 @@ describe('FlatFilesService', () => {
       it('should not save duplicate users', async () => {
         enableAsyncRulesInTest()
         enableLocalChangeHandler()
-        const s3Key = `test-${uuidv4()}.csv`
+        const s3Key = `${TEST_TENANT_ID}/test-${uuidv4()}.csv`
         const user1 = mockConsumerUser()
         const user2 = { ...mockConsumerUser(), userId: user1 }
         const user3 = mockConsumerUser()
@@ -319,7 +319,7 @@ describe('FlatFilesService', () => {
 
     describe('Transaction flat file import', () => {
       it('should save TRANSACTION to database', async () => {
-        const s3Key = `test-${uuidv4()}.csv`
+        const s3Key = `${TEST_TENANT_ID}/test-${uuidv4()}.csv`
         const dynamoDb = getDynamoDbClient()
         const mongoDb = await getMongoDbClient()
         const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)

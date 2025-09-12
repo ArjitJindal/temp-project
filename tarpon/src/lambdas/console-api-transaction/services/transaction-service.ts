@@ -631,7 +631,7 @@ export class TransactionService {
   public async importFlatFile(request: TransactionFlatFileUploadRequest) {
     const { file } = request
 
-    const files = await this.s3Service.copyFilesToPermanentBucket([file])
+    const files = await this.s3Service.copyFlatFilesToPermanentBucket([file])
     await sendBatchJobCommand({
       tenantId: this.tenantId,
       type: 'FLAT_FILES_VALIDATION',

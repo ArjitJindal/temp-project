@@ -8621,6 +8621,8 @@ components:
           $ref: '#/components/schemas/TaskStatusChangeStatusEnum'
         isValidationJobRunning:
           type: boolean
+        erroredRecrodS3Key:
+          type: string
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string
