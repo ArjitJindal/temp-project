@@ -108,7 +108,7 @@ export default function FilesDraggerInput(props: Props) {
               onSuccess(s3Key);
             }
             const fileInfo = { s3Key, filename: file.name, size: file.size };
-            setState((prevState) => [...(prevState ?? []), fileInfo]);
+            setState((prevState) => (singleFile ? [fileInfo] : [...(prevState ?? []), fileInfo]));
             hideMessage();
           } catch (error) {
             const errorMessage = `${getErrorMessage(error)}`;
