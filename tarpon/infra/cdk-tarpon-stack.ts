@@ -1864,7 +1864,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     // Create performance dashboards
     if (!isQaEnv()) {
-      createTransactionFunctionPerformanceDashboard(this)
+      createTransactionFunctionPerformanceDashboard(this, this.config.region)
     }
   }
 
