@@ -25,7 +25,7 @@ import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { retryWebhookTasks } from '@/services/webhook/utils'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')

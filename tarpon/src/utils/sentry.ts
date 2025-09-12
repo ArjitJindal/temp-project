@@ -1,10 +1,10 @@
-import * as Sentry from '@sentry/node'
-import * as createError from 'http-errors'
+import { NodeOptions as SentryNodeOptions } from '@sentry/node'
+import { HttpError } from 'http-errors'
 import { generateChecksum } from './object'
 import { getContext } from '@/core/utils/context-storage'
 import { SENTRY_DSN } from '@/core/constants'
 
-export const SENTRY_INIT_CONFIG: Sentry.NodeOptions = {
+export const SENTRY_INIT_CONFIG: SentryNodeOptions = {
   dsn: SENTRY_DSN,
   tracesSampleRate: 0,
   environment: process.env.ENV || 'local',
@@ -12,7 +12,7 @@ export const SENTRY_INIT_CONFIG: Sentry.NodeOptions = {
 
   beforeSend(event, hint) {
     const error = hint?.originalException
-    if (error instanceof createError.HttpError && error.statusCode < 500) {
+    if (error instanceof HttpError && error.statusCode < 500) {
       return null
     }
     const currentErrorHash = generateChecksum(error, 32)

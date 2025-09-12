@@ -26,7 +26,7 @@ const IGNORED = [
   'superagent-proxy',
   'highlight.js',
   '@/core/local-handlers/*',
-  // '@/utils/local-dynamodb-change-handler', // removing this because we still need to use this as a direct import
+  '@/utils/local-dynamodb-change-handler', // removing this because we still need to use this as a direct import
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
@@ -153,7 +153,7 @@ async function main() {
         const inputs = Object.entries(info.inputs)
           .map(([input, { bytesInOutput }]) => ({ input, size: bytesInOutput }))
           .sort((a, b) => b.size - a.size)
-          .slice(0, 10) // top 10 biggest inputs
+          .slice(0, 20) // top 20 biggest inputs
 
         for (const { input, size } of inputs) {
           console.log(`   - ${input}: ${size.toLocaleString()} bytes`)

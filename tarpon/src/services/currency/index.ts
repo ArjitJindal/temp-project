@@ -1,7 +1,7 @@
 import isEmpty from 'lodash/isEmpty'
 import mapValues from 'lodash/mapValues'
 import set from 'lodash/set'
-import * as Sentry from '@sentry/aws-serverless'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'
 import { CurrencyRepository } from './repository'
@@ -124,7 +124,7 @@ export class CurrencyService {
           const failureTimestamp = new Date(exchangeData?.date).getTime()
           const diffInHours = (Date.now() - failureTimestamp) / (1000 * 60 * 60)
           if (diffInHours >= 48) {
-            Sentry.captureMessage(
+            captureExceptionSentry(
               `Failed to fetch currency exchange data from CDN for more than 48 hours`
             )
           }

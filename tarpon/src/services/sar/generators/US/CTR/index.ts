@@ -6,7 +6,10 @@ import { XMLBuilder } from 'fast-xml-parser'
 import cloneDeep from 'lodash/cloneDeep'
 import last from 'lodash/last'
 import { BadRequest } from 'http-errors'
-import * as Sentry from '@sentry/aws-serverless'
+import {
+  withScope as withScopeSentry,
+  captureMessage as captureMessageSentry,
+} from '@sentry/aws-serverless'
 import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
 import {
   ActivityPartyTypeCodesCTR,
@@ -535,10 +538,10 @@ export class UsCtrReportGenerator implements ReportGenerator {
       await sftp.end()
     }
 
-    Sentry.withScope((scope) => {
+    withScopeSentry((scope) => {
       scope.setTags({ reportId: report.id })
       scope.setFingerprint([this.tenantId, report.id ?? ''])
-      Sentry.captureMessage(`[${report.id}] New FinCEN CTR report submitted`)
+      captureMessageSentry(`[${report.id}] New FinCEN CTR report submitted`)
     })
     return ''
   }

@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/aws-serverless'
+import { setTags, setExtras } from '@sentry/aws-serverless'
 import { Extras } from '@sentry/types/types/extra'
 import { utils } from 'aws-xray-sdk-core'
 import {
@@ -203,7 +203,7 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
       },
       isNil
     )
-    Sentry.setTags(context.logMetadata)
+    setTags(context.logMetadata)
   }
 }
 
@@ -217,7 +217,7 @@ export function addSentryExtras(addedExtras: Extras) {
   }
 
   if (context?.sentryExtras) {
-    Sentry.setExtras(context.sentryExtras)
+    setExtras(context.sentryExtras)
   }
 }
 

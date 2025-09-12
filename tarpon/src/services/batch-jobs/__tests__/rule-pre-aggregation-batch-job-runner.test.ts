@@ -23,7 +23,7 @@ import {
 } from '@/test-utils/transaction-test-utils'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getTestRiskFactor } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

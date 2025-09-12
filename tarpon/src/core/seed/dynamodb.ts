@@ -21,7 +21,6 @@ import {
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { ruleInstances } from '@/core/seed/data/rules'
-import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
@@ -55,13 +54,21 @@ import { getTriggerSource } from '@/utils/lambda'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { data as transactionEvents } from '@/core/seed/data/transaction_events'
 import { getUserEvents } from '@/core/seed/data/user_events'
+import { envIs } from '@/utils/env'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
   tenantId: string
 ) {
   logger.info('Seeding DynamoDB...')
-  disableLocalChangeHandler()
+
+  if (envIs('local') || envIs('test')) {
+    const { disableLocalChangeHandler } = await import(
+      '@/utils/local-change-handler'
+    )
+
+    disableLocalChangeHandler()
+  }
 
   const userRepo = new UserRepository(tenantId, {
     dynamoDb: dynamoDb,

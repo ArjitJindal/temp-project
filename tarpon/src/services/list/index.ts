@@ -1,7 +1,7 @@
 import readline from 'node:readline'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import * as csvParse from '@fast-csv/parse'
+import { parseString } from '@fast-csv/parse'
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials as STSCredentials } from '@aws-sdk/client-sts'
 import {
@@ -502,8 +502,7 @@ export class ListService {
     for await (const line of rl) {
       try {
         const parsedRow: string[] = await new Promise((resolve, reject) => {
-          csvParse
-            .parseString(line)
+          parseString(line)
             .on('data', (row: string[]) => resolve(row))
             .on('error', (error) => reject(error))
             .on('end', () => resolve([]))

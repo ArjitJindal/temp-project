@@ -11,7 +11,7 @@ import groupBy from 'lodash/groupBy'
 import memoize from 'lodash/memoize'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import * as Sentry from '@sentry/aws-serverless'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -106,7 +106,7 @@ export class MongoDbConsumer {
         logger.warn(message, logObject)
         logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)
         logger.info(`tenantId: ${tenantId}`)
-        Sentry.captureException(new Error(message), { extra: logObject })
+        captureExceptionSentry(new Error(message), { extra: logObject })
         return false
       }
       return true

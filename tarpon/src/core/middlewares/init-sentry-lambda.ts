@@ -1,4 +1,14 @@
-import * as Sentry from '@sentry/aws-serverless'
+import {
+  init,
+  rewriteFramesIntegration,
+  wrapHandler,
+  getCurrentScope,
+  setUser,
+  setTags,
+  setContext,
+  setTag,
+  setExtras,
+} from '@sentry/aws-serverless'
 import { isQaEnv } from '@flagright/lib/qa'
 import { getContext } from '../utils/context-storage'
 import { SENTRY_INIT_CONFIG } from '@/utils/sentry'
@@ -14,41 +24,41 @@ export const initSentryLambda =
       }
     }
 
-    Sentry.init({
+    init({
       ...SENTRY_INIT_CONFIG,
       debug: process.env.ENV === 'local', // Enable debug mode in local environment
       integrations: [
-        Sentry.rewriteFramesIntegration({
+        rewriteFramesIntegration({
           prefix: `app:///lambdas/${process.env.LAMBDA_CODE_PATH}/`,
         }),
       ],
     })
 
-    return Sentry.wrapHandler(async (event: any, ...args): Promise<any> => {
-      const scope = Sentry.getCurrentScope()
+    return wrapHandler(async (event: any, ...args): Promise<any> => {
+      const scope = getCurrentScope()
       scope.clear()
 
       if (event.requestContext?.authorizer) {
         const { userId, verifiedEmail } = event.requestContext
           .authorizer as unknown as JWTAuthorizerResult
-        Sentry.setUser({
+        setUser({
           id: userId,
           email: verifiedEmail ?? undefined,
         })
       }
-      Sentry.setTags(getContext()?.logMetadata || {})
-      Sentry.setContext(
+      setTags(getContext()?.logMetadata || {})
+      setContext(
         'query',
         (event?.queryStringParameters as Record<string, unknown>) || {}
       )
-      Sentry.setContext('body', (event?.body as Record<string, unknown>) || {})
-      Sentry.setContext(
+      setContext('body', (event?.body as Record<string, unknown>) || {})
+      setContext(
         'path',
         (event?.pathParameters as Record<string, unknown>) || {}
       )
-      Sentry.setTag('httpMethod', event?.httpMethod || '')
-      Sentry.setTag('resource', event?.resource || '')
-      Sentry.setExtras(getContext()?.sentryExtras || {})
+      setTag('httpMethod', event?.httpMethod || '')
+      setTag('resource', event?.resource || '')
+      setExtras(getContext()?.sentryExtras || {})
 
       return handler(event, ...args)
     })

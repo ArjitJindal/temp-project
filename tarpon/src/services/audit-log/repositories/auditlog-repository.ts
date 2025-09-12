@@ -1,9 +1,8 @@
 import { MongoClient, Document, AggregationCursor, Filter } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import * as Sentry from '@sentry/aws-serverless'
-
 import omit from 'lodash/omit'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
 import { logger } from '@/core/logger'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import {
@@ -94,7 +93,7 @@ export class AuditLogRepository {
         timestamp: newAuditLog.timestamp,
       }
       logger.warn('Not saving audit log for unknown tenant:', logObject)
-      Sentry.captureException(
+      captureExceptionSentry(
         new Error(`Unknown tenantId found in audit log: ${this.tenantId}`),
         { extra: logObject }
       )

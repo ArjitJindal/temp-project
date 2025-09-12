@@ -1,4 +1,4 @@
-import * as ARN from '@aws-sdk/util-arn-parser'
+import { parse as parseArn } from '@aws-sdk/util-arn-parser'
 import { STSClient, AssumeRoleCommand, Credentials } from '@aws-sdk/client-sts'
 import {
   APIGatewayAuthorizerResult,
@@ -88,7 +88,7 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
   async (
     event: APIGatewayRequestAuthorizerEvent
   ): Promise<APIGatewayAuthorizerResult> => {
-    const arn = ARN.parse(event.methodArn)
+    const arn = parseArn(event.methodArn)
     const { apiId, stage, accountId, requestId } = event.requestContext
     const apiKey = getApiKey(event)
     const tenantId = apiKey ? getTenantIdFromApiKey(apiKey) : undefined

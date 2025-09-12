@@ -10,7 +10,7 @@ import {
   setUpTransactionsHooks,
 } from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { getS3ClientByEvent } from '@/utils/s3'

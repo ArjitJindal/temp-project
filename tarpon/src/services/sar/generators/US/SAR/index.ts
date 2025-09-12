@@ -2,7 +2,6 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import path from 'path'
 import os from 'os'
-import * as Sentry from '@sentry/aws-serverless'
 import { BadRequest } from 'http-errors'
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
 import chunk from 'lodash/chunk'
@@ -12,8 +11,11 @@ import last from 'lodash/last'
 import omit from 'lodash/omit'
 import pick from 'lodash/pick'
 import SftpClient from 'ssh2-sftp-client'
+import {
+  captureException as captureExceptionSentry,
+  captureMessage as captureMessageSentry,
+} from '@sentry/aws-serverless'
 import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
-
 import {
   ContactOffice,
   FilingInstitution,
@@ -772,11 +774,11 @@ export class UsSarReportGenerator implements ReportGenerator {
       await sftp.end()
     }
 
-    Sentry.withScope((scope) => {
-      scope.setTags({ reportId: report.id })
-      scope.setFingerprint([this.tenantId, report.id ?? ''])
-      Sentry.captureMessage(`[${report.id}] New FinCEN SAR report submitted`)
+    captureExceptionSentry(`${report.id}] New FinCEN SAR report submitted`, {
+      tags: { reportId: report.id },
+      fingerprint: [this.tenantId, report.id ?? ''],
     })
+    captureMessageSentry(`[${report.id}] New FinCEN SAR report submitted`)
     return '' // todo update this
   }
 }

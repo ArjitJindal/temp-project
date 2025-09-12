@@ -5,7 +5,7 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import dayjs from '@/utils/dayjs'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 
 function toMap(obj: object) {
   return new Map(Object.entries(obj))

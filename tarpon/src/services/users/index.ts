@@ -1,5 +1,4 @@
-import * as createError from 'http-errors'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
@@ -1359,7 +1358,7 @@ export class UserService {
     const user = await this.userRepository.getUserById(userId)
 
     if (!user) {
-      throw new createError.NotFound(`User ${userId} not found`)
+      throw new NotFound(`User ${userId} not found`)
     }
 
     if (!getAttachments || !this.s3 || !this.tmpBucketName) {
@@ -2058,7 +2057,7 @@ export class UserService {
     const user = await this.getUser(userId, true)
 
     if (!user) {
-      throw new createError.NotFound(`User ${userId} not found`)
+      throw new NotFound(`User ${userId} not found`)
     }
 
     return ((await this.getAugmentedUser(user)).comments ?? []).map(
@@ -2070,12 +2069,12 @@ export class UserService {
     const user = await this.getUser(userId, true)
 
     if (!user) {
-      throw new createError.NotFound(`User ${userId} not found`)
+      throw new NotFound(`User ${userId} not found`)
     }
 
     const comment = user?.comments?.find((comment) => comment.id === commentId)
     if (!comment) {
-      throw new createError.NotFound(`Comment ${commentId} not found`)
+      throw new NotFound(`Comment ${commentId} not found`)
     }
 
     const commentUpdated = {
@@ -2093,13 +2092,13 @@ export class UserService {
     const user = await this.getUser(userId, true)
 
     if (!user) {
-      throw new createError.NotFound(`User ${userId} not found`)
+      throw new NotFound(`User ${userId} not found`)
     }
 
     const comment = user?.comments?.find((comment) => comment.id === commentId)
 
     if (!comment) {
-      throw new createError.NotFound(`Comment ${commentId} not found`)
+      throw new NotFound(`Comment ${commentId} not found`)
     }
 
     const savedReply = await this.userRepository.saveUserComment(userId, {
@@ -2125,7 +2124,7 @@ export class UserService {
     const user = await this.getUser(userId, true)
 
     if (!user) {
-      throw new createError.NotFound(`User ${userId} not found`)
+      throw new NotFound(`User ${userId} not found`)
     }
 
     let deleteObjectsPromise: Promise<any> = Promise.resolve()
@@ -2243,7 +2242,7 @@ export class UserService {
 
     const comment = user?.comments?.find((comment) => comment.id === commentId)
     if (!comment) {
-      throw new createError.NotFound(`Comment ${commentId} not found`)
+      throw new NotFound(`Comment ${commentId} not found`)
     }
 
     if (comment.files && comment.files.length > 0) {
@@ -2350,7 +2349,7 @@ export class UserService {
         UserWithRulesResult | BusinessWithRulesResult
       >(userId)
       if (!oldUser) {
-        throw new createError.NotFound('User not found')
+        throw new NotFound('User not found')
       }
 
       // Create update request from the proposed change
@@ -2419,7 +2418,7 @@ export class UserService {
         UserWithRulesResult | BusinessWithRulesResult
       >(userId)
       if (!oldUser) {
-        throw new createError.NotFound('User not found')
+        throw new NotFound('User not found')
       }
 
       // Apply all the proposed changes using the same method used in normal approvals
@@ -2522,7 +2521,7 @@ export class UserService {
       id
     )
     if (!deleted) {
-      throw new createError.NotFound('User approval proposal not found')
+      throw new NotFound('User approval proposal not found')
     }
   }
 
@@ -2548,7 +2547,7 @@ export class UserService {
       // Check if the account is currently locked
       const currentRiskAssignment = await riskService.getRiskAssignment(userId)
       if (currentRiskAssignment?.isUpdatable === false) {
-        throw new createError.BadRequest(
+        throw new BadRequest(
           'Cannot change CRA level when the account is locked. Please unlock the account first.'
         )
       }
@@ -2666,10 +2665,10 @@ export class UserService {
   ): Promise<AuditLogReturnData<UserApproval>> {
     const approval = await this.getUserApprovalProposal(userId, id)
     if (!approval) {
-      throw new createError.NotFound('User approval proposal not found')
+      throw new NotFound('User approval proposal not found')
     }
     if (approval.approvalStatus !== 'PENDING') {
-      throw new createError.BadRequest('Approval already processed')
+      throw new BadRequest('Approval already processed')
     }
 
     // validate action
@@ -2678,28 +2677,24 @@ export class UserService {
       request.action !== 'reject' &&
       request.action !== 'cancel'
     ) {
-      throw new createError.BadRequest('Invalid action')
+      throw new BadRequest('Invalid action')
     }
 
     // Handle cancel action - only the author can cancel at step 0
     if (request.action === 'cancel') {
       const currentUserId = getContext()?.user?.id
       if (!currentUserId) {
-        throw new createError.BadRequest('User context not available')
+        throw new BadRequest('User context not available')
       }
 
       // Only the author can cancel the proposal
       if (approval.createdBy !== currentUserId) {
-        throw new createError.BadRequest(
-          'Only the author can cancel the proposal'
-        )
+        throw new BadRequest('Only the author can cancel the proposal')
       }
 
       // Only allow cancellation at step 0 (first step)
       if (approval.approvalStep !== 0) {
-        throw new createError.BadRequest(
-          'Can only cancel at the first step of approval'
-        )
+        throw new BadRequest('Can only cancel at the first step of approval')
       }
 
       // Delete the approval object from database
@@ -2723,7 +2718,7 @@ export class UserService {
     // fetch the workflow definition
     const wRef = approval.workflowRef
     if (!wRef) {
-      throw new createError.BadRequest('No workflow reference found')
+      throw new BadRequest('No workflow reference found')
     }
 
     const workflow = await this.workflowService.getWorkflowVersion(
@@ -2739,7 +2734,7 @@ export class UserService {
     const currentStep = workflowMachine.getApprovalStep(approval.approvalStep)
     if (currentStep.role !== getContext()?.user?.role) {
       // TODO: keeping this check disabled in backend for now
-      // throw new createError.BadRequest('User does not have the role required to perform this action')
+      // throw new BadRequest('User does not have the role required to perform this action')
     }
 
     if (request.action === 'reject') {
@@ -2768,7 +2763,7 @@ export class UserService {
         UserWithRulesResult | BusinessWithRulesResult
       >(userId)
       if (!oldUser) {
-        throw new createError.NotFound('User not found')
+        throw new NotFound('User not found')
       }
 
       // Apply all the proposed changes using the reusable method

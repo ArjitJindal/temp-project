@@ -1,5 +1,5 @@
 import { XMLBuilder } from 'fast-xml-parser'
-import * as createError from 'http-errors'
+import { BadRequest } from 'http-errors'
 import { schema } from './schema'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -207,7 +207,7 @@ export class LithuaniaSTRReportGenerator implements ReportGenerator {
     })
 
     if (!valid) {
-      throw new createError.BadRequest(
+      throw new BadRequest(
         `Invalid report parameters: ${JSON.stringify(
           validate.errors?.map((error) => error.message)
         )}`

@@ -46,7 +46,7 @@ import { UserEventRepository } from '@/services/rules-engine/repositories/user-e
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { pickKnownEntityFields } from '@/utils/object'
 import { User } from '@/@types/openapi-public/User'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'

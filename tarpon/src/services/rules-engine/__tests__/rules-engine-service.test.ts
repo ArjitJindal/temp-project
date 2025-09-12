@@ -31,7 +31,7 @@ import {
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import dayjs from '@/utils/dayjs'

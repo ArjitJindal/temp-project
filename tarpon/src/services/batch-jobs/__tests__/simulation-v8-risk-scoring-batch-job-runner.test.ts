@@ -18,7 +18,7 @@ import {
   getTestUser,
   setUpUsersHooks,
 } from '@/test-utils/user-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 withFeatureHook(['SIMULATOR', 'RISK_LEVELS', 'RISK_SCORING'])

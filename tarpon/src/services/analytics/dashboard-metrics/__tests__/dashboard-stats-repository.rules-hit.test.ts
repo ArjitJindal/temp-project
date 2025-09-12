@@ -26,7 +26,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { transactionEventHandler } from '@/lambdas/public-api-rules-engine/app'
 import { getApiGatewayPostEvent } from '@/test-utils/apigateway-test-utils'
-import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { enableLocalChangeHandler } from '@/utils/local-change-handler'
 
 enableLocalChangeHandler()
 dynamoDbSetupHook()

@@ -366,6 +366,7 @@ const getTestTransactionSuccess = async () => {
           statusCode: 400,
           statusMessage: 'Bad Request',
           dataCallback: (_, data, reject) => {
+            logger.info('data 1', data)
             if (
               !data.validationErrors.startsWith(
                 '[instance value ("AB") not found in enum (possible values:'
@@ -634,7 +635,7 @@ const getTestTransactionSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -745,7 +746,7 @@ const getTestTransactionSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1057,7 +1058,7 @@ const getTestBusinessUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1155,6 +1156,7 @@ const getTestBusinessUserSuccess = async () => {
           statusCode: 400,
           statusMessage: 'Bad Request',
           dataCallback: (_, data, reject) => {
+            logger.info('data 2', data)
             if (
               !data.validationErrors.startsWith(
                 '[instance value ("AB") not found in enum (possible values:'
@@ -1343,7 +1345,7 @@ const getTestBusinessUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1405,7 +1407,7 @@ const getTestBusinessUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1650,7 +1652,7 @@ const getTestCustomerUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1744,6 +1746,7 @@ const getTestCustomerUserSuccess = async () => {
           statusCode: 400,
           statusMessage: 'Bad Request',
           dataCallback: (_, data, reject) => {
+            logger.info('data 3', data)
             if (
               !data.validationErrors.startsWith(
                 '[instance value ("AA") not found in enum (possible values:'
@@ -1878,7 +1881,7 @@ const getTestCustomerUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1913,7 +1916,7 @@ const getTestCustomerUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },

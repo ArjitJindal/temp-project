@@ -35,7 +35,7 @@ import { UserService } from '@/services/users'
 import {
   disableLocalChangeHandler,
   enableLocalChangeHandler,
-} from '@/utils/local-dynamodb-change-handler'
+} from '@/utils/local-change-handler'
 
 dynamoDbSetupHook()
 

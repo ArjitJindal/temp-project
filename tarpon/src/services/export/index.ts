@@ -1,4 +1,4 @@
-import * as csvFormat from '@fast-csv/format'
+import { format as formatCsv } from '@fast-csv/format'
 import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { AggregationCursor } from 'mongodb'
@@ -95,7 +95,7 @@ export class ExportService<T> {
 
     const headers = makeHeader(headerSettings)
 
-    const stream = csvFormat.format({
+    const stream = formatCsv({
       headers,
       alwaysWriteHeaders: true,
       transform: (object: any) => makeRows(object, headerSettings),

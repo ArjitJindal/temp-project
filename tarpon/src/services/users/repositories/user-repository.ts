@@ -80,7 +80,6 @@ import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRul
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import {
@@ -102,6 +101,7 @@ import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { UserApproval } from '@/@types/openapi-internal/UserApproval'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
 
 type Params = OptionalPaginationParams &
   DefaultApiGetAllUsersListRequest &
@@ -1120,6 +1120,7 @@ export class UserRepository {
       )
       await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
+
     return newUser
   }
 
