@@ -8,6 +8,8 @@ import * as Card from '@/components/ui/Card';
 import { P } from '@/components/ui/Typography';
 import { FlatFileProgressResponse } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import ProgressBar from '@/components/ui/ProgressBar';
+import { isOngoingImport } from '@/pages/transactions-import/helpers';
 
 type Props = {
   progressRes: AsyncResource<FlatFileProgressResponse>;
@@ -21,6 +23,14 @@ export default function ValidationStats(props: Props) {
         <Card.Root>
           <Card.Section>
             <P bold={true}>{'Validation summary'}</P>
+            {isOngoingImport(progress) && (
+              <ProgressBar
+                value={progress.processed ?? 0}
+                maxValue={progress.isValidationJobRunning ? undefined : progress.total}
+                showPercentage={true}
+                showValue={progress.isValidationJobRunning}
+              />
+            )}
             <div className={s.stats}>
               {progress.saved != null && progress.total != null && (
                 <div className={cn(s.statsRow)}>

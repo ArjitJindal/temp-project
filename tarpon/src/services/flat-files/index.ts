@@ -4,8 +4,9 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { ConnectionCredentials } from 'thunder-schema'
 import { ClickHouseClient } from '@clickhouse/client'
-import { S3 } from '@aws-sdk/client-s3'
+import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getFlatFileErrorRecordS3Key } from '@flagright/lib/utils'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { FlatFileFormat } from './format'
 import { CsvFormat } from './format/csv'
@@ -305,6 +306,21 @@ export class FlatFilesService {
     const savedRows = result[0].savedRows
     const erroredRows = result[0].erroredRows
 
+    let downloadUrl: string | undefined
+    if (
+      (batchJobStatus === 'SUCCESS' || batchJobStatus === 'FAILED') &&
+      !isValidationJobRunning
+    ) {
+      const s3 = new S3()
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: this.s3Bucket,
+        Key: getFlatFileErrorRecordS3Key(s3Key),
+      })
+      downloadUrl = await getSignedUrl(s3, getObjectCommand, {
+        expiresIn: 3600,
+      })
+    }
+
     return {
       total: totalCount,
       processed: processedCount,
@@ -312,11 +328,7 @@ export class FlatFilesService {
       errored: erroredRows,
       status: batchJobStatus,
       isValidationJobRunning,
-      erroredRecrodS3Key:
-        (batchJobStatus === 'SUCCESS' || batchJobStatus === 'FAILED') &&
-        !isValidationJobRunning
-          ? getFlatFileErrorRecordS3Key(s3Key)
-          : undefined,
+      erroredRecordsFileUrl: downloadUrl,
     }
   }
 

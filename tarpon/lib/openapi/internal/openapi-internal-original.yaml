@@ -8625,7 +8625,7 @@ components:
           type: boolean
         isValidationJobRunning:
           type: boolean
-        erroredRecrodS3Key:
+        erroredRecordsFileUrl:
           type: string
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat

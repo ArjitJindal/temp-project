@@ -1,7 +1,7 @@
 import cn from 'clsx';
 import s from './index.module.less';
 import Label from '@/components/library/Label';
-import { AsyncResource } from '@/utils/asyncResource';
+import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
 import { P } from '@/components/ui/Typography';
 import { FlatFileProgressResponse } from '@/apis';
@@ -9,6 +9,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import ValidationStats from '@/pages/transactions-import/DataValidationStep/ValidationStats';
 import { isOngoingImport } from '@/pages/transactions-import/helpers';
 import ProgressBar from '@/components/ui/ProgressBar';
+import { downloadUrl } from '@/utils/browser';
 
 type Props = {
   progressRes: AsyncResource<FlatFileProgressResponse>;
@@ -62,11 +63,28 @@ export default function DataValidationStep(props: Props) {
             <Label
               label="Data validation"
               description={
-                // 'Valid rows are imported; a downloadable CSV is generated for rows with errors to enable quick correction and re-upload.'
-                'Valid rows are imported'
+                isSuccess(progressRes) && progressRes.value.erroredRecordsFileUrl
+                  ? 'Valid rows are imported; a downloadable CSV is generated for rows with errors to enable quick correction and re-upload.'
+                  : 'Valid rows are imported'
               }
             >
               <ValidationStats progressRes={progressRes} />
+              {isSuccess(progressRes) && progressRes.value.erroredRecordsFileUrl != null && (
+                <a
+                  href={'#'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (progressRes.value.erroredRecordsFileUrl) {
+                      downloadUrl(
+                        'transactions_import_errors.csv',
+                        progressRes.value.erroredRecordsFileUrl,
+                      );
+                    }
+                  }}
+                >
+                  Download CSV with errors
+                </a>
+              )}
             </Label>
           );
         }}
