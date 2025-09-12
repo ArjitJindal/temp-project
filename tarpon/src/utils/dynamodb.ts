@@ -57,7 +57,6 @@ import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { handleLocalDynamoDbTrigger } from '@/core/local-handlers/dynamo-db-trigger'
 import { DynamoConsumerMessage } from '@/@types/dynamo'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
@@ -1066,6 +1065,9 @@ export async function sendMessageToDynamoDbConsumer(
     return
   }
   if (envIs('local') || envIs('test')) {
+    const { handleLocalDynamoDbTrigger } = await import(
+      '@/core/local-handlers/dynamo-db-trigger'
+    )
     await handleLocalDynamoDbTrigger(message)
   }
   logger.debug('Sending message to DynamoDb consumer', {

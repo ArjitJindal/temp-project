@@ -26,7 +26,7 @@ const IGNORED = [
   'superagent-proxy',
   'highlight.js',
   '@/core/local-handlers/*',
-  '@/utils/local-dynamodb-change-handler',
+  // '@/utils/local-dynamodb-change-handler', // removing this because we still need to use this as a direct import
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)

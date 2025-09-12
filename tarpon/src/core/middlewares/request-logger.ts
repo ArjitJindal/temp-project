@@ -14,7 +14,6 @@ import { envIs } from '@/utils/env'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { getErrorMessage } from '@/utils/lang'
 import { getSQSClient } from '@/utils/sns-sqs-client'
-import { handleLocalRequestLogger } from '@/core/local-handlers/request-logger'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
@@ -94,6 +93,9 @@ async function logRequest(
     })
 
     if (envIs('local') || envIs('test')) {
+      const { handleLocalRequestLogger } = await import(
+        '@/core/local-handlers/request-logger'
+      )
       await handleLocalRequestLogger([data])
     } else {
       await getSQSClient().send(sqsMessage)
