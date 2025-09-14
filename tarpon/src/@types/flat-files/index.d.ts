@@ -1,6 +1,7 @@
 export type FlatFileRecord = {
   index: number
   record: Record<string, any>
+  intialRecord: string
 }
 
 export type FlatFilesErrorStage =
@@ -24,7 +25,7 @@ export type FlatFilesRecordsError = {
 export type FlatFilesRecordsSchema = {
   row: number
   initialRecord: string // JSON String of the Record
-  parsedRecord?: string // JSON String of the Record
+  parsedRecord: string // JSON String of the Record
   isError: boolean
   createdAt: number
   updatedAt: number

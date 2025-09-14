@@ -1,3 +1,4 @@
+import { ErrorRecord } from '../utils'
 import { FlatFileFormat } from './index'
 import { FlatFileTemplateResponse } from '@/@types/openapi-internal/FlatFileTemplateResponse'
 import { FlatFileRecord } from '@/@types/flat-files'
@@ -26,7 +27,29 @@ export class JsonlFormat extends FlatFileFormat {
     const lines = await jsonlStreamReader(s3Key, documentBucket)
     let index = 0
     for await (const line of lines) {
-      yield { index: index++, record: JSON.parse(line) }
+      yield { index: index++, record: JSON.parse(line), intialRecord: line }
     }
+  }
+
+  preProcessFile(): string | undefined {
+    return undefined
+  }
+
+  postProcessFile(): string | undefined {
+    return undefined
+  }
+
+  handleErroredRecrod(records: ErrorRecord[]): string {
+    const formatedRecords: string[] = []
+    records.forEach((erroredRecord) => {
+      const record = JSON.parse(erroredRecord.record)
+      const error: string = erroredRecord.error.join('-').split('"').join("'")
+      record.error = error
+      formatedRecords.push(JSON.stringify(record))
+    })
+    return formatedRecords.join('\n')
+  }
+  getErroredFileContentType(): string {
+    return 'application/jsonlines'
   }
 }

@@ -20,6 +20,7 @@ import { FlatFileBaseRunner } from './baseRunner'
 import { TransactionUploadRunner } from './batchRunner/transaction-upload'
 import { BulkAlertClosureRunner } from './runner/bulk-alert-closure'
 import { BulkSanctionsHitsUpdateRunner } from './runner/bulk-sanctions-hits-update'
+import { ErrorRecord } from './utils'
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { traceable } from '@/core/xray'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
@@ -110,12 +111,6 @@ const FlatFileFormatToModel: Record<
     new CsvFormat(tenantId, model, s3Key, compoundPrimaryKey),
   JSONL: (tenantId, model, s3Key, compoundPrimaryKey) =>
     new JsonlFormat(tenantId, model, s3Key, compoundPrimaryKey),
-}
-
-type ErrorRecord = {
-  recordNumber: number
-  record: string
-  error: string[]
 }
 
 @traceable
@@ -228,10 +223,16 @@ export class FlatFilesService {
     return isAllValid
   }
 
-  async run(schema: FlatFileSchema, s3Key: string, metadata: object) {
+  async run(
+    schema: FlatFileSchema,
+    format: FlatFileTemplateFormat,
+    s3Key: string,
+    metadata: object
+  ) {
     const runnerInstance = await this.getRunnerInstance(schema)
     await runnerInstance.run(s3Key, metadata)
-    await this.getErroredRows(s3Key)
+    const model = await this.getModel(schema, metadata)
+    await this.getErroredRows(s3Key, schema, format, model, metadata)
   }
 
   async getProgress(
@@ -336,9 +337,23 @@ export class FlatFilesService {
   // we can only create csv in /tmp directory of the lambda
   // we should buffer
 
-  private async getErroredRows(s3Key: string): Promise<string> {
+  private async getErroredRows(
+    s3Key: string,
+    schema: FlatFileSchema,
+    format: FlatFileTemplateFormat,
+    model: EntityModel,
+    metadata?: object
+  ): Promise<string> {
     const MAX_BUFFER_SIZE = 1000
     const s3 = new S3()
+
+    const fileFormatter = await this.getFormatInstance(
+      schema,
+      format,
+      model,
+      metadata
+    )
+
     try {
       // get flatfile client
       const clickhouseConnectionConfig = await getClickhouseCredentials(
@@ -357,14 +372,18 @@ export class FlatFilesService {
       const filePath = path.resolve('/tmp', fileName)
       let fileBuffer: ErrorRecord[] = []
 
-      const erroredRecords = flatFilesRecords.objects.filter({
-        fileId: s3Key,
-        isProcessed: true,
-        isError: true,
-      })
+      const erroredRecords = flatFilesRecords.objects
+        .filter({
+          fileId: s3Key,
+          isProcessed: true,
+          isError: true,
+        })
+        .final()
 
-      const header = ['Record number', 'Recrod', 'Error']
-      this.writeBufferToFile(filePath, fileBuffer, header) // this will create the file with headers
+      const preFileData = fileFormatter.preProcessFile()
+      if (preFileData) {
+        this.writeBufferToFile(filePath, preFileData)
+      }
 
       for await (const erroredRecord of erroredRecords) {
         const row: ErrorRecord = {
@@ -377,21 +396,28 @@ export class FlatFilesService {
         fileBuffer.push(row)
         if (fileBuffer.length === MAX_BUFFER_SIZE) {
           // flush the buffer
-          this.writeBufferToFile(filePath, fileBuffer, header)
+          const data = fileFormatter.handleErroredRecrod(fileBuffer)
+          this.writeBufferToFile(filePath, data)
           fileBuffer = []
         }
       }
       if (fileBuffer.length > 0) {
         // flush buffer
-        this.writeBufferToFile(filePath, fileBuffer, header)
+        const data = fileFormatter.handleErroredRecrod(fileBuffer)
+        this.writeBufferToFile(filePath, data)
         fileBuffer = []
       }
 
-      logger.info('Uploading file to s3 bucket')
+      const postFileData = fileFormatter.postProcessFile()
+      if (postFileData) {
+        this.writeBufferToFile(filePath, postFileData)
+      }
+
       await s3.putObject({
         Bucket: this.s3Bucket,
         Key: getFlatFileErrorRecordS3Key(s3Key),
         Body: fs.createReadStream(filePath),
+        ContentType: fileFormatter.getErroredFileContentType(),
       })
 
       return fileName
@@ -403,28 +429,7 @@ export class FlatFilesService {
     }
   }
 
-  private writeBufferToFile(
-    filePath: string,
-    fileBuffer: ErrorRecord[],
-    header: string[]
-  ) {
-    // check for the file
-    if (!fs.existsSync(filePath)) {
-      // writing the headers
-      const formatedHeader = header.map((columnHeader) => {
-        const santiziedHeader = columnHeader.split('"').join("'")
-        return `"${santiziedHeader}"`
-      }) // ensuring commas in header are handled
-      fs.appendFileSync(filePath, formatedHeader.join(',') + '\n', 'utf-8')
-    }
-    const rows: string[] = []
-    for (const erroredRecord of fileBuffer) {
-      const recordNumber = erroredRecord.recordNumber + 1
-      const record = erroredRecord.record.split('"').join("'")
-      const error: string = erroredRecord.error.join('-').split('"').join("'")
-      rows.push(`${recordNumber},"${record}","${error}"`)
-    }
-
-    fs.appendFileSync(filePath, rows.join('\n'), 'utf8')
+  private writeBufferToFile(filePath: string, fileBuffer: string) {
+    fs.appendFileSync(filePath, fileBuffer, 'utf8')
   }
 }

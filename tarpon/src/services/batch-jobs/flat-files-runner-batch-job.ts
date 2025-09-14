@@ -9,6 +9,7 @@ export class FlatFilesRunnerBatchJobRunner extends BatchJobRunner {
     const flatFilesService = new FlatFilesService(tenantId)
     await flatFilesService.run(
       parameters.schema,
+      parameters.format,
       parameters.s3Key,
       parameters.metadata ?? {}
     )

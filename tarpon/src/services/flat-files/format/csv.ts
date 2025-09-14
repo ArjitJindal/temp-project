@@ -2,6 +2,7 @@ import { Readable } from 'stream'
 import set from 'lodash/set'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { parse } from 'csv-parse'
+import { ErrorRecord } from '../utils'
 import { FlatFileTemplateResponse } from '@/@types/openapi-internal/FlatFileTemplateResponse'
 import { FlatFileFormat } from '@/services/flat-files/format'
 import { EntityModel } from '@/@types/model'
@@ -101,6 +102,7 @@ export class CsvFormat extends FlatFileFormat {
         skip_empty_lines: true,
         relax_quotes: true,
         relax_column_count: true,
+        raw: true, // this will return the raw record that we are parsing helpfult to generate error csv
       })
     )
 
@@ -119,12 +121,11 @@ export class CsvFormat extends FlatFileFormat {
       try {
         const nested: Record<string, any> = {}
 
-        for (const [key, value] of Object.entries(flatRow)) {
+        for (const [key, value] of Object.entries(flatRow.record)) {
           if (value) {
             set(nested, key, value) // expand dotted keys
           }
         }
-
         if (
           this.isDuplicate(nested, (record: Record<string, object>) => {
             this.afterDuplicateCheck(record)
@@ -132,18 +133,29 @@ export class CsvFormat extends FlatFileFormat {
         ) {
           await this.saveError(
             flatFilesRecords,
-            { index: index++, record: { record: flatRow } },
+            {
+              index: index++,
+              record: { record: flatRow.record },
+              intialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
+            },
             new Error('Duplicate record'),
             'DUPLICATE'
           )
           continue
         }
-
-        yield { index: index++, record: nested }
+        yield {
+          index: index++,
+          record: nested,
+          intialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
+        }
       } catch (error) {
         await this.saveError(
           flatFilesRecords,
-          { index: index++, record: { record: flatRow } },
+          {
+            index: index++,
+            record: { record: flatRow.record },
+            intialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
+          },
           error,
           'PARSE'
         )
@@ -152,5 +164,35 @@ export class CsvFormat extends FlatFileFormat {
     }
 
     logger.info('Finished reading and parsing CSV file')
+  }
+
+  public preProcessFile() {
+    const { keys: header } = this.getTemplate()
+    header.push('error')
+    const formatedHeader = header.map((columnHeader) => {
+      const santiziedHeader = columnHeader.split('"').join("'")
+      return `"${santiziedHeader}"`
+    }) // ensuring commas in header are handled
+    return formatedHeader.join(',') + '\n'
+  }
+
+  public handleErroredRecrod(records: ErrorRecord[]): string {
+    const formatedRecords: string[] = []
+    records.forEach((erroredRecord) => {
+      // the csv parser handles records cell with , in them. We have to leverage this while creating a comma seperated row
+      // cells having , in their content are enclosed in "" by the parser, we need to iterate the whole string partition for these cells
+      const record = erroredRecord.record
+      const error: string = erroredRecord.error.join('-').split('"').join("'")
+      formatedRecords.push(`${record},"${error}"`)
+    })
+    return formatedRecords.join('\n')
+  }
+
+  public postProcessFile() {
+    return undefined
+  }
+
+  public getErroredFileContentType() {
+    return 'text/csv'
   }
 }
