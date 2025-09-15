@@ -5961,8 +5961,8 @@ components:
               type: string
           required:
             - userId
-    CaseClosedDetails:
-      title: CaseClosedDetails
+    CaseStatusDetails:
+      title: CaseStatusDetails
       type: object
       properties:
         caseId:
@@ -5997,8 +5997,8 @@ components:
           type: array
           items:
             type: string
-    AlertClosedDetails:
-      title: AlertClosedDetails
+    AlertStatusDetails:
+      title: AlertStatusDetails
       type: object
       properties:
         alertId:
@@ -6179,9 +6179,9 @@ components:
             data:
               oneOf:
                 - $ref: '#/components/schemas/UserStateDetails'
-                - $ref: '#/components/schemas/CaseClosedDetails'
+                - $ref: '#/components/schemas/CaseStatusDetails'
                 - $ref: '#/components/schemas/CaseOpenedDetails'
-                - $ref: '#/components/schemas/AlertClosedDetails'
+                - $ref: '#/components/schemas/AlertStatusDetails'
                 - $ref: '#/components/schemas/AlertOpenedDetails'
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
@@ -6208,6 +6208,8 @@ components:
         - LIST_UPDATED
         - SANCTIONS_STATUS_UPDATED
         - ADVERSE_MEDIA_STATUS_UPDATED
+        - CASE_ESCALATED
+        - ALERT_ESCALATED
     ListType:
       type: string
       enum:

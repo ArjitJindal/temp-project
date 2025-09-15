@@ -39,7 +39,7 @@ import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
-import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'
+import { CaseStatusDetails } from '@/@types/openapi-public/CaseStatusDetails'
 import { CaseAlertsCommonService } from '@/services/case-alerts-common'
 import { getS3ClientByEvent } from '@/utils/s3'
 import {
@@ -503,13 +503,14 @@ export class CaseService extends CaseAlertsCommonService {
     return body
   }
 
-  private async sendCasesClosedWebhook(
+  private async sendCaseWebhook(
     cases: Case[],
-    updateRequest: CaseStatusUpdate
+    updateRequest: CaseStatusUpdate,
+    event: WebhookEventType
   ) {
-    const webhookTasks: ThinWebhookDeliveryTask<CaseClosedDetails>[] =
+    const webhookTasks: ThinWebhookDeliveryTask<CaseStatusDetails>[] =
       cases.map((case_) => ({
-        event: 'CASE_CLOSED' as WebhookEventType,
+        event,
         triggeredBy: 'MANUAL',
         entityId: case_.caseId as string,
         payload: {
@@ -525,7 +526,29 @@ export class CaseService extends CaseAlertsCommonService {
         },
       }))
 
-    await sendWebhookTasks<CaseClosedDetails>(this.tenantId, webhookTasks)
+    await sendWebhookTasks<CaseStatusDetails>(this.tenantId, webhookTasks)
+  }
+
+  private async sendCasesClosedWebhook(
+    cases: Case[],
+    updateRequest: CaseStatusUpdate
+  ) {
+    await this.sendCaseWebhook(
+      cases,
+      updateRequest,
+      'CASE_CLOSED' as WebhookEventType
+    )
+  }
+
+  private async sendCasesEscalatedWebhook(
+    cases: Case[],
+    updateRequest: CaseStatusUpdate
+  ) {
+    await this.sendCaseWebhook(
+      cases,
+      updateRequest,
+      'CASE_ESCALATED' as WebhookEventType
+    )
   }
 
   private async updateUserDetails(cases: Case[], updates: CaseStatusUpdate) {
@@ -789,8 +812,15 @@ export class CaseService extends CaseAlertsCommonService {
       }
     })
 
-    if (!externalRequest && updates.caseStatus === 'CLOSED') {
-      await this.sendCasesClosedWebhook(cases, updates)
+    if (!externalRequest) {
+      if (updates.caseStatus === 'CLOSED') {
+        await this.sendCasesClosedWebhook(cases, updates)
+      } else if (
+        updates.caseStatus === 'ESCALATED' ||
+        updates.caseStatus === 'ESCALATED_L2'
+      ) {
+        await this.sendCasesEscalatedWebhook(cases, updates)
+      }
     }
 
     const auditLogEntitiesPromises = cases.map(async (caseItem) => {
