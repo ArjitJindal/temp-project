@@ -6,6 +6,7 @@ import isEqual from 'lodash/isEqual'
 import memoize from 'lodash/memoize'
 import omit from 'lodash/omit'
 import pMap from 'p-map'
+import { FetchHttpHandler } from '@smithy/fetch-http-handler'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
@@ -22,6 +23,7 @@ import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 const awsApiGateway = new APIGatewayClient({
   region: process.env.AWS_REGION,
+  requestHandler: new FetchHttpHandler({}),
 })
 
 interface ValidationError {
