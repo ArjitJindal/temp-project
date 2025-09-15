@@ -303,18 +303,52 @@ export const casesHandler = lambdaApi()(
 
     /** Status Change */
     handlers.registerAlertsStatusChange(async (ctx, request) => {
-      const response = await alertsService.updateStatus(
-        request.AlertsStatusUpdateRequest.alertIds,
-        request.AlertsStatusUpdateRequest.updates
-      )
+      const { updates, alertIds } = request.AlertsStatusUpdateRequest
+      const response = await alertsService.updateStatus(alertIds, updates)
+
+      const newAlertStatus = response.entities[0].newImage?.alertStatus
+
+      if (newAlertStatus === 'CLOSED' && updates.updateTransactionStatus) {
+        await sendBatchJobCommand({
+          tenantId: ctx.tenantId,
+          type: 'UPDATE_TRANSACTION_STATUS',
+          parameters: {
+            type: 'ALERT',
+            alertIds,
+            updatedTransactionStatus: updates.updateTransactionStatus,
+            comment: updates.comment,
+            reason: updates.reason,
+            otherReason: updates.otherReason,
+            userId: ctx.userId,
+          },
+        })
+      }
+
       return response.result
     })
 
     handlers.registerPatchCasesStatusChange(async (ctx, request) => {
-      const response = await caseService.updateStatus(
-        request.CasesStatusUpdateRequest.caseIds,
-        request.CasesStatusUpdateRequest.updates
-      )
+      const { updates, caseIds } = request.CasesStatusUpdateRequest
+      const response = await caseService.updateStatus(caseIds, updates)
+
+      const newCaseStatus = response.entities[0].newImage?.caseStatus
+
+      if (newCaseStatus === 'CLOSED' && updates.updateTransactionStatus) {
+        await sendBatchJobCommand({
+          tenantId: ctx.tenantId,
+          type: 'UPDATE_TRANSACTION_STATUS',
+          parameters: {
+            type: 'CASE',
+            caseIds,
+            updatedTransactionStatus: updates.updateTransactionStatus,
+            comment: updates.comment,
+            reason: updates.reason,
+            otherReason: updates.otherReason,
+            userId: ctx.userId,
+          },
+        })
+      }
+
       return response.result
     })
 

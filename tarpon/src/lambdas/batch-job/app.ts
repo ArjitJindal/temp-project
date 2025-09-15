@@ -134,6 +134,7 @@ export const jobDecisionHandler = async (
     EDD_REVIEW: 'LAMBDA',
     SCREENING_PROFILE_DATA_FETCH: 'FARGATE',
     SCREENING_ALERTS_EXPORT: 'FARGATE',
+    UPDATE_TRANSACTION_STATUS: 'FARGATE',
   }
 
   return {

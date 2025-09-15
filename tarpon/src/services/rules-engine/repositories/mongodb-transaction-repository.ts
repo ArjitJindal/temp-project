@@ -858,14 +858,16 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsByIds(
-    transactionIds: string[]
+    transactionIds: string[],
+    filter?: Filter<InternalTransaction>,
+    projection?: Document
   ): Promise<InternalTransaction[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const query = { transactionId: { $in: transactionIds } }
-    const cursor = collection.find(query)
+    const query = { transactionId: { $in: transactionIds }, ...filter }
+    const cursor = collection.find(query, { projection })
 
     return await cursor.toArray()
   }

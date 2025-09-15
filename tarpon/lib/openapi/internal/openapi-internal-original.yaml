@@ -14035,6 +14035,8 @@ components:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
         screeningDetails:
           $ref: '#/components/schemas/ScreeningDetails'
+        updateTransactionStatus:
+          $ref: '#/components/schemas/RuleAction'
       required:
         - reason
       description: ''
@@ -14162,6 +14164,8 @@ components:
           type: number
         listId:
           type: string
+        updateTransactionStatus:
+          $ref: '#/components/schemas/RuleAction'
         tags:
           type: array
           items:

@@ -15,6 +15,7 @@ import { FlatFileSchema } from '../openapi-internal/FlatFileSchema'
 import { FlatFileTemplateFormat } from '../openapi-internal/FlatFileTemplateFormat'
 import { DynamoDbClickhouseBackfillBatchJobEntity } from '../openapi-internal/DynamoDbClickhouseBackfillBatchJobEntity'
 import { TaskStatusChangeStatusEnum } from '../openapi-internal/TaskStatusChangeStatusEnum'
+import { RuleAction } from '../openapi-internal/RuleAction'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -541,6 +542,34 @@ export type ScreeningAlertsExportBatchJob = {
   }
 }
 
+interface UpdateTransactionStatusBatchJobParameters {
+  updatedTransactionStatus: RuleAction
+  comment: string | undefined
+  reason: string[]
+  otherReason: string | undefined
+  userId: string
+}
+
+interface CaseUpdateTransactionStatusBatchJobParameters
+  extends UpdateTransactionStatusBatchJobParameters {
+  type: 'CASE'
+  caseIds: string[]
+}
+
+interface AlertUpdateTransactionStatusBatchJobParameters
+  extends UpdateTransactionStatusBatchJobParameters {
+  type: 'ALERT'
+  alertIds: string[]
+}
+
+export type UpdateTransactionStatusBatchJob = {
+  type: 'UPDATE_TRANSACTION_STATUS'
+  tenantId: string
+  parameters:
+    | CaseUpdateTransactionStatusBatchJobParameters
+    | AlertUpdateTransactionStatusBatchJobParameters
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -600,6 +629,7 @@ export type BatchJob =
   | ScreeningProfileDataFetchBatchJob
   | EddReviewBatchJob
   | ScreeningAlertsExportBatchJob
+  | UpdateTransactionStatusBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string
