@@ -90,12 +90,24 @@ export function SarButton(props: UserProps | CaseProps) {
 
   return (
     <Feature name="SAR">
-      <AsyncResourceRenderer resource={caseQueryResult.data}>
-        {(caseItem) => {
-          const noCaseUsers = !caseItem.caseUsers?.origin && !caseItem.caseUsers?.destination;
+      {reportSubjectType === 'USER' ? (
+        // For user profiles - render button directly
+        <Button
+          type="TETRIARY"
+          onClick={() => setIsModalVisible(true)}
+          isDisabled={isDisabled}
+          testName="sar-button"
+          requiredResources={['write:::case-management/case-details/*']}
+        >
+          Generate SAR
+        </Button>
+      ) : (
+        // For cases - check case data first
+        <AsyncResourceRenderer resource={caseQueryResult.data}>
+          {(caseItem) => {
+            const noCaseUsers = !caseItem.caseUsers?.origin && !caseItem.caseUsers?.destination;
 
-          return (
-            <>
+            return (
               <Button
                 type="TETRIARY"
                 onClick={() => setIsModalVisible(true)}
@@ -105,10 +117,10 @@ export function SarButton(props: UserProps | CaseProps) {
               >
                 Generate SAR
               </Button>
-            </>
-          );
-        }}
-      </AsyncResourceRenderer>
+            );
+          }}
+        </AsyncResourceRenderer>
+      )}
       <Modal
         title="Generate SAR"
         isOpen={isModalVisible}
