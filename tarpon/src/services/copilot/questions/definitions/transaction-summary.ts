@@ -53,13 +53,13 @@ export const TransactionSummary: PropertiesQuestion<
 
     const query = `
       SELECT
-        count(*) as count,
+        count() as count,
         min(originAmountDetails_amountInUsd) as min,
         max(originAmountDetails_amountInUsd) as max,
         sum(originAmountDetails_amountInUsd) as total,
         avg(originAmountDetails_amountInUsd) as avg
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-      WHERE
+      PREWHERE
         ${condition}
         and timestamp between {{ from }} and {{ to }}
       `
