@@ -9230,6 +9230,9 @@ components:
       enum:
         - USER_TRANSACTIONS
         - PAYMENT_DETAILS_TRANSACTIONS
+        - PAYMENT_DETAILS_ADDRESS
+        - PAYMENT_DETAILS_NAME
+        - PAYMENT_DETAILS_EMAIL
     LogicAggregationTransactionDirection:
       title: LogicAggregationTransactionDirection
       type: string
@@ -12917,6 +12920,7 @@ components:
         - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
+        - CUSTOM_AGGREGATION_FIELDS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

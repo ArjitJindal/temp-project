@@ -269,3 +269,91 @@ export const getPersonName = (person?: Person) => {
     person?.generalDetails?.name?.lastName,
   ]).join(' ')
 }
+
+export const getAddressStringForAggregation = (address?: Address): string => {
+  if (!address) {
+    return ''
+  }
+
+  // Encode values safely by replacing delimiters
+  const encode = (val?: string) =>
+    (val ?? '').replace(/\|/g, '__PIPE__').replace(/=/g, '__EQ__')
+
+  const addressLines = (address.addressLines ?? []).map(encode).join('__LINE__')
+
+  return [
+    `LINES=${addressLines}`,
+    `CITY=${encode(address.city)}`,
+    `STATE=${encode(address.state)}`,
+    `POSTCODE=${encode(address.postcode)}`,
+    `COUNTRY=${encode(address.country)}`,
+  ].join('|')
+}
+
+export const parseAddressStringForAggregation = (
+  addressString: string
+): Address | undefined => {
+  if (!addressString) {
+    return undefined
+  }
+
+  const decode = (val: string) =>
+    val.replace(/__PIPE__/g, '|').replace(/__EQ__/g, '=')
+
+  const parts = addressString.split('|')
+  const map: Record<string, string> = {}
+
+  for (const part of parts) {
+    const [key, ...rest] = part.split('=')
+    map[key] = decode(rest.join('=')) // in case value itself had '='
+  }
+
+  return {
+    addressLines: map.LINES ? map.LINES.split('__LINE__').map(decode) : [],
+    city: map.CITY ?? '',
+    state: map.STATE ?? '',
+    postcode: map.POSTCODE ?? '',
+    country: map.COUNTRY ?? '',
+  }
+}
+
+export const getNameStringForAggregation = (
+  name?: ConsumerName | string
+): string => {
+  if (!name) {
+    return ''
+  }
+  if (typeof name === 'string') {
+    return name
+  }
+  return compact([
+    `FIRST_NAME=${name.firstName}`,
+    `MIDDLE_NAME=${name.middleName}`,
+    `LAST_NAME=${name.lastName}`,
+  ]).join('|')
+}
+
+export const parseNameStringForAggregation = (
+  nameString: string
+): ConsumerName | string | undefined => {
+  if (!nameString) {
+    return undefined
+  }
+  // If the string does not contain any '=', treat as plain string
+  if (!nameString.includes('=')) {
+    return nameString
+  }
+
+  const parts = nameString.split('|')
+  const map: Record<string, string> = {}
+  for (const part of parts) {
+    const [key, ...rest] = part.split('=')
+    map[key] = rest.join('=') // in case value itself had '='
+  }
+
+  return {
+    firstName: map.FIRST_NAME ?? '',
+    middleName: map.MIDDLE_NAME ?? '',
+    lastName: map.LAST_NAME ?? '',
+  }
+}

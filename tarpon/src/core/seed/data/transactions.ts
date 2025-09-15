@@ -30,7 +30,8 @@ import { COUNTRIES } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SAMPLE_CURRENCIES } from '@/core/seed/samplers/currencies'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
-import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
+import { envIs } from '@/utils/env'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
@@ -48,7 +49,6 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { getPaymentDetailsName } from '@/utils/helpers'
 import { hasFeature } from '@/core/utils/context'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
-import { envIs } from '@/utils/env'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)

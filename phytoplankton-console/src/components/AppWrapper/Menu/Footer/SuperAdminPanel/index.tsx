@@ -217,6 +217,11 @@ export const featureDescriptions: Record<
     description: 'Enables EDD Report',
     tag: FeatureTag.WIP,
   },
+  CUSTOM_AGGREGATION_FIELDS: {
+    title: 'Custom aggregation fields',
+    description: 'Enables custom aggregation fields like (name, email, address)',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {

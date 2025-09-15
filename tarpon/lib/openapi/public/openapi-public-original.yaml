@@ -4712,6 +4712,8 @@ components:
         networkProviderRiskScore:
           type: number
           description: Risk score of the card from your network provider
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5070,6 +5072,11 @@ components:
           description: Contact Number of the account holder
         emailId:
           $ref: '#/components/schemas/EmailId'
+        name:
+          type: string
+          description: Name of the account holder
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -6432,6 +6439,10 @@ components:
         identifier:
           type: string
           description: Identifier for the cash transaction
+        address:
+          $ref: '#/components/schemas/Address'
+        name:
+          type: string
       required:
         - method
     CountryCode:

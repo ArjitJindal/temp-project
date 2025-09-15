@@ -164,6 +164,10 @@ export type V8LogicAggregationRebuildTask = {
   totalSliceCount?: number
   userId?: string
   paymentDetails?: PaymentDetails
+  aggregationData?: {
+    type: 'ADDRESS' | 'EMAIL' | 'NAME'
+    value: string | undefined
+  }
 }
 
 export type TransactionAggregationTaskEntry = {

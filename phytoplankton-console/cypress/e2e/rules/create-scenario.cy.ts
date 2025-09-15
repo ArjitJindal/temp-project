@@ -129,7 +129,7 @@ describe('Create scenario', () => {
     if (type === 'USER') {
       cy.get('input[data-cy="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
     } else {
-      cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
+      cy.singleSelect('[data-cy~="variable-entity-v8"]', 'TRANSACTION');
     }
     cy.get('[data-cy~="variable-entity-v8"]').click().type(`${entityText}`).wait(1);
     cy.get(`div[title="${entityText}"]`).click();

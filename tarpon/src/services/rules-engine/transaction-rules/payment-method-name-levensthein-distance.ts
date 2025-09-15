@@ -8,7 +8,7 @@ import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { businessName, consumerName, formatConsumerName } from '@/utils/helpers'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
 import { traceable } from '@/core/xray'
 import { Business } from '@/@types/openapi-public/Business'
 
