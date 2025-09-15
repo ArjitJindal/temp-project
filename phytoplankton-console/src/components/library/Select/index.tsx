@@ -399,59 +399,65 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             inputRef?.focus();
           }}
         >
-          <div className={s.placeholder}>
-            {placeholderIcon && <div className={s.placeholderIcon}>{placeholderIcon}</div>}
-            {placeholder}
-          </div>
-          {selectedOptions.length > 0 &&
-            (props.mode === 'MULTIPLE' ? (
-              <RenderTags
-                options={selectedOptions}
-                onRemove={(value) => {
-                  props.onChange?.(props.value?.filter((v) => v !== value));
-                }}
+          <div data-cy={'select-root'}>
+            <div className={s.placeholder}>
+              {placeholderIcon && <div className={s.placeholderIcon}>{placeholderIcon}</div>}
+              {placeholder}
+            </div>
+            {selectedOptions.length > 0 &&
+              (props.mode === 'MULTIPLE' ? (
+                <RenderTags
+                  options={selectedOptions}
+                  onRemove={(value) => {
+                    props.onChange?.(props.value?.filter((v) => v !== value));
+                  }}
+                />
+              ) : (
+                <span className={s.selectedOption} key={key(selectedOptions[0].value)}>
+                  <span className={s.selectedOptionLabel}>{selectedOptions[0].label}</span>
+                </span>
+              ))}
+            <input
+              type="text"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => {
+                setIsFocused(false);
+              }}
+              className={s.input}
+              ref={setInputRef}
+              disabled={isDisabled}
+              value={searchText ?? ''}
+              onChange={(e) => handleChangeSearchText(e.target.value)}
+              onClick={() => {
+                if (!isDisabled && isFocused) {
+                  handleOpenChange(!isOpen);
+                }
+              }}
+            />
+            <div className={s.rightIcons} data-cy="select-right-icon">
+              {showCopyIcon && (
+                <FileCopyLineIcon onClick={handleCopy} className={cn(s.rightIcon, s.copyIcon)} />
+              )}
+              {showClearIcon && (
+                <CloseCircleFillIcon
+                  className={cn(s.rightIcon, s.clearIcon)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (props.mode === 'MULTIPLE') {
+                      props.onChange?.([]);
+                    } else {
+                      props.onChange?.(undefined);
+                    }
+                  }}
+                  data-cy="select-close-icon"
+                />
+              )}
+              {isLoading && <LoaderIcon className={cn(s.rightIcon, s.loadingIcon)} />}
+              <ArrowDownIcon
+                className={cn(s.rightIcon, s.arrowDownIcon)}
+                data-cy="select-arrow-icon"
               />
-            ) : (
-              <span className={s.selectedOption} key={key(selectedOptions[0].value)}>
-                <span className={s.selectedOptionLabel}>{selectedOptions[0].label}</span>
-              </span>
-            ))}
-          <input
-            type="text"
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => {
-              setIsFocused(false);
-            }}
-            className={s.input}
-            ref={setInputRef}
-            disabled={isDisabled}
-            value={searchText ?? ''}
-            onChange={(e) => handleChangeSearchText(e.target.value)}
-            onClick={() => {
-              if (!isDisabled && isFocused) {
-                handleOpenChange(!isOpen);
-              }
-            }}
-          />
-          <div className={s.rightIcons}>
-            {showCopyIcon && (
-              <FileCopyLineIcon onClick={handleCopy} className={cn(s.rightIcon, s.copyIcon)} />
-            )}
-            {showClearIcon && (
-              <CloseCircleFillIcon
-                className={cn(s.rightIcon, s.clearIcon)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (props.mode === 'MULTIPLE') {
-                    props.onChange?.([]);
-                  } else {
-                    props.onChange?.(undefined);
-                  }
-                }}
-              />
-            )}
-            {isLoading && <LoaderIcon className={cn(s.rightIcon, s.loadingIcon)} />}
-            <ArrowDownIcon className={cn(s.rightIcon, s.arrowDownIcon)} />
+            </div>
           </div>
         </div>
       </div>

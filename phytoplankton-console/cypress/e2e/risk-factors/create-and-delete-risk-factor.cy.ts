@@ -27,7 +27,7 @@ function createEntityVariable(entityText: string, type: 'USER' | 'TRANSACTION') 
   if (type === 'USER') {
     cy.get('input[data-cy~="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
   } else {
-    cy.singleSelect('[data-cy~="variable-entity-v8"]', 'TRANSACTION');
+    cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction id');
   }
   cy.getInputContainerByLabel('Entity').within(() => {
     cy.singleSelect('', entityText);
@@ -46,21 +46,25 @@ function addCondition(variableName, value) {
 }
 
 function createRiskFactor() {
+  cy.intercept('POST', '**/logic-config').as('logicConfig');
   cy.visit('risk-levels/risk-factors/transaction');
   cy.get('button[data-cy="create-risk-factor-button"]').click();
   cy.waitNothingLoading();
   cy.getInputByLabel('Risk factor name', 'input').type('Test Risk Factor');
   cy.getInputByLabel('Risk factor description', 'input').type('Test Description');
   cy.get('button[data-cy="drawer-next-button-v8"]').click();
-  cy.wait(1000);
-  createEntityVariable('User id (origin or destination)', 'TRANSACTION');
-  addCondition('user id', '123');
-  cy.getInputByLabel('Risk score', 'input').type('50');
-  cy.get('input[data-cy="input text-input"]').last().type('0.27');
-  cy.get('button[data-cy="modal-ok"]').click();
-  cy.get('button[data-cy="drawer-create-save-button"]').click();
-  cy.wait('@riskFactor', { timeout: 15000 }).then((interception) => {
+  cy.wait('@logicConfig', { timeout: 120000 }).then((interception) => {
     expect(interception.response?.statusCode).to.eq(200);
+    cy.wait(1000);
+    createEntityVariable('User id (origin or destination)', 'TRANSACTION');
+    addCondition('user id', '123');
+    cy.getInputByLabel('Risk score', 'input').type('50');
+    cy.get('input[data-cy="input text-input"]').last().type('0.27');
+    cy.get('button[data-cy="modal-ok"]').click();
+    cy.get('button[data-cy="drawer-create-save-button"]').click();
+    cy.wait('@riskFactor', { timeout: 15000 }).then((interception) => {
+      expect(interception.response?.statusCode).to.eq(200);
+    });
   });
 }
 

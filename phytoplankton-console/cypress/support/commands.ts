@@ -186,11 +186,11 @@ Cypress.Commands.add('singleSelect', (preSelector, textOrIndex: string | number)
       );
     });
   } else {
-    cy.get(`${preSelector} *[data-cy~=select-root]`).first().click().type(`${textOrIndex}{enter}`);
+    cy.get(`${preSelector} *[data-cy~=select-root]`).first().click().type(`${textOrIndex}`);
     cy.document().within(() => {
       cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(
         () => {
-          cy.get(`*[data-cy^=menu-item-label][title*="${textOrIndex}"]:visible`).click();
+          cy.get(`*[data-cy^=menu-item-label][title*="${textOrIndex}"]:visible`).first().click();
         },
       );
     });

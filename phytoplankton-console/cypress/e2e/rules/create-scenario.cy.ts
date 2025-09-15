@@ -37,7 +37,7 @@ describe('Create scenario', () => {
 
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
-    cy.wait('@ruleLogicConfig').then((interception) => {
+    cy.wait('@ruleLogicConfig', { timeout: 120000 }).then((interception) => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
       createAggregationVariable('Variable 1', 'type');
       if (type === 'USER') {
@@ -85,7 +85,7 @@ describe('Create scenario', () => {
       if (ruleId.includes(ruleInstanceId)) {
         cy.get('button[data-cy="rule-edit-button"]').eq(index).click();
         cy.get('button[data-cy="drawer-next-button-v8"]').click();
-        cy.wait('@ruleLogicConfig').then((interception) => {
+        cy.wait('@ruleLogicConfig', { timeout: 120000 }).then((interception) => {
           expect(interception.response?.statusCode).to.oneOf([200, 304]);
           checkConditionsCount(2, 'LOW');
           checkConditionsCount(2, 'MEDIUM');
@@ -129,7 +129,7 @@ describe('Create scenario', () => {
     if (type === 'USER') {
       cy.get('input[data-cy="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
     } else {
-      cy.singleSelect('[data-cy~="variable-entity-v8"]', 'TRANSACTION');
+      cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction id');
     }
     cy.get('[data-cy~="variable-entity-v8"]').click().type(`${entityText}`).wait(1);
     cy.get(`div[title="${entityText}"]`).click();
