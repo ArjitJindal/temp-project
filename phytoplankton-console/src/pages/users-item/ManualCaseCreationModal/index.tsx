@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
-import { Case, CaseReasons, CasesUsersUserIdResponse, FileInfo, Priority } from '@/apis';
+import { Case, CasesUsersUserIdResponse, FileInfo, Priority } from '@/apis';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -30,7 +30,7 @@ type Props = {
 };
 
 type FormValues = {
-  reason?: CaseReasons;
+  reason?: string;
   otherReason?: string;
   files: FileInfo[];
   comment?: string;
@@ -46,7 +46,7 @@ const INITIAL_VALUES: FormValues = {
   priority: 'P1',
 };
 
-const MANUAL_CASE_CREATION_REASONSS: readonly CaseReasons[] = [
+const MANUAL_CASE_CREATION_REASONSS: readonly string[] = [
   'Internal referral',
   'External referral',
   'Other',
@@ -220,7 +220,7 @@ export const MannualCaseCreationModal = (props: Props) => {
             {(inputProps) => (
               <Select
                 {...inputProps}
-                options={MANUAL_CASE_CREATION_REASONSS.map((reason: CaseReasons) => ({
+                options={MANUAL_CASE_CREATION_REASONSS.map((reason: string) => ({
                   label: reason,
                   value: reason,
                 }))}

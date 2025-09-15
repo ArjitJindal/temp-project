@@ -15,7 +15,7 @@ import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/
 import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
-import { AdditionalCopilotInfo, CaseReasons, FileInfo, NarrativeType, RuleAction } from '@/apis';
+import { AdditionalCopilotInfo, FileInfo, NarrativeType, RuleAction } from '@/apis';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
@@ -24,10 +24,10 @@ import { CopilotButtonContent } from '@/pages/case-management/components/Copilot
 import Alert from '@/components/library/Alert';
 import { useUsers } from '@/utils/user-utils';
 
-export const OTHER_REASON: CaseReasons = 'Other';
+export const OTHER_REASON: string = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
-export const CLOSING_REASONS: CaseReasons[] = [
+export const CLOSING_REASONS: string[] = [
   'False positive',
   'Investigation completed',
   'Documents collected',

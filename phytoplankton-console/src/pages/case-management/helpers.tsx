@@ -24,7 +24,6 @@ import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react
 import { denseArray } from '@/utils/lang';
 import {
   Account,
-  CaseReasons,
   ChecklistStatus,
   DerivedStatus,
   PaymentMethod,
@@ -149,7 +148,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
       filterQaStatus: raw?.['filterQaStatus'] as ChecklistStatus | undefined | "NOT_QA'd",
-      filterClosingReason: raw?.['filterClosingReason']?.split(',') as CaseReasons[],
+      filterClosingReason: raw?.['filterClosingReason']?.split(',') as string[],
       alertPriority: raw?.alertPriority?.split(
         ',',
       ) as unknown as TableSearchParams['alertPriority'],

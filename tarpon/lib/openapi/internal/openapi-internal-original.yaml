@@ -13338,30 +13338,6 @@ components:
       enum:
         - CLOSURE
         - ESCALATION
-    CaseReasons:
-      type: string
-      title: CaseReasons
-      enum:
-        - Other
-        - False positive
-        - Documents collected
-        - Transaction Rejected
-        - Transaction Refunded
-        - Suspicious activity reported (SAR)
-        - Documents not collected
-        - Investigation completed
-        - Escalated
-        - Fraud
-        - Anti-money laundering
-        - Terrorist financing
-        - User Blacklisted
-        - User Terminated
-        - Internal referral
-        - External referral
-        - Confirmed fraud
-        - Confirmed genuine
-        - Suspected fraud
-        - True positive
     SanctionsHitReasons:
       type: string
       title: SanctionsHitReasons

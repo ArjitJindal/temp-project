@@ -12,11 +12,9 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { CASE_REASONSS } from '@/@types/openapi-internal-custom/CaseReasons'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { isStatusInReview, statusEscalated } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CHECKLIST_STATUSS } from '@/@types/openapi-internal-custom/ChecklistStatus'
@@ -61,7 +59,7 @@ Based on the aforementioned suspicious activity, there is reasonable suspicion t
 
 export function generateNarrative(
   ruleDescriptions: string[],
-  reasons: CaseReasons[],
+  reasons: string[],
   user: InternalBusinessUser | InternalConsumerUser
 ) {
   let name: string
@@ -229,7 +227,7 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
     )
     const reasons = this.rng
       .r(1)
-      .randomSubset<CaseReasons>([
+      .randomSubset<string>([
         'Anti-money laundering',
         'Documents collected',
         'Fraud',
@@ -458,6 +456,29 @@ export class StatusChangeSampler extends BaseSampler<CaseStatusChange[]> {
     alerts?: boolean
   ): CaseStatusChange[] {
     const statusChanges: CaseStatusChange[] = []
+    const CASE_REASONSS: string[] = [
+      'Other',
+      'False positive',
+      'Documents collected',
+      'Transaction Rejected',
+      'Transaction Refunded',
+      'Suspicious activity reported (SAR)',
+      'Documents not collected',
+      'Investigation completed',
+      'Escalated',
+      'Fraud',
+      'Anti-money laundering',
+      'Terrorist financing',
+      'User Blacklisted',
+      'User Terminated',
+      'Internal referral',
+      'External referral',
+      'Confirmed fraud',
+      'Confirmed genuine',
+      'Suspected fraud',
+      'True positive',
+    ]
+
     if (caseStatus === 'CLOSED' || caseStatus === 'REOPENED') {
       const time = dayjs().subtract(
         Math.floor(this.rng.randomInt(alerts ? 150 : 400)),
@@ -522,7 +543,7 @@ export class StatusChangeSampler extends BaseSampler<CaseStatusChange[]> {
 
 export class AuditLogForStatusChangeSampler extends BaseSampler<AuditLog> {
   protected generateSample(caseItem: Case): AuditLog {
-    const reasons = this.rng.randomSubset<CaseReasons>([
+    const reasons = this.rng.randomSubset<string>([
       'Anti-money laundering',
       'Documents collected',
       'Fraud',

@@ -1,4 +1,6 @@
-import { chunk, memoize, uniq } from 'lodash'
+import chunk from 'lodash/chunk'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
@@ -11,7 +13,6 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { UpdateTransactionStatusBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 
 export class UpdateTransactionStatusBatchJobRunner extends BatchJobRunner {
   private cases = memoize(
@@ -111,7 +112,7 @@ export class UpdateTransactionStatusBatchJobRunner extends BatchJobRunner {
           {
             transactionIds,
             action: updatedTransactionStatus,
-            reason: reason as CaseReasons[],
+            reason: reason,
             comment: comment ?? '',
             otherReason: otherReason,
           },

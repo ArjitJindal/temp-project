@@ -1,7 +1,6 @@
 import { AttributeSet } from '../attributes/attribute-set'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 type AdditionalInfoTransaction = {
@@ -15,7 +14,7 @@ const ruleActionToAlias: Record<RuleAction, string> = {
   FLAG: 'Flagging',
 }
 
-const reasonNarrative = (action: RuleAction): Record<CaseReasons, string> => {
+const reasonNarrative = (action: RuleAction): Record<string, string> => {
   return {
     'Investigation completed': `Transaction between [originUserName] and [originUserName] with amount [originTransactionCurrency] [originTransactionAmount] travelling from [originTransactionCountry] to [destinationTransactionCountry] was reviewed. After obtaining customer explanation that [Customer explanation] with [Supporting documentation], the transaction has been cleared and is now being ${ruleActionToAlias[action]}.`,
     'False positive': `Transaction flagged by [ruleHitNames] rule(s) has been reviewed. Analysis of payment from [originUserName] to [destinationUserName] indicates with the [Payment details] that this is a false positive. The transaction is now being ${ruleActionToAlias[action]}.`,
@@ -70,10 +69,10 @@ export class TransactionNarrativeService extends BaseNarrativeService<Additional
     return Object.values(sections).join('')
   }
 
-  public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
+  public reasonNarratives(): ReasonNarrative<string>[] {
     return Object.entries(reasonNarrative(this.additionalInfo.action)).map(
       ([reason, narrative]) => ({
-        reason: reason as CaseReasons,
+        reason: reason as string,
         narrative,
       })
     )
