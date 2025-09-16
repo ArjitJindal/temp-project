@@ -4912,7 +4912,7 @@ components:
           $ref: '#/components/schemas/WalletNetwork'
         address:
           $ref: '#/components/schemas/Address'
-        nationality:
+        countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
         dateOfBirth:
           type: string

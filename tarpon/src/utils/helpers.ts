@@ -214,7 +214,6 @@ export const getPaymentDetailsName = (
       break
     case 'SWIFT':
     case 'UPI':
-    case 'WALLET':
     case 'CHECK':
       if (paymentDetails.name != null) {
         namesToSearch.push({
@@ -250,6 +249,17 @@ export const getPaymentDetailsName = (
             address: paymentDetails.address,
           })
         }
+      }
+      break
+    }
+    case 'WALLET': {
+      if (paymentDetails.name) {
+        namesToSearch.push({
+          name: paymentDetails.name,
+          countryOfNationality: paymentDetails.countryOfNationality,
+          dateOfBirth: paymentDetails.dateOfBirth,
+          entityType: 'PAYMENT_NAME',
+        })
       }
       break
     }
