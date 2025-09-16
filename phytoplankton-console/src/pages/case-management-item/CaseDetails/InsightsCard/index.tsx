@@ -45,14 +45,6 @@ export default function InsightsCard(props: Props) {
 
   return (
     <Card.Root>
-      <Card.Section className={s.root}>
-        <TransactionsSelector
-          currency={selectorParams.currency}
-          userId={userId}
-          params={selectorParams}
-          onChangeParams={setSelectorParams}
-        />
-      </Card.Section>
       <Card.Section className={cn(s.subtitle, s.gray)} direction="horizontal">
         <PulseLineIcon className={s.icon} />
         {'Insights based on selected transactions'}
@@ -72,6 +64,14 @@ export default function InsightsCard(props: Props) {
           </InsightCard>
         </Card.Section>
       </Card.Row>
+      <Card.Section className={s.root}>
+        <TransactionsSelector
+          currency={selectorParams.currency}
+          userId={userId}
+          params={selectorParams}
+          onChangeParams={setSelectorParams}
+        />
+      </Card.Section>
       <Card.Section>
         <InsightCard title="Transactions">
           <TransactionsList userId={userId} selectorParams={selectorParams} />
