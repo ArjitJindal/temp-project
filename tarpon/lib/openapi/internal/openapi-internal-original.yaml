@@ -3499,6 +3499,19 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantCreationRequest'
         required: true
+  /tenant:
+    get:
+      summary: Tenant - Info
+      operationId: get-tenant
+      x-flagright:
+        alwaysAllowedAcdess: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
   /tenants/settings:
     get:
       summary: Tenant - Get Settings
@@ -11628,6 +11641,8 @@ components:
         isProductionAccessDisabled:
           type: boolean
         host:
+          type: string
+        tenantCreatedAt:
           type: string
       required:
         - id
