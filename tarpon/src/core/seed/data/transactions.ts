@@ -3,7 +3,10 @@ import memoize from 'lodash/memoize'
 import shuffle from 'lodash/shuffle'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
-import { ConsumerSanctionsSearchSampler } from '../raw-data/sanctions-search'
+import {
+  BusinessSanctionsSearchSampler,
+  ConsumerSanctionsSearchSampler,
+} from '../raw-data/sanctions-search'
 import { BaseSampler } from '../samplers/base'
 import { getUserUniqueTags, users } from './users'
 import {
@@ -19,7 +22,6 @@ import {
   TRANSACTIONS_SEED,
 } from './seeds'
 import {
-  CardDetailsSampler,
   CryptoTransactionSampler,
   PaymentDetailsSampler,
   TransactionSampler,
@@ -218,10 +220,16 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       const namesToSearch = getPaymentDetailsName(paymentDetails)
       const sanctionsDetails: SanctionsDetails[] = []
 
-      const sanctionsSearchSampler = new ConsumerSanctionsSearchSampler()
-
       for (const n of namesToSearch) {
         const { name, entityType } = n
+
+        let sanctionsSearchSampler
+        if (entityType === 'BANK_ACCOUNT_HOLDER_NAME') {
+          sanctionsSearchSampler = new BusinessSanctionsSearchSampler()
+        } else {
+          sanctionsSearchSampler = new ConsumerSanctionsSearchSampler()
+        }
+
         const data = sanctionsSearchSampler.getSample(
           undefined, // seed already assigned
           name,
@@ -267,20 +275,38 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       }
 
       if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
-        const sanctionsDetails: SanctionsDetails[] = [
-          ...getSanctionsSearch(
-            transaction.originPaymentDetails as PaymentDetails,
-            originUserId,
-            hitRule.ruleInstanceId,
-            transactionId
-          ),
-          ...getSanctionsSearch(
-            transaction.destinationPaymentDetails as PaymentDetails,
-            destinationUserId,
-            hitRule.ruleInstanceId,
-            transactionId
-          ),
-        ]
+        const sanctionsDetails: SanctionsDetails[] = []
+
+        if (
+          counterPartyDirection === 'origin' ||
+          counterPartyDirection === null
+        ) {
+          sanctionsDetails.push(
+            ...getSanctionsSearch(
+              transaction.originPaymentDetails as PaymentDetails,
+              counterPartyDirection === 'origin'
+                ? 'counterparty'
+                : originUserId,
+              hitRule.ruleInstanceId,
+              transactionId
+            )
+          )
+        }
+        if (
+          counterPartyDirection === 'destination' ||
+          counterPartyDirection === null
+        ) {
+          sanctionsDetails.push(
+            ...getSanctionsSearch(
+              transaction.destinationPaymentDetails as PaymentDetails,
+              counterPartyDirection === 'destination'
+                ? 'counterparty'
+                : destinationUserId,
+              hitRule.ruleInstanceId,
+              transactionId
+            )
+          )
+        }
 
         return {
           ...hitRule,
@@ -371,13 +397,22 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
         },
         tags: [this.tagSampler.getSample()],
       }),
-      // for counter party making sure it has card payment type
       ...(counterPartyDirection === 'origin' && {
-        originPaymentDetails: new CardDetailsSampler().getSample(),
+        originPaymentDetails: new PaymentDetailsSampler(
+          this.rng.randomInt()
+        ).getSample(),
       }),
       ...(counterPartyDirection === 'destination' && {
-        destinationPaymentDetails: new CardDetailsSampler().getSample(),
+        destinationPaymentDetails: new PaymentDetailsSampler(
+          this.rng.randomInt()
+        ).getSample(),
       }),
+    }
+
+    if (counterPartyDirection === 'origin') {
+      fullTransaction.destinationPaymentMethodId = undefined
+    } else if (counterPartyDirection === 'destination') {
+      fullTransaction.originPaymentMethodId = undefined
     }
     return fullTransaction
   }

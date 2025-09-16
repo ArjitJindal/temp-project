@@ -136,23 +136,57 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
     ruleInstanceTransactionMap: Map<string, InternalTransaction[]>
   ) {
     const hitDirection = direction === 'origin' ? 'ORIGIN' : 'DESTINATION'
-    if (
-      t[direction + 'UserId'] === userId &&
-      !this.procssedTxnIds.has(t.transactionId)
-    ) {
-      const shouldInclude = t.hitRules.some((rh) => {
-        const hit = rh.ruleHitMeta?.hitDirections?.includes(hitDirection)
-        if (hit) {
-          ruleInstanceTransactionMap.set(rh.ruleInstanceId, [
-            ...(ruleInstanceTransactionMap.get(rh.ruleInstanceId) ?? []),
-            t,
-          ])
-          return true
+    const oppositeDirection = direction === 'origin' ? 'destination' : 'origin'
+    const oppositeUserId = t[oppositeDirection + 'UserId']
+    const thisUserId = t[direction + 'UserId']
+    const thisPaymentDetails = t[direction + 'PaymentDetails']
+
+    if (!this.procssedTxnIds.has(t.transactionId)) {
+      const isCounterpartyRule = t.hitRules.some((rh) => rh.ruleId === 'R-169')
+
+      if (isCounterpartyRule) {
+        if (
+          oppositeUserId === userId &&
+          thisUserId === undefined &&
+          thisPaymentDetails != null
+        ) {
+          const shouldInclude = t.hitRules.some((rh) => {
+            const hit = rh.ruleHitMeta?.hitDirections?.includes(hitDirection)
+            if (hit) {
+              ruleInstanceTransactionMap.set(rh.ruleInstanceId, [
+                ...(ruleInstanceTransactionMap.get(rh.ruleInstanceId) ?? []),
+                t,
+              ])
+              return true
+            }
+            return false
+          })
+          if (shouldInclude) {
+            this.procssedTxnIds.add(t.transactionId)
+          }
+          return shouldInclude
         }
-        return false
-      })
-      return shouldInclude
+      }
+
+      if (t[direction + 'UserId'] === userId) {
+        const shouldInclude = t.hitRules.some((rh) => {
+          const hit = rh.ruleHitMeta?.hitDirections?.includes(hitDirection)
+          if (hit) {
+            ruleInstanceTransactionMap.set(rh.ruleInstanceId, [
+              ...(ruleInstanceTransactionMap.get(rh.ruleInstanceId) ?? []),
+              t,
+            ])
+            return true
+          }
+          return false
+        })
+        if (shouldInclude) {
+          this.procssedTxnIds.add(t.transactionId)
+        }
+        return shouldInclude
+      }
     }
+
     return false
   }
 
