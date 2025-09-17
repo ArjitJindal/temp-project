@@ -35,6 +35,7 @@ export const NarrativeCopilot = () => {
         </P>
         <SelectionGroup
           mode="SINGLE"
+          noBorder
           value={settings.narrativeMode ?? 'STANDARD'}
           onChange={(newValue) => {
             settingsMutaion.mutate({

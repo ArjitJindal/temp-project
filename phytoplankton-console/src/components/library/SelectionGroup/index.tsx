@@ -21,6 +21,7 @@ interface CommonProps<Value extends SelectionGroupValueType> {
   options: Option<Value>[];
   testName?: string;
   optionFixedWidth?: number;
+  noBorder?: boolean;
 }
 
 interface MultipleProps<Value extends SelectionGroupValueType>
@@ -49,7 +50,7 @@ type Props<Value extends SelectionGroupValueType> =
 export default function SelectionGroup<
   Value extends SelectionGroupValueType = SelectionGroupValueType,
 >(props: Props<Value>) {
-  const { mode, options, testName, optionFixedWidth, isDisabled } = props;
+  const { mode, options, testName, optionFixedWidth, isDisabled, noBorder } = props;
   const isSingle = props.mode === 'SINGLE';
   const values: SelectionGroupValueType[] = isSingle
     ? props.value != null
@@ -58,7 +59,13 @@ export default function SelectionGroup<
     : props.value ?? [];
 
   return (
-    <div className={cn(s.root, mode === 'MULTIPLE' ? s.modeMultiple : s.modeSingle)}>
+    <div
+      className={cn(
+        s.root,
+        mode === 'MULTIPLE' ? s.modeMultiple : s.modeSingle,
+        noBorder && s.noBorder,
+      )}
+    >
       {options.map((option, index) => {
         const isActive = values.some(
           (value) => JSON.stringify(option.value) === JSON.stringify(value),
