@@ -835,6 +835,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         formattedId: identifier.value?.split(' ')[0]?.replace(/-/g, ''),
       })),
       addresses: this.getAddresses(entity.addresses),
+      associates: this.getAssociates(entity),
       sanctionsSources,
       pepSources,
       mediaSources,
@@ -920,9 +921,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
           sanctionSearchTypes
         )
       ),
+      associates: this.getAssociates(entity),
       // pick evidence name from current.regime.name
       sanctionSearchTypes,
-      associates: this.getAssociates(entity),
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',
