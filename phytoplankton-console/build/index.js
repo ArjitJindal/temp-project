@@ -106,10 +106,10 @@ async function main() {
       env.ENV === 'local' ? ' http://localhost:3002 ' : ' '
     }*.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}${
       hotReload ? ' ws://localhost:35729' : ''
-    }`,
-    `font-src 'self' https://fonts.gstatic.com`,
-    `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS} https://connect.nango.dev/`,
-    `img-src 'self' data: https://cdn.auth0.com https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://www.acurisriskintelligence.com/`,
+    } https://api-iam.intercom.io https://i1.wp.com https://js.intercomcdn.com/* wss://nexus-websocket-a.intercom.io/`,
+    `font-src 'self' https://fonts.gstatic.com https://fonts.intercomcdn.com`,
+    `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS} https://connect.nango.dev/  https://api-iam.intercom.io https://i1.wp.com https://js.intercomcdn.com/*`,
+    `img-src 'self' data: https://cdn.auth0.com https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://www.acurisriskintelligence.com/ https://js.intercomcdn.com/ https://downloads.intercomcdn.com https://static.intercomassets.com`,
     `manifest-src 'self'`,
     `media-src 'self'`,
     `worker-src blob:`,

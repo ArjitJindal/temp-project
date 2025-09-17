@@ -12935,6 +12935,7 @@ components:
         - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
+        - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
       description: ''
     NewRiskFactorIdResponse:

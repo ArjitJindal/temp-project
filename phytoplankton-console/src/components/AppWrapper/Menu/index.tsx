@@ -17,6 +17,7 @@ import Header from './Header';
 import Footer from './Footer';
 import { Notifications } from './Notifications';
 import { SubMenuItem } from './TopLevelLink/SubMenu';
+import Help from './Help';
 import Article from '@/components/ui/icons/Remix/document/article-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import BarChartFillIcon from '@/components/ui/icons/Remix/business/bar-chart-fill.react.svg';
@@ -28,8 +29,6 @@ import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
 import { isLeaf, RouteItem, RouteWithPath } from '@/services/routing/types';
 import TopLevelLink from '@/components/AppWrapper/Menu/TopLevelLink';
-import { getBranding } from '@/utils/branding';
-import { CluesoContext } from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import MlModelsIcon from '@/components/ui/icons/ml-models.react.svg';
 import GitMergeIcon from '@/components/ui/icons/Remix/development/git-merge-line.react.svg';
 
@@ -52,8 +51,6 @@ const icons = {
   workflows: <GitMergeIcon />,
 };
 
-const branding = getBranding();
-
 interface Props {
   isCollapsed: boolean;
   onChangeCollapsed: (value: boolean) => void;
@@ -72,7 +69,6 @@ export default function Menu(props: Props) {
   const i18n = useI18n();
   const routes = useRoutes();
   const sideBarCollapseContext = useContext(SideBarContext);
-  const cluesoToken = useContext(CluesoContext);
   const notificationsFeatureEnabled = useFeatureEnabled('NOTIFICATIONS');
 
   useEffect(() => {
@@ -119,16 +115,11 @@ export default function Menu(props: Props) {
               isCollapsed,
               isNotificationsDrawerVisible,
             ),
-            <TopLevelLink
+            <Help
               key="help"
-              to={`${branding.knowledgeBaseUrl}?token=${cluesoToken}`}
-              isExternal={true}
-              icon={<QuestionLineIcon />}
               isCollapsed={isCollapsed}
               isActiveHighlightingEnabled={isNotificationsDrawerVisible}
-            >
-              {i18n('menu.support')}
-            </TopLevelLink>,
+            />,
           ]}
         </div>
       </div>
