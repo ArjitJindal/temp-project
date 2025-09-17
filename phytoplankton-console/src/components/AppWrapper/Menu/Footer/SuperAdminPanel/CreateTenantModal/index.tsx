@@ -146,17 +146,13 @@ export const CreateTenantModal = (props: Props) => {
           type: 'string',
           title: 'Tenant Name',
         },
-        tenantWebsite: {
-          type: 'string',
-          title: 'Tenant Website',
-        },
-        tenantId: {
-          type: 'string',
-          title: 'Tenant ID',
-        },
         auth0DisplayName: {
           type: 'string',
           title: 'Auth0 Display Name',
+        },
+        tenantWebsite: {
+          type: 'string',
+          title: 'Tenant Website',
         },
         auth0Domain: {
           type: 'string',
@@ -171,6 +167,10 @@ export const CreateTenantModal = (props: Props) => {
             type: 'string',
             description: 'The email of the admin will assign the role of "admin" in Auth0',
           },
+        },
+        tenantId: {
+          type: 'string',
+          title: 'Tenant ID',
         },
         featureFlags: {
           type: 'array',
