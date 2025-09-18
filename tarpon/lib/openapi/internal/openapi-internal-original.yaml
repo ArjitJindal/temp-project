@@ -14711,6 +14711,8 @@ components:
           type: array
           items:
             type: string
+        entityType:
+          $ref: '#/components/schemas/SanctionsSearchRequestEntityType'
     ScreeningProfileRequest:
       title: ScreeningProfileRequest
       type: object
