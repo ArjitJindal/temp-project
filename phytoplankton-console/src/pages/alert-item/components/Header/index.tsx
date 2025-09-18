@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
+import { EllipsisOutlined } from '@ant-design/icons';
 import StatusChangeMenu from './StatusChangeMenu';
 import SubHeader from './SubHeader';
 import AiForensicsPdfDownloadButton from './AiForensicsPdfDownloadButton';
+import s from './index.module.less';
+import Dropdown from '@/components/library/Dropdown';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -61,6 +64,7 @@ export default function Header(props: Props) {
   const api = useApi();
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);
+  const aiForensicsRef = useRef<HTMLDivElement>(null);
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
@@ -117,10 +121,32 @@ export default function Header(props: Props) {
           }}
           requiredResources={['write:::case-management/case-overview/*']}
         />,
-        alertId && isAiForensicsEnabled && (
-          <AiForensicsPdfDownloadButton key="ai-forensics-pdf-download" alertId={alertId} />
-        ),
         ...getOr(actionsRes, []),
+        alertId && isAiForensicsEnabled && (
+          <div key="hamburger-menu" className={s.hamburgerMenu}>
+            <Dropdown
+              options={[
+                {
+                  value: 'ai-forensics-report',
+                  label: 'AIF Report',
+                },
+              ]}
+              onSelect={(option) => {
+                if (option.value === 'ai-forensics-report') {
+                  const button = aiForensicsRef.current?.querySelector('button');
+                  if (button) {
+                    button.click();
+                  }
+                }
+              }}
+            >
+              <EllipsisOutlined className={s.hamburgerIcon} />
+            </Dropdown>
+            <div ref={aiForensicsRef} className={s.hiddenButton}>
+              <AiForensicsPdfDownloadButton alertId={alertId} />
+            </div>
+          </div>
+        ),
       ].filter(notEmpty)}
       subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItemRes={alertItemRes} />}
     />
