@@ -49,9 +49,9 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 0,
     },
     TRANSACTION_LAMBDA: {
-      MAX_PROVISIONED_CONCURRENCY: 1,
+      MAX_PROVISIONED_CONCURRENCY: 0,
       MIN_PROVISIONED_CONCURRENCY: 0,
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 512,
     },
     TARPON_CHANGE_CAPTURE_LAMBDA: {
       MEMORY_SIZE: 1024,
@@ -77,7 +77,7 @@ export const config: Config = {
     },
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 512,
     },
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
