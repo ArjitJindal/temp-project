@@ -28,7 +28,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID } from '@/components/library/Table/standardDataTypes';
-import { SanctionsEntity } from '@/apis';
+import { SanctionsEntity, SanctionsSearchRequestEntityType } from '@/apis';
 import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
@@ -44,6 +44,7 @@ export interface TableSearchParams {
   fuzziness?: number;
   countryCodes?: Array<string>;
   yearOfBirth?: number;
+  entityType?: SanctionsSearchRequestEntityType;
 }
 
 interface Props {
@@ -246,6 +247,11 @@ export default function SanctionsSearchTable(props: Props) {
     }),
   );
 
+  const ENTITY_TYPE_OPTIONS = [
+    { label: 'Person', value: 'PERSON' },
+    { label: 'Business', value: 'BUSINESS' },
+  ];
+
   const searchProfiles = getOr(searchProfileResult.data, { items: [], total: 0 }).items;
   const selectedProfile = searchProfiles.find(
     (profile) => profile.searchProfileId === (params as any)?.searchProfileId,
@@ -322,6 +328,16 @@ export default function SanctionsSearchTable(props: Props) {
         max: 1,
         step: 0.1,
         defaultValue: 0.5,
+      },
+    },
+    {
+      title: 'User type',
+      key: 'entityType',
+      renderer: {
+        kind: 'select',
+        options: ENTITY_TYPE_OPTIONS,
+        mode: 'SINGLE',
+        displayMode: 'select',
       },
     },
   ];

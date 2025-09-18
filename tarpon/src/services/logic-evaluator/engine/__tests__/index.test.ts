@@ -17,6 +17,8 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { Address } from '@/@types/openapi-public/Address'
+import { getAddressStringForAggregation } from '@/utils/helpers'
 
 jest.mock('../../operators/starts-ends-with', () => {
   const actualModule = jest.requireActual('../../operators/starts-ends-with')
@@ -2408,7 +2410,13 @@ describe('V8 aggregator', () => {
     aggregationFieldKey: string,
     aggregationFunc: string,
     granularity: string,
-    aggregationGroupByFieldKey?: string
+    aggregationGroupByFieldKey?: string,
+    type?:
+      | 'USER_TRANSACTIONS'
+      | 'PAYMENT_DETAILS_TRANSACTIONS'
+      | 'PAYMENT_DETAILS_ADDRESS'
+      | 'PAYMENT_DETAILS_EMAIL'
+      | 'PAYMENT_DETAILS_NAME'
   ) => {
     return {
       aggregationFieldKey,
@@ -2422,7 +2430,7 @@ describe('V8 aggregator', () => {
         end: { granularity: 'now', units: 0 },
       },
       userDirection: 'SENDER',
-      type: 'USER_TRANSACTIONS',
+      type: type || 'USER_TRANSACTIONS',
       transactionDirection: 'SENDING',
       version: dayjs().valueOf(),
       key: `agg:${uuidv4()}`,
@@ -2633,6 +2641,81 @@ describe('V8 aggregator', () => {
       { time: '2024', value: 1 },
       { time: '2025', value: 2 },
     ])
+  })
+
+  test('Should rebuild the aggregation data for Address', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const AGG_VARIABLE = getAggVar(
+      'TRANSACTION:destinationUserId',
+      'COUNT',
+      'day',
+      undefined,
+      'PAYMENT_DETAILS_ADDRESS'
+    )
+
+    const getAddress = (address?: Partial<Address>): Address => {
+      return {
+        ...address,
+        addressLines: ['100 Dest Way'],
+        city: 'Dest City',
+        state: 'Dest State',
+        postcode: '12345',
+        country: 'US',
+      }
+    }
+    const transactions = [
+      getTestTransaction({
+        originUserId: 'O-1',
+        originAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: 'D-1',
+        destinationPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: 'D-1',
+          address: getAddress(),
+        },
+        timestamp: dayjs('2023-01-01T11:01:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: 'O-2',
+        originAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: 'D-2',
+        destinationPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: 'D-2',
+          address: getAddress(),
+        },
+        timestamp: dayjs('2023-01-01T11:02:00.000Z').valueOf(),
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+
+    await logicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      dayjs('2023-01-01T11:01:00.000Z').valueOf(),
+      undefined,
+      undefined,
+      {
+        type: 'ADDRESS',
+        value: getAddressStringForAggregation(getAddress()),
+      }
+    )
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      getAddressStringForAggregation(getAddress()) || '',
+      AGG_VARIABLE,
+      dayjs('2023-01-01T11:00:00.000Z').valueOf(),
+      dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      'day'
+    )
+    expect(aggData).toEqual([{ time: '2023-01-01', value: 2 }])
   })
 
   test('Should rebuild the aggregation data for the user for granularity hour - checks count', async () => {

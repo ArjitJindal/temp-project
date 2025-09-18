@@ -141,6 +141,16 @@ export const tenantsHandler = lambdaApi()(
       return await tenantService.getAllTenants(auth0Domain)
     })
 
+    handlers.registerGetTenant(async (ctx) => {
+      const { tenantId } = ctx
+      const tenantService = new TenantService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClientByEvent(event),
+      })
+      const tenant = await tenantService.getTenantById(tenantId)
+      return tenant
+    })
+
     handlers.registerPostCreateTenant(async (ctx, request) => {
       assertCurrentUserRole('root')
       // check for tenant id before taking any action

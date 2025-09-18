@@ -2895,8 +2895,6 @@ components:
             - key: customKey
               value: customValue
       properties:
-        transactionState:
-          $ref: '#/components/schemas/TransactionState'
         originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
         destinationAmountDetails:
@@ -2973,12 +2971,14 @@ components:
         originUserId: 8650a2611d0771cba03310f74bf6
         destinationUserId: 9350a2611e0771cba03310f74bf6
         timestamp: 1262300400111
+        transactionState: CREATED
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
           type: DEPOSIT
           originUserId: 8650a2611d0771cba03310f74bf6
           destinationUserId: 9350a2611e0771cba03310f74bf6
+          transactionState: CREATED
       properties:
         type:
           type: string
@@ -3001,6 +3001,8 @@ components:
           description:
             UserId for transaction's destination. In other words, where the
             value is being transferred to.
+        transactionState:
+          $ref: '#/components/schemas/TransactionState'
       required:
         - type
         - transactionId
@@ -4712,6 +4714,8 @@ components:
         networkProviderRiskScore:
           type: number
           description: Risk score of the card from your network provider
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -4908,7 +4912,7 @@ components:
           $ref: '#/components/schemas/WalletNetwork'
         address:
           $ref: '#/components/schemas/Address'
-        nationality:
+        countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
         dateOfBirth:
           type: string
@@ -5070,6 +5074,11 @@ components:
           description: Contact Number of the account holder
         emailId:
           $ref: '#/components/schemas/EmailId'
+        name:
+          type: string
+          description: Name of the account holder
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5954,8 +5963,8 @@ components:
               type: string
           required:
             - userId
-    CaseClosedDetails:
-      title: CaseClosedDetails
+    CaseStatusDetails:
+      title: CaseStatusDetails
       type: object
       properties:
         caseId:
@@ -5990,8 +5999,8 @@ components:
           type: array
           items:
             type: string
-    AlertClosedDetails:
-      title: AlertClosedDetails
+    AlertStatusDetails:
+      title: AlertStatusDetails
       type: object
       properties:
         alertId:
@@ -6172,9 +6181,9 @@ components:
             data:
               oneOf:
                 - $ref: '#/components/schemas/UserStateDetails'
-                - $ref: '#/components/schemas/CaseClosedDetails'
+                - $ref: '#/components/schemas/CaseStatusDetails'
                 - $ref: '#/components/schemas/CaseOpenedDetails'
-                - $ref: '#/components/schemas/AlertClosedDetails'
+                - $ref: '#/components/schemas/AlertStatusDetails'
                 - $ref: '#/components/schemas/AlertOpenedDetails'
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
@@ -6201,6 +6210,8 @@ components:
         - LIST_UPDATED
         - SANCTIONS_STATUS_UPDATED
         - ADVERSE_MEDIA_STATUS_UPDATED
+        - CASE_ESCALATED
+        - ALERT_ESCALATED
     ListType:
       type: string
       enum:
@@ -6432,6 +6443,10 @@ components:
         identifier:
           type: string
           description: Identifier for the cash transaction
+        address:
+          $ref: '#/components/schemas/Address'
+        name:
+          type: string
       required:
         - method
     CountryCode:

@@ -217,6 +217,16 @@ export const featureDescriptions: Record<
     description: 'Enables EDD Report',
     tag: FeatureTag.WIP,
   },
+  CHATBOT: {
+    title: 'Chatbot',
+    description: 'Enables chatbot',
+    tag: FeatureTag.ENG,
+  },
+  CUSTOM_AGGREGATION_FIELDS: {
+    title: 'Custom aggregation fields',
+    description: 'Enables custom aggregation fields like (name, email, address)',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
@@ -458,16 +468,18 @@ export default function SuperAdminPanel() {
         {role === 'root' && (
           <div className={s.rootSettingsContainer}>
             <br />
-            <Button
-              type="PRIMARY"
-              size="MEDIUM"
-              onClick={() => {
-                setShowCreateTenantModal(true);
-                handleCancel();
-              }}
-            >
-              Create new tenant
-            </Button>
+            <div className={s.buttonWrapper}>
+              <Button
+                type="PRIMARY"
+                size="MEDIUM"
+                onClick={() => {
+                  setShowCreateTenantModal(true);
+                  handleCancel();
+                }}
+              >
+                Create new tenant
+              </Button>
+            </div>
 
             {tenantsDeletedRecently?.length ? (
               <ListTenants
@@ -645,9 +657,11 @@ export default function SuperAdminPanel() {
               }}
             >
               {(props) => (
-                <Button isDisabled={!batchJobName} type={'PRIMARY'} onClick={props.onClick}>
-                  Run
-                </Button>
+                <div className={s.buttonWrapper}>
+                  <Button isDisabled={!batchJobName} type={'PRIMARY'} onClick={props.onClick}>
+                    Run
+                  </Button>
+                </div>
               )}
             </Confirm>
 
@@ -673,16 +687,18 @@ export default function SuperAdminPanel() {
                 isDisabled={false}
               />
             </Label>
-            <Button
-              type="PRIMARY"
-              onClick={() =>
-                mutateTenantSettings.mutate({
-                  apiKeyViewData: [],
-                })
-              }
-            >
-              Reset current API key view count
-            </Button>
+            <div className={s.buttonWrapper}>
+              <Button
+                type="PRIMARY"
+                onClick={() =>
+                  mutateTenantSettings.mutate({
+                    apiKeyViewData: [],
+                  })
+                }
+              >
+                Reset current API key view count
+              </Button>
+            </div>
             <Label label="Rerun risk scoring limit">
               <NumberInput
                 value={limits?.rerunRiskScoringLimit ?? 0}
@@ -823,23 +839,25 @@ export default function SuperAdminPanel() {
                 <br />
               </>
             )}
-            <Button
-              type={'PRIMARY'}
-              onClick={async () => {
-                try {
-                  setDownloadFeatureState(true);
-                  message.info('Pulling features config');
-                  await handlePullAllTenantsFeatures();
-                } catch (e) {
-                  message.error(`Failed to download features config ${e}`);
-                } finally {
-                  setDownloadFeatureState(false);
-                }
-              }}
-              isLoading={downloadFeatureLoading}
-            >
-              Download features config
-            </Button>
+            <div className={s.buttonWrapper}>
+              <Button
+                type={'PRIMARY'}
+                onClick={async () => {
+                  try {
+                    setDownloadFeatureState(true);
+                    message.info('Pulling features config');
+                    await handlePullAllTenantsFeatures();
+                  } catch (e) {
+                    message.error(`Failed to download features config ${e}`);
+                  } finally {
+                    setDownloadFeatureState(false);
+                  }
+                }}
+                isLoading={downloadFeatureLoading}
+              >
+                Download features config
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

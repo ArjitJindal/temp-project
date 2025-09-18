@@ -31,6 +31,36 @@ export const winstonLogger = createLogger({
   transports: [new transports.Console({})],
 })
 
+// removing once we have resolved throttling execption
+const shouldSkipSentryLogging = (error: Error, extra: any): boolean => {
+  const skipMessages = [
+    'Throughput exceeds the current capacity of your table or index', //https://flagright-data-technologies-in.sentry.io/issues/6865563889/?project=6567808&query=is%3Aunresolved&referrer=issue-stream
+    'The conditional request failed', //https://flagright-data-technologies-in.sentry.io/issues/6869317684/?project=6567808&query=is%3Aunresolved&referrer=issue-stream
+    // Add more messages you want to skip
+    'Processing transaction in fargate', //https://flagright-data-technologies-in.sentry.io/issues/6869617490/?project=6567808&query=is%3Aunresolved%20processing%20transaction&referrer=issue-stream
+    'Aggregation variable agg:', //https://flagright-data-technologies-in.sentry.io/issues/6884861763/?project=6567808&query=is%3Aunresolved&referrer=issue-stream
+  ]
+  const skipErrorTypes = [
+    'ThrottlingException',
+    'ConditionalCheckFailedException',
+  ]
+
+  if (skipMessages.some((msg) => error.message.includes(msg))) {
+    return true
+  }
+
+  if (skipErrorTypes.includes(error.name)) {
+    return true
+  }
+
+  // Skip by custom property
+  if ((extra as any)?.skipSentry === true) {
+    return true
+  }
+
+  return false
+}
+
 winstonLogger.error = wrap(
   winstonLogger.error,
   (func: any, arg: any, ...rest) => {
@@ -40,7 +70,8 @@ winstonLogger.error = wrap(
       error.name = arg
     }
     const extra = rest.find(isPlainObject)
-    if (!isLocal) {
+
+    if (!isLocal && !shouldSkipSentryLogging(error, extra)) {
       const sentryFunctions = [
         { withScope, captureException },
         { withScope: withScopeNode, captureException: captureExceptionNode },

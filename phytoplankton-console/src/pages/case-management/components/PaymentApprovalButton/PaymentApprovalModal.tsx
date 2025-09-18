@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Modal from '../../../../components/library/Modal/index';
 import { FormRef } from '@/components/library/Form';
-import { CaseReasons, RuleAction } from '@/apis';
+import { RuleAction } from '@/apis';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import Narrative, { FormValues, NarrativeFormValues, OTHER_REASON } from '@/components/Narrative';
@@ -40,14 +40,14 @@ const commentFormat = (props: CommentFormatProps) => {
 
 export default function PaymentApprovalModal(props: Props) {
   const { visible, action, transactionIds, hide, onSuccess } = props;
-  const formRef = useRef<FormRef<FormValues<CaseReasons>>>(null);
+  const formRef = useRef<FormRef<FormValues<string>>>(null);
   const reasonsResult = useQuery(ACTION_REASONS('CLOSURE'), async () => {
     return await api.getActionReasons({
       type: 'CLOSURE',
     });
   });
   const reasons = getOr(reasonsResult.data, []).map((reason) => reason.reason);
-  const [narrativeValues, setNarrativeValues] = useState<NarrativeFormValues<CaseReasons>>({
+  const [narrativeValues, setNarrativeValues] = useState<NarrativeFormValues<string>>({
     isValid: false,
     values: { reasons: [], comment: '', files: [], reasonOther: '' },
   });
@@ -56,7 +56,7 @@ export default function PaymentApprovalModal(props: Props) {
 
   let messageData: CloseMessage;
   const mutation = useMutation(
-    async (values: FormValues<CaseReasons>) => {
+    async (values: FormValues<string>) => {
       messageData = message.loading(
         `${humanizeConstant(action)} transaction${transactionIds.length > 1 ? 's' : ''}`,
       );

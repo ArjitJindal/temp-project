@@ -336,7 +336,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                       ? props.value?.filter((v) => v !== selectedValue)
                       : [...(props.value ?? []), selectedValue];
                     props.onChange?.(newValue);
-                    setSearchText('');
                   } else if (props.mode === 'DYNAMIC') {
                     if (option.isVirtual) {
                       setVirtualOptions((prev) => {
@@ -428,6 +427,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             disabled={isDisabled}
             value={searchText ?? ''}
             onChange={(e) => handleChangeSearchText(e.target.value)}
+            onClick={() => {
+              if (!isDisabled && isFocused) {
+                handleOpenChange(!isOpen);
+              }
+            }}
           />
           <div className={s.rightIcons}>
             {showCopyIcon && (

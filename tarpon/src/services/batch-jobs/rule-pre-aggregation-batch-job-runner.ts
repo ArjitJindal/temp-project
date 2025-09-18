@@ -78,12 +78,37 @@ type PaymentDetailsUserInfo = {
   paymentDetails: PaymentDetails
 }
 
+export type UserInfoTypes = 'ADDRESS' | 'EMAIL' | 'NAME'
+
+interface PaymentDetailsInfo {
+  userKeyId: string
+  value: string
+  type: UserInfoTypes
+}
+
+interface PaymentDetailsAddressUserInfo extends PaymentDetailsInfo {
+  type: 'ADDRESS'
+}
+
+interface PaymentDetailsNameUserInfo extends PaymentDetailsInfo {
+  type: 'NAME'
+}
+
+interface PaymentDetailsEmailUserInfo extends PaymentDetailsInfo {
+  type: 'EMAIL'
+}
+
+type PaymentDetailsAggregation =
+  | PaymentDetailsAddressUserInfo
+  | PaymentDetailsEmailUserInfo
+  | PaymentDetailsNameUserInfo
+
 type PreAggregationTask =
   | { type: 'USER_TRANSACTIONS'; ids: string[] }
-  | {
-      type: 'PAYMENT_DETAILS_TRANSACTIONS'
-      ids: PaymentDetailsUserInfo[]
-    }
+  | { type: 'PAYMENT_DETAILS_TRANSACTIONS'; ids: PaymentDetailsUserInfo[] }
+  | { type: 'PAYMENT_DETAILS_ADDRESS'; ids: PaymentDetailsAddressUserInfo[] }
+  | { type: 'PAYMENT_DETAILS_EMAIL'; ids: PaymentDetailsEmailUserInfo[] }
+  | { type: 'PAYMENT_DETAILS_NAME'; ids: PaymentDetailsNameUserInfo[] }
 
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
@@ -156,10 +181,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         currentTimestamp ?? Date.now(),
         tenantId
       )
-      for (const idsChunk of chunk<PaymentDetailsUserInfo | string>(
-        ids,
-        DEFAULT_CHUNK_SIZE
-      )) {
+      for (const idsChunk of chunk<
+        PaymentDetailsUserInfo | string | PaymentDetailsAggregation
+      >(ids, DEFAULT_CHUNK_SIZE)) {
         let messages: FifoSqsMessage[] = []
         if (type === 'USER_TRANSACTIONS') {
           messages = (idsChunk as string[]).flatMap((userId) => {
@@ -235,6 +259,30 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
               })
             }
           )
+        } else if (
+          type === 'PAYMENT_DETAILS_ADDRESS' ||
+          type === 'PAYMENT_DETAILS_EMAIL' ||
+          type === 'PAYMENT_DETAILS_NAME'
+        ) {
+          messages = (idsChunk as PaymentDetailsAggregation[]).flatMap(
+            ({ userKeyId, value, type }) => {
+              return getAggregationTaskMessage({
+                userKeyId,
+                payload: {
+                  type: 'PRE_AGGREGATION',
+                  tenantId: job.tenantId,
+                  currentTimestamp: currentTimestamp ?? Date.now(),
+                  jobId: this.jobId,
+                  entity,
+                  aggregationVariable,
+                  aggregationData: {
+                    type: type,
+                    value: value,
+                  },
+                },
+              })
+            }
+          )
         }
 
         await this.internalBulkSendMesasges(this.dynamoDb, messages)
@@ -297,6 +345,28 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     },
     (tenantId, direction, timeRange) =>
       `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
+  )
+
+  private uniqueEntityDetails = memoize(
+    async (
+      tenantId: string,
+      direction: 'ORIGIN' | 'DESTINATION',
+      timeRange: { afterTimestamp: number; beforeTimestamp: number },
+      type: 'ADDRESS' | 'EMAIL' | 'NAME'
+    ) => {
+      const transactionsRepo = new MongoDbTransactionRepository(
+        tenantId,
+        await getMongoDbClient(),
+        this.dynamoDb
+      )
+      return await transactionsRepo.getUniqueEntityDetails(
+        direction,
+        timeRange,
+        type
+      )
+    },
+    (tenantId, direction, timeRange, type) =>
+      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}-${type}`
   )
 
   private async internalBulkSendMesasges(
@@ -462,15 +532,81 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           }
         })
       )
-
       return {
         ids: userInfos,
         type: 'PAYMENT_DETAILS_TRANSACTIONS',
       }
+    } else if (this.isPaymentDetailsEntityType(aggregationVariable.type)) {
+      const entityType = this.getEntityTypeFromAggregationType(
+        aggregationVariable.type
+      )
+
+      const [originEntities, destinationEntities] = await Promise.all([
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? []
+          : this.uniqueEntityDetails(tenantId, 'ORIGIN', timeRange, entityType),
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? []
+          : this.uniqueEntityDetails(
+              tenantId,
+              'DESTINATION',
+              timeRange,
+              entityType
+            ),
+      ])
+
+      const uniqueEntities = uniqBy(
+        [...originEntities, ...destinationEntities],
+        (entity) => entity
+      )
+
+      const mappedEntities = uniqueEntities.map((entity) => ({
+        userKeyId: entity,
+        value: entity,
+        type: entityType,
+      }))
+
+      return this.createPaymentDetailsTask(
+        aggregationVariable.type,
+        mappedEntities
+      )
     }
 
     throw new Error(
       `Unsupported aggregation variable type: ${aggregationVariable.type}`
     )
+  }
+
+  private isPaymentDetailsEntityType(type: string): boolean {
+    return [
+      'PAYMENT_DETAILS_ADDRESS',
+      'PAYMENT_DETAILS_EMAIL',
+      'PAYMENT_DETAILS_NAME',
+    ].includes(type)
+  }
+
+  private getEntityTypeFromAggregationType(type: string): UserInfoTypes {
+    const typeMap: Record<string, UserInfoTypes> = {
+      PAYMENT_DETAILS_ADDRESS: 'ADDRESS',
+      PAYMENT_DETAILS_EMAIL: 'EMAIL',
+      PAYMENT_DETAILS_NAME: 'NAME',
+    }
+    return typeMap[type] || 'NAME'
+  }
+
+  private createPaymentDetailsTask(
+    aggregationType: string,
+    entities: Array<{ userKeyId: string; value: string; type: UserInfoTypes }>
+  ): PreAggregationTask {
+    const typeMap: Record<string, PreAggregationTask['type']> = {
+      PAYMENT_DETAILS_ADDRESS: 'PAYMENT_DETAILS_ADDRESS',
+      PAYMENT_DETAILS_EMAIL: 'PAYMENT_DETAILS_EMAIL',
+      PAYMENT_DETAILS_NAME: 'PAYMENT_DETAILS_NAME',
+    }
+
+    return {
+      ids: entities as any,
+      type: typeMap[aggregationType] || 'PAYMENT_DETAILS_NAME',
+    }
   }
 }

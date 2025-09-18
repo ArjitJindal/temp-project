@@ -48,7 +48,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
-import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
+import { AlertStatusDetails } from '@/@types/openapi-public/AlertStatusDetails'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
@@ -1633,8 +1633,19 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     })
 
-    if (statusUpdateRequest.alertStatus === 'CLOSED' && !externalRequest) {
-      await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+    if (!externalRequest) {
+      if (statusUpdateRequest.alertStatus === 'CLOSED') {
+        await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+      } else if (
+        statusUpdateRequest.alertStatus === 'ESCALATED' ||
+        statusUpdateRequest.alertStatus === 'ESCALATED_L2'
+      ) {
+        await this.sendAlertEscalatedWebhook(
+          alertIds,
+          cases,
+          statusUpdateRequest
+        )
+      }
     }
     if (statusUpdateRequest.alertStatus === 'CLOSED') {
       await sendActionProcessionTasks(
@@ -1693,7 +1704,8 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  private async sendAlertClosedWebhook(
+  private async sendAlertWebhook(
+    event: 'ALERT_CLOSED' | 'ALERT_ESCALATED',
     alertIds: string[],
     cases: Case[],
     statusUpdateRequest: AlertStatusUpdateRequest
@@ -1702,7 +1714,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const commentBody =
       this.getAlertStatusChangeCommentBody(statusUpdateRequest)
 
-    const webhookTasks: ThinWebhookDeliveryTask<AlertClosedDetails>[] = []
+    const webhookTasks: ThinWebhookDeliveryTask<AlertStatusDetails>[] = []
 
     for (const alertId of alertIds) {
       const case_ = cases.find((c) =>
@@ -1713,7 +1725,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
       if (alert) {
         webhookTasks.push({
-          event: 'ALERT_CLOSED',
+          event,
           triggeredBy: 'MANUAL',
           entityId: alertId,
           payload: {
@@ -1729,12 +1741,39 @@ export class AlertsService extends CaseAlertsCommonService {
               case_?.caseUsers?.origin?.userId ??
               case_?.caseUsers?.destination?.userId,
             transactionIds: alert.transactionIds,
+            status: alert.alertStatus,
           },
         })
       }
     }
 
-    await sendWebhookTasks<AlertClosedDetails>(this.tenantId, webhookTasks)
+    await sendWebhookTasks<AlertStatusDetails>(this.tenantId, webhookTasks)
+  }
+
+  private async sendAlertClosedWebhook(
+    alertIds: string[],
+    cases: Case[],
+    statusUpdateRequest: AlertStatusUpdateRequest
+  ) {
+    await this.sendAlertWebhook(
+      'ALERT_CLOSED',
+      alertIds,
+      cases,
+      statusUpdateRequest
+    )
+  }
+
+  private async sendAlertEscalatedWebhook(
+    alertIds: string[],
+    cases: Case[],
+    statusUpdateRequest: AlertStatusUpdateRequest
+  ) {
+    await this.sendAlertWebhook(
+      'ALERT_ESCALATED',
+      alertIds,
+      cases,
+      statusUpdateRequest
+    )
   }
 
   @auditLog('ALERT', 'CHECKLIST_ITEM_STATUS_CHANGE', 'UPDATE')

@@ -963,14 +963,17 @@ export class UserRepository {
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
-      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules, #updateCount = if_not_exists(#updateCount, :zero) + :one`,
       ExpressionAttributeNames: {
         '#executedRules': 'executedRules',
         '#hitRules': 'hitRules',
+        '#updateCount': 'updateCount',
       },
       ExpressionAttributeValues: {
         ':executedRules': executedRules,
         ':hitRules': hitRulesResults,
+        ':zero': 0,
+        ':one': 1,
       },
       ReturnValues: 'ALL_NEW',
     }

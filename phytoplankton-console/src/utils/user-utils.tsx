@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { keyBy } from 'lodash';
 import { hasResources, Resource } from '@flagright/lib/utils';
 import { useQuery } from './queries/hooks';
-import { ACCOUNT_LIST, ROLES_LIST } from './queries/keys';
+import { ACCOUNT_LIST, ROLES_LIST, TENANT } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
 import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
 import { useApi } from '@/api';
-import { Account, AccountRole, Permission, PermissionStatements } from '@/apis';
+import { Account, AccountRole, Permission, PermissionStatements, Tenant } from '@/apis';
 import { useSettings, useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export enum CommentType {
@@ -264,6 +264,19 @@ export function useAccountsQueryResult(): QueryResult<Account[]> {
   });
 }
 
+export function useAccountTenantInfoQueryResult(): QueryResult<Tenant> {
+  const api = useApi();
+  const { tenantId: currentUserTenantId } = useAuth0User();
+  return useQuery(TENANT(currentUserTenantId), async () => {
+    try {
+      return await api.getTenant();
+    } catch (e) {
+      console.error(e);
+      return undefined;
+    }
+  });
+}
+
 export function useAccounts(): Account[] {
   const accountsQueryResult = useAccountsQueryResult();
   return getOr(accountsQueryResult.data, []);
@@ -336,6 +349,12 @@ export function useUser(userId: string | null | undefined): Account | null {
   }
 
   return user;
+}
+
+export function useTenantInfo(): Tenant | null {
+  const tenantQueryResult = useAccountTenantInfoQueryResult();
+  const tenant = getOr(tenantQueryResult.data, null);
+  return tenant;
 }
 
 export function useSortedUsers(

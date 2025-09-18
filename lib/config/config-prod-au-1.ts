@@ -41,7 +41,7 @@ export const config: Config = {
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},
     LAMBDA_DEFAULT: {
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 512,
     },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,

@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import ScreeningHitTable from '@/components/ScreeningHitTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { OccupationCode, GenericSanctionsSearchType } from '@/apis';
+import {
+  OccupationCode,
+  GenericSanctionsSearchType,
+  SanctionsSearchRequestEntityType,
+} from '@/apis';
 import { getOr, isLoading, isSuccess, map } from '@/utils/asyncResource';
 import { map as mapQuery } from '@/utils/queries/types';
 import { AllParams } from '@/components/library/Table/types';
@@ -34,6 +38,7 @@ interface TableSearchParams {
   documentId?: string;
   searchProfileId?: string;
   screeningProfileId?: string;
+  entityType?: SanctionsSearchRequestEntityType;
 }
 
 interface Props {
@@ -124,6 +129,7 @@ export function SearchResultTable(props: Props) {
         yearOfBirth: response?.yearOfBirth ?? prevState?.yearOfBirth,
         documentId: response?.documentId?.[0] ?? prevState?.documentId,
         searchTerm: undefined,
+        entityType: response?.entityType ?? prevState?.entityType,
       }));
     } else {
       const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
@@ -205,6 +211,7 @@ export function SearchResultTable(props: Props) {
         nationality: historyItem.request?.nationality,
         occupationCode: historyItem.request?.occupationCode,
         documentId: historyItem.request?.documentId?.[0],
+        entityType: historyItem.request?.entityType,
       }));
     }
   }, [historyItem]);
@@ -255,6 +262,7 @@ export function SearchResultTable(props: Props) {
           screeningProfileId: isScreeningProfileEnabled
             ? searchParams.screeningProfileId
             : undefined,
+          entityType: searchParams.entityType,
         },
       });
     },

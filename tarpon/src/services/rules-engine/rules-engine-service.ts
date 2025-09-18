@@ -164,6 +164,10 @@ export type V8LogicAggregationRebuildTask = {
   totalSliceCount?: number
   userId?: string
   paymentDetails?: PaymentDetails
+  aggregationData?: {
+    type: 'ADDRESS' | 'EMAIL' | 'NAME'
+    value: string | undefined
+  }
 }
 
 export type TransactionAggregationTaskEntry = {
@@ -1634,7 +1638,8 @@ export class RulesEngineService {
           })
           // silencing this due to noise on sentry
           logger.info(
-            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`
+            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`,
+            { skipSentry: true }
           )
         }
       },

@@ -23,10 +23,17 @@ async function prepareSchemas(OUTPUT_DIR: string) {
     // Generate and save merged spec first
     const mergedSpec = mergeInternalSpecs()
     const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
-    await fs.writeFile(
-      path.resolve(internalDir, 'temp-merged-spec.yaml'),
-      stringify(mergedSpec)
+    const tempMergedSpecPath = path.resolve(
+      internalDir,
+      'temp-merged-spec.yaml'
     )
+
+    // Clean up any existing temp file/directory before creating new one
+    if (fs.existsSync(tempMergedSpecPath)) {
+      fs.removeSync(tempMergedSpecPath)
+    }
+
+    await fs.writeFile(tempMergedSpecPath, stringify(mergedSpec))
 
     // Continue with existing directory setup
     const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')

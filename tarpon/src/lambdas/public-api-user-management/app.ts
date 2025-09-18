@@ -25,6 +25,7 @@ import {
   DefaultApiPostBusinessUserRequest,
   DefaultApiPostConsumerUserRequest,
 } from '@/@types/openapi-public/RequestParameters'
+import { batchCreateUserOptions } from '@/utils/user'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
@@ -147,6 +148,7 @@ export const userHandler = lambdaApi()(
         ? request.lockKycRiskLevel === 'true'
         : undefined,
     })
+
     handlers.registerPostConsumerUser(async (_ctx, request) => {
       return createUser(request.User, getCreateUserOptions(request))
     })
@@ -170,12 +172,6 @@ export const userHandler = lambdaApi()(
           batchId,
           request.UserBatchRequest.data
         )
-      const isDrsUpdatable = request.lockCraRiskLevel
-        ? request.lockCraRiskLevel !== 'true'
-        : undefined
-      const lockKrs = request.lockKycRiskLevel
-        ? request.lockKycRiskLevel === 'true'
-        : undefined
 
       await sendAsyncRuleTasks(
         validatedUsers.map((v) => ({
@@ -184,10 +180,7 @@ export const userHandler = lambdaApi()(
           user: v,
           tenantId,
           batchId,
-          parameters: {
-            lockCraRiskLevel: isDrsUpdatable,
-            lockKycRiskLevel: lockKrs,
-          },
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response
@@ -199,15 +192,18 @@ export const userHandler = lambdaApi()(
 
       const batchId = request.BusinessBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
+
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
         mongoDb: await getMongoDbClient(),
       })
+
       const { response, validatedUsers } =
         await batchImportService.importBusinessUsers(
           batchId,
           request.BusinessBatchRequest.data
         )
+
       await sendAsyncRuleTasks(
         validatedUsers.map((v) => ({
           type: 'USER_BATCH',
@@ -215,6 +211,7 @@ export const userHandler = lambdaApi()(
           user: v,
           tenantId,
           batchId,
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response

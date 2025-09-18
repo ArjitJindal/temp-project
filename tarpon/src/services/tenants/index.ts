@@ -884,6 +884,15 @@ export class TenantService {
     return tenantRepository.getTenantSettings()
   }
 
+  public async getTenantById(tenantId: string) {
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const tenant = await accountsService.getTenantById(tenantId)
+    if (!tenant) {
+      throw new createHttpError.NotFound('Tenant id not found')
+    }
+    return tenant
+  }
+
   public async deleteTenant(
     tenantIdToDelete: string,
     notRecoverable?: boolean

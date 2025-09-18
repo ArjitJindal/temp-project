@@ -3499,6 +3499,19 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantCreationRequest'
         required: true
+  /tenant:
+    get:
+      summary: Tenant - Info
+      operationId: get-tenant
+      x-flagright:
+        alwaysAllowedAcdess: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
   /tenants/settings:
     get:
       summary: Tenant - Get Settings
@@ -9234,6 +9247,9 @@ components:
       enum:
         - USER_TRANSACTIONS
         - PAYMENT_DETAILS_TRANSACTIONS
+        - PAYMENT_DETAILS_ADDRESS
+        - PAYMENT_DETAILS_NAME
+        - PAYMENT_DETAILS_EMAIL
     LogicAggregationTransactionDirection:
       title: LogicAggregationTransactionDirection
       type: string
@@ -11630,6 +11646,8 @@ components:
           type: boolean
         host:
           type: string
+        tenantCreatedAt:
+          type: string
       required:
         - id
         - name
@@ -12921,6 +12939,8 @@ components:
         - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
+        - CHATBOT
+        - CUSTOM_AGGREGATION_FIELDS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -13338,30 +13358,6 @@ components:
       enum:
         - CLOSURE
         - ESCALATION
-    CaseReasons:
-      type: string
-      title: CaseReasons
-      enum:
-        - Other
-        - False positive
-        - Documents collected
-        - Transaction Rejected
-        - Transaction Refunded
-        - Suspicious activity reported (SAR)
-        - Documents not collected
-        - Investigation completed
-        - Escalated
-        - Fraud
-        - Anti-money laundering
-        - Terrorist financing
-        - User Blacklisted
-        - User Terminated
-        - Internal referral
-        - External referral
-        - Confirmed fraud
-        - Confirmed genuine
-        - Suspected fraud
-        - True positive
     SanctionsHitReasons:
       type: string
       title: SanctionsHitReasons
@@ -14035,6 +14031,8 @@ components:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
         screeningDetails:
           $ref: '#/components/schemas/ScreeningDetails'
+        updateTransactionStatus:
+          $ref: '#/components/schemas/RuleAction'
       required:
         - reason
       description: ''
@@ -14162,6 +14160,8 @@ components:
           type: number
         listId:
           type: string
+        updateTransactionStatus:
+          $ref: '#/components/schemas/RuleAction'
         tags:
           type: array
           items:
@@ -14715,6 +14715,8 @@ components:
           type: array
           items:
             type: string
+        entityType:
+          $ref: '#/components/schemas/SanctionsSearchRequestEntityType'
     ScreeningProfileRequest:
       title: ScreeningProfileRequest
       type: object

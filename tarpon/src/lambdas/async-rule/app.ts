@@ -25,6 +25,11 @@ import { BatchImportService } from '@/services/batch-import'
 function getLockKeys(record: AsyncRuleRecord): string[] {
   switch (record.type) {
     case 'TRANSACTION':
+      if (record.tenantId === '4c9cdf0251') {
+        return [record.senderUser?.userId, record.receiverUser?.userId].filter(
+          (id): id is string => !!id
+        )
+      }
       return [
         record.transaction.originUserId,
         record.transaction.destinationUserId,

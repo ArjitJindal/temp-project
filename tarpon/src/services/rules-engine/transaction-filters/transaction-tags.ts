@@ -42,14 +42,6 @@ export class TransactionTagsRuleFilter extends TransactionRuleFilter<Transaction
     const transactionTags = this.transaction.tags
     const filterTags = this.parameters.transactionTags
     const useAndLogic = this.parameters.useAndLogic
-    console.log(
-      transactionTags,
-      'transactionTags',
-      filterTags,
-      'filterTags',
-      'useAndLogic',
-      useAndLogic
-    )
     return tagsRuleFilter(transactionTags, filterTags, useAndLogic)
   }
 }

@@ -231,7 +231,7 @@ export class TarponChangeMongoDbConsumer {
 
     const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-    const existingUser = usersRepo.getUserById(newUser.userId)
+    const existingUser = await usersRepo.getUserById(newUser.userId)
     /*  version check before processing user*/
     if (!applyNewVersion(newUser, existingUser)) {
       return

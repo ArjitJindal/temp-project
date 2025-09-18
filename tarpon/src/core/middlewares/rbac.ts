@@ -74,7 +74,7 @@ export const rbacMiddleware =
           ...event.queryStringParameters,
           [filterKey]: currentFilterValue.concat(
             permission.ids.length && currentFilterValue.length ? ',' : '',
-            ...permission.ids
+            permission.ids.join(',')
           ),
         }
       }

@@ -33,6 +33,7 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { batchCreateUserOptions } from '@/utils/user'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
@@ -451,12 +452,7 @@ export const userEventsHandler = lambdaApi()(
           batchId,
           request.ConsumerUserEventBatchRequest.data
         )
-      const isDrsUpdatable = request.lockCraRiskLevel
-        ? request.lockCraRiskLevel !== 'true'
-        : undefined
-      const lockKrs = request.lockKycRiskLevel
-        ? request.lockKycRiskLevel === 'true'
-        : undefined
+
       await sendAsyncRuleTasks(
         validatedUserEvents.map((v) => ({
           type: 'USER_EVENT_BATCH',
@@ -464,10 +460,7 @@ export const userEventsHandler = lambdaApi()(
           userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
           batchId,
-          parameters: {
-            lockCraRiskLevel: isDrsUpdatable,
-            lockKycRiskLevel: lockKrs,
-          },
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response
@@ -497,6 +490,7 @@ export const userEventsHandler = lambdaApi()(
           userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
           batchId,
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response

@@ -52,7 +52,6 @@ import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CounterRepository } from '@/services/counter/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AccountsService } from '@/services/accounts'
 import {
   batchInsertToClickhouse,
@@ -2232,7 +2231,7 @@ export class AlertsRepository {
     }
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const FALSE_POSITIVE_REASON: CaseReasons = 'False positive'
+    const FALSE_POSITIVE_REASON: string = 'False positive'
     const timezone = dayjsLib.tz.guess()
     const pipeline = [
       {

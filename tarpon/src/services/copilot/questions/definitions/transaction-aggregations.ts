@@ -1,5 +1,4 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
-import startCase from 'lodash/startCase'
 import {
   InvestigationContext,
   TimeseriesQuestion,
@@ -51,29 +50,21 @@ export const getClickhouseQuery = (
       sqlGranularity = 'YEAR'
       break
   }
-  const startOf = `toStartOf${startCase(sqlGranularity.toLowerCase())}`
-
   const query = `
     SELECT
-      toDate(${startOf}(toDateTime(timestamp / 1000))) as date,
+      toDate(timestamp / 1000) as date,
       round(${aggregationExpression(granularity)}, 2) as agg
     FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-    WHERE
+    PREWHERE
     (
-      (toDateTime(timestamp / 1000) >= fromUnixTimestamp64Milli(${
-        period.from
-      }) AND toDateTime(timestamp / 1000) <= fromUnixTimestamp64Milli(${
-    period.to
-  }))
-      AND ${clickhouseCondition}
+      (timestamp >= ${period.from} AND timestamp <= ${period.to})
+      AND (${clickhouseCondition})
     )
     GROUP BY date
     ORDER BY date ASC
-    WITH FILL FROM toDate(${startOf}(toDateTime(${
-    period.from
-  } / 1000))) TO toDate(${startOf}(toDateTime(${
-    period.to
-  } / 1000))) + INTERVAL 1 ${sqlGranularity} STEP INTERVAL 1 ${sqlGranularity}
+    WITH FILL FROM toDate(${period.from} / 1000)
+    TO toDate(${period.to} / 1000) + INTERVAL 1 ${sqlGranularity} 
+    STEP INTERVAL 1 ${sqlGranularity}
     SETTINGS output_format_json_quote_64bit_integers = 0
   `
 

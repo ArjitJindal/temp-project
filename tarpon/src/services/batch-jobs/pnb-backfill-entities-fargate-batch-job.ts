@@ -29,7 +29,8 @@ import {
   getDynamoDbClient,
 } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DynamoDbKeys, getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   TRANSACTIONS_COLLECTION,

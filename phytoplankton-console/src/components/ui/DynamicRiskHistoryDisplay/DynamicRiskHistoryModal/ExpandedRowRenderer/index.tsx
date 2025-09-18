@@ -1,9 +1,4 @@
-import {
-  BUSINESS_RISK_PARAMETERS,
-  isNotArsChangeTxId,
-  TRANSACTION_RISK_PARAMETERS,
-  USER_RISK_PARAMETERS,
-} from '@flagright/lib/utils/risk';
+import { isNotArsChangeTxId } from '@flagright/lib/utils/risk';
 import { keyBy } from 'lodash';
 import s from './index.module.less';
 import { useApi } from '@/api';
@@ -143,28 +138,29 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
     const data = await api.getAllRiskFactors({ includeV2: true });
     return keyBy(data, 'id');
   });
-  const defaultFactorsData =
-    props.components?.map((val): TableItem => {
-      const dataSource =
-        val.entityType === 'BUSINESS'
-          ? BUSINESS_RISK_PARAMETERS
-          : val.entityType === 'CONSUMER_USER'
-          ? USER_RISK_PARAMETERS
-          : TRANSACTION_RISK_PARAMETERS;
-      const name = dataSource.find((dt) => dt.parameter === val.parameter)?.title ?? val.parameter;
-      return {
-        name,
-        value: val.value,
-        riskScore: val.score,
-        weight: val.weight,
-        riskLevel: val.riskLevel,
-        rowKey: val.parameter,
-        isCustom: false,
-      };
-    }) ?? [];
+
   return (
     <AsyncResourceRenderer resource={factorMapResult.data}>
       {(factorMap) => {
+        const defaultFactorsData =
+          props.factorScoreDetails
+            ?.map((val): TableItem | null => {
+              const parameter = factorMap[val.riskFactorId]?.parameter;
+              if (!parameter) {
+                return null;
+              }
+              const name = factorMap[val.riskFactorId]?.name ?? '-';
+              return {
+                name,
+                value: factorMap[val.riskFactorId]?.description ?? '-',
+                riskScore: val.score,
+                weight: val.weight,
+                riskLevel: val.riskLevel,
+                isCustom: false,
+                rowKey: parameter ?? '',
+              };
+            })
+            .filter((item): item is TableItem => item !== null) ?? [];
         const customRiskFactorsData =
           props.factorScoreDetails
             ?.map((val): TableItem => {

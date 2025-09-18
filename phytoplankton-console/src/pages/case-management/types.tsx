@@ -1,6 +1,5 @@
 import {
   AuditLogType,
-  CaseReasons,
   CaseType,
   ChecklistStatus,
   DerivedStatus,
@@ -45,7 +44,7 @@ export type CommonCaseParams = {
   updatedAt: string[];
   caseTypesFilter: CaseType[];
   filterQaStatus?: ChecklistStatus | "NOT_QA'd";
-  filterClosingReason?: CaseReasons[];
+  filterClosingReason?: string[];
   alertPriority: Priority[];
   ruleQueueIds?: string[];
   ruleNature?: string[];
