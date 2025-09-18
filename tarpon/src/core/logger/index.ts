@@ -38,6 +38,7 @@ const shouldSkipSentryLogging = (error: Error, extra: any): boolean => {
     'The conditional request failed', //https://flagright-data-technologies-in.sentry.io/issues/6869317684/?project=6567808&query=is%3Aunresolved&referrer=issue-stream
     // Add more messages you want to skip
     'Processing transaction in fargate', //https://flagright-data-technologies-in.sentry.io/issues/6869617490/?project=6567808&query=is%3Aunresolved%20processing%20transaction&referrer=issue-stream
+    'Aggregation variable agg:', //https://flagright-data-technologies-in.sentry.io/issues/6884861763/?project=6567808&query=is%3Aunresolved&referrer=issue-stream
   ]
   const skipErrorTypes = [
     'ThrottlingException',
