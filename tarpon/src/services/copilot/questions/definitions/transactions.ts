@@ -116,12 +116,14 @@ const clickhouseTransactionQuery = async (
       t.type,
       t.timestamp,
       t.transactionState,
-      t.originUserId,
+      t.originUserId === 'null' || !t.originUserId ? '-' : t.originUserId,
       t.originConsumerName,
       t.originAmount,
       t.originCurrency,
       t.originCountry,
-      t.destinationUserId,
+      t.destinationUserId === 'null' || !t.destinationUserId
+        ? '-'
+        : t.destinationUserId,
       t.destinationConsumerName,
       t.destinationAmount,
       t.destinationCurrency,
