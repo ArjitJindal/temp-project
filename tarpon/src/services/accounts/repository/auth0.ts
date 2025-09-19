@@ -205,6 +205,15 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
             ...(patchData.role && {
               role: patchData.role,
             }),
+            ...(patchedAppMetadata.escalationLevel === undefined && {
+              escalationLevel: null,
+            }),
+            ...(patchedAppMetadata.escalationReviewerId === undefined && {
+              escalationReviewerId: null,
+            }),
+            ...(patchedAppMetadata.reviewerId === undefined && {
+              reviewerId: null,
+            }),
             tenantId: tenantInfo.tenantId,
             orgName: tenantInfo.orgName,
           },
