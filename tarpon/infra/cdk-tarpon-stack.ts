@@ -853,11 +853,12 @@ export class CdkTarponStack extends cdk.Stack {
       maxCapacity:
         config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
     }
+
     transactionAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
-      utilizationTarget: 0.5,
+      utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
     })
     transactionEventAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
-      utilizationTarget: 0.5,
+      utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
     })
 
     /*  User Event */
