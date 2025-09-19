@@ -18,10 +18,10 @@ export function buildPaymentIdentifierQuery(
     directionSmall === 'from'
       ? 'originPaymentMethodId'
       : 'destinationPaymentMethodId'
-  const paymentDetailsPath =
+  const paymentDetailsNamePath =
     directionSmall === 'from'
-      ? 'originPaymentDetails'
-      : 'destinationPaymentDetails'
+      ? 'originPaymentDetailsName'
+      : 'destinationPaymentDetailsName'
   const userIdColumn =
     directionSmall === 'from' ? 'originUserId' : 'destinationUserId'
 
@@ -42,29 +42,7 @@ export function buildPaymentIdentifierQuery(
         ${paymentMethodIdColumn},
         ${paymentMethodColumn},
         originAmountDetails_amountInUsd,
-        CASE
-          WHEN ${paymentMethodColumn} = 'CARD' THEN trimBoth(replaceRegexpAll(CONCAT(
-            JSONExtractString(data, '${paymentDetailsPath}', 'nameOnCard', 'firstName'),
-            ' ',
-            JSONExtractString(data, '${paymentDetailsPath}', 'nameOnCard', 'middleName'),
-            ' ',
-            JSONExtractString(data, '${paymentDetailsPath}', 'nameOnCard', 'lastName')
-          ),
-          '\\s+',
-          ' '
-        ))
-          WHEN ${paymentMethodColumn} = 'NPP' THEN trimBoth(replaceRegexpAll(CONCAT(
-            JSONExtractString(data, '${paymentDetailsPath}', 'name', 'firstName'),
-            ' ',
-            JSONExtractString(data, '${paymentDetailsPath}', 'name', 'middleName'),
-            ' ',
-            JSONExtractString(data, '${paymentDetailsPath}', 'name', 'lastName')
-          ),
-          '\\s+',
-          ' '
-        ))
-          ELSE trimBoth(JSONExtractString(data, '${paymentDetailsPath}', 'name'))
-        END AS names
+        ${paymentDetailsNamePath} AS names
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE
         ${userIdColumn} = '${userId}'

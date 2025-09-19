@@ -56,13 +56,12 @@ const clickhouseTransactionQuery = async (
   ),
   users as (
     SELECT
-        DISTINCT u.id as userId,
-        u.username
+        DISTINCT id as userId,
+        username
     FROM
-        users_by_id u
-        JOIN transactions t ON u.id = t.originUserId
-        OR u.id = t.destinationUserId
-  ) 
+        users_by_id FINAL
+        WHERE id in (SELECT DISTINCT coalesce(originUserId, destinationUserId) AS id from txn )
+  )
   SELECT
     txn.transactionId as transactionId,
     txn.type as type,
