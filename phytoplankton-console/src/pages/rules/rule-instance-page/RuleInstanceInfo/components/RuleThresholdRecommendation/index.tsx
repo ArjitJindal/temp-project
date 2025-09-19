@@ -79,8 +79,8 @@ export default function RuleThresholdRecommendation(props: Props) {
   return (
     <>
       <Button
-        isLoading={isLoading(recommendationResult.data) || data.isReady}
-        isDisabled={isFailed(recommendationResult.data)}
+        isLoading={isLoading(recommendationResult.data)}
+        isDisabled={isFailed(recommendationResult.data) || !data.isReady}
         loadingTooltip={`Recommendations are not ready yet. Please wait for few moments.`}
         onClick={() => {
           setShowRecommendations(true);
