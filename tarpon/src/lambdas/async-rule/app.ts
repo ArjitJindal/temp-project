@@ -1,6 +1,7 @@
 import { SQSEvent } from 'aws-lambda'
 import compact from 'lodash/compact'
 import groupBy from 'lodash/groupBy'
+import { StackConstants } from '@lib/constants'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   hasFeature,
@@ -17,6 +18,7 @@ import { logger } from '@/core/logger'
 import {
   AsyncBatchRecord,
   AsyncRuleRecord,
+  sendAsyncRuleTasks,
 } from '@/services/rules-engine/utils'
 import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
@@ -167,7 +169,6 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
     }
   }
 }
-
 export const asyncRuleRunnerHandler = lambdaConsumer()(
   async (event: SQSEvent & { saveBatchEntities?: boolean }) => {
     const { Records, saveBatchEntities = true } = event
@@ -185,6 +186,18 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
           const isConcurrentAsyncRulesEnabled = hasFeature(
             'CONCURRENT_ASYNC_RULES'
           )
+          if (
+            tenantId === '4c9cdf0251' &&
+            process.env.AWS_LAMBDA_FUNCTION_NAME ===
+              StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME
+          ) {
+            await sendAsyncRuleTasks(
+              records.map((record) => record.body),
+              true
+            )
+            logger.info(`Sent messages to secondary queue`)
+            return
+          }
           let batchSavingPromise: Promise<void> | undefined
           if (saveBatchEntities) {
             const batchImportService = new BatchImportService(tenantId, {

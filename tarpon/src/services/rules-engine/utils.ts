@@ -523,6 +523,7 @@ function getAsyncRuleMessageGroupId(
 
 export async function sendAsyncRuleTasks(
   tasks: AsyncRuleRecord[],
+  secondaryQueue: boolean = false,
   saveBatchEntities: boolean = true
 ): Promise<void> {
   if (envIs('test', 'local')) {
@@ -559,7 +560,9 @@ export async function sendAsyncRuleTasks(
       }
       return {
         MessageBody: JSON.stringify(task),
-        QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+        QueueUrl: secondaryQueue
+          ? process.env.SECONDARY_ASYNC_RULE_QUEUE_URL
+          : process.env.ASYNC_RULE_QUEUE_URL,
         MessageGroupId: generateChecksum(
           isConcurrentAsyncRulesEnabled
             ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
@@ -607,7 +610,13 @@ export async function sendAsyncRuleTasks(
     })
 
   await Promise.all([
-    bulkSendMessages(sqs, process.env.ASYNC_RULE_QUEUE_URL as string, messages),
+    bulkSendMessages(
+      sqs,
+      secondaryQueue
+        ? (process.env.SECONDARY_ASYNC_RULE_QUEUE_URL as string)
+        : (process.env.ASYNC_RULE_QUEUE_URL as string),
+      messages
+    ),
     bulkSendMessages(
       sqs,
       process.env.BATCH_ASYNC_RULE_QUEUE_URL as string,

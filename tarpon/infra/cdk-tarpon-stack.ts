@@ -270,6 +270,16 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const secondaryAsyncRuleQueue = this.createQueue(
+      SQSQueues.SecondaryAsyncRuleQueue.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const batchAsyncRuleQueue = this.createQueue(
       SQSQueues.BATCH_ASYNC_RULE_QUEUE_NAME.name,
       {
@@ -605,6 +615,7 @@ export class CdkTarponStack extends cdk.Stack {
           downstreamSecondaryTarponEventQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
+        SECONDARY_ASYNC_RULE_QUEUE_URL: secondaryAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
         DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
@@ -705,6 +716,7 @@ export class CdkTarponStack extends cdk.Stack {
             downstreamTarponEventQueue.queueArn,
             downstreamSecondaryTarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
+            secondaryAsyncRuleQueue.queueArn,
             batchAsyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
             mongoUpdateConsumerQueue.queueArn,
@@ -997,9 +1009,19 @@ export class CdkTarponStack extends cdk.Stack {
       heavyLibLayer
     )
 
+    const { alias: secondaryAsyncRule } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.SECONDARY_ASYNC_RULE_RUNNER_FUNCTION_NAME,
+        memorySize: config.resource.ASYNC_RULES_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
+
     // non-batch async rule
     asyncRuleAlias.addEventSource(
-      new SqsEventSource(asyncRuleQueue, { maxConcurrency: 100, batchSize: 10 })
+      new SqsEventSource(asyncRuleQueue, { maxConcurrency: 200, batchSize: 10 })
     )
 
     // batch async rule
@@ -1007,6 +1029,12 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(batchAsyncRuleQueue, {
         maxConcurrency: 100,
         batchSize: 10,
+      })
+    )
+    secondaryAsyncRule.addEventSource(
+      new SqsEventSource(secondaryAsyncRuleQueue, {
+        maxConcurrency: 5,
+        batchSize: 1,
       })
     )
 
