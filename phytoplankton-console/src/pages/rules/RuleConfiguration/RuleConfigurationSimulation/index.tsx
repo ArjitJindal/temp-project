@@ -218,6 +218,7 @@ export function RuleConfigurationSimulation(props: Props) {
     {
       onSuccess: (data) => {
         setCreatedJobId(data.jobId);
+        setShowDemoProgress(false);
       },
       onError: (err: any) => {
         message.fatal(`Unable to run simulation - ${getErrorMessage(err)}`, err);
@@ -260,7 +261,6 @@ export function RuleConfigurationSimulation(props: Props) {
     } else {
       if (isDemoMode) {
         setShowDemoProgress(true);
-        setTimeout(() => setShowDemoProgress(false), 5000);
       }
       startSimulationMutation.mutate(newIterations);
     }

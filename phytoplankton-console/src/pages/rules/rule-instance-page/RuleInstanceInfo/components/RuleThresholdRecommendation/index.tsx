@@ -17,7 +17,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useLogicEntityVariablesList } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
-import { getOr, isLoading, map } from '@/utils/asyncResource';
+import { getOr, isFailed, isLoading, map } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { THRESHOLD_RECOMMENDATIONS } from '@/utils/queries/keys';
 import Icon from '@/components/ui/icons/Remix/system/arrow-down-line.react.svg';
@@ -31,6 +31,9 @@ import {
   UPDATED_VAR_DATA_KEY,
 } from '@/utils/ruleThreshold';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
+
 interface Props {
   ruleInstance: RuleInstance;
   entityVariables?: LogicEntityVariableInUse[];
@@ -59,6 +62,11 @@ export default function RuleThresholdRecommendation(props: Props) {
       });
       return result;
     },
+    {
+      onError: (e) => {
+        message.fatal(`Failed to calculate recommendations for the rule. ${getErrorMessage(e)}`, e);
+      },
+    },
   );
   const data = getOr(recommendationResult.data, {
     ruleInstanceId: ruleInstance.id ?? '',
@@ -69,139 +77,142 @@ export default function RuleThresholdRecommendation(props: Props) {
     navigate(makeUrl(`/rules/my-rules`));
   });
   return (
-    <AsyncResourceRenderer resource={ruleLogicConfig}>
-      {(variables) => (
-        <>
-          <Button
-            isLoading={isLoading(recommendationResult.data)}
-            onClick={() => {
-              setShowRecommendations(true);
-            }}
-            isDisabled={!data.isReady}
-          >
-            Recommended thresholds
-          </Button>
-          <Modal
-            isOpen={showRecommendations}
-            onCancel={() => {
-              setShowRecommendations(false);
-            }}
-            hideFooter
-            title={'Threshold recommendation'}
-            width="XL"
-          >
-            <Table
-              data={
-                // Todo
-                map(recommendationResult.data, (val) => ({
-                  items: val.varsThresholdData,
-                }))
-              }
-              hideFilters
-              toolsOptions={false}
-              rowKey="varKey"
-              columns={[
-                helper.display({
-                  title: 'Variable',
-                  id: 'variable',
-                  defaultWidth: 600,
-                  render: (item) => {
-                    let name: string = '';
-                    if (item.varKey.startsWith('agg:')) {
-                      const aggVar = aggregationVariables?.find((val) => val.key === item.varKey);
-                      name = aggVar
-                        ? aggVar.name ??
-                          getAggVarDefinition(aggVar, variables).uiDefinition.label ??
-                          ''
-                        : '';
-                    } else {
-                      const variable = entityVariables?.find((val) => val.key === item.varKey); // Todo
-                      name =
-                        variable?.name ??
-                        variables.find((val) => val.key === variable?.entityKey)?.uiDefinition
-                          .label ??
-                        '';
-                    }
-                    return (
-                      <Tag color="action" trimText={false}>
-                        {name}
-                      </Tag>
-                    );
-                  },
-                }),
-                helper.simple({
-                  title: 'Recommended value',
-                  key: 'threshold',
-                  type: NUMBER,
-                  defaultWidth: 200,
-                }),
-                helper.display({
-                  title: 'False positives reduced by',
-                  id: 'falsePositivesReduced',
-                  defaultWidth: 200,
-                  render: (item) => {
-                    return (
-                      <div className={s.falsePositive}>
-                        <>{item.falsePositivesReduced}%</>
-                        <Icon className={s.icon} />
-                      </div>
-                    );
-                  },
-                }),
-                helper.display({
-                  title: '',
-                  id: 'actions',
-                  defaultWidth: 260,
-                  render: (item) => {
-                    return (
-                      <div className={s.actions}>
-                        <Button
-                          type="TETRIARY"
-                          isDisabled={isSimulationModeEnabled}
-                          onClick={() => {
-                            if (!isSimulationModeEnabled) {
-                              setIsSimulationModeEnabled(true);
-                            }
-                            setSimulationVarUpdatedData(item);
-                            navigate(
-                              makeUrl('/rules/my-rules/:id/:mode', {
-                                id: ruleInstance.id,
-                                mode: 'edit',
-                              }),
-                            );
-                          }}
-                        >
-                          Run simulation
-                        </Button>
-                        <Button
-                          type="TETRIARY"
-                          onClick={() => {
-                            const updatedRuleInstance = updateCurrentInstance(ruleInstance, item);
-                            updateRuleInstanceMutation.mutate(updatedRuleInstance);
-                          }}
-                        >
-                          Update rule
-                        </Button>
-                      </div>
-                    );
-                  },
-                }),
-              ]}
-              isExpandable={() => true}
-              renderExpanded={(data) => {
-                return (
-                  <ExtendedRowRenderer
-                    data={{
-                      ...data,
-                      createdAt: ruleInstance.createdAt,
-                    }}
-                  />
-                );
+    <>
+      <Button
+        isLoading={isLoading(recommendationResult.data) || data.isReady}
+        isDisabled={isFailed(recommendationResult.data)}
+        loadingTooltip={`Recommendations are not ready yet. Please wait for few moments.`}
+        onClick={() => {
+          setShowRecommendations(true);
+        }}
+      >
+        Recommended thresholds
+      </Button>
+      <AsyncResourceRenderer resource={ruleLogicConfig} renderLoading={() => <></>}>
+        {(variables) => (
+          <>
+            <Modal
+              isOpen={showRecommendations}
+              onCancel={() => {
+                setShowRecommendations(false);
               }}
-            />
-          </Modal>
-        </>
-      )}
-    </AsyncResourceRenderer>
+              hideFooter
+              title={'Threshold recommendation'}
+              width="XL"
+            >
+              <Table
+                data={
+                  // Todo
+                  map(recommendationResult.data, (val) => ({
+                    items: val.varsThresholdData,
+                  }))
+                }
+                hideFilters
+                toolsOptions={false}
+                rowKey="varKey"
+                columns={[
+                  helper.display({
+                    title: 'Variable',
+                    id: 'variable',
+                    defaultWidth: 600,
+                    render: (item) => {
+                      let name: string = '';
+                      if (item.varKey.startsWith('agg:')) {
+                        const aggVar = aggregationVariables?.find((val) => val.key === item.varKey);
+                        name = aggVar
+                          ? aggVar.name ??
+                            getAggVarDefinition(aggVar, variables).uiDefinition.label ??
+                            ''
+                          : '';
+                      } else {
+                        const variable = entityVariables?.find((val) => val.key === item.varKey); // Todo
+                        name =
+                          variable?.name ??
+                          variables.find((val) => val.key === variable?.entityKey)?.uiDefinition
+                            .label ??
+                          '';
+                      }
+                      return (
+                        <Tag color="action" trimText={false}>
+                          {name}
+                        </Tag>
+                      );
+                    },
+                  }),
+                  helper.simple({
+                    title: 'Recommended value',
+                    key: 'threshold',
+                    type: NUMBER,
+                    defaultWidth: 200,
+                  }),
+                  helper.display({
+                    title: 'False positives reduced by',
+                    id: 'falsePositivesReduced',
+                    defaultWidth: 200,
+                    render: (item) => {
+                      return (
+                        <div className={s.falsePositive}>
+                          <>{item.falsePositivesReduced}%</>
+                          <Icon className={s.icon} />
+                        </div>
+                      );
+                    },
+                  }),
+                  helper.display({
+                    title: '',
+                    id: 'actions',
+                    defaultWidth: 260,
+                    render: (item) => {
+                      return (
+                        <div className={s.actions}>
+                          <Button
+                            type="TETRIARY"
+                            isDisabled={isSimulationModeEnabled}
+                            onClick={() => {
+                              if (!isSimulationModeEnabled) {
+                                setIsSimulationModeEnabled(true);
+                              }
+                              setSimulationVarUpdatedData(item);
+                              navigate(
+                                makeUrl('/rules/my-rules/:id/:mode', {
+                                  id: ruleInstance.id,
+                                  mode: 'edit',
+                                }),
+                              );
+                            }}
+                          >
+                            Run simulation
+                          </Button>
+                          <Button
+                            type="TETRIARY"
+                            onClick={() => {
+                              const updatedRuleInstance = updateCurrentInstance(ruleInstance, item);
+                              updateRuleInstanceMutation.mutate(updatedRuleInstance);
+                            }}
+                          >
+                            Update rule
+                          </Button>
+                        </div>
+                      );
+                    },
+                  }),
+                ]}
+                isExpandable={() => true}
+                renderExpanded={(data) => {
+                  return (
+                    <ExtendedRowRenderer
+                      data={{
+                        ...data,
+                        createdAt: ruleInstance.createdAt,
+                      }}
+                    />
+                  );
+                }}
+              />
+            </Modal>
+          </>
+        )}
+      </AsyncResourceRenderer>
+    </>
   );
 }

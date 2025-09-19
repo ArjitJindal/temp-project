@@ -30,6 +30,7 @@ export interface CommonButtonProps extends React.HTMLAttributes<HTMLButtonElemen
   iconRight?: React.ReactNode;
   isLogout?: boolean;
   requiredResources?: Resource[];
+  loadingTooltip?: string;
 }
 
 export interface ButtonProps extends CommonButtonProps {
@@ -153,12 +154,14 @@ const Button = React.forwardRef<ButtonRef, Props>((props, ref) => {
   const { requiredResources = [], ...baseProps } = props;
   const hasUserPermissions = useHasResources(requiredResources);
 
+  let tooltipTitle: string | null = null;
+  if (!hasUserPermissions) {
+    tooltipTitle = `You don't have enough permissions to perform this action`;
+  } else if (baseProps.loadingTooltip != null && baseProps.isLoading) {
+    tooltipTitle = baseProps.loadingTooltip;
+  }
   return (
-    <Tooltip
-      title={
-        !hasUserPermissions ? `You don't have enough permissions to perform this action` : null
-      }
-    >
+    <Tooltip title={tooltipTitle}>
       <BaseButton
         {...baseProps}
         isDisabled={baseProps.isDisabled || !hasUserPermissions}
