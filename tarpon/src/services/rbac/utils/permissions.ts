@@ -725,6 +725,24 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         actions: ['read', 'write'],
         type: 'STATIC',
       },
+      {
+        id: 'manual-screening',
+        name: 'Manual screening',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
+      {
+        id: 'activity',
+        name: 'Screening activity',
+        actions: ['read'],
+        type: 'STATIC',
+      },
+      {
+        id: 'whitelist',
+        name: 'Screening whitelist',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
     ],
   },
   {

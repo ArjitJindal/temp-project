@@ -6940,7 +6940,7 @@ paths:
       operationId: post-sanctions
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - write:::screening/manual-screening
       responses:
         '200':
           description: OK
@@ -6966,7 +6966,7 @@ paths:
       operationId: get-sanctions-search
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/activity
       responses:
         '200':
           description: OK
@@ -7017,7 +7017,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/activity
       responses:
         '200':
           description: OK
@@ -7041,7 +7041,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/activity
       responses:
         '200':
           description: OK
@@ -7095,7 +7095,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/manual-screening
       responses:
         '200':
           description: OK
@@ -7192,7 +7192,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/whitelist
       responses:
         '200':
           description: OK
@@ -7241,7 +7241,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - write:::sanctions/search
+          - write:::screening/whitelist
       responses:
         '200':
           description: OK

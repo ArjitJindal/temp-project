@@ -14,6 +14,7 @@ import {
   useExtraFilters,
 } from '@/components/SanctionsWhitelistTable/helpers';
 import ScreeningHitDetailsDrawer from '@/components/ScreeningHitTable/ScreeningHitDetailsDrawer';
+import { useHasResources } from '@/utils/user-utils';
 
 interface Props {
   singleUserMode?: boolean;
@@ -23,6 +24,8 @@ interface Props {
 
 export default function SanctionsWhitelistTable(props: Props) {
   const { singleUserMode = false, params, onChangeParams } = props;
+
+  const hasSanctionsWhitelistWritePermission = useHasResources(['write:::screening/whitelist/*']);
 
   const api = useApi();
 
@@ -69,6 +72,7 @@ export default function SanctionsWhitelistTable(props: Props) {
         params={params}
         onChangeParams={onChangeParams}
         columns={columns}
+        readOnlyFilters={!hasSanctionsWhitelistWritePermission}
       />
       <ScreeningHitDetailsDrawer
         hit={selectedSearchHit?.sanctionsEntity ? selectedSearchHit.sanctionsEntity : null}

@@ -19,7 +19,7 @@ import {
   SEARCH_PROFILES,
 } from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
-import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useHasResources } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
@@ -57,6 +57,10 @@ export function SearchResultTable(props: Props) {
   const navigate = useNavigate();
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+
+  const hasManualScreeningWritePermission = useHasResources([
+    'write:::screening/manual-screening/*',
+  ]);
 
   const searchProfilesResult = useQuery(
     SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
@@ -306,7 +310,7 @@ export function SearchResultTable(props: Props) {
 
   return (
     <ScreeningHitTable
-      readOnly={searchId != null}
+      readOnly={searchId != null || !hasManualScreeningWritePermission}
       params={allParams}
       onChangeParams={setParams}
       extraTools={[
