@@ -87,6 +87,7 @@ export const config: Config = {
     },
     INSPECTOR_ENABLED: false,
     ATLAS_SEARCH_ENABLED: true,
+    LAMBDA_VPC_ENABLED: true,
     DYNAMO_WRITE_CAPACITY_THRESHOLD: 400,
   },
   clickhouse: {

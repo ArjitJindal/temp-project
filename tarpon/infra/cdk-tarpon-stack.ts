@@ -57,6 +57,8 @@ import {
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
   EbsDeviceVolumeType,
+  GatewayVpcEndpoint,
+  GatewayVpcEndpointAwsService,
   InterfaceVpcEndpoint,
   InterfaceVpcEndpointService,
   IpAddresses,
@@ -82,6 +84,7 @@ import {
   DEFAULT_LAMBDA_TIMEOUT_SECONDS,
 } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
   getQaApiKeyId,
@@ -119,7 +122,6 @@ import {
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -128,7 +130,6 @@ import {
   createFinCENSTFPConnectionAlarm,
 } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
-import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 import { createCanary } from './cdk-utils/cdk-synthetics-utils'
 import {
   addFargateContainer,
@@ -138,6 +139,7 @@ import {
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
 import { CdkTarponPythonStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-python-stack'
 import { createTransactionFunctionPerformanceDashboard } from './dashboards/public-api-transaction-function'
+import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 import { envIs, envIsNot } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -808,6 +810,18 @@ export class CdkTarponStack extends cdk.Stack {
     lambdaExecutionRoleWithLogsListing.attachInlinePolicy(logListingPolicy)
     ecsTaskExecutionRole.attachInlinePolicy(policy)
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
+
+    const dynamoDbVpcEndpoint = this.createDynamoDbVpcEndpoint(vpc)
+
+    if (dynamoDbVpcEndpoint) {
+      this.functionProps = {
+        ...this.functionProps,
+        environment: {
+          ...this.functionProps.environment,
+          DYNAMODB_VPC_ENDPOINT_ID: dynamoDbVpcEndpoint.vpcEndpointId,
+        },
+      }
+    }
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
@@ -1965,8 +1979,54 @@ export class CdkTarponStack extends cdk.Stack {
     alias.addEventSource(eventSource)
   }
 
+  private createDynamoDbVpcEndpoint(
+    vpc: Vpc | null
+  ): GatewayVpcEndpoint | null {
+    // Only create VPC endpoint for dev and sandbox stages AND when lambdas are in VPC
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      (envIsNot('dev') && envIsNot('sandbox'))
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+    })
+
+    // Create DynamoDB Gateway VPC endpoint with explicit route table association
+    const dynamoDbVpcEndpoint = vpc.addGatewayEndpoint(
+      'dynamodb-gateway-endpoint',
+      {
+        service: GatewayVpcEndpointAwsService.DYNAMODB,
+        subnets: [privateSubnets],
+      }
+    )
+
+    this.addTagsToResource(dynamoDbVpcEndpoint, {
+      Name: 'DynamoDBGatewayEndpoint',
+      Service: 'DynamoDB',
+      Stage: this.config.stage,
+    })
+
+    // Output VPC endpoint information
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, 'DynamoDB Gateway VPC Endpoint ID', {
+        value: dynamoDbVpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return dynamoDbVpcEndpoint
+  }
+
   private createMongoAtlasVpc() {
-    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
+    // Enable VPC for dev, sandbox, and prod stages
+    if (
+      this.config.stage !== 'dev' &&
+      this.config.stage !== 'sandbox' &&
+      this.config.stage !== 'prod'
+    ) {
       return {
         vpc: null,
         vpcCidr: null,
@@ -2013,7 +2073,16 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     securityGroup.addIngressRule(Peer.ipv4(IP_ADDRESS_RANGE), Port.tcp(27017))
-
+    securityGroup.addEgressRule(
+      Peer.anyIpv4(),
+      Port.tcp(443),
+      'HTTPS for DynamoDB VPC endpoint'
+    )
+    securityGroup.addEgressRule(
+      Peer.anyIpv4(),
+      Port.tcp(80),
+      'HTTP for DynamoDB VPC endpoint'
+    )
     const clickhouseSecurityGroup = new SecurityGroup(
       this,
       StackConstants.CLICKHOUSE_SECURITY_GROUP_ID,
