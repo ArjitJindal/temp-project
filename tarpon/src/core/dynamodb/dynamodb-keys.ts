@@ -713,7 +713,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   GENERIC_BANK_ACCOUNT: ['accountNumber', 'accountType', 'bankCode'],
   SWIFT: ['accountNumber', 'swiftCode'],
   MPESA: ['businessShortCode', 'phoneNumber'],
-  CHECK: ['checkIdentifier', 'checkNumber'],
+  CHECK: ['accountNumber'],
   CASH: ['identifier'],
   NPP: ['payId'],
 }
