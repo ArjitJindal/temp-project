@@ -2,69 +2,94 @@ import startCase from 'lodash/startCase'
 import toLower from 'lodash/toLower'
 import { ACRONYMS, isValidAcronyms } from '../constants/acronyms'
 
+export type HumaniseParams = { firstLetterUpper?: boolean }
+
+const DEFAULT_HUMANIZE_PARAMS: HumaniseParams = { firstLetterUpper: true }
+
 /*
   SOME_CONSTANT_NAME => Some constant name
  */
-export function humanizeConstant(name: string): string {
-  return humanizeSnakeCase(toLower(name))
+export function humanizeConstant(
+  name: string,
+  params: HumaniseParams = DEFAULT_HUMANIZE_PARAMS
+): string {
+  return humanizeSnakeCase(toLower(name), params)
 }
 
 /*
   bank_smart_iban => Bank smart iban
  */
-export function humanizeSnakeCase(name: string): string {
-  return firstLetterUpper(
-    toLower(name)
-      .split('_')
-      .map((x) =>
-        ACRONYMS.includes(x.toUpperCase()) ? x.toLocaleUpperCase() : x
-      )
-      .join(' ')
-  )
+export function humanizeSnakeCase(
+  name: string,
+  params: HumaniseParams = DEFAULT_HUMANIZE_PARAMS
+): string {
+  let result = toLower(name)
+    .split('_')
+    .map((x) =>
+      ACRONYMS.includes(x.toUpperCase()) ? x.toLocaleUpperCase() : x
+    )
+    .join(' ')
+  if (params.firstLetterUpper) {
+    result = firstLetterUpper(result)
+  }
+  return result
 }
 
 /*
   bank-smart-iban => Bank smart iban
  */
-export function humanizeKebabCase(value: string): string {
-  return firstLetterUpper(
-    value
-      .split('-')
-      .map((x) =>
-        ACRONYMS.includes(x.toUpperCase()) ? x.toLocaleUpperCase() : x
-      )
-      .join(' ')
-  )
+export function humanizeKebabCase(
+  value: string,
+  params: HumaniseParams = DEFAULT_HUMANIZE_PARAMS
+): string {
+  let result = value
+    .split('-')
+    .map((x) =>
+      ACRONYMS.includes(x.toUpperCase()) ? x.toLocaleUpperCase() : x
+    )
+    .join(' ')
+  if (params.firstLetterUpper) {
+    result = firstLetterUpper(result)
+  }
+  return result
 }
 
 /*
   BankSmartIBAN => Bank smart IBAN
  */
-export function humanizeCamelCase(name: string): string {
+export function humanizeCamelCase(
+  name: string,
+  params: HumaniseParams = DEFAULT_HUMANIZE_PARAMS
+): string {
   return name
     .replace(/([a-z])([A-Z])/g, '$1 $2') // Insert space before uppercase letters preceded by lowercase letters
     .replace(/([A-Z])([A-Z])([a-z])/g, '$1 $2$3') // Insert space between consecutive uppercase letters followed by a lowercase letter
     .replace(/( [A-Z])([a-z])/g, (v, g1, g2) => g1.toLowerCase() + g2) // Convert uppercase letter to lowercase if preceded by a space
-    .replace(/^[a-z]/, (v) => v.toUpperCase()) // Capitalize the first letter of the string
+    .replace(/^[a-zA-Z]/, (v) =>
+      params.firstLetterUpper ? v.toUpperCase() : v.toLowerCase()
+    ) // Capitalize the first letter of the string
     .split(/\s+/)
     .map((x) => (ACRONYMS.includes(x.toUpperCase()) ? x.toUpperCase() : x))
     .join(' ')
 }
 
-export function humanizeAuto(value: string): string {
+export function humanizeAuto(
+  value: string,
+  params: HumaniseParams = DEFAULT_HUMANIZE_PARAMS
+): string {
   if (isValidAcronyms(value)) {
     return value
   }
   const caseType = recognizeCase(value)
   switch (caseType) {
     case 'CAMEL_CASE':
-      return humanizeCamelCase(value)
+      return humanizeCamelCase(value, params)
     case 'SNAKE_CASE':
-      return humanizeSnakeCase(value)
+      return humanizeSnakeCase(value, params)
     case 'CONSTANT':
-      return humanizeConstant(value)
+      return humanizeConstant(value, params)
     case 'KEBAB':
-      return humanizeKebabCase(value)
+      return humanizeKebabCase(value, params)
     case 'UNKNOWN':
       return value
   }
