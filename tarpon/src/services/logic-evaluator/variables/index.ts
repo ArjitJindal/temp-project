@@ -42,10 +42,14 @@ import {
 import {
   ARRAY_ITEM_INDICATOR,
   EntityLeafValueInfo,
+  getPathKey,
+  getPathLabel,
   getPublicModelLeafAttrs,
   isArrayIntermediateNode,
   isArrayIntermediateNodeandHasLeafArrayNode,
   isArrayLeafNode,
+  parsePathKey,
+  Path,
 } from './utils'
 import { USER_TYPE } from './user-type'
 import { TRANSACTION_TIME } from './transaction-time'
@@ -67,8 +71,8 @@ import { USER_KRS_LEVEL } from './user-krs-level'
 import { USER_CRA_LEVEL, USER_PREVIOUS_CRA_LEVEL } from './user-cra-level'
 import { SAR_DETAILS } from './sar-details'
 import {
-  PNB_CUSTOM_TAGS_KEYS_VARIABLES,
   FIRST_DIGITAL_CUSTOM_TAGS_KEYS_VARIABLES,
+  PNB_CUSTOM_TAGS_KEYS_VARIABLES,
 } from './custom-tag-keys'
 import { CURRENT_TIMESTAMP } from './current-timestamp'
 import { ALERT_TIMESTAMP } from './alert-timestamp'
@@ -504,13 +508,13 @@ export const getTransactionLogicEntityVariables = memoize(
 )
 
 function getArrayUiDefinition(
-  subPath: string[],
+  subPath: Path,
   groupLeafValueInfos: Array<
-    EntityLeafValueInfo & { arrayGroupLevels: Array<string[]> }
+    EntityLeafValueInfo & { arrayGroupLevels: Array<Path> }
   >
 ): FieldOrGroup {
   return {
-    label: subPath.map(lowerCase).join(' > '),
+    label: getPathLabel(subPath),
     type: '!group',
     mode: 'array',
     conjunctions: ['AND', 'OR'],
@@ -533,7 +537,7 @@ function getUiDefinition(info: EntityLeafValueInfo): FieldOrGroup {
         }
       : undefined
   return {
-    label: info.path.map(lowerCase).join(' > '),
+    label: getPathLabel(info.path),
     type,
     valueSources: ['value', 'field', 'func'],
     fieldSettings,
@@ -557,13 +561,16 @@ function getAutoLogicEntityVariables(
   const nonArrayVariables: LogicVariable[] = leafValueInfos
     .filter((info) => !info.pathKey.includes(ARRAY_ITEM_INDICATOR))
     .map((info) => {
+      const propertyPath = info.path.map((x) =>
+        x.isArray ? ARRAY_ITEM_INDICATOR : x.key
+      )
       return {
         key: info.pathKey,
         entity: entityType,
         valueType: info.type,
         uiDefinition: getUiDefinition(info),
         load: async (entity: any) => {
-          const value = get(entity, info.path)
+          const value = get(entity, propertyPath)
           return info.type === 'number' ? value ?? NaN : value
         },
       }
@@ -579,7 +586,7 @@ function getAutoLogicEntityVariables(
       ...info,
       arrayGroupLevels: info.pathKey
         .split(new RegExp(`\\.?\\${ARRAY_ITEM_INDICATOR}\\.?`))
-        .map((v) => v.split('.')),
+        .map((v): Path => parsePathKey(v)),
     }))
 
   return [
@@ -590,34 +597,39 @@ function getAutoLogicEntityVariables(
 }
 
 function getAutoArrayLogicEntityVariableSubfields(
-  infos: Array<EntityLeafValueInfo & { arrayGroupLevels: Array<string[]> }>
+  inputInfos: Array<EntityLeafValueInfo & { arrayGroupLevels: Array<Path> }>
 ): { [key: string]: FieldOrGroup } {
   return mapValues(
     // NOTE: object key here needs to be a subpath of the array group using '.' as the separator.
     // For example, 'nameOnDocument.firstName' for 'legalDocuments.$i.nameOnDocument.firstName'
-    groupBy(infos, (v) => v.arrayGroupLevels[0].join('.')),
-    (infos) => {
-      if (infos.length === 1) {
-        if (isArrayIntermediateNodeandHasLeafArrayNode(infos[0])) {
+    groupBy(inputInfos, (v): string => {
+      return getPathKey(v.arrayGroupLevels[0])
+    }),
+    (groupedInfos) => {
+      if (groupedInfos.length === 1) {
+        if (isArrayIntermediateNodeandHasLeafArrayNode(groupedInfos[0])) {
           return {
-            ...infos[0],
+            ...groupedInfos[0],
             ...{
-              label: infos[0].arrayGroupLevels[0].map(lowerCase).join(' > '),
+              label: getPathLabel(groupedInfos[0].arrayGroupLevels[0]),
               type: 'multiselect',
               preferWidgets: ['multiselect'],
               valueSources: ['value', 'field', 'func'] as ValueSource[],
               allowCustomValues: true,
-              path: infos[0].arrayGroupLevels[0],
+              path: groupedInfos[0].arrayGroupLevels[0],
             },
           } as FieldOrGroup
         }
         return getUiDefinition({
-          ...infos[0],
-          path: infos[0].arrayGroupLevels[0],
+          ...groupedInfos[0],
+          path: groupedInfos[0].arrayGroupLevels[0],
         })
       } else {
         // Nested subfields
-        return getArrayUiDefinition(infos[0].arrayGroupLevels[0], infos)
+        return getArrayUiDefinition(
+          groupedInfos[0].arrayGroupLevels[0],
+          groupedInfos
+        )
       }
     }
   )
@@ -626,11 +638,11 @@ function getAutoArrayLogicEntityVariableSubfields(
 function getAutoArrayLogicEntityVariables(
   entityType: LogicEntityType,
   arrayLeafValueInfos: Array<
-    EntityLeafValueInfo & { arrayGroupLevels: Array<string[]> }
+    EntityLeafValueInfo & { arrayGroupLevels: Array<Path> }
   >
 ): LogicVariable[] {
   return Object.entries(
-    groupBy(arrayLeafValueInfos, (v) => v.arrayGroupLevels[0].join('.'))
+    groupBy(arrayLeafValueInfos, (v) => getPathKey(v.arrayGroupLevels[0]))
   ).map((entry) => {
     const arrayGroupKey = entry[0]
     const groupLeafValueInfos = entry[1]
@@ -639,7 +651,7 @@ function getAutoArrayLogicEntityVariables(
       entity: entityType,
       valueType: 'array',
       uiDefinition: getArrayUiDefinition(
-        arrayGroupKey.split('.'),
+        parsePathKey(arrayGroupKey),
         groupLeafValueInfos
       ),
       load: async (entity: any) => get(entity, arrayGroupKey),
@@ -652,9 +664,12 @@ function getLeafArrayEntityVariables(
   entityType: LogicEntityType
 ): LogicVariable {
   const path = info.path.slice(0, -1)
-  const label = path.map(lowerCase).join(' > ')
+  const label = getPathLabel(path)
+  const propertyPath = path.map((x) =>
+    x.isArray ? ARRAY_ITEM_INDICATOR : x.key
+  )
   return {
-    key: path.join('.'),
+    key: propertyPath.join('.'),
     entity: entityType,
     valueType: 'array',
     uiDefinition: {
@@ -671,7 +686,7 @@ function getLeafArrayEntityVariables(
       valueSources: ['value', 'field', 'func'] as ValueSource[],
       allowCustomValues: true,
     },
-    load: async (entity: any) => get(entity, path),
+    load: async (entity: any) => get(entity, propertyPath),
   }
 }
 

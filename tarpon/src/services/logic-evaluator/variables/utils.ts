@@ -10,21 +10,63 @@ import {
   CURRENCIES,
 } from '@flagright/lib/constants'
 import { isValidAcronyms } from '@flagright/lib/constants/acronyms'
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
 import { EntityModel } from '@/@types/model'
+import { notEmpty } from '@/utils/array'
 
 export type LeafValueType = 'string' | 'number' | 'boolean'
 const LEAF_VALUE_TYPES: LeafValueType[] = ['string', 'number', 'boolean']
+
+type PathElement =
+  | { key: string; isArray: false; oneOfSubtype?: string }
+  | { isArray: true }
+
+export type Path = PathElement[]
+
 export type EntityLeafValueInfo = {
-  path: string[]
+  path: Path
   pathKey: string
   type: LeafValueType
   options?: Array<{ title: string; value: string }>
 }
 export const ARRAY_ITEM_INDICATOR = '$i'
-function getPathKey(path: string[]) {
-  return path.join('.')
+
+export function getPathKey(path: Path): string {
+  return path.map((x) => (x.isArray ? ARRAY_ITEM_INDICATOR : x.key)).join('.')
+}
+
+export function parsePathKey(key: string): Path {
+  return key.split('.').map((part) => {
+    if (part === ARRAY_ITEM_INDICATOR) {
+      return { isArray: true }
+    }
+    return { key: part, isArray: false }
+  })
+}
+
+export const LABEL_SEPARATOR = ` > `
+
+export function getPathLabel(path: Path) {
+  return path
+    .map((x, i) => {
+      if (x.isArray) {
+        return null
+      }
+      let humanised = humanizeAuto(x.key)
+      if (i !== 0) {
+        humanised = firstLetterUpper(humanised)
+      }
+      if (x.oneOfSubtype) {
+        humanised = `${humanised}${LABEL_SEPARATOR}${humanizeAuto(
+          x.oneOfSubtype
+        )}`
+      }
+      return humanised
+    })
+    .filter(notEmpty)
+    .join(LABEL_SEPARATOR)
 }
 
 function getOptions(
@@ -49,7 +91,7 @@ function getOptions(
 
 function getPublicModelLeafAttrsByName(
   modelName: string,
-  parentPath: string[] = []
+  parentPath: Path = []
 ): EntityLeafValueInfo[] {
   const model = Models[modelName]
   if (model) {
@@ -60,12 +102,18 @@ function getPublicModelLeafAttrsByName(
 
 export function getPublicModelLeafAttrs(
   entityClass: typeof EntityModel,
-  parentPath: string[] = []
+  parentPath: Path = []
 ): EntityLeafValueInfo[] {
   const result: EntityLeafValueInfo[] = []
 
   for (const attribute of entityClass.attributeTypeMap) {
-    const path = [...parentPath, attribute.baseName]
+    const path: Path = [
+      ...parentPath,
+      {
+        key: attribute.baseName,
+        isArray: attribute.baseName === ARRAY_ITEM_INDICATOR,
+      },
+    ]
     const attributeType = attribute.type
 
     if (LEAF_VALUE_TYPES.includes(attributeType as LeafValueType)) {
@@ -80,15 +128,26 @@ export function getPublicModelLeafAttrs(
       !attributeType.includes('Array')
     ) {
       // Handle oneOf types
-      const oneOfResult = attributeType
-        .split(' | ')
-        .flatMap((type) => getPublicModelLeafAttrsByName(type, path))
+      const oneOfResult = attributeType.split(' | ').flatMap((type) =>
+        getPublicModelLeafAttrsByName(
+          type,
+          path.map((x, i) => {
+            if (i === 0 && x.isArray === false) {
+              return {
+                ...x,
+                oneOfSubtype: type,
+              }
+            }
+            return x
+          })
+        )
+      )
       mergeResultsByPathKey(oneOfResult, result)
     } else if (attributeType.startsWith('Array<')) {
       // Handle arrays
       const arrayType = attributeType.match(/Array<(.+)>/)?.[1]
       if (arrayType) {
-        const arrayPath = [...path, ARRAY_ITEM_INDICATOR]
+        const arrayPath: Path = [...path, { isArray: true }]
         if (LEAF_VALUE_TYPES.includes(arrayType as LeafValueType)) {
           result.push({
             path: arrayPath,
@@ -114,21 +173,18 @@ export function getPublicModelLeafAttrs(
 }
 
 export function isArrayIntermediateNode(info: EntityLeafValueInfo) {
-  const index = info.path.indexOf(ARRAY_ITEM_INDICATOR)
+  const index = info.path.findIndex((x) => x.isArray)
   return index !== -1 && index !== info.path.length - 1
 }
 export function isArrayLeafNode(info: EntityLeafValueInfo) {
-  return info.path.indexOf(ARRAY_ITEM_INDICATOR) === info.path.length - 1
+  return info.path.findIndex((x) => x.isArray) === info.path.length - 1
 }
 
 export function isArrayIntermediateNodeandHasLeafArrayNode(
   info: EntityLeafValueInfo
 ) {
-  const index = info.path.indexOf(ARRAY_ITEM_INDICATOR)
-  const reverseIndex = findLastIndex(
-    info.path,
-    (v) => v === ARRAY_ITEM_INDICATOR
-  )
+  const index = info.path.findIndex((x) => x.isArray)
+  const reverseIndex = findLastIndex(info.path, (v) => v.isArray)
   return (
     index !== -1 &&
     index !== info.path.length - 1 &&
@@ -138,7 +194,7 @@ export function isArrayIntermediateNodeandHasLeafArrayNode(
 
 function handleArrayTypes(
   arrayType: string,
-  arrayPath: string[],
+  arrayPath: Path,
   result: EntityLeafValueInfo[]
 ) {
   if (!arrayType.includes(' | ')) {
@@ -159,7 +215,7 @@ function handleArrayTypes(
 
 function handleEnumTypes(
   attributeType: string,
-  path: string[],
+  path: Path,
   result: EntityLeafValueInfo[]
 ) {
   const enumConstKey = `${snakeCase(attributeType).toUpperCase()}S`
