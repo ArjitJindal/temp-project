@@ -8,13 +8,14 @@ export function getNamespacedRoleName(namespace: string, roleName: string) {
 }
 
 export function getRoleDisplayName(roleName?: string) {
-  if (roleName == 'root') {
-    return 'root'
+  if (!roleName) {
+    return undefined
   }
-  if (roleName == 'whitelabel-root') {
-    return 'whitelabel-root'
+  if (roleName === 'root' || roleName === 'whitelabel-root') {
+    return roleName
   }
-  return roleName && roleName.split(':')[1]
+  const parts = roleName.split(':')
+  return parts.length > 1 ? parts[1] : roleName
 }
 
 export function isInNamespace(namespace: string, roleName?: string) {
