@@ -215,7 +215,7 @@ export class AlertsRepository {
       const alertMap = new Map<string, Alert>()
       alerts.forEach((a) => alertMap.set(a.alertId as string, a))
       // Create map for alert metadata from ClickHouse (includes age calculation)
-      const alertMetadataMap = new Map<string, { id: string; age: number }>()
+      const alertMetadataMap = new Map<string, { id: string; age: string }>()
       items.forEach((item) =>
         alertMetadataMap.set(item.id, { id: item.id, age: item.age })
       )
@@ -233,11 +233,12 @@ export class AlertsRepository {
         data: alerts.map((alert) => ({
           alert,
           caseType: caseMap.get(alert.caseId as string)?.caseType as CaseType,
-          caseCreatedTimestamp: caseMap.get(alert.caseId as string)
-            ?.createdTimestamp as number,
+          caseCreatedTimestamp: alert.caseCreatedTimestamp as number,
           caseUsers: caseMap.get(alert.caseId as string)
             ?.caseUsers as CaseCaseUsers,
-          age: alertMetadataMap.get(alert.alertId as string)?.age,
+          age: parseInt(
+            alertMetadataMap.get(alert.alertId as string)?.age ?? '0'
+          ),
         })),
       }
     } else if (!hasFeature('PNB')) {

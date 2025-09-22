@@ -1069,6 +1069,7 @@ export async function sendMessageToDynamoDbConsumer(
       '@/core/local-handlers/dynamo-db-trigger'
     )
     await handleLocalDynamoDbTrigger(message)
+    return
   }
   logger.debug('Sending message to DynamoDb consumer', {
     message,
