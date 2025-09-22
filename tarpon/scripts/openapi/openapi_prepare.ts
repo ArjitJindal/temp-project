@@ -2,7 +2,7 @@
 import path from 'path'
 import { execSync } from 'child_process'
 import fs from 'fs-extra'
-import { pick } from 'lodash'
+import pick from 'lodash/pick'
 import mkdirp from 'mkdirp'
 import { flattenSchemas } from '../../lib/openapi/openapi-augmentor-util'
 import { stringify, parse, localizeRefs, PROJECT_DIR } from './openapi_helpers'

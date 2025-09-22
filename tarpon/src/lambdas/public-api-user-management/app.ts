@@ -8,7 +8,7 @@ import { v4 as uuid4 } from 'uuid'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { publicLambdaApi } from '@/core/middlewares/public-lambda-api-middleware'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { updateLogMetadata } from '@/core/utils/context'
@@ -29,7 +29,7 @@ import { batchCreateUserOptions } from '@/utils/user'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
-export const userHandler = lambdaApi()(
+export const userHandler = publicLambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<Credentials>

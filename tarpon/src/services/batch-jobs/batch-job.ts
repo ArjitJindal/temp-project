@@ -7,8 +7,6 @@ import { getSQSClient } from '@/utils/sns-sqs-client'
 
 const sqsClient = getSQSClient()
 
-export const LONG_RUNNING_MIGRATION_TENANT_ID = 'long-running-migration'
-
 export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
   if (envIs('test') || job.tenantId === 'cypress-tenant') {
     return

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { mockClient } from 'aws-sdk-client-mock'
 import { BatchJobRepository } from '../repositories/batch-job-repository'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import {

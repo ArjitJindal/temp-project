@@ -36,19 +36,19 @@ export const LAMBDAS: {
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME]: {
-    codePath: 'public-api-rules-engine',
+    codePath: 'public-api-transaction',
     handlerName: 'transactionHandler',
     expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME]: {
-    codePath: 'public-api-rules-engine',
+    codePath: 'public-api-transaction-event',
     handlerName: 'transactionEventHandler',
     expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME]: {
-    codePath: 'public-api-rules-engine',
+    codePath: 'public-api-user-events',
     handlerName: 'userEventsHandler',
     expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
@@ -116,12 +116,6 @@ export const LAMBDAS: {
   [StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME]: {
     codePath: 'console-api-transaction',
     handlerName: 'transactionsViewHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
-  [StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME]: {
-    codePath: 'console-api-account',
-    handlerName: 'accountsHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
@@ -312,19 +306,19 @@ export const LAMBDAS: {
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
-    codePath: 'batch-job',
+    codePath: 'batch-job-trigger-consumer',
     handlerName: 'jobTriggerHandler',
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME]: {
-    codePath: 'batch-job',
+    codePath: 'batch-job-decision',
     handlerName: 'jobDecisionHandler',
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME]: {
-    codePath: 'batch-job',
+    codePath: 'batch-job-runner',
     handlerName: 'jobRunnerHandler',
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
