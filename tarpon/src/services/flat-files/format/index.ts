@@ -156,7 +156,7 @@ export abstract class FlatFileFormat {
         fileId: this.s3Key,
         isError: !data.valid,
         isProcessed: false,
-        initialRecord: data.record.intialRecord,
+        initialRecord: data.record.initialRecord,
         parsedRecord: JSON.stringify(data.record.record),
         row: data.record.index,
         stage: 'VALIDATE',
@@ -213,7 +213,7 @@ export abstract class FlatFileFormat {
         fileId: this.s3Key,
         isError: true,
         isProcessed: true,
-        initialRecord: record.intialRecord,
+        initialRecord: record.initialRecord,
         row: record.index,
       })
 

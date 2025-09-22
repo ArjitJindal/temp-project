@@ -85,16 +85,17 @@ describe('CsvFormat', () => {
           },
         })
       )
-
       // Verify parsed records
       expect(records).toHaveLength(2)
       expect(records[0]).toEqual({
         index: 0,
         record: { name: 'John', age: 30 },
+        initialRecord: 'John,30',
       })
       expect(records[1]).toEqual({
         index: 1,
         record: { name: 'Jane', age: 25 },
+        initialRecord: 'Jane,25',
       })
     })
 
@@ -177,6 +178,8 @@ describe('CsvFormat', () => {
           address: '123 Main St',
           amount: 100.01,
         },
+        initialRecord:
+          '"John,Wilson",1234567890,"31","true","123 Main St",100.01',
       })
       expect(records[1]).toEqual({
         index: 1,
@@ -188,6 +191,7 @@ describe('CsvFormat', () => {
           address: '456 Main St',
           amount: 200.02,
         },
+        initialRecord: 'Jane,0987654321,32,false,"456 Main St",200.02',
       })
     })
 
@@ -255,10 +259,12 @@ describe('CsvFormat', () => {
       expect(records[0]).toEqual({
         index: 0,
         record: { name: 'John', age: undefined },
+        initialRecord: 'John',
       })
       expect(records[1]).toEqual({
         index: 1,
         record: { name: 'Jane', age: 25 },
+        initialRecord: 'Jane,25',
       })
     })
 
@@ -285,6 +291,7 @@ describe('CsvFormat', () => {
           name: 'John',
           children: [{ name: 'Jane' }, { name: 'Mike' }],
         },
+        initialRecord: 'John,Jane,Mike',
       })
     })
   })

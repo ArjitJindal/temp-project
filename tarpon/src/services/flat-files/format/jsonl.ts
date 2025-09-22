@@ -27,7 +27,7 @@ export class JsonlFormat extends FlatFileFormat {
     const lines = await jsonlStreamReader(s3Key, documentBucket)
     let index = 0
     for await (const line of lines) {
-      yield { index: index++, record: JSON.parse(line), intialRecord: line }
+      yield { index: index++, record: JSON.parse(line), initialRecord: line }
     }
   }
 

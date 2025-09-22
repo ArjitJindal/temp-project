@@ -1,7 +1,7 @@
 export type FlatFileRecord = {
   index: number
   record: Record<string, any>
-  intialRecord: string
+  initialRecord: string
 }
 
 export type FlatFilesErrorStage =

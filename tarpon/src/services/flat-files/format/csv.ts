@@ -136,7 +136,7 @@ export class CsvFormat extends FlatFileFormat {
             {
               index: index++,
               record: { record: flatRow.record },
-              intialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
+              initialRecord: flatRow.raw.replace(/[\r\n]+/g, ' ').trim(),
             },
             new Error('Duplicate record'),
             'DUPLICATE'
@@ -146,7 +146,7 @@ export class CsvFormat extends FlatFileFormat {
         yield {
           index: index++,
           record: nested,
-          intialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
+          initialRecord: flatRow.raw.replace(/[\r\n]+/g, ' ').trim(),
         }
       } catch (error) {
         await this.saveError(
@@ -154,7 +154,7 @@ export class CsvFormat extends FlatFileFormat {
           {
             index: index++,
             record: { record: flatRow.record },
-            intialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
+            initialRecord: flatRow.raw.replace(/[\r\n]+/g, ' '),
           },
           error,
           'PARSE'
