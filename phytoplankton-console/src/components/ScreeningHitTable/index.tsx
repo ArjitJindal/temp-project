@@ -34,9 +34,14 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSancti
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { useQuery } from '@/utils/queries/hooks';
-import { SEARCH_PROFILES, SCREENING_PROFILES } from '@/utils/queries/keys';
+import {
+  DEFAULT_MANUAL_SCREENING_FILTERS,
+  SEARCH_PROFILES,
+  SCREENING_PROFILES,
+} from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { getOr, match } from '@/utils/asyncResource';
+import { useHasResources } from '@/utils/user-utils';
 import { getErrorMessage } from '@/utils/lang';
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -83,6 +88,9 @@ export default function SanctionsSearchTable(props: Props) {
   const settings = useSettings();
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
+  const canEditManualScreeningFilters = useHasResources([
+    'write:::screening/manual-screening-filters/*',
+  ]);
 
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
@@ -420,9 +428,34 @@ export default function SanctionsSearchTable(props: Props) {
     },
   });
 
+  const restrictedByPermission = new Set(['fuzziness', 'nationality', 'types']);
+
+  const defaultManualScreeningFilters = useQuery(
+    DEFAULT_MANUAL_SCREENING_FILTERS(),
+    async () => api.getDefaultManualScreeningFilters(),
+    { enabled: isScreeningProfileEnabled, refetchOnMount: true, refetchOnWindowFocus: true },
+  );
+
   extraFilters.forEach((filter) => {
     const renderer = filter.renderer as any;
-    renderer.readOnly = readOnly || readOnlyFilterKeys.includes(filter.key);
+
+    let isReadOnly = readOnly || readOnlyFilterKeys.includes(filter.key);
+
+    if (
+      isScreeningProfileEnabled &&
+      restrictedByPermission.has(filter.key) &&
+      !canEditManualScreeningFilters
+    ) {
+      const defaults = getOr(defaultManualScreeningFilters.data, null) as any;
+      const value = defaults?.[filter.key];
+      const isSet = value != null && (!Array.isArray(value) || value.length > 0);
+
+      if (isSet) {
+        isReadOnly = true;
+      }
+    }
+
+    renderer.readOnly = isReadOnly;
     renderer.filterKey = filter.key;
   });
 

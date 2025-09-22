@@ -353,7 +353,7 @@ const customTextWidget: CoreWidgets['text'] = {
                   <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
                     <SingleListSelectDynamic
                       uniqueTypeProps={uniqueTypeProps}
-                      value={currentValue as string}
+                      value={currentValue}
                       onChange={(val) => props.setValue(val)}
                       filter={dynamicKeyFilter}
                     />

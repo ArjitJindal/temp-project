@@ -909,6 +909,12 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         type: 'STATIC',
       },
       {
+        id: 'manual-screening-filters',
+        name: 'Manual screening filters',
+        actions: ['write'],
+        type: 'STATIC',
+      },
+      {
         id: 'manual-screening',
         name: 'Manual screening',
         actions: ['read', 'write'],
