@@ -20,15 +20,17 @@ import { envIs, envIsNot } from '../env'
 import { bulkSendMessages } from '../sns-sqs-client'
 import {
   ClickHouseTables,
-  MaterializedViewDefinition,
-  ProjectionsDefinition,
-  ClickhouseTableDefinition,
   TableName,
-  IndexType,
-  IndexOptions,
   CLICKHOUSE_DEFINITIONS,
 } from './definition'
 import { generateColumnsFromModel } from './model-schema-parser'
+import {
+  MaterializedViewDefinition,
+  ProjectionsDefinition,
+  ClickhouseTableDefinition,
+  IndexType,
+  IndexOptions,
+} from '@/@types/clickhouse'
 import {
   DATE_TIME_FORMAT_JS,
   DAY_DATE_FORMAT_JS,
@@ -39,8 +41,7 @@ import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
-import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
-import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
+import { MongoConsumerMessage } from '@/@types/mongo'
 import { addNewSubsegment } from '@/core/xray'
 import { MigrationTrackerTable } from '@/models/migration-tracker'
 
@@ -775,7 +776,11 @@ export const sendMessageToMongoConsumer = async (
   }
 
   if (envIs('local') || envIs('test')) {
-    await handleMongoConsumerSQSMessage([message])
+    const { handleLocalMongoDbTrigger } = await import(
+      '@/core/local-handlers/mongo-db-trigger-consumer'
+    )
+
+    await handleLocalMongoDbTrigger([message])
     return
   }
 
@@ -799,10 +804,16 @@ export async function sendBulkMessagesToMongoConsumer(
   if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
     return
   }
+
   if (envIs('local') || envIs('test')) {
-    await handleMongoConsumerSQSMessage(messages)
+    const { handleLocalMongoDbTrigger } = await import(
+      '@/core/local-handlers/mongo-db-trigger-consumer'
+    )
+
+    await handleLocalMongoDbTrigger(messages)
     return
   }
+
   await bulkSendMessages(
     sqs,
     process.env.MONGO_DB_CONSUMER_QUEUE_URL as string,

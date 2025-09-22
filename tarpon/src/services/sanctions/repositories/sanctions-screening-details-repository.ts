@@ -14,10 +14,10 @@ import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import {
-  MongoUpdateMessage,
   paginatePipeline,
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
+import { MongoUpdateMessage } from '@/@types/mongo'
 import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'

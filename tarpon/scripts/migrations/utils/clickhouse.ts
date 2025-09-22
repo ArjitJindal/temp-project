@@ -1,12 +1,10 @@
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
-import {
-  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
-  ClickhouseTableDefinition,
-} from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO } from '@/utils/clickhouse/definition'
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { logger } from '@/core/logger'
 
 export async function syncClickhouseTableWithMongo(
