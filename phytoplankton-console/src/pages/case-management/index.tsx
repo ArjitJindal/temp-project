@@ -31,6 +31,8 @@ import { applyUpdater, Updater } from '@/utils/state';
 import { useIsChanged } from '@/utils/hooks';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useFirstAvailableDerivedStatus } from '@/utils/permissions/case-permission-filter';
+import { useFirstAvailableDerivedAlertStatus } from '@/utils/permissions/alert-permission-filter';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -50,6 +52,8 @@ export default function CaseManagementPage() {
   });
 
   const userEscalationLevel = userAccount?.escalationLevel;
+  const firstAvailableStatus = useFirstAvailableDerivedStatus();
+  const firstAvailableAlertStatus = useFirstAvailableDerivedAlertStatus();
 
   const handleChangeParams = useCallback(
     (paramsUpdater: Updater<AllParams<TableSearchParams>>) => {
@@ -57,7 +61,10 @@ export default function CaseManagementPage() {
         const newParams = applyUpdater(prevState, paramsUpdater);
         // When changing type of scope - reset status filter
         if (isAlertScope(newParams.showCases) && !isAlertScope(prevState.showCases)) {
-          newParams.alertStatus = ['OPEN'];
+          // Use first available alert status from user permissions, fallback to OPEN if none available
+          newParams.alertStatus = firstAvailableAlertStatus
+            ? [firstAvailableAlertStatus]
+            : ['OPEN'];
           newParams.caseStatus = null;
         } else if (isCasesScope(newParams.showCases) && !isCasesScope(prevState.showCases)) {
           newParams.alertStatus = null;
@@ -67,7 +74,8 @@ export default function CaseManagementPage() {
           } else if (userEscalationLevel === 'L2') {
             newParams.caseStatus = ['ESCALATED_L2'];
           } else {
-            newParams.caseStatus = ['OPEN'];
+            // Use first available status from user permissions, fallback to OPEN if none available
+            newParams.caseStatus = firstAvailableStatus ? [firstAvailableStatus] : ['OPEN'];
           }
         } else if (isQaScope(newParams.showCases)) {
           newParams.alertStatus = ['CLOSED'];
@@ -79,7 +87,7 @@ export default function CaseManagementPage() {
         return newParams;
       });
     },
-    [setParams, userEscalationLevel],
+    [setParams, userEscalationLevel, firstAvailableStatus, firstAvailableAlertStatus],
   );
 
   // When changing qa mode - change scope

@@ -24,9 +24,9 @@ import { RulesEngineService } from '@/services/rules-engine/rules-engine-service
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
-import { transactionEventHandler } from '@/lambdas/public-api-rules-engine/app'
 import { getApiGatewayPostEvent } from '@/test-utils/apigateway-test-utils'
 import { enableLocalChangeHandler } from '@/utils/local-change-handler'
+import { transactionEventHandler } from '@/lambdas/public-api-transaction-event/app'
 
 enableLocalChangeHandler()
 dynamoDbSetupHook()

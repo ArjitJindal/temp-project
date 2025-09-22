@@ -4,7 +4,7 @@ import {
 } from '@lib/cdk/constants'
 import { logger } from '@/core/logger'
 import { nodeConsumer } from '@/core/middlewares/node-consumer-middleware'
-import { genericJobRunnerHandler } from '@/lambdas/batch-job/app'
+import { genericJobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 

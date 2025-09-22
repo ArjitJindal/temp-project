@@ -1,7 +1,5 @@
-import {
-  LONG_RUNNING_MIGRATION_TENANT_ID,
-  sendBatchJobCommand,
-} from '@/services/batch-jobs/batch-job'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/utils/batch-job'
 import { envIsNot } from '@/utils/env'
 
 export const up = async () => {

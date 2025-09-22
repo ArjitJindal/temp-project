@@ -3,6 +3,7 @@
   "number_of_objects",
   "truncate_decimal",
   "string_to_number",
+  "string_to_timestamp",
   "number_to_string",
   "lowercase",
   "uppercase",

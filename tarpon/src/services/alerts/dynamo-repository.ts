@@ -935,20 +935,6 @@ export class DynamoAlertRepository {
   ) {
     const now = Date.now()
 
-    const updateExpression = `SET lastStatusChange = :statusChange, updatedAt = :updatedAt, ${
-      isLastInReview
-        ? 'userId = lastStatusChange.userId, reviewerId = :reviewerId'
-        : 'userId = :userId'
-    }, statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange), alertStatus = :alertStatus`
-
-    const expressionAttributeValues = removeUndefinedFields({
-      ':statusChange': [statusChange],
-      ...(!isLastInReview && { ':userId': statusChange.userId }),
-      ...(isLastInReview && { ':reviewerId': statusChange.userId }),
-      ':updatedAt': now,
-      ':alertStatus': statusChange.caseStatus,
-      ':empty_list': [],
-    })
     const caseIdsSet = new Map<string, string[]>()
     const operationsAndKeyLists = await Promise.all(
       alertIds.map(async (alertId) => {
@@ -960,6 +946,31 @@ export class DynamoAlertRepository {
           alertItem.caseId as string,
           alertItem.caseSubjectIdentifiers as string[]
         )
+
+        const statusChangeItem = {
+          ...statusChange,
+          userId: isLastInReview
+            ? alertItem?.lastStatusChange?.userId
+            : statusChange.userId,
+          reviewerId: isLastInReview ? statusChange.userId : undefined,
+          timestamp: now,
+        }
+
+        const updateExpression = `
+          SET 
+            alertStatus = :alertStatus,
+            lastStatusChange = :lastStatusChange,
+            updatedAt = :updatedAt,
+            statusChanges = list_append(if_not_exists(statusChanges, :emptyList), :statusChange)
+        `
+        const expressionAttributeValues = removeUndefinedFields({
+          ':alertStatus': statusChange.caseStatus,
+          ':lastStatusChange': statusChangeItem,
+          ':updatedAt': now,
+          ':statusChange': [statusChangeItem],
+          ':emptyList': [],
+        })
+
         return await this.createAlertUpdatesQueries(
           alertId,
           updateExpression,

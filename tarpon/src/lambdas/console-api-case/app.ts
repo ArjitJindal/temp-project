@@ -11,12 +11,20 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { Case } from '@/@types/openapi-internal/Case'
 import { AlertTransactionsStats } from '@/@types/openapi-internal/AlertTransactionsStats'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, userStatements } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getContext } from '@/core/utils/context-storage'
+import {
+  enforceCaseStatusAccessAndGetCase,
+  assertCaseStatusAccessById,
+} from '@/services/cases/case-permissions'
+import {
+  assertAlertAndCaseAccessByAlertId,
+  enforceAlertAccessAndGetAlert,
+} from '@/services/alerts/alert-permissions'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -137,10 +145,14 @@ export const casesHandler = lambdaApi()(
     })
 
     handlers.registerGetCase(async (ctx, request) => {
-      const response = await caseService.getCase(request.caseId, {
-        logAuditLogView: true,
-      })
-      return caseResponse(response.result, true)
+      const statements = await userStatements(ctx.tenantId)
+      const caseEntity = await enforceCaseStatusAccessAndGetCase(
+        statements as any,
+        caseService,
+        request.caseId,
+        { logAuditLogView: true }
+      )
+      return caseResponse(caseEntity, true)
     })
     handlers.registerDeleteCasesCaseIdCommentsCommentId(
       async (ctx, request) => {
@@ -185,13 +197,28 @@ export const casesHandler = lambdaApi()(
     )
 
     handlers.registerGetCaseTransactions(async (ctx, request) => {
+      // Enforce status-based access for the case whose transactions are requested
+      const statements = await userStatements(ctx.tenantId)
+      await assertCaseStatusAccessById(
+        statements as any,
+        caseService,
+        request.caseId
+      )
+
       const transactionService = await TransactionService.fromEvent(event)
       return await transactionService.getCasesTransactions(request)
     })
 
     handlers.registerGetAlert(async (ctx, request) => {
-      return (await alertsService.getAlert(request.alertId, { auditLog: true }))
-        .result
+      const statements = await userStatements(ctx.tenantId)
+      const alert = await enforceAlertAccessAndGetAlert(
+        statements as any,
+        caseService,
+        alertsService,
+        request.alertId,
+        { auditLog: true }
+      )
+      return alert
     })
 
     handlers.registerAlertsNoNewCase(async (ctx, request) => {
@@ -210,6 +237,13 @@ export const casesHandler = lambdaApi()(
     })
 
     handlers.registerGetAlertTransactionList(async (ctx, request) => {
+      const statements = await userStatements(ctx.tenantId)
+      await assertAlertAndCaseAccessByAlertId(
+        statements as any,
+        caseService,
+        alertsService,
+        request.alertId
+      )
       const transactionService = await TransactionService.fromEvent(event)
 
       return await transactionService.getAlertsTransaction(request)
@@ -222,6 +256,29 @@ export const casesHandler = lambdaApi()(
       const alertIds = request?.filterEntityIds?.filter((id) =>
         id.startsWith('A-')
       )
+
+      // Enforce permissions for each requested entity before fetching comments
+      const statements = await userStatements(ctx.tenantId)
+      if (request.filterEntityTypes?.includes('CASE') && caseIds?.length) {
+        await Promise.all(
+          caseIds.map((id) =>
+            assertCaseStatusAccessById(statements as any, caseService, id)
+          )
+        )
+      }
+
+      if (request.filterEntityTypes?.includes('ALERT') && alertIds?.length) {
+        await Promise.all(
+          alertIds.map((id) =>
+            assertAlertAndCaseAccessByAlertId(
+              statements as any,
+              caseService,
+              alertsService,
+              id
+            )
+          )
+        )
+      }
 
       const promises: Promise<CommentsResponseItem[]>[] = []
 
@@ -239,6 +296,13 @@ export const casesHandler = lambdaApi()(
 
     handlers.registerGetAlertTransactionStats(
       async (ctx, request): Promise<AlertTransactionsStats> => {
+        const statements = await userStatements(ctx.tenantId)
+        await assertAlertAndCaseAccessByAlertId(
+          statements as any,
+          caseService,
+          alertsService,
+          request.alertId
+        )
         const transactionService = await TransactionService.fromEvent(event)
 
         const alert = (await alertsService.getAlert(request.alertId)).result

@@ -37,7 +37,8 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
-import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
+import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
+import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRoles } from '@/utils/user-utils';
@@ -253,6 +254,8 @@ export const useCaseAlertFilters = (
   const ruleOptions = useRuleOptions({ onlyWithAlerts: true });
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
+  const allowedCaseStatuses = useDerivedStatusesFromPermissions();
+  const allowedAlertStatuses = useDerivedAlertStatusesFromPermissions();
 
   const [roles] = useRoles();
   const roleAssignedToOptions = map(roles, 'name');
@@ -483,7 +486,7 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: DERIVED_STATUSS.map((status) => ({
+        options: allowedCaseStatuses.map((status) => ({
           value: status,
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
@@ -499,7 +502,7 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: DERIVED_STATUSS.map((status) => ({
+        options: allowedAlertStatuses.map((status) => ({
           value: status,
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),

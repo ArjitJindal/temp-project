@@ -5209,16 +5209,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime-corejs3@npm:^7.16.5":
-  version: 7.26.0
-  resolution: "@babel/runtime-corejs3@npm:7.26.0"
-  dependencies:
-    core-js-pure: "npm:^3.30.2"
-    regenerator-runtime: "npm:^0.14.0"
-  checksum: fd813d8b5bfc412c083033638c937e13f621b3223161c4a20bb8532d77ae622b620915476bd265670f6a8fc1a76a017ffd738ad25ad24431953e3725247c6520
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:^7.21.0":
   version: 7.23.8
   resolution: "@babel/runtime@npm:7.23.8"
@@ -14752,13 +14742,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js-pure@npm:^3.30.2":
-  version: 3.39.0
-  resolution: "core-js-pure@npm:3.39.0"
-  checksum: 43922b14f9c928ec958fc444e70cfb429a21e3f842f03f67810faf29a99780fec20dc688f65ab3780d2b8a2f1ae8287464ec5adb396826e0374a4f2907b4b383
-  languageName: node
-  linkType: hard
-
 "core-util-is@npm:1.0.2":
   version: 1.0.2
   resolution: "core-util-is@npm:1.0.2"
@@ -24103,7 +24086,6 @@ __metadata:
     winston: "npm:^3.8.1"
     xlsx-js-style: "npm:^1.2.0"
     xml2js: "npm:^0.6.2"
-    xregexp: "npm:^5.1.1"
     xsd2jsonschema: "npm:^0.3.7"
     yaml: "npm:^2.1.1"
   languageName: unknown
@@ -25624,15 +25606,6 @@ __metadata:
   version: 2.0.0
   resolution: "xregexp@npm:2.0.0"
   checksum: 4d0a653a9142f92dbe0a5c4e97de68f9011a2d43b48d73cc23e6f907025185ae21d8ed2f3e7dff9662f0d28eaa16975082b05d1bbccd7344e9086fbdf0c6ff53
-  languageName: node
-  linkType: hard
-
-"xregexp@npm:^5.1.1":
-  version: 5.1.1
-  resolution: "xregexp@npm:5.1.1"
-  dependencies:
-    "@babel/runtime-corejs3": "npm:^7.16.5"
-  checksum: 1f868050d9e03a9d0e8aabc7db9858918d7178e0a8e0f3df6356cb710aa231661ac7ff4c90ac53a07dbce80b8f3c22878bb44ca5f5449ec5dda3b2ee6cea8fa2
   languageName: node
   linkType: hard
 

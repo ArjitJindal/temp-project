@@ -129,7 +129,6 @@ describe('List of entity variables', () => {
           key: 'TRANSACTION:tags',
           entity: 'TRANSACTION',
           valueType: 'array',
-          sourceField: 'tags',
           uiDefinition: {
             label: 'Transaction / tags',
             type: '!group',
@@ -142,8 +141,8 @@ describe('List of entity variables', () => {
                 valueSources: ['value', 'field', 'func'],
                 fieldSettings: {
                   allowCustomValues: true,
-                  allowNewValues: true,
                   uniqueType: 'TAGS_KEY',
+                  allowNewValues: true,
                 },
               },
               value: {
@@ -152,12 +151,18 @@ describe('List of entity variables', () => {
                 valueSources: ['value', 'field', 'func'],
                 fieldSettings: {
                   allowCustomValues: true,
-                  allowNewValues: true,
                   uniqueType: 'TAGS_VALUE',
+                  allowNewValues: true,
                 },
+              },
+              isTimestamp: {
+                label: 'is timestamp',
+                type: 'boolean',
+                valueSources: ['value', 'field', 'func'],
               },
             },
           },
+          sourceField: 'tags',
         },
         {
           key: 'CONSUMER_USER:legalDocuments__SENDER',
@@ -234,6 +239,11 @@ describe('List of entity variables', () => {
                     type: 'text',
                     valueSources: ['value', 'field', 'func'],
                   },
+                  isTimestamp: {
+                    label: 'is timestamp',
+                    type: 'boolean',
+                    valueSources: ['value', 'field', 'func'],
+                  },
                 },
               },
             },
@@ -248,6 +258,7 @@ describe('List of entity variables', () => {
     const entityVariableKeys = Object.values(
       getTransactionLogicEntityVariables()
     ).map((v) => v.key)
+
     const variables = JSON.parse(
       fs.readFileSync(
         path.join(__dirname, 'resources', 'entity-variables.json'),

@@ -1,4 +1,9 @@
-import { NUMBER_TO_STRING, STRING_TO_NUMBER } from '../type-convertion'
+import {
+  NUMBER_TO_STRING,
+  STRING_TO_NUMBER,
+  STRING_TO_TIMESTAMP,
+} from '../type-convertion'
+import dayjs from '@/utils/dayjs'
 
 describe('type-conversion function', () => {
   it('should convert number to string', async () => {
@@ -36,5 +41,14 @@ describe('STRING_TO_NUMBER function', () => {
     const str = ''
     const result = await STRING_TO_NUMBER.run([str])
     expect(result).toEqual(0)
+  })
+})
+
+describe('STRING_TO_TIMESTAMP function', () => {
+  it('should convert string to timestamp', async () => {
+    const timestamp = dayjs().unix() * 1000
+    const str = String(timestamp)
+    const result = await STRING_TO_TIMESTAMP.run([str])
+    expect(result).toEqual(timestamp)
   })
 })

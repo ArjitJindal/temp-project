@@ -3,6 +3,7 @@ import { describe, expect } from '@jest/globals';
 import { Fields } from '@react-awesome-query-builder/ui';
 import {
   VIRTUAL_STRING_TO_NUMBER_SUFFIX,
+  VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX,
   addStringToNumberFields,
   addVirtualFieldsForNestedSubfields,
   reduceVirtualFields,
@@ -55,6 +56,31 @@ describe('addNumberToFields', () => {
       [`${FIELD_NAME}${VIRTUAL_STRING_TO_NUMBER_SUFFIX}`]: {
         label: 'user id (as a number)',
         type: 'number',
+        valueSources: ['value', 'field', 'func'],
+      },
+    });
+  });
+
+  test('should properly add a timestamp field to a value text field', () => {
+    const FIELD_NAME = 'value';
+    const input: Fields = {
+      [FIELD_NAME]: {
+        label: 'user value',
+        type: 'text',
+        valueSources: ['value', 'field', 'func'],
+      },
+    };
+    const result = addStringToNumberFields(input);
+    expect(result).toEqual({
+      ...input,
+      [`${FIELD_NAME}${VIRTUAL_STRING_TO_NUMBER_SUFFIX}`]: {
+        label: 'user value (as a number)',
+        type: 'number',
+        valueSources: ['value', 'field', 'func'],
+      },
+      [`${FIELD_NAME}${VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX}`]: {
+        label: 'user value (as a timestamp)',
+        type: 'datetime',
         valueSources: ['value', 'field', 'func'],
       },
     });
@@ -235,6 +261,21 @@ describe('convertVirtualFields', () => {
       ],
     });
   });
+
+  test('should properly convert timestamp field to text field wrapped with function', () => {
+    const input = {
+      var: `entity:bcae168a${VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX}`,
+    };
+    const result = reduceVirtualFields(input);
+    expect(result).toEqual({
+      string_to_timestamp: [
+        {
+          var: 'entity:bcae168a',
+        },
+      ],
+    });
+  });
+
   test('should properly handle complex json logic', () => {
     const input = {
       and: [
@@ -306,6 +347,18 @@ describe('parseVirtualFields', () => {
   test('should ignore top-level function usages', () => {
     const input = {
       string_to_number: [
+        {
+          var: 'entity:bcae168a',
+        },
+      ],
+    };
+    const result = parseVirtualFields(input);
+    expect(result).toEqual(input);
+  });
+
+  test('should ignore top-level string_to_timestamp function usages', () => {
+    const input = {
+      string_to_timestamp: [
         {
           var: 'entity:bcae168a',
         },
