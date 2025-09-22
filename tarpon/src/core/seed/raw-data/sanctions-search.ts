@@ -55,7 +55,7 @@ const commentGenerator = (rng: RandomNumberGenerator, hit: SanctionsHit) => {
     ]
 
     let comment = `${rng.pickRandom(openingStatements)}${matchTypes
-      .map(humanizeAuto)
+      .map((x) => humanizeAuto(x))
       .join(', ')}. `
 
     if (matchTypes.includes('name_exact') || matchTypes.includes('aka_exact')) {
@@ -120,7 +120,7 @@ const commentGenerator = (rng: RandomNumberGenerator, hit: SanctionsHit) => {
     ]
 
     let comment = `${rng.pickRandom(clearingStatements)}${matchTypes
-      .map(humanizeAuto)
+      .map((x) => humanizeAuto(x))
       .join(', ')}. `
 
     if (matchTypes.includes('name_exact') || matchTypes.includes('aka_exact')) {
