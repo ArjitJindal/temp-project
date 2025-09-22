@@ -43,8 +43,14 @@ export class JsonlFormat extends FlatFileFormat {
     const formatedRecords: string[] = []
     records.forEach((erroredRecord) => {
       const record = JSON.parse(erroredRecord.record)
-      const error: string = erroredRecord.error.join('-').split('"').join("'")
-      record.error = error
+      const errorMessage: string = erroredRecord.error.errorMessage
+        .split('"')
+        .join("'")
+      const errorCode: string = erroredRecord.error.errorCode
+        .split('"')
+        .join("'")
+      record.errorMessage = errorMessage
+      record.errorCode = errorCode
       formatedRecords.push(JSON.stringify(record))
     })
     return formatedRecords.join('\n')

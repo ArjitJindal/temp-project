@@ -168,7 +168,8 @@ export class CsvFormat extends FlatFileFormat {
 
   public preProcessFile() {
     const { keys: header } = this.getTemplate()
-    header.push('error')
+    header.push('Error Message')
+    header.push('Error Codes')
     const formatedHeader = header.map((columnHeader) => {
       const santiziedHeader = columnHeader.split('"').join("'")
       return `"${santiziedHeader}"`
@@ -182,8 +183,13 @@ export class CsvFormat extends FlatFileFormat {
       // the csv parser handles records cell with , in them. We have to leverage this while creating a comma seperated row
       // cells having , in their content are enclosed in "" by the parser, we need to iterate the whole string partition for these cells
       const record = erroredRecord.record
-      const error: string = erroredRecord.error.join('-').split('"').join("'")
-      formatedRecords.push(`${record},"${error}"`)
+      const errorMessage: string = erroredRecord.error.errorMessage
+        .split('"')
+        .join("'")
+      const errorCode: string = erroredRecord.error.errorCode
+        .split('"')
+        .join("'")
+      formatedRecords.push(`${record},"${errorMessage}","${errorCode}"`)
     })
     return formatedRecords.join('\n')
   }

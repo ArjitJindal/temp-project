@@ -386,12 +386,25 @@ export class FlatFilesService {
       }
 
       for await (const erroredRecord of erroredRecords) {
+        const errors = erroredRecord.error.map((e) => {
+          return {
+            errorMessage: e.message ?? undefined,
+            errorCode: e.stage ?? undefined,
+          }
+        })
         const row: ErrorRecord = {
           recordNumber: erroredRecord.row,
           record: erroredRecord.initialRecord,
-          error: erroredRecord.error.map((e) => {
-            return Object.values(e).join(',')
-          }),
+          error: {
+            errorMessage: errors
+              .map((e) => e.errorMessage)
+              .filter(Boolean)
+              .join(','),
+            errorCode: errors
+              .map((e) => e.errorCode)
+              .filter(Boolean)
+              .join(','),
+          },
         }
         fileBuffer.push(row)
         if (fileBuffer.length === MAX_BUFFER_SIZE) {

@@ -1,5 +1,5 @@
 export type ErrorRecord = {
   recordNumber: number
   record: string
-  error: string[]
+  error: { errorMessage: string; errorCode: string }
 }
