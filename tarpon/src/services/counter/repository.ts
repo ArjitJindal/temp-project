@@ -92,7 +92,8 @@ export class CounterRepository {
     let counter: number | undefined
     if (isClickhouseEnabledInRegion()) {
       counter = await this.dynamoCounterRepository.getNextCounterAndUpdate(
-        entity
+        entity,
+        1
       )
     }
     const collectionName = COUNTER_COLLECTION(this.tenantId)
