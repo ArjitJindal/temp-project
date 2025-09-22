@@ -2,6 +2,8 @@ import React from 'react';
 import { InternalTransaction, Tag as ApiTag } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
+import { DATE_TIME_FORMAT } from '@/components/library/DateRangePicker/DateTimeTextInput';
+import { dayjs } from '@/utils/dayjs';
 interface Props {
   transaction: InternalTransaction;
 }
@@ -30,7 +32,12 @@ export default function TransactionTags(props: Props) {
         <EntityPropertiesCard
           title={`Tags (${transaction.tags?.length ?? 0})`}
           items={
-            transaction.tags?.map((tag: ApiTag) => ({ label: tag.key, value: tag.value })) ?? []
+            transaction.tags?.map((tag: ApiTag) => ({
+              label: tag.key,
+              value: tag.isTimestamp
+                ? dayjs(Number(tag.value)).format(DATE_TIME_FORMAT)
+                : tag.value,
+            })) ?? []
           }
           columnTemplate={getColumnTemplate(transaction.tags?.length ?? 0)}
         />

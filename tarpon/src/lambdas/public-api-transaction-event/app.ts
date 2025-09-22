@@ -23,6 +23,7 @@ import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { MAX_BATCH_IMPORT_COUNT } from '@/utils/transaction'
+import { assertValidTimestampTags } from '@/utils/tags'
 
 type TransactionUserMap = Record<
   string,
@@ -70,8 +71,12 @@ export const transactionEventHandler = publicLambdaApi()(
     }
 
     handlers.registerPostTransactionEvent(
-      async (_ctx, { TransactionEvent: transactionEvent }) =>
-        await createTransactionEvent(transactionEvent)
+      async (_ctx, { TransactionEvent: transactionEvent }) => {
+        assertValidTimestampTags(
+          transactionEvent.updatedTransactionAttributes?.tags
+        )
+        return await createTransactionEvent(transactionEvent)
+      }
     )
     handlers.registerPostBatchTransactionEvents(async (ctx, request) => {
       if (
@@ -79,6 +84,12 @@ export const transactionEventHandler = publicLambdaApi()(
         MAX_BATCH_IMPORT_COUNT
       ) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
+      for (const transactionEvent of request.TransactionEventBatchRequest
+        .data) {
+        assertValidTimestampTags(
+          transactionEvent.updatedTransactionAttributes?.tags
+        )
       }
       const batchId = request.TransactionEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)

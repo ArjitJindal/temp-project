@@ -26,6 +26,7 @@ import { BatchImportService } from '@/services/batch-import'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { MAX_BATCH_IMPORT_COUNT } from '@/utils/transaction'
 import { batchCreateUserOptions } from '@/utils/user'
+import { assertValidTimestampTags } from '@/utils/tags'
 
 export const userEventsHandler = publicLambdaApi()(
   async (
@@ -98,6 +99,7 @@ export const userEventsHandler = publicLambdaApi()(
           lockKycRiskLevel,
         }
       ) => {
+        assertValidTimestampTags(userEvent.updatedConsumerUserAttributes?.tags)
         return createUserEvent(
           userEvent,
           allowUserTypeConversion,
@@ -119,6 +121,9 @@ export const userEventsHandler = publicLambdaApi()(
         dynamoDb,
         mongoDb,
       })
+      for (const userEvent of request.ConsumerUserEventBatchRequest.data) {
+        assertValidTimestampTags(userEvent.updatedConsumerUserAttributes?.tags)
+      }
       const { response, validatedUserEvents } =
         await batchImportService.importConsumerUserEvents(
           batchId,
@@ -142,6 +147,9 @@ export const userEventsHandler = publicLambdaApi()(
         MAX_BATCH_IMPORT_COUNT
       ) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
+      for (const userEvent of request.BusinessUserEventBatchRequest.data) {
+        assertValidTimestampTags(userEvent.updatedBusinessUserAttributes?.tags)
       }
       const batchId = request.BusinessUserEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)

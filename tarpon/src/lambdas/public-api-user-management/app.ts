@@ -26,6 +26,7 @@ import {
   DefaultApiPostConsumerUserRequest,
 } from '@/@types/openapi-public/RequestParameters'
 import { batchCreateUserOptions } from '@/utils/user'
+import { assertValidTimestampTags } from '@/utils/tags'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
@@ -72,7 +73,7 @@ export const userHandler = publicLambdaApi()(
     ) => {
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
-
+      assertValidTimestampTags(userPayload.tags)
       if (options?.validateUserId) {
         const existingUser = await validateUser(userPayload)
         if (existingUser) {
@@ -160,7 +161,9 @@ export const userHandler = publicLambdaApi()(
       if (request.UserBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
       }
-
+      for (const user of request.UserBatchRequest.data) {
+        assertValidTimestampTags(user.tags)
+      }
       const batchId = request.UserBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
@@ -189,7 +192,9 @@ export const userHandler = publicLambdaApi()(
       if (request.BusinessBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
       }
-
+      for (const user of request.BusinessBatchRequest.data) {
+        assertValidTimestampTags(user.tags)
+      }
       const batchId = request.BusinessBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
 

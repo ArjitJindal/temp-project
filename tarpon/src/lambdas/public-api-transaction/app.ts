@@ -24,6 +24,7 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { MAX_BATCH_IMPORT_COUNT } from '@/utils/transaction'
+import { assertValidTimestampTags } from '@/utils/tags'
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -76,6 +77,7 @@ export const transactionHandler = publicLambdaApi()(
         transaction.transactionId
       )
       updateLogMetadata({ transactionId: transaction.transactionId })
+      assertValidTimestampTags(transaction.tags)
       logger.info(`Processing transaction`) // Need to log to show on the logs
 
       if (
