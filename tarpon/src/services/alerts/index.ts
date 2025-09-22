@@ -1741,7 +1741,7 @@ export class AlertsService extends CaseAlertsCommonService {
               case_?.caseUsers?.origin?.userId ??
               case_?.caseUsers?.destination?.userId,
             transactionIds: alert.transactionIds,
-            status: alert.alertStatus,
+            status: statusUpdateRequest.alertStatus,
           },
         })
       }
