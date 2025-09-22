@@ -69,7 +69,7 @@ import {
   statusInProgressOrOnHold,
   statusInReview,
 } from '@/utils/case-utils';
-import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
+import { useCaseStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useApi } from '@/api';
 import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
@@ -641,56 +641,60 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
 export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
   statusesToShow?: CaseStatus[];
   reload: () => void;
-}): ColumnDataType<CaseStatus, T> => ({
-  render: (caseStatus, { item: entity }) => {
-    return caseStatus && entity ? (
-      statusInProgressOrOnHold(caseStatus) ? (
-        <Tooltip
-          title={humanizeConstant(
-            caseStatus.replace('_IN_PROGRESS', ', In Progress').replace('_ON_HOLD', ', On Hold'),
-          )}
-        >
+}): ColumnDataType<CaseStatus, T> => {
+  const allowedStatuses = useCaseStatusesFromPermissions();
+
+  return {
+    render: (caseStatus, { item: entity }) => {
+      return caseStatus && entity ? (
+        statusInProgressOrOnHold(caseStatus) ? (
+          <Tooltip
+            title={humanizeConstant(
+              caseStatus.replace('_IN_PROGRESS', ', In Progress').replace('_ON_HOLD', ', On Hold'),
+            )}
+          >
+            <StatusChangeDropDown<T>
+              entity={entity}
+              caseStatus={caseStatus}
+              reload={options?.reload ?? (() => {})}
+            />
+          </Tooltip>
+        ) : (
           <StatusChangeDropDown<T>
             entity={entity}
             caseStatus={caseStatus}
             reload={options?.reload ?? (() => {})}
           />
-        </Tooltip>
+        )
       ) : (
-        <StatusChangeDropDown<T>
-          entity={entity}
-          caseStatus={caseStatus}
-          reload={options?.reload ?? (() => {})}
-        />
-      )
-    ) : (
-      <></>
-    );
-  },
-  stringify: (value) => {
-    return value ? statusToOperationName(value, true) : '-';
-  },
-  autoFilterDataType: {
-    kind: 'select',
-    options: uniqBy<Option<string>>(
-      (options?.statusesToShow ?? CASE_STATUSS).map((status) => ({
-        value: status,
-        label: humanizeConstant(
-          statusInReview(status)
-            ? 'IN_REVIEW'
-            : status.endsWith('IN_PROGRESS')
-            ? 'IN_PROGRESS'
-            : status.endsWith('ON_HOLD')
-            ? 'ON_HOLD'
-            : status,
-        ),
-      })),
-      'label',
-    ),
-    displayMode: 'list',
-    mode: 'SINGLE',
-  },
-});
+        <></>
+      );
+    },
+    stringify: (value) => {
+      return value ? statusToOperationName(value, true) : '-';
+    },
+    autoFilterDataType: {
+      kind: 'select',
+      options: uniqBy<Option<string>>(
+        (options?.statusesToShow ?? allowedStatuses).map((status) => ({
+          value: status,
+          label: humanizeConstant(
+            statusInReview(status)
+              ? 'IN_REVIEW'
+              : status.endsWith('IN_PROGRESS')
+              ? 'IN_PROGRESS'
+              : status.endsWith('ON_HOLD')
+              ? 'ON_HOLD'
+              : status,
+          ),
+        })),
+        'label',
+      ),
+      displayMode: 'list',
+      mode: 'SINGLE',
+    },
+  };
+};
 export const STATUS_CHANGE_PATH = (entityType: 'CASE' | 'ALERT') => {
   return {
     stringify: (value, entity) => {

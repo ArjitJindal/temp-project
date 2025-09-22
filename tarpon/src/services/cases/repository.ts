@@ -126,6 +126,27 @@ export class CaseRepository {
     )
   }
 
+  // Lean fetch: return only minimal case fields used for permission checks
+  public async getCaseStatusById(
+    caseId: string
+  ): Promise<{ caseId: string; caseStatus?: string } | null> {
+    if (await this.isTenantMigratedToDynamo) {
+      const c = await this.dynamoCaseRepository.getCaseById(caseId)
+      return c
+        ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+        : null
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const c = await collection.findOne(
+      { caseId },
+      { projection: { caseId: 1, caseStatus: 1 } }
+    )
+    return c
+      ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+      : null
+  }
+
   /**
    * Get the clickhouse case repository.
    * Since we cannot initialize the repository in the constructor, we need to initialize it here.
