@@ -327,8 +327,12 @@ const customTextWidget: CoreWidgets['text'] = {
         if (entityId) {
           return (
             <DynamicValueFieldWrapper entityId={entityId}>
-              {(dynamicKeyFilter, forceUpdateTrigger) => {
-                const currentValue = forceUpdateTrigger > 0 ? undefined : props.value;
+              {(dynamicKeyFilter) => {
+                const keyValue = getTagKeyValue(entityId);
+                const currentValue = !keyValue ? undefined : props.value;
+                if (!keyValue) {
+                  props.setValue(undefined);
+                }
 
                 if (isArrayType) {
                   return (
