@@ -309,28 +309,43 @@ function RoleList(props: InputProps<string[]>) {
         flexWrap: 'wrap',
       }}
     >
-      {value?.map((role, i) => (
-        <SelectWrapper key={`${role}-${i}`}>
-          <Select
-            mode="SINGLE"
-            options={roleOptions}
-            value={role}
-            isLoading={isLoadingRoles}
-            isDisabled={!permissions || isLoadingRoles}
-            onChange={(newRole) => {
-              if (newRole) {
-                onChange?.(value.map((x, index) => (index === i ? newRole : x)));
-              } else {
-                onChange?.(value.filter((_, index) => index !== i));
+      {value?.map((role, i) => {
+        const isRoleMissing = !roleOptions.some((x) => x.value === role);
+        return (
+          <SelectWrapper key={`${role}-${i}`}>
+            <Select
+              mode="SINGLE"
+              options={
+                isRoleMissing
+                  ? [
+                      {
+                        value: role,
+                        label: `Unknown role: ${role}`,
+                        isDisabled: true,
+                      },
+                      ...roleOptions,
+                    ]
+                  : roleOptions
               }
-            }}
-            placeholder="Select a role"
-          />
-          {i < MAX_ROLES_LIMIT - 1 && (
-            <ArrowRightLineIcon style={{ width: '16px', color: '#666666' }} />
-          )}
-        </SelectWrapper>
-      ))}
+              value={role}
+              isLoading={isLoadingRoles}
+              isDisabled={!permissions || isLoadingRoles}
+              isError={isRoleMissing}
+              onChange={(newRole) => {
+                if (newRole) {
+                  onChange?.(value.map((x, index) => (index === i ? newRole : x)));
+                } else {
+                  onChange?.(value.filter((_, index) => index !== i));
+                }
+              }}
+              placeholder="Select a role"
+            />
+            {i < MAX_ROLES_LIMIT - 1 && (
+              <ArrowRightLineIcon style={{ width: '16px', color: '#666666' }} />
+            )}
+          </SelectWrapper>
+        );
+      })}
       {(value == null || value.length < MAX_ROLES_LIMIT) && (
         <SelectWrapper>
           <Select
@@ -359,6 +374,7 @@ function SelectWrapper(props: { children: React.ReactNode }) {
         gap: '8px',
         alignItems: 'center',
         minWidth: '150px',
+        maxWidth: '300px',
       }}
     >
       {props.children}
