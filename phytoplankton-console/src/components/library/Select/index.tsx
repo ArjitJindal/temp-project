@@ -8,7 +8,6 @@ import {
   size as floatingUiSize,
   useDismiss,
   useFloating,
-  useFocus,
   useInteractions,
 } from '@floating-ui/react';
 import { uniq } from 'lodash';
@@ -217,13 +216,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     }
   }, [update, isOpen]);
 
-  const focus = useFocus(context);
-
   const dismiss = useDismiss(context, {
     ancestorScroll: true,
   });
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([focus, dismiss]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
 
   const selectedOptions: Option<Value>[] = useMemo(() => {
     return availableOptions.filter((option): option is Option<Value> => {
@@ -372,7 +369,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         {...getReferenceProps()}
         className={s.rootWrapper}
         role="combobox"
-        data-cy={cn('input')}
+        data-cy={'input'}
       >
         <div
           data-cy={cn(
@@ -400,7 +397,9 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             },
           )}
           onClick={() => {
-            inputRef?.focus();
+            if (!isFocused) {
+              inputRef?.focus();
+            }
           }}
         >
           <div className={s.placeholder}>
@@ -422,7 +421,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             ))}
           <input
             type="text"
-            onFocus={() => setIsFocused(true)}
+            onFocus={() => {
+              setIsFocused(true);
+              if (!isOpen) {
+                handleOpenChange(true);
+              }
+            }}
             onBlur={() => {
               setIsFocused(false);
             }}
@@ -431,9 +435,9 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             disabled={isDisabled}
             value={searchText ?? ''}
             onChange={(e) => handleChangeSearchText(e.target.value)}
-            onClick={() => {
-              if (!isDisabled && isFocused) {
-                handleOpenChange(!isOpen);
+            onKeyDown={(e) => {
+              if (e.key === 'Tab') {
+                handleOpenChange(false);
               }
             }}
           />
@@ -455,7 +459,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
               />
             )}
             {isLoading && <LoaderIcon className={cn(s.rightIcon, s.loadingIcon)} />}
-            <ArrowDownIcon className={cn(s.rightIcon, s.arrowDownIcon)} />
+            <ArrowDownIcon
+              className={cn(s.rightIcon, s.arrowDownIcon)}
+              onClick={() => {
+                handleOpenChange(!isOpen);
+              }}
+            />
           </div>
         </div>
       </div>
