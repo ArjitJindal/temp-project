@@ -6,11 +6,12 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { logger } from '@/core/logger'
 import { Account } from '@/@types/openapi-internal/Account'
+import { RoleService } from '@/services/roles'
 
-export async function fetchAndSetAccounts(
+async function getTenantConfig(
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient
-): Promise<Account[]> {
+) {
   const originalTenantId = getNonDemoTenantId(tenantId)
   const tenantRepository = new TenantRepository(originalTenantId, {
     dynamoDb,
@@ -18,6 +19,18 @@ export async function fetchAndSetAccounts(
   const settings = await tenantRepository.getTenantSettings(['auth0Domain'])
   const auth0Domain =
     settings.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+
+  return { originalTenantId, auth0Domain }
+}
+
+export async function fetchAndSetAccounts(
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient
+): Promise<Account[]> {
+  const { originalTenantId, auth0Domain } = await getTenantConfig(
+    tenantId,
+    dynamoDb
+  )
   const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
 
   logger.info(`TenantId: ${tenantId}`)
@@ -40,4 +53,23 @@ export async function fetchAndSetAccounts(
   setAccounts(accounts)
 
   return allAccounts
+}
+
+export async function syncAccountAndRoles(
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient
+) {
+  const { originalTenantId, auth0Domain } = await getTenantConfig(
+    tenantId,
+    dynamoDb
+  )
+  const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
+  const roleService = new RoleService({ auth0Domain }, { dynamoDb })
+
+  const tenant = await accountsService.getTenantById(originalTenantId)
+  if (tenant) {
+    logger.info(`Syncing ${originalTenantId} accounts and roles`)
+    await accountsService.syncTenantAccounts(tenant)
+    await roleService.syncTenantRoles(tenant)
+  }
 }
