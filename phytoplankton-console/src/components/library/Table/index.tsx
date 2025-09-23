@@ -195,9 +195,11 @@ function Table<Item extends object, Params extends object = CommonParams>(
   useEffect(() => {
     setCreateDraft(creationInitialItem);
   }, [creationInitialItem]);
+  const [createBusy, setCreateBusy] = useState(false);
 
   // Inline editing drafts
   const [editDrafts, setEditDrafts] = useState<Record<string, Item>>({});
+  const [editBusy, setEditBusy] = useState<Record<string, boolean>>({});
 
   const handleChangeParams = useCallback(
     (newParams: AllParams<Params>) => {
@@ -308,17 +310,27 @@ function Table<Item extends object, Params extends object = CommonParams>(
           return {
             isEditing: true,
             isCreateRow: true,
+            isBusy: createBusy,
             getDraft: () => createDraft ?? original,
             setDraft: (newValue: Item) => setCreateDraft(newValue),
             startEdit: () => {},
             cancelEdit: () => setCreateDraft(original),
             save: async () => {
+              if (createBusy) {
+                return;
+              }
               const draft = createDraft ?? original;
               const submit = createRow?.onSubmit;
-              if (submit) {
-                await submit(draft);
+              if (!submit) {
+                return;
               }
-              setCreateDraft(creationInitialItem);
+              setCreateBusy(true);
+              try {
+                await submit(draft);
+                setCreateDraft(creationInitialItem);
+              } finally {
+                setCreateBusy(false);
+              }
             },
           } as any;
         }
@@ -326,10 +338,14 @@ function Table<Item extends object, Params extends object = CommonParams>(
         return {
           isEditing,
           isCreateRow: false,
+          isBusy: Boolean(editBusy[id]),
           getDraft: () => (isEditing ? (editDrafts[id] as Item) : original),
           setDraft: (newValue: Item) => setEditDrafts((prev) => ({ ...prev, [id]: newValue })),
           startEdit: () => setEditDrafts((prev) => (prev[id] ? prev : { ...prev, [id]: original })),
           cancelEdit: () => {
+            if (editBusy[id]) {
+              return;
+            }
             const cancel = rowEditing?.onCancel;
             try {
               cancel?.(id, original);
@@ -338,17 +354,33 @@ function Table<Item extends object, Params extends object = CommonParams>(
                 const { [id]: _, ...rest } = prev;
                 return rest as Record<string, Item>;
               });
+              setEditBusy((prev) => {
+                const { [id]: __, ...rest } = prev;
+                return rest as Record<string, boolean>;
+              });
             }
           },
           save: async () => {
-            const draft = (editDrafts[id] ?? original) as Item;
-            if (rowEditing?.onSave) {
-              await rowEditing.onSave(id, draft);
+            if (editBusy[id]) {
+              return;
             }
-            setEditDrafts((prev) => {
-              const { [id]: _, ...rest } = prev;
-              return rest as Record<string, Item>;
-            });
+            const draft = (editDrafts[id] ?? original) as Item;
+            if (!rowEditing?.onSave) {
+              return;
+            }
+            setEditBusy((prev) => ({ ...prev, [id]: true }));
+            try {
+              await rowEditing.onSave(id, draft);
+              setEditDrafts((prev) => {
+                const { [id]: _, ...rest } = prev;
+                return rest as Record<string, Item>;
+              });
+            } finally {
+              setEditBusy((prev) => {
+                const { [id]: __, ...rest } = prev;
+                return rest as Record<string, boolean>;
+              });
+            }
           },
         } as any;
       },

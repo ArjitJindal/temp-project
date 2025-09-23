@@ -37,6 +37,7 @@ export interface CellEditContext<Value, Item> extends CellContext<Value, Item> {
 export interface PublicRowEditApi {
   isEditing: boolean;
   isCreateRow?: boolean;
+  isBusy?: boolean;
   getDraft: () => unknown;
   setDraft: (newValue: unknown) => void;
   startEdit: () => void;

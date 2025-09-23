@@ -510,6 +510,7 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
 
   const rowApi = props.table.options.meta?.getRowApi?.(props.cell.row);
   const isRowEditing = Boolean(rowApi?.isCreateRow || rowApi?.isEditing);
+  const isBusy = Boolean(rowApi?.isBusy);
   const draftItem: Item = (rowApi?.getDraft?.() as Item) ?? props.row.original.content;
   const currentValue: Value = isRowEditing
     ? (applyFieldAccessor(draftItem, column.key as FieldAccessor<Item>) as Value)
@@ -519,7 +520,7 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
     isEditing: isRowEditing,
     toggleEditing: () => {},
     state: [currentValue, (_updater: any) => {}] as any,
-    isBusy: false,
+    isBusy: isBusy,
     onConfirm: async (newValue: Value) => {
       if (rowApi?.setDraft) {
         const updated = setByFieldAccessor(draftItem, column.key, newValue as any);

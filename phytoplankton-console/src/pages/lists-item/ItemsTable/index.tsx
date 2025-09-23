@@ -519,8 +519,8 @@ function useColumns(options: {
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
-                    isLoading={isAddUserLoading}
-                    isDisabled={!isValid}
+                    isLoading={Boolean(rowApi?.isBusy) || isAddUserLoading}
+                    isDisabled={!isValid || Boolean(rowApi?.isBusy)}
                     onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
@@ -535,7 +535,8 @@ function useColumns(options: {
                     size="SMALL"
                     type="PRIMARY"
                     onClick={() => rowApi?.save?.()}
-                    isDisabled={!isEditUserValid}
+                    isDisabled={!isEditUserValid || Boolean(rowApi?.isBusy)}
+                    isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
                     Save
@@ -544,6 +545,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="SECONDARY"
                     onClick={() => rowApi?.cancelEdit?.()}
+                    isDisabled={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
                     Cancel
@@ -656,8 +658,8 @@ function useColumns(options: {
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
-                    isLoading={isAddUserLoading}
-                    isDisabled={!isValid}
+                    isLoading={Boolean(rowApi?.isBusy) || isAddUserLoading}
+                    isDisabled={!isValid || Boolean(rowApi?.isBusy)}
                     onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
@@ -672,12 +674,18 @@ function useColumns(options: {
                     size="SMALL"
                     type="PRIMARY"
                     onClick={() => rowApi?.save?.()}
-                    isDisabled={!isEditUserValid}
+                    isDisabled={!isEditUserValid || Boolean(rowApi?.isBusy)}
+                    isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
                     Save
                   </Button>
-                  <Button size="SMALL" type="SECONDARY" onClick={() => rowApi?.cancelEdit?.()}>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    onClick={() => rowApi?.cancelEdit?.()}
+                    isDisabled={Boolean(rowApi?.isBusy)}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -690,6 +698,7 @@ function useColumns(options: {
                   type="SECONDARY"
                   onClick={() => rowApi?.startEdit?.()}
                   requiredResources={requiredWriteResources}
+                  isLoading={Boolean(rowApi?.isBusy)}
                 >
                   Edit
                 </Button>
@@ -698,6 +707,7 @@ function useColumns(options: {
                   type="SECONDARY"
                   onClick={() => onDelete(String(entity.value ?? ''))}
                   requiredResources={requiredWriteResources}
+                  isLoading={Boolean(rowApi?.isBusy)}
                 >
                   Remove
                 </Button>
