@@ -109,11 +109,14 @@ export class CdkLoadTestingStack extends Stack {
     const taskDefinition = createFargateTaskDefinition(
       this,
       'load-testing-fargate-task',
-      { cpu: 4096, role: taskRole, memoryLimitMiB: 8192 }
+      { cpu: 4096, role: taskRole, memoryLimitMiB: 8192, architecture: 'arm64' }
     )
     const container = taskDefinition.addContainer('load-testing-container', {
       image: ContainerImage.fromDockerImageAsset(
-        createDockerImage(this, 'jmeter-image', { path: 'load-testing' })
+        createDockerImage(this, 'jmeter-image', {
+          path: 'load-testing',
+          architecture: 'arm64',
+        })
       ),
       logging: LogDrivers.awsLogs({ logGroup, streamPrefix: 'jmeter' }),
     })

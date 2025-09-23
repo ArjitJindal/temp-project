@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:20-alpine
+FROM --platform=linux/arm64 node:20-alpine
 WORKDIR /usr/src/app
 
 COPY index.js .

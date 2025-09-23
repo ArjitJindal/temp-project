@@ -27,6 +27,7 @@ export const config: Config = {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 1024,
       MEMORY_LIMIT: 2048,
+      ARCHITECTURE: 'arm64',
     },
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 512,

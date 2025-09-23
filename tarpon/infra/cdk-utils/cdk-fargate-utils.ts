@@ -1,10 +1,12 @@
-import { Config } from '@flagright/lib/config/config'
+import { Config, FlagrightCPUArchitecture } from '@flagright/lib/config/config'
 import { RemovalPolicy } from 'aws-cdk-lib'
 import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets'
 import {
   ContainerImage,
+  CpuArchitecture,
   FargateTaskDefinition,
   LogDriver,
+  OperatingSystemFamily,
   UlimitName,
 } from 'aws-cdk-lib/aws-ecs'
 import { IRole } from 'aws-cdk-lib/aws-iam'
@@ -15,13 +17,26 @@ import { Construct } from 'constructs'
 export const createFargateTaskDefinition = (
   scope: Construct,
   name: string,
-  props: { cpu?: number; memoryLimitMiB?: number; role: IRole }
+  props: {
+    cpu?: number
+    memoryLimitMiB?: number
+    role: IRole
+    architecture: FlagrightCPUArchitecture
+  }
 ) => {
   const fargateTaskDefinition = new FargateTaskDefinition(scope, name, {
     cpu: props.cpu ?? 256,
     memoryLimitMiB: props.memoryLimitMiB ?? 512,
     executionRole: props.role,
     taskRole: props.role,
+    runtimePlatform: {
+      cpuArchitecture:
+        props.architecture === 'arm64'
+          ? CpuArchitecture.ARM64
+          : CpuArchitecture.X86_64,
+
+      operatingSystemFamily: OperatingSystemFamily.LINUX,
+    },
   })
 
   return fargateTaskDefinition
@@ -30,17 +45,18 @@ export const createFargateTaskDefinition = (
 export const createDockerImage = (
   scope: Construct,
   name: string,
-  props: { path: string }
+  props: { path: string; architecture: FlagrightCPUArchitecture }
 ) => {
   const directory = props.path
+  const isArm64 = props.architecture === 'arm64'
 
   return new DockerImageAsset(scope, name, {
     directory,
-    invalidation: { buildArgs: false },
+    invalidation: { buildArgs: true },
     buildArgs: {
-      PLATFORM: 'linux/amd64',
+      platform: isArm64 ? 'linux/arm64' : 'linux/amd64',
     },
-    platform: Platform.LINUX_AMD64,
+    platform: isArm64 ? Platform.LINUX_ARM64 : Platform.LINUX_AMD64,
   })
 }
 
@@ -50,7 +66,11 @@ export const addFargateContainer = (
   },
   name: string,
   taskDefinition: FargateTaskDefinition,
-  props: { image: ContainerImage; memoryLimitMiB?: number }
+  props: {
+    image: ContainerImage
+    memoryLimitMiB?: number
+    architecture: FlagrightCPUArchitecture
+  }
 ) => {
   const { image } = props
 
@@ -58,7 +78,7 @@ export const addFargateContainer = (
     image:
       process.env.INFRA_CI === 'true'
         ? ContainerImage.fromRegistry(
-            'public.ecr.aws/docker/library/node:18-alpine'
+            'public.ecr.aws/docker/library/node:20-alpine'
           )
         : image,
     logging: LogDriver.awsLogs({
