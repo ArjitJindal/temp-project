@@ -144,7 +144,6 @@ export default function Team() {
         const accounts = (queryResult ?? []).items.filter(
           (account) => account !== null && account.id !== deletedUserId,
         );
-        console.info('Accounts', accounts);
 
         const columns: TableColumn<Account>[] = columnHelper.list([
           ...(isNewFeaturesEnabled
