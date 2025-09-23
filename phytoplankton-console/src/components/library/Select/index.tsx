@@ -54,6 +54,7 @@ interface CommonProps {
   placeholderIcon?: React.ReactNode;
   hideBorders?: boolean;
   width?: string | number;
+  rootRef?: (node: HTMLElement | null) => void;
 }
 
 export interface SingleProps<Value extends Comparable> extends CommonProps, InputProps<Value> {
@@ -363,7 +364,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         </FloatingPortal>
       )}
       <div
-        ref={refs.setReference}
+        ref={(ref) => {
+          refs.setReference(ref);
+          props.rootRef?.(ref);
+        }}
         style={width != null ? { width } : undefined}
         {...getReferenceProps()}
         className={s.rootWrapper}
