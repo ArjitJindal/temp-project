@@ -409,8 +409,8 @@ export class RuleInstanceRepository {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
     }
-    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
     await this.deleteRuleInstanceFromUsedAggVars(ruleInstanceId)
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 
   public async deleteRuleInstanceFromUsedAggVars(
