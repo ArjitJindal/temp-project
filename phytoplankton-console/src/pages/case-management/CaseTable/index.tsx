@@ -81,6 +81,7 @@ import { USER_STATES } from '@/apis/models-custom/UserState';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { getOr } from '@/utils/asyncResource';
+import { withRenderPerf } from '@/perf/withRenderPerf';
 import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 
 interface Props<FirstModalProps, SecondModalProps> {
@@ -95,7 +96,7 @@ interface Props<FirstModalProps, SecondModalProps> {
   setSecondModalVisibility: (visibility: boolean) => void;
 }
 
-export default function CaseTable<FirstModalProps, SecondModalProps>(
+function CaseTable<FirstModalProps, SecondModalProps>(
   props: Props<FirstModalProps, SecondModalProps>,
 ) {
   const {
@@ -1105,3 +1106,11 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
     />
   );
 }
+
+type CaseTableComponent = <FirstModalProps, SecondModalProps>(
+  props: Props<FirstModalProps, SecondModalProps>,
+) => JSX.Element;
+
+const CaseTableWithPerf = withRenderPerf(CaseTable, 'CasesTable') as CaseTableComponent;
+
+export default CaseTableWithPerf;

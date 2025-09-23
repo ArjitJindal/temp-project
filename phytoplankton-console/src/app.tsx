@@ -40,9 +40,9 @@ Sentry.init({
   ],
   replaysOnErrorSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,
-  tracesSampleRate: 0.2,
+  tracesSampleRate: 1.0, //0.2,
   environment: process.env.ENV_NAME,
-  enabled: !['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
+  enabled: true, //!['local', 'dev:user'].includes(process.env.ENV_NAME ?? ''),
   beforeSend(event, hint) {
     const originalException = hint.originalException;
     // This specific issue is caused by the MetaMask browser extension, in future we could add more specific rules

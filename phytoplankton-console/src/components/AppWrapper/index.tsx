@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react';
-import React, { useEffect, useState } from 'react';
+import React, { Profiler, useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Helmet } from 'react-helmet';
 import Providers, { StorybookMockProviders } from './Providers';
@@ -12,6 +12,8 @@ import { getOr } from '@/utils/asyncResource';
 import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
 import { getBranding } from '@/utils/branding';
 import { useAuth0User } from '@/utils/user-utils';
+import { recordRenderCommit } from '@/perf/sentryPerf';
+import { useAtfReady } from '@/perf/useAtfReady';
 
 interface Props {
   children?: React.ReactNode;
@@ -50,10 +52,19 @@ function MainContent(props: Props) {
         <Menu isCollapsed={isCollapsed} onChangeCollapsed={setCollapsed} />
       </aside>
       <main className={s.main}>
-        <ErrorBoundary>{props.children}</ErrorBoundary>
+        <Profiler id="App" onRender={(_, __, actualDuration) => recordRenderCommit(actualDuration)}>
+          <ErrorBoundary>
+            <AtfGate>{props.children}</AtfGate>
+          </ErrorBoundary>
+        </Profiler>
       </main>
     </div>
   );
+}
+
+function AtfGate({ children }: { children?: React.ReactNode }) {
+  useAtfReady();
+  return <>{children}</>;
 }
 
 function SpecialRoutes(props: Props) {
