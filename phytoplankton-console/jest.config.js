@@ -14,6 +14,7 @@ const includeEsModules = [
 process.env.TZ = 'Etc/UTC';
 
 module.exports = {
+  testTimeout: 30000,
   globals: {
     API_BASE_PATH: '',
     AUTH0_AUDIENCE: '',

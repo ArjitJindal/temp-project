@@ -1,5 +1,5 @@
 import range from 'lodash/range'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'

@@ -204,12 +204,27 @@ describe('getOptimizedPermissions', () => {
       'test-tenant',
       admin?.permissions ?? []
     )
-    expect(frns).toEqual([
-      {
-        actions: ['read', 'write'],
-        resources: ['frn:console:test-tenant:::*'],
-      },
-    ])
+    // Expect one wildcard statement and one read statement for statuses with filters
+    expect(frns).toEqual(
+      expect.arrayContaining([
+        {
+          actions: ['read', 'write'],
+          resources: ['frn:console:test-tenant:::*'],
+          filter: undefined,
+        },
+        {
+          actions: ['read'],
+          resources: expect.arrayContaining([
+            'frn:console:test-tenant:::case-management/case-status/*',
+            'frn:console:test-tenant:::case-management/alert-status/*',
+          ]),
+          filter: expect.arrayContaining([
+            expect.objectContaining({ param: 'filterCaseStatus' }),
+            expect.objectContaining({ param: 'filterAlertStatus' }),
+          ]),
+        },
+      ])
+    )
   })
 
   it('should not change dynamic permissions', () => {

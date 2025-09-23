@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'

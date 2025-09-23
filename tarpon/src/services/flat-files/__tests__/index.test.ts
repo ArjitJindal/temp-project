@@ -15,7 +15,7 @@ import {
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { BatchJob, FlatFilesValidationBatchJob } from '@/@types/batch-job'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'

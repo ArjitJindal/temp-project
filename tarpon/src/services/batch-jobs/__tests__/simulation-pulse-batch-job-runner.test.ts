@@ -1,4 +1,4 @@
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { BatchJobWithId } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'

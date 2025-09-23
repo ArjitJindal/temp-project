@@ -4,6 +4,7 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Dropdown from '@/components/library/Dropdown';
 import { useAuth0User } from '@/utils/user-utils';
 import { statusEscalated } from '@/utils/case-utils';
+import { useCaseStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 
 type Props = {
   caseStatus: CaseStatus;
@@ -17,6 +18,8 @@ type Props = {
 export const CaseStatusWithDropDown = (props: Props) => {
   const { caseStatus, assignments, reviewAssignments, onSelect, previousStatus, statusChanges } =
     props;
+
+  const allowedStatuses = useCaseStatusesFromPermissions();
 
   const isReopened = useMemo(() => {
     return statusChanges?.find((statusChange) => statusChange?.caseStatus === 'CLOSED');
@@ -33,6 +36,19 @@ export const CaseStatusWithDropDown = (props: Props) => {
     return currAssignees?.find((assignment) => assignment.assigneeUserId === currentUser.userId);
   }, [caseStatus, assignments, currentUser, reviewAssignments]);
 
+  const availableStatuses = useMemo(() => {
+    const baseStatuses = ifCaseIsEscalated
+      ? ['ESCALATED', 'ESCALATED_IN_PROGRESS', 'ESCALATED_ON_HOLD']
+      : [
+          ...(isReopened || caseStatus === 'REOPENED' ? ['REOPENED'] : ['OPEN']),
+          'OPEN_IN_PROGRESS',
+          'OPEN_ON_HOLD',
+        ];
+
+    // Filter to only include statuses the user has permission for
+    return baseStatuses.filter((status) => allowedStatuses.includes(status as CaseStatus));
+  }, [ifCaseIsEscalated, isReopened, caseStatus, allowedStatuses]);
+
   return (
     [
       'OPEN',
@@ -43,20 +59,14 @@ export const CaseStatusWithDropDown = (props: Props) => {
       'ESCALATED_IN_PROGRESS',
       'ESCALATED_ON_HOLD',
     ] as CaseStatus[]
-  ).includes(caseStatus) && isCurrentUserAssignee ? (
+  ).includes(caseStatus) &&
+    isCurrentUserAssignee &&
+    availableStatuses.length > 0 ? (
     <Dropdown<CaseStatus>
-      options={(
-        (ifCaseIsEscalated
-          ? ['ESCALATED', 'ESCALATED_IN_PROGRESS', 'ESCALATED_ON_HOLD']
-          : ([
-              ...(isReopened || caseStatus === 'REOPENED' ? ['REOPENED'] : ['OPEN']),
-              'OPEN_IN_PROGRESS',
-              'OPEN_ON_HOLD',
-            ] as CaseStatus[])) as CaseStatus[]
-      )
+      options={availableStatuses
         .filter((status) => status !== caseStatus)
         .map((status) => ({
-          label: <CaseStatusTag caseStatus={status} />,
+          label: <CaseStatusTag caseStatus={status as CaseStatus} />,
           value: status as CaseStatus,
         }))}
       onSelect={(newStatus) => {

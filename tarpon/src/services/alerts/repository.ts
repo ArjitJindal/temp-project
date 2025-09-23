@@ -215,7 +215,7 @@ export class AlertsRepository {
       const alertMap = new Map<string, Alert>()
       alerts.forEach((a) => alertMap.set(a.alertId as string, a))
       // Create map for alert metadata from ClickHouse (includes age calculation)
-      const alertMetadataMap = new Map<string, { id: string; age: number }>()
+      const alertMetadataMap = new Map<string, { id: string; age: string }>()
       items.forEach((item) =>
         alertMetadataMap.set(item.id, { id: item.id, age: item.age })
       )
@@ -233,11 +233,12 @@ export class AlertsRepository {
         data: alerts.map((alert) => ({
           alert,
           caseType: caseMap.get(alert.caseId as string)?.caseType as CaseType,
-          caseCreatedTimestamp: caseMap.get(alert.caseId as string)
-            ?.createdTimestamp as number,
+          caseCreatedTimestamp: alert.caseCreatedTimestamp as number,
           caseUsers: caseMap.get(alert.caseId as string)
             ?.caseUsers as CaseCaseUsers,
-          age: alertMetadataMap.get(alert.alertId as string)?.age,
+          age: parseInt(
+            alertMetadataMap.get(alert.alertId as string)?.age ?? '0'
+          ),
         })),
       }
     } else if (!hasFeature('PNB')) {
@@ -1052,6 +1053,36 @@ export class AlertsRepository {
     }
 
     return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
+  }
+
+  // Lean fetch: return only minimal alert fields used for permission checks
+  public async getAlertLeanById(
+    alertId: string
+  ): Promise<{ alertId: string; caseId?: string; status?: string } | null> {
+    if (isConsoleMigrationEnabled()) {
+      const a = (
+        await this.dynamoAlertRepository.getAlertsFromAlertIds([alertId], {
+          getComments: false,
+        })
+      )[0]
+      return a
+        ? {
+            alertId: a.alertId as string,
+            caseId: (a as any)?.caseId,
+            status: (a as any)?.status,
+          }
+        : null
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const result = await collection.findOne(
+      { 'alerts.alertId': alertId },
+      { projection: { alerts: { $elemMatch: { alertId } } } as any }
+    )
+    const a = result?.alerts?.[0] as any
+    return a
+      ? { alertId: a.alertId, caseId: a.caseId, status: a.alertStatus }
+      : null
   }
 
   public getNonClosedAlertsCursor(

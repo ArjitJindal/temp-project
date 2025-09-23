@@ -229,6 +229,11 @@ export function useUserFieldChangesStrategy(
   }
 
   return map(chainRes, (chain) => {
+    // If no approval chain is configured, apply changes directly
+    if (chain.length === 0) {
+      return 'DIRECT';
+    }
+
     if (currentRole == null) {
       return 'APPROVE';
     }

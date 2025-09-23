@@ -18,10 +18,10 @@ import {
 } from '@/utils/clickhouse/utils'
 import { traceable } from '@/core/xray'
 import {
-  ClickhouseTableDefinition,
   ClickHouseTables,
   MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE,
 } from '@/utils/clickhouse/definition'
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { CurrencyService } from '@/services/currency'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
@@ -32,30 +32,7 @@ import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { logger } from '@/core/logger'
 import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
 import { envIs } from '@/utils/env'
-
-type TableDetails = {
-  tenantId: string
-  collectionName: string
-  clickhouseTable: ClickhouseTableDefinition
-  mongoCollectionName: string
-}
-
-type MongoConsumerFilterDocument = {
-  type: 'filter'
-  value: Filter<Document>
-}
-
-type MongoConsumerIdDocument = {
-  type: 'id'
-  value: string
-}
-
-export type MongoConsumerMessage = {
-  operationType: 'delete' | 'insert' | 'update' | 'replace'
-  documentKey: MongoConsumerFilterDocument | MongoConsumerIdDocument
-  clusterTime: number
-  collectionName: string
-}
+import { MongoConsumerMessage, TableDetails } from '@/@types/mongo'
 
 @traceable
 export class MongoDbConsumer {

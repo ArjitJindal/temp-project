@@ -172,7 +172,7 @@ export function useColumns(
   deleteMutation: Mutation<unknown, unknown, { ids: string[] }>,
   selectedState: StatePair<SanctionsWhitelistEntity | undefined>,
 ): TableColumn<SanctionsWhitelistEntity>[] {
-  const hasWritePermissions = useHasResources(['write:::sanctions/search/*']);
+  const hasWritePermissions = useHasResources(['write:::screening/whitelist/*']);
   const settings = useSettings();
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   return useMemo(() => {

@@ -56,6 +56,7 @@ const staticOperators: Record<StaticallyDescriptionGenerator, string> = {
   'op:similarto': 'is similar to',
   number_to_string: 'number to string',
   string_to_number: 'string to number',
+  string_to_timestamp: 'string to timestamp',
   concat_string: 'concatenate string',
   truncate_decimal: 'truncate decimal',
   'op:!similartowords': 'is not similar to words',

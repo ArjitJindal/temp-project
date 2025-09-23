@@ -89,7 +89,16 @@ const ScreeningProfileDefaultFilters = () => {
   const handleSave = () => {
     setIsSaving(true);
     api
-      .postDefaultManualScreeningFilters({ DefaultManualScreeningFiltersRequest: params })
+      .postDefaultManualScreeningFilters({
+        DefaultManualScreeningFiltersRequest: {
+          ...params,
+          documentId: params.documentId
+            ? Array.isArray(params.documentId)
+              ? params.documentId
+              : [params.documentId]
+            : [],
+        },
+      })
       .then(() => {
         message.success('Default filters updated successfully');
       })

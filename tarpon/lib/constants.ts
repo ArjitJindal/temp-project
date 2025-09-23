@@ -342,6 +342,9 @@ export const StackConstants = {
   ),
   PROCESSING_LAMBDA_FUNCTION_NAME: getResourceNameForTarpon('ProcessingLambda'),
   PYTHON_LAYER_NAME: getResourceNameForTarpon('PythonLayer'),
+  SECONDARY_ASYNC_RULE_RUNNER_FUNCTION_NAME: getResourceName(
+    'SecondaryAsyncRuleRunner'
+  ),
 }
 
 export const SQSQueues: {
@@ -413,6 +416,10 @@ export const SQSQueues: {
   BATCH_RERUN_USERS_QUEUE_NAME: {
     name: getResourceName('BatchRerunUsersQueue'),
     oldestMsgAgeAlarmThresholdMinutes: 240, // 4 hours since there can be a lot of users to rerun
+  },
+  SecondaryAsyncRuleQueue: {
+    name: getResourceName('SecondaryAsyncRuleQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 360,
   },
 }
 

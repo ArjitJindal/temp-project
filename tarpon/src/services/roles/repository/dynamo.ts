@@ -139,6 +139,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role = await this.getRole(id)
 
     if (!role) {
+      // add the role from auth0
       throw new Error('Role not found with id: ' + id)
     }
 

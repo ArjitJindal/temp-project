@@ -2773,6 +2773,9 @@ components:
           minLength: 1
           type: string
           description: Value for a given key when you are creating a custom variable
+        isTimestamp:
+          type: boolean
+          description: Flag to indicate if the tag value is a timestamp
       description:
         Generic key-value pair model to append a custom variable being sent
         to Flagright API

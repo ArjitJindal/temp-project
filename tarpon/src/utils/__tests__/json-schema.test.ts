@@ -84,6 +84,9 @@ describe('generateJsonSchemaFromEntityClass', () => {
               value: {
                 type: 'string',
               },
+              isTimestamp: {
+                type: 'boolean',
+              },
             },
             required: ['key', 'value'],
           },
@@ -140,6 +143,9 @@ describe('generateJsonSchemaFromEntityClass', () => {
                   },
                   value: {
                     type: 'string',
+                  },
+                  isTimestamp: {
+                    type: 'boolean',
                   },
                 },
                 required: ['key', 'value'],
