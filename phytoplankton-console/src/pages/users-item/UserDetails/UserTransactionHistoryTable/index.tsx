@@ -376,6 +376,12 @@ export function Content(props: { userId: string }) {
       renderer: { kind: 'string' },
       showFilterByDefault: false,
     },
+    {
+      title: 'Reference',
+      key: 'reference',
+      renderer: { kind: 'string' },
+      showFilterByDefault: false,
+    },
   ];
 
   return (
