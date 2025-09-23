@@ -565,7 +565,7 @@ export async function extractParamValues(
       type === 'BUSINESS' &&
       riskData.type === 'USER'
     ) {
-      return riskData.user[param].map((p) => get(p, targetIterableParameter))
+      return riskData.user[param]?.map((p) => get(p, targetIterableParameter))
     }
     return get(
       riskData.type === 'TRANSACTION' ? riskData.transaction : riskData.user,
