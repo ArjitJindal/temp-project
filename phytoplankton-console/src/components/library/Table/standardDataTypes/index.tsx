@@ -457,16 +457,28 @@ export const QA_SAMPLE_ID: ColumnDataType<
   },
 };
 
-export const MONEY_AMOUNT: ColumnDataType<number> = {
+export const MONEY_AMOUNT = (currency?: string): ColumnDataType<number> => ({
   render: (value) => {
-    if (value !== undefined) {
+    if (value !== undefined && value !== null) {
+      if (currency) {
+        return <Money value={Number(value)} currency={currency} />;
+      }
       return <>{new Intl.NumberFormat().format(value)}</>;
     } else {
       return <>{value}</>;
     }
   },
+  stringify: (value) => {
+    if (value !== undefined && value !== null) {
+      if (currency) {
+        return `${currency} ${new Intl.NumberFormat().format(Number(value))}`;
+      }
+      return new Intl.NumberFormat().format(value);
+    }
+    return String(value || '');
+  },
   autoFilterDataType: { kind: 'dateTimeRange' },
-};
+});
 
 export const MONEY_CURRENCY: ColumnDataType<CurrencyCode> = {
   render: (value) => {
