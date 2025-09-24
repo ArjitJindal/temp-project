@@ -75,9 +75,9 @@ export default defineConfig({
                       };
                     }
                     acc[testName].failedCount += failedAttempts.length;
+                    // accumulating the error messages
+                    acc[testName].errors = errors[testName];
                   }
-                  // accumulating the error messages
-                  acc[testName].errors = errors[testName];
                   return acc;
                 }, globalAcc);
               }, {});
