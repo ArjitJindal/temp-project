@@ -57,6 +57,7 @@ function ApiTagsTable(props: Props) {
           return (
             <Button
               isDisabled={!draft.key || !draft.value}
+              isLoading={Boolean(rowApi?.isBusy)}
               onClick={() => {
                 rowApi.save?.();
               }}
@@ -68,16 +69,25 @@ function ApiTagsTable(props: Props) {
           const isEditing = rowApi?.isEditing ?? false;
           return isEditing ? (
             <div className={s.actions}>
-              <Button onClick={() => rowApi?.save?.()}>Save</Button>
-              <Button onClick={() => rowApi?.cancelEdit?.()}>Cancel</Button>
+              <Button isLoading={Boolean(rowApi?.isBusy)} onClick={() => rowApi?.save?.()}>
+                Save
+              </Button>
+              <Button isLoading={Boolean(rowApi?.isBusy)} onClick={() => rowApi?.cancelEdit?.()}>
+                Cancel
+              </Button>
             </div>
           ) : (
             <div className={s.actions}>
-              <Button isDisabled={!item.isEditable} onClick={() => rowApi?.startEdit?.()}>
+              <Button
+                isDisabled={!item.isEditable}
+                isLoading={Boolean(rowApi?.isBusy)}
+                onClick={() => rowApi?.startEdit?.()}
+              >
                 Edit
               </Button>
               <Button
                 isDisabled={!item.isEditable}
+                isLoading={Boolean(rowApi?.isBusy)}
                 onClick={() => {
                   setTags((tags ?? []).filter((tag) => tag.key !== item.key));
                 }}

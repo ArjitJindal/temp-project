@@ -139,6 +139,7 @@ export const NUMBER: ColumnDataType<number> = {
       <div className={s.maxWidth}>
         <NumberInput
           step={1}
+          isDisabled={context.edit.isBusy}
           value={state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -156,6 +157,7 @@ export const FLOAT: ColumnDataType<number> = {
     return (
       <div className={s.maxWidth}>
         <NumberInput
+          isDisabled={context.edit.isBusy}
           value={state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -175,6 +177,7 @@ export const STRING: ColumnDataType<string> = {
     return (
       <div className={s.maxWidth}>
         <TextInput
+          isDisabled={context.edit.isBusy}
           value={Array.isArray(state) ? state.join(',') : state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -194,6 +197,7 @@ export const STRING_MULTIPLE: ColumnDataType<string | string[]> = {
     return (
       <div className={s.maxWidth}>
         <TextInput
+          isDisabled={context.edit.isBusy}
           value={Array.isArray(state) ? state.join(', ') : state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -212,6 +216,7 @@ export const LONG_TEXT: ColumnDataType<string> = {
       <div className={s.maxWidth}>
         <TextArea
           className={s.textArea}
+          isDisabled={context.edit.isBusy}
           value={state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -229,6 +234,7 @@ export const BOOLEAN: ColumnDataType<boolean> = {
     const [state] = context.edit.state;
     return (
       <Toggle
+        isDisabled={context.edit.isBusy}
         value={state}
         onChange={(checked) => {
           context.edit.onConfirm(checked);

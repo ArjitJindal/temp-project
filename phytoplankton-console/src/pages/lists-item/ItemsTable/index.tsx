@@ -520,7 +520,7 @@ function useColumns(options: {
                   <Button
                     type="PRIMARY"
                     isLoading={Boolean(rowApi?.isBusy) || isAddUserLoading}
-                    isDisabled={!isValid || Boolean(rowApi?.isBusy)}
+                    isDisabled={!isValid}
                     onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
@@ -535,7 +535,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="PRIMARY"
                     onClick={() => rowApi?.save?.()}
-                    isDisabled={!isEditUserValid || Boolean(rowApi?.isBusy)}
+                    isDisabled={!isEditUserValid}
                     isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
@@ -545,7 +545,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="SECONDARY"
                     onClick={() => rowApi?.cancelEdit?.()}
-                    isDisabled={Boolean(rowApi?.isBusy)}
+                    isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
                     Cancel
@@ -559,6 +559,7 @@ function useColumns(options: {
                   size="SMALL"
                   type="SECONDARY"
                   onClick={() => rowApi?.startEdit?.()}
+                  isLoading={Boolean(rowApi?.isBusy)}
                   requiredResources={requiredWriteResources}
                 >
                   Edit
@@ -567,6 +568,7 @@ function useColumns(options: {
                   size="SMALL"
                   type="SECONDARY"
                   onClick={() => onDelete(String(entity.value ?? ''))}
+                  isLoading={Boolean(rowApi?.isBusy)}
                   requiredResources={requiredWriteResources}
                 >
                   Remove
@@ -600,6 +602,7 @@ function useColumns(options: {
                     <NewValueInput
                       key={String(isAddUserLoading)}
                       value={draft.value}
+                      isDisabled={Boolean(rowApi?.isBusy)}
                       onChange={(value) => {
                         rowApi?.setDraft?.({ ...draft, value: value ?? [] });
                       }}
@@ -659,7 +662,7 @@ function useColumns(options: {
                   <Button
                     type="PRIMARY"
                     isLoading={Boolean(rowApi?.isBusy) || isAddUserLoading}
-                    isDisabled={!isValid || Boolean(rowApi?.isBusy)}
+                    isDisabled={!isValid}
                     onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
@@ -674,7 +677,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="PRIMARY"
                     onClick={() => rowApi?.save?.()}
-                    isDisabled={!isEditUserValid || Boolean(rowApi?.isBusy)}
+                    isDisabled={!isEditUserValid}
                     isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
@@ -684,7 +687,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="SECONDARY"
                     onClick={() => rowApi?.cancelEdit?.()}
-                    isDisabled={Boolean(rowApi?.isBusy)}
+                    isLoading={Boolean(rowApi?.isBusy)}
                   >
                     Cancel
                   </Button>
@@ -697,8 +700,8 @@ function useColumns(options: {
                   size="SMALL"
                   type="SECONDARY"
                   onClick={() => rowApi?.startEdit?.()}
-                  requiredResources={requiredWriteResources}
                   isLoading={Boolean(rowApi?.isBusy)}
+                  requiredResources={requiredWriteResources}
                 >
                   Edit
                 </Button>
@@ -706,8 +709,8 @@ function useColumns(options: {
                   size="SMALL"
                   type="SECONDARY"
                   onClick={() => onDelete(String(entity.value ?? ''))}
-                  requiredResources={requiredWriteResources}
                   isLoading={Boolean(rowApi?.isBusy)}
+                  requiredResources={requiredWriteResources}
                 >
                   Remove
                 </Button>

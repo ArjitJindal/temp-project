@@ -11,6 +11,7 @@ import SegmentedControl from '@/components/library/SegmentedControl';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { TableRefType, ColumnDataType } from '@/components/library/Table/types';
+import Button from '@/components/library/Button';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { statusInReview } from '@/utils/case-utils';
@@ -34,6 +35,7 @@ const CHECKLIST_STATUS_TYPE: ColumnDataType<ChecklistDoneStatus, ChecklistItem> 
         }))}
         arrow={'LINE'}
         bordered
+        disabled={context.edit.isBusy}
         selectedKeys={[state ?? '']}
         onSelect={(e) => context.edit.onConfirm(e.value)}
         minWidth={150}
@@ -75,6 +77,7 @@ const QA_STATUS_TYPE: ColumnDataType<ChecklistStatus | undefined, ChecklistItem>
         }))}
         arrow={'LINE'}
         bordered
+        disabled={context.edit.isBusy}
         onSelect={(e) => context.edit.onConfirm(e.value)}
         minWidth={200}
         selectedKeys={state ? [state] : undefined}
@@ -105,6 +108,7 @@ const COMMENT_TYPE: ColumnDataType<string | undefined, ChecklistItem> = {
         value={state}
         onChange={(value) => context.edit.onConfirm(value)}
         onBlur={() => {}}
+        isDisabled={context.edit.isBusy}
       />
     );
   },
@@ -283,21 +287,37 @@ export default function ChecklistTab(props: Props) {
             if (rowApi?.isEditing) {
               return (
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
+                  <Button
+                    size="SMALL"
+                    type="PRIMARY"
+                    isLoading={Boolean(rowApi?.isBusy)}
                     onClick={() => {
                       rowApi.save?.();
                     }}
                   >
                     Save
-                  </button>
-                  <button onClick={() => rowApi.cancelEdit?.()}>Cancel</button>
+                  </Button>
+                  <Button
+                    size="SMALL"
+                    type="SECONDARY"
+                    isLoading={Boolean(rowApi?.isBusy)}
+                    onClick={() => rowApi.cancelEdit?.()}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               );
             }
             return (
-              <button disabled={!canEdit} onClick={() => rowApi?.startEdit?.()}>
+              <Button
+                size="SMALL"
+                type="SECONDARY"
+                isLoading={Boolean(rowApi?.isBusy)}
+                isDisabled={!canEdit}
+                onClick={() => rowApi?.startEdit?.()}
+              >
                 Edit
-              </button>
+              </Button>
             );
           },
         }),

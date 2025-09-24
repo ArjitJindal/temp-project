@@ -39,7 +39,7 @@ const TAG_TYPE: ColumnDataType<ConsoleTagTypeEnum, Item> = {
     return (
       <RadioGroup
         value={state}
-        isDisabled={false}
+        isDisabled={context.edit.isBusy}
         orientation="HORIZONTAL"
         onChange={(value) => {
           context.edit.onConfirm(value as ConsoleTagTypeEnum);
@@ -67,7 +67,7 @@ const TAG_OPTIONS: ColumnDataType<string[] | undefined, Item> = {
       <Select
         mode="MULTIPLE"
         allowNewOptions
-        isDisabled={false}
+        isDisabled={context.edit.isBusy}
         options={options}
         value={state}
         onChange={(newValue) => context.edit.onConfirm(newValue ?? [])}
@@ -100,7 +100,11 @@ const columns = helper.list([
       const canEdit = true;
       if (rowApi?.isCreateRow) {
         return (
-          <Button isDisabled={!draft?.key || !canEdit} onClick={() => rowApi?.save?.()}>
+          <Button
+            isDisabled={!draft?.key || !canEdit}
+            isLoading={Boolean(rowApi?.isBusy)}
+            onClick={() => rowApi?.save?.()}
+          >
             Add
           </Button>
         );
