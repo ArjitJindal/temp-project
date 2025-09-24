@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Account } from '@/apis';
-import { FlagrightAuth0User, isAtLeast, UserRole } from '@/utils/user-utils';
+import { FlagrightAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import Modal from '@/components/library/Modal';
@@ -44,9 +44,7 @@ export function ResetUserMfa(props: ResetMFAProps) {
   );
 
   const handleDelete = () => {
-    if (isAtLeast(user, UserRole.ADMIN)) {
-      setIsModalVisible(true);
-    }
+    setIsModalVisible(true);
   };
 
   const confirmDelete = () => {

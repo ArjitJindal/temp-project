@@ -54,23 +54,35 @@ export default defineConfig({
           // we accumulate all the failed tests for all the runs
           // NOTE: we have a retry for each test, so we need to accumulate the failed attempts
           if (results.status === 'finished') {
-            let failedTests: Record<string, number> = results?.runs?.reduce((globalAcc, run) => {
-              return run.tests.reduce((acc, test) => {
-                const testName = test.title.join('-');
-                const failedAttempts = test.attempts.filter(
-                  (attempt) => attempt.state === 'failed',
-                );
-                if (failedAttempts.length > 0) {
-                  if (!acc[testName]) {
-                    acc[testName] = 0;
+            let failedTests: Record<string, { failedCount: number; errors: string[] }> =
+              results?.runs?.reduce((globalAcc, run) => {
+                const specName = run.spec.relativeToCommonRoot;
+                const errors: { [key: string]: string[] } = {};
+                return run.tests.reduce((acc, test) => {
+                  const testName = specName + ':' + test.title.join('-');
+                  errors[testName] = [];
+                  const failedAttempts = test.attempts.filter((attempt) => {
+                    if (attempt.error?.message) {
+                      errors[testName].push(attempt.error.message);
+                    }
+                    return attempt.state === 'failed';
+                  });
+                  if (failedAttempts.length > 0) {
+                    if (!acc[testName]) {
+                      acc[testName] = {
+                        failedCount: 0,
+                        errors: [],
+                      };
+                    }
+                    acc[testName].failedCount += failedAttempts.length;
+                    // accumulating the error messages
+                    acc[testName].errors = errors[testName];
                   }
-                  acc[testName] += failedAttempts.length;
-                }
-                return acc;
-              }, globalAcc);
-            }, {});
+                  return acc;
+                }, globalAcc);
+              }, {});
             failedTests = Object.fromEntries(
-              Object.entries(failedTests).sort(([, a], [, b]) => b - a),
+              Object.entries(failedTests).sort(([, a], [, b]) => b.failedCount - a.failedCount),
             );
             // writing the failed tests to a file
             fs.writeFileSync(

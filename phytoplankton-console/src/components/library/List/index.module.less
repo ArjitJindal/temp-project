@@ -1,0 +1,61 @@
+@import 'src/components/ui/colors';
+
+.list {
+  :global {
+    .ant-list-items {
+      border-radius: 4px;
+      overflow: hidden;
+    }
+  }
+}
+
+.item {
+  padding: 8px 12px !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &:hover,
+  &.isActive {
+    background: @fr-colors-brandBlueTint;
+  }
+
+  :global {
+    .ant-list-item-meta-title {
+      margin-bottom: 0 !important;
+    }
+  }
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+}
+
+.checkIcon {
+  color: @fr-colors-brandBlue;
+  font-weight: bold;
+}
+
+// Style for disabled dropdown options
+.isDisabled {
+  background: @figma-vars--tokens-colorBackgroundDisabled !important;
+  color: @figma-vars--tokens-colorTextSecondary !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  opacity: 0.6;
+
+  &:hover {
+    background: @figma-vars--tokens-colorBackgroundDisabled !important;
+  }
+
+  :global {
+    .ant-list-item-meta-title {
+      color: @figma-vars--tokens-colorTextSecondary !important;
+    }
+  }
+}

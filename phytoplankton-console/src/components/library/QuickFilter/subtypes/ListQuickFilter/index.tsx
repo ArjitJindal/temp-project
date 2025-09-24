@@ -1,13 +1,11 @@
 import React from 'react';
-import { List } from 'antd';
-import cn from 'clsx';
 import QuickFilterBase from '../../QuickFilterBase';
-import s from './index.module.less';
 import { InputProps } from '@/components/library/Form';
 import { Props as QuickFilterProps } from '@/components/library/QuickFilter/QuickFilterBase';
 import { Option } from '@/components/library/Select';
 import { joinReactNodes } from '@/utils/react';
-import { Comparable, key } from '@/utils/comparable';
+import { Comparable } from '@/utils/comparable';
+import List from '@/components/library/List';
 
 interface SharedProps<Value extends Comparable> extends QuickFilterProps {
   options: Option<Value>[];
@@ -56,33 +54,22 @@ export default function ListQuickFilter<Value extends Comparable>(props: Props<V
       }
     >
       {({ setOpen }) => (
-        <List<Option<Value>>
-          className={s.list}
-          dataSource={options}
-          renderItem={(option: Option<Value>) => (
-            <List.Item
-              key={key(option.value)}
-              className={cn(s.item, valueArray.includes(option.value) && s.isActive)}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                if (props.mode === 'SINGLE') {
-                  props.onChange?.(option.value);
-                  setOpen(false);
-                  onUpdateFilterClose && onUpdateFilterClose(true);
-                } else {
-                  props.onChange?.(
-                    !valueArray.includes(option.value)
-                      ? [...(valueArray ?? []), option.value]
-                      : valueArray.filter((x) => x !== option.value),
-                  );
-                }
-              }}
-              data-cy={option.value}
-            >
-              <List.Item.Meta title={option.label} />
-            </List.Item>
-          )}
+        <List<Value>
+          options={options}
+          selectedValues={valueArray}
+          onSelectOption={(value) => {
+            if (props.mode === 'SINGLE') {
+              props.onChange?.(value);
+              setOpen(false);
+              onUpdateFilterClose && onUpdateFilterClose(true);
+            } else {
+              props.onChange?.(
+                !valueArray.includes(value)
+                  ? [...(valueArray ?? []), value]
+                  : valueArray.filter((x) => x !== value),
+              );
+            }
+          }}
         />
       )}
     </QuickFilterBase>

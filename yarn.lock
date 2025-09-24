@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 6
   cacheKey: 10
 
 "@aws-cdk/asset-awscli-v1@npm:2.2.242":
@@ -1548,10 +1548,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.17.14":
-  version: 4.17.15
-  resolution: "@types/lodash@npm:4.17.15"
-  checksum: 27b348b5971b9c670215331b52448a13d7d65bf1fbd320a7049c9c153c1186ff5d116ba75f05f07d32d7ece8a992b26a30c7bdc9be22a3d1e4e3e6068aa04603
+"@types/lodash@npm:^4.17.20":
+  version: 4.17.20
+  resolution: "@types/lodash@npm:4.17.20"
+  checksum: 8/dc7bb4653514dd91117a4c4cec2c37e2b5a163d7643445e4757d76a360fabe064422ec7a42dde7450c5e7e0e7e678d5e6eae6d2a919abcddf581d81e63e63839
   languageName: node
   linkType: hard
 
@@ -2239,9 +2239,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>":
+"fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>":
   version: 2.3.2
-  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#~builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
   dependencies:
     node-gyp: "npm:latest"
   conditions: os=darwin
@@ -3645,24 +3645,24 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tarpon@workspace:."
   dependencies:
-    "@aws-sdk/client-cloudformation": "npm:^3.441.0"
+    "@aws-sdk/client-cloudformation": ^3.441.0
     "@flagright/lib": "link:./lib"
-    "@linear/sdk": "npm:^37.0.0"
-    "@slack/web-api": "npm:^7.10.0"
-    "@tsconfig/node20": "npm:^20.1.5"
-    "@types/lodash": "npm:^4.17.14"
-    aws-cdk: "npm:~2.1025.0"
-    aws-cdk-lib: "npm:~2.209.1"
-    constructs: "npm:^10.4.2"
-    husky: "npm:^8.0.1"
-    lodash: "npm:^4.17.21"
-    octokit: "npm:^3.2.1"
-    prettier: "npm:^3.1.1"
-    purgecss: "npm:^7.0.2"
-    slackify-markdown: "npm:^4.4.0"
-    ts-node: "npm:^10.9.1"
-    tsconfig-paths: "npm:^4.2.0"
-    typescript: "npm:^5.2.2"
+    "@linear/sdk": ^37.0.0
+    "@slack/web-api": ^7.10.0
+    "@tsconfig/node20": ^20.1.5
+    "@types/lodash": ^4.17.20
+    aws-cdk: ~2.1025.0
+    aws-cdk-lib: ~2.209.1
+    constructs: ^10.4.2
+    husky: ^8.0.1
+    lodash: ^4.17.21
+    octokit: ^3.2.1
+    prettier: ^3.1.1
+    purgecss: ^7.0.2
+    slackify-markdown: ^4.4.0
+    ts-node: ^10.9.1
+    tsconfig-paths: ^4.2.0
+    typescript: ^5.2.2
   languageName: unknown
   linkType: soft
 
@@ -3753,13 +3753,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.2.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@^5.2.2#~builtin<compat/typescript>":
   version: 5.4.5
-  resolution: "typescript@patch:typescript@npm%3A5.4.5#optional!builtin<compat/typescript>::version=5.4.5&hash=e012d7"
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=d73830"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 584be8bac7112ad49a9eb9992f71d542b1ff2fafb5bb315e1c196145e8feab589f1d7223cfb2d5df6770789582e6918f8287d1f2f89911b38eb80e29c560ad00
+  checksum: 8/2373c693f3b328f3b2387c3efafe6d257b057a142f9a79291854b14ff4d5367d3d730810aee981726b677ae0fd8329b23309da3b6aaab8263dbdccf1da07a3ba
   languageName: node
   linkType: hard
 

@@ -11,6 +11,14 @@ export function findSelectRoot(): HTMLElement {
   return screen.getByClassName(s.root);
 }
 
+export function findInputElement(): HTMLElement {
+  return screen.getByClassName(s.input);
+}
+
+export function findArrowButton(): HTMLElement {
+  return screen.getByClassName(s.arrowDownIcon);
+}
+
 /**
  * Click on the select element to open the dropdown
  */
@@ -71,10 +79,17 @@ export async function clickOutside(): Promise<void> {
 export function expectDropdownOpen(shouldBeOpen: boolean = true): void {
   const dropdownEl = screen.getByClassName(s.menuWrapper);
   expect(dropdownEl).toBeInTheDocument();
+  expect(dropdownEl).toBeTruthy();
+  const classList = Array.from(dropdownEl.classList);
+
   if (shouldBeOpen) {
-    expect(dropdownEl).toHaveClass(s.isOpen);
+    expect(classList.includes(s.isOpen)).toBeTruthyOrMessage(
+      "Select menu wrapper's class list expected to have 'isOpen' class, but it's not",
+    );
   } else {
-    expect(dropdownEl).not.toHaveClass(s.isOpen);
+    expect(!classList.includes(s.isOpen)).toBeTruthyOrMessage(
+      "Select menu wrapper's class list expected NOT to have 'isOpen' class, but it is there",
+    );
   }
 }
 

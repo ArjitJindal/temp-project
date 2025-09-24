@@ -33,6 +33,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       filterOriginPaymentMethodId: params['originPayment.paymentMethodId'],
       filterDestinationPaymentMethodId: params['destinationPayment.paymentMethodId'],
       filterPaymentDetailName: params.filterPaymentDetailName,
+      reference: params.reference,
     };
   },
   deserializer: (raw): TransactionsTableParams => {
@@ -68,6 +69,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       'destinationAmountDetails.country': raw['destinationAmountDetails.country']?.split(','),
       showDetailedView: raw.includePaymentDetails === 'true',
       filterPaymentDetailName: raw.filterPaymentDetailName,
+      reference: raw.reference,
     };
   },
 };

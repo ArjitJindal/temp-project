@@ -58,7 +58,7 @@ export function DeleteUser(props: DeleteUserProps) {
   );
 
   const handleDelete = () => {
-    if (accounts.length === 1 && user.role === UserRole.ROOT) {
+    if (accounts.length === 1) {
       deactiveUserMutation.mutate({
         userId: item.id,
         reassignTo: user.userId, // reassign to self if superuser is the only user

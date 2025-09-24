@@ -152,7 +152,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
-const enableFargateBatchJob = false
+const enableFargateBatchJob = true
 const FEATURE = 'feature'
 
 const FEATURES = {
@@ -1218,6 +1218,21 @@ export class CdkTarponStack extends cdk.Stack {
           cpu: config.resource.FARGATE_BATCH_JOB_CONTAINER.CPU,
           memoryLimitMiB:
             config.resource.FARGATE_BATCH_JOB_CONTAINER.MEMORY_LIMIT,
+          architecture:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.ARCHITECTURE ??
+            'x86_64',
+        }
+      )
+
+      const image = createDockerImage(
+        this,
+        StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+        {
+          path:
+            process.env.INFRA_CI === 'true' ? 'src/fargate' : 'dist/fargate',
+          architecture:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.ARCHITECTURE ??
+            'x86_64',
         }
       )
 
@@ -1228,18 +1243,10 @@ export class CdkTarponStack extends cdk.Stack {
         {
           memoryLimitMiB:
             config.resource.FARGATE_BATCH_JOB_CONTAINER.MEMORY_LIMIT,
-          image: ContainerImage.fromDockerImageAsset(
-            createDockerImage(
-              this,
-              StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
-              {
-                path:
-                  process.env.INFRA_CI === 'true'
-                    ? 'src/fargate'
-                    : 'dist/fargate',
-              }
-            )
-          ),
+          image: ContainerImage.fromDockerImageAsset(image),
+          architecture:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.ARCHITECTURE ??
+            'x86_64',
         }
       )
       const batchJobCluster = new Cluster(

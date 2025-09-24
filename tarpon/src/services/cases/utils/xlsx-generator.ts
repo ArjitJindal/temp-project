@@ -41,7 +41,8 @@ export type Report = Sheet[]
 
 export async function convert(report: Report): Promise<ReadStream> {
   // Create a new workbook
-  const XLSX = await import('xlsx-js-style')
+  const xlsxModule = await import('xlsx-js-style')
+  const XLSX = xlsxModule.default || xlsxModule
   const wb = XLSX.utils.book_new()
 
   function countMaxColumns(items: Item[], level = 0): number {
