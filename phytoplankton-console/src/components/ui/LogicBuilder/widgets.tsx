@@ -797,9 +797,12 @@ const customFieldWidget: FieldWidget<Config> = {
     const queryBuilderConfig = props.config as QueryBuilderConfig;
     if (isViewMode(queryBuilderConfig)) {
       const { variableColors, onClickVariable } = queryBuilderConfig.settings;
+      const selectedOption = finalOptions.find((x) => x.value === finalValue);
       return (
         <VariableInfoPopover onClick={props.value && (() => onClickVariable?.(props.value))}>
-          <ViewModeTags color={variableColors?.[props.value]}>{finalValue}</ViewModeTags>
+          <ViewModeTags color={variableColors?.[props.value]}>
+            {selectedOption?.label ?? finalValue}
+          </ViewModeTags>
         </VariableInfoPopover>
       );
     }
