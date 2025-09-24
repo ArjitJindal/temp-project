@@ -1,5 +1,6 @@
 import { v4 as uuid4 } from 'uuid'
-import { compact, isEmpty } from 'lodash'
+import compact from 'lodash/compact'
+import isEmpty from 'lodash/isEmpty'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { RandomNumberGenerator } from '../samplers/prng'
 import { SANCTION_SEARCH_SEED } from '../data/seeds'

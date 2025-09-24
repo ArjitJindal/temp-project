@@ -8,6 +8,7 @@ export enum LogicFunctionKey {
   TIMESTAMP_DIFF_SECONDS = 'timestamp_diff_seconds',
   TRUNCATE_DECIMAL = 'truncate_decimal',
   STRING_TO_NUMBER = 'string_to_number',
+  STRING_TO_TIMESTAMP = 'string_to_timestamp',
   NUMBER_TO_STRING = 'number_to_string',
   LOWERCASE = 'lowercase',
   UPPERCASE = 'uppercase',

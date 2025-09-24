@@ -1,5 +1,6 @@
 import { MongoClient, Collection } from 'mongodb'
-import { intersection, sample } from 'lodash'
+import intersection from 'lodash/intersection'
+import sample from 'lodash/sample'
 import { sanitizeString } from '@flagright/lib/utils/string'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SanctionsDataFetcher } from '../sanctions-data-fetcher'

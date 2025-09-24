@@ -11,15 +11,13 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { Dimension } from '@aws-sdk/client-cloudwatch'
 
-import {
-  groupBy,
-  mapValues,
-  maxBy,
-  mergeWith,
-  min,
-  sortBy,
-  sumBy,
-} from 'lodash'
+import groupBy from 'lodash/groupBy'
+import mapValues from 'lodash/mapValues'
+import maxBy from 'lodash/maxBy'
+import mergeWith from 'lodash/mergeWith'
+import min from 'lodash/min'
+import sortBy from 'lodash/sortBy'
+import sumBy from 'lodash/sumBy'
 import { PostHog } from 'posthog-node'
 import { SanctionsDataProviders } from '../sanctions/types'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'

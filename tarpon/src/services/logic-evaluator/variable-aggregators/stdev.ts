@@ -1,4 +1,4 @@
-import { sum } from 'lodash'
+import sum from 'lodash/sum'
 import { LogicVariableAggregator } from './types'
 
 export interface StdDevSample {

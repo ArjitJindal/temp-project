@@ -1,4 +1,5 @@
-import { last, memoize } from 'lodash'
+import last from 'lodash/last'
+import memoize from 'lodash/memoize'
 import pMap from 'p-map'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import { StackConstants } from '@lib/constants'

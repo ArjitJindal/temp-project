@@ -1,4 +1,4 @@
-import { last } from 'lodash'
+import last from 'lodash/last'
 import { MongoClient } from 'mongodb'
 import { RulesEngineService } from '../rules-engine'
 import { LogicEvaluator } from '../logic-evaluator/engine'

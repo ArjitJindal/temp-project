@@ -84,6 +84,9 @@ describe('generateJsonSchemaFromEntityClass', () => {
               value: {
                 type: 'string',
               },
+              isTimestamp: {
+                type: 'boolean',
+              },
             },
             required: ['key', 'value'],
           },
@@ -141,6 +144,9 @@ describe('generateJsonSchemaFromEntityClass', () => {
                   value: {
                     type: 'string',
                   },
+                  isTimestamp: {
+                    type: 'boolean',
+                  },
                 },
                 required: ['key', 'value'],
               },
@@ -149,7 +155,7 @@ describe('generateJsonSchemaFromEntityClass', () => {
           required: ['addressLines'],
         },
       },
-      required: ['method', 'payId', 'endToEndId'],
+      required: ['method'],
     })
   })
 })

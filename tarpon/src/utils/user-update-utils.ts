@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { Case } from '@/@types/openapi-internal/Case'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'

@@ -6,12 +6,11 @@ import {
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoAlertRepository } from '../alerts/dynamo-repository'
 import {
   createUpdateCaseQueries,
-  dynamoKeyList,
   generateDynamoConsumerMessage,
   getCaseAuxiliaryIndexes,
   transactWriteWithClickhouse,
@@ -34,7 +33,6 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
@@ -51,6 +49,7 @@ import {
 } from '@/@types/cases/CasesInternal'
 import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { removeUndefinedFields } from '@/utils/object'
+import { DynamoConsumerMessage, dynamoKeyList } from '@/@types/dynamo'
 type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 type SubjectCasesQueryParams = {

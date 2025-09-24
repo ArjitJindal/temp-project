@@ -40,25 +40,25 @@ export default function BatchRerunRiskScoringSettings() {
               {
                 label: 'Disabled',
                 value: 'DISABLED',
-                description: 'Disable re-calculation of risk scores',
+                description: 'Do not recalculate risk scores',
               },
               {
                 label: 'Daily',
                 value: 'DAILY',
                 description:
-                  'Re-calculate risk scores in the background if risk factors have changed on start of day in UTC',
+                  'Recalculate risk scores in the background at the start of each day (UTC) if risk factors have changed',
               },
               {
                 label: 'Weekly',
                 value: 'WEEKLY',
                 description:
-                  'Re-calculate risk scores in the background if risk factors have changed on start of the first day of the week in UTC',
+                  'Recalculate risk scores in the background at the start of each week (UTC) if risk factors have changed',
               },
               {
                 label: 'Monthly',
                 value: 'MONTHLY',
                 description:
-                  'Re-calculate risk scores in the background if risk factors have changed on start of the first day of the month in UTC',
+                  'Recalculate risk scores in the background at the start of each month (UTC) if risk factors have changed',
               },
             ]}
             value={rerunFrequency}
@@ -84,7 +84,7 @@ export default function BatchRerunRiskScoringSettings() {
           </Button>
           <Confirm
             title="Rerun risk scoring"
-            text="Are you sure you want to re-run risk scoring? Only KRS and CRA will be re-calculated transactions will be re-calculated."
+            text="Are you sure you want to rerun risk scoring? Only KRS and CRA will be recalculated. Transactions will not be recalculated.."
             onConfirm={() => {
               setIsRerun(true);
               triggerBulkRerunRiskScoring.mutate();

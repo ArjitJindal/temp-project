@@ -1,4 +1,6 @@
-import { invert, memoize, uniq } from 'lodash'
+import invert from 'lodash/invert'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
 import { MONGO_TABLE_SUFFIX_MAP } from '../mongodb-definitions'
 import {
   userStatsColumns,
@@ -20,76 +22,7 @@ import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
-
-export type IndexOptions = {
-  type: string
-  config: Record<string, any>
-}
-
-export type IndexType =
-  | 'inverted'
-  | 'normal'
-  | 'bloom_filter'
-  | 'minmax'
-  | 'set'
-  | 'tokenbf_v1'
-
-type BaseTableDefinition = {
-  table: string
-  idColumn: string
-  timestampColumn: string
-  materializedColumns?: string[]
-  indexes?: {
-    column: string
-    name: string
-    type: IndexType
-    options: {
-      granularity: number
-      ngramSize?: number
-      bloomFilterSize?: number
-      numHashFunctions?: number
-      randomSeed?: number
-    }
-  }[]
-  engine: 'ReplacingMergeTree' | 'AggregatingMergeTree' | 'SummingMergeTree'
-  versionColumn?: string
-  primaryKey: string
-  orderBy: string
-  partitionBy?: string
-  mongoIdColumn?: boolean
-  optimize?: boolean
-}
-
-type QueryCallback = (tenantId: string) => Promise<string>
-
-export type MaterializedViewDefinition = Omit<
-  BaseTableDefinition,
-  'idColumn' | 'timestampColumn' | 'projections' | 'materializedColumns'
-> & {
-  viewName: string
-  columns: string[]
-  query?: string | QueryCallback
-  refresh?: {
-    interval: number
-    granularity: 'MINUTE' | 'HOUR' | 'DAY' | 'SECOND'
-  }
-}
-
-export type ProjectionsDefinition = {
-  name: string
-  version: number
-  definition: {
-    columns: string[]
-    aggregator: 'GROUP'
-    aggregatorBy: string
-  }
-}
-
-export type ClickhouseTableDefinition = BaseTableDefinition & {
-  materializedViews?: MaterializedViewDefinition[]
-  projections?: ProjectionsDefinition[]
-  model?: string // Optional: Generate columns from this model instead of materializedColumns
-}
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 
 const enumFields = (
   enumValues: string[],
@@ -1423,16 +1356,6 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
   [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2]:
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
   [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING]:
-    CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.API_REQUEST_LOGS]:
-    CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.NOTIFICATIONS]:
-    CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.METRICS]: CLICKHOUSE_DEFINITIONS.METRICS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.WEBHOOK]: CLICKHOUSE_DEFINITIONS.WEBHOOK.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.WEBHOOK_DELIVERIES]:
-    CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

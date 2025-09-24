@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import {
   checkTransactionAmountBetweenThreshold,
   getTransactionStatsTimeGroupLabelV2,

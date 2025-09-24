@@ -3499,6 +3499,19 @@ paths:
             schema:
               $ref: '#/components/schemas/TenantCreationRequest'
         required: true
+  /tenant:
+    get:
+      summary: Tenant - Info
+      operationId: get-tenant
+      x-flagright:
+        alwaysAllowedAcdess: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
   /tenants/settings:
     get:
       summary: Tenant - Get Settings
@@ -5176,6 +5189,10 @@ paths:
           type: string
         in: query
         name: filterPaymentMethodId
+      - schema:
+          type: string
+        in: query
+        name: filterReference
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list
@@ -6927,7 +6944,7 @@ paths:
       operationId: post-sanctions
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - write:::screening/manual-screening
       responses:
         '200':
           description: OK
@@ -6953,7 +6970,7 @@ paths:
       operationId: get-sanctions-search
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/activity
       responses:
         '200':
           description: OK
@@ -7004,7 +7021,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/activity
       responses:
         '200':
           description: OK
@@ -7028,7 +7045,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/activity
       responses:
         '200':
           description: OK
@@ -7082,7 +7099,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/manual-screening
       responses:
         '200':
           description: OK
@@ -7179,7 +7196,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/whitelist
       responses:
         '200':
           description: OK
@@ -7228,7 +7245,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - write:::sanctions/search
+          - write:::screening/whitelist
       responses:
         '200':
           description: OK
@@ -8566,6 +8583,129 @@ paths:
         required: true
 components:
   schemas:
+    FilterCondition:
+      title: FilterCondition
+      description: A single filter condition
+      type: object
+      properties:
+        permissionId:
+          type: string
+          description: The ID of the permission being filtered (e.g., case-status)
+        operator:
+          type: string
+          description: The operator to apply (e.g., Equals, NotEquals)
+          enum:
+            - Equals
+            - NotEquals
+            - In
+            - NotIn
+            - Contains
+            - Range
+            - Pattern
+        param:
+          type: string
+          description: The query parameter name (e.g., filterCaseStatus)
+        values:
+          type: array
+          description: The values to filter by
+          items:
+            type: string
+      required:
+        - permissionId
+        - operator
+        - param
+        - values
+      example:
+        permissionId: case-status
+        operator: Equals
+        param: filterCaseStatus
+        values:
+          - OPEN
+          - CLOSED
+    FilterConditions:
+      title: FilterConditions
+      description: A list of filter conditions to apply
+      type: array
+      items:
+        $ref: '#/components/schemas/FilterCondition'
+      example:
+        - permissionId: case-status
+          operator: Equals
+          param: filterCaseStatus
+          values:
+            - OPEN
+            - CLOSED
+        - permissionId: alert-status
+          operator: In
+          param: filterAlertStatus
+          values:
+            - OPEN
+            - ESCALATED
+    FilterDefinition:
+      title: FilterDefinition
+      description:
+        Defines how a permission node can be filtered, including the type
+        of filter, parameter name, and allowed operators.
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type of filter to apply
+          enum:
+            - enum
+            - range
+            - dateRange
+            - pattern
+            - array
+        param:
+          type: string
+          description: The query parameter name to use for this filter (e.g.,
+            filterCaseStatus)
+        operator:
+          type: string
+          description: List of operators allowed for this filter type
+          enum:
+            - Equals
+            - NotEquals
+            - In
+            - NotIn
+            - Contains
+            - Range
+            - Pattern
+        allowedValues:
+          type: array
+          description: List of allowed values for enum filters
+          items:
+            type: string
+        validation:
+          type: object
+          description: Optional validation rules for the filter values
+          properties:
+            minValue:
+              type: number
+              description: Minimum allowed value for range filters
+            maxValue:
+              type: number
+              description: Maximum allowed value for range filters
+            minDate:
+              type: string
+              format: date-time
+              description: Minimum allowed date for dateRange filters
+            maxDate:
+              type: string
+              format: date-time
+              description: Maximum allowed date for dateRange filters
+            pattern:
+              type: string
+              description: Regex pattern for pattern filters
+            allowedValues:
+              type: array
+              description: List of allowed values for enum filters
+              items:
+                type: string
+      required:
+        - type
+        - param
     CustomListMetadataList:
       title: CustomListMetadataList
       type: object
@@ -8621,6 +8761,8 @@ components:
           $ref: '#/components/schemas/TaskStatusChangeStatusEnum'
         isValidationJobRunning:
           type: boolean
+        erroredRecrodS3Key:
+          type: string
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
       type: string
@@ -9228,6 +9370,9 @@ components:
       enum:
         - USER_TRANSACTIONS
         - PAYMENT_DETAILS_TRANSACTIONS
+        - PAYMENT_DETAILS_ADDRESS
+        - PAYMENT_DETAILS_NAME
+        - PAYMENT_DETAILS_EMAIL
     LogicAggregationTransactionDirection:
       title: LogicAggregationTransactionDirection
       type: string
@@ -11371,7 +11516,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         files:
           type: array
           items:
@@ -11623,6 +11768,8 @@ components:
         isProductionAccessDisabled:
           type: boolean
         host:
+          type: string
+        tenantCreatedAt:
           type: string
       required:
         - id
@@ -12855,6 +13002,16 @@ components:
       required:
         - type
         - value
+    SarCountries:
+      type: string
+      title: SarCountries
+      enum:
+        - AU
+        - CA
+        - KE
+        - LT
+        - US
+        - MY
     Feature:
       type: string
       title: Feature
@@ -12905,6 +13062,8 @@ components:
         - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
+        - CHATBOT
+        - CUSTOM_AGGREGATION_FIELDS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -13322,30 +13481,6 @@ components:
       enum:
         - CLOSURE
         - ESCALATION
-    CaseReasons:
-      type: string
-      title: CaseReasons
-      enum:
-        - Other
-        - False positive
-        - Documents collected
-        - Transaction Rejected
-        - Transaction Refunded
-        - Suspicious activity reported (SAR)
-        - Documents not collected
-        - Investigation completed
-        - Escalated
-        - Fraud
-        - Anti-money laundering
-        - Terrorist financing
-        - User Blacklisted
-        - User Terminated
-        - Internal referral
-        - External referral
-        - Confirmed fraud
-        - Confirmed genuine
-        - Suspected fraud
-        - True positive
     SanctionsHitReasons:
       type: string
       title: SanctionsHitReasons
@@ -14019,6 +14154,8 @@ components:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
         screeningDetails:
           $ref: '#/components/schemas/ScreeningDetails'
+        updateTransactionStatus:
+          $ref: '#/components/schemas/RuleAction'
       required:
         - reason
       description: ''
@@ -14146,6 +14283,8 @@ components:
           type: number
         listId:
           type: string
+        updateTransactionStatus:
+          $ref: '#/components/schemas/RuleAction'
         tags:
           type: array
           items:
@@ -14699,6 +14838,8 @@ components:
           type: array
           items:
             type: string
+        entityType:
+          $ref: '#/components/schemas/SanctionsSearchRequestEntityType'
     ScreeningProfileRequest:
       title: ScreeningProfileRequest
       type: object
@@ -18776,6 +18917,13 @@ components:
                 - STATIC
             name:
               type: string
+            filter:
+              $ref: '#/components/schemas/FilterDefinition'
+            allowedValues:
+              type: array
+              description: List of allowed values for enum filters
+              items:
+                type: string
           required:
             - type
             - name
@@ -18799,6 +18947,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/DynamicResourcesData'
+            filter:
+              $ref: '#/components/schemas/FilterDefinition'
           required:
             - type
             - subType
@@ -18852,6 +19002,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PermissionsAction'
+        filter:
+          $ref: '#/components/schemas/FilterConditions'
       required:
         - resources
         - actions

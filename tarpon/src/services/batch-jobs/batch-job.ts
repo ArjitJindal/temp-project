@@ -1,15 +1,11 @@
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { v4 as uuidv4 } from 'uuid'
-import { BatchJobRepository } from './repositories/batch-job-repository'
 import { BatchJob, BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
 import { getSQSClient } from '@/utils/sns-sqs-client'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const sqsClient = getSQSClient()
-
-export const LONG_RUNNING_MIGRATION_TENANT_ID = 'long-running-migration'
 
 export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
   if (envIs('test') || job.tenantId === 'cypress-tenant') {
@@ -21,15 +17,8 @@ export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
     jobId: jobId ?? uuidv4(),
   }
   if (envIs('local')) {
-    const jobRepository = new BatchJobRepository(
-      job.tenantId,
-      await getMongoDbClient()
-    )
-    await jobRepository.insertJob(jobWithId)
-
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const jobRunnerHandler = require('@/lambdas/batch-job/app').jobRunnerHandler
-    jobRunnerHandler(jobWithId)
+    const { handleBatchJob } = await import('@/core/local-handlers/batch-job')
+    await handleBatchJob(jobWithId)
     return
   }
 

@@ -1,6 +1,6 @@
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { RulesEngineService } from '..'
@@ -31,7 +31,7 @@ import {
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import dayjs from '@/utils/dayjs'
@@ -3976,5 +3976,847 @@ describe('transaction event for last N entities', () => {
         ruleName: 'test rule name',
       },
     ])
+  })
+})
+
+describe('Verify Transaction: V8 engine with Payment Details Address', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+  let mongoDb: MongoClient
+
+  beforeEach(async () => {
+    mongoDb = await getMongoDbClient()
+  })
+
+  describe('Payment Details Address aggregation - CARD method', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-CARD',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-card' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-card',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregates transactions by card address', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // First transaction with card address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-card-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'card-123',
+            address: {
+              addressLines: ['123 Main St'],
+              city: 'New York',
+              state: 'NY',
+              postcode: '10001',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-card']
+      ).toBe(1)
+
+      // Second transaction with same card address
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-card-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'card-456',
+            address: {
+              addressLines: ['123 Main St'],
+              city: 'New York',
+              state: 'NY',
+              postcode: '10001',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-card']
+      ).toBe(2)
+    })
+  })
+
+  describe('Payment Details Address aggregation - ACH method', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-ACH',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-ach' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-ach',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregates transactions by ACH bank address', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // First transaction with ACH bank address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-ach-1',
+          originPaymentDetails: {
+            method: 'ACH',
+            accountNumber: '1234567890',
+            bankAddress: {
+              addressLines: ['456 Bank Ave'],
+              city: 'Chicago',
+              state: 'IL',
+              postcode: '60601',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-ach']).toBe(
+        1
+      )
+
+      // Second transaction with same ACH bank address
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-ach-2',
+          originPaymentDetails: {
+            method: 'ACH',
+            accountNumber: '0987654321',
+            bankAddress: {
+              addressLines: ['456 Bank Ave'],
+              city: 'Chicago',
+              state: 'IL',
+              postcode: '60601',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+      expect(result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-ach']).toBe(
+        2
+      )
+    })
+  })
+
+  describe('Payment Details Address aggregation - CHECK method', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-CHECK',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-check' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-check',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregates transactions by check shipping address', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // First transaction with check shipping address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-check-1',
+          originPaymentDetails: {
+            method: 'CHECK',
+            checkIdentifier: 'check-123',
+            shippingAddress: {
+              addressLines: ['789 Check St'],
+              city: 'Miami',
+              state: 'FL',
+              postcode: '33101',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-check']
+      ).toBe(1)
+
+      // Second transaction with same check shipping address
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-check-2',
+          originPaymentDetails: {
+            method: 'CHECK',
+            checkIdentifier: 'check-456',
+            shippingAddress: {
+              addressLines: ['789 Check St'],
+              city: 'Miami',
+              state: 'FL',
+              postcode: '33101',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-check']
+      ).toBe(2)
+    })
+  })
+
+  describe('Payment Details Address aggregation - mixed payment methods', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-MIXED',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-mixed' }, 2] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-mixed',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER_OR_RECEIVER',
+            transactionDirection: 'SENDING_RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregates transactions by address across different payment methods', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // First transaction with CARD address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-mixed-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'card-mixed-1',
+            address: {
+              addressLines: ['100 Shared Blvd'],
+              city: 'Austin',
+              state: 'TX',
+              postcode: '73301',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-mixed']
+      ).toBe(1)
+
+      // Second transaction with ACH bank address (same address)
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-mixed-2',
+          originPaymentDetails: {
+            method: 'ACH',
+            accountNumber: 'ach-mixed-1',
+            bankAddress: {
+              addressLines: ['100 Shared Blvd'],
+              city: 'Austin',
+              state: 'TX',
+              postcode: '73301',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('ALLOW')
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-mixed']
+      ).toBe(2)
+
+      // Third transaction with CHECK shipping address (same address)
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-mixed-3',
+          originPaymentDetails: {
+            method: 'CHECK',
+            checkIdentifier: 'check-mixed-1',
+            shippingAddress: {
+              addressLines: ['100 Shared Blvd'],
+              city: 'Austin',
+              state: 'TX',
+              postcode: '73301',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 2000,
+        })
+      )
+      expect(result3.status).toBe('FLAG')
+      expect(
+        result3.executedRules[0]?.vars?.[0]?.value?.['agg:addr-mixed']
+      ).toBe(3)
+    })
+  })
+
+  describe('Payment Details Address aggregation - destination direction', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-DEST',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-dest' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-dest',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'RECEIVER',
+            transactionDirection: 'RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregates transactions by destination payment details address', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // First transaction with destination address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-dest-1',
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'dest-card-1',
+            address: {
+              addressLines: ['200 Dest Way'],
+              city: 'Seattle',
+              state: 'WA',
+              postcode: '98101',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-dest']
+      ).toBe(1)
+
+      // Second transaction with same destination address
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-dest-2',
+          destinationPaymentDetails: {
+            method: 'ACH',
+            accountNumber: 'dest-ach-1',
+            bankAddress: {
+              addressLines: ['200 Dest Way'],
+              city: 'Seattle',
+              state: 'WA',
+              postcode: '98101',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-dest']
+      ).toBe(2)
+    })
+  })
+
+  describe('Payment Details Address aggregation - exclude current entity', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-EXCLUDE',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-exclude' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-exclude',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: false,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('excludes current transaction from address aggregation', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // First transaction with address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-exclude-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'exclude-card-1',
+            address: {
+              addressLines: ['300 Exclude St'],
+              city: 'Denver',
+              state: 'CO',
+              postcode: '80201',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-exclude']
+      ).toBe(0)
+
+      // Second transaction with same address
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-exclude-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'exclude-card-2',
+            address: {
+              addressLines: ['300 Exclude St'],
+              city: 'Denver',
+              state: 'CO',
+              postcode: '80201',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('ALLOW')
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-exclude']
+      ).toBe(1)
+
+      // Third transaction with same address
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-exclude-3',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'exclude-card-3',
+            address: {
+              addressLines: ['300 Exclude St'],
+              city: 'Denver',
+              state: 'CO',
+              postcode: '80201',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 2000,
+        })
+      )
+      expect(result3.status).toBe('FLAG')
+      expect(
+        result3.executedRules[0]?.vars?.[0]?.value?.['agg:addr-exclude']
+      ).toBe(2)
+    })
+  })
+
+  describe('Payment Details Address aggregation - different aggregation functions', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-UNIQUE',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-unique' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-unique',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:originUserId',
+            aggregationFunc: 'UNIQUE_COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    setUpUsersHooks(TEST_TENANT_ID, [
+      getTestUser({
+        userId: 'U-1',
+      }),
+      getTestUser({
+        userId: 'U-2',
+      }),
+    ])
+
+    test('counts unique users per payment details addresses', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs('2025-01-01').valueOf()
+
+      // First transaction with address A
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-unique-1',
+          originUserId: 'U-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'unique-card-1',
+            address: {
+              addressLines: ['Address A'],
+              city: 'City A',
+              state: 'ST',
+              postcode: '12345',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-unique']
+      ).toBe(1)
+
+      // Second transaction with address B (different address) - same method type
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-unique-2',
+          originUserId: 'U-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'unique-card-2',
+            address: {
+              addressLines: ['Address A'],
+              city: 'City A',
+              state: 'ST',
+              postcode: '12345',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-unique']
+      ).toBe(2)
+
+      // Third transaction with address C (different address) - same method type
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-unique-3',
+          originUserId: 'U-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'unique-card-3',
+            address: {
+              addressLines: ['Address A'],
+              city: 'City A',
+              state: 'ST',
+              postcode: '12345',
+              country: 'US',
+            },
+          },
+          timestamp: timestamp + 2000,
+        })
+      )
+      expect(result3.status).toBe('FLAG')
+      expect(
+        result3.executedRules[0]?.vars?.[0]?.value?.['agg:addr-unique']
+      ).toBe(2)
+    })
+  })
+
+  describe('Payment Details Address aggregation - time window variations', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-TIME',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-time' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-time',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'hour' },
+              end: { units: 0, granularity: 'hour' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('respects time window boundaries for address aggregation', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const baseTime = dayjs()
+
+      // First transaction within time window
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-time-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'time-card-1',
+            address: {
+              addressLines: ['400 Time St'],
+              city: 'Portland',
+              state: 'OR',
+              postcode: '97201',
+              country: 'US',
+            },
+          },
+          timestamp: baseTime.subtract(30, 'minute').valueOf(),
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-time']
+      ).toBe(1)
+
+      // Second transaction within time window
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-time-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'time-card-2',
+            address: {
+              addressLines: ['400 Time St'],
+              city: 'Portland',
+              state: 'OR',
+              postcode: '97201',
+              country: 'US',
+            },
+          },
+          timestamp: baseTime.subtract(15, 'minute').valueOf(),
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+      expect(
+        result2.executedRules[0]?.vars?.[0]?.value?.['agg:addr-time']
+      ).toBe(2)
+
+      // Third transaction outside time window (should not count)
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-time-3',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'time-card-3',
+            address: {
+              addressLines: ['400 Time St'],
+              city: 'Portland',
+              state: 'OR',
+              postcode: '97201',
+              country: 'US',
+            },
+          },
+          timestamp: baseTime.subtract(2, 'hour').valueOf(),
+        })
+      )
+      expect(result3.status).toBe('ALLOW')
+      expect(
+        result3.executedRules[0]?.vars?.[0]?.value?.['agg:addr-time']
+      ).toBe(1)
+    })
+  })
+
+  describe('Payment Details Address aggregation - no address scenarios', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-ADDR-NO-ADDR',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:addr-no-addr' }, 0] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:addr-no-addr',
+            type: 'PAYMENT_DETAILS_ADDRESS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('handles transactions without addresses gracefully', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+
+      const timestamp = dayjs().valueOf()
+
+      // Transaction with no address
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-no-addr-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'no-addr-card-1',
+            // No address field
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      expect(
+        result1.executedRules[0]?.vars?.[0]?.value?.['agg:addr-no-addr']
+      ).toBeUndefined()
+    })
   })
 })

@@ -6,10 +6,8 @@ import {
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts/repository'
-import {
-  ClickhouseTableDefinition,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { logger } from '@/core/logger'
 
 async function migrateTenant(tenant: Tenant) {

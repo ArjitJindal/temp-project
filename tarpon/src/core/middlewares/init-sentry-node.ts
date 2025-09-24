@@ -1,4 +1,7 @@
-import * as Sentry from '@sentry/node'
+import {
+  init as initNodeSentry,
+  withScope as withScopeSentryNode,
+} from '@sentry/node'
 import { isQaEnv } from '@flagright/lib/qa'
 import { getContext } from '../utils/context-storage'
 import { envIs } from '@/utils/env'
@@ -12,9 +15,9 @@ export const initSentryNode =
       return handler()
     }
 
-    Sentry.init(SENTRY_INIT_CONFIG)
+    initNodeSentry(SENTRY_INIT_CONFIG)
 
-    return Sentry.withScope((scope) => {
+    return withScopeSentryNode((scope) => {
       scope.clear()
       scope.setTags(getContext()?.logMetadata || {})
       scope.setExtras(getContext()?.sentryExtras || {})

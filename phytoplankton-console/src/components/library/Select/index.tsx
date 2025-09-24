@@ -8,7 +8,6 @@ import {
   size as floatingUiSize,
   useDismiss,
   useFloating,
-  useFocus,
   useInteractions,
 } from '@floating-ui/react';
 import { uniq } from 'lodash';
@@ -54,6 +53,7 @@ interface CommonProps {
   placeholderIcon?: React.ReactNode;
   hideBorders?: boolean;
   width?: string | number;
+  rootRef?: (node: HTMLElement | null) => void;
 }
 
 export interface SingleProps<Value extends Comparable> extends CommonProps, InputProps<Value> {
@@ -216,13 +216,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     }
   }, [update, isOpen]);
 
-  const focus = useFocus(context);
-
   const dismiss = useDismiss(context, {
     ancestorScroll: true,
   });
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([focus, dismiss]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
 
   const selectedOptions: Option<Value>[] = useMemo(() => {
     return availableOptions.filter((option): option is Option<Value> => {
@@ -336,7 +334,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                       ? props.value?.filter((v) => v !== selectedValue)
                       : [...(props.value ?? []), selectedValue];
                     props.onChange?.(newValue);
-                    setSearchText('');
                   } else if (props.mode === 'DYNAMIC') {
                     if (option.isVirtual) {
                       setVirtualOptions((prev) => {
@@ -364,12 +361,15 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         </FloatingPortal>
       )}
       <div
-        ref={refs.setReference}
+        ref={(ref) => {
+          refs.setReference(ref);
+          props.rootRef?.(ref);
+        }}
         style={width != null ? { width } : undefined}
         {...getReferenceProps()}
         className={s.rootWrapper}
         role="combobox"
-        data-cy={cn('input')}
+        data-cy={'input'}
       >
         <div
           data-cy={cn(
@@ -397,7 +397,9 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             },
           )}
           onClick={() => {
-            inputRef?.focus();
+            if (!isFocused) {
+              inputRef?.focus();
+            }
           }}
         >
           <div className={s.placeholder}>
@@ -419,7 +421,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             ))}
           <input
             type="text"
-            onFocus={() => setIsFocused(true)}
+            onFocus={() => {
+              setIsFocused(true);
+              if (!isOpen) {
+                handleOpenChange(true);
+              }
+            }}
             onBlur={() => {
               setIsFocused(false);
             }}
@@ -428,6 +435,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             disabled={isDisabled}
             value={searchText ?? ''}
             onChange={(e) => handleChangeSearchText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Tab') {
+                handleOpenChange(false);
+              }
+            }}
           />
           <div className={s.rightIcons}>
             {showCopyIcon && (
@@ -447,7 +459,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
               />
             )}
             {isLoading && <LoaderIcon className={cn(s.rightIcon, s.loadingIcon)} />}
-            <ArrowDownIcon className={cn(s.rightIcon, s.arrowDownIcon)} />
+            <ArrowDownIcon
+              className={cn(s.rightIcon, s.arrowDownIcon)}
+              onClick={() => {
+                handleOpenChange(!isOpen);
+              }}
+            />
           </div>
         </div>
       </div>

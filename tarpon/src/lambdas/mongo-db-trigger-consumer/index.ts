@@ -6,20 +6,22 @@ import {
   Filter,
   FindCursor,
 } from 'mongodb'
-import { Dictionary, groupBy, memoize } from 'lodash'
+import type { Dictionary } from 'lodash'
+import groupBy from 'lodash/groupBy'
+import memoize from 'lodash/memoize'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import * as Sentry from '@sentry/aws-serverless'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
 } from '@/utils/clickhouse/utils'
 import { traceable } from '@/core/xray'
 import {
-  ClickhouseTableDefinition,
   ClickHouseTables,
   MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE,
 } from '@/utils/clickhouse/definition'
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { CurrencyService } from '@/services/currency'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
@@ -30,30 +32,7 @@ import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { logger } from '@/core/logger'
 import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
 import { envIs } from '@/utils/env'
-
-type TableDetails = {
-  tenantId: string
-  collectionName: string
-  clickhouseTable: ClickhouseTableDefinition
-  mongoCollectionName: string
-}
-
-type MongoConsumerFilterDocument = {
-  type: 'filter'
-  value: Filter<Document>
-}
-
-type MongoConsumerIdDocument = {
-  type: 'id'
-  value: string
-}
-
-export type MongoConsumerMessage = {
-  operationType: 'delete' | 'insert' | 'update' | 'replace'
-  documentKey: MongoConsumerFilterDocument | MongoConsumerIdDocument
-  clusterTime: number
-  collectionName: string
-}
+import { MongoConsumerMessage, TableDetails } from '@/@types/mongo'
 
 @traceable
 export class MongoDbConsumer {
@@ -104,7 +83,7 @@ export class MongoDbConsumer {
         logger.warn(message, logObject)
         logger.info(`allTenantIds: ${JSON.stringify(allTenantIds, null, 2)}`)
         logger.info(`tenantId: ${tenantId}`)
-        Sentry.captureException(new Error(message), { extra: logObject })
+        captureExceptionSentry(new Error(message), { extra: logObject })
         return false
       }
       return true

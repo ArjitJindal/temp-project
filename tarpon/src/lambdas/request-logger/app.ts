@@ -1,6 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
-import { groupBy } from 'lodash'
-import * as Sentry from '@sentry/aws-serverless'
+import groupBy from 'lodash/groupBy'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -23,19 +23,16 @@ const captureException = (log: ApiRequestLog) => {
     method: log.method,
     timestamp: log.timestamp,
   })
-  Sentry.captureException(
-    new Error(`Unknown tenantId found: ${log.tenantId}`),
-    {
-      extra: {
-        tenantId: log.tenantId,
-        requestId: log.requestId || 'no-request-id',
-        traceId: log.traceId,
-        path: log.path,
-        method: log.method,
-        timestamp: log.timestamp,
-      },
-    }
-  )
+  captureExceptionSentry(new Error(`Unknown tenantId found: ${log.tenantId}`), {
+    extra: {
+      tenantId: log.tenantId,
+      requestId: log.requestId || 'no-request-id',
+      traceId: log.traceId,
+      path: log.path,
+      method: log.method,
+      timestamp: log.timestamp,
+    },
+  })
 }
 
 export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {

@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getMlModelsSample } from '../samplers/ml-models'
 import { RuleMLModel } from '@/@types/openapi-internal/RuleMLModel'
 

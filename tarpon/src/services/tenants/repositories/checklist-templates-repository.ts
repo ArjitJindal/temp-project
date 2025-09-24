@@ -1,6 +1,7 @@
 import { MongoClient, AggregationCursor } from 'mongodb'
 import { v4 as uuid4 } from 'uuid'
-import { isNil, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import {
   paginatePipeline,
   prefixRegexMatchFilter,

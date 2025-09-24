@@ -1,5 +1,5 @@
 import { APIGatewayProxyResult, Handler } from 'aws-lambda'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { InternalServerError } from 'http-errors'
 import { getAllowedOrigins } from '@lib/openapi/openapi-internal-constants'
 import { logger } from '@/core/logger'

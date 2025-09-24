@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest, InternalServerError, NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'

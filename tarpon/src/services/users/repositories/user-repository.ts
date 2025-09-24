@@ -23,16 +23,14 @@ import {
   UpdateCommandInput,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-import {
-  get,
-  isEmpty,
-  keyBy,
-  mapValues,
-  mergeWith,
-  omit,
-  set,
-  uniq,
-} from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import keyBy from 'lodash/keyBy'
+import mapValues from 'lodash/mapValues'
+import mergeWith from 'lodash/mergeWith'
+import omit from 'lodash/omit'
+import set from 'lodash/set'
+import uniq from 'lodash/uniq'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import {
   getUsersFilterByRiskLevel,
@@ -82,7 +80,6 @@ import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRul
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import {
@@ -104,6 +101,7 @@ import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { UserApproval } from '@/@types/openapi-internal/UserApproval'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
 
 type Params = OptionalPaginationParams &
   DefaultApiGetAllUsersListRequest &
@@ -365,25 +363,22 @@ export class UserRepository {
       filterConditions.push({ $and: filterNameConditions })
 
       if (useQuickSearch) {
-        // As quick search searchs by prefix, if a user's name part contains space, we need to match it
         filterConditions.push({
-          $or: [
-            {
-              'userDetails.name.firstName': prefixRegexMatchFilter(
-                params.filterName
-              ),
+          $expr: {
+            $regexMatch: {
+              input: {
+                $concat: [
+                  '$userDetails.name.firstName',
+                  ' ',
+                  '$userDetails.name.middleName',
+                  ' ',
+                  '$userDetails.name.lastName',
+                ],
+              },
+              regex: `^${params.filterName}`,
+              options: 'i',
             },
-            {
-              'userDetails.name.middleName': prefixRegexMatchFilter(
-                params.filterName
-              ),
-            },
-            {
-              'userDetails.name.lastName': prefixRegexMatchFilter(
-                params.filterName
-              ),
-            },
-          ],
+          },
         })
       }
     }
@@ -965,14 +960,17 @@ export class UserRepository {
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
-      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules, #updateCount = if_not_exists(#updateCount, :zero) + :one`,
       ExpressionAttributeNames: {
         '#executedRules': 'executedRules',
         '#hitRules': 'hitRules',
+        '#updateCount': 'updateCount',
       },
       ExpressionAttributeValues: {
         ':executedRules': executedRules,
         ':hitRules': hitRulesResults,
+        ':zero': 0,
+        ':one': 1,
       },
       ReturnValues: 'ALL_NEW',
     }
@@ -992,10 +990,10 @@ export class UserRepository {
     delete user.createdAt
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
 
     return user as UserWithRulesResult | BusinessWithRulesResult
@@ -1035,10 +1033,10 @@ export class UserRepository {
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
   }
 
@@ -1117,11 +1115,12 @@ export class UserRepository {
     )
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
+
     return newUser
   }
 
@@ -1147,12 +1146,8 @@ export class UserRepository {
         { $set: updateWithoutId },
         { session: options?.session }
       ),
+      this.updateUniqueTags(userToSave?.tags),
     ]
-
-    // Skip updateUniqueTags for gocardless tenant
-    if (this.tenantId !== '4c9cdf0251') {
-      promises.push(this.updateUniqueTags(userToSave?.tags))
-    }
 
     await Promise.all(promises)
 

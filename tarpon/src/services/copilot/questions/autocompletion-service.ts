@@ -1,4 +1,4 @@
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
 import { QuestionCategory } from './types'
 import {

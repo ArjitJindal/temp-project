@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,

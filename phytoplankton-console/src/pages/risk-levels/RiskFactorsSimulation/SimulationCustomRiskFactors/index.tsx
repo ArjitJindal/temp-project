@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { cloneDeep } from 'lodash';
 import RiskFactorsTable from '@/pages/risk-levels/risk-factors/RiskFactorsTable';
 import { RiskFactor } from '@/apis';
@@ -10,6 +10,7 @@ import {
   ScopeSelectorValue,
   scopeToRiskEntityType,
 } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/utils';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 interface Props {
   simulationRiskFactors?: RiskFactor[];
@@ -24,7 +25,7 @@ export default function SimulationCustomRiskFactorsTable(props: Props) {
     jobId ?? 'new',
     activeIterationIndex,
   );
-  useEffect(() => {
+  useDeepEqualEffect(() => {
     if (
       simulationRiskFactors &&
       simulationRiskFactorsMap.CONSUMER_USER.length === 0 &&
@@ -43,7 +44,7 @@ export default function SimulationCustomRiskFactorsTable(props: Props) {
   }, [simulationRiskFactors, simulationRiskFactorsMap, setSimulationRiskFactorsMap]);
 
   const handleSimulationSave = (updatedRiskFactors: RiskFactor[]) => {
-    const updatedMap = { ...simulationRiskFactorsMap };
+    const updatedMap = cloneDeep(simulationRiskFactorsMap);
     updatedRiskFactors.forEach((riskFactor) => {
       const entityType = riskFactor.type;
       const existingIndex = updatedMap[entityType].findIndex((rf) => rf.id === riskFactor.id);

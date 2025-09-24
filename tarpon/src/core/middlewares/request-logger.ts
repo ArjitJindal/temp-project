@@ -6,13 +6,12 @@ import {
   Context,
 } from 'aws-lambda'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { logger } from '../logger'
 import { getContext } from '../utils/context-storage'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { envIs } from '@/utils/env'
 import { ApiRequestLog } from '@/@types/request-logger'
-import { handleRequestLoggerTask } from '@/lambdas/request-logger/app'
 import { getErrorMessage } from '@/utils/lang'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 
@@ -94,7 +93,10 @@ async function logRequest(
     })
 
     if (envIs('local') || envIs('test')) {
-      await handleRequestLoggerTask([data])
+      const { handleLocalRequestLogger } = await import(
+        '@/core/local-handlers/request-logger'
+      )
+      await handleLocalRequestLogger([data])
     } else {
       await getSQSClient().send(sqsMessage)
     }

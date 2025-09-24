@@ -16,7 +16,7 @@ import {
   getTestUser,
   setUpUsersHooks,
 } from '@/test-utils/user-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'

@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getCases } from './cases'
 import { reports } from './reports'
 import { ruleInstances } from './rules'

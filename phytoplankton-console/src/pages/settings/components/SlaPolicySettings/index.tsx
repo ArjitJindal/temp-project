@@ -289,6 +289,43 @@ export function SlaPolicySettings() {
       description="Define SLA policies for investigation"
       minRequiredResources={['read:::settings/case-management/sla-policies/*']}
     >
+      <Drawer
+        title={'Create SLA policy'}
+        description="Fill in the required information to create a SLA policy"
+        isVisible={isDrawerVisible}
+        onChangeVisibility={(isShown) => {
+          if (!isShown) {
+            setSelectedSlaPolicy(undefined);
+            setHasChanges(false);
+          }
+          setIsDrawerVisible(isShown);
+        }}
+        drawerMaxWidth="1200px"
+        hasChanges={hasChanges}
+        footer={
+          <div>
+            <Button
+              type="PRIMARY"
+              onClick={() => {
+                formRef.current?.submit();
+              }}
+            >
+              {selectedSlaPolicy ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        }
+      >
+        <PolicyForm
+          initialValues={initialValues}
+          handleCreate={handleCreate}
+          handleEdit={handleEdit}
+          formRef={formRef}
+          mode={selectedSlaPolicy ? 'EDIT' : 'CREATE'}
+          onChange={(formValues) => {
+            setHasChanges(!isEqual(formValues, initialValues));
+          }}
+        />
+      </Drawer>
       <AsyncResourceRenderer resource={slaPoliciesResult.data}>
         {(slaPolicies) => {
           if (slaPolicies.items.length === 0) {
@@ -330,43 +367,6 @@ export function SlaPolicySettings() {
           );
         }}
       </AsyncResourceRenderer>
-      <Drawer
-        title={'Create SLA policy'}
-        description="Fill in the required information to create a SLA policy"
-        isVisible={isDrawerVisible}
-        onChangeVisibility={(isShown) => {
-          if (!isShown) {
-            setSelectedSlaPolicy(undefined);
-            setHasChanges(false);
-          }
-          setIsDrawerVisible(isShown);
-        }}
-        drawerMaxWidth="1200px"
-        hasChanges={hasChanges}
-        footer={
-          <div>
-            <Button
-              type="PRIMARY"
-              onClick={() => {
-                formRef.current?.submit();
-              }}
-            >
-              {selectedSlaPolicy ? 'Update' : 'Create'}
-            </Button>
-          </div>
-        }
-      >
-        <PolicyForm
-          initialValues={initialValues}
-          handleCreate={handleCreate}
-          handleEdit={handleEdit}
-          formRef={formRef}
-          mode={selectedSlaPolicy ? 'EDIT' : 'CREATE'}
-          onChange={(formValues) => {
-            setHasChanges(!isEqual(formValues, initialValues));
-          }}
-        />
-      </Drawer>
     </SettingsCard>
   );
 }

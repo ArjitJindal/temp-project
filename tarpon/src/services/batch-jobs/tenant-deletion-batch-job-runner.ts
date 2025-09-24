@@ -3,7 +3,8 @@ import {
   ListObjectsCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
-import { memoize, orderBy } from 'lodash'
+import memoize from 'lodash/memoize'
+import orderBy from 'lodash/orderBy'
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { AccountsService } from '../accounts'
@@ -123,6 +124,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'MIGRATION_PRE_DEPLOYMENT'
   | 'MIGRATION_POST_DEPLOYMENT'
   | 'SECONDARY_QUEUE_TENANTS'
+  | 'CLICKHOUSE_SYNC_CHECKSUM'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable

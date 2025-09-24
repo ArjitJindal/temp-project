@@ -1,18 +1,16 @@
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { BadRequest, NotFound } from 'http-errors'
-import {
-  compact,
-  Dictionary,
-  isEmpty,
-  isNil,
-  isObject,
-  keyBy,
-  last,
-  map,
-  omit,
-  pick,
-} from 'lodash'
+import type { Dictionary } from 'lodash'
+import compact from 'lodash/compact'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import isObject from 'lodash/isObject'
+import keyBy from 'lodash/keyBy'
+import last from 'lodash/last'
+import map from 'lodash/map'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
 import { MongoClient } from 'mongodb'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -166,6 +164,10 @@ export type V8LogicAggregationRebuildTask = {
   totalSliceCount?: number
   userId?: string
   paymentDetails?: PaymentDetails
+  aggregationData?: {
+    type: 'ADDRESS' | 'EMAIL' | 'NAME'
+    value: string | undefined
+  }
 }
 
 export type TransactionAggregationTaskEntry = {
@@ -1634,8 +1636,10 @@ export class RulesEngineService {
           publishMetric(RULE_ERROR_COUNT_METRIC, 1, undefined, {
             aggregateOnNamespace: true,
           })
-          logger.error(
-            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`
+          // silencing this due to noise on sentry
+          logger.info(
+            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`,
+            { skipSentry: true }
           )
         }
       },

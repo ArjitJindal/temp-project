@@ -1,6 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import { InternalServerError } from 'http-errors'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -170,6 +170,7 @@ export async function handleV8PreAggregationTask(
         task.currentTimestamp,
         task.userId,
         task.paymentDetails,
+        task.aggregationData,
         task.timeWindow,
         task.totalSliceCount
       )
@@ -213,6 +214,7 @@ export async function handleV8PreAggregationTask(
         task.currentTimestamp,
         task.userId,
         task.paymentDetails,
+        task.aggregationData,
         task.timeWindow,
         task.totalSliceCount
       )
@@ -235,6 +237,7 @@ export async function handleV8PreAggregationTask(
       task.currentTimestamp,
       task.userId,
       task.paymentDetails,
+      task.aggregationData,
       task.timeWindow,
       task.totalSliceCount
     )

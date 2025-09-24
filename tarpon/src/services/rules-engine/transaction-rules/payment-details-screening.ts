@@ -1,4 +1,5 @@
-import { mapValues, uniqBy } from 'lodash'
+import mapValues from 'lodash/mapValues'
+import uniqBy from 'lodash/uniqBy'
 import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'

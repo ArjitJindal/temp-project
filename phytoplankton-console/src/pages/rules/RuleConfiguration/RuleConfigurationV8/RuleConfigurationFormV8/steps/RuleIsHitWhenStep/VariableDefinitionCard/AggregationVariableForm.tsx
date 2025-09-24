@@ -37,7 +37,7 @@ import VariableTimeWindow from '@/pages/rules/RuleConfiguration/RuleConfiguratio
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import NumberInput from '@/components/library/NumberInput';
 import {
   FormRuleAggregationVariable,
@@ -211,11 +211,23 @@ export const AggregationVariableFormContent: React.FC<
   const [formValues, setFormValues] = formValuesState;
   const [aggregateByLastN, setAggregateByLastN] = useState(!!formValues.lastNEntities);
   const settings = useSettings();
+  const hasCustomAggregationFields = useFeatureEnabled('CUSTOM_AGGREGATION_FIELDS');
 
   const TYPE_OPTIONS: Array<{ value: LogicAggregationType; label: string }> = [
-    { value: 'USER_TRANSACTIONS', label: `${firstLetterUpper(settings.userAlias)} ID` },
-    { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment ID' },
+    {
+      value: 'USER_TRANSACTIONS' as LogicAggregationType,
+      label: `${firstLetterUpper(settings.userAlias)} ID`,
+    },
+    { value: 'PAYMENT_DETAILS_TRANSACTIONS' as LogicAggregationType, label: 'Payment ID' },
+    ...(hasCustomAggregationFields
+      ? [
+          { value: 'PAYMENT_DETAILS_ADDRESS' as LogicAggregationType, label: 'Address' },
+          { value: 'PAYMENT_DETAILS_EMAIL' as LogicAggregationType, label: 'Email' },
+          { value: 'PAYMENT_DETAILS_NAME' as LogicAggregationType, label: 'Name' },
+        ]
+      : []),
   ];
+
   const aggregateFieldOptions = useMemo(() => {
     return entityVariables
       .filter((v) => v.entity === 'TRANSACTION' && !isTransactionOriginOrDestinationVariable(v.key))
@@ -488,13 +500,13 @@ export const AggregationVariableFormContent: React.FC<
         </Label>
         {ruleType === 'TRANSACTION' && (
           <Label label="Check transactions for" required={{ value: true, showHint: !readOnly }}>
-            <SelectionGroup
+            <Select<LogicAggregationType>
+              mode="SINGLE"
               value={formValues.type}
               onChange={(type) => handleUpdateForm({ type })}
-              mode={'SINGLE'}
               options={TYPE_OPTIONS}
-              testName="variable-type-v8"
               isDisabled={readOnly}
+              testId="variable-type-v8"
             />
           </Label>
         )}

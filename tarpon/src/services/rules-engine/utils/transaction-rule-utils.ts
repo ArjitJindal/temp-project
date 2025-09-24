@@ -1,9 +1,13 @@
 import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants'
-import { groupBy, inRange, last, mapValues } from 'lodash'
+import groupBy from 'lodash/groupBy'
+import inRange from 'lodash/inRange'
+import last from 'lodash/last'
+import mapValues from 'lodash/mapValues'
 import memoizeOne from 'memoize-one'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   AuxiliaryIndexTransaction,
+  NonUserEntityData,
   RulesEngineTransactionRepositoryInterface,
   TransactionWithRiskDetails,
 } from '../repositories/transaction-repository-interface'
@@ -137,6 +141,40 @@ export function sumTransactionAmountDetails(
       transactionAmountDetails1.transactionAmount +
       transactionAmountDetails2.transactionAmount,
     transactionCurrency: transactionAmountDetails1.transactionCurrency,
+  }
+}
+
+export async function* getTransactionsGeneratorByEntity(
+  entityData: NonUserEntityData | undefined,
+  transactionRepository: RulesEngineTransactionRepositoryInterface,
+  options: { afterTimestamp: number; beforeTimestamp: number },
+  attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+): AsyncGenerator<{
+  sendingTransactions: AuxiliaryIndexTransaction[]
+  receivingTransactions: AuxiliaryIndexTransaction[]
+}> {
+  const sendingTransactionsGenerator =
+    transactionRepository.getNonUserSendingTransactionsGeneratorByEntity(
+      entityData,
+      options,
+      attributesToFetch
+    )
+  const receivingTransactionsGenerator =
+    transactionRepository.getNonUserReceivingTransactionsGeneratorByEntity(
+      entityData,
+      options,
+      attributesToFetch
+    )
+
+  for await (const data of zipGenerators(
+    sendingTransactionsGenerator,
+    receivingTransactionsGenerator,
+    { sendingTransactions: [], receivingTransactions: [] }
+  )) {
+    yield {
+      sendingTransactions: data[0],
+      receivingTransactions: data[1],
+    }
   }
 }
 

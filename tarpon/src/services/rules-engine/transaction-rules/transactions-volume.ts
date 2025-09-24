@@ -1,13 +1,11 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  compact,
-  flatMap,
-  isEmpty,
-  mergeWith,
-  random,
-  sumBy,
-  uniq,
-} from 'lodash'
+import compact from 'lodash/compact'
+import flatMap from 'lodash/flatMap'
+import isEmpty from 'lodash/isEmpty'
+import mergeWith from 'lodash/mergeWith'
+import random from 'lodash/random'
+import sumBy from 'lodash/sumBy'
+import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionsTotalAmount,

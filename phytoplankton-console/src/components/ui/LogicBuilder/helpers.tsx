@@ -227,17 +227,20 @@ export function makeConfig(
             testId="logic-operator"
           >
             <Tooltip title={props.selectedLabel}>
-              <Select
-                allowClear={false}
-                options={finalOptions}
-                value={props.selectedKey}
-                onChange={(key) => {
-                  const item = options.find((x) => x.key === key);
-                  if (item && item.path) {
-                    props.setField(item.path);
-                  }
-                }}
-              />
+              {({ ref }) => (
+                <Select
+                  rootRef={ref}
+                  allowClear={false}
+                  options={finalOptions}
+                  value={props.selectedKey}
+                  onChange={(key) => {
+                    const item = options.find((x) => x.key === key);
+                    if (item && item.path) {
+                      props.setField(item.path);
+                    }
+                  }}
+                />
+              )}
             </Tooltip>
           </OptionalLabel>
         );
@@ -253,17 +256,20 @@ export function makeConfig(
         return (
           <Label label={'Function'} testId="logic-function">
             <Tooltip title={props.selectedLabel}>
-              <Select
-                allowClear={false}
-                options={options}
-                value={value}
-                onChange={(key) => {
-                  const item = props.items.find((x) => x.key === key);
-                  if (item && item.path) {
-                    props.setField(item.path);
-                  }
-                }}
-              />
+              {({ ref }) => (
+                <Select
+                  rootRef={ref}
+                  allowClear={false}
+                  options={options}
+                  value={value}
+                  onChange={(key) => {
+                    const item = props.items.find((x) => x.key === key);
+                    if (item && item.path) {
+                      props.setField(item.path);
+                    }
+                  }}
+                />
+              )}
             </Tooltip>
           </Label>
         );
@@ -328,12 +334,15 @@ export const FieldInput = (props: FieldInputProps) => {
     <OptionalLabel label={'Variable'} showLabel={showlabel} testId="logic-variable">
       <div className={s.variableSelects}>
         <Tooltip title={selectedOption?.label}>
-          <Select
-            allowClear={false}
-            options={options.filter((x) => !isVirtualFieldVarName(x.value))}
-            value={selectedOption?.value}
-            onChange={onChange}
-          />
+          {({ ref }) => (
+            <Select
+              rootRef={ref}
+              allowClear={false}
+              options={options.filter((x) => !isVirtualFieldVarName(x.value))}
+              value={selectedOption?.value}
+              onChange={onChange}
+            />
+          )}
         </Tooltip>
         {selectedOption && selectedOptionVirtualFieldsOptions.length > 0 && (
           <Select

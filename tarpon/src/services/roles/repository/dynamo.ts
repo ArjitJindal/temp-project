@@ -6,7 +6,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import {
   getNamespace,
   getNamespacedRoleName,
@@ -139,6 +139,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role = await this.getRole(id)
 
     if (!role) {
+      // add the role from auth0
       throw new Error('Role not found with id: ' + id)
     }
 

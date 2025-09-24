@@ -22,7 +22,10 @@ import {
   getAllUsagePlans,
   USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
-import { compact, flatten, isEmpty, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import flatten from 'lodash/flatten'
+import isEmpty from 'lodash/isEmpty'
+import uniq from 'lodash/uniq'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'
@@ -879,6 +882,15 @@ export class TenantService {
       dynamoDb: this.dynamoDb,
     })
     return tenantRepository.getTenantSettings()
+  }
+
+  public async getTenantById(tenantId: string) {
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const tenant = await accountsService.getTenantById(tenantId)
+    if (!tenant) {
+      throw new createHttpError.NotFound('Tenant id not found')
+    }
+    return tenant
   }
 
   public async deleteTenant(

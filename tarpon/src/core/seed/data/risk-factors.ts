@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { ID_PREFIXES } from './seeds'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'

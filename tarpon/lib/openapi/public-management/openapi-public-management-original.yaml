@@ -1628,7 +1628,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         otherReason:
           type: string
         comment:
@@ -1648,7 +1648,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         otherReason:
           type: string
         comment:
@@ -1693,30 +1693,6 @@ components:
         - type
         - ruleId
         - checksFor
-    CaseReasons:
-      type: string
-      title: CaseReasons
-      enum:
-        - Other
-        - False positive
-        - Documents collected
-        - Transaction Rejected
-        - Transaction Refunded
-        - Suspicious activity reported (SAR)
-        - Documents not collected
-        - Investigation completed
-        - Escalated
-        - Fraud
-        - Anti-money laundering
-        - Terrorist financing
-        - User Blacklisted
-        - User Terminated
-        - Internal referral
-        - External referral
-        - Confirmed fraud
-        - Confirmed genuine
-        - Suspected fraud
-        - True positive
     RuleInstanceUpdatable:
       title: RuleInstanceUpdatable
       type: object

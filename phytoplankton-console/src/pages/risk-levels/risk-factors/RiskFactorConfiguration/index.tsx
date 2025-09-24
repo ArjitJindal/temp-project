@@ -285,6 +285,7 @@ export const RiskFactorConfiguration = (props: Props) => {
                     }}
                     icon={<EditOutlined />}
                     requiredResources={['write:::risk-scoring/risk-factors/*']}
+                    testName={'edit-button'}
                   >
                     Edit
                   </Button>

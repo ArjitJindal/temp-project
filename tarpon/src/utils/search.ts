@@ -2,7 +2,7 @@ import {
   getEditDistance,
   getEditDistanceForNormalizedStrings,
 } from '@flagright/lib/utils'
-import { max } from 'lodash'
+import max from 'lodash/max'
 
 export function calculateLevenshteinDistancePercentage(
   str1: string,

@@ -10,7 +10,7 @@ import {
   setUpTransactionsHooks,
 } from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { AlertUpdatable } from '@/@types/openapi-public-management/AlertUpdatable'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'

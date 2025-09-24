@@ -2,7 +2,7 @@ import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -631,7 +631,7 @@ export class TransactionService {
   public async importFlatFile(request: TransactionFlatFileUploadRequest) {
     const { file } = request
 
-    const files = await this.s3Service.copyFilesToPermanentBucket([file])
+    const files = await this.s3Service.copyFlatFilesToPermanentBucket([file])
     await sendBatchJobCommand({
       tenantId: this.tenantId,
       type: 'FLAT_FILES_VALIDATION',

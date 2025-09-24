@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import uniqBy from 'lodash/uniqBy'
 import {
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
   ENABLE_PHONETIC_MATCHING_SCHEMA,
@@ -40,7 +41,7 @@ import { traceable } from '@/core/xray'
 import { notNullish } from '@/utils/array'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'

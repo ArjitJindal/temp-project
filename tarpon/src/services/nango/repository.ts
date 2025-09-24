@@ -56,8 +56,12 @@ export class NangoRepository {
     }
 
     if (process.env.NODE_ENV === 'development') {
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
       await Promise.all(
-        keys.map((key) => handleLocalChangeCapture(this.tenantId, key))
+        keys.map((key) => handleLocalTarponChangeCapture(this.tenantId, [key]))
       )
     }
   }
@@ -206,7 +210,11 @@ export class NangoRepository {
     await this.dynamoDb.send(crmRecord)
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, key)
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
 
@@ -217,15 +225,4 @@ export class NangoRepository {
       [link]
     )
   }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-
-  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'TARPON')
 }

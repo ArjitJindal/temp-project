@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { distance } from 'fastest-levenshtein'
 import { ACCENTS_MAP } from './accents'
 

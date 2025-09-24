@@ -1,4 +1,4 @@
-import { range } from 'lodash'
+import range from 'lodash/range'
 import { bulkSendMessages } from '../sns-sqs-client'
 
 const MOCK_QUEUE_URL = 'https://sqs.us-west-2.amazonaws.com/1234567890/my-queue'

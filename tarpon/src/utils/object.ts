@@ -1,15 +1,13 @@
 import crypto from 'crypto'
-import {
-  pick,
-  merge,
-  mergeWith,
-  isNil,
-  isArray,
-  uniqBy,
-  isPlainObject,
-  transform,
-  isUndefined,
-} from 'lodash'
+import pick from 'lodash/pick'
+import merge from 'lodash/merge'
+import mergeWith from 'lodash/mergeWith'
+import isNil from 'lodash/isNil'
+import isArray from 'lodash/isArray'
+import uniqBy from 'lodash/uniqBy'
+import isPlainObject from 'lodash/isPlainObject'
+import transform from 'lodash/transform'
+import isUndefined from 'lodash/isUndefined'
 import { stringify } from 'safe-stable-stringify'
 
 export function generateChecksum(obj: any, length = 64) {

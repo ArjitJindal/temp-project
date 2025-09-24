@@ -1,4 +1,5 @@
-import { last, uniq } from 'lodash'
+import last from 'lodash/last'
+import uniq from 'lodash/uniq'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DashboardRefreshBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

@@ -1049,7 +1049,23 @@ paths:
         - x-api-key: []
       summary: Batch create consumer users
       operationId: post-batch-consumer-users
-      parameters: []
+      parameters:
+        - name: lockCraRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
+        - name: lockKycRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
       requestBody:
         description: ''
         content:
@@ -1490,6 +1506,23 @@ paths:
         - x-api-key: []
       summary: Batch create business users
       operationId: post-batch-business-users
+      parameters:
+        - name: lockCraRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
+        - name: lockKycRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
       requestBody:
         description: ''
         content:
@@ -1766,6 +1799,23 @@ paths:
             schema:
               $ref: '#/components/schemas/ConsumerUserEventBatchRequest'
         required: true
+      parameters:
+        - name: lockCraRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
+        - name: lockKycRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
       responses:
         '201':
           description: Created
@@ -1965,6 +2015,23 @@ paths:
         - x-api-key: []
       summary: Batch create business user events
       operationId: post-batch-business-user-events
+      parameters:
+        - name: lockCraRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
+        - name: lockKycRiskLevel
+          in: query
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
+          required: false
+          schema:
+            $ref: '#/components/schemas/BooleanString'
       requestBody:
         description: ''
         content:
@@ -2706,6 +2773,9 @@ components:
           minLength: 1
           type: string
           description: Value for a given key when you are creating a custom variable
+        isTimestamp:
+          type: boolean
+          description: Flag to indicate if the tag value is a timestamp
       description:
         Generic key-value pair model to append a custom variable being sent
         to Flagright API
@@ -2828,8 +2898,6 @@ components:
             - key: customKey
               value: customValue
       properties:
-        transactionState:
-          $ref: '#/components/schemas/TransactionState'
         originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
         destinationAmountDetails:
@@ -2906,12 +2974,14 @@ components:
         originUserId: 8650a2611d0771cba03310f74bf6
         destinationUserId: 9350a2611e0771cba03310f74bf6
         timestamp: 1262300400111
+        transactionState: CREATED
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
           type: DEPOSIT
           originUserId: 8650a2611d0771cba03310f74bf6
           destinationUserId: 9350a2611e0771cba03310f74bf6
+          transactionState: CREATED
       properties:
         type:
           type: string
@@ -2934,6 +3004,8 @@ components:
           description:
             UserId for transaction's destination. In other words, where the
             value is being transferred to.
+        transactionState:
+          $ref: '#/components/schemas/TransactionState'
       required:
         - type
         - transactionId
@@ -4645,6 +4717,8 @@ components:
         networkProviderRiskScore:
           type: number
           description: Risk score of the card from your network provider
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -4724,8 +4798,6 @@ components:
           $ref: '#/components/schemas/Address'
       required:
         - method
-        - endToEndId
-        - payId
     IBANDetails:
       title: IBANDetails
       type: object
@@ -4841,6 +4913,14 @@ components:
           $ref: '#/components/schemas/Amount'
         network:
           $ref: '#/components/schemas/WalletNetwork'
+        address:
+          $ref: '#/components/schemas/Address'
+        countryOfNationality:
+          $ref: '#/components/schemas/CountryCode'
+        dateOfBirth:
+          type: string
+          pattern: ^(\d{4}-\d{2}-\d{2})*$
+          description: Date of birth of the account holder (YYYY-MM-DD)
       required:
         - method
     WalletNetwork:
@@ -4947,6 +5027,9 @@ components:
           type: string
           minLength: 1
           description: Account number
+        routingNumber:
+          type: string
+          description: Routing number of the bank
         accountBalance:
           $ref: '#/components/schemas/Amount'
         accountType:
@@ -4994,6 +5077,11 @@ components:
           description: Contact Number of the account holder
         emailId:
           $ref: '#/components/schemas/EmailId'
+        name:
+          type: string
+          description: Name of the account holder
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5878,8 +5966,8 @@ components:
               type: string
           required:
             - userId
-    CaseClosedDetails:
-      title: CaseClosedDetails
+    CaseStatusDetails:
+      title: CaseStatusDetails
       type: object
       properties:
         caseId:
@@ -5914,8 +6002,8 @@ components:
           type: array
           items:
             type: string
-    AlertClosedDetails:
-      title: AlertClosedDetails
+    AlertStatusDetails:
+      title: AlertStatusDetails
       type: object
       properties:
         alertId:
@@ -6096,9 +6184,9 @@ components:
             data:
               oneOf:
                 - $ref: '#/components/schemas/UserStateDetails'
-                - $ref: '#/components/schemas/CaseClosedDetails'
+                - $ref: '#/components/schemas/CaseStatusDetails'
                 - $ref: '#/components/schemas/CaseOpenedDetails'
-                - $ref: '#/components/schemas/AlertClosedDetails'
+                - $ref: '#/components/schemas/AlertStatusDetails'
                 - $ref: '#/components/schemas/AlertOpenedDetails'
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
@@ -6125,6 +6213,8 @@ components:
         - LIST_UPDATED
         - SANCTIONS_STATUS_UPDATED
         - ADVERSE_MEDIA_STATUS_UPDATED
+        - CASE_ESCALATED
+        - ALERT_ESCALATED
     ListType:
       type: string
       enum:
@@ -6325,6 +6415,9 @@ components:
           type: string
         checkIdentifier:
           type: string
+        routingNumber:
+          type: string
+          description: Routing number of the bank
         name:
           type: string
         deliveryStatus:
@@ -6353,6 +6446,10 @@ components:
         identifier:
           type: string
           description: Identifier for the cash transaction
+        address:
+          $ref: '#/components/schemas/Address'
+        name:
+          type: string
       required:
         - method
     CountryCode:

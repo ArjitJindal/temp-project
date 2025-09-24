@@ -1,4 +1,5 @@
-import { compact, memoize } from 'lodash'
+import compact from 'lodash/compact'
+import memoize from 'lodash/memoize'
 import { RandomNumberGenerator } from '../samplers/prng'
 import { users } from './users'
 import { AUDIT_LOGS_STATUS_CHANGE_SEED, CASES_SEED } from './seeds'

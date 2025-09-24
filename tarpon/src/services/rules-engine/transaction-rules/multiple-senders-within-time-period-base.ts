@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-
-import { chain, compact, mergeWith, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import mergeWith from 'lodash/mergeWith'
+import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
@@ -212,11 +213,13 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     )
 
     if (userAggregationData) {
-      return chain(userAggregationData)
-        .flatMap((aggregationData) => aggregationData.senderKeys ?? [])
-        .compact()
-        .uniq()
-        .value()
+      return uniq(
+        compact(
+          userAggregationData.flatMap(
+            (aggregationData) => aggregationData.senderKeys ?? []
+          )
+        )
+      )
     }
 
     if (this.shouldUseRawData()) {

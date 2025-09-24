@@ -161,6 +161,12 @@ export const webhooksHandler = lambdaApi()(
       '100.20.92.101',
       '44.225.181.72',
       '44.227.217.144',
+
+      // New IPs
+      '52.34.139.153',
+      '54.69.127.183',
+      '44.247.133.183',
+      '52.26.211.56',
     ]
 
     handlers.registerPostWebhookNango(async (ctx, request) => {

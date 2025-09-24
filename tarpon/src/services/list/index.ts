@@ -1,7 +1,7 @@
 import readline from 'node:readline'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import * as csvParse from '@fast-csv/parse'
+import { parseString } from '@fast-csv/parse'
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials as STSCredentials } from '@aws-sdk/client-sts'
 import {
@@ -10,7 +10,7 @@ import {
 } from 'aws-lambda'
 import { NodeJsRuntimeStreamingBlobPayloadOutputTypes } from '@smithy/types/dist-types/streaming-payload/streaming-blob-payload-output-types'
 import { MongoClient } from 'mongodb'
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
@@ -134,7 +134,7 @@ export class ListService {
         throw new Error('No columns found in the file')
       }
 
-      const files = await s3Service.copyFilesToPermanentBucket([fileInfo])
+      const files = await s3Service.copyFlatFilesToPermanentBucket([fileInfo])
 
       await sendBatchJobCommand({
         tenantId: this.tenantId,
@@ -502,8 +502,7 @@ export class ListService {
     for await (const line of rl) {
       try {
         const parsedRow: string[] = await new Promise((resolve, reject) => {
-          csvParse
-            .parseString(line)
+          parseString(line)
             .on('data', (row: string[]) => resolve(row))
             .on('error', (error) => reject(error))
             .on('end', () => resolve([]))
@@ -625,7 +624,7 @@ export class ListService {
     file: FileInfo
   ): Promise<ListImportResponse> {
     const s3Service = new S3Service(this.s3 as S3, this.s3Config as S3Config)
-    const files = await s3Service.copyFilesToPermanentBucket([file])
+    const files = await s3Service.copyFlatFilesToPermanentBucket([file])
     await sendBatchJobCommand({
       tenantId: this.tenantId,
       type: 'FLAT_FILES_VALIDATION',

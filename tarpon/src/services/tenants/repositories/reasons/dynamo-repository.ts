@@ -8,7 +8,7 @@ import {
   NativeAttributeValue,
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import {
   TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA,
   TransactionTimeRange,

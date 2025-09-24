@@ -327,8 +327,12 @@ const customTextWidget: CoreWidgets['text'] = {
         if (entityId) {
           return (
             <DynamicValueFieldWrapper entityId={entityId}>
-              {(dynamicKeyFilter, forceUpdateTrigger) => {
-                const currentValue = forceUpdateTrigger > 0 ? undefined : props.value;
+              {(dynamicKeyFilter) => {
+                const keyValue = getTagKeyValue(entityId);
+                const currentValue = !keyValue ? undefined : props.value;
+                if (!keyValue) {
+                  props.setValue(undefined);
+                }
 
                 if (isArrayType) {
                   return (
@@ -349,7 +353,7 @@ const customTextWidget: CoreWidgets['text'] = {
                   <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
                     <SingleListSelectDynamic
                       uniqueTypeProps={uniqueTypeProps}
-                      value={currentValue as string}
+                      value={currentValue}
                       onChange={(val) => props.setValue(val)}
                       filter={dynamicKeyFilter}
                     />
@@ -793,9 +797,12 @@ const customFieldWidget: FieldWidget<Config> = {
     const queryBuilderConfig = props.config as QueryBuilderConfig;
     if (isViewMode(queryBuilderConfig)) {
       const { variableColors, onClickVariable } = queryBuilderConfig.settings;
+      const selectedOption = finalOptions.find((x) => x.value === finalValue);
       return (
         <VariableInfoPopover onClick={props.value && (() => onClickVariable?.(props.value))}>
-          <ViewModeTags color={variableColors?.[props.value]}>{finalValue}</ViewModeTags>
+          <ViewModeTags color={variableColors?.[props.value]}>
+            {selectedOption?.label ?? finalValue}
+          </ViewModeTags>
         </VariableInfoPopover>
       );
     }

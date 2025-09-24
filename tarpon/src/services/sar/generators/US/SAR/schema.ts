@@ -1,8 +1,9 @@
-/**
- * Party types: Page 25 of https://bsaefiling.fincen.treas.gov/docs/XMLUserGuide_FinCENSAR.pdf
- */
-
-import { pick, merge, omit, isNumber, cloneDeep, has } from 'lodash'
+import pick from 'lodash/pick'
+import merge from 'lodash/merge'
+import omit from 'lodash/omit'
+import isNumber from 'lodash/isNumber'
+import cloneDeep from 'lodash/cloneDeep'
+import has from 'lodash/has'
 import { FincenJsonSchema } from './resources/EFL_SARXBatchSchema'
 import { AttributeInfos } from './scripts/attribute-infos'
 

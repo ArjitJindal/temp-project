@@ -1,4 +1,6 @@
-import { keyBy, sortBy, sum } from 'lodash'
+import keyBy from 'lodash/keyBy'
+import sortBy from 'lodash/sortBy'
+import sum from 'lodash/sum'
 import { GranularityValuesType } from '../../dashboard/repositories/types'
 import { getTimeLabels } from '../../dashboard/utils'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'

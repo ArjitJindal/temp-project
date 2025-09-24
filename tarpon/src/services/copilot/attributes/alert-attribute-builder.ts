@@ -1,4 +1,8 @@
-import { compact, isEmpty, isNil, omitBy, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
+import uniqBy from 'lodash/uniqBy'
 import { ruleNarratives } from '../rule-narratives'
 import { AttributeSet, RuleAttribute } from './attribute-set'
 import {

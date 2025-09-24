@@ -3,19 +3,17 @@ import {
   replaceMagicKeyword,
   traverse,
 } from '@flagright/lib/utils'
-import {
-  cloneDeep,
-  get,
-  isArray,
-  isNil,
-  isNaN,
-  isPlainObject,
-  mapValues,
-  omitBy,
-  set,
-  uniq,
-  unset,
-} from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import get from 'lodash/get'
+import isArray from 'lodash/isArray'
+import isNil from 'lodash/isNil'
+import isNaN from 'lodash/isNaN'
+import isPlainObject from 'lodash/isPlainObject'
+import mapValues from 'lodash/mapValues'
+import omitBy from 'lodash/omitBy'
+import set from 'lodash/set'
+import uniq from 'lodash/uniq'
+import unset from 'lodash/unset'
 import { JSONPath } from 'jsonpath-plus'
 import { canAggregateMinute } from '@flagright/lib/rules-engine'
 import {

@@ -83,17 +83,13 @@ export const UsersTransactedWith: TableQuestion<
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
       GROUP BY ${otherUserIdKey}
-      ORDER BY
-          count DESC
-      LIMIT ${derivedPageSize}
-      OFFSET ${(derivedPage - 1) * derivedPageSize}
   ),
   users_data AS (
       SELECT
           username,
           type,
           id
-      FROM users
+      FROM users_by_id
       WHERE id IN (SELECT userId FROM transactions_data)
   )
   SELECT
@@ -105,7 +101,9 @@ export const UsersTransactedWith: TableQuestion<
       FROM transactions_data
       LEFT JOIN users_data
           ON transactions_data.userId = users_data.id
-      ${orderByClause}
+      ${orderByClause || 'ORDER BY count DESC'}
+      LIMIT ${derivedPageSize}
+      OFFSET ${(derivedPage - 1) * derivedPageSize}
       `
 
     const tenantId = getContext()?.tenantId ?? ''

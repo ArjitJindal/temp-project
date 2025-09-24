@@ -1,5 +1,5 @@
 import { Collection, Filter, MongoClient, WithId } from 'mongodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoBatchJobRepository } from './dynamo-repository'
 import { BatchJobFilterUtils } from './filter-utils'

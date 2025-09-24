@@ -122,17 +122,25 @@ export default function CasesStatusChangeModal(props: Props) {
           copyFeedback: 'Case URL copied to clipboard',
         });
       } else {
+        let messageText = `${capitalizeNameFromEmail(
+          auth0User?.name || '',
+        )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
+          updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
+        }`;
+
+        if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+          messageText += ` All suspended transactions will be updated to '${
+            updates.updateTransactionStatus === 'ALLOW' ? 'Allowed' : 'Blocked'
+          }' shortly.`;
+        }
+
         message.success(
           `${pluralize(
             'Case',
             props.entityIds.length,
           )} ${props.newStatus.toLowerCase()} successfully`,
           {
-            details: `${capitalizeNameFromEmail(
-              auth0User?.name || '',
-            )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
-              updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
-            }`,
+            details: messageText,
             link: makeUrl(`/case-management/case/:id`, {
               id: props.entityIds[0],
             }),
@@ -152,6 +160,7 @@ export default function CasesStatusChangeModal(props: Props) {
         caseStatus: props.newStatus,
         reason: formValues?.reasons ?? [],
         files: formValues?.files ?? [],
+        updateTransactionStatus: formValues?.updateTransactionStatus,
       };
 
       updates = getStatusChangeUpdatesFromFormValues<CaseStatusUpdate>(
@@ -179,7 +188,7 @@ export default function CasesStatusChangeModal(props: Props) {
       onError: (e) => {
         message.fatal(`Failed to update the case! ${getErrorMessage(e)}`, e);
       },
-      onSuccess: async () => {
+      onSuccess: async (_, variables) => {
         await queryClient.invalidateQueries({
           predicate(query) {
             const checklistQueryKey = ALERT_CHECKLIST('');
@@ -190,16 +199,27 @@ export default function CasesStatusChangeModal(props: Props) {
           },
         });
         await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(props.entityIds[0], {}));
+
         if (currentUser?.reviewerId) {
-          message.warn(
-            `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
-              props.entityIds.length > 1 ? 'are' : 'is'
-            } sent to review ${
-              users[currentUser.reviewerId]?.name ||
-              users[currentUser.reviewerId]?.email ||
-              currentUser?.reviewerId
-            }. Once approved your case action will be performed successfully.`,
-          );
+          let messageText = `${pluralize(
+            'Case',
+            props.entityIds.length,
+            true,
+          )} ${props.entityIds.join(', ')} ${
+            props.entityIds.length > 1 ? 'are' : 'is'
+          } sent to review ${
+            users[currentUser.reviewerId]?.name ||
+            users[currentUser.reviewerId]?.email ||
+            currentUser?.reviewerId
+          }. Once approved your case action will be performed successfully.`;
+
+          if (props.newStatus === 'CLOSED' && variables.updateTransactionStatus) {
+            messageText += ` All suspended transactions will be updated to '${
+              variables.updateTransactionStatus === 'ALLOW' ? 'Allowed' : 'Blocked'
+            }' on approval.`;
+          }
+
+          message.warn(messageText);
         }
         props.onSaved();
       },

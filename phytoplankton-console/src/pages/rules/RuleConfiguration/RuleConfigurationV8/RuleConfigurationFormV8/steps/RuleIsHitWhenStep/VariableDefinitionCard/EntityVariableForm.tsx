@@ -176,11 +176,31 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   );
   const settings = useSettings();
 
-  const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
+  const TX_ENTITY_TYPE_OPTIONS: Array<{
+    value: 'TRANSACTION' | 'USER';
+    label: string;
+    isDisabled?: boolean;
+  }> = [
     { value: 'TRANSACTION', label: 'Transaction' },
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
-  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string }> = [
+
+  const ALL_TX_ENTITY_TYPE_OPTIONS: Array<{
+    value: 'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER';
+    label: string;
+  }> = [
+    { value: 'TRANSACTION', label: 'Transaction' },
+    { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias?.toLowerCase()}` },
+    { value: 'BUSINESS_USER', label: `Business ${settings.userAlias?.toLowerCase()}` },
+  ];
+  const ALL_USER_ENTITY_TYPE_OPTIONS: Array<{
+    value: 'CONSUMER_USER' | 'BUSINESS_USER';
+    label: string;
+  }> = [
+    { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias?.toLowerCase()}` },
+    { value: 'BUSINESS_USER', label: `Business ${settings.userAlias?.toLowerCase()}` },
+  ];
+  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string; isDisabled?: boolean }> = [
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
 
@@ -194,7 +214,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     types:
       ruleType === 'TRANSACTION'
         ? TX_ENTITY_TYPE_OPTIONS[0].value
-        : USER_ENTITY_TYPE_OPTIONS[0].value,
+        : ALL_USER_ENTITY_TYPE_OPTIONS[0].value,
   });
 
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
@@ -309,8 +329,8 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
         dataType: {
           kind: 'select',
           options: (ruleType === 'TRANSACTION'
-            ? TX_ENTITY_TYPE_OPTIONS
-            : USER_ENTITY_TYPE_OPTIONS
+            ? ALL_TX_ENTITY_TYPE_OPTIONS
+            : ALL_USER_ENTITY_TYPE_OPTIONS
           ).map((option) => ({
             value: option.value,
             label: option.label,
@@ -318,6 +338,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           mode: 'SINGLE',
           displayMode: 'list',
           allowClear: false,
+          style: {
+            width: '40em',
+          },
         },
         kind: 'AUTO',
         key: 'types',
@@ -477,13 +500,13 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 value={formValues.type}
                 onChange={(type) => {
                   handleUpdateForm({
-                    type: type as 'TRANSACTION' | 'USER',
+                    type: type === 'TRANSACTION' ? 'TRANSACTION' : 'USER',
                     entityVariableKey: undefined,
                     userNatures: undefined,
                   });
                   setFilterParams({
                     ...filterParams,
-                    types: type as 'TRANSACTION' | 'USER',
+                    types: type === 'TRANSACTION' ? 'TRANSACTION' : 'USER',
                   });
                 }}
                 mode={'SINGLE'}

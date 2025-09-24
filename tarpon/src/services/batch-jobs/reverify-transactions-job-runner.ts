@@ -1,4 +1,6 @@
-import { isEqual, pick, sortBy } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import pick from 'lodash/pick'
+import sortBy from 'lodash/sortBy'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'

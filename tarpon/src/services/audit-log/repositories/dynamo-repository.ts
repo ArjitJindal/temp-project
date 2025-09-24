@@ -1,7 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
-import * as Sentry from '@sentry/aws-serverless'
+import omit from 'lodash/omit'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
 import { ClickhouseAuditLogRepository } from './clickhouse-repository'
 import { traceable } from '@/core/xray'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
@@ -81,7 +81,7 @@ export class DynamoAuditLogRepository {
 
       await batch.execute()
     } catch (error) {
-      Sentry.captureMessage('Error saving audit log to DynamoDB', {
+      captureExceptionSentry('Error saving audit log to DynamoDB', {
         level: 'warning',
         extra: {
           error,

@@ -266,7 +266,6 @@ export abstract class FlatFileFormat {
           }
 
           await this.createRecord(flatFilesRecords, data)
-          isAllValid = isAllValid && data.valid
           await this.saveRecords(flatFilesRecords)
         } catch (error) {
           await this.saveError(flatFilesRecords, data.record, error, 'RUNNER')

@@ -12,4 +12,5 @@ declare global {
   declare const POSTHOG_API_KEY: string;
   declare const INTERNAL_POSTHOG_API_KEY: string;
   declare const POSTHOG_HOST: string;
+  declare const INTERCOM_WIDGET_KEY: string;
 }

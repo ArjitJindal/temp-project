@@ -1,6 +1,12 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { difference, isEmpty, isEqual, omit, pick, uniq, compact } from 'lodash'
+import difference from 'lodash/difference'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
+import compact from 'lodash/compact'
 import { StackConstants } from '@lib/constants'
 import {
   arsScoreEventHandler,
@@ -225,7 +231,7 @@ export class TarponChangeMongoDbConsumer {
 
     const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-    const existingUser = usersRepo.getUserById(newUser.userId)
+    const existingUser = await usersRepo.getUserById(newUser.userId)
     /*  version check before processing user*/
     if (!applyNewVersion(newUser, existingUser)) {
       return

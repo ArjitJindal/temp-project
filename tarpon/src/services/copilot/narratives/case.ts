@@ -6,7 +6,6 @@ import {
 } from './utils/reason-narratives'
 import { BaseNarrativeService, ReasonNarrative } from '.'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 
 type AdditionalInfoCase = {
@@ -37,7 +36,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
     return `This ${customerType} case is being ${statusPrefix} due to: ${reasons}. Maintain markdown formatting and use bold for key information. Do not add any unneccesary heading on top. Only fill placeholders when data is available. Do not add information that is not available. Be very precise to the information provided.`
   }
 
-  public reasonNarratives(): ReasonNarrative<CaseReasons>[] {
+  public reasonNarratives(): ReasonNarrative<string>[] {
     const screening = isScreening(this.attributes)
     const comments = this.attributes.getAttribute('caseComments')
     const commentsAvailable = comments ? comments.length > 0 : false
@@ -45,7 +44,7 @@ export class CaseNarrativeService extends BaseNarrativeService<AdditionalInfoCas
       ? reasonNarrativeScreening(this.type, commentsAvailable)
       : reasonNarrativesCasesAlerts(this.type, commentsAvailable)
     return Object.entries(reasonNarratives).map(([reason, narrative]) => ({
-      reason: reason as CaseReasons,
+      reason: reason as string,
       narrative,
     }))
   }

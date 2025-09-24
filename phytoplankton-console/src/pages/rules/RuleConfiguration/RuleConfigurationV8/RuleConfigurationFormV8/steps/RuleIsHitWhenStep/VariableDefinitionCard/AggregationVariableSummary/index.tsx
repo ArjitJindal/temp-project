@@ -76,7 +76,19 @@ export default function AggregationVariableSummary({
         ? 'receiver '
         : 'sender or receiver '
       : '';
-  const userLabel = type === 'USER_TRANSACTIONS' ? settings.userAlias : 'payment ID';
+  let userLabel = '';
+  if (type === 'USER_TRANSACTIONS') {
+    userLabel = settings.userAlias ?? 'user';
+  } else if (type === 'PAYMENT_DETAILS_TRANSACTIONS') {
+    userLabel = 'payment ID';
+  } else if (type === 'PAYMENT_DETAILS_NAME') {
+    userLabel = 'name';
+  } else if (type === 'PAYMENT_DETAILS_EMAIL') {
+    userLabel = 'email';
+  } else if (type === 'PAYMENT_DETAILS_ADDRESS') {
+    userLabel = 'address';
+  }
+
   const filtersCount = filtersLogic?.and?.length ?? filtersLogic?.or?.length ?? 0;
 
   const textComponents = [

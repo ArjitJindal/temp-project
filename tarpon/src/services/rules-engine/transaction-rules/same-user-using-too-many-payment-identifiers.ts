@@ -1,5 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, mergeWith, startCase, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import mergeWith from 'lodash/mergeWith'
+import startCase from 'lodash/startCase'
+import uniq from 'lodash/uniq'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import {

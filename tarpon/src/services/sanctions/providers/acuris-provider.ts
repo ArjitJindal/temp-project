@@ -1,7 +1,10 @@
 import { Readable, pipeline, Transform } from 'stream'
 import { createInterface } from 'readline'
 import { promisify } from 'util'
-import { capitalize, compact, concat, uniq } from 'lodash'
+import capitalize from 'lodash/capitalize'
+import compact from 'lodash/compact'
+import concat from 'lodash/concat'
+import uniq from 'lodash/uniq'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
 import { Client } from '@opensearch-project/opensearch/.'
@@ -832,6 +835,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         formattedId: identifier.value?.split(' ')[0]?.replace(/-/g, ''),
       })),
       addresses: this.getAddresses(entity.addresses),
+      associates: this.getAssociates(entity),
       sanctionsSources,
       pepSources,
       mediaSources,
@@ -917,9 +921,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
           sanctionSearchTypes
         )
       ),
+      associates: this.getAssociates(entity),
       // pick evidence name from current.regime.name
       sanctionSearchTypes,
-      associates: this.getAssociates(entity),
       otherSources: [
         {
           type: 'REGULATORY_ENFORCEMENT_LIST',

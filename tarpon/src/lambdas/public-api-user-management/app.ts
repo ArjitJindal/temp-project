@@ -8,7 +8,7 @@ import { v4 as uuid4 } from 'uuid'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { publicLambdaApi } from '@/core/middlewares/public-lambda-api-middleware'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { updateLogMetadata } from '@/core/utils/context'
@@ -25,10 +25,12 @@ import {
   DefaultApiPostBusinessUserRequest,
   DefaultApiPostConsumerUserRequest,
 } from '@/@types/openapi-public/RequestParameters'
+import { batchCreateUserOptions } from '@/utils/user'
+import { assertValidTimestampTags } from '@/utils/tags'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
-export const userHandler = lambdaApi()(
+export const userHandler = publicLambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -71,7 +73,7 @@ export const userHandler = lambdaApi()(
     ) => {
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
-
+      assertValidTimestampTags(userPayload.tags)
       if (options?.validateUserId) {
         const existingUser = await validateUser(userPayload)
         if (existingUser) {
@@ -147,6 +149,7 @@ export const userHandler = lambdaApi()(
         ? request.lockKycRiskLevel === 'true'
         : undefined,
     })
+
     handlers.registerPostConsumerUser(async (_ctx, request) => {
       return createUser(request.User, getCreateUserOptions(request))
     })
@@ -158,7 +161,9 @@ export const userHandler = lambdaApi()(
       if (request.UserBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
       }
-
+      for (const user of request.UserBatchRequest.data) {
+        assertValidTimestampTags(user.tags)
+      }
       const batchId = request.UserBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
@@ -170,6 +175,7 @@ export const userHandler = lambdaApi()(
           batchId,
           request.UserBatchRequest.data
         )
+
       await sendAsyncRuleTasks(
         validatedUsers.map((v) => ({
           type: 'USER_BATCH',
@@ -177,6 +183,7 @@ export const userHandler = lambdaApi()(
           user: v,
           tenantId,
           batchId,
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response
@@ -185,18 +192,23 @@ export const userHandler = lambdaApi()(
       if (request.BusinessBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
       }
-
+      for (const user of request.BusinessBatchRequest.data) {
+        assertValidTimestampTags(user.tags)
+      }
       const batchId = request.BusinessBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
+
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
         mongoDb: await getMongoDbClient(),
       })
+
       const { response, validatedUsers } =
         await batchImportService.importBusinessUsers(
           batchId,
           request.BusinessBatchRequest.data
         )
+
       await sendAsyncRuleTasks(
         validatedUsers.map((v) => ({
           type: 'USER_BATCH',
@@ -204,6 +216,7 @@ export const userHandler = lambdaApi()(
           user: v,
           tenantId,
           batchId,
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response

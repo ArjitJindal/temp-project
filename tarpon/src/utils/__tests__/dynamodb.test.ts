@@ -1,5 +1,5 @@
 import { StackConstants } from '@lib/constants'
-import { range } from 'lodash'
+import range from 'lodash/range'
 import { GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import {
   batchGet,

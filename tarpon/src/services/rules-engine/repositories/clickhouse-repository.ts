@@ -1,5 +1,6 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { compact, round } from 'lodash'
+import compact from 'lodash/compact'
+import round from 'lodash/round'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '../../../core/xray'

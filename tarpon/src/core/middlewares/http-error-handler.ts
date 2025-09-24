@@ -1,4 +1,4 @@
-import * as createError from 'http-errors'
+import { HttpError as HttpErrorClass } from 'http-errors'
 import { logger } from '../logger'
 import { HttpError } from '@/@types/http'
 import { envIs } from '@/utils/env'
@@ -10,7 +10,7 @@ export const httpErrorHandler =
     try {
       return await handler(event, context)
     } catch (error) {
-      if (error instanceof createError.HttpError && error.statusCode < 500) {
+      if (error instanceof HttpErrorClass && error.statusCode < 500) {
         return {
           body: JSON.stringify({
             error: error.name,
@@ -33,10 +33,10 @@ export const httpErrorHandler =
       return {
         body: JSON.stringify({
           error: 'Internal server error',
-          message: (error as createError.HttpError)?.message,
+          message: (error as HttpErrorClass)?.message,
           stack:
             process.env.ENV === 'local' || process.env.ENV === 'dev'
-              ? (error as createError.HttpError)?.stack
+              ? (error as HttpErrorClass)?.stack
               : undefined,
         }),
         headers: {

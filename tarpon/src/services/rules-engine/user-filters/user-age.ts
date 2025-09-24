@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { inRange } from 'lodash'
+import inRange from 'lodash/inRange'
 import { AGE_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { UserRuleFilter } from './filter'

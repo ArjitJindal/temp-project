@@ -1,7 +1,12 @@
-import { difference, uniqBy } from 'lodash'
+import difference from 'lodash/difference'
+import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getPaymentDetailsIdentifiersSubject } from '../logic-evaluator/variables/payment-details'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
+import {
+  DynamoConsumerMessage,
+  dynamoKeyList,
+  dynamoKeyListOptions,
+} from '@/@types/dynamo'
 import {
   TransactWriteOperation,
   transactWrite,
@@ -16,19 +21,6 @@ import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
-export type dynamoKey = {
-  PartitionKeyID: string
-  SortKeyID?: string
-}
-
-export type dynamoKeyList = {
-  key: dynamoKey
-}[]
-
-export type dynamoKeyListOptions = {
-  keyLists: dynamoKeyList
-  tableName: string
-}
 
 export type CaseSubject =
   | { type: 'USER'; user: InternalUser }

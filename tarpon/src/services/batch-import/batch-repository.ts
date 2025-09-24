@@ -6,7 +6,7 @@ import {
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { groupBy } from 'lodash'
+import groupBy from 'lodash/groupBy'
 import {
   AsyncBatchRecord,
   AsyncRuleRecordUserBatch,

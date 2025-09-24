@@ -1,4 +1,6 @@
-import { compact, intersection, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import uniq from 'lodash/uniq'
 import {
   adverseMediaCategoryMap,
   isLatinScript,

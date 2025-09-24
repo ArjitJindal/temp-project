@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, mergeWith, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import mergeWith from 'lodash/mergeWith'
+import uniq from 'lodash/uniq'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {

@@ -11,7 +11,7 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery, upsertSaveDynamo } from '@/utils/dynamodb'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { UserType } from '@/@types/user/user-type'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
 import { traceable } from '@/core/xray'
 import { InternalUserEvent } from '@/@types/openapi-internal/InternalUserEvent'
 import { DefaultApiGetEventsListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -91,10 +91,11 @@ export class UserEventRepository {
     )
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
     return eventId
   }
@@ -131,10 +132,10 @@ export class UserEventRepository {
     await this.dynamoDb.send(updateCommand)
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
   }
 

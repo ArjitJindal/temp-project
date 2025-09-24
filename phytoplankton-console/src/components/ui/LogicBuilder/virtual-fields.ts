@@ -18,7 +18,13 @@ import { QueryBuilderConfig } from './types';
  */
 export const VIRTUAL_STRING_TO_NUMBER_SUFFIX = ':STRING_TO_NUMBER';
 
+/**
+ * A suffix for the virtual fields that are created to support converting text fields to timestamp fields.
+ */
+export const VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX = ':STRING_TO_TIMESTAMP';
+
 export const STRING_TO_NUMBER_FIELDS = ['key', 'value'];
+export const STRING_TO_TIMESTAMP_FIELDS = ['value'];
 
 export function jsonLogicParse(
   jsonLogic: unknown,
@@ -73,6 +79,24 @@ export function parseVirtualFields(jsonLogic: unknown): unknown {
             }
           }
         }
+        if ('string_to_timestamp' in jsonLogic) {
+          const functionBody = jsonLogic['string_to_timestamp'];
+          if (functionBody != null && Array.isArray(functionBody) && functionBody.length === 1) {
+            const functionArg = functionBody[0];
+            if (
+              functionArg != null &&
+              typeof functionArg === 'object' &&
+              'var' in functionBody[0]
+            ) {
+              const varName = functionArg['var'];
+              if (varName != null) {
+                return {
+                  var: `${varName}${VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX}`,
+                };
+              }
+            }
+          }
+        }
       }
       if (
         ['some', 'every', 'all', 'any', 'none', 'map', 'filter', 'reduce'].some(
@@ -105,31 +129,52 @@ export function reduceVirtualFields(jsonLogic: unknown): unknown {
   }
   if (typeof jsonLogic === 'object' && 'var' in jsonLogic && typeof jsonLogic.var === 'string') {
     if (isVirtualFieldVarName(jsonLogic.var)) {
-      return {
-        string_to_number: [
-          {
-            var: jsonLogic.var.slice(0, -VIRTUAL_STRING_TO_NUMBER_SUFFIX.length),
-          },
-        ],
-      };
+      if (jsonLogic.var.endsWith(VIRTUAL_STRING_TO_NUMBER_SUFFIX)) {
+        return {
+          string_to_number: [
+            {
+              var: jsonLogic.var.slice(0, -VIRTUAL_STRING_TO_NUMBER_SUFFIX.length),
+            },
+          ],
+        };
+      }
+      if (jsonLogic.var.endsWith(VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX)) {
+        return {
+          string_to_timestamp: [
+            {
+              var: jsonLogic.var.slice(0, -VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX.length),
+            },
+          ],
+        };
+      }
     }
   }
   return mapValues(jsonLogic, reduceVirtualFields);
 }
 
 export function isVirtualFieldVarName(varName: string): boolean {
-  return varName.endsWith(VIRTUAL_STRING_TO_NUMBER_SUFFIX);
+  return (
+    varName.endsWith(VIRTUAL_STRING_TO_NUMBER_SUFFIX) ||
+    varName.endsWith(VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX)
+  );
 }
 
 export function getVirtualFieldVarName(varName: string): string {
-  return isVirtualFieldVarName(varName)
-    ? varName.slice(0, -VIRTUAL_STRING_TO_NUMBER_SUFFIX.length)
-    : varName;
+  if (varName.endsWith(VIRTUAL_STRING_TO_NUMBER_SUFFIX)) {
+    return varName.slice(0, -VIRTUAL_STRING_TO_NUMBER_SUFFIX.length);
+  }
+  if (varName.endsWith(VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX)) {
+    return varName.slice(0, -VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX.length);
+  }
+  return varName;
 }
 
 export function getVirtualFieldDescription(varName: string): string {
-  if (isVirtualFieldVarName(varName)) {
+  if (varName.endsWith(VIRTUAL_STRING_TO_NUMBER_SUFFIX)) {
     return 'number';
+  }
+  if (varName.endsWith(VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX)) {
+    return 'datetime';
   }
   return varName;
 }
@@ -150,7 +195,7 @@ export function addVirtualFieldsForNestedSubfields(fields: Fields): Fields {
 }
 
 /**
- * For every text field, add a field with the same properties but with the type `number` and the label `(as number)`
+ * For every text field, add fields with the same properties but with the type `number` and `datetime` and the labels `(as a number)` and `(as a timestamp)`
  * @param fields
  * @returns
  */
@@ -164,6 +209,13 @@ export function addStringToNumberFields(fields: Fields): Fields {
         ...field,
         type: 'number',
         label: `${field.label} (as a number)`,
+      };
+    }
+    if (field.type === 'text' && STRING_TO_TIMESTAMP_FIELDS.includes(key)) {
+      result[`${key}${VIRTUAL_STRING_TO_TIMESTAMP_SUFFIX}`] = {
+        ...field,
+        type: 'datetime',
+        label: `${field.label} (as a timestamp)`,
       };
     }
   }

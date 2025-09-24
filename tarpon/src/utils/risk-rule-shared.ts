@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'

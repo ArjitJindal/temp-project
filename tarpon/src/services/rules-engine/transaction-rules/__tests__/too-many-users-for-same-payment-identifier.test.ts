@@ -1,4 +1,4 @@
-import { reduce } from 'lodash'
+import reduce from 'lodash/reduce'
 import { TooManyUsersForSamePaymentIdentifierParameters } from '../too-many-users-for-same-payment-identifier'
 import { getRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'

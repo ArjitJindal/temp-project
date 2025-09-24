@@ -6,11 +6,11 @@ import {
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { compact, concat, omit } from 'lodash'
+import compact from 'lodash/compact'
+import concat from 'lodash/concat'
+import omit from 'lodash/omit'
 import {
   createUpdateCaseQueries,
-  dynamoKey,
-  dynamoKeyList,
   generateDynamoConsumerMessage,
   transactWriteWithClickhouse,
 } from '../case-alerts-common/utils'
@@ -34,7 +34,11 @@ import {
   BatchWriteRequestInternal,
 } from '@/utils/dynamodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
+import {
+  DynamoConsumerMessage,
+  dynamoKey,
+  dynamoKeyList,
+} from '@/@types/dynamo'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { logger } from '@/core/logger'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
@@ -51,21 +55,12 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { envIs } from '@/utils/env'
 import { removeUndefinedFields } from '@/utils/object'
+
 type caseUpdateOptions = {
   updateCase: boolean
   caseUpdateFields: Record<string, any>
 }
 
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-
-  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'TARPON')
-}
 @traceable
 export class DynamoAlertRepository {
   private readonly tenantId: string
@@ -940,20 +935,6 @@ export class DynamoAlertRepository {
   ) {
     const now = Date.now()
 
-    const updateExpression = `SET lastStatusChange = :statusChange, updatedAt = :updatedAt, ${
-      isLastInReview
-        ? 'userId = lastStatusChange.userId, reviewerId = :reviewerId'
-        : 'userId = :userId'
-    }, statusChanges = list_append(if_not_exists(statusChanges, :empty_list), :statusChange), alertStatus = :alertStatus`
-
-    const expressionAttributeValues = removeUndefinedFields({
-      ':statusChange': [statusChange],
-      ...(!isLastInReview && { ':userId': statusChange.userId }),
-      ...(isLastInReview && { ':reviewerId': statusChange.userId }),
-      ':updatedAt': now,
-      ':alertStatus': statusChange.caseStatus,
-      ':empty_list': [],
-    })
     const caseIdsSet = new Map<string, string[]>()
     const operationsAndKeyLists = await Promise.all(
       alertIds.map(async (alertId) => {
@@ -965,6 +946,31 @@ export class DynamoAlertRepository {
           alertItem.caseId as string,
           alertItem.caseSubjectIdentifiers as string[]
         )
+
+        const statusChangeItem = {
+          ...statusChange,
+          userId: isLastInReview
+            ? alertItem?.lastStatusChange?.userId
+            : statusChange.userId,
+          reviewerId: isLastInReview ? statusChange.userId : undefined,
+          timestamp: now,
+        }
+
+        const updateExpression = `
+          SET 
+            alertStatus = :alertStatus,
+            lastStatusChange = :lastStatusChange,
+            updatedAt = :updatedAt,
+            statusChanges = list_append(if_not_exists(statusChanges, :emptyList), :statusChange)
+        `
+        const expressionAttributeValues = removeUndefinedFields({
+          ':alertStatus': statusChange.caseStatus,
+          ':lastStatusChange': statusChangeItem,
+          ':updatedAt': now,
+          ':statusChange': [statusChangeItem],
+          ':emptyList': [],
+        })
+
         return await this.createAlertUpdatesQueries(
           alertId,
           updateExpression,
@@ -1911,7 +1917,11 @@ export class DynamoAlertRepository {
     await batch.execute()
     if (envIs('local') || envIs('test')) {
       for (const key of keyLists) {
-        await handleLocalChangeCapture(this.tenantId, key.key)
+        const { handleLocalTarponChangeCapture } = await import(
+          '@/core/local-handlers/tarpon'
+        )
+
+        await handleLocalTarponChangeCapture(this.tenantId, [key.key])
       }
     }
   }
@@ -1965,7 +1975,11 @@ export class DynamoAlertRepository {
       await batch.execute()
 
       if (envIs('local') || envIs('test')) {
-        await handleLocalChangeCapture(this.tenantId, key)
+        const { handleLocalTarponChangeCapture } = await import(
+          '@/core/local-handlers/tarpon'
+        )
+
+        await handleLocalTarponChangeCapture(this.tenantId, [key])
       }
     } else {
       logger.warn('Sampling ID is required')

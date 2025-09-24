@@ -219,7 +219,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
     extension: AIExtension
   ): Promise<string> {
     const extractors: Record<AIExtension, (file: Buffer) => Promise<string>> = {
-      pdf: this.pdfExtractor,
+      pdf: this.pdfExtractor.bind(this),
     }
     return await extractors[extension](file)
   }

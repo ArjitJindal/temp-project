@@ -46,7 +46,6 @@ import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 import { RuleExecutionMode } from '@/@types/openapi-internal/RuleExecutionMode'
-import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SanctionsService } from '@/services/sanctions'
@@ -55,6 +54,7 @@ import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { disableLocalChangeHandler } from '@/utils/local-change-handler'
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>

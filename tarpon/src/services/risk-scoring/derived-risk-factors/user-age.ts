@@ -1,4 +1,5 @@
-import { compact, get } from 'lodash'
+import compact from 'lodash/compact'
+import get from 'lodash/get'
 import { getAgeFromTimestamp, getAgeInDaysFromTimestamp } from '../utils'
 import {
   TransactionRiskFactorValueHandler,

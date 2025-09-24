@@ -595,7 +595,8 @@ const _RULES_LIBRARY: Array<
       id: 'R-26',
       type: 'TRANSACTION',
       name: 'Round-amount anomaly',
-      description: 'Detect abnormal frequency of round-amount transactions',
+      description:
+        'Same user ID performs an abnormally high percentage of round-value transactions ending in 00.00 (without cents) compared to their usual historical behavior, indicating anomalous transaction patterns.',
       descriptionTemplate:
         'Percentage of round-number transactions in last 30 days is anomalously high vs 90-day baseline (stddev)',
       defaultParameters: {},
@@ -1497,7 +1498,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many round transactions to the same user',
       description:
-        'User receives or sends >= x round transactions within time t',
+        'Same user ID receives or sends ≥ X round-value transactions ending in 00.00 (without cents) within time t. The rule activates when the total count of such round transactions crosses a predefined threshold.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} {{ parameters.transactionsLimit }} or more transactions as round values ending in 00.00 (hundreds without cents) within time {{ format-time-window parameters.timeWindow }}",
       defaultParameters,

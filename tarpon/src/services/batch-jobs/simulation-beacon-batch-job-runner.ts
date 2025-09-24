@@ -1,6 +1,10 @@
 import pMap from 'p-map'
 import PQueue from 'p-queue'
-import { chain, chunk, compact, memoize, uniq, uniqBy } from 'lodash'
+import chunk from 'lodash/chunk'
+import compact from 'lodash/compact'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
+import uniqBy from 'lodash/uniqBy'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
@@ -256,13 +260,13 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private simulationUsersHit(
     executionDetails: SimulatedTransactionHit[]
   ): string[] {
-    return chain(executionDetails)
-      .flatMap(({ executedRules, transaction }) =>
-        this.extractHitUserIds(executedRules, transaction)
+    return uniq(
+      compact(
+        executionDetails.flatMap(({ executedRules, transaction }) =>
+          this.extractHitUserIds(executedRules, transaction)
+        )
       )
-      .uniq()
-      .compact()
-      .value()
+    )
   }
 
   private async getActualUsersHit(ruleInstanceId: string): Promise<number> {

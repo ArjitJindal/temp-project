@@ -1,5 +1,5 @@
 import { BadRequest } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import {
   getNamespacedRoleName,
   getRoleDisplayName,
@@ -164,6 +164,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
         "Can't overwrite default role, please choose a different name."
       )
     }
+
     await rolesManager.update(
       { id },
       {

@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getCountriesData, streets } from '../raw-data/address'
 import { BaseSampler } from './base'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'

@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import pLimit from 'p-limit'
 
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,

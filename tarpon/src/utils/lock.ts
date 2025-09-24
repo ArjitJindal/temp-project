@@ -6,7 +6,7 @@ import {
 import { StackConstants } from '@lib/constants'
 import { Mutex, MutexInterface } from 'async-mutex'
 import { backOff } from 'exponential-backoff'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const DEFAULT_TTL = 600

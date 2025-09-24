@@ -1,8 +1,10 @@
-import { isEmpty, isEqual, uniq } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import uniq from 'lodash/uniq'
 import { logger } from '../logger'
 import { TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { seedDynamo } from './dynamodb'
-import { fetchAndSetAccounts } from './account-setup'
+import { fetchAndSetAccounts, syncAccountAndRoles } from './account-setup'
 import { removeDemoRoles } from './roles-setup'
 import { getReports } from './data/reports'
 import { deleteXMLFileFromS3 } from './samplers/report'
@@ -27,7 +29,12 @@ export async function seedDemoData(tenantId: string) {
   process.env.TENANT_ID = tenantId
 
   const account = await fetchAndSetAccounts(tenantId, dynamo)
-  await removeDemoRoles(tenantId, account, dynamo)
+  await syncAccountAndRoles(tenantId, dynamo)
+
+  // should only remove roles for demo mode
+  if (isDemoTenant(tenantId)) {
+    await removeDemoRoles(tenantId, account, dynamo)
+  }
   now = Date.now()
   await createTenantDatabase(tenantId)
   logger.info(`TIME: Tenant database creation took ~ ${Date.now() - now}`)

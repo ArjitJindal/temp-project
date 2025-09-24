@@ -1,5 +1,8 @@
 import { v4 as uuidv4 } from 'uuid'
-import { intersection, omit, pick, uniq } from 'lodash'
+import intersection from 'lodash/intersection'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
 import dayjs from '@flagright/lib/utils/dayjs'
 import {
   getSourceUrl,

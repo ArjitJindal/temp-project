@@ -1,4 +1,5 @@
-import { memoize, shuffle } from 'lodash'
+import memoize from 'lodash/memoize'
+import shuffle from 'lodash/shuffle'
 import { QA_SAMPLES_SEED } from '../data/seeds'
 import { getAlerts } from '@/core/seed/data/alerts'
 import { getAccounts } from '@/core/seed/samplers/accounts'

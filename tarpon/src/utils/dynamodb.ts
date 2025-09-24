@@ -4,7 +4,13 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { chunk, isNil, omitBy, wrap, omit, uniqBy, isUndefined } from 'lodash'
+import chunk from 'lodash/chunk'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
+import wrap from 'lodash/wrap'
+import omit from 'lodash/omit'
+import uniqBy from 'lodash/uniqBy'
+import isUndefined from 'lodash/isUndefined'
 import {
   BatchGetCommand,
   BatchGetCommandInput,
@@ -50,8 +56,9 @@ import { logger } from '@/core/logger'
 import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { envIs, envIsNot } from '@/utils/env'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { DynamoConsumerMessage } from '@/@types/dynamo'
+
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
 export const __dynamoDbClientsForTesting__: DynamoDBClient[] = []
@@ -1058,17 +1065,10 @@ export async function sendMessageToDynamoDbConsumer(
     return
   }
   if (envIs('local') || envIs('test')) {
-    // Direct processing for local/test environments
-    const { dynamoDbTriggerQueueConsumerHandler } = await import(
-      '@/lambdas/dynamo-db-trigger-consumer/app'
+    const { handleLocalDynamoDbTrigger } = await import(
+      '@/core/local-handlers/dynamo-db-trigger'
     )
-    await dynamoDbTriggerQueueConsumerHandler({
-      Records: [
-        {
-          body: JSON.stringify(message),
-        },
-      ],
-    })
+    await handleLocalDynamoDbTrigger(message)
     return
   }
   logger.debug('Sending message to DynamoDb consumer', {

@@ -1,5 +1,7 @@
 import pMap from 'p-map'
-import { chunk, difference, uniq } from 'lodash'
+import chunk from 'lodash/chunk'
+import difference from 'lodash/difference'
+import uniq from 'lodash/uniq'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { ListRepository } from '../list/repositories/list-repository'

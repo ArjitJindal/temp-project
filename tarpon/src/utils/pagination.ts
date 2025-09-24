@@ -1,4 +1,6 @@
-import { get, isEmpty, isNumber } from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import isNumber from 'lodash/isNumber'
 import { validate as uuidValidate } from 'uuid'
 import {
   Collection,
@@ -356,7 +358,7 @@ export async function getClickhouseCountOnly(
   countWhereClause?: string
 ): Promise<number> {
   const countWhere = countWhereClause === undefined ? where : countWhereClause
-  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
+  const countQuery = `SELECT count(*) as count FROM ${queryTableName} FINAL ${
     countWhere
       ? `WHERE ${countWhere} AND timestamp != 0`
       : 'WHERE timestamp != 0'

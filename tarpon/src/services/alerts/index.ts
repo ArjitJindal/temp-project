@@ -2,19 +2,17 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { BadRequest, Forbidden, NotFound } from 'http-errors'
-import {
-  capitalize,
-  isEmpty,
-  omit,
-  startCase,
-  toLower,
-  uniq,
-  isEqual,
-  cloneDeep,
-  difference,
-  uniqBy,
-  compact,
-} from 'lodash'
+import capitalize from 'lodash/capitalize'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
+import startCase from 'lodash/startCase'
+import toLower from 'lodash/toLower'
+import uniq from 'lodash/uniq'
+import isEqual from 'lodash/isEqual'
+import cloneDeep from 'lodash/cloneDeep'
+import difference from 'lodash/difference'
+import uniqBy from 'lodash/uniqBy'
+import compact from 'lodash/compact'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -32,7 +30,6 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-
 import { AlertParams, AlertsRepository } from './repository'
 import { API_USER, FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -51,7 +48,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
-import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
+import { AlertStatusDetails } from '@/@types/openapi-public/AlertStatusDetails'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
@@ -1347,9 +1344,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const isPNB = hasFeature('PNB')
     const isClosing = statusUpdateRequest.alertStatus === 'CLOSED'
     const cascadeCaseUpdates = isPNB && !isClosing ? false : true
-    console.log('externalRequest', externalRequest)
     const userId = externalRequest ? API_USER : getContext()?.user?.id
-    console.log('userId', userId)
     const statusChange: CaseStatusChange = {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
@@ -1638,8 +1633,19 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     })
 
-    if (statusUpdateRequest.alertStatus === 'CLOSED' && !externalRequest) {
-      await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+    if (!externalRequest) {
+      if (statusUpdateRequest.alertStatus === 'CLOSED') {
+        await this.sendAlertClosedWebhook(alertIds, cases, statusUpdateRequest)
+      } else if (
+        statusUpdateRequest.alertStatus === 'ESCALATED' ||
+        statusUpdateRequest.alertStatus === 'ESCALATED_L2'
+      ) {
+        await this.sendAlertEscalatedWebhook(
+          alertIds,
+          cases,
+          statusUpdateRequest
+        )
+      }
     }
     if (statusUpdateRequest.alertStatus === 'CLOSED') {
       await sendActionProcessionTasks(
@@ -1698,7 +1704,8 @@ export class AlertsService extends CaseAlertsCommonService {
     }
   }
 
-  private async sendAlertClosedWebhook(
+  private async sendAlertWebhook(
+    event: 'ALERT_CLOSED' | 'ALERT_ESCALATED',
     alertIds: string[],
     cases: Case[],
     statusUpdateRequest: AlertStatusUpdateRequest
@@ -1707,7 +1714,7 @@ export class AlertsService extends CaseAlertsCommonService {
     const commentBody =
       this.getAlertStatusChangeCommentBody(statusUpdateRequest)
 
-    const webhookTasks: ThinWebhookDeliveryTask<AlertClosedDetails>[] = []
+    const webhookTasks: ThinWebhookDeliveryTask<AlertStatusDetails>[] = []
 
     for (const alertId of alertIds) {
       const case_ = cases.find((c) =>
@@ -1718,7 +1725,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
       if (alert) {
         webhookTasks.push({
-          event: 'ALERT_CLOSED',
+          event,
           triggeredBy: 'MANUAL',
           entityId: alertId,
           payload: {
@@ -1734,12 +1741,39 @@ export class AlertsService extends CaseAlertsCommonService {
               case_?.caseUsers?.origin?.userId ??
               case_?.caseUsers?.destination?.userId,
             transactionIds: alert.transactionIds,
+            status: statusUpdateRequest.alertStatus,
           },
         })
       }
     }
 
-    await sendWebhookTasks<AlertClosedDetails>(this.tenantId, webhookTasks)
+    await sendWebhookTasks<AlertStatusDetails>(this.tenantId, webhookTasks)
+  }
+
+  private async sendAlertClosedWebhook(
+    alertIds: string[],
+    cases: Case[],
+    statusUpdateRequest: AlertStatusUpdateRequest
+  ) {
+    await this.sendAlertWebhook(
+      'ALERT_CLOSED',
+      alertIds,
+      cases,
+      statusUpdateRequest
+    )
+  }
+
+  private async sendAlertEscalatedWebhook(
+    alertIds: string[],
+    cases: Case[],
+    statusUpdateRequest: AlertStatusUpdateRequest
+  ) {
+    await this.sendAlertWebhook(
+      'ALERT_ESCALATED',
+      alertIds,
+      cases,
+      statusUpdateRequest
+    )
   }
 
   @auditLog('ALERT', 'CHECKLIST_ITEM_STATUS_CHANGE', 'UPDATE')

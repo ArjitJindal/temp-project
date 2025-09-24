@@ -3441,6 +3441,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@intercom/messenger-js-sdk@npm:^0.0.17":
+  version: 0.0.17
+  resolution: "@intercom/messenger-js-sdk@npm:0.0.17"
+  checksum: 26b70c40534e3e9346f5bcfa90726862ae406ad55acc473ed490bddffdb12011be20193b94cc67713eb860e18f61c1ce8236068ed3e80dff85bc65870d5a3cea
+  languageName: node
+  linkType: hard
+
 "@isaacs/balanced-match@npm:^4.0.1":
   version: 4.0.1
   resolution: "@isaacs/balanced-match@npm:4.0.1"
@@ -17183,6 +17190,7 @@ __metadata:
     "@fingerprintjs/fingerprintjs": "npm:^4.5.0"
     "@flagright/lib": "link:../lib"
     "@floating-ui/react": "npm:^0.27.12"
+    "@intercom/messenger-js-sdk": "npm:^0.0.17"
     "@nangohq/frontend": "npm:^0.57.1"
     "@openapitools/openapi-generator-cli": "npm:^2.7.0"
     "@react-awesome-query-builder/ui": "npm:^6.6.2"

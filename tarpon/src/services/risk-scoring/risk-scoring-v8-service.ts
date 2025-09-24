@@ -1,6 +1,8 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { mean, omit, uniq } from 'lodash'
+import mean from 'lodash/mean'
+import omit from 'lodash/omit'
+import uniq from 'lodash/uniq'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -507,9 +509,10 @@ export class RiskScoringV8Service {
     const totalWeight =
       (krsScore ? krsWeight : 0) + (avgArsScore ? avgArsWeight : 0)
     return (
+      // To avoid division by zero
       (krsWeight * (krsScore ?? 0) +
         avgArsWeight * (avgArsScore ?? arsScore ?? 0)) /
-      (totalWeight === 0 ? 1 : totalWeight) // To avoid division by zero
+      (totalWeight === 0 ? 1 : totalWeight)
     )
   }
 

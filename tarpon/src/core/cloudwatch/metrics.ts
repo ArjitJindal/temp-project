@@ -4,7 +4,7 @@ import {
   MetricDatum,
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch'
-import { groupBy } from 'lodash'
+import groupBy from 'lodash/groupBy'
 
 import unidecode from 'unidecode'
 import { logger } from '../logger'

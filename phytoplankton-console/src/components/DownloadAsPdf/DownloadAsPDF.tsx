@@ -428,7 +428,7 @@ const addTopFormatting = (
 
   const timestampText = `Timestamp: ${documentTimestamp}`;
   const rightMargin = 15;
-  const topMargin = 25;
+  const topMargin = 15;
 
   const currentFontSize = doc.getFontSize();
 

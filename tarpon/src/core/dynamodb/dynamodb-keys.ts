@@ -86,6 +86,8 @@ export const MIGRATION_POST_DEPLOYMENT_KEY_IDENTIFIER =
   'migrations-post-deployment'
 export const DYNAMO_CLICKHOUSE_KEY_IDENTIFIER =
   '#dynamo-clickhouse-console-backfill'
+export const CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER =
+  'clickhouse-sync-checksum'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -681,6 +683,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}${DYNAMO_CLICKHOUSE_KEY_IDENTIFIER}`,
     SortKeyID: entity,
   }),
+  CLICKHOUSE_SYNC_CHECKSUM: (tenantId: string) => ({
+    PartitionKeyID: `${CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER}`,
+    SortKeyID: tenantId,
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys
@@ -707,7 +713,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   GENERIC_BANK_ACCOUNT: ['accountNumber', 'accountType', 'bankCode'],
   SWIFT: ['accountNumber', 'swiftCode'],
   MPESA: ['businessShortCode', 'phoneNumber'],
-  CHECK: ['checkIdentifier', 'checkNumber'],
+  CHECK: ['accountNumber'],
   CASH: ['identifier'],
   NPP: ['payId'],
 }

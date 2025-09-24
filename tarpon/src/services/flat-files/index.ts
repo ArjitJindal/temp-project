@@ -1,8 +1,12 @@
+import path from 'path'
+import fs from 'fs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { ConnectionCredentials } from 'thunder-schema'
 import { NotFound } from 'http-errors'
 import { ClickHouseClient } from '@clickhouse/client'
+import { S3 } from '@aws-sdk/client-s3'
+import { getFlatFileErrorRecordS3Key } from '@flagright/lib/utils'
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { FlatFileFormat } from './format'
 import { CsvFormat } from './format/csv'
@@ -32,6 +36,8 @@ import { Business } from '@/@types/openapi-public/Business'
 import { BatchJobParams } from '@/@types/batch-job'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import { FlatFilesRecords } from '@/models/flat-files-records'
+import { logger } from '@/core/logger'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
 
 type Connections = {
   dynamoDb: DynamoDBDocumentClient
@@ -105,12 +111,21 @@ const FlatFileFormatToModel: Record<
     new JsonlFormat(tenantId, model, s3Key, compoundPrimaryKey),
 }
 
+type ErrorRecord = {
+  recordNumber: number
+  record: string
+  error: string[]
+}
+
 @traceable
 export class FlatFilesService {
   private readonly tenantId: string
+  s3Bucket: string
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
+    const { DOCUMENT_BUCKET } = process.env as CaseConfig
+    this.s3Bucket = DOCUMENT_BUCKET
   }
 
   private async getFormatInstance(
@@ -215,6 +230,7 @@ export class FlatFilesService {
   async run(schema: FlatFileSchema, s3Key: string, metadata: object) {
     const runnerInstance = await this.getRunnerInstance(schema)
     await runnerInstance.run(s3Key, metadata)
+    await this.getErroredRows(s3Key)
   }
 
   async getProgress(schema: FlatFileSchema, entityId: string) {
@@ -283,6 +299,107 @@ export class FlatFilesService {
       errored: erroredRows,
       status: batchJobStatus,
       isValidationJobRunning,
+      erroredRecrodS3Key:
+        (batchJobStatus === 'SUCCESS' || batchJobStatus === 'FAILED') &&
+        !isValidationJobRunning
+          ? getFlatFileErrorRecordS3Key(s3Key)
+          : undefined,
     }
+  }
+
+  // this function should return a link to a s3 bucket which has a csv of all record which are all errored
+  // we can only create csv in /tmp directory of the lambda
+  // we should buffer
+
+  private async getErroredRows(s3Key: string): Promise<string> {
+    const MAX_BUFFER_SIZE = 1000
+    const s3 = new S3()
+    try {
+      // get flatfile client
+      const clickhouseConnectionConfig = await getClickhouseCredentials(
+        this.tenantId
+      )
+      const flatFilesRecords = new FlatFilesRecords({
+        credentials: clickhouseConnectionConfig,
+        options: {
+          keepAlive: true,
+          keepAliveTimeout: 60_000,
+          maxRetries: 10, // 10 retries
+        },
+      })
+
+      const fileName = getFlatFileErrorRecordS3Key(s3Key).split('/')[1]
+      const filePath = path.resolve('/tmp', fileName)
+      let fileBuffer: ErrorRecord[] = []
+
+      const erroredRecords = flatFilesRecords.objects.filter({
+        fileId: s3Key,
+        isProcessed: true,
+        isError: true,
+      })
+
+      const header = ['Record number', 'Recrod', 'Error']
+      this.writeBufferToFile(filePath, fileBuffer, header) // this will create the file with headers
+
+      for await (const erroredRecord of erroredRecords) {
+        const row: ErrorRecord = {
+          recordNumber: erroredRecord.row,
+          record: erroredRecord.initialRecord,
+          error: erroredRecord.error.map((e) => {
+            return Object.values(e).join(',')
+          }),
+        }
+        fileBuffer.push(row)
+        if (fileBuffer.length === MAX_BUFFER_SIZE) {
+          // flush the buffer
+          this.writeBufferToFile(filePath, fileBuffer, header)
+          fileBuffer = []
+        }
+      }
+      if (fileBuffer.length > 0) {
+        // flush buffer
+        this.writeBufferToFile(filePath, fileBuffer, header)
+        fileBuffer = []
+      }
+
+      logger.info('Uploading file to s3 bucket')
+      await s3.putObject({
+        Bucket: this.s3Bucket,
+        Key: getFlatFileErrorRecordS3Key(s3Key),
+        Body: fs.createReadStream(filePath),
+      })
+
+      return fileName
+    } catch (e) {
+      logger.error('Error in FlatFileBaseRunner.getErroredRows', {
+        error: e,
+      })
+      throw e
+    }
+  }
+
+  private writeBufferToFile(
+    filePath: string,
+    fileBuffer: ErrorRecord[],
+    header: string[]
+  ) {
+    // check for the file
+    if (!fs.existsSync(filePath)) {
+      // writing the headers
+      const formatedHeader = header.map((columnHeader) => {
+        const santiziedHeader = columnHeader.split('"').join("'")
+        return `"${santiziedHeader}"`
+      }) // ensuring commas in header are handled
+      fs.appendFileSync(filePath, formatedHeader.join(',') + '\n', 'utf-8')
+    }
+    const rows: string[] = []
+    for (const erroredRecord of fileBuffer) {
+      const recordNumber = erroredRecord.recordNumber + 1
+      const record = erroredRecord.record.split('"').join("'")
+      const error: string = erroredRecord.error.join('-').split('"').join("'")
+      rows.push(`${recordNumber},"${record}","${error}"`)
+    }
+
+    fs.appendFileSync(filePath, rows.join('\n'), 'utf8')
   }
 }

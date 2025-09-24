@@ -6,7 +6,7 @@ import {
 } from '@aws-sdk/client-secrets-manager'
 import { fromIni } from '@aws-sdk/credential-providers'
 import { SecretName, Secrets } from '@flagright/lib/secrets/secrets'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { envIs } from './env'
 import { WrappedError } from '@/utils/errors'
 

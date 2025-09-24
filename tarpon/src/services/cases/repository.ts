@@ -10,7 +10,11 @@ import {
   ObjectId,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact, intersection, isEmpty, isNil, omitBy } from 'lodash'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { SLAService, SlaUpdates } from '../sla/sla-service'
 import { AlertsRepository } from '../alerts/repository'
@@ -120,6 +124,27 @@ export class CaseRepository {
       this.dynamoDb,
       'CASES_ALERTS'
     )
+  }
+
+  // Lean fetch: return only minimal case fields used for permission checks
+  public async getCaseStatusById(
+    caseId: string
+  ): Promise<{ caseId: string; caseStatus?: string } | null> {
+    if (await this.isTenantMigratedToDynamo) {
+      const c = await this.dynamoCaseRepository.getCaseById(caseId)
+      return c
+        ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+        : null
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const c = await collection.findOne(
+      { caseId },
+      { projection: { caseId: 1, caseStatus: 1 } }
+    )
+    return c
+      ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+      : null
   }
 
   /**

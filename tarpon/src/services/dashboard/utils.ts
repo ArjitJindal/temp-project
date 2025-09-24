@@ -1,5 +1,5 @@
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import dayjs from '@/utils/dayjs'
 import { neverThrow } from '@/utils/lang'
 

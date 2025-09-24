@@ -1,5 +1,7 @@
 import createHttpError from 'http-errors'
-import { compact, groupBy, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
@@ -362,18 +364,11 @@ export async function sendTransactionAggregationTasks(
   mongoDb: MongoClient
 ) {
   if (envIs('local', 'test')) {
-    const {
-      handleTransactionAggregationTask,
-      handleV8TransactionAggregationTask,
-    } = await import('@/lambdas/transaction-aggregation/app')
-    for (const message of messages) {
-      const payload = JSON.parse(message.MessageBody)
-      if (payload.type === 'TRANSACTION_AGGREGATION') {
-        await handleV8TransactionAggregationTask(payload, dynamoDb)
-      } else {
-        await handleTransactionAggregationTask(payload, dynamoDb, mongoDb)
-      }
-    }
+    const { handleTransactionAggregationTasks } = await import(
+      '@/core/local-handlers/transaction-aggregation'
+    )
+
+    await handleTransactionAggregationTasks(messages, dynamoDb, mongoDb)
   } else {
     const finalMessages = [...messages]
     await bulkSendMessages(
@@ -413,15 +408,22 @@ type AsyncRuleRecordTransactionEventBatch = {
   destinationUserId?: string
 }
 
+type UserParameters = {
+  lockCraRiskLevel?: boolean
+  lockKycRiskLevel?: boolean
+}
+
 type AsyncRuleRecordUser = {
   type: 'USER'
   userType: UserType
   user: User | Business
 }
+
 export type AsyncRuleRecordUserBatch = {
   type: 'USER_BATCH'
   userType: UserType
   user: User | Business
+  parameters?: UserParameters
 }
 
 type AsyncRuleRecordUserEvent = {
@@ -435,6 +437,7 @@ export type AsyncRuleRecordUserEventBatch = {
   type: 'USER_EVENT_BATCH'
   userType: UserType
   userEvent: ConsumerUserEvent | BusinessUserEvent
+  parameters?: UserParameters
 }
 
 export type AsyncBatchRecord = (
@@ -520,18 +523,15 @@ function getAsyncRuleMessageGroupId(
 
 export async function sendAsyncRuleTasks(
   tasks: AsyncRuleRecord[],
+  secondaryQueue: boolean = false,
   saveBatchEntities: boolean = true
 ): Promise<void> {
   if (envIs('test', 'local')) {
-    const { asyncRuleRunnerHandler } = await import('@/lambdas/async-rule/app')
-    if (envIs('local') || process.env.__ASYNC_RULES_IN_SYNC_TEST__ === 'true') {
-      await asyncRuleRunnerHandler({
-        Records: tasks.map((task) => ({
-          body: JSON.stringify(task),
-        })),
-        saveBatchEntities,
-      })
-    }
+    const { handleLocalAsyncRuleTasks } = await import(
+      '@/core/local-handlers/async-rules'
+    )
+
+    await handleLocalAsyncRuleTasks(tasks, saveBatchEntities)
     return
   }
 
@@ -560,7 +560,9 @@ export async function sendAsyncRuleTasks(
       }
       return {
         MessageBody: JSON.stringify(task),
-        QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+        QueueUrl: secondaryQueue
+          ? process.env.SECONDARY_ASYNC_RULE_QUEUE_URL
+          : process.env.ASYNC_RULE_QUEUE_URL,
         MessageGroupId: generateChecksum(
           isConcurrentAsyncRulesEnabled
             ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
@@ -608,7 +610,13 @@ export async function sendAsyncRuleTasks(
     })
 
   await Promise.all([
-    bulkSendMessages(sqs, process.env.ASYNC_RULE_QUEUE_URL as string, messages),
+    bulkSendMessages(
+      sqs,
+      secondaryQueue
+        ? (process.env.SECONDARY_ASYNC_RULE_QUEUE_URL as string)
+        : (process.env.ASYNC_RULE_QUEUE_URL as string),
+      messages
+    ),
     bulkSendMessages(
       sqs,
       process.env.BATCH_ASYNC_RULE_QUEUE_URL as string,

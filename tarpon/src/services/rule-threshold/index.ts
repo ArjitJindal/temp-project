@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { CaseRepository } from '../cases/repository'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -36,6 +36,7 @@ import {
 } from '@/utils/clickhouse/utils'
 import { ClickhouseAlertRepository } from '@/services/alerts/clickhouse-repository'
 import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
+import dayjs from '@/utils/dayjs'
 
 const MIN_DISPOSED_LIMIT = 15
 
@@ -113,7 +114,7 @@ export class RuleThresholdOptimizer {
     const [ruleInstance, currentInstanceStats] = await Promise.all([
       ruleInstanceService.getRuleInstanceById(ruleInstanceId),
       ruleInstanceService.getRuleInstanceStats(ruleInstanceId, {
-        afterTimestamp: 0,
+        afterTimestamp: dayjs().subtract(1, 'year').valueOf(),
         beforeTimestamp: Date.now(),
       }),
     ])

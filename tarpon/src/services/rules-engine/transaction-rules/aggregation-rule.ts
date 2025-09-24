@@ -1,4 +1,4 @@
-import { mapValues } from 'lodash'
+import mapValues from 'lodash/mapValues'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { getTransactionStatsTimeGroupLabelV2 } from '../utils/transaction-rule-utils'

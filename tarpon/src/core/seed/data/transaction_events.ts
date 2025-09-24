@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { TRANSACTION_EVENTS_SEED } from '../data/seeds'
 import { getTransactions } from './transactions'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'

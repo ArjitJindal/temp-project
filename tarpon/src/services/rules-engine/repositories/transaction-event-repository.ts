@@ -13,7 +13,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
 import { traceable } from '@/core/xray'
 import { pickKnownEntityFields } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
@@ -23,7 +23,11 @@ import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTran
 import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
-import { getUpsertSaveDynamoCommand, transactWrite } from '@/utils/dynamodb'
+import {
+  getUpsertSaveDynamoCommand,
+  paginateQuery,
+  transactWrite,
+} from '@/utils/dynamodb'
 
 @traceable
 export class TransactionEventRepository {
@@ -108,17 +112,12 @@ export class TransactionEventRepository {
 
     // Handle local changes if needed
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await Promise.all(
-        primaryKeys
-          .filter((primaryKey) => primaryKey !== undefined)
-          .map((primaryKey) =>
-            localTarponChangeCaptureHandler(this.tenantId, primaryKey)
-          )
-      )
+      await handleLocalTarponChangeCapture(this.tenantId, primaryKeys)
     }
+
     return operations.map((request) => request.eventId)
   }
 
@@ -153,10 +152,11 @@ export class TransactionEventRepository {
     }
     await this.dynamoDb.send(new UpdateCommand(updateParams))
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, key)
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
 
@@ -167,8 +167,7 @@ export class TransactionEventRepository {
       this.tenantId,
       transactionId
     ).PartitionKeyID
-
-    const queryInput: QueryCommandInput = {
+    const query = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
       ExpressionAttributeValues: {
@@ -176,9 +175,7 @@ export class TransactionEventRepository {
       },
       ConsistentRead: true,
     }
-
-    const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
-
+    const { Items } = await paginateQuery(this.dynamoDb, query)
     return Items as TransactionEventWithRulesResult[]
   }
 

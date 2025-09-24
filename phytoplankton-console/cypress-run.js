@@ -20,22 +20,22 @@ if (!process.env.ENV) {
 }
 
 async function notifySlack(failedTests) {
+  // failedTests -> Record<string, { failedCount: number; errors: string[] }
   const slackClient = new WebClient(process.env.SLACK_TOKEN);
   const buildNumber = process.env.CODEBUILD_BUILD_NUMBER;
   const buildUrl =
     getCodeBuildConsoleUrlFromArn() ?? 'https://console.aws.amazon.com/codebuild/home';
 
-  const s3Url = process.env.E2E_ARTIFACT_S3_URL ?? buildUrl;
   const message = slackifyMarkdown(
     `<!subteam^${ENGINEERING_ON_CALL_GROUP_ID}> E2E tests failing summary <${buildUrl}|Build #${buildNumber}>
 
 # List of failing E2E tests
 ${Object.entries(failedTests)
-  .map(([test, count]) => {
-    if (count === 1) {
-      return `⚠️ *${test}* - Failing *${count} time*`;
+  .map(([test, description]) => {
+    if (description.failedCount === 1) {
+      return `⚠️ *${test}* - Failing *${description.failedCount} time*`;
     } else {
-      return `❌ *${test}* - Failing *${count} times*`;
+      return `❌ *${test}* - Failing *${description.failedCount} times*`;
     }
   })
   .join('\n')}
@@ -43,7 +43,7 @@ ${Object.entries(failedTests)
   );
   console.log('Publishing slack message');
   try {
-    await slackClient.chat.postMessage({
+    const postedMessage = await slackClient.chat.postMessage({
       channel: DEPLOYMENT_SLACK_CHANNEL,
       blocks: [
         {
@@ -52,9 +52,46 @@ ${Object.entries(failedTests)
         },
       ],
     });
+    if (postedMessage.ts) {
+      const sendSlackThread = async (threadGroupMessages) => {
+        const message = slackifyMarkdown(threadGroupMessages.join('\n'));
+        await slackClient.chat.postMessage({
+          channel: DEPLOYMENT_SLACK_CHANNEL,
+          blocks: [
+            {
+              type: 'section',
+              text: { type: 'mrkdwn', text: message },
+            },
+          ],
+          thread_ts: postedMessage.ts,
+        });
+      };
+      // sending errors in the thread limit of a message is 12,000 characters
+      let threadGroupMessages = [];
+      let currentThreadCharacters = 0;
+      const MESSAGE_MAX_CHARS = 11000; // account for new line charcters max limit is 120000
+      Object.entries(failedTests).forEach(async ([test, description]) => {
+        const header = `***${test} -> errors*** \n`;
+        const errors = description.errors.join('\n');
+        const currentMessageChars = header.length + errors.length;
+        if (currentMessageChars + currentThreadCharacters > MESSAGE_MAX_CHARS) {
+          await sendSlackThread(threadGroupMessages);
+          currentThreadCharacters = 0;
+          threadGroupMessages = [];
+        }
+        currentThreadCharacters += currentMessageChars;
+        threadGroupMessages.push(header);
+        threadGroupMessages.push(errors);
+      });
+
+      if (threadGroupMessages.length > 0) {
+        await sendSlackThread(threadGroupMessages);
+      }
+    }
   } catch (e) {
     console.log(e);
   }
+  console.log('Finished publishing slack message');
 }
 
 function getCodeBuildConsoleUrlFromArn() {
@@ -81,13 +118,14 @@ async function updateCloudWatchMetrics(failedTests) {
     region: 'eu-central-1',
   });
 
-  const metricData = Object.entries(failedTests).map(([testName, count]) => ({
+  const metricData = Object.entries(failedTests).map(([testName, description]) => ({
+    // failedTests -> Record<string, { failedCount: number; errors: string[] }
     MetricName: 'E2ETestFailure',
     Dimensions: [
       { Name: 'TestName', Value: testName },
       { Name: 'BuildNumber', Value: buildNumber },
     ],
-    Value: count,
+    Value: description.failedCount,
     Unit: 'Count',
   }));
 
@@ -102,21 +140,27 @@ async function updateCloudWatchMetrics(failedTests) {
   } catch (e) {
     console.error('Error publishing cloudwatch metrics', e);
   }
+  console.log('Finished publishing cloudwatch metrics');
 }
 
 async function afterCypressRun() {
-  const filePath = path.resolve(__dirname, 'cypress', 'failed-e2e-tests.json');
-  if (fs.existsSync(filePath)) {
-    const data = fs.readFileSync(filePath, 'utf8');
-    const failedTests = JSON.parse(data);
+  if (process.env.CI === true) {
+    const filePath = path.resolve(__dirname, 'cypress', 'failed-e2e-tests.json');
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      const failedTests = JSON.parse(data); // type of this parsed object Record<string, { failedCount: number; errors: string[] }
 
-    const failedTestsCount = Object.values(failedTests).reduce((acc, count) => acc + count, 0);
-    if (failedTestsCount > 0) {
-      await notifySlack(failedTests);
+      const failedTestsCount = Object.values(failedTests).reduce(
+        (acc, testDescription) => acc + testDescription.failedCount,
+        0,
+      );
+      if (failedTestsCount > 0) {
+        await notifySlack(failedTests);
+      }
+      await updateCloudWatchMetrics(failedTests);
+    } else {
+      console.warn('No failed tests found at', filePath);
     }
-    await updateCloudWatchMetrics(failedTests);
-  } else {
-    console.warn('No failed tests found at', filePath);
   }
 }
 
@@ -217,7 +261,7 @@ async function getCypressCreds() {
   });
 
   try {
-    // const spec = ` --spec "cypress/e2e/cases/case-creation-test.cy.ts"`;
+    // const spec = ` --spec "cypress/e2e/cases/case-details*.cy.ts"`;
     const spec = ``;
     execSync(
       `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag} ${spec}`,

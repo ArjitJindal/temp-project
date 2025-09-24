@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,

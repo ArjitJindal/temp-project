@@ -158,7 +158,9 @@ export default function DistributionChartWidget<
               groupBy === 'TIME' ? seriesLabel : '',
             ),
             pdfRef,
-            tableTitle: `${attributeName} distribution`,
+            tableTitle: `${
+              restProps.title ? `${restProps.title} - ` : ''
+            } ${attributeName} distribution`,
           };
           resolve(fileData);
         });

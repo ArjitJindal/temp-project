@@ -6,7 +6,8 @@ import {
   PostOrganizationsRequest,
 } from 'auth0'
 import { Conflict } from 'http-errors'
-import { memoize, uniq } from 'lodash'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
 import { getSecret } from './secrets-manager'
 import dayjs from './dayjs'
 import { EscalationLevel } from '@/@types/openapi-internal/EscalationLevel'

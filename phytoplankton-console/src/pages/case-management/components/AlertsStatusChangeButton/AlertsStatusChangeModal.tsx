@@ -151,12 +151,20 @@ export default function AlertsStatusChangeModal(props: Props) {
         queryClient.refetchQueries({ queryKey: ALERT_ITEM(alertId) });
       });
       if (!currentUser?.reviewerId) {
+        let messageText = `${capitalizeNameFromEmail(
+          auth0User?.name || '',
+        )} ${props.newStatus.toLowerCase()} the alert ${props.entityIds[0]} ${
+          updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
+        }`;
+
+        if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+          messageText += ` All suspended transactions will be updated to '${
+            updates.updateTransactionStatus === 'ALLOW' ? 'Allowed' : 'Blocked'
+          }' shortly.`;
+        }
+
         message.success(`Alert ${props.newStatus.toLowerCase()} successfully`, {
-          details: `${capitalizeNameFromEmail(
-            auth0User?.name || '',
-          )} ${props.newStatus.toLowerCase()} the alert ${props.entityIds[0]} ${
-            updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
-          }`,
+          details: messageText,
           link: makeUrl(`/case-management/alerts/:id`, {
             id: props.entityIds[0],
           }),
@@ -166,15 +174,24 @@ export default function AlertsStatusChangeModal(props: Props) {
       }
 
       if (currentUser?.reviewerId) {
-        message.warn(
-          `${pluralize('Alert', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
-            props.entityIds.length > 1 ? 'are' : 'is'
-          } sent to review ${
-            users[currentUser.reviewerId]?.name ||
-            users[currentUser.reviewerId]?.email ||
-            currentUser?.reviewerId
-          }. Once approved your alert action will be performed successfully.`,
-        );
+        const alertCount = props.entityIds.length;
+        const alertLabel = pluralize('Alert', alertCount, true);
+        const alertIds = props.entityIds.join(', ');
+        const verb = alertCount > 1 ? 'are' : 'is';
+        const reviewer =
+          users[currentUser.reviewerId]?.name ||
+          users[currentUser.reviewerId]?.email ||
+          currentUser?.reviewerId;
+
+        let messageText = `${alertLabel} ${alertIds} ${verb} sent to review ${reviewer}. Once approved, your alert action will be performed successfully.`;
+
+        if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+          messageText += ` All transactions which are suspended will be updated to ${
+            updates.updateTransactionStatus === 'ALLOW' ? 'allowed' : 'blocked'
+          } after the approval of your alert action.`;
+        }
+        message.warn(messageText);
+
         return;
       }
     },
@@ -197,6 +214,7 @@ export default function AlertsStatusChangeModal(props: Props) {
         alertStatus: props.newStatus,
         reason: formValues?.reasons ?? [],
         files: formValues?.files ?? [],
+        updateTransactionStatus: formValues?.updateTransactionStatus,
       };
 
       updates = getStatusChangeUpdatesFromFormValues<AlertStatusUpdateRequest>(

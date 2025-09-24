@@ -9,7 +9,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import {
   getTestRiskFactor,
   setUpRiskFactorsHook,

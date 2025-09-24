@@ -1,5 +1,7 @@
 import { MongoClient, Document, UpdateFilter, Filter } from 'mongodb'
-import { isNil, omitBy, sum } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
+import sum from 'lodash/sum'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SendMessageBatchRequestEntry, SQSClient } from '@aws-sdk/client-sqs'
 import {
@@ -12,10 +14,10 @@ import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import {
-  MongoUpdateMessage,
   paginatePipeline,
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
+import { MongoUpdateMessage } from '@/@types/mongo'
 import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'

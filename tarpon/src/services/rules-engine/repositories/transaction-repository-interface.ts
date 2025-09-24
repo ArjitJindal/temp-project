@@ -8,6 +8,8 @@ import {
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
+import { Address } from '@/@types/openapi-public/Address'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 
 export type TransactionWithRiskDetails = Omit<
   TransactionWithRulesResult,
@@ -35,6 +37,23 @@ export type TransactionsFilterOptions = {
   transactionTimeRange24hr?: TransactionTimeRange
 }
 
+type AddressData = {
+  type: 'ADDRESS'
+  address: Address | undefined
+}
+
+type EmailData = {
+  type: 'EMAIL'
+  email: string | undefined
+}
+
+type NameData = {
+  type: 'NAME'
+  name: string | ConsumerName | undefined
+}
+
+export type NonUserEntityData = AddressData | EmailData | NameData
+
 export interface RulesEngineTransactionRepositoryInterface {
   getLastNUserSendingTransactions(
     userId: string,
@@ -57,6 +76,18 @@ export interface RulesEngineTransactionRepositoryInterface {
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>>
+
+  getNonUserSendingTransactionsGeneratorByEntity(
+    entity: NonUserEntityData | undefined,
+    timeRange: TimeRange,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>>
+
+  getNonUserReceivingTransactionsGeneratorByEntity(
+    entity: NonUserEntityData | undefined,
+    timeRange: TimeRange,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>>
 
   getGenericUserReceivingTransactionsGenerator(

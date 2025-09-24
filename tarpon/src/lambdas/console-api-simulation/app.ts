@@ -3,7 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

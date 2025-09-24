@@ -78,6 +78,7 @@
     &.isSearchEmpty:not(.isFocused):not(.isEmpty):not(.isOpen) {
       .input {
         width: 0;
+        pointer-events: none;
       }
     }
 
@@ -119,7 +120,8 @@
 
   &:not(.isDisabled) {
     &:not(.isError):not(.isSuccess) {
-      &.isFocused {
+      &.isFocused,
+      &.isOpen {
         border-color: @figma-vars--tokens-colorStrokeAction;
       }
     }
@@ -141,6 +143,7 @@
     .input {
       width: 0;
       position: absolute;
+      pointer-events: none;
     }
   }
 
@@ -195,17 +198,18 @@
   transform: translateY(-50%);
   display: flex;
   align-items: center;
+  pointer-events: none;
 }
 
 .rightIcon {
   color: @figma-vars--tokens-colorIconSecondary;
+  pointer-events: all;
 
   &.clearIcon {
     cursor: pointer;
   }
 
   &.arrowDownIcon {
-    pointer-events: none;
     transition-property: transform;
     transition-duration: @default-animation-speed;
     transition-timing-function: @default-animation-function;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Account } from '@/apis';
-import { FlagrightAuth0User, isAtLeast, UserRole } from '@/utils/user-utils';
+import { FlagrightAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import Modal from '@/components/library/Modal';
@@ -13,11 +13,10 @@ interface ResetMFAProps {
   item: Account;
   user: FlagrightAuth0User;
   onSuccess: () => void;
-  isDisabled: (item: Account) => boolean;
 }
 
 export function ResetUserMfa(props: ResetMFAProps) {
-  const { isDisabled, item, user, onSuccess } = props;
+  const { item, user, onSuccess } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const api = useApi();
 
@@ -45,9 +44,7 @@ export function ResetUserMfa(props: ResetMFAProps) {
   );
 
   const handleDelete = () => {
-    if (isAtLeast(user, UserRole.ADMIN)) {
-      setIsModalVisible(true);
-    }
+    setIsModalVisible(true);
   };
 
   const confirmDelete = () => {
@@ -62,7 +59,7 @@ export function ResetUserMfa(props: ResetMFAProps) {
         testName="reset-mfa-button"
         type="TETRIARY"
         onClick={handleDelete}
-        isDisabled={isDisabled(item)}
+        isDisabled={item.blocked || item.id === user.userId}
         icon={<DeleteOutlined />}
         requiredResources={['write:::accounts/overview/*']}
       >

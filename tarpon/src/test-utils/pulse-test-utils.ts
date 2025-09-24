@@ -1,4 +1,4 @@
-import { uniqueId } from 'lodash'
+import uniqueId from 'lodash/uniqueId'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'

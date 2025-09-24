@@ -4,14 +4,22 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { TableUser } from '../CaseTable/types';
 import { statusToOperationName } from './StatusChangeButton';
 import s from './index.module.less';
-import { CaseStatus, FileInfo, KYCStatus, ScreeningDetails, UserState, UserTag } from '@/apis';
+import {
+  CaseStatus,
+  FileInfo,
+  KYCStatus,
+  RuleAction,
+  ScreeningDetails,
+  UserState,
+  UserTag,
+} from '@/apis';
 import Modal from '@/components/library/Modal';
-import Narrative, { NarrativeRef } from '@/components/Narrative';
+import Narrative, { NarrativeRef, OTHER_REASON } from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
@@ -31,6 +39,7 @@ export interface FormValues {
   screeningDetails?: ScreeningDetails;
   listId?: string;
   actionReason?: string;
+  updateTransactionStatus?: RuleAction;
 }
 
 export type ActionLabel =
@@ -141,6 +150,9 @@ export default function StatusChangeModal(props: Props) {
       ? undefined
       : notEmpty;
   };
+
+  const isPaymentApprovalEnabled = useSettings().isPaymentApprovalEnabled;
+
   return (
     <>
       <Modal
@@ -167,7 +179,7 @@ export default function StatusChangeModal(props: Props) {
           ref={narrativeRef}
           showErrors={showErrors}
           values={formState}
-          // otherReason={OTHER_REASON}
+          otherReason={OTHER_REASON}
           onChange={setFormState}
           alertMessage={alertMessage}
           entityType={entityName}
@@ -187,6 +199,11 @@ export default function StatusChangeModal(props: Props) {
             ...(entityName === 'CASE' && { newCaseStatus: newStatus }),
             ...(entityName === 'ALERT' && { newAlertStatus: newStatus }),
           }}
+          showPaymentApprovalStatusChange={
+            (entityName === 'CASE' || entityName === 'ALERT') &&
+            newStatus === 'CLOSED' &&
+            isPaymentApprovalEnabled
+          }
         />
       </Modal>
       <Modal

@@ -1,5 +1,9 @@
 import { MongoClient } from 'mongodb'
-import { chunk, cloneDeep, flatMap, memoize, uniq } from 'lodash'
+import chunk from 'lodash/chunk'
+import cloneDeep from 'lodash/cloneDeep'
+import flatMap from 'lodash/flatMap'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
@@ -371,6 +375,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     riskClassificationValues: RiskClassificationScore[],
     updateProgress: (progress: number) => Promise<void>
   ) {
+    await this.riskFactors
     await pMap(
       users ?? [],
       async (user) => {

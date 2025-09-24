@@ -11,7 +11,8 @@ import {
   GoogleSpreadsheetWorksheet,
 } from 'google-spreadsheet'
 import { JWT } from 'google-auth-library'
-import { memoize, merge } from 'lodash'
+import memoize from 'lodash/memoize'
+import merge from 'lodash/merge'
 import { BackoffOptions, backOff } from 'exponential-backoff'
 import { DailyMetricStats, MonthlyMetricStats } from './utils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'

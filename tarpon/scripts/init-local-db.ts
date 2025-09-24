@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
-import axios from 'axios'
+import fetch from 'node-fetch'
 import { initializeEnvVars } from './migrations/utils/config'
 import { RuleService } from '@/services/rules-engine'
 import { seedDemoData } from '@/core/seed'
@@ -12,7 +12,7 @@ async function main() {
   initializeEnvVars()
   console.info('Creating Clickhouse tables...')
   // Create Clickhouse database
-  await axios.post(
+  await fetch(
     'http://localhost:8123/?query=CREATE%20DATABASE%20IF%20NOT%20EXISTS%20tarpon'
   )
   console.log('Creating Dynamo tables...')

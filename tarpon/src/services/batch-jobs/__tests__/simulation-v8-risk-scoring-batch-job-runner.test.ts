@@ -2,7 +2,7 @@ import { BatchJobWithId } from '@/@types/batch-job'
 import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -18,7 +18,7 @@ import {
   getTestUser,
   setUpUsersHooks,
 } from '@/test-utils/user-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 withFeatureHook(['SIMULATOR', 'RISK_LEVELS', 'RISK_SCORING'])

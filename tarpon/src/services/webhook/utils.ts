@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import {
   SecretsManagerWebhookSecrets,
   WebhookDeliveryTask,
@@ -12,7 +12,6 @@ import { logger } from '@/core/logger'
 import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
-import { handleWebhookDeliveryTask } from '@/lambdas/webhook-deliverer/utils'
 
 const LOCAL_SECRET_KEY = 'test-secret'
 
@@ -125,9 +124,14 @@ async function sendWebhookTasksToWebhooks<T extends object = object>(
 
     if (envIs('local') || envIs('test')) {
       logger.info(`Sending ${entries.length} webhooks to local queue`)
+      const { handleLocalWebhookDelivery } = await import(
+        '@/core/local-handlers/webhook-delivery'
+      )
+
       await Promise.all(
         entries.map((entry) =>
-          handleWebhookDeliveryTask(
+          handleLocalWebhookDelivery(
+            tenantId,
             JSON.parse(entry.MessageBody as string) as WebhookDeliveryTask
           )
         )

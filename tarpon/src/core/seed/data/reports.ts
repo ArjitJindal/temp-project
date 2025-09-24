@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import pMap from 'p-map'
 import { ReportSampler } from '../samplers/report'
 import { getCases } from './cases'

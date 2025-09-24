@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { hasResources } from '@flagright/lib/utils'
 import { BadRequest } from 'http-errors'
 import { RiskService } from '@/services/risk'
@@ -248,7 +248,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         tmpBucketName: TMP_BUCKET,
         documentBucketName: DOCUMENT_BUCKET,
       })
-      const fileInfo = await s3Service.copyFilesToPermanentBucket([file])
+      const fileInfo = await s3Service.copyFlatFilesToPermanentBucket([file])
       await sendBatchJobCommand({
         tenantId,
         type: 'FLAT_FILES_VALIDATION',

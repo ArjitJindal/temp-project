@@ -12,15 +12,14 @@ import {
   MongoClient,
   ObjectId,
   OptionalUnlessRequiredId,
-  UpdateFilter,
   UpdateOneModel,
   UpdateResult,
   WithId,
   UpdateManyModel,
   AnyBulkWriteOperation,
 } from 'mongodb'
-
-import { isEqual, memoize } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import memoize from 'lodash/memoize'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { escapeStringRegexp } from './regex'
@@ -58,8 +57,8 @@ import {
 } from '@/core/constants'
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
-import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
 import { hasFeature } from '@/core/utils/context'
+import { MongoUpdateMessage } from '@/@types/mongo'
 
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
@@ -722,16 +721,6 @@ export async function internalMongoBulkUpdate<T extends Document>(
   )
 }
 
-export interface MongoUpdateMessage<T extends Document = Document> {
-  filter: Filter<T>
-  operationType: 'updateOne'
-  updateMessage: UpdateFilter<T>
-  sendToClickhouse: boolean
-  collectionName: string
-  upsert?: boolean
-  arrayFilters?: Document[]
-}
-
 export async function sendMessageToMongoUpdateConsumer<
   T extends Document = Document
 >(message: MongoUpdateMessage<T>) {
@@ -740,7 +729,13 @@ export async function sendMessageToMongoUpdateConsumer<
   }
 
   if (envIs('local') || envIs('test')) {
-    await executeMongoUpdate([message as MongoUpdateMessage<Document>])
+    const { handleLocalExecuteMongoUpdate } = await import(
+      '@/core/local-handlers/execute-mongo-update'
+    )
+
+    await handleLocalExecuteMongoUpdate([
+      message as MongoUpdateMessage<Document>,
+    ])
     return
   }
 

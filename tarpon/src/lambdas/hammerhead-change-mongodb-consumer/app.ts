@@ -1,4 +1,4 @@
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { DbClients } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'

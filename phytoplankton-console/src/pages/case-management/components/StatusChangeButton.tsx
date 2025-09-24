@@ -5,7 +5,6 @@ import { Resource } from '@flagright/lib/utils';
 import { ActionLabel } from './StatusChangeModal';
 import { AlertStatus, CaseStatus, FileInfo, SanctionsHitStatus } from '@/apis';
 import Button, { ButtonProps } from '@/components/library/Button';
-import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
 import { getNextStatus } from '@/utils/case-utils';
 import { useApi } from '@/api';
@@ -55,7 +54,7 @@ export const statusToOperationName = (
 };
 
 export interface FormValues {
-  reasons: CaseReasons[];
+  reasons: string[];
   reasonOther: string | null;
   comment: string | null;
   files: FileInfo[];

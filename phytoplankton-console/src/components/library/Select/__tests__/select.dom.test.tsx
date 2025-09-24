@@ -1,17 +1,18 @@
-import { test } from '@jest/globals';
+import { describe, test } from '@jest/globals';
 import React from 'react';
-import { render } from 'testing-library-wrapper';
+import { render, userEvent } from 'testing-library-wrapper';
 import Select, { Props } from '..';
 import {
-  clickSelector,
-  clickOptionByText,
   clickClear,
+  clickOptionByText,
+  clickOutside,
+  clickSelector,
   clickValueRemove,
   expectDropdownOpen,
-  expectValues,
-  typeInSelect,
-  clickOutside,
   expectTags,
+  expectValues,
+  findArrowButton,
+  typeInSelect,
 } from './select.jest-helpers';
 import { Comparable } from '@/utils/comparable';
 
@@ -33,6 +34,41 @@ describe('SINGLE mode', () => {
     await clickOptionByText('First option');
     expectDropdownOpen(false);
     expectValues(['First option']);
+  });
+
+  test('Closes and opens by Tab key', async () => {
+    render(
+      <RenderSelect
+        options={[
+          { label: 'First option', value: 'option1' },
+          { label: 'Second option', value: 'option2' },
+        ]}
+        placeholder={'Placeholder example'}
+      />,
+    );
+    await clickSelector();
+    expectDropdownOpen(true);
+    await userEvent.keyboard('{Tab}');
+    expectDropdownOpen(false);
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}');
+    expectDropdownOpen(true);
+  });
+
+  test('Closes and opens by arrow icon', async () => {
+    render(
+      <RenderSelect
+        options={[
+          { label: 'First option', value: 'option1' },
+          { label: 'Second option', value: 'option2' },
+        ]}
+        placeholder={'Placeholder example'}
+      />,
+    );
+    expectDropdownOpen(false);
+    await userEvent.click(findArrowButton());
+    expectDropdownOpen(true);
+    await userEvent.click(findArrowButton());
+    expectDropdownOpen(false);
   });
 });
 

@@ -6,18 +6,16 @@ import {
   FindCursor,
   MongoClient,
 } from 'mongodb'
-import {
-  compact,
-  difference,
-  isEmpty,
-  isNil,
-  keyBy,
-  mapKeys,
-  mapValues,
-  omitBy,
-  pick,
-  uniq,
-} from 'lodash'
+import compact from 'lodash/compact'
+import difference from 'lodash/difference'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import keyBy from 'lodash/keyBy'
+import mapKeys from 'lodash/mapKeys'
+import mapValues from 'lodash/mapValues'
+import omitBy from 'lodash/omitBy'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -30,6 +28,7 @@ import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/
 import { filterOutInternalRules } from '../pnb-custom-logic'
 import {
   AuxiliaryIndexTransaction,
+  NonUserEntityData,
   RulesEngineTransactionRepositoryInterface,
   TimeRange,
   TransactionsFilterOptions,
@@ -77,9 +76,9 @@ import {
 } from '@/@types/tranasction/payment-type'
 import {
   getPaymentDetailsIdentifiers,
-  getPaymentMethodId,
   PAYMENT_METHOD_IDENTIFIER_FIELDS,
 } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
@@ -87,6 +86,7 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { Address } from '@/@types/openapi-public/Address'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -168,11 +168,8 @@ export class MongoDbTransactionRepository
         { $set: payload },
         { session: options?.session }
       ),
+      this.updateUniqueTransactionTags(transaction),
     ]
-    // Skip updateUniqueTransactionTags for gocardless tenant
-    if (this.tenantId !== '4c9cdf0251') {
-      promises.push(this.updateUniqueTransactionTags(transaction))
-    }
     await Promise.all(promises)
 
     return internalTransaction
@@ -861,14 +858,16 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsByIds(
-    transactionIds: string[]
+    transactionIds: string[],
+    filter?: Filter<InternalTransaction>,
+    projection?: Document
   ): Promise<InternalTransaction[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const query = { transactionId: { $in: transactionIds } }
-    const cursor = collection.find(query)
+    const query = { transactionId: { $in: transactionIds }, ...filter }
+    const cursor = collection.find(query, { projection })
 
     return await cursor.toArray()
   }
@@ -2128,6 +2127,261 @@ export class MongoDbTransactionRepository
     }
     return allResult
   }
+
+  public async getUniqueEntityDetails(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    type: 'ADDRESS' | 'EMAIL' | 'NAME'
+  ): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+
+    let projectField: Document = {}
+    const matchField = 'entity'
+
+    if (type === 'ADDRESS') {
+      projectField = {
+        entity: {
+          $let: {
+            vars: {
+              addressObj: {
+                $ifNull: [
+                  `$${paymentDetailsField}.address`,
+                  `$${paymentDetailsField}.shippingAddress`,
+                  `$${paymentDetailsField}.bankAddress`,
+                  null,
+                ],
+              },
+            },
+            in: {
+              $cond: {
+                if: { $eq: ['$$addressObj', null] },
+                then: null,
+                else: {
+                  $concat: [
+                    {
+                      $reduce: {
+                        input: {
+                          $ifNull: ['$$addressObj.addressLines', []],
+                        },
+                        initialValue: '',
+                        in: {
+                          $concat: [
+                            '$$value',
+                            { $ifNull: ['$$this', ''] },
+                            ' ',
+                          ],
+                        },
+                      },
+                    },
+                    { $ifNull: ['$$addressObj.postcode', ''] },
+                    { $ifNull: ['$$addressObj.city', ''] },
+                    { $ifNull: ['$$addressObj.state', ''] },
+                    { $ifNull: ['$$addressObj.country', ''] },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      }
+    } else if (type === 'EMAIL') {
+      // Try to extract all emails from payment details
+      projectField = {
+        entity: {
+          $ifNull: [`$${paymentDetailsField}.email`, null],
+        },
+      }
+    } else if (type === 'NAME') {
+      // Try to extract name as a string, or first+middle+last
+      projectField = {
+        entity: {
+          $cond: [
+            { $ifNull: [`$${paymentDetailsField}.name`, false] },
+            `$${paymentDetailsField}.name`,
+            {
+              $trim: {
+                input: {
+                  $concat: [
+                    { $ifNull: [`$${paymentDetailsField}.firstName`, ''] },
+                    ' ',
+                    { $ifNull: [`$${paymentDetailsField}.middleName`, ''] },
+                    ' ',
+                    { $ifNull: [`$${paymentDetailsField}.lastName`, ''] },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      }
+    } else {
+      throw new Error(`Unsupported type for getUniqueEntityDetails: ${type}`)
+    }
+
+    const aggregationPipeline: Document[] = [
+      {
+        $match: {
+          timestamp: {
+            $gte: timeRange.afterTimestamp,
+            $lt: timeRange.beforeTimestamp,
+          },
+        },
+      },
+      {
+        $project: projectField,
+      },
+      {
+        $match: {
+          [matchField]: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: `$${matchField}`,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          entity: '$_id',
+        },
+      },
+    ]
+
+    const result = await collection
+      .aggregate<{ entity: string }>(aggregationPipeline)
+      .toArray()
+    return result.map((v) => v.entity)
+  }
+
+  /**
+   * Helper to build address filter from Address object.
+   */
+  private buildAddressFilter(
+    addressValue: Address | undefined
+  ): Filter<Address> {
+    const addressFilter: Filter<Address> = {}
+    if (!addressValue) {
+      return addressFilter
+    }
+    if (addressValue.addressLines && addressValue.addressLines.length > 0) {
+      addressFilter.addressLines = addressValue.addressLines
+    }
+    if (addressValue.postcode) {
+      addressFilter.postcode = addressValue.postcode
+    }
+    if (addressValue.city) {
+      addressFilter.city = addressValue.city
+    }
+    if (addressValue.state) {
+      addressFilter.state = addressValue.state
+    }
+    if (addressValue.country) {
+      addressFilter.country = addressValue.country
+    }
+    return addressFilter
+  }
+
+  private getNonUserTransactionsGeneratorByEntity(
+    entity: NonUserEntityData | undefined,
+    timeRange: TimeRange,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
+    direction: 'origin' | 'destination'
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (!entity) {
+      return this.getRulesEngineTransactionsGenerator(
+        [],
+        timeRange,
+        {},
+        attributesToFetch
+      )
+    }
+
+    let filter: Filter<InternalTransaction> = {}
+
+    if (entity.type === 'EMAIL') {
+      filter = {
+        [`${direction}PaymentDetails.emailId`]: entity.email,
+      }
+    }
+
+    if (entity.type === 'NAME') {
+      if (typeof entity.name === 'string') {
+        filter = {
+          [`${direction}PaymentDetails.name`]: entity.name,
+        }
+      } else {
+        filter = {
+          [`${direction}PaymentDetails.name.firstName`]: entity.name?.firstName,
+          [`${direction}PaymentDetails.name.middleName`]:
+            entity.name?.middleName,
+          [`${direction}PaymentDetails.name.lastName`]: entity.name?.lastName,
+        }
+      }
+    }
+
+    if (entity.type === 'ADDRESS') {
+      filter = {
+        $or: [
+          {
+            [`${direction}PaymentDetails.address`]: this.buildAddressFilter(
+              entity.address
+            ),
+          },
+          {
+            [`${direction}PaymentDetails.shippingAddress`]:
+              this.buildAddressFilter(entity.address),
+          },
+          {
+            [`${direction}PaymentDetails.bankAddress`]: this.buildAddressFilter(
+              entity.address
+            ),
+          },
+        ],
+      }
+    }
+
+    return this.getRulesEngineTransactionsGenerator(
+      [filter],
+      timeRange,
+      {},
+      attributesToFetch
+    )
+  }
+
+  public getNonUserSendingTransactionsGeneratorByEntity(
+    entity: NonUserEntityData | undefined,
+    timeRange: TimeRange,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    return this.getNonUserTransactionsGeneratorByEntity(
+      entity,
+      timeRange,
+      attributesToFetch,
+      'origin'
+    )
+  }
+
+  public getNonUserReceivingTransactionsGeneratorByEntity(
+    entity: NonUserEntityData | undefined,
+    timeRange: TimeRange,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    return this.getNonUserTransactionsGeneratorByEntity(
+      entity,
+      timeRange,
+      attributesToFetch,
+      'destination'
+    )
+  }
+
   public async getRuleInstanceHitStats(
     ruleInstanceId: string,
     timeRange: { afterTimestamp: number; beforeTimestamp: number },

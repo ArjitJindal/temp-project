@@ -1,4 +1,7 @@
-import { compact, concat, startCase, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import concat from 'lodash/concat'
+import startCase from 'lodash/startCase'
+import uniq from 'lodash/uniq'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'

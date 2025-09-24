@@ -10,7 +10,7 @@ import {
   QueryCommandInput,
   NativeAttributeValue,
 } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { BatchJobFilterUtils } from './filter-utils'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -62,7 +62,11 @@ export class DynamoBatchJobRepository {
 
     await batch.execute()
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, keys)
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, keys)
     }
   }
   public async getJobById(jobId: string): Promise<BatchJobInDb | null> {
@@ -96,7 +100,11 @@ export class DynamoBatchJobRepository {
       })
     )
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
 
@@ -120,7 +128,11 @@ export class DynamoBatchJobRepository {
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Item) as BatchJobInDb
   }
@@ -213,7 +225,11 @@ export class DynamoBatchJobRepository {
       })
     )
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -243,7 +259,11 @@ export class DynamoBatchJobRepository {
     )
 
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -273,7 +293,11 @@ export class DynamoBatchJobRepository {
       })
     )
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -304,7 +328,11 @@ export class DynamoBatchJobRepository {
     )
 
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
     return sanitizeMongoObject(result.Attributes) as BatchJobInDb
   }
@@ -434,17 +462,5 @@ export class DynamoBatchJobRepository {
 
     const result = await this.dynamoDb.send(new QueryCommand(queryParams))
     return (result.Items?.length ?? 0) > 0
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
   }
 }

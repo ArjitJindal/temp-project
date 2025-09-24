@@ -26,6 +26,7 @@ export const config: Config = {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 2048,
       MEMORY_LIMIT: 4096,
+      ARCHITECTURE: 'arm64',
     },
     CLOUD_WATCH: {
       logRetention: RetentionDays.ONE_WEEK,
@@ -36,7 +37,7 @@ export const config: Config = {
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},
     LAMBDA_DEFAULT: {
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 512,
     },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,
@@ -61,26 +62,26 @@ export const config: Config = {
       MEMORY_SIZE: 512,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 3,
+      PROVISIONED_CONCURRENCY: 0,
     },
     USERS_VIEW_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
+      PROVISIONED_CONCURRENCY: 0,
     },
     USER_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
+      PROVISIONED_CONCURRENCY: 1,
       MEMORY_SIZE: 1024,
     },
     TARPON_CHANGE_CAPTURE_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
     TENANT_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 1,
+      PROVISIONED_CONCURRENCY: 0,
     },
     DASHBOARD_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
+      PROVISIONED_CONCURRENCY: 0,
     },
     CASE_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
+      PROVISIONED_CONCURRENCY: 0,
       MEMORY_SIZE: 1024,
     },
     BATCH_JOB_LAMBDA: {
@@ -129,6 +130,6 @@ export const config: Config = {
     deploy: true,
     dataNodes: 3,
     dataNodeInstanceType: 'm7g.medium.search',
-    volumeSize: 10,
+    volumeSize: 20,
   },
 }

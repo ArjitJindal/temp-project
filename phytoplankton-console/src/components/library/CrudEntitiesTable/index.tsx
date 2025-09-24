@@ -271,6 +271,21 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
 
   return (
     <Authorized minRequiredResources={requiredResources ?? []}>
+      <DrawerStepperJsonSchemaForm<Entity>
+        isVisible={drawerMode !== 'CLOSED'}
+        onChangeVisibility={handleDrawerChangeVisibility}
+        title={getDrawerTitle(drawerMode, entityName)}
+        description={getDrawerDescription(drawerMode, entityName)}
+        mode={drawerMode}
+        steps={formSteps}
+        onSubmit={handleEntitySubmit}
+        drawerMaxWidth={formWidth}
+        formInitialValues={formInitialValues}
+        isSaving={updateMutation.isLoading || creationMutation.isLoading}
+        extraInfo={extraInfo}
+        onChange={onChange}
+        portal={portal}
+      />
       <AsyncResourceRenderer resource={queryResult.data}>
         {(data) => {
           return data.total === 0 ? (
@@ -307,22 +322,6 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
           );
         }}
       </AsyncResourceRenderer>
-
-      <DrawerStepperJsonSchemaForm<Entity>
-        isVisible={drawerMode !== 'CLOSED'}
-        onChangeVisibility={handleDrawerChangeVisibility}
-        title={getDrawerTitle(drawerMode, entityName)}
-        description={getDrawerDescription(drawerMode, entityName)}
-        mode={drawerMode}
-        steps={formSteps}
-        onSubmit={handleEntitySubmit}
-        drawerMaxWidth={formWidth}
-        formInitialValues={formInitialValues}
-        isSaving={updateMutation.isLoading || creationMutation.isLoading}
-        extraInfo={extraInfo}
-        onChange={onChange}
-        portal={portal}
-      />
     </Authorized>
   );
 }

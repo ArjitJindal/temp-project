@@ -15,7 +15,7 @@ import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/
 import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
-import { AdditionalCopilotInfo, CaseReasons, FileInfo, NarrativeType } from '@/apis';
+import { AdditionalCopilotInfo, FileInfo, NarrativeType, RuleAction } from '@/apis';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
@@ -24,10 +24,10 @@ import { CopilotButtonContent } from '@/pages/case-management/components/Copilot
 import Alert from '@/components/library/Alert';
 import { useUsers } from '@/utils/user-utils';
 
-export const OTHER_REASON: CaseReasons = 'Other';
+export const OTHER_REASON: string = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
-export const CLOSING_REASONS: CaseReasons[] = [
+export const CLOSING_REASONS: string[] = [
   'False positive',
   'Investigation completed',
   'Documents collected',
@@ -51,6 +51,7 @@ export type FormValues<R, ExtraFields = unknown> = {
   reasonOther: string | undefined;
   comment: string | undefined;
   files: FileInfo[];
+  updateTransactionStatus?: RuleAction | undefined;
 } & ExtraFields;
 
 export type NarrativeFormValues<R, ExtraFields = unknown> = {
@@ -69,6 +70,7 @@ type NarrativeProps<R> = {
   possibleReasons: R[];
   onSubmit: (values: FormValues<R>) => void;
   showErrors: boolean;
+  showPaymentApprovalStatusChange?: boolean;
   extraFields?: React.ReactNode;
   otherReason?: R;
   advancedOptions?: React.ReactNode;
@@ -101,6 +103,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
     infoText,
     advancedOptionsValidators,
     additionalCopilotInfo,
+    showPaymentApprovalStatusChange,
   } = props;
 
   const editorRef = useRef<MarkdownEditor>(null);
@@ -176,6 +179,24 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
           }}
         >
           {(inputProps) => <TextInput {...inputProps} />}
+        </InputField>
+      )}
+      {showPaymentApprovalStatusChange && (
+        <InputField<FormValues<R>, 'updateTransactionStatus'>
+          name="updateTransactionStatus"
+          label="Update status of suspended transactions to"
+          labelProps={{ required: { value: false, showHint: false } }}
+        >
+          {(inputProps) => (
+            <Select<RuleAction>
+              {...inputProps}
+              mode="SINGLE"
+              options={Object.values(['ALLOW', 'BLOCK'] as RuleAction[]).map((value) => ({
+                value: value,
+                label: humanizeAuto(value),
+              }))}
+            />
+          )}
         </InputField>
       )}
       {advancedOptions && (

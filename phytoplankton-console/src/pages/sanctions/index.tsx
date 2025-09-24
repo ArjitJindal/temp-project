@@ -83,6 +83,7 @@ const SanctionsPage: React.FC = () => {
                 <SearchResultTable searchId={searchId} setSearchTerm={setSearchTerm} />
               </PageWrapperContentContainer>
             ),
+            minRequiredResources: ['read:::screening/manual-screening/*'],
           },
           {
             key: 'activity',
@@ -127,6 +128,7 @@ const SanctionsPage: React.FC = () => {
                 {activeType === 'manual' && <SanctionsSearchHistoryTable />}
               </PageWrapperContentContainer>
             ),
+            minRequiredResources: ['read:::screening/activity/*'],
           },
           {
             key: 'whitelist',
@@ -139,6 +141,7 @@ const SanctionsPage: React.FC = () => {
                 <WhitelistTab />
               </PageWrapperContentContainer>
             ),
+            minRequiredResources: ['read:::screening/whitelist/*'],
           },
         ]}
       />

@@ -33,6 +33,8 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { batchCreateUserOptions } from '@/utils/user'
+import { assertValidTimestampTags } from '@/utils/tags'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
@@ -88,7 +90,7 @@ export const transactionHandler = lambdaApi()(
       )
       updateLogMetadata({ transactionId: transaction.transactionId })
       logger.info(`Processing transaction`) // Need to log to show on the logs
-
+      assertValidTimestampTags(transaction.tags)
       if (
         transaction.relatedTransactionIds &&
         transaction.relatedTransactionIds.length
@@ -189,12 +191,18 @@ export const transactionHandler = lambdaApi()(
       ) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
       }
+      for (const transaction of request.TransactionBatchRequest.data) {
+        assertValidTimestampTags(transaction.tags)
+      }
       const batchId = request.TransactionBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
         mongoDb,
       })
+      for (const transaction of request.TransactionBatchRequest.data) {
+        assertValidTimestampTags(transaction.tags)
+      }
       const { response, validatedTransactions } =
         await batchImportService.importTransactions(
           batchId,
@@ -279,8 +287,12 @@ export const transactionEventHandler = lambdaApi()(
     }
 
     handlers.registerPostTransactionEvent(
-      async (_ctx, { TransactionEvent: transactionEvent }) =>
-        await createTransactionEvent(transactionEvent)
+      async (_ctx, { TransactionEvent: transactionEvent }) => {
+        assertValidTimestampTags(
+          transactionEvent.updatedTransactionAttributes?.tags
+        )
+        return await createTransactionEvent(transactionEvent)
+      }
     )
     handlers.registerPostBatchTransactionEvents(async (ctx, request) => {
       if (
@@ -289,6 +301,14 @@ export const transactionEventHandler = lambdaApi()(
       ) {
         throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
       }
+
+      for (const transactionEvent of request.TransactionEventBatchRequest
+        .data) {
+        assertValidTimestampTags(
+          transactionEvent.updatedTransactionAttributes?.tags
+        )
+      }
+
       const batchId = request.TransactionEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
@@ -425,6 +445,7 @@ export const userEventsHandler = lambdaApi()(
           lockKycRiskLevel,
         }
       ) => {
+        assertValidTimestampTags(userEvent.updatedConsumerUserAttributes?.tags)
         return createUserEvent(
           userEvent,
           allowUserTypeConversion,
@@ -446,11 +467,15 @@ export const userEventsHandler = lambdaApi()(
         dynamoDb,
         mongoDb,
       })
+      for (const userEvent of request.ConsumerUserEventBatchRequest.data) {
+        assertValidTimestampTags(userEvent.updatedConsumerUserAttributes?.tags)
+      }
       const { response, validatedUserEvents } =
         await batchImportService.importConsumerUserEvents(
           batchId,
           request.ConsumerUserEventBatchRequest.data
         )
+
       await sendAsyncRuleTasks(
         validatedUserEvents.map((v) => ({
           type: 'USER_EVENT_BATCH',
@@ -458,6 +483,7 @@ export const userEventsHandler = lambdaApi()(
           userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
           batchId,
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response
@@ -475,6 +501,9 @@ export const userEventsHandler = lambdaApi()(
         dynamoDb,
         mongoDb,
       })
+      for (const userEvent of request.BusinessUserEventBatchRequest.data) {
+        assertValidTimestampTags(userEvent.updatedBusinessUserAttributes?.tags)
+      }
       const { response, validatedUserEvents } =
         await batchImportService.importBusinessUserEvents(
           batchId,
@@ -487,6 +516,7 @@ export const userEventsHandler = lambdaApi()(
           userEvent: { ...v, eventId: v.eventId ?? uuidv4() },
           tenantId,
           batchId,
+          parameters: batchCreateUserOptions(request),
         }))
       )
       return response
@@ -501,6 +531,7 @@ export const userEventsHandler = lambdaApi()(
           lockKycRiskLevel,
         }
       ) => {
+        assertValidTimestampTags(userEvent.updatedBusinessUserAttributes?.tags)
         userEvent.updatedBusinessUserAttributes =
           userEvent.updatedBusinessUserAttributes &&
           pickKnownEntityFields(

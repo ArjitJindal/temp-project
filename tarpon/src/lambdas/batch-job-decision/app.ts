@@ -1,64 +1,11 @@
-import { SQSEvent } from 'aws-lambda'
-import {
-  ExecutionAlreadyExists,
-  SFNClient,
-  StartExecutionCommand,
-} from '@aws-sdk/client-sfn'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
   BatchRunType,
 } from '@lib/cdk/constants'
-import { getBatchJobRunner } from '@/services/batch-jobs/batch-job-runner-factory'
-import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { BatchJob, BatchJobWithId } from '@/@types/batch-job'
-import { logger } from '@/core/logger'
-import {
-  initializeTenantContext,
-  tenantSettings,
-  updateLogMetadata,
-} from '@/core/utils/context'
-import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/services/batch-jobs/batch-job'
-
-function getBatchJobName(job: BatchJobWithId) {
-  return `${job.tenantId}-${job.type}-${job.jobId}`.slice(0, 80)
-}
-
-export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
-  const sfnClient = new SFNClient({
-    region: process.env.ENV === 'local' ? 'local' : process.env.AWS_REGION,
-    maxAttempts: 5,
-    retryMode: 'standard',
-  })
-
-  for (const record of event.Records) {
-    const job = JSON.parse(record.body) as BatchJobWithId
-    const jobName = getBatchJobName(job)
-    const mongoDb = await getMongoDbClient()
-    const jobRepository = new BatchJobRepository(job.tenantId, mongoDb)
-    const existingJob = await jobRepository.getJobById(job.jobId)
-    if (!existingJob) {
-      await jobRepository.insertJob(job)
-    }
-
-    try {
-      await sfnClient.send(
-        new StartExecutionCommand({
-          stateMachineArn: process.env.BATCH_JOB_STATE_MACHINE_ARN,
-          name: jobName,
-          input: record.body,
-        })
-      )
-      logger.info(`Job ${jobName} started`, { jobName, batchJobPayload: job })
-    } catch (e) {
-      if (!(e instanceof ExecutionAlreadyExists)) {
-        throw e
-      }
-    }
-  }
-})
+import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/utils/batch-job'
+import { tenantSettings } from '@/core/utils/context'
 
 export const jobDecisionHandler = async (
   job: BatchJobWithId
@@ -134,6 +81,7 @@ export const jobDecisionHandler = async (
     EDD_REVIEW: 'LAMBDA',
     SCREENING_PROFILE_DATA_FETCH: 'FARGATE',
     SCREENING_ALERTS_EXPORT: 'FARGATE',
+    UPDATE_TRANSACTION_STATUS: 'FARGATE',
   }
 
   return {
@@ -149,37 +97,3 @@ export const jobDecisionHandler = async (
           },
   }
 }
-
-export const genericJobRunnerHandler = async (job: BatchJobWithId) => {
-  if (job.tenantId !== LONG_RUNNING_MIGRATION_TENANT_ID) {
-    // Skipping as we are creating job per region and context should be handled per tenant
-    await initializeTenantContext(job.tenantId)
-  }
-  updateLogMetadata({
-    jobId: job.jobId,
-    type: job.type,
-    tenantId: job.tenantId,
-  })
-  logger.info(`Starting job - ${job.type}`, job)
-
-  const jobRepository = new BatchJobRepository(
-    job.tenantId,
-    await getMongoDbClient()
-  )
-  try {
-    await jobRepository.updateJobStatus(job.jobId, 'IN_PROGRESS')
-    await getBatchJobRunner(job.type, job.jobId).execute(job)
-    await jobRepository.updateJobStatus(job.jobId, 'SUCCESS')
-  } catch (error) {
-    await jobRepository.updateJobStatus(job.jobId, 'FAILED')
-    throw error
-  }
-
-  logger.debug(`Job ${job.jobId} completed`, {
-    jobId: job.jobId,
-    type: job.type,
-    tenantId: job.tenantId,
-  })
-}
-
-export const jobRunnerHandler = lambdaConsumer()(genericJobRunnerHandler)

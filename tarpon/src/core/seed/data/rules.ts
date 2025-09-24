@@ -1,4 +1,5 @@
-import { memoize, shuffle } from 'lodash'
+import memoize from 'lodash/memoize'
+import shuffle from 'lodash/shuffle'
 import { getAccounts } from '../samplers/accounts'
 import { BaseSampler } from '../samplers/base'
 import { companies } from '../samplers/dictionary'

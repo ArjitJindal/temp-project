@@ -680,6 +680,7 @@ function useTabs(
                     evidenceId={source.evidenceId}
                     entityType={entity.entityType}
                     sanctionsSourceFields={source.fields}
+                    provider={entity.provider}
                   >
                     {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>
@@ -751,6 +752,7 @@ function useTabs(
     delta?.sanctionsSources,
     entity.resourceId,
     entity.entityType,
+    entity.provider,
   ]);
 }
 

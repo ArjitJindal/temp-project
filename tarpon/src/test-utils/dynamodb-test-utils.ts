@@ -5,7 +5,7 @@ import {
   DynamoDBClient,
 } from '@aws-sdk/client-dynamodb'
 import { backOff } from 'exponential-backoff'
-import { range } from 'lodash'
+import range from 'lodash/range'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
 // We use a separate table for each jest worker. Then different test files running in parallel

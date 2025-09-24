@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { Nango } from '@nangohq/node'
 import createHttpError from 'http-errors'
 import { backOff } from 'exponential-backoff'

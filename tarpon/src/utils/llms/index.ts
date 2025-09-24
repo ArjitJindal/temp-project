@@ -87,19 +87,10 @@ export async function linkLLMRequestDynamoDB(
 
   await batch.execute()
   if (envIs('local') || envIs('test')) {
-    await handleLocalChangeCapture(tenantId, keys)
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
+    const { handleLocalTarponChangeCapture } = await import(
+      '@/core/local-handlers/tarpon'
+    )
+    await handleLocalTarponChangeCapture(tenantId, keys)
   }
 }
 

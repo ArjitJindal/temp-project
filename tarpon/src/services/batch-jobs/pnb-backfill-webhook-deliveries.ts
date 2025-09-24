@@ -1,5 +1,5 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3'
-import { random } from 'lodash'
+import random from 'lodash/random'
 import { sendWebhookTasks } from '../webhook/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillWebhookDeliveries } from '@/@types/batch-job'

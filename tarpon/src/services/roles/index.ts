@@ -1,13 +1,13 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { AccountsService } from '../accounts'
 import { MicroTenantInfo, Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { getOptimizedPermissions } from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
 import { DynamoRolesRepository } from './repository/dynamo'
-import { isInNamespace, transformRole } from './utils'
+import { getNamespacedRoleName, isInNamespace, transformRole } from './utils'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -19,6 +19,8 @@ import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { getContext } from '@/core/utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { logger } from '@/core/logger'
+import { getNonDemoTenantId } from '@/utils/tenant'
 
 @traceable
 export class RoleService {
@@ -123,6 +125,8 @@ export class RoleService {
       ...inputRole,
       permissions,
     })
+
+    // we are passing the update role from auth0, this will handle such scenrio where role is not present in the cache
     await this.cache.updateRole(tenantId, oldRole.id, {
       ...inputRole,
       permissions,
@@ -313,5 +317,46 @@ export class RoleService {
   async updateRolePermissions(id: string, permissions: Permission[]) {
     await this.auth0.updateRolePermissions(id, permissions)
     await this.cache.updateRolePermissions(id, permissions)
+  }
+
+  public async syncTenantRoles(tenant: Tenant) {
+    const auth0Roles = await this.auth0.rolesByNamespace(
+      getNonDemoTenantId(tenant.id)
+    )
+
+    const cacheRoles = await this.cache.getTenantRoles(
+      getNonDemoTenantId(tenant.id),
+      false,
+      false
+    )
+
+    // delete roles which are in cache but not in auth0
+    const rolesToDelete = cacheRoles.filter(
+      (role) => !auth0Roles.some((r) => r.id === role.id)
+    )
+
+    for (const role of rolesToDelete) {
+      await this.cache.deleteRole(role.id)
+    }
+
+    for (const role of auth0Roles) {
+      const updatedStatements =
+        cacheRoles.find((r) => r.id === role.id)?.statements ?? []
+
+      if (updatedStatements.length === 0) {
+        logger.warn(
+          `No statements found for role ${role.name} for tenant ${tenant.id}`
+        )
+      }
+
+      await this.cache.createRole(tenant.id, {
+        type: 'DATABASE',
+        params: {
+          ...role,
+          name: getNamespacedRoleName(tenant.id, role.name),
+          statements: updatedStatements,
+        },
+      })
+    }
   }
 }

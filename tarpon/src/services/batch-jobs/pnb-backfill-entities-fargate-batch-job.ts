@@ -1,5 +1,7 @@
 import pMap from 'p-map'
-import { chunk, last, uniqBy } from 'lodash'
+import chunk from 'lodash/chunk'
+import last from 'lodash/last'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient, ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -27,7 +29,8 @@ import {
   getDynamoDbClient,
 } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DynamoDbKeys, getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   TRANSACTIONS_COLLECTION,

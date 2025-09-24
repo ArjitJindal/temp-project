@@ -1,4 +1,5 @@
-import { range, uniq } from 'lodash'
+import range from 'lodash/range'
+import uniq from 'lodash/uniq'
 import { backOff } from 'exponential-backoff'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'

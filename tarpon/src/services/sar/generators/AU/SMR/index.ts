@@ -1,6 +1,7 @@
 import path from 'path'
 import fs from 'fs'
-import { cloneDeep, uniq } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import uniq from 'lodash/uniq'
 import { XMLBuilder } from 'fast-xml-parser'
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequest } from 'http-errors'

@@ -1,7 +1,12 @@
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
-import { cloneDeep, compact, intersection, isEmpty, last, uniqBy } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
+import last from 'lodash/last'
+import uniqBy from 'lodash/uniqBy'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
@@ -47,7 +52,6 @@ import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CounterRepository } from '@/services/counter/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AccountsService } from '@/services/accounts'
 import {
   batchInsertToClickhouse,
@@ -211,7 +215,7 @@ export class AlertsRepository {
       const alertMap = new Map<string, Alert>()
       alerts.forEach((a) => alertMap.set(a.alertId as string, a))
       // Create map for alert metadata from ClickHouse (includes age calculation)
-      const alertMetadataMap = new Map<string, { id: string; age: number }>()
+      const alertMetadataMap = new Map<string, { id: string; age: string }>()
       items.forEach((item) =>
         alertMetadataMap.set(item.id, { id: item.id, age: item.age })
       )
@@ -229,11 +233,12 @@ export class AlertsRepository {
         data: alerts.map((alert) => ({
           alert,
           caseType: caseMap.get(alert.caseId as string)?.caseType as CaseType,
-          caseCreatedTimestamp: caseMap.get(alert.caseId as string)
-            ?.createdTimestamp as number,
+          caseCreatedTimestamp: alert.caseCreatedTimestamp as number,
           caseUsers: caseMap.get(alert.caseId as string)
             ?.caseUsers as CaseCaseUsers,
-          age: alertMetadataMap.get(alert.alertId as string)?.age,
+          age: parseInt(
+            alertMetadataMap.get(alert.alertId as string)?.age ?? '0'
+          ),
         })),
       }
     } else if (!hasFeature('PNB')) {
@@ -877,52 +882,7 @@ export class AlertsRepository {
       ],
     })
 
-    if (alertConditions.length > 0) {
-      pipeline.push({
-        $match: {
-          alerts: {
-            $elemMatch: {
-              $and: replaceMagicKeyword(alertConditions, 'alerts.', ''),
-            },
-          },
-        },
-      })
-      if (options?.enablePerformanceWorkaround) {
-        pipeline.push({
-          $addFields: {
-            alerts: {
-              $filter: {
-                input: '$alerts',
-                as: 'alert',
-                cond: convertQueryToAggregationExpression({
-                  $and: replaceMagicKeyword(
-                    alertConditions,
-                    'alerts.',
-                    'alert.'
-                  ),
-                }),
-              },
-            },
-          },
-        })
-      }
-    }
-
-    if (!options?.countOnly && sortStage) {
-      pipeline.push(sortStage)
-    }
-
-    if (options?.extraAlertsFilterConditions?.length) {
-      pipeline.push({
-        $match: {
-          $and: options.extraAlertsFilterConditions,
-        },
-      })
-      alertConditions.push(...options.extraAlertsFilterConditions)
-    }
-
-    // compute the age of the alert dynamically
-    pipeline.push({
+    const alertAgeCalculation = {
       $addFields: {
         alerts: {
           $map: {
@@ -955,7 +915,56 @@ export class AlertsRepository {
           },
         },
       },
-    })
+    }
+    if (alertConditions.length > 0) {
+      pipeline.push({
+        $match: {
+          alerts: {
+            $elemMatch: {
+              $and: replaceMagicKeyword(alertConditions, 'alerts.', ''),
+            },
+          },
+        },
+      })
+
+      if (options?.enablePerformanceWorkaround) {
+        pipeline.push({
+          $addFields: {
+            alerts: {
+              $filter: {
+                input: '$alerts',
+                as: 'alert',
+                cond: convertQueryToAggregationExpression({
+                  $and: replaceMagicKeyword(
+                    alertConditions,
+                    'alerts.',
+                    'alert.'
+                  ),
+                }),
+              },
+            },
+          },
+        })
+      }
+      pipeline.push(alertAgeCalculation)
+    }
+
+    if (!options?.countOnly && sortStage) {
+      pipeline.push(sortStage)
+    }
+
+    if (options?.extraAlertsFilterConditions?.length) {
+      pipeline.push({
+        $match: {
+          $and: options.extraAlertsFilterConditions,
+        },
+      })
+      alertConditions.push(...options.extraAlertsFilterConditions)
+    }
+    if (!options?.enablePerformanceWorkaround) {
+      // compute the age of the alert dynamically
+      pipeline.push(alertAgeCalculation)
+    }
 
     pipeline.push({
       $unwind: {
@@ -1044,6 +1053,36 @@ export class AlertsRepository {
     }
 
     return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
+  }
+
+  // Lean fetch: return only minimal alert fields used for permission checks
+  public async getAlertLeanById(
+    alertId: string
+  ): Promise<{ alertId: string; caseId?: string; status?: string } | null> {
+    if (isConsoleMigrationEnabled()) {
+      const a = (
+        await this.dynamoAlertRepository.getAlertsFromAlertIds([alertId], {
+          getComments: false,
+        })
+      )[0]
+      return a
+        ? {
+            alertId: a.alertId as string,
+            caseId: (a as any)?.caseId,
+            status: (a as any)?.status,
+          }
+        : null
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const result = await collection.findOne(
+      { 'alerts.alertId': alertId },
+      { projection: { alerts: { $elemMatch: { alertId } } } as any }
+    )
+    const a = result?.alerts?.[0] as any
+    return a
+      ? { alertId: a.alertId, caseId: a.caseId, status: a.alertStatus }
+      : null
   }
 
   public getNonClosedAlertsCursor(
@@ -1173,7 +1212,9 @@ export class AlertsRepository {
   public async validateAlertsQAStatus(
     alertIds: string[]
   ): Promise<Pick<Alert, 'alertId' | 'ruleChecklist'>[]> {
-    if (isConsoleMigrationEnabled()) {
+    // should read from clickhouse only if the tenant is migrated to CH
+    // as we only update checklist status in dynamo when tenant is migrated
+    if ((await this.isTenantMigratedToDynamo) && isConsoleMigrationEnabled()) {
       const clickhouseRepository = await this.getClickhouseAlertRepository()
       return await clickhouseRepository.validateAlertsQAStatus(alertIds)
     }
@@ -1189,7 +1230,14 @@ export class AlertsRepository {
       .project({ 'alerts.alertId': 1, 'alerts.ruleChecklist': 1 })
       .toArray()
 
-    return result.flatMap((caseItem) => caseItem.alerts ?? [])
+    const alertIdsMap: { [alertId: string]: boolean } = {}
+    alertIds.forEach((a) => (alertIdsMap[a] = true))
+
+    // need to remove other alerts from the case object as case object can have other alerts which are not in alertIds
+    return result.flatMap(
+      (caseItem) =>
+        caseItem.alerts.filter((a) => alertIdsMap[a.alertId ?? '']) ?? []
+    )
   }
 
   public async saveComment(
@@ -2214,7 +2262,7 @@ export class AlertsRepository {
     }
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const FALSE_POSITIVE_REASON: CaseReasons = 'False positive'
+    const FALSE_POSITIVE_REASON: string = 'False positive'
     const timezone = dayjsLib.tz.guess()
     const pipeline = [
       {

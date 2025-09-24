@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { FlatFileRunner } from '.'
 import { FlatFileValidationResult } from '@/@types/flat-files'
 import { AlertClosure } from '@/@types/openapi-internal/AlertClosure'

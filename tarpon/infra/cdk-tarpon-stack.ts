@@ -57,6 +57,8 @@ import {
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
   EbsDeviceVolumeType,
+  GatewayVpcEndpoint,
+  GatewayVpcEndpointAwsService,
   InterfaceVpcEndpoint,
   InterfaceVpcEndpointService,
   IpAddresses,
@@ -82,6 +84,7 @@ import {
   DEFAULT_LAMBDA_TIMEOUT_SECONDS,
 } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
+import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
   getQaApiKeyId,
@@ -119,7 +122,6 @@ import {
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -128,7 +130,6 @@ import {
   createFinCENSTFPConnectionAlarm,
 } from './cdk-utils/cdk-cw-alarms-utils'
 import { createFunction } from './cdk-utils/cdk-lambda-utils'
-import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 import { createCanary } from './cdk-utils/cdk-synthetics-utils'
 import {
   addFargateContainer,
@@ -138,6 +139,7 @@ import {
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
 import { CdkTarponPythonStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-python-stack'
 import { createTransactionFunctionPerformanceDashboard } from './dashboards/public-api-transaction-function'
+import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
 import { envIs, envIsNot } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -150,7 +152,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
-const enableFargateBatchJob = false
+const enableFargateBatchJob = true
 const FEATURE = 'feature'
 
 const FEATURES = {
@@ -262,6 +264,16 @@ export class CdkTarponStack extends cdk.Stack {
 
     const asyncRuleQueue = this.createQueue(
       SQSQueues.ASYNC_RULE_QUEUE_NAME.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
+    const secondaryAsyncRuleQueue = this.createQueue(
+      SQSQueues.SecondaryAsyncRuleQueue.name,
       {
         fifo: true,
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
@@ -605,6 +617,7 @@ export class CdkTarponStack extends cdk.Stack {
           downstreamSecondaryTarponEventQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
+        SECONDARY_ASYNC_RULE_QUEUE_URL: secondaryAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
         DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
@@ -705,6 +718,7 @@ export class CdkTarponStack extends cdk.Stack {
             downstreamTarponEventQueue.queueArn,
             downstreamSecondaryTarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
+            secondaryAsyncRuleQueue.queueArn,
             batchAsyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
             mongoUpdateConsumerQueue.queueArn,
@@ -797,6 +811,18 @@ export class CdkTarponStack extends cdk.Stack {
     ecsTaskExecutionRole.attachInlinePolicy(policy)
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
+    const dynamoDbVpcEndpoint = this.createDynamoDbVpcEndpoint(vpc)
+
+    if (dynamoDbVpcEndpoint) {
+      this.functionProps = {
+        ...this.functionProps,
+        environment: {
+          ...this.functionProps.environment,
+          DYNAMODB_VPC_ENDPOINT_ID: dynamoDbVpcEndpoint.vpcEndpointId,
+        },
+      }
+    }
+
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
     Metric.grantPutMetricData(ecsTaskExecutionRole)
@@ -853,11 +879,12 @@ export class CdkTarponStack extends cdk.Stack {
       maxCapacity:
         config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
     }
+
     transactionAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
-      utilizationTarget: 0.5,
+      utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
     })
     transactionEventAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
-      utilizationTarget: 0.5,
+      utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
     })
 
     /*  User Event */
@@ -996,9 +1023,19 @@ export class CdkTarponStack extends cdk.Stack {
       heavyLibLayer
     )
 
+    const { alias: secondaryAsyncRule } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.SECONDARY_ASYNC_RULE_RUNNER_FUNCTION_NAME,
+        memorySize: config.resource.ASYNC_RULES_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
+
     // non-batch async rule
     asyncRuleAlias.addEventSource(
-      new SqsEventSource(asyncRuleQueue, { maxConcurrency: 100, batchSize: 10 })
+      new SqsEventSource(asyncRuleQueue, { maxConcurrency: 200, batchSize: 10 })
     )
 
     // batch async rule
@@ -1006,6 +1043,12 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(batchAsyncRuleQueue, {
         maxConcurrency: 100,
         batchSize: 10,
+      })
+    )
+    secondaryAsyncRule.addEventSource(
+      new SqsEventSource(secondaryAsyncRuleQueue, {
+        maxConcurrency: 5,
+        batchSize: 1,
       })
     )
 
@@ -1175,6 +1218,21 @@ export class CdkTarponStack extends cdk.Stack {
           cpu: config.resource.FARGATE_BATCH_JOB_CONTAINER.CPU,
           memoryLimitMiB:
             config.resource.FARGATE_BATCH_JOB_CONTAINER.MEMORY_LIMIT,
+          architecture:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.ARCHITECTURE ??
+            'x86_64',
+        }
+      )
+
+      const image = createDockerImage(
+        this,
+        StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
+        {
+          path:
+            process.env.INFRA_CI === 'true' ? 'src/fargate' : 'dist/fargate',
+          architecture:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.ARCHITECTURE ??
+            'x86_64',
         }
       )
 
@@ -1185,18 +1243,10 @@ export class CdkTarponStack extends cdk.Stack {
         {
           memoryLimitMiB:
             config.resource.FARGATE_BATCH_JOB_CONTAINER.MEMORY_LIMIT,
-          image: ContainerImage.fromDockerImageAsset(
-            createDockerImage(
-              this,
-              StackConstants.FARGATE_BATCH_JOB_CONTAINER_NAME,
-              {
-                path:
-                  process.env.INFRA_CI === 'true'
-                    ? 'src/fargate'
-                    : 'dist/fargate',
-              }
-            )
-          ),
+          image: ContainerImage.fromDockerImageAsset(image),
+          architecture:
+            config.resource.FARGATE_BATCH_JOB_CONTAINER.ARCHITECTURE ??
+            'x86_64',
         }
       )
       const batchJobCluster = new Cluster(
@@ -1864,7 +1914,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     // Create performance dashboards
     if (!isQaEnv()) {
-      createTransactionFunctionPerformanceDashboard(this)
+      createTransactionFunctionPerformanceDashboard(this, this.config.region)
     }
   }
 
@@ -1936,8 +1986,54 @@ export class CdkTarponStack extends cdk.Stack {
     alias.addEventSource(eventSource)
   }
 
+  private createDynamoDbVpcEndpoint(
+    vpc: Vpc | null
+  ): GatewayVpcEndpoint | null {
+    // Only create VPC endpoint for dev and sandbox stages AND when lambdas are in VPC
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      (envIsNot('dev') && envIsNot('sandbox'))
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+    })
+
+    // Create DynamoDB Gateway VPC endpoint with explicit route table association
+    const dynamoDbVpcEndpoint = vpc.addGatewayEndpoint(
+      'dynamodb-gateway-endpoint',
+      {
+        service: GatewayVpcEndpointAwsService.DYNAMODB,
+        subnets: [privateSubnets],
+      }
+    )
+
+    this.addTagsToResource(dynamoDbVpcEndpoint, {
+      Name: 'DynamoDBGatewayEndpoint',
+      Service: 'DynamoDB',
+      Stage: this.config.stage,
+    })
+
+    // Output VPC endpoint information
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, 'DynamoDB Gateway VPC Endpoint ID', {
+        value: dynamoDbVpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return dynamoDbVpcEndpoint
+  }
+
   private createMongoAtlasVpc() {
-    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
+    // Enable VPC for dev, sandbox, and prod stages
+    if (
+      this.config.stage !== 'dev' &&
+      this.config.stage !== 'sandbox' &&
+      this.config.stage !== 'prod'
+    ) {
       return {
         vpc: null,
         vpcCidr: null,
@@ -1984,7 +2080,16 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     securityGroup.addIngressRule(Peer.ipv4(IP_ADDRESS_RANGE), Port.tcp(27017))
-
+    securityGroup.addEgressRule(
+      Peer.anyIpv4(),
+      Port.tcp(443),
+      'HTTPS for DynamoDB VPC endpoint'
+    )
+    securityGroup.addEgressRule(
+      Peer.anyIpv4(),
+      Port.tcp(80),
+      'HTTP for DynamoDB VPC endpoint'
+    )
     const clickhouseSecurityGroup = new SecurityGroup(
       this,
       StackConstants.CLICKHOUSE_SECURITY_GROUP_ID,

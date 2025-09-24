@@ -285,6 +285,8 @@ type ApiGatewayConfig = {
   }
 }
 
+export type FlagrightCPUArchitecture = 'arm64' | 'x86_64'
+
 export type Config = {
   stage: Stage
   region?: FlagrightRegion
@@ -297,6 +299,7 @@ export type Config = {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: number
       MEMORY_LIMIT: number
+      ARCHITECTURE?: FlagrightCPUArchitecture
     }
     DYNAMODB: {
       READ_CAPACITY?: number

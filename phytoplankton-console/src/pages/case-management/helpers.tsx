@@ -24,7 +24,6 @@ import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react
 import { denseArray } from '@/utils/lang';
 import {
   Account,
-  CaseReasons,
   ChecklistStatus,
   DerivedStatus,
   PaymentMethod,
@@ -38,7 +37,8 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
-import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
+import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
+import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRoles } from '@/utils/user-utils';
@@ -149,7 +149,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
       filterQaStatus: raw?.['filterQaStatus'] as ChecklistStatus | undefined | "NOT_QA'd",
-      filterClosingReason: raw?.['filterClosingReason']?.split(',') as CaseReasons[],
+      filterClosingReason: raw?.['filterClosingReason']?.split(',') as string[],
       alertPriority: raw?.alertPriority?.split(
         ',',
       ) as unknown as TableSearchParams['alertPriority'],
@@ -254,6 +254,8 @@ export const useCaseAlertFilters = (
   const ruleOptions = useRuleOptions({ onlyWithAlerts: true });
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
+  const allowedCaseStatuses = useDerivedStatusesFromPermissions();
+  const allowedAlertStatuses = useDerivedAlertStatusesFromPermissions();
 
   const [roles] = useRoles();
   const roleAssignedToOptions = map(roles, 'name');
@@ -484,7 +486,7 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: DERIVED_STATUSS.map((status) => ({
+        options: allowedCaseStatuses.map((status) => ({
           value: status,
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
@@ -500,7 +502,7 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: DERIVED_STATUSS.map((status) => ({
+        options: allowedAlertStatuses.map((status) => ({
           value: status,
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
