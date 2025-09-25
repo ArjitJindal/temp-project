@@ -1,19 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  useFloating,
-  Placement as FloatingUiPlacement,
-  useClick,
-  useInteractions,
-  useDismiss,
-  FloatingArrow,
-  useHover,
-  autoUpdate,
-  FloatingPortal,
   arrow,
-  offset,
+  autoUpdate,
   flip,
+  FloatingArrow,
+  FloatingPortal,
   hide,
+  offset,
+  Placement as FloatingUiPlacement,
   size,
+  useClick,
+  useDismiss,
+  useFloating,
+  useHover,
+  useInteractions,
 } from '@floating-ui/react';
 import s from './style.module.less';
 import { neverReturn } from '@/utils/lang';
@@ -149,7 +149,7 @@ function TooltipRoot(props: Props) {
 
 export default function Tooltip(props: Props) {
   if ((props.title == null || props.title === '') && props.overlay == null) {
-    return <>{props.children}</>;
+    return typeof props.children === 'function' ? props.children({}) : props.children;
   }
   return <TooltipRoot {...props} />;
 }

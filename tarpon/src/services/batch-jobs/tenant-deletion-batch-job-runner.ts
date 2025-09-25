@@ -740,7 +740,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         ),
       // Always delete the primary transaction item at last to avoid having zombie indexes that
       // can not be deleted.
-      DynamoDbKeys.TRANSACTION(tenantId, transactionId),
+      DynamoDbKeys.TRANSACTION(tenantId, transactionId, transaction.timestamp),
     ].filter(Boolean) as Array<DynamoDbKey>
 
     for (const key of keysToDelete) {

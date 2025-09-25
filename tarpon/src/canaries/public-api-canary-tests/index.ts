@@ -265,7 +265,7 @@ const getTestTransactionSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.Message !==
-              'User is not authorized to access this resource with an explicit deny'
+              'User is not authorized to access this resource with an explicit deny in an identity-based policy'
             ) {
               reject('Error message does not match')
             }
@@ -1282,7 +1282,7 @@ const getTestBusinessUserSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.Message !==
-              'User is not authorized to access this resource with an explicit deny'
+              'User is not authorized to access this resource with an explicit deny in an identity-based policy'
             ) {
               reject('Error message does not match')
             }

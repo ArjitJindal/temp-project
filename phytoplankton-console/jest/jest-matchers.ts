@@ -3,6 +3,30 @@ import type { MatcherFunction } from 'expect';
 import expectModule from 'expect';
 import { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 
+export const toBeTruthyOrMessage: MatcherFunction<unknown[]> = function (isValid, message) {
+  if (message == null) {
+    throw new Error(`toBeTruthyOrMessage: message is required`);
+  }
+  if (typeof message !== 'string') {
+    throw new Error(`toBeTruthyOrMessage: message should be a string`);
+  }
+
+  return {
+    pass: !!isValid,
+    message: () => {
+      return [
+        this.utils.matcherHint(
+          `${this.isNot ? '.not' : ''}.toBeTruthyOrMessage`,
+          `${isValid}`,
+          `"${message}"`,
+        ),
+        '',
+        message,
+      ].join('\n');
+    },
+  };
+};
+
 const toBeColor: MatcherFunction<[color: string]> = function (actual: unknown, expected) {
   if (typeof actual !== 'string' || typeof expected !== 'string') {
     throw new Error('Colors to compare should be strings');
@@ -30,14 +54,17 @@ const toBeColor: MatcherFunction<[color: string]> = function (actual: unknown, e
 
 expect.extend({
   toBeColor,
+  toBeTruthyOrMessage,
 });
 
 declare module 'expect' {
   interface AsymmetricMatchers {
     toBeColor(expectedColor: string): void;
+    toBeTruthyOrMessage(truthyValue: string): void;
   }
 
   interface Matchers<R> extends TestingLibraryMatchers<typeof expectModule.stringContaining, R> {
     toBeColor(expectedColor: string): R;
+    toBeTruthyOrMessage(truthyValue: string): R;
   }
 }

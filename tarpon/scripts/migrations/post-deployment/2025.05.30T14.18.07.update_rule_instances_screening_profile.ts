@@ -4,7 +4,7 @@ import { RuleInstanceService } from '@/services/rules-engine/rule-instance-servi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { ScreeningProfileService } from '@/services/screening-profile'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { hasFeature } from '@/core/utils/context'
 
 async function migrateTenant(tenant: Tenant) {

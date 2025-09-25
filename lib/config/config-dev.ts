@@ -27,6 +27,7 @@ export const config: Config = {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 1024,
       MEMORY_LIMIT: 2048,
+      ARCHITECTURE: 'arm64',
     },
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 512,
@@ -87,7 +88,7 @@ export const config: Config = {
     },
     INSPECTOR_ENABLED: false,
     ATLAS_SEARCH_ENABLED: true,
-    LAMBDA_VPC_ENABLED: true,
+    LAMBDA_VPC_ENABLED: false,
     DYNAMO_WRITE_CAPACITY_THRESHOLD: 400,
   },
   clickhouse: {
@@ -127,6 +128,6 @@ export const config: Config = {
     deploy: true,
     dataNodes: 3,
     dataNodeInstanceType: 'm7g.medium.search',
-    volumeSize: 20,
+    volumeSize: 30,
   },
 }

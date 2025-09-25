@@ -123,7 +123,7 @@
     "@types/json-stringify-safe": "^5.0.3",
     "@types/jsonpath-plus": "^5.0.5",
     "@types/jsonwebtoken": "^8.5.8",
-    "@types/lodash": "^4.14.180",
+    "@types/lodash": "^4.17.20",
     "@types/mkdirp": "^1.0.2",
     "@types/node": "^18.17.14",
     "@types/node-fetch": "^2.6.4",

@@ -39,7 +39,7 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 export type TenantBasic = {
@@ -963,5 +963,25 @@ export class AccountsService {
       }
       fn.cache.clear()
     }
+  }
+
+  public async syncTenantAccounts(tenant: Tenant) {
+    const auth0Accounts = await this.auth0.getTenantAccounts(tenant)
+    const currentCacheAccounts = await this.cache.getTenantAccounts(tenant)
+
+    // find accounts which are in currentCacheAccounts but not in auth0Accounts
+    const accountsToDelete = currentCacheAccounts.filter(
+      (account) => !auth0Accounts.some((a) => a.id === account.id)
+    )
+
+    for (const account of accountsToDelete) {
+      await this.cache.deleteAccountFromOrganization({ id: tenant.id }, account)
+    }
+
+    await this.cache.putMultipleAccounts(tenant.id, auth0Accounts)
+    await this.cache.createOrganization(tenant.id, {
+      type: 'DATABASE',
+      params: tenant,
+    })
   }
 }

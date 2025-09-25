@@ -5,7 +5,7 @@ import {
   APIGatewayAuthorizerResultContext,
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
-import * as jwt from 'jsonwebtoken'
+import { decode, verify, JwtPayload } from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
@@ -15,7 +15,7 @@ import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewar
 import { updateLogMetadata } from '@/core/utils/context'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { logger } from '@/core/logger'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import { envIs } from '@/utils/env'
 
 const UNAUTHORIZED_RESPONSE = {
@@ -102,14 +102,14 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     let kid: string
     let auth0Domain: string
     try {
-      const decoded = jwt.decode(token, { complete: true })
+      const decoded = decode(token, { complete: true })
       if (!decoded?.header?.kid) {
         logger.warn('token failed to be decoded')
         return UNAUTHORIZED_RESPONSE
       }
       kid = decoded?.header?.kid
       auth0Domain =
-        (decoded.payload as jwt.JwtPayload)?.[
+        (decoded.payload as JwtPayload)?.[
           `${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/auth0Domain`
         ] || (process.env.AUTH0_DOMAIN as string)
     } catch (e) {
@@ -134,13 +134,13 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     const key = await jwks.getSigningKey(kid)
     const signingKey = key.getPublicKey()
 
-    let verifiedDecoded: jwt.JwtPayload
+    let verifiedDecoded: JwtPayload
     try {
-      verifiedDecoded = jwt.verify(token, signingKey, {
+      verifiedDecoded = verify(token, signingKey, {
         audience: process.env.AUTH0_AUDIENCE,
         // IMPORTANT: The ending '/' is required
         issuer: `https://${tenantConfig.customDomain}/`,
-      }) as jwt.JwtPayload
+      }) as JwtPayload
     } catch (e) {
       logger.warn('token failed to be verified')
       return UNAUTHORIZED_RESPONSE

@@ -2,7 +2,7 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { envIsNot } from '@/utils/env'
 import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { logger } from '@/core/logger'
 import { seedDemoData } from '@/core/seed'
 

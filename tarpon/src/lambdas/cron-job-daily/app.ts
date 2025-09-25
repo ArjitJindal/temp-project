@@ -43,7 +43,7 @@ import {
   executeClickhouseQuery,
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { createApiUsageJobs } from '@/utils/api-usage'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -118,7 +118,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
         })
       } else if (providers.length) {
         commonDataTenantIds.push(tenant.tenant.id)
-        return []
       } else {
         batchJobs.push({
           type: 'ONGOING_SCREENING_USER_RULE',

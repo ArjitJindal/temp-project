@@ -7,7 +7,6 @@ import { LogicEntityVariableEntityEnum, RuleType } from '@/apis';
 
 // TODO: Move PropertyColumns to library
 import { StatePair } from '@/utils/state';
-import { getAllEntityVariableKeys } from '@/pages/rules/utils';
 
 interface Props<
   FormState extends {
@@ -43,10 +42,6 @@ export default function VariableFilters<
     <FiltersLogicBuilder
       ruleType={ruleType}
       entityVariableTypes={entityVariableTypes}
-      entityVariablesInUse={getAllEntityVariableKeys(formValues.filtersLogic).map((item) => ({
-        key: item,
-        entityKey: item,
-      }))}
       configParams={{
         mode: readOnly ? 'VIEW' : 'EDIT',
       }}

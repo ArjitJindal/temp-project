@@ -471,7 +471,8 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
             Item: {
               ...DynamoDbKeys.TRANSACTION(
                 this.tenantId,
-                transactionEvent.transactionId
+                transactionEvent.transactionId,
+                transaction.timestamp
               ),
               ...updatedTransaction,
             },

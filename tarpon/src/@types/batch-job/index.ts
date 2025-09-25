@@ -19,7 +19,7 @@ import { RuleAction } from '../openapi-internal/RuleAction'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
-import { V8LogicAggregationRebuildTask } from '@/services/rules-engine'
+import { V8LogicAggregationRebuildTask } from '@/@types/tranasction/aggregation'
 import { ClickhouseTableNames } from '@/utils/clickhouse/definition'
 import { BatchRerunUsersJobType } from '@/@types/rerun-users'
 

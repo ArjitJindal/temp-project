@@ -5189,6 +5189,10 @@ paths:
           type: string
         in: query
         name: filterPaymentMethodId
+      - schema:
+          type: string
+        in: query
+        name: filterReference
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

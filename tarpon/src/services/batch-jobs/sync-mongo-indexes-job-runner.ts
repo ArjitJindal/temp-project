@@ -11,7 +11,7 @@ import {
   syncThunderSchemaTables,
 } from '@/utils/clickhouse/utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import { envIsNot } from '@/utils/env'
 
 export class SyncDatabases extends BatchJobRunner {

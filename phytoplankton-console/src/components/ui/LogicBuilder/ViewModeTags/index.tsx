@@ -14,7 +14,7 @@ export default function ViewModeTags(props: {
   color?: TagColor;
   children: React.ReactNode | React.ReactNode[] | undefined | null | false;
 }) {
-  const flattenedChildren = Children.toArray(props.children).filter(Boolean);
+  const flattenedChildren = Children.toArray(props.children).filter((x) => x === 0 || !!x);
 
   return (
     <div className={s.root}>

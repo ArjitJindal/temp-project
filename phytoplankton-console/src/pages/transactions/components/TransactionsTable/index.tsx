@@ -550,7 +550,9 @@ export default function TransactionsTable(props: Props) {
         title: 'Reference',
         type: STRING,
         key: 'reference',
-        defaultVisibility: false,
+        filtering: true,
+        defaultVisibility: true,
+        showFilterByDefault: false,
       }),
       helper.simple<'alertIds'>({
         title: 'Alert IDs',
@@ -613,14 +615,6 @@ export default function TransactionsTable(props: Props) {
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
-    } as ExtraFilterProps<TransactionsTableParams>,
-    {
-      title: 'Reference',
-      key: 'reference',
-      renderer: {
-        kind: 'string',
-        allowClear: true,
-      },
     } as ExtraFilterProps<TransactionsTableParams>,
   ];
 

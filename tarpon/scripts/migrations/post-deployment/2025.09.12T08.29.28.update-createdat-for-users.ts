@@ -1,6 +1,6 @@
 import { AggregationCursor, AnyBulkWriteOperation, Db } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {

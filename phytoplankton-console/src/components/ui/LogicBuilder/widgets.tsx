@@ -87,7 +87,14 @@ const isTransactionKeyField = (
 ): boolean => {
   if (typeof entityKey === 'string') {
     const field = entityKey.split('.')[0];
-    return !!props.fields[field]?.label?.toLowerCase().includes('transaction /');
+    const fieldData = props.fields[field] as any;
+    if (fieldData?.fieldSettings) {
+      const { uniqueType } = fieldData.fieldSettings;
+      if (uniqueType) {
+        return uniqueType.startsWith('TRANSACTION_');
+      }
+      return true;
+    }
   }
   return false;
 };
@@ -797,9 +804,12 @@ const customFieldWidget: FieldWidget<Config> = {
     const queryBuilderConfig = props.config as QueryBuilderConfig;
     if (isViewMode(queryBuilderConfig)) {
       const { variableColors, onClickVariable } = queryBuilderConfig.settings;
+      const selectedOption = finalOptions.find((x) => x.value === finalValue);
       return (
         <VariableInfoPopover onClick={props.value && (() => onClickVariable?.(props.value))}>
-          <ViewModeTags color={variableColors?.[props.value]}>{finalValue}</ViewModeTags>
+          <ViewModeTags color={variableColors?.[props.value]}>
+            {selectedOption?.label ?? finalValue}
+          </ViewModeTags>
         </VariableInfoPopover>
       );
     }

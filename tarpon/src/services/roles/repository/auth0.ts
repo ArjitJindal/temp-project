@@ -164,6 +164,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
         "Can't overwrite default role, please choose a different name."
       )
     }
+
     await rolesManager.update(
       { id },
       {

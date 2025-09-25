@@ -1,4 +1,9 @@
-import { isNotArsChangeTxId } from '@flagright/lib/utils/risk';
+import {
+  BUSINESS_RISK_PARAMETERS,
+  isNotArsChangeTxId,
+  TRANSACTION_RISK_PARAMETERS,
+  USER_RISK_PARAMETERS,
+} from '@flagright/lib/utils/risk';
 import { keyBy } from 'lodash';
 import s from './index.module.less';
 import { useApi } from '@/api';
@@ -138,6 +143,25 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
     const data = await api.getAllRiskFactors({ includeV2: true });
     return keyBy(data, 'id');
   });
+  const defaultFactorsDataComponents =
+    props.components?.map((val): TableItem => {
+      const dataSource =
+        val.entityType === 'BUSINESS'
+          ? BUSINESS_RISK_PARAMETERS
+          : val.entityType === 'CONSUMER_USER'
+          ? USER_RISK_PARAMETERS
+          : TRANSACTION_RISK_PARAMETERS;
+      const name = dataSource.find((dt) => dt.parameter === val.parameter)?.title ?? val.parameter;
+      return {
+        name,
+        value: val.value,
+        riskScore: val.score,
+        weight: val.weight,
+        riskLevel: val.riskLevel,
+        rowKey: val.parameter,
+        isCustom: false,
+      };
+    }) ?? [];
 
   return (
     <AsyncResourceRenderer resource={factorMapResult.data}>
@@ -161,6 +185,16 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
               };
             })
             .filter((item): item is TableItem => item !== null) ?? [];
+        const allDefaultFactors = [...defaultFactorsDataComponents, ...defaultFactorsData];
+        const finalDefaultFactorsData = allDefaultFactors.reduce((acc, current) => {
+          const existingIndex = acc.findIndex((item) => item.rowKey === current.rowKey);
+          if (existingIndex === -1) {
+            acc.push(current);
+          } else {
+            acc[existingIndex] = current;
+          }
+          return acc;
+        }, [] as TableItem[]);
         const customRiskFactorsData =
           props.factorScoreDetails
             ?.map((val): TableItem => {
@@ -186,7 +220,7 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
               columns={columns}
               toolsOptions={false}
               rowKey="rowKey"
-              data={{ items: defaultFactorsData?.concat(customRiskFactorsData) }}
+              data={{ items: finalDefaultFactorsData?.concat(customRiskFactorsData) }}
             ></Table>
           </div>
         );

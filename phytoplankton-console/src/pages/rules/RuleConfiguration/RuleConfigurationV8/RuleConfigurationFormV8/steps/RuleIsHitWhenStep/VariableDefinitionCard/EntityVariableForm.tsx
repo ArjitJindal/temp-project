@@ -176,10 +176,15 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   );
   const settings = useSettings();
 
-  const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
+  const TX_ENTITY_TYPE_OPTIONS: Array<{
+    value: 'TRANSACTION' | 'USER';
+    label: string;
+    isDisabled?: boolean;
+  }> = [
     { value: 'TRANSACTION', label: 'Transaction' },
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
+
   const ALL_TX_ENTITY_TYPE_OPTIONS: Array<{
     value: 'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER';
     label: string;
@@ -195,7 +200,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias?.toLowerCase()}` },
     { value: 'BUSINESS_USER', label: `Business ${settings.userAlias?.toLowerCase()}` },
   ];
-  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string }> = [
+  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string; isDisabled?: boolean }> = [
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
 

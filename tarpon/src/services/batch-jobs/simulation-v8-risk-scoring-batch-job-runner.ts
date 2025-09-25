@@ -375,6 +375,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     riskClassificationValues: RiskClassificationScore[],
     updateProgress: (progress: number) => Promise<void>
   ) {
+    await this.riskFactors
     await pMap(
       users ?? [],
       async (user) => {

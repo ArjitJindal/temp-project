@@ -138,6 +138,7 @@ export function useAlertQuery(
         totalPages: result.totalPages,
       };
     },
+    { meta: { atf: true } },
   );
 }
 

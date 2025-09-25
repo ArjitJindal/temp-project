@@ -19,7 +19,7 @@ function getDerivedAge(
   parameter: RiskFactorParameter | 'createdTimestamp',
   granularity = 'YEAR'
 ): number | undefined {
-  const endValue = get(user, parameter)
+  const endValue = get(user, parameter) as number | string
   if (!endValue) {
     return
   }

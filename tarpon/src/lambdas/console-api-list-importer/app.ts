@@ -9,7 +9,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ListService } from '@/services/list'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 import { DefaultApiPatchBlacklistRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 

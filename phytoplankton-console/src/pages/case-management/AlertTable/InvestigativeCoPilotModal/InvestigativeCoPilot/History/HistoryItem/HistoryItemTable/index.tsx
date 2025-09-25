@@ -28,7 +28,11 @@ interface Props {
   onPageParams: (params: CommonParams) => void;
 }
 
-export const typeAssigner = (columnType: string | undefined, tenantSettings?: TenantSettings) => {
+export const typeAssigner = (
+  columnType: string | undefined,
+  tenantSettings?: TenantSettings,
+  currency?: string,
+) => {
   let type: ColumnDataType<any> = UNKNOWN;
   if (!columnType) {
     return type;
@@ -76,7 +80,7 @@ export const typeAssigner = (columnType: string | undefined, tenantSettings?: Te
       break;
     }
     case 'MONEY_AMOUNT': {
-      type = MONEY_AMOUNT;
+      type = MONEY_AMOUNT(currency);
       break;
     }
     case 'MONEY_CURRENCY': {
@@ -95,6 +99,9 @@ export default function HistoryItemTable(props: Props) {
   const { item, pageParams, onPageParams } = props;
   const settings = useSettings();
   const columnHelper = new ColumnHelper();
+
+  // Extract currency from item variables
+  const currency = item.variables?.find((variable) => variable.name === 'currency')?.value;
 
   const paginate = item.rows?.length != item.total;
   const tableData = useMemo(() => {
@@ -132,11 +139,13 @@ export default function HistoryItemTable(props: Props) {
       toolsOptions={false}
       rowKey="index"
       columns={(item.headers ?? []).map((header) => {
+        const columnType = typeAssigner(header.columnType, settings, currency);
+
         return columnHelper.simple({
           title: setUserAlias(header.name, settings.userAlias),
           key: header.columnId ?? header.name,
           sorting: header.sortable,
-          type: typeAssigner(header.columnType, settings),
+          type: columnType,
           ...(header.columnWidth ? { defaultWidth: header.columnWidth } : {}),
         });
       })}

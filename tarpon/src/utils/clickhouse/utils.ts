@@ -1154,9 +1154,6 @@ export async function processClickhouseInBatch<
       whereClauses.push(
         `(timestamp, id) > (${lastCursor.timestamp}, '${lastCursor.id}')`
       )
-    } else if (!lastCursor) {
-      // First execution - use default values
-      whereClauses.push(`(timestamp, id) > (0, '000')`)
     }
 
     // append additional filtering if provided
@@ -1171,7 +1168,7 @@ export async function processClickhouseInBatch<
       SELECT ${
         additionalSelect ? `${additionalSelect},` : ''
       } id, timestamp, data
-      FROM ${tableName}
+      FROM ${tableName} FINAL
       ${additionalJoin ? `ARRAY JOIN ${additionalJoin}` : ''}
       ${whereClause}
       ORDER BY timestamp, id

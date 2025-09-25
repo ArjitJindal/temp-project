@@ -76,7 +76,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 import { getSecretByName } from '@/utils/secrets-manager'
 
 const DEFAULT_FUZZINESS = 0.5

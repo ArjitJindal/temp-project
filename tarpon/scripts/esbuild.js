@@ -6,11 +6,21 @@ const { chunk } = require('lodash')
 const builtinModules = require('builtin-modules')
 const { execSync } = require('child_process')
 
-// --- Added: CLI trace flag ---
-// TRACE IMPORTS = node scripts/esbuild.js --trace src/utils/clickhouse/definition.ts
+// --- Added: CLI trace flags ---
+// Usage examples:
+//   node scripts/esbuild.js --trace lodash.clonedeep
+//   node scripts/esbuild.js --trace lodash.clonedeep --lambda webhook-deliverer
+//   node scripts/esbuild.js --trace some-package --lambda console-api
+
 const TRACE_PACKAGE = process.argv.includes('--trace')
   ? process.argv[process.argv.indexOf('--trace') + 1]
   : null
+
+const TRACE_LAMBDA = process.argv.includes('--lambda')
+  ? process.argv[process.argv.indexOf('--lambda') + 1]
+  : null
+
+const TRACE_MAX_DEPTH = 20 // Maximum depth for recursive import tracing
 
 // These are transitive dependencies of our dependencies...
 const IGNORED = [
@@ -31,6 +41,7 @@ const IGNORED = [
   'highlight.js',
   '@/core/local-handlers/*',
   '@/utils/local-dynamodb-change-handler',
+  '@/core/middlewares/local-dev',
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
@@ -60,15 +71,45 @@ async function copyDirsToDist(entries) {
 }
 
 // --- Added: trace helper ---
-function traceImport(metafile, target) {
+function traceImport(metafile, target, maxDepth = 5) {
   const results = []
-  for (const [input, info] of Object.entries(metafile.inputs)) {
+
+  function traceRecursiveFromFile(
+    inputPath,
+    depth = 0,
+    chain = [],
+    visited = new Set()
+  ) {
+    if (depth > maxDepth || visited.has(inputPath)) {
+      return
+    }
+
+    visited.add(inputPath)
+    const info = metafile.inputs[inputPath]
+    if (!info) return
+
     for (const imp of info.imports || []) {
+      const currentChain = [...chain, { importer: inputPath, import: imp.path }]
+
       if (imp.path.includes(target)) {
-        results.push({ importer: input, import: imp.path })
+        results.push({
+          chain: currentChain,
+          depth: depth + 1,
+          finalImport: imp.path,
+        })
       }
+
+      // Recursively trace the imported file
+      traceRecursiveFromFile(imp.path, depth + 1, currentChain, visited)
     }
   }
+
+  // Start tracing from all files in the metafile to catch transitive dependencies
+  for (const inputPath of Object.keys(metafile.inputs)) {
+    // Use a fresh visited set for each starting point to allow multiple paths
+    traceRecursiveFromFile(inputPath, 0, [], new Set())
+  }
+
   return results
 }
 
@@ -176,14 +217,38 @@ async function main() {
 
         // --- Added: run trace if requested for each file ---
         if (TRACE_PACKAGE) {
-          console.log(
-            `\n🔎 Tracing imports for "${TRACE_PACKAGE}" in ${file}...`
-          )
-          const traces = traceImport(bundleResults.metafile, TRACE_PACKAGE)
-          if (traces.length === 0) {
-            console.log(`   (No imports found for "${TRACE_PACKAGE}")`)
-          } else {
-            traces.forEach((t) => console.log(`   ${t.importer} → ${t.import}`))
+          // Check if we should trace this specific file - only when lambda name is specified and file contains it
+          const shouldTrace = TRACE_LAMBDA && file.includes(TRACE_LAMBDA)
+
+          if (shouldTrace) {
+            console.log(
+              `\n🔎 Tracing imports for "${TRACE_PACKAGE}" in ${file}...`
+            )
+            const traces = traceImport(
+              bundleResults.metafile,
+              TRACE_PACKAGE,
+              TRACE_MAX_DEPTH
+            )
+            if (traces.length === 0) {
+              console.log(`   (No imports found for "${TRACE_PACKAGE}")`)
+            } else {
+              traces.forEach((trace) => {
+                // Build import chain string
+                let chainString = ''
+                trace.chain.forEach((link, index) => {
+                  const indent = '   ' + '  '.repeat(index)
+                  chainString += `${indent}${link.importer} → ${link.import}\n`
+                })
+
+                // Only show chain if it contains the lambda name
+                if (chainString.includes(TRACE_LAMBDA)) {
+                  console.log(`\n   📍 Found at depth ${trace.depth}:`)
+                  console.log(`\n   📍 ${trace.finalImport}`)
+                  console.log(`   📋 Import chain:`)
+                  console.log(chainString)
+                }
+              })
+            }
           }
         }
       }

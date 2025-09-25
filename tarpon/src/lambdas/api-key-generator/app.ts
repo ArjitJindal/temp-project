@@ -13,7 +13,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { createNewApiKeyForTenant } from '@/services/api-key'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import { envIs } from '@/utils/env'
 
 export type ApiKeyGeneratorQueryStringParameters = {

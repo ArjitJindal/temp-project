@@ -78,6 +78,7 @@
     &.isSearchEmpty:not(.isFocused):not(.isEmpty):not(.isOpen) {
       .input {
         width: 0;
+        pointer-events: none;
       }
     }
 
@@ -119,7 +120,8 @@
 
   &:not(.isDisabled) {
     &:not(.isError):not(.isSuccess) {
-      &.isFocused {
+      &.isFocused,
+      &.isOpen {
         border-color: @figma-vars--tokens-colorStrokeAction;
       }
     }
@@ -141,6 +143,7 @@
     .input {
       width: 0;
       position: absolute;
+      pointer-events: none;
     }
   }
 
@@ -207,7 +210,6 @@
   }
 
   &.arrowDownIcon {
-    pointer-events: none;
     transition-property: transform;
     transition-duration: @default-animation-speed;
     transition-timing-function: @default-animation-function;
