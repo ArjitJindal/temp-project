@@ -279,7 +279,7 @@ const DownloadAsPDF = async (props: Props) => {
 
     const pageWidth = doc.internal.pageSize.getWidth() - 20;
 
-    let position = 20;
+    let position = 30;
     addAndSetFonts(doc);
 
     addTopFormatting(doc, logoImage, orientation, documentTimestamp);
