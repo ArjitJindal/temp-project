@@ -186,12 +186,19 @@ describe('FlatFilesService', () => {
       ])
     }
 
-    const getTransactionFromDynamo = async (transactionId: string) => {
+    const getTransactionFromDynamo = async (
+      transactionId: string,
+      timestamp: number
+    ) => {
       const dynamoDb = getDynamoDbClient()
       const result = await dynamoDb.send(
         new GetCommand({
           TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(TEST_TENANT_ID),
-          Key: DynamoDbKeys.TRANSACTION(TEST_TENANT_ID, transactionId),
+          Key: DynamoDbKeys.TRANSACTION(
+            TEST_TENANT_ID,
+            transactionId,
+            timestamp
+          ),
         })
       )
       return omit(result.Item, [
@@ -362,10 +369,12 @@ describe('FlatFilesService', () => {
         await sendBatchJobCommand(testJob)
 
         const dynamoTransaction1 = await getTransactionFromDynamo(
-          transaction1.transactionId
+          transaction1.transactionId,
+          transaction1.timestamp
         )
         const dynamoTransaction2 = await getTransactionFromDynamo(
-          transaction2.transactionId
+          transaction2.transactionId,
+          transaction2.timestamp
         )
 
         expect(dynamoTransaction1).toMatchObject(transaction1)

@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient, Collection } from 'mongodb'
-import { isEqual, pick } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import pick from 'lodash/pick'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -292,7 +293,11 @@ async function handleTransaction(
     return
   }
   console.log(`Syncing data for transaction with Id: ${transactionId}`)
-  const transactionKeys = DynamoDbKeys.TRANSACTION(tenantId, transactionId)
+  const transactionKeys = DynamoDbKeys.TRANSACTION(
+    tenantId,
+    transactionId,
+    dynamoTransaction.timestamp
+  )
   // Send transaction to SQS
   await sendEntityToSQS({
     tenantId,

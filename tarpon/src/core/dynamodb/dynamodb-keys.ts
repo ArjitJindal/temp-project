@@ -7,6 +7,7 @@
 
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 import { logger } from '../logger'
+import { getPrimaryTransactionSwitchTimestamp } from './key-constants'
 import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -183,10 +184,22 @@ export const DynamoDbKeys = {
     SortKeyID: `${caseId}`,
   }),
   // Attributes: refer to Transaction
-  TRANSACTION: (tenantId: string, transactionId?: string) => ({
-    PartitionKeyID: `${tenantId}#${TRANSACTION_PRIMARY_KEY_IDENTIFIER}`,
-    SortKeyID: transactionId,
-  }),
+  TRANSACTION: (
+    tenantId: string,
+    transactionId?: string,
+    timestamp?: number
+  ) => {
+    if (timestamp && timestamp >= getPrimaryTransactionSwitchTimestamp()) {
+      return {
+        PartitionKeyID: `${tenantId}#${TRANSACTION_PRIMARY_KEY_IDENTIFIER}#${TRANSACTION_ID_PREFIX}${transactionId}`,
+        SortKeyID: '1', // can impement versioning here
+      }
+    }
+    return {
+      PartitionKeyID: `${tenantId}#${TRANSACTION_PRIMARY_KEY_IDENTIFIER}`,
+      SortKeyID: transactionId,
+    }
+  },
   // Attributes: refer to TransactionEvent
   TRANSACTION_EVENT: (
     tenantId: string,

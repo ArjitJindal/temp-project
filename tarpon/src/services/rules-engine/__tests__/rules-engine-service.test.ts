@@ -1027,7 +1027,11 @@ describe('Verify Transaction for Simulation', () => {
     )
     const testTransactionId = 'dummy'
     const testRuleInstanceId = 'abc'
-    const transaction = getTestTransaction({ transactionId: testTransactionId })
+    const testTimestamp = Date.now()
+    const transaction = getTestTransaction({
+      transactionId: testTransactionId,
+      timestamp: testTimestamp,
+    })
     const result = await rulesEngine.verifyTransactionForSimulation(
       transaction,
       {
@@ -1065,7 +1069,11 @@ describe('Verify Transaction for Simulation', () => {
     const transactionDynamoData = await dynamoDb.send(
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(TEST_TENANT_ID),
-        Key: DynamoDbKeys.TRANSACTION(TEST_TENANT_ID, testTransactionId),
+        Key: DynamoDbKeys.TRANSACTION(
+          TEST_TENANT_ID,
+          testTransactionId,
+          testTimestamp
+        ),
       })
     )
     expect(transactionDynamoData.Item).toBeUndefined()

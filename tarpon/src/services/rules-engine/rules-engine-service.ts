@@ -891,7 +891,8 @@ export class RulesEngineService {
           status: finalStatus,
           executedRules: mergedExecutedRules,
           hitRules: mergedHitRules,
-        }
+        },
+        transaction.timestamp
       ),
       this.transactionEventRepository.saveTransactionEvent(
         newTransactionEvent,
@@ -990,7 +991,12 @@ export class RulesEngineService {
     await Promise.all([
       this.transactionRepository.updateTransactionRulesResult(
         transaction.transactionId,
-        { status, executedRules: mergedExecutedRules, hitRules: mergedHitRules }
+        {
+          status,
+          executedRules: mergedExecutedRules,
+          hitRules: mergedHitRules,
+        },
+        transaction.timestamp
       ),
       this.transactionEventRepository.updateTransactionEventRulesResult(
         transaction.transactionId,

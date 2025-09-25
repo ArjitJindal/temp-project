@@ -54,6 +54,7 @@ import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
 import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { runLocalChangeHandler } from '@/utils/local-change-handler'
+import { FUTURE_TIMESTAMP_TO_COMPARE } from '@/core/dynamodb/key-constants'
 
 type NonUserTransactionsFilterOptions = {
   originAddress?: Address
@@ -113,7 +114,8 @@ export class DynamoDbTransactionRepository
 
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
-      transaction.transactionId
+      transaction.transactionId,
+      transaction.timestamp
     )
     return {
       putItemInput: {
@@ -149,7 +151,8 @@ export class DynamoDbTransactionRepository
 
         const primaryKey = DynamoDbKeys.TRANSACTION(
           this.tenantId,
-          transaction.transactionId
+          transaction.transactionId,
+          transaction.timestamp
         )
         primaryKeys.push(primaryKey)
 
@@ -195,9 +198,14 @@ export class DynamoDbTransactionRepository
 
   public async updateTransactionRulesResult(
     transactionId: string,
-    rulesResult: Undefined<TransactionMonitoringResult> = {}
+    rulesResult: Undefined<TransactionMonitoringResult> = {},
+    timestamp: number
   ): Promise<void> {
-    const primaryKey = DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
+    const primaryKey = DynamoDbKeys.TRANSACTION(
+      this.tenantId,
+      transactionId,
+      timestamp
+    )
     const executedRules = rulesResult.executedRules || []
     const hitRules = rulesResult.hitRules || []
 
@@ -231,7 +239,8 @@ export class DynamoDbTransactionRepository
   public async deleteTransaction(transaction: Transaction): Promise<void> {
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
-      transaction.transactionId
+      transaction.transactionId,
+      transaction.timestamp
     )
     const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
     await batchWrite(
@@ -369,22 +378,31 @@ export class DynamoDbTransactionRepository
     transactionId: string,
     attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<TransactionWithRulesResult | null> {
-    const getItemInput: GetCommandInput = {
+    const getItemInput = (newPartitionKey: boolean): GetCommandInput => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+      Key: newPartitionKey
+        ? DynamoDbKeys.TRANSACTION(
+            this.tenantId,
+            transactionId,
+            FUTURE_TIMESTAMP_TO_COMPARE
+          ) // Future timestamp to always use new partition key)
+        : DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ConsistentRead: true,
       ...(attributesToFetch
         ? { ProjectionExpression: attributesToFetch.join(', ') }
         : {}),
-    }
-    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
-
-    if (!result.Item) {
+    })
+    // Checking both partition as we don't have timestamp to check which partition to use
+    const results = await Promise.all([
+      this.dynamoDb.send(new GetCommand(getItemInput(false))),
+      this.dynamoDb.send(new GetCommand(getItemInput(true))),
+    ])
+    const finalResult = compact(results.map((rest) => rest.Item))
+    if (!finalResult[0]) {
       return null
     }
-
     const transaction = {
-      ...result.Item,
+      ...finalResult[0],
     }
 
     delete transaction.createdAt
@@ -401,12 +419,18 @@ export class DynamoDbTransactionRepository
       TransactionWithRulesResult.getAttributeTypeMap().map(
         (attribute) => attribute.name
       )
+    // Checking both partition as we don't have timestamp to check which partition to use
     return await batchGet<TransactionWithRulesResult>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      transactionIds.map((transactionId) =>
-        DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
-      ),
+      transactionIds.flatMap((transactionId) => [
+        DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+        DynamoDbKeys.TRANSACTION(
+          this.tenantId,
+          transactionId,
+          FUTURE_TIMESTAMP_TO_COMPARE
+        ), // Future timestamp to always use new partition key)
+      ]),
       {
         ProjectionExpression: transactionAttributeNames
           .map((name) => `#${name}`)
@@ -458,9 +482,14 @@ export class DynamoDbTransactionRepository
     const batchGetItemInput: BatchGetCommandInput = {
       RequestItems: {
         [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: {
-          Keys: Array.from(new Set(transactionIds)).map((transactionId) =>
-            DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
-          ),
+          Keys: Array.from(new Set(transactionIds)).flatMap((transactionId) => [
+            DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+            DynamoDbKeys.TRANSACTION(
+              this.tenantId,
+              transactionId,
+              FUTURE_TIMESTAMP_TO_COMPARE
+            ), // Future timestamp to always use new partition key)
+          ]),
           ProjectionExpression: transactionAttributeNames
             .map((name) => `#${name}`)
             .join(', '),
