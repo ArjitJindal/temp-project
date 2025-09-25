@@ -98,7 +98,7 @@ import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import dayjs from '@/utils/dayjs'
-import { TimestampRange } from '@/services/rules-engine'
+import { TimestampRange } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
   getPaymentEmailId,
