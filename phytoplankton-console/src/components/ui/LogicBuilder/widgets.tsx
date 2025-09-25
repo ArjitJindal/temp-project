@@ -87,7 +87,14 @@ const isTransactionKeyField = (
 ): boolean => {
   if (typeof entityKey === 'string') {
     const field = entityKey.split('.')[0];
-    return !!props.fields[field]?.label?.toLowerCase().includes('transaction /');
+    const fieldData = props.fields[field] as any;
+    if (fieldData?.fieldSettings) {
+      const { uniqueType } = fieldData.fieldSettings;
+      if (uniqueType) {
+        return uniqueType.startsWith('TRANSACTION_');
+      }
+      return true;
+    }
   }
   return false;
 };
