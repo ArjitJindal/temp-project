@@ -92,7 +92,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { notNullish } from '@/utils/array'
 import { getS3Client, getS3ClientByEvent } from '@/utils/s3'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'

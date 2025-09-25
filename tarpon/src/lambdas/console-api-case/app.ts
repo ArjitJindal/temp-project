@@ -26,11 +26,6 @@ import {
   enforceAlertAccessAndGetAlert,
 } from '@/services/alerts/alert-permissions'
 
-export type CaseConfig = {
-  TMP_BUCKET: string
-  DOCUMENT_BUCKET: string
-}
-
 export const casesHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
