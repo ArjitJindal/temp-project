@@ -39,7 +39,7 @@ import { BatchJobParams } from '@/@types/batch-job'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import { FlatFilesRecords } from '@/models/flat-files-records'
 import { logger } from '@/core/logger'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 
 type Connections = {
   dynamoDb: DynamoDBDocumentClient

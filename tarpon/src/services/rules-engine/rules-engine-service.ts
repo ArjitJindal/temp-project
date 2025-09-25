@@ -42,7 +42,6 @@ import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { RuleHitResult, RuleHitResultItem } from './rule'
 import {
-  LegacyFilters,
   TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
   TransactionFilters,
@@ -111,80 +110,27 @@ import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUs
 import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
-import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { FifoSqsMessage } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
-import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { AccountsService } from '@/services/accounts'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import {
+  RuleStage,
+  ValidationOptions,
+  RiskScoreDetails,
+  DuplicateTransactionReturnType,
+} from '@/@types/tranasction/aggregation'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
 ) => ((rule1?.ruleId ?? '') > (rule2?.ruleId ?? '') ? 1 : -1)
-
-type RiskScoreDetails = TransactionRiskScoringResult & {
-  components?: RiskScoreComponent[]
-}
-export type TimestampRange = { startTimestamp: number; endTimestamp: number }
-
-export type TransactionAggregationTask = {
-  transactionId: string
-  ruleInstanceId: string
-  direction: 'origin' | 'destination'
-  tenantId: string
-  isTransactionHistoricalFiltered: boolean
-}
-export type V8TransactionAggregationTask = {
-  type: 'TRANSACTION_AGGREGATION'
-  tenantId: string
-  aggregationVariable?: LogicAggregationVariable
-  transaction: Transaction
-  direction?: 'origin' | 'destination'
-  filters?: LegacyFilters
-  transactionRiskScore?: number
-}
-export type V8LogicAggregationRebuildTask = {
-  type: 'PRE_AGGREGATION'
-  tenantId: string
-  entity?:
-    | { type: 'RULE'; ruleInstanceId: string }
-    | { type: 'RISK_FACTOR'; riskFactorId: string }
-  jobId: string
-  aggregationVariable: LogicAggregationVariable
-  currentTimestamp: number
-  timeWindow?: TimestampRange
-  totalSliceCount?: number
-  userId?: string
-  paymentDetails?: PaymentDetails
-  aggregationData?: {
-    type: 'ADDRESS' | 'EMAIL' | 'NAME'
-    value: string | undefined
-  }
-}
-
-export type TransactionAggregationTaskEntry = {
-  userKeyId: string
-  payload:
-    | TransactionAggregationTask
-    | V8TransactionAggregationTask
-    | V8LogicAggregationRebuildTask
-}
-
-type ValidationOptions = {
-  validateTransactionId?: boolean
-  validateOriginUserId?: boolean
-  validateDestinationUserId?: boolean
-}
-
-type RuleStage = TransactionRuleStage | UserRuleStage
 
 export function getExecutedAndHitRulesResult(
   ruleResults: ExecutedRulesResult[]
@@ -217,10 +163,6 @@ export function getExecutedAndHitRulesResult(
     hitRules,
     status: getAggregatedRuleStatus(hitRules),
   }
-}
-
-export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
-  message: string
 }
 
 @traceable

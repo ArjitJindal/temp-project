@@ -8,7 +8,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { TransactionViewConfig } from '../app'
+import { TransactionViewConfig } from '@/@types/tranasction/transaction-config'
 import {
   DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseTransactionsRequest,

@@ -7,7 +7,7 @@ import { CaseService } from '@/services/cases'
 import { CaseRepository } from '@/services/cases/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 
 async function migrateTenant(tenant: Tenant) {
   const tenantId = tenant.id

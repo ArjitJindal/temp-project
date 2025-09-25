@@ -20,11 +20,6 @@ import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 import { EddService } from '@/services/edd'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
-export type UserViewConfig = {
-  TMP_BUCKET: string
-  DOCUMENT_BUCKET: string
-}
-
 export const businessUsersViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<

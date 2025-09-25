@@ -14,11 +14,6 @@ import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongo
 import { getPaymentDetailsIdentifiersKey } from '../logic-evaluator/variables/payment-details'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import {
-  TimestampRange,
-  TransactionAggregationTaskEntry,
-  V8LogicAggregationRebuildTask,
-} from '../rules-engine'
-import {
   getAggVarHash,
   TIME_SLICE_COUNT,
 } from '../logic-evaluator/engine/aggregation-repository'
@@ -27,6 +22,11 @@ import {
   getAggregationGranularity,
 } from '../logic-evaluator/engine/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
+import {
+  TimestampRange,
+  TransactionAggregationTaskEntry,
+  V8LogicAggregationRebuildTask,
+} from '@/@types/tranasction/aggregation'
 import { traceable } from '@/core/xray'
 import {
   RulePreAggregationBatchJob,
