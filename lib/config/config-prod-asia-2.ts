@@ -63,8 +63,8 @@ export const config: Config = {
   },
   opensearch: {
     deploy: true,
-    dataNodes: 5,
-    dataNodeInstanceType: 'm7g.large.search',
-    volumeSize: 20,
+    dataNodes: 7,
+    dataNodeInstanceType: 'm7g.2xlarge.search',
+    volumeSize: 25,
   },
 }

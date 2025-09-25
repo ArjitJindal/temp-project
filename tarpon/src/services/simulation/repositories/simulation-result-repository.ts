@@ -9,7 +9,7 @@ import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/Simulat
 import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
 import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 type SimulationResult =
   | SimulationRiskLevelsResult

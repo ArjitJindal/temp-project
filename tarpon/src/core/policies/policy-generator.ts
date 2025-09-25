@@ -6,7 +6,7 @@ import {
   SHARED_AUTH0_PARTITION_KEY_PREFIX,
   SHARED_PARTITION_KEY_PREFIX,
 } from '../dynamodb/dynamodb-keys'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 
 export default class PolicyBuilder {
   tenantId: string

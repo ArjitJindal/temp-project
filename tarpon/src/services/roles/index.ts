@@ -20,7 +20,7 @@ import { getContext } from '@/core/utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 import { logger } from '@/core/logger'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 
 @traceable
 export class RoleService {

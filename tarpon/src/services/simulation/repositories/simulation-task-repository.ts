@@ -26,7 +26,7 @@ import { SimulationBeaconIteration } from '@/@types/openapi-internal/SimulationB
 import { SimulationJob } from '@/@types/openapi-internal/SimulationJob'
 import { isCurrentUserAtLeastRole } from '@/@types/jwt'
 import { traceable } from '@/core/xray'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { TXN_COUNT } from '@/core/seed/data/transactions'
 import { SimulationV8RiskFactorsIteration } from '@/@types/openapi-internal/SimulationV8RiskFactorsIteration'
 import { SimulationV8RiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsStatisticsResult'

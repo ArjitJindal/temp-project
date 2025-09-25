@@ -33,7 +33,7 @@ import {
   RuleQueueWithId,
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
-import { getFullTenantId, isDemoTenant } from '@/utils/tenant'
+import { getFullTenantId, isDemoTenant } from '@/utils/tenant-id'
 import {
   addSentryExtras,
   tenantSettings,

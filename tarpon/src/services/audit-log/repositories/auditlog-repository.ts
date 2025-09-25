@@ -22,7 +22,8 @@ import {
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { ClickhouseAuditLogRepository } from '@/services/audit-log/repositories/clickhouse-repository'
 import { DynamoAuditLogRepository } from '@/services/audit-log/repositories/dynamo-repository'
-import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
+import { getAllTenantIds } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { envIs } from '@/utils/env'
 
 @traceable

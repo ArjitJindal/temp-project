@@ -5,7 +5,8 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
+import { getAllTenantIds } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { ApiRequestLog } from '@/@types/request-logger'
 import {
   batchInsertToClickhouse,

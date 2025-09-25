@@ -110,7 +110,7 @@ import {
   getCaseAuditLogMetadata,
 } from '@/utils/audit-log'
 import { CaseSubject } from '@/services/case-alerts-common/utils'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isConsoleMigrationEnabled } from '@/utils/clickhouse/utils'
 

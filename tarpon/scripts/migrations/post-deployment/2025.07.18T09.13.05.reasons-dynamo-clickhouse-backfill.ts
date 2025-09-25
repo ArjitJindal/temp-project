@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { REASONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { Tenant } from '@/services/accounts/repository'

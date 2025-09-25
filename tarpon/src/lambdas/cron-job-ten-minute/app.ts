@@ -34,7 +34,7 @@ import {
   handleBatchJobTrigger,
 } from '@/utils/cron'
 import { runSanctionsDataCountJob } from '@/services/sanctions/sanctions-data-count'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
   getOpensearchClient,

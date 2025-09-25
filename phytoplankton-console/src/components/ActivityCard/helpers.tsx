@@ -3,7 +3,7 @@ import { capitalize, has } from 'lodash';
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { LogItemData } from './LogCard/LogContainer/LogItem';
-import { Account, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
+import { Account, Assignment, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { formatDuration, getDuration } from '@/utils/time-utils';
@@ -272,7 +272,10 @@ export const extractSubtype = (log: AuditLog): string | undefined => {
 };
 
 export const getAssignee = (newImage: any, users: { [userId: string]: Account }) => {
-  const assignments = has(newImage, 'assignments')
+  const assignments: Assignment[] = has<{
+    reviewAssignments?: Assignment[];
+    assignments?: Assignment[];
+  }>(newImage, 'assignments')
     ? newImage.assignments
     : newImage?.reviewAssignments ?? [];
   const userIds = assignments?.map((assignee: any) => assignee.assigneeUserId);

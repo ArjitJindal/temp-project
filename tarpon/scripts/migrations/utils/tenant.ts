@@ -1,5 +1,5 @@
 import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
-import { cloneDeep } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
 import { getConfig } from './config'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -8,7 +8,7 @@ import { TenantInfo, TenantService } from '@/services/tenants'
 import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { envIs } from '@/utils/env'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import {
   initializeTenantContext,
   tenantSettings,

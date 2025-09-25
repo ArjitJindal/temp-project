@@ -16,7 +16,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { createTenantDatabase } from '@/utils/clickhouse/utils'
 import { envIsNot } from '@/utils/env'
 import { getUsers } from '@/core/seed/data/users'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 

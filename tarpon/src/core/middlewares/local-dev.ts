@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import { envIsNot } from '@/utils/env'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
