@@ -2,7 +2,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { AccountsService } from '@/services/accounts'
 import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   if (isDemoTenant(tenant.id)) {

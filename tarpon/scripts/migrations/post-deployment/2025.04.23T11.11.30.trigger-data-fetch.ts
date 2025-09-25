@@ -2,7 +2,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { hasFeature } from '@/core/utils/context'
 import { Tenant } from '@/services/accounts/repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 let hasFeatureAcuris = false
 let hasFeatureOpenSanctions = false
