@@ -13,6 +13,7 @@ export interface ExternalState {
 
 const helper = new ColumnHelper<TableItem>();
 export const columns: TableColumn<TableItem>[] = helper.list([
+  // is isActive = falst then show - inactive
   helper.simple({
     title: 'Level',
     defaultWidth: 100,
@@ -23,7 +24,10 @@ export const columns: TableColumn<TableItem>[] = helper.list([
     title: 'Score',
     defaultWidth: 100,
     render: (item, context) => {
+      console.log('item1', item)
+      console.log('context1', context)
       const externalState: ExternalState = context.external as ExternalState;
+      
       const { state } = externalState;
       const start = state?.[item.index - 1] ?? 0;
       const end = state?.[item.index] ?? 100;

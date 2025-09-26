@@ -6,6 +6,7 @@ type RiskClassificationScore = {
   riskLevel: RiskLevel
   lowerBoundRiskScore: number
   upperBoundRiskScore: number
+  isActive: Boolean
 }
 
 export const DEFAULT_RISK_LEVEL: RiskLevel = 'VERY_HIGH'

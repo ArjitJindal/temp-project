@@ -47,9 +47,12 @@ export default function RiskQualification(props: Props) {
       if (!state) {
         throw new Error('No state available');
       }
-      return api.postPulseRiskClassification({
+      const res=  api.postPulseRiskClassification({
+        // update isActive
         RiskClassificationRequest: { scores: prepareApiState(state), comment: comment },
       });
+      console.log('res', res)
+      return res
     },
     {
       onSuccess: () => {

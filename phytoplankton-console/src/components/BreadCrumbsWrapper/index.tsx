@@ -60,6 +60,7 @@ export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProp
 
   const handleSimulationModeChange = useCallback(
     (value: boolean | undefined) => {
+      console.log('value', value);
       setIsSimulationEnabled(value);
       if (!value) {
         if (props.simulationStorageKey === 'SIMULATION_CUSTOM_RISK_FACTORS') {
@@ -98,7 +99,8 @@ export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProp
   );
 
   const location = useLocation();
-
+  console.log('props', props.children);
+  console.log('isSimulationEnabled', isSimulationEnabled);
   return (
     <TopRightSection
       className={props.className}

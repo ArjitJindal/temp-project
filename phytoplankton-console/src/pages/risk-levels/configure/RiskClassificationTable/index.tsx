@@ -24,21 +24,27 @@ const LEVEL_ENTRIES = RISK_LEVELS.map((key, i) => ({
   key,
   index: i,
   title: RISK_LEVEL_LABELS[key],
+  isActive:true
 })) as TableItem[];
 
 export type ApiState = Array<RiskClassificationScore>;
 
 export function prepareApiState(state: State | undefined | null): ApiState {
+  console.log('state', state)
+  console.log('RISK_LEVELS', RISK_LEVELS)
   return RISK_LEVELS.map((riskLevel, index) => ({
     riskLevel,
     lowerBoundRiskScore: state?.[index - 1] ?? 0,
     upperBoundRiskScore: state?.[index] ?? 100,
+    isActive: true,
   }));
 }
 
 export function parseApiState(values: ApiState): State {
   const result: any[] = [];
+  console.log('values', values)
   for (let i = 0; i < RISK_LEVELS.length - 1; i += 1) {
+
     const level = RISK_LEVELS[i];
     const riskLevelEntry = values.find(({ riskLevel }) => riskLevel === level);
     if (riskLevelEntry == null) {
@@ -57,6 +63,7 @@ const RiskClassificationTable = (props: Props) => {
     isDisabled,
     setState,
   };
+  console.log('props1', props)
   return (
     <Table<TableItem>
       rowKey="key"

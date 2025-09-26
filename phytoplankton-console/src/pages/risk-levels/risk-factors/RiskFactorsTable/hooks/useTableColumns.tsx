@@ -103,7 +103,6 @@ export function useTableColumns({
 
   const columns: TableColumn<RiskFactorRow>[] = useMemo(() => {
     const columnHelper = new ColumnHelper<RiskFactorRow>();
-
     return columnHelper.list([
       columnHelper.simple<'id'>({
         title: 'Risk factor ID',

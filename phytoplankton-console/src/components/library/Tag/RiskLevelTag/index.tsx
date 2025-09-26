@@ -13,12 +13,20 @@ interface Props {
 export default function RiskLevelTag(props: Props): JSX.Element {
   const { level } = props;
   const settings = useSettings();
+  console.log('level',level)
   if (!level) {
     return <>-</>;
   }
   return (
-    <Tag className={cn(s.root, s[`level-${level}`])}>
-      {humanizeConstant(getRiskLevelLabel(level, settings))}
-    </Tag>
+    <>
+      <Tag className={cn(s.root, s[`level-${level}`], getRiskLevelLabel(level, settings).isActive && s.active)}>
+        {humanizeConstant(getRiskLevelLabel(level, settings).riskLevelLabel)}
+      </Tag>
+      {!getRiskLevelLabel(level, settings).isActive && (
+        <Tag className={cn(s.root)} color="gray">
+          Inactive
+        </Tag>
+      )}
+    </>
   );
 }

@@ -225,9 +225,19 @@ export function useRuleActionLabel(ruleAction: RuleAction | undefined): string |
   return getRuleActionLabel(ruleAction, settings);
 }
 
-export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
+export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): {
+  riskLevelLabel: string,
+  isActive: boolean,
+} {
+  console.log('settings', settings)
+
   const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
-  return alias || humanizeConstant(riskLevel);
+  const isActive = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.isActive;
+  const riskLevelObj = settings.riskLevelAlias?.find((item) => item.level === riskLevel);
+  if (riskLevelObj && riskLevelObj.isActive === false) {
+    return { riskLevelLabel: alias || humanizeConstant(riskLevel), isActive: false };
+  }
+  return { riskLevelLabel: alias || humanizeConstant(riskLevel), isActive: true };
 }
 
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
@@ -240,7 +250,7 @@ export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSe
 
 export function useRiskLevelLabel(riskLevel: RiskLevel): string | undefined {
   const settings = useSettings();
-  return getRiskLevelLabel(riskLevel, settings);
+  return getRiskLevelLabel(riskLevel, settings).riskLevelLabel;
 }
 
 export function getTransactionStateLabel(

@@ -139,7 +139,7 @@ export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionPro
               </Link>
             )}
             {uploadModal}
-            <Label label="Simulator" position="RIGHT">
+            <Label label="Simulatorrr" position="RIGHT">
               {!isSimulationFeatureEnabled ? (
                 <div>
                   <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="bottomLeft">

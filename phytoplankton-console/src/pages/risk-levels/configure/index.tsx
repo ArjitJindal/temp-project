@@ -107,6 +107,7 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
   const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
     api.getPulseRiskClassification(),
   );
+  console.log('riskValuesQueryResults', riskValuesQueryResults)
 
   useEffect(() => {
     if (isFailed(riskValuesQueryResults.data)) {
