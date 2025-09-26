@@ -1989,11 +1989,10 @@ export class CdkTarponStack extends cdk.Stack {
   private createDynamoDbVpcEndpoint(
     vpc: Vpc | null
   ): GatewayVpcEndpoint | null {
-    // Only create VPC endpoint for dev and sandbox stages AND when lambdas are in VPC
     if (
       !vpc ||
       !this.config.resource.LAMBDA_VPC_ENABLED ||
-      (envIsNot('dev') && envIsNot('sandbox'))
+      (envIsNot('prod') && envIsNot('sandbox'))
     ) {
       return null
     }
@@ -2028,12 +2027,8 @@ export class CdkTarponStack extends cdk.Stack {
   }
 
   private createMongoAtlasVpc() {
-    // Enable VPC for dev, sandbox, and prod stages
-    if (
-      this.config.stage !== 'dev' &&
-      this.config.stage !== 'sandbox' &&
-      this.config.stage !== 'prod'
-    ) {
+    // Enable VPC forsandbox, and prod stages
+    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
       return {
         vpc: null,
         vpcCidr: null,
