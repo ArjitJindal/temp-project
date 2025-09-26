@@ -51,6 +51,7 @@ export function SearchResultTable(props: Props) {
   const api = useApi();
   const currentUser = useAuth0User();
   const hasSetDefaultProfile = useRef(false);
+  const hasSetDefaultManualFilters = useRef(false);
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
@@ -120,10 +121,10 @@ export function SearchResultTable(props: Props) {
   );
 
   useEffect(() => {
-    if (hasSetDefaultProfile.current) {
+    if (hasSetDefaultManualFilters.current) {
       return;
     }
-    if (isScreeningProfileEnabled) {
+    if (isScreeningProfileEnabled && isSuccess(defaultManualScreeningFilters.data)) {
       const response = getOr(defaultManualScreeningFilters.data, {});
       setParams((prevState) => ({
         ...prevState,
@@ -135,7 +136,8 @@ export function SearchResultTable(props: Props) {
         searchTerm: undefined,
         entityType: response?.entityType ?? prevState?.entityType,
       }));
-    } else {
+      hasSetDefaultManualFilters.current = true;
+    } else if (isSuccess(searchProfilesResult.data)) {
       const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
       const profiles = response.items || [];
       const defaultProfile = Array.isArray(profiles)
@@ -156,7 +158,7 @@ export function SearchResultTable(props: Props) {
           searchTerm: undefined,
         }));
       }
-      hasSetDefaultProfile.current = true;
+      hasSetDefaultManualFilters.current = true;
     }
   }, [searchProfilesResult.data, defaultManualScreeningFilters.data, isScreeningProfileEnabled]);
 
