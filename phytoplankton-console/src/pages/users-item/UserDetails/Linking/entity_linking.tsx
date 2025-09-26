@@ -1,6 +1,6 @@
 import React from 'react';
 import s from './index.module.less';
-import UserGraph, { GraphFilters } from './UserGraph';
+import UserGraph, { GraphFilters, useLinkingState, useUserEntityFollow } from './UserGraph';
 import * as Card from '@/components/ui/Card';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 import { GraphEdges, GraphNodes } from '@/apis';
@@ -73,4 +73,26 @@ const Linking = (props: Props) => {
   );
 };
 
-export default Linking;
+export default function LinkingWrapper(props: { userId: string }) {
+  const { userId } = props;
+  const linkingState = useLinkingState(userId);
+  const handleFollow = useUserEntityFollow(linkingState);
+
+  return (
+    <Linking
+      userId={userId}
+      scope={linkingState.scope}
+      onScopeChange={linkingState.setScope}
+      entityNodes={linkingState.entityNodes}
+      entityEdges={linkingState.entityEdges}
+      txnNodes={linkingState.txnNodes}
+      txnEdges={linkingState.txnEdges}
+      followed={linkingState.followed}
+      onFollow={handleFollow}
+      entityFilters={linkingState.entityFilters}
+      setEntityFilters={linkingState.setEntityFilters}
+      txnFilters={linkingState.txnFilters}
+      setTxnFilters={linkingState.setTxnFilters}
+    />
+  );
+}
