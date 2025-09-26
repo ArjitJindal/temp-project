@@ -40,17 +40,14 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Linking from '@/pages/users-item/UserDetails/Linking';
 import {
   useFeatureEnabled,
-  useSettings,
   useFreshdeskCrmEnabled,
+  useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import { CRM_ICON_MAP, useConsoleUser } from '@/pages/users-item/UserDetails/utils';
-import {
-  useLinkingState,
-  useUserEntityFollow,
-} from '@/pages/users-item/UserDetails/Linking/UserGraph';
+
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords';
 import CRMDataComponent from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
@@ -304,9 +301,6 @@ export function useAlertTabs(props: Props): TabItem[] {
   });
   const userQueryResult = useConsoleUser(caseUserId);
 
-  const linkingState = useLinkingState(caseUserId);
-  const handleFollow = useUserEntityFollow(linkingState);
-
   const tabs: TabItem[] = useMemo(() => {
     return tabList
       .map((tab): TabItem | null => {
@@ -431,23 +425,7 @@ export function useAlertTabs(props: Props): TabItem[] {
           return {
             title: 'Ontology',
             key: tab,
-            children: (
-              <Linking
-                userId={caseUserId}
-                scope={linkingState.scope}
-                onScopeChange={linkingState.setScope}
-                entityNodes={linkingState.entityNodes}
-                entityEdges={linkingState.entityEdges}
-                txnNodes={linkingState.txnNodes}
-                txnEdges={linkingState.txnEdges}
-                followed={linkingState.followed}
-                onFollow={handleFollow}
-                entityFilters={linkingState.entityFilters}
-                setEntityFilters={linkingState.setEntityFilters}
-                txnFilters={linkingState.txnFilters}
-                setTxnFilters={linkingState.setTxnFilters}
-              />
-            ),
+            children: <Linking userId={caseUserId} />,
             captureEvents: true,
           };
         }
@@ -525,8 +503,6 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectionInfo,
     selectionActions,
     fitTables,
-    handleFollow,
-    linkingState,
     isAiForensicsEnabled,
     isClickhouseEnabled,
     settings.userAlias,

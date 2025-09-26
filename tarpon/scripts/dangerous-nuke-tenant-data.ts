@@ -128,7 +128,11 @@ async function deleteTransaction(transaction: Transaction) {
       ),
     // Always delete the primary transaction item at last to avoid having zombie indexes that
     // can not be deleted.
-    DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
+    DynamoDbKeys.TRANSACTION(
+      tenantId,
+      transaction.transactionId,
+      transaction.timestamp
+    ),
   ].filter(Boolean) as Array<DynamoDbKey>
   for (const key of keysToDelete) {
     await deletePartitionKey('transaction', key)

@@ -15,7 +15,11 @@ import DefaultChartContainer from '@/components/charts/shared/DefaultChartContai
 import { DEFAULT_FONT_STYLE } from '@/components/charts/shared/text';
 import FitText from '@/components/charts/shared/FitText';
 import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
-import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
+import {
+  DEFAULT_FORMATTER,
+  DEFAULT_NUMBER_FORMATTER,
+  Formatter,
+} from '@/components/charts/shared/formatting';
 import { StatePair } from '@/utils/state';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 
@@ -43,7 +47,7 @@ export default function DonutChart<Name extends StringLike>(props: Props<Name>) 
     colors,
     hideLegend,
     formatName = DEFAULT_FORMATTER,
-    formatValue = DEFAULT_FORMATTER,
+    formatValue = DEFAULT_NUMBER_FORMATTER,
   } = props;
 
   const [disabledSeries, setDisabledSeries] = useState<string[]>([]);

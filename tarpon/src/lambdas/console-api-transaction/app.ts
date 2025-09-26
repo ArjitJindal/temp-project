@@ -11,7 +11,7 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { CaseService } from '@/services/cases'
@@ -93,7 +93,7 @@ export const transactionsViewHandler = lambdaApi()(
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const [rulesEngineService, caseService, transactionService] =
       await Promise.all([
         RulesEngineService.fromEvent(event),

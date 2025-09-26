@@ -376,6 +376,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             props.testId ?? `select-root-${id}`,
             'select-root',
             isEmpty && 'empty',
+            isDisabled && 'disabled',
             isLoading && CY_LOADING_FLAG_CLASS,
           )}
           data-portal-id={portalId}

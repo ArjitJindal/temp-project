@@ -217,8 +217,8 @@ async function main() {
 
         // --- Added: run trace if requested for each file ---
         if (TRACE_PACKAGE) {
-          // Check if we should trace this specific file
-          const shouldTrace = !TRACE_LAMBDA || file.includes(TRACE_LAMBDA)
+          // Check if we should trace this specific file - only when lambda name is specified and file contains it
+          const shouldTrace = TRACE_LAMBDA && file.includes(TRACE_LAMBDA)
 
           if (shouldTrace) {
             console.log(
@@ -233,13 +233,20 @@ async function main() {
               console.log(`   (No imports found for "${TRACE_PACKAGE}")`)
             } else {
               traces.forEach((trace) => {
-                console.log(`\n   📍 Found at depth ${trace.depth}:`)
-                console.log(`   ${trace.finalImport}`)
-                console.log(`   📋 Import chain:`)
+                // Build import chain string
+                let chainString = ''
                 trace.chain.forEach((link, index) => {
                   const indent = '   ' + '  '.repeat(index)
-                  console.log(`${indent}${link.importer} → ${link.import}`)
+                  chainString += `${indent}${link.importer} → ${link.import}\n`
                 })
+
+                // Only show chain if it contains the lambda name
+                if (chainString.includes(TRACE_LAMBDA)) {
+                  console.log(`\n   📍 Found at depth ${trace.depth}:`)
+                  console.log(`\n   📍 ${trace.finalImport}`)
+                  console.log(`   📋 Import chain:`)
+                  console.log(chainString)
+                }
               })
             }
           }

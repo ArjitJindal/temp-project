@@ -6,8 +6,8 @@ import memoize from 'lodash/memoize'
 import range from 'lodash/range'
 import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
-import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -44,7 +44,6 @@ import {
   sanitizeDeduplicationId,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
-import { handleV8PreAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { TransientRepository } from '@/core/repositories/transient-repository'
 import dayjs, { duration } from '@/utils/dayjs'
 import { generateChecksum } from '@/utils/object'
@@ -115,9 +114,11 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private setDeduplicationIds = new Set<string>()
   private dynamoDb!: DynamoDBDocumentClient
   private mongoDb!: MongoClient
+
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
+
     const tenantId = job.tenantId
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
@@ -125,8 +126,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     })
     const riskRepository = new RiskRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
-      mongoDb: await getMongoDbClient(),
+      mongoDb: this.mongoDb,
     })
+
     if (entity?.type === 'RULE') {
       const { ruleInstanceId } = entity
       const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
@@ -317,9 +319,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     ) => {
       const transactionsRepo = new MongoDbTransactionRepository(
         tenantId,
-        await getMongoDbClient(),
+        this.mongoDb,
         this.dynamoDb
       )
+
       return await transactionsRepo.getUniqueUserIds(direction, timeRange)
     },
     (tenantId, direction, timeRange) =>
@@ -334,7 +337,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     ) => {
       const transactionsRepo = new MongoDbTransactionRepository(
         tenantId,
-        await getMongoDbClient(),
+        this.mongoDb,
         this.dynamoDb
       )
 
@@ -356,7 +359,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     ) => {
       const transactionsRepo = new MongoDbTransactionRepository(
         tenantId,
-        await getMongoDbClient(),
+        this.mongoDb,
         this.dynamoDb
       )
       return await transactionsRepo.getUniqueEntityDetails(
@@ -396,13 +399,11 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     )
 
     if (envIs('local')) {
-      for (const message of dedupMessages) {
-        await handleV8PreAggregationTask(
-          JSON.parse(message.MessageBody),
-          this.dynamoDb,
-          this.mongoDb
-        )
-      }
+      const { handleV8PreAggregationTasks } = await import(
+        '@/core/local-handlers/v8-pre-aggregation'
+      )
+
+      await handleV8PreAggregationTasks(dedupMessages)
     } else {
       const transientRepository = new TransientRepository(
         dynamoDb,

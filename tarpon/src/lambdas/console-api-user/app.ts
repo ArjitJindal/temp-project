@@ -15,7 +15,7 @@ import { LinkerService } from '@/services/linker'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMentionsFromComments } from '@/utils/helpers'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 import { EddService } from '@/services/edd'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -199,7 +199,7 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUserScreeningStatus(async (_ctx, _request) => {
-      const dynamoDb = getDynamoDbClient()
+      const dynamoDb = getDynamoDbClientByEvent(event)
       const ongoingScreeningUserRules =
         await getOngoingScreeningUserRuleInstances(tenantId, dynamoDb)
 

@@ -50,8 +50,9 @@ export function isRuleInstanceUpdateOrOnboarding(
     Boolean(
       (isV8RuleInstance(ruleInstance) &&
         ruleInstance.userRuleRunCondition?.entityUpdated !== false) ||
-        parameters?.ruleStages == null ||
-        parameters.ruleStages.includes(stage)
+        (!isV8RuleInstance(ruleInstance) &&
+          (parameters?.ruleStages == null ||
+            parameters.ruleStages.includes(stage)))
     )
 
   if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {

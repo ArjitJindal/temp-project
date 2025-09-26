@@ -118,7 +118,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
         })
       } else if (providers.length) {
         commonDataTenantIds.push(tenant.tenant.id)
-        return []
       } else {
         batchJobs.push({
           type: 'ONGOING_SCREENING_USER_RULE',
