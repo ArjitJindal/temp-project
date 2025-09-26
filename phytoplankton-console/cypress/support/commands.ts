@@ -175,9 +175,11 @@ Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
 });
 
 Cypress.Commands.add('singleSelect', (preSelector, textOrIndex: string | number) => {
-  cy.get(`${preSelector} *[data-cy~=select-root]`).first().scrollIntoView();
+  cy.get(`${preSelector} *[data-cy~=select-root]:not([data-cy~=disabled])`)
+    .first()
+    .scrollIntoView();
   if (typeof textOrIndex === 'number') {
-    cy.get(`${preSelector} *[data-cy~=select-root]`).first().click();
+    cy.get(`${preSelector} *[data-cy~=select-root]:not([data-cy~=disabled])`).first().click();
     cy.document().within(() => {
       cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(
         () => {
@@ -186,7 +188,10 @@ Cypress.Commands.add('singleSelect', (preSelector, textOrIndex: string | number)
       );
     });
   } else {
-    cy.get(`${preSelector} *[data-cy~=select-root]`).first().click().type(`${textOrIndex}`);
+    cy.get(`${preSelector} *[data-cy~=select-root]:not([data-cy~=disabled])`)
+      .first()
+      .click()
+      .type(`${textOrIndex}`);
     cy.document().within(() => {
       cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`).within(
         () => {
@@ -200,7 +205,9 @@ Cypress.Commands.add('singleSelect', (preSelector, textOrIndex: string | number)
 Cypress.Commands.add('multiSelect', (preSelector, options, params = {}) => {
   const { fullOptionMatch = false, clear = false } = params;
   const toSelect = Array.isArray(options) ? options : [options];
-  cy.get(`${preSelector} *[data-cy~=select-root]`).first().click({ force: true });
+  cy.get(`${preSelector} *[data-cy~=select-root]:not([data-cy~=disabled])`)
+    .first()
+    .click({ force: true });
   cy.document().within(() => {
     cy.get(`*[data-cy~=select-menu-wrapper][data-cy~=open] *[data-cy^=select-menu]`)
       .should('be.visible')
