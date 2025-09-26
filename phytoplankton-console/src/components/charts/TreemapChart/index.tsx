@@ -16,7 +16,11 @@ import DefaultChartContainer from '@/components/charts/shared/DefaultChartContai
 import { DEFAULT_FONT_STYLE } from '@/components/charts/shared/text';
 import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import FixText from '@/components/charts/shared/FitText';
-import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
+import {
+  DEFAULT_FORMATTER,
+  DEFAULT_NUMBER_FORMATTER,
+  Formatter,
+} from '@/components/charts/shared/formatting';
 import { Highlighted } from '@/components/charts/DonutChart/helpers';
 import { StatePair } from '@/utils/state';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
@@ -46,7 +50,7 @@ export default function TreemapChart<Name extends StringLike>(props: Props<Name>
     colors,
     hideLegend,
     formatName = DEFAULT_FORMATTER,
-    formatValue = DEFAULT_FORMATTER,
+    formatValue = DEFAULT_NUMBER_FORMATTER,
   } = props;
 
   const [disabledSeries, setDisabledSeries] = useState<string[]>([]);

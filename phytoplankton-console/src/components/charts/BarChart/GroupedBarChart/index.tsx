@@ -26,7 +26,7 @@ import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colo
 import { StatePair } from '@/utils/state';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
 import { DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
-import { DEFAULT_FORMATTER } from '@/components/charts/shared/formatting';
+import { DEFAULT_FORMATTER, DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
 import { DefaultAxisBottom, DefaultAxisLeft } from '@/components/charts/shared/DefaultAxis';
@@ -66,7 +66,7 @@ export default function GropedColumn<
     height,
     hideLegend,
     grouping,
-    formatValue = DEFAULT_FORMATTER,
+    formatValue = DEFAULT_NUMBER_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
     formatCategory = DEFAULT_FORMATTER,
     customBarColors,
