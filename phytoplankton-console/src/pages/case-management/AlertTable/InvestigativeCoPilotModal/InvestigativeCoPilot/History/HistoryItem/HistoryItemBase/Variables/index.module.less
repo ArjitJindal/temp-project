@@ -7,12 +7,9 @@
 }
 
 .variables {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
   gap: 16px;
-
-  label {
-    margin-left: 15px;
-  }
 }
 
 .variablesModal {
@@ -25,17 +22,16 @@
   }
 }
 
-.input {
-  &:not(.labelPosition-RIGHT) {
-    width: fit-content;
-  }
-}
-
 .buttons {
   display: flex;
   gap: 16px;
 }
 
 .autocomplete {
-  width: 100%;
+  flex: 1;
+  min-width: 150px;
+}
+
+.input {
+  display: flex;
 }
