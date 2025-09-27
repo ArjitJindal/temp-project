@@ -1,7 +1,7 @@
 import { envIs } from '@/utils/env'
 
-// Thursday, 25 September 2025 11:35:53.681 GMT
-export const PRIMARY_TRANSACTION_SWITCH_TIMESTAMP = 1758909600000
+//Monday, 29 September 2025 18:00:00 GMT
+export const PRIMARY_TRANSACTION_SWITCH_TIMESTAMP = 1759168800000
 // Wednesday, 23 September 2026 18:00:00 GMT
 export const FUTURE_TIMESTAMP_TO_COMPARE = 1790186400000
 
