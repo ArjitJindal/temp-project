@@ -353,8 +353,8 @@ export class UserClickhouseRepository {
       id: 'id',
       userId: 'id',
       data: 'data',
-      createdTimestamp: 'timestamp',
-      timestamp: 'timestamp',
+      createdTimestamp: "JSONExtractFloat(data, 'createdTimestamp')",
+      timestamp: "JSONExtractFloat(data, 'timestamp')",
       type: 'type',
       username: 'username',
     }
