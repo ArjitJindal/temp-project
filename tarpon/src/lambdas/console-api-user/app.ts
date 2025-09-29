@@ -34,9 +34,29 @@ export const businessUsersViewHandler = lambdaApi()(
 
     handlers.registerGetBusinessUsersList(async (ctx, request) => {
       if (isClickhouseEnabled()) {
-        return await userService.getBusinessUsersV2(request)
+        if (request.responseType === 'count') {
+          const count = await userService.getBusinessUsersV2Count(request)
+          return { items: [], count }
+        }
+        if (request.responseType === 'data') {
+          const items = await userService.getBusinessUsersV2(request)
+          return { items, count: 0 }
+        }
+        const count = await userService.getBusinessUsersV2Count(request)
+        const items = await userService.getBusinessUsersV2(request)
+        return { items, count }
       }
-      return await userService.getBusinessUsers(request)
+      if (request.responseType === 'count') {
+        const count = await userService.getBusinessUsersCount(request)
+        return { items: [], count }
+      }
+      if (request.responseType === 'data') {
+        const items = await userService.getBusinessUsers(request)
+        return { items, count: 0 }
+      }
+      const count = await userService.getBusinessUsersCount(request)
+      const items = await userService.getBusinessUsers(request)
+      return { items, count }
     })
 
     handlers.registerGetBusinessUsersItem(async (ctx, request) => {
@@ -74,9 +94,29 @@ export const consumerUsersViewHandler = lambdaApi()(
 
     handlers.registerGetConsumerUsersList(async (ctx, request) => {
       if (isClickhouseEnabled()) {
-        return await userService.getConsumerUsersV2(request)
+        if (request.responseType === 'count') {
+          const count = await userService.getConsumerUsersV2Count(request)
+          return { items: [], count }
+        }
+        if (request.responseType === 'data') {
+          const items = await userService.getConsumerUsersV2(request)
+          return { items, count: 0 }
+        }
+        const count = await userService.getConsumerUsersV2Count(request)
+        const items = await userService.getConsumerUsersV2(request)
+        return { items, count }
       }
-      return await userService.getConsumerUsers(request)
+      if (request.responseType === 'count') {
+        const count = await userService.getConsumerUsersCount(request)
+        return { items: [], count }
+      }
+      if (request.responseType === 'data') {
+        const items = await userService.getConsumerUsers(request)
+        return { items, count: 0 }
+      }
+      const count = await userService.getConsumerUsersCount(request)
+      const items = await userService.getConsumerUsers(request)
+      return { items, count }
     })
 
     handlers.registerGetConsumerUsersItem(async (ctx, request) => {
@@ -110,9 +150,29 @@ export const allUsersViewHandler = lambdaApi()(
 
     handlers.registerGetAllUsersList(async (ctx, request) => {
       if (isClickhouseEnabled()) {
-        return await userService.getClickhouseUsers(request)
+        if (request.responseType === 'count') {
+          const count = await userService.getClickhouseUsersCount(request)
+          return { items: [], count }
+        }
+        if (request.responseType === 'data') {
+          const items = await userService.getClickhouseUsers(request)
+          return { items, count: 0 }
+        }
+        const count = await userService.getClickhouseUsersCount(request)
+        const items = await userService.getClickhouseUsers(request)
+        return { items, count }
       }
-      return (await userService.getUsers(request)).result
+      if (request.responseType === 'count') {
+        const count = await userService.getUsersCount(request)
+        return { items: [], count }
+      }
+      if (request.responseType === 'data') {
+        const items = (await userService.getUsers(request)).result
+        return { items, count: 0 }
+      }
+      const count = await userService.getUsersCount(request)
+      const items = (await userService.getUsers(request)).result
+      return { items, count }
     })
 
     handlers.registerGetAllUsersPreviewList(async (ctx, request) => {

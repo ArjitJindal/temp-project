@@ -2085,6 +2085,15 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
+
     parameters: []
   /users:
     get:
@@ -2208,6 +2217,15 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
+
   /users-preview:
     get:
       summary: All Users - List (Lite)
@@ -2621,6 +2639,14 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
     parameters: []
   /users/{userId}:
     get:

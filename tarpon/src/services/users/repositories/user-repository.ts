@@ -173,7 +173,7 @@ export class UserRepository {
     mapper: (user: InternalUser) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
-  ): Promise<AllUsersOffsetPaginateListResponse> {
+  ): Promise<AllUsersTableItem[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
@@ -192,18 +192,15 @@ export class UserRepository {
       userType
     )
 
-    const [users, count] = await Promise.all([
-      collection
-        .find(
-          { $and: query as Filter<InternalUser>[] },
-          {
-            projection: options?.projection,
-            ...paginateFindOptions(params),
-          }
-        )
-        .toArray(),
-      collection.countDocuments({ $and: query }),
-    ])
+    const users = await collection
+      .find(
+        { $and: query as Filter<InternalUser>[] },
+        {
+          projection: options?.projection,
+          ...paginateFindOptions(params),
+        }
+      )
+      .toArray()
 
     const userIds = users.map((user) => user.userId)
     const casesCountPipeline = [
@@ -262,10 +259,34 @@ export class UserRepository {
         })
       : users
 
-    return {
-      items: updatedItems.map(mapper),
-      count,
+    return updatedItems.map(mapper)
+  }
+
+  public async getMongoUsersCount(
+    params: OptionalPagination<Params>,
+    userType?: UserType
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const isPulseEnabled = this.isPulseEnabled()
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
     }
+    const query = await this.getMongoUsersQuery(
+      params,
+      isPulseEnabled,
+      riskClassificationValues,
+      userType
+    )
+
+    const count = await collection.countDocuments({ $and: query })
+
+    return count
   }
 
   public async getMongoAllUsers(
@@ -1732,10 +1753,17 @@ export class UserRepository {
 
     const data = await result.next()
 
-    return this.getMongoUsersPaginate(
-      { ...params, filterUserIds: uniq(data?.userIds.flat()) },
-      mapper
-    )
+    const count = await this.getMongoUsersCount({
+      ...params,
+      filterUserIds: uniq(data?.userIds.flat()),
+    })
+    return {
+      items: await this.getMongoUsersPaginate(
+        { ...params, filterUserIds: uniq(data?.userIds.flat()) },
+        mapper
+      ),
+      count,
+    }
   }
 
   public async getRuleInstanceStats(

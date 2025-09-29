@@ -137,13 +137,33 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           ? await api.getBusinessUsersList({
               ...queryObj,
               filterUserRegistrationStatus: params.userRegistrationStatus,
+              responseType: 'data',
             })
           : type === 'consumer'
-          ? await api.getConsumerUsersList({ ...queryObj, filterIsPepHit: params.isPepHit })
-          : await api.getAllUsersList({ ...queryObj });
+          ? await api.getConsumerUsersList({
+              ...queryObj,
+              filterIsPepHit: params.isPepHit,
+              responseType: 'data',
+            })
+          : await api.getAllUsersList({ ...queryObj, responseType: 'data' });
+
+      const countResponse =
+        type === 'business'
+          ? await api.getBusinessUsersList({
+              ...queryObj,
+              filterUserRegistrationStatus: params.userRegistrationStatus,
+              responseType: 'count',
+            })
+          : type === 'consumer'
+          ? await api.getConsumerUsersList({
+              ...queryObj,
+              filterIsPepHit: params.isPepHit,
+              responseType: 'count',
+            })
+          : await api.getAllUsersList({ ...queryObj, responseType: 'count' });
 
       return {
-        total: response.count,
+        total: countResponse.count,
         items: response.items,
       };
     },
