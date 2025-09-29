@@ -60,7 +60,7 @@ describe('Filter according to case id (optimized)', () => {
   it('should filter according to rule name', () => {
     cy.intercept('GET', '**/rule-instances/rules-with-alerts').as('getRuleWithAlerts');
     cy.intercept('GET', '**/rule_instances**').as('rules');
-    cy.visit('/case-management/cases?showCases=ALL_ALERTS');
+    cy.visit('/case-management/cases?showCases=ALL_ALERTS&alertStatus=OPEN');
 
     cy.wait('@getRuleWithAlerts', { timeout: 25000 }).then((interception) => {
       expect(interception.response?.statusCode).to.be.oneOf([200, 304]);
@@ -76,8 +76,7 @@ describe('Filter according to case id (optimized)', () => {
         }
       });
       expect(ruleName).to.not.equal('');
-      cy.get('[data-cy="rules-filter"]:contains("Alert status")').first().click();
-      cy.get('li[data-cy="OPEN"]').first().click();
+      cy.waitNothingLoading();
       cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
       cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
       cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();

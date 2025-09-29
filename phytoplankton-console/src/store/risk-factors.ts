@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { atom } from 'jotai';
-import { clone, cloneDeep } from 'lodash';
+import { clone } from 'lodash';
 import { RiskFactor } from '@/apis';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import {
@@ -32,12 +32,18 @@ type TempRiskFactorsParams = {
 
 export const useTempRiskFactors = (params: TempRiskFactorsParams) => {
   const { riskFactors, simulationStorageKey, isSimulation } = params;
-  const defaultRiskFactorsMap: RiskFactorsTypeMap = riskFactors
-    ? riskFactors.reduce((acc, riskFactor) => {
-        acc[riskFactor.type].push(riskFactor);
+  const defaultRiskFactorsMap: RiskFactorsTypeMap = useMemo(() => {
+    if (riskFactors && riskFactors.length > 0) {
+      return riskFactors.reduce((acc, riskFactor) => {
+        const existingIndex = acc[riskFactor.type].findIndex((rf) => rf.id === riskFactor.id);
+        if (existingIndex === -1) {
+          acc[riskFactor.type].push(riskFactor);
+        }
         return acc;
-      }, cloneDeep(DEFAULT_RISK_FACTORS_MAP))
-    : cloneDeep(DEFAULT_RISK_FACTORS_MAP);
+      }, clone(DEFAULT_RISK_FACTORS_MAP));
+    }
+    return clone(DEFAULT_RISK_FACTORS_MAP);
+  }, [riskFactors]);
 
   const [localStorageRiskFactors, setLocalStorageRiskFactors] =
     useSafeLocalStorageState<RiskFactorsTypeMap>(

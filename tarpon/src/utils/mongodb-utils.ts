@@ -36,7 +36,7 @@ import {
   sendMessageToMongoConsumer,
 } from './clickhouse/utils'
 import { envIs, envIsNot } from './env'
-import { isDemoTenant } from './tenant'
+import { isDemoTenant } from './tenant-id'
 import { getSQSClient } from './sns-sqs-client'
 import { generateChecksum } from './object'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'

@@ -3,10 +3,10 @@ import { apiContextProvider } from './context-provider'
 import { featureProtected } from './feature-protected'
 import { httpErrorHandler } from './http-error-handler'
 import { jsonSerializer } from './json-serializer'
-import { localDev } from './local-dev'
 import { initSentryLambda } from './init-sentry-lambda'
 import { registerUnhandledErrorHandler } from './lambda-utils'
 import { requestLoggerMiddleware } from './request-logger'
+import { createLazyLocalDev } from './lazy-local-dev'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
 import { bgProcessingMiddleware } from '@/core/middlewares/bg-processing-middleware'
@@ -19,7 +19,7 @@ export const publicLambdaApi = (options?: {
 }) => {
   registerUnhandledErrorHandler()
   const middlewares = [
-    localDev(),
+    createLazyLocalDev(),
     apiContextProvider(),
     xrayMiddleware(),
     bgProcessingMiddleware(),

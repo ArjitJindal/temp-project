@@ -20,7 +20,7 @@ import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { hasFeature } from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { saveMigrationProgressToDynamo } from '@/utils/migration-progress'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'

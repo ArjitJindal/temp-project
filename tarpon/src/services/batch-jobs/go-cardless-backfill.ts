@@ -230,7 +230,11 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
         getData: (transactionId: string) =>
           this.dynamoDbTransactionRepository.getTransactionById(transactionId),
         getKeys: (tenantId: string, transaction: Transaction) =>
-          DynamoDbKeys.TRANSACTION(tenantId, transaction.transactionId),
+          DynamoDbKeys.TRANSACTION(
+            tenantId,
+            transaction.transactionId,
+            transaction.timestamp
+          ),
       }
     )
   }

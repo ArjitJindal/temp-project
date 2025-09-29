@@ -4,7 +4,7 @@ import {
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts/repository'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 async function migrateTenant(tenant: Tenant) {
   if (!isClickhouseEnabledInRegion()) {

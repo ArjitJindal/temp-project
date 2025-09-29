@@ -12,7 +12,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { sendAsyncRuleTasks } from '@/services/rules-engine/utils'
 import { TransactionService } from '@/lambdas/console-api-transaction/services/transaction-service'
 import { getS3Client } from '@/utils/s3'
-import { TransactionViewConfig } from '@/lambdas/console-api-transaction/app'
+import { TransactionViewConfig } from '@/@types/tranasction/transaction-config'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export class TransactionUploadRunner extends FlatFileBatchRunner<Transaction> {

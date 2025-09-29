@@ -39,7 +39,7 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 export type TenantBasic = {

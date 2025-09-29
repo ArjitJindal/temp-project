@@ -1,6 +1,7 @@
 import * as TanTable from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 import { CommonParams, SelectionInfo, SortingParams, TableRow } from './types';
+import s from './index.module.less';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
@@ -86,14 +87,16 @@ const ExpandCheckbox = <Item extends object>({
   }, [row]);
 
   return (
-    <Checkbox
-      value={partiallySelectedIds?.includes(row.id) ? false : row.getIsSelected()}
-      isDisabled={isDisabled}
-      onChange={(newValue) => {
-        row.toggleSelected(newValue);
-      }}
-      testName="row-table"
-    />
+    <div className={s.selectColumn}>
+      <Checkbox
+        value={partiallySelectedIds?.includes(row.id) ? false : row.getIsSelected()}
+        isDisabled={isDisabled}
+        onChange={(newValue) => {
+          row.toggleSelected(newValue);
+        }}
+        testName="row-table"
+      />
+    </div>
   );
 };
 
@@ -111,12 +114,14 @@ export const EXPAND_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRo
       return <></>;
     }
     return (
-      <ExpandIcon
-        isExpanded={cell.row.getIsExpanded()}
-        color="BLACK"
-        size="SMALL"
-        onClick={() => cell.row.toggleExpanded()}
-      />
+      <div className={s.selectColumn}>
+        <ExpandIcon
+          isExpanded={cell.row.getIsExpanded()}
+          color="BLACK"
+          size="SMALL"
+          onClick={() => cell.row.toggleExpanded()}
+        />
+      </div>
     );
   },
 });

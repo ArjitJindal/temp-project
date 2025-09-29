@@ -24,7 +24,7 @@ import {
   BatchWriteRequestInternal,
 } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
 

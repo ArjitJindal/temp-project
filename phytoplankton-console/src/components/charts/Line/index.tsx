@@ -16,7 +16,11 @@ import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { AsyncResource, getOr, isLoading, map } from '@/utils/asyncResource';
 import { makeRandomNumberGenerator } from '@/utils/prng';
 import CustomLegendOrdinal from '@/components/charts/shared/CustomLegendOrdinal';
-import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
+import {
+  DEFAULT_FORMATTER,
+  DEFAULT_NUMBER_FORMATTER,
+  Formatter,
+} from '@/components/charts/shared/formatting';
 import { DefaultAxisBottom, DefaultAxisLeft } from '@/components/charts/shared/DefaultAxis';
 
 const random = makeRandomNumberGenerator(999999);
@@ -48,7 +52,7 @@ export default function LineChart<X extends StringLike, Series extends StringLik
     colors,
     hideLegend,
     formatX = DEFAULT_FORMATTER,
-    formatY = DEFAULT_FORMATTER,
+    formatY = DEFAULT_NUMBER_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
     verticalLines = [],
   } = props;

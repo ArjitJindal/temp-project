@@ -35,7 +35,7 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 export function getSenderKeys(
   tenantId: string,

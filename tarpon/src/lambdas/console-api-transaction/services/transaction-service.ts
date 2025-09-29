@@ -8,7 +8,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { TransactionViewConfig } from '../app'
+import { TransactionViewConfig } from '@/@types/tranasction/transaction-config'
 import {
   DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseTransactionsRequest,
@@ -560,10 +560,13 @@ export class TransactionService {
 
       const data = await clickhouseTransactionsRepository.getStatsByType(params)
       const currencyService = new CurrencyService(this.dynamoDb)
-      const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
-        referenceCurrency,
-        'USD'
-      )
+      const exchangeRateWithUsd =
+        referenceCurrency !== 'USD'
+          ? await currencyService.getCurrencyExchangeRate(
+              'USD',
+              referenceCurrency
+            )
+          : 1
 
       return data.map((item) => ({
         ...item,

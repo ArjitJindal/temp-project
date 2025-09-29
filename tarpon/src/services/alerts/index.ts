@@ -66,7 +66,7 @@ import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 import {
   getMentionsFromComments,
   getParsedCommentBody,

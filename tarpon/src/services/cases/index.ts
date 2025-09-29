@@ -48,7 +48,7 @@ import {
   withTransaction,
 } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 import { CaseEscalationsUpdateRequest } from '@/@types/openapi-internal/CaseEscalationsUpdateRequest'
 import { AccountsService } from '@/services/accounts'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'

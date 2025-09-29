@@ -25,7 +25,7 @@ import {
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
-import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/app'
+import { handleRequestLoggerTaskClickhouse } from '@/lambdas/request-logger/utils'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Case } from '@/@types/openapi-internal/Case'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

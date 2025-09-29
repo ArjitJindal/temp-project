@@ -4,11 +4,6 @@ import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import {
-  TransactionAggregationTask,
-  V8LogicAggregationRebuildTask,
-  V8TransactionAggregationTask,
-} from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -38,6 +33,11 @@ import { GeoIPService } from '@/services/geo-ip'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import {
+  V8TransactionAggregationTask,
+  V8LogicAggregationRebuildTask,
+  TransactionAggregationTask,
+} from '@/@types/tranasction/aggregation'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask,
