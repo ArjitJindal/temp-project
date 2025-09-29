@@ -72,7 +72,9 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private getUniqueIdentifier(paymentDetails: PaymentDetails | undefined) {

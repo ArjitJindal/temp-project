@@ -892,25 +892,43 @@ export class UserRepository {
     delete user.PartitionKeyID
     delete user.SortKeyID
     delete user.createdAt
-
+    // delete sanctionsDetails from each executedRule in user
+    ;(
+      user as UserWithRulesResult | BusinessWithRulesResult
+    ).executedRules?.forEach((rule) => {
+      delete rule.sanctionsDetails
+    })
     if (this.tenantId.toLowerCase() === '0789ad73b8') {
       if (user.linkedEntities) {
         ;(user.linkedEntities as any).childUserIds = undefined
       }
     }
 
-    return user as T
+    return {
+      ...user,
+      executedRules: user.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    } as T
   }
 
   public async getUsersByIds<
     T extends UserWithRulesResult | BusinessWithRulesResult
   >(userIds: string[]): Promise<T[]> {
-    return await batchGet<T>(
+    const users = await batchGet<T>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       userIds.map((userId) => DynamoDbKeys.USER(this.tenantId, userId)),
       { ConsistentRead: true }
     )
+    return users.map((user) => ({
+      ...user,
+      executedRules: user.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    }))
   }
 
   public async getChildUsers(userId: string): Promise<InternalUser[]> {

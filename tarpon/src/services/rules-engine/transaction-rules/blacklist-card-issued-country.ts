@@ -51,6 +51,8 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
         vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

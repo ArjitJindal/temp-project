@@ -363,7 +363,11 @@ export class SanctionsService {
       })
     }
 
-    if (context && context.ruleInstanceId) {
+    if (!existedSearch?.response && request.monitoring) {
+      await this.updateSearch(searchId, request.monitoring, providerOverrides)
+    }
+
+    if (context && context.ruleInstanceId && context.isOngoingScreening) {
       // Save the screening details check when running a rule
       const details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'> = {
         name: request.searchTerm,

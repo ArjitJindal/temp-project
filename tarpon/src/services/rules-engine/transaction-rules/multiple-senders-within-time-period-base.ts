@@ -64,7 +64,9 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     const transactionUser = await this.getTransactionSenderUserKey()
 
     if (!transactionUser) {
-      return hitResult
+      return {
+        ruleHitResult: hitResult,
+      }
     }
 
     const updatedUsers = new Set([transactionUser, ...data])
@@ -79,7 +81,9 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         vars: super.getTransactionVars('destination'),
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private getTransactionSenderUserKey(): string | undefined {

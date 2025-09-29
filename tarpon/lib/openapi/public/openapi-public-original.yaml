@@ -3534,6 +3534,14 @@ components:
           type: object
       required:
         - value
+    RuleExecutionSanctionsDetails:
+      title: RuleExecutionSanctionsDetails
+      allOf:
+        - $ref: '#/components/schemas/SanctionsDetails'
+        - type: object
+          properties:
+            isRuleHit:
+              type: boolean
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -3584,6 +3592,11 @@ components:
           $ref: '#/components/schemas/RuleNature'
         isShadow:
           type: boolean
+        sanctionsDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleExecutionSanctionsDetails'
+          x-fern-ignore: true
       required:
         - ruleInstanceId
         - ruleName

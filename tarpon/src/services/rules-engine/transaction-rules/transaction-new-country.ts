@@ -66,7 +66,9 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
         vars: super.getTransactionVars('destination'),
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async getData(): Promise<{

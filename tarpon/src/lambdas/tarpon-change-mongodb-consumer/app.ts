@@ -68,6 +68,7 @@ import {
 } from '@/utils/downstream-version'
 import { WebhookConfiguration } from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
+import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -336,6 +337,12 @@ export class TarponChangeMongoDbConsumer {
     }
     await casesRepo.syncCaseUsers(internalUser)
 
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+    await sanctionsScreeningDetailsRepository.addScreeningDetails(
+      newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
+        []
+    )
     subSegment?.close()
   }
 
@@ -531,6 +538,14 @@ export class TarponChangeMongoDbConsumer {
       tenantId,
       timestampBeforeCasesCreation,
       cases
+    )
+
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+    await sanctionsScreeningDetailsRepository.addScreeningDetails(
+      transaction.executedRules?.flatMap(
+        (rule) => rule.sanctionsDetails ?? []
+      ) ?? []
     )
     handleNewCasesSubSegment?.close()
     subSegment?.close()

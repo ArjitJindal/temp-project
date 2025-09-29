@@ -119,6 +119,8 @@ export default class UserOnboardedFromHighRiskCountry extends UserRule<UserOnboa
       }
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

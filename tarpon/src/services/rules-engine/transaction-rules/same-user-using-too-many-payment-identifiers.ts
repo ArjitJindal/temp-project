@@ -88,7 +88,9 @@ export default class SameUserUsingTooManyPaymentIdentifiersRule extends Transact
       })
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async getData(): Promise<Set<string>> {

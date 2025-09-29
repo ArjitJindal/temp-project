@@ -72,6 +72,8 @@ export default class FirstPaymentRule extends TransactionRule<
         vars: super.getTransactionVars('origin'),
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

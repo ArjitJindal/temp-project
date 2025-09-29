@@ -83,6 +83,8 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }
