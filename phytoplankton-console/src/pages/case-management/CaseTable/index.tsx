@@ -681,6 +681,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
     showAssignedToFilter && 'assignedTo',
     showAssignedToFilter && 'roleAssignedTo',
     'caseStatus',
+    'filterClosingReason',
     'caseSla',
   ]);
   const filters = useCaseAlertFilters(filterIds);

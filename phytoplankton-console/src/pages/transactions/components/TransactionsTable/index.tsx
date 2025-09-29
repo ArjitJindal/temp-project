@@ -99,6 +99,7 @@ export interface TransactionsTableParams extends CommonParams {
   isPaymentApprovals?: boolean;
   responseType?: 'data' | 'count';
   reference?: string;
+  filterActionReasons?: string[];
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -199,6 +200,9 @@ export const transactionParamsToRequest = (
     filterShadowHit: filterShadowHit,
     isPaymentApprovals: isPaymentApprovals,
     filterReference: reference,
+    filterActionReasons: params.filterActionReasons?.length
+      ? params.filterActionReasons
+      : undefined,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;

@@ -1423,6 +1423,12 @@ paths:
           in: query
           name: filterReference
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterActionReasons
+        - schema:
             type: string
             enum:
               - data
