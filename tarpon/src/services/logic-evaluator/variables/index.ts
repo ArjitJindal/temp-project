@@ -45,6 +45,7 @@ import {
   getPathKey,
   getPathLabel,
   getPublicModelLeafAttrs,
+  isArrayElement,
   isArrayIntermediateNode,
   isArrayIntermediateNodeandHasLeafArrayNode,
   isArrayLeafNode,
@@ -562,7 +563,7 @@ function getAutoLogicEntityVariables(
     .filter((info) => !info.pathKey.includes(ARRAY_ITEM_INDICATOR))
     .map((info) => {
       const propertyPath = info.path.map((x) =>
-        x.isArray ? ARRAY_ITEM_INDICATOR : x.key
+        isArrayElement(x) ? ARRAY_ITEM_INDICATOR : x.key
       )
       return {
         key: info.pathKey,
@@ -666,7 +667,7 @@ function getLeafArrayEntityVariables(
   const path = info.path.slice(0, -1)
   const label = getPathLabel(path)
   const propertyPath = path.map((x) =>
-    x.isArray ? ARRAY_ITEM_INDICATOR : x.key
+    isArrayElement(x) ? ARRAY_ITEM_INDICATOR : x.key
   )
   return {
     key: propertyPath.join('.'),

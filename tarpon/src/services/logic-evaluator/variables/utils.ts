@@ -19,11 +19,19 @@ import { notEmpty } from '@/utils/array'
 export type LeafValueType = 'string' | 'number' | 'boolean'
 const LEAF_VALUE_TYPES: LeafValueType[] = ['string', 'number', 'boolean']
 
-type PathElement =
-  | { key: string; isArray: false; oneOfSubtype?: string }
-  | { isArray: true }
+type PathElementKey = { key: string; oneOfSubtype?: string }
+type PathElementArray = { isArray: true }
+type PathElement = PathElementKey | PathElementArray
 
 export type Path = PathElement[]
+
+export function isArrayElement(el: PathElement): el is PathElementArray {
+  return 'isArray' in el && el.isArray === true
+}
+
+export function isKeyElement(el: PathElement): el is PathElementKey {
+  return !isArrayElement(el)
+}
 
 export type EntityLeafValueInfo = {
   path: Path
@@ -34,7 +42,9 @@ export type EntityLeafValueInfo = {
 export const ARRAY_ITEM_INDICATOR = '$i'
 
 export function getPathKey(path: Path): string {
-  return path.map((x) => (x.isArray ? ARRAY_ITEM_INDICATOR : x.key)).join('.')
+  return path
+    .map((x) => (isArrayElement(x) ? ARRAY_ITEM_INDICATOR : x.key))
+    .join('.')
 }
 
 export function parsePathKey(key: string): Path {
@@ -51,7 +61,7 @@ export const LABEL_SEPARATOR = ` > `
 export function getPathLabel(path: Path) {
   return path
     .map((x, i) => {
-      if (x.isArray) {
+      if (isArrayElement(x)) {
         return null
       }
       let humanised = humanizeAuto(x.key)
@@ -109,10 +119,13 @@ export function getPublicModelLeafAttrs(
   for (const attribute of entityClass.attributeTypeMap) {
     const path: Path = [
       ...parentPath,
-      {
-        key: attribute.baseName,
-        isArray: attribute.baseName === ARRAY_ITEM_INDICATOR,
-      },
+      attribute.baseName === ARRAY_ITEM_INDICATOR
+        ? {
+            isArray: true,
+          }
+        : {
+            key: attribute.baseName,
+          },
     ]
     const attributeType = attribute.type
 
@@ -132,7 +145,7 @@ export function getPublicModelLeafAttrs(
         getPublicModelLeafAttrsByName(
           type,
           path.map((x, i) => {
-            if (i === 0 && x.isArray === false) {
+            if (i === 0 && !isArrayElement(x)) {
               return {
                 ...x,
                 oneOfSubtype: type,
@@ -173,18 +186,18 @@ export function getPublicModelLeafAttrs(
 }
 
 export function isArrayIntermediateNode(info: EntityLeafValueInfo) {
-  const index = info.path.findIndex((x) => x.isArray)
+  const index = info.path.findIndex(isArrayElement)
   return index !== -1 && index !== info.path.length - 1
 }
 export function isArrayLeafNode(info: EntityLeafValueInfo) {
-  return info.path.findIndex((x) => x.isArray) === info.path.length - 1
+  return info.path.findIndex(isArrayElement) === info.path.length - 1
 }
 
 export function isArrayIntermediateNodeandHasLeafArrayNode(
   info: EntityLeafValueInfo
 ) {
-  const index = info.path.findIndex((x) => x.isArray)
-  const reverseIndex = findLastIndex(info.path, (v) => v.isArray)
+  const index = info.path.findIndex(isArrayElement)
+  const reverseIndex = findLastIndex(info.path, isArrayElement)
   return (
     index !== -1 &&
     index !== info.path.length - 1 &&
