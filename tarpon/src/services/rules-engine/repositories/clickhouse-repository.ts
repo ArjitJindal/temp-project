@@ -860,10 +860,14 @@ export class ClickhouseTransactionsRepository {
       query
     )
     const currencyService = new CurrencyService(this.dynamoDb)
-    const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
-      referenceCurrency,
-      'USD'
-    )
+    const exchangeRateWithUsd =
+      referenceCurrency !== 'USD'
+        ? await currencyService.getCurrencyExchangeRate(
+            'USD',
+            referenceCurrency
+          )
+        : 1
+
     const result: TransactionsStatsByTimeResponse['data'] = []
     for await (const transaction of data) {
       const series = dayjsLib
