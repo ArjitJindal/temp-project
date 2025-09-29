@@ -603,9 +603,10 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
 
   private async calculateUserKrs(user: User | Business): Promise<UserKrsData> {
     const isConsumer = isConsumerUser(user)
+    const allRiskFactors = this.riskFactors
     const riskFactors = isConsumer
-      ? this.riskFactors?.consumer
-      : this.riskFactors?.business
+      ? allRiskFactors?.consumer
+      : allRiskFactors?.business
     if (!riskFactors) {
       return { score: 0, isOverriddenScore: false }
     }
