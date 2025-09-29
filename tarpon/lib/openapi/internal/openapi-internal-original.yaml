@@ -2093,7 +2093,6 @@ paths:
           in: query
           name: responseType
           description: Type of response - 'data' for table data only, 'count' for count only
-
     parameters: []
   /users:
     get:
@@ -2225,7 +2224,6 @@ paths:
           in: query
           name: responseType
           description: Type of response - 'data' for table data only, 'count' for count only
-
   /users-preview:
     get:
       summary: All Users - List (Lite)
