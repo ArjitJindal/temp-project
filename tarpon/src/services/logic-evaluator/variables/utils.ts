@@ -10,7 +10,7 @@ import {
   CURRENCIES,
 } from '@flagright/lib/constants'
 import { isValidAcronyms } from '@flagright/lib/constants/acronyms'
-import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import * as Models from '@/@types/openapi-public/all'
 import * as CustomModelData from '@/@types/openapi-public-custom/all'
 import { EntityModel } from '@/@types/model'
@@ -60,17 +60,19 @@ export const LABEL_SEPARATOR = ` > `
 
 export function getPathLabel(path: Path) {
   return path
-    .map((x, i) => {
+    .map((x) => {
       if (isArrayElement(x)) {
         return null
       }
-      let humanised = humanizeAuto(x.key)
-      if (i !== 0) {
-        humanised = firstLetterUpper(humanised)
-      }
+      let humanised = humanizeAuto(x.key, {
+        firstLetterUpper: false,
+      })
       if (x.oneOfSubtype) {
         humanised = `${humanised}${LABEL_SEPARATOR}${humanizeAuto(
-          x.oneOfSubtype
+          x.oneOfSubtype,
+          {
+            firstLetterUpper: false,
+          }
         )}`
       }
       return humanised
