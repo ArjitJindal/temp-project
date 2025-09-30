@@ -66,6 +66,7 @@ import {
   isTenantMigratedToDynamo,
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
+import { Address } from '@/@types/openapi-public/Address'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 50_000
@@ -1521,34 +1522,7 @@ export class CaseRepository {
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    const filters: Filter<Case>[] = []
-
-    if (params.filterAvailableAfterTimestamp != null) {
-      filters.push({
-        availableAfterTimestamp: { $in: params.filterAvailableAfterTimestamp },
-      })
-    }
-
-    if (params.filterOutCaseStatus != null) {
-      filters.push({
-        caseStatus: { $ne: params.filterOutCaseStatus },
-      })
-    }
-
-    if (params.filterMaxTransactions != null) {
-      filters.push({
-        [`caseTransactionsIds.${params.filterMaxTransactions - 1}`]: {
-          $exists: false,
-        },
-      })
-    }
-
-    if (params.filterCaseType != null) {
-      filters.push({
-        caseType: params.filterCaseType,
-      })
-    }
+    const filters = this.getMongoParamsQuery(params)
 
     const { directions } = params
     const paymentDetailsFilters = omitBy(
@@ -1574,11 +1548,6 @@ export class CaseRepository {
         $or: directionsFilters,
       })
     }
-    if (params.filterTransactionId) {
-      filters.push({
-        caseTransactionsIds: params.filterTransactionId,
-      })
-    }
 
     const filter = {
       ...(filters.length > 0 ? { $and: filters } : {}),
@@ -1586,15 +1555,108 @@ export class CaseRepository {
     return await casesCollection.find(filter).toArray()
   }
 
-  public async getCasesByUserId(
-    userId: string,
+  public async getCasesByAddress(
+    address: Address,
     params: SubjectCasesQueryParams
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
 
+    const directionFilters: Filter<Case>[] = []
+    for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+      if (address.addressLines) {
+        directionFilters.push({
+          [`address.${directionKey}.addressLines`]: {
+            $in: address.addressLines,
+          },
+        })
+      } else {
+        directionFilters.push({
+          [`address.${directionKey}.addressLines`]: null,
+        })
+      }
+      if (address.postcode) {
+        directionFilters.push({
+          [`address.${directionKey}.postcode`]: address.postcode,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.postcode`]: null })
+      }
+      if (address.city) {
+        directionFilters.push({
+          [`address.${directionKey}.city`]: address.city,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.city`]: null })
+      }
+      if (address.state) {
+        directionFilters.push({
+          [`address.${directionKey}.state`]: address.state,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.state`]: null })
+      }
+      if (address.country) {
+        directionFilters.push({
+          [`address.${directionKey}.country`]: address.country,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.country`]: null })
+      }
+
+      filters.push({ $or: directionFilters })
+    }
+    return await casesCollection
+      .find({
+        ...(filters.length > 0 ? { $and: filters } : {}),
+      })
+      .toArray()
+  }
+
+  public async getCasesByEmail(
+    email: string,
+    params: SubjectCasesQueryParams
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
+    const directionFilters: Filter<Case>[] = []
+    for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+      directionFilters.push({ [`email.${directionKey}`]: email })
+    }
+    filters.push({ $or: directionFilters })
+    return await casesCollection
+      .find({
+        ...(filters.length > 0 ? { $and: filters } : {}),
+      })
+      .toArray()
+  }
+
+  public async getCasesByName(
+    name: string,
+    params: SubjectCasesQueryParams
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
+    const directionFilters: Filter<Case>[] = []
+    for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+      directionFilters.push({ [`name.${directionKey}`]: name })
+    }
+    filters.push({ $or: directionFilters })
+    return await casesCollection
+      .find({
+        ...(filters.length > 0 ? { $and: filters } : {}),
+      })
+      .toArray()
+  }
+
+  private getMongoParamsQuery(params: SubjectCasesQueryParams): Filter<Case>[] {
     const filters: Filter<Case>[] = []
-
     if (params.filterAvailableAfterTimestamp != null) {
       filters.push({
         availableAfterTimestamp: { $in: params.filterAvailableAfterTimestamp },
@@ -1621,6 +1683,22 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterTransactionId) {
+      filters.push({
+        caseTransactionsIds: params.filterTransactionId,
+      })
+    }
+
+    return filters
+  }
+
+  public async getCasesByUserId(
+    userId: string,
+    params: SubjectCasesQueryParams
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
     const directionFilters: Filter<Case>[] = []
     const { directions } = params
     if (directions == null || directions.includes('ORIGIN')) {
@@ -1636,12 +1714,6 @@ export class CaseRepository {
     if (directionFilters.length > 0) {
       filters.push({
         $or: directionFilters,
-      })
-    }
-
-    if (params.filterTransactionId) {
-      filters.push({
-        caseTransactionsIds: params.filterTransactionId,
       })
     }
 

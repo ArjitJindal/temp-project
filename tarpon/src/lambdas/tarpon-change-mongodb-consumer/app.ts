@@ -512,10 +512,16 @@ export class TarponChangeMongoDbConsumer {
     )
     casesSubSegment?.close()
     const { ORIGIN, DESTINATION } = transactionUsers ?? {}
-    if (
-      ruleWithAdvancedOptions?.length &&
-      (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
-    ) {
+    const originUser = ORIGIN?.find(
+      (subject): subject is { type: 'USER'; user: InternalUser } =>
+        subject.type === 'USER'
+    )?.user
+    const destinationUser = DESTINATION?.find(
+      (subject): subject is { type: 'USER'; user: InternalUser } =>
+        subject.type === 'USER'
+    )?.user
+
+    if (ruleWithAdvancedOptions?.length && (originUser || destinationUser)) {
       const userServiceSubSegment = await addNewSubsegment(
         'StreamConsumer',
         'handleTransaction handleUserStatusUpdateTrigger'
@@ -523,8 +529,8 @@ export class TarponChangeMongoDbConsumer {
       await userService.handleUserStatusUpdateTrigger(
         transaction?.hitRules ?? [],
         ruleInstances as RuleInstance[],
-        ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
-        DESTINATION?.type === 'USER' ? DESTINATION?.user : null
+        originUser ?? null,
+        destinationUser ?? null
       )
       userServiceSubSegment?.close()
     }

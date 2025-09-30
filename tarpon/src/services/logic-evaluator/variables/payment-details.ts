@@ -1,7 +1,11 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import { TransactionLogicVariable } from './types'
-import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
+import {
+  getAddressIdentifiers,
+  getPaymentDetailsIdentifiers,
+} from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { Address } from '@/@types/openapi-public/Address'
 
 export const getPaymentDetailsIdentifiersKey = (
   paymentDetails: PaymentDetails
@@ -67,6 +71,26 @@ export function getPaymentDetailsIdentifiersSubject(
   return Object.entries(identifiers)
     .map((entry) => `${entry[0]}:${entry[1]}`)
     .join('#')
+}
+
+export function getAddressIdentifiersSubject(
+  address: Address
+): string | undefined {
+  const identifiers = getAddressIdentifiers(address)
+  if (!identifiers) {
+    return
+  }
+  return Object.entries(identifiers)
+    .map((entry) => `${entry[0]}:${entry[1]}`)
+    .join('#')
+}
+
+export function getNamesSubject(name: string): string | undefined {
+  return `name:${name}`
+}
+
+export function getEmailsSubject(email: string): string | undefined {
+  return `email:${email}`
 }
 
 export const TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER =

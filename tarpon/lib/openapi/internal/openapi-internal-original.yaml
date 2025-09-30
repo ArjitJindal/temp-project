@@ -9869,6 +9869,9 @@ components:
                 enum:
                   - USER
                   - PAYMENT_DETAILS
+                  - ADDRESS
+                  - EMAIL
+                  - NAME
             frozenStatuses:
               type: array
               items:
@@ -13649,6 +13652,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Alert'
+        address:
+          type: object
+          properties:
+            origin:
+              $ref: '#/components/schemas/Address'
+            destination:
+              $ref: '#/components/schemas/Address'
+        email:
+          type: object
+          properties:
+            origin:
+              type: string
+            destination:
+              type: string
+        name:
+          type: object
+          properties:
+            origin:
+              type: string
+            destination:
+              type: string
         paymentDetails:
           type: object
           properties:
@@ -18176,6 +18200,9 @@ components:
       enum:
         - USER
         - PAYMENT
+        - NAME
+        - ADDRESS
+        - EMAIL
     RiskScoreDetails:
       title: RiskScoreDetails
       type: object
