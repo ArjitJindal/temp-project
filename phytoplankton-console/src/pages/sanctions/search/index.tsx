@@ -57,7 +57,10 @@ export function SearchResultTable(props: Props) {
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
   const navigate = useNavigate();
 
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    entityType: 'PERSON',
+  });
 
   const hasManualScreeningWritePermission = useHasResources([
     'write:::screening/manual-screening/*',

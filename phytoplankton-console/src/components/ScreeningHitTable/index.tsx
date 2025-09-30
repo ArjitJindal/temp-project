@@ -318,13 +318,17 @@ export default function SanctionsSearchTable(props: Props) {
         kind: 'string',
       },
     },
-    {
-      title: 'Year of birth',
-      key: 'yearOfBirth',
-      renderer: {
-        kind: 'year',
-      },
-    },
+    ...(params?.entityType === 'PERSON' || !params?.entityType
+      ? [
+          {
+            title: 'Year of birth',
+            key: 'yearOfBirth',
+            renderer: {
+              kind: 'year',
+            },
+          } as ExtraFilterProps<TableSearchParams>,
+        ]
+      : []),
     {
       title: 'Fuzziness',
       description: '(The default value is 0.5)',
@@ -400,7 +404,8 @@ export default function SanctionsSearchTable(props: Props) {
 
   if (isSanctionsEnabledWithDataProvider) {
     extraFilters.push({
-      title: 'Nationality',
+      title:
+        params?.entityType === 'BUSINESS' ? 'Country of registration' : 'Country of nationality',
       key: 'nationality',
       renderer: {
         kind: 'select',
