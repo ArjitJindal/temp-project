@@ -137,7 +137,7 @@
     "@types/xml2js": "^0",
     "@typescript-eslint/eslint-plugin": "^6.6.0",
     "@typescript-eslint/parser": "^6.6.0",
-    "aws-cdk": "~2.177.0",
+    "aws-cdk": "~2.1029.3",
     "aws-cdk-lib": "~2.217.0",
     "aws-sdk-client-mock": "^2.0.1",
     "aws-sdk-client-mock-jest": "^2.0.1",
