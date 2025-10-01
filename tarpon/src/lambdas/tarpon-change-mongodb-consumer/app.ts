@@ -68,6 +68,7 @@ import {
 } from '@/utils/downstream-version'
 import { WebhookConfiguration } from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
+import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -336,6 +337,12 @@ export class TarponChangeMongoDbConsumer {
     }
     await casesRepo.syncCaseUsers(internalUser)
 
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+    await sanctionsScreeningDetailsRepository.addScreeningDetails(
+      newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
+        []
+    )
     subSegment?.close()
   }
 
@@ -505,10 +512,16 @@ export class TarponChangeMongoDbConsumer {
     )
     casesSubSegment?.close()
     const { ORIGIN, DESTINATION } = transactionUsers ?? {}
-    if (
-      ruleWithAdvancedOptions?.length &&
-      (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
-    ) {
+    const originUser = ORIGIN?.find(
+      (subject): subject is { type: 'USER'; user: InternalUser } =>
+        subject.type === 'USER'
+    )?.user
+    const destinationUser = DESTINATION?.find(
+      (subject): subject is { type: 'USER'; user: InternalUser } =>
+        subject.type === 'USER'
+    )?.user
+
+    if (ruleWithAdvancedOptions?.length && (originUser || destinationUser)) {
       const userServiceSubSegment = await addNewSubsegment(
         'StreamConsumer',
         'handleTransaction handleUserStatusUpdateTrigger'
@@ -516,8 +529,8 @@ export class TarponChangeMongoDbConsumer {
       await userService.handleUserStatusUpdateTrigger(
         transaction?.hitRules ?? [],
         ruleInstances as RuleInstance[],
-        ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
-        DESTINATION?.type === 'USER' ? DESTINATION?.user : null
+        originUser ?? null,
+        destinationUser ?? null
       )
       userServiceSubSegment?.close()
     }
@@ -531,6 +544,14 @@ export class TarponChangeMongoDbConsumer {
       tenantId,
       timestampBeforeCasesCreation,
       cases
+    )
+
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+    await sanctionsScreeningDetailsRepository.addScreeningDetails(
+      transaction.executedRules?.flatMap(
+        (rule) => rule.sanctionsDetails ?? []
+      ) ?? []
     )
     handleNewCasesSubSegment?.close()
     subSegment?.close()

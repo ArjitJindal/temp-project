@@ -320,6 +320,15 @@ type Executions = {
   executedRules: ExecutedRulesResult[]
 }
 
+function filterOutSanctionsDetails(
+  executedRules: ExecutedRulesResult[]
+): ExecutedRulesResult[] {
+  return executedRules.map((rule) => ({
+    ...rule,
+    sanctionsDetails: undefined,
+  }))
+}
+
 export function filterLiveRules(
   executions: Partial<Executions>,
   includeInternal = false
@@ -330,11 +339,13 @@ export function filterLiveRules(
     executions.executedRules?.filter(
       (executedRule) => !executedRule.isShadow
     ) ?? []
+
+  const filteredExecutedRules = includeInternal
+    ? executedRules
+    : filterOutInternalRules(executedRules)
   return {
     hitRules: includeInternal ? hitRules : filterOutInternalRules(hitRules),
-    executedRules: includeInternal
-      ? executedRules
-      : filterOutInternalRules(executedRules),
+    executedRules: filterOutSanctionsDetails(filteredExecutedRules),
   }
 }
 

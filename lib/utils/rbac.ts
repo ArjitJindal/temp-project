@@ -83,7 +83,7 @@ export function hasResources(
           normalizedResource === '*' ||
           (normalizedResource.endsWith('/*') &&
             normalizedRequiredResource.startsWith(
-              normalizedResource.slice(0, -2)
+              normalizedResource.slice(0, -1)
             ))
         )
       })

@@ -603,3 +603,9 @@ export const RISK_FACTOR_LOGIC = (
   versionId: string,
   riskLevel: RiskLevel,
 ): QueryKey => ['risk-factor-logic', riskFactorId, versionId, riskLevel];
+
+export const AIF_SEARCH_KEY = (
+  questionId: string,
+  variableKey: string,
+  debouncedSearch: string,
+): QueryKey => ['aif-search', questionId, variableKey, debouncedSearch];

@@ -102,7 +102,9 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
         vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private isPaymentBlacklisted(paymentDetails: PaymentDetails) {

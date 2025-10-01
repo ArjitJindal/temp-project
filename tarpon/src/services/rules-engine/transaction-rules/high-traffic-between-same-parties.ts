@@ -89,7 +89,9 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async *getRawTransactionsData(): AsyncGenerator<

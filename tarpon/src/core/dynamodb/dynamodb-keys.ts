@@ -28,6 +28,7 @@ import dayjs from '@/utils/dayjs'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
 import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
+import { Address } from '@/@types/openapi-public/Address'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -819,6 +820,21 @@ export function getPaymentDetailsIdentifiers(
     return Object.fromEntries(
       identifierFields.map((field) => [field, (paymentDetails as any)[field]])
     )
+  }
+}
+
+export function getAddressIdentifiers(
+  address: Address | undefined
+): { [key: string]: string | undefined } | null {
+  if (!address) {
+    return null
+  }
+  return {
+    address: address.addressLines.join(', '),
+    city: address.city,
+    state: address.state,
+    postcode: address.postcode,
+    country: address.country,
   }
 }
 

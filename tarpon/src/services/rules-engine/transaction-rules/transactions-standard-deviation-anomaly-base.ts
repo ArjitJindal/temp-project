@@ -226,7 +226,9 @@ export abstract class TransactionsStandardDeviationAnomalyBaseRule extends Trans
       this.computeDirection('origin'),
       this.computeDirection('destination'),
     ])
-    return [origin, destination]
+    return {
+      ruleHitResult: [origin, destination].filter(Boolean),
+    }
   }
 
   /**

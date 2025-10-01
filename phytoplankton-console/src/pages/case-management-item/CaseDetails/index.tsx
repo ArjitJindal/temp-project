@@ -9,6 +9,9 @@ import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
 import { EDDDetails } from './EDDDetails';
+import NameDetailsCard from './NameDetailsCard';
+import AddressDetailsCard from './AddressDetailsCard';
+import EmailDetailsCard from './EmailDetailsCard';
 import {
   Alert,
   AlertStatus,
@@ -207,6 +210,9 @@ function useTabs(
   const entityIds = caseItem ? getEntityIds(caseItem) : [];
   const paymentDetails =
     caseItem?.paymentDetails?.origin ?? caseItem?.paymentDetails?.destination ?? undefined;
+  const address = caseItem?.address?.origin ?? caseItem?.address?.destination ?? undefined;
+  const email = caseItem?.email?.origin ?? caseItem?.email?.destination ?? undefined;
+  const name = caseItem?.name?.origin ?? caseItem?.name?.destination ?? undefined;
   const user = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
 
   const deleteCommentMutation = useMutation<
@@ -267,6 +273,9 @@ function useTabs(
   const subjectType = caseItem?.subjectType ?? (isEmpty(user) ? 'PAYMENT' : 'USER');
   const isUserSubject = subjectType === 'USER';
   const isPaymentSubject = subjectType === 'PAYMENT';
+  const isAddressSubject = subjectType === 'ADDRESS';
+  const isEmailSubject = subjectType === 'EMAIL';
+  const isNameSubject = subjectType === 'NAME';
 
   if (!caseItem) {
     return [];
@@ -289,6 +298,30 @@ function useTabs(
         title: 'Payment identifier details',
         key: 'payment-details',
         children: <PaymentIdentifierDetailsCard paymentDetails={paymentDetails} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isAddressSubject &&
+      address && {
+        title: 'Address details',
+        key: 'address-details',
+        children: <AddressDetailsCard address={address} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isEmailSubject &&
+      email && {
+        title: 'Email details',
+        key: 'email-details',
+        children: <EmailDetailsCard email={email} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isNameSubject &&
+      name && {
+        title: 'Name details',
+        key: 'name-details',
+        children: <NameDetailsCard name={name} />,
         isClosable: false,
         isDisabled: false,
       },

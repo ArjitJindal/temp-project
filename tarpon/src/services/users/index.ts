@@ -77,8 +77,6 @@ import {
   getParsedCommentBody,
   getUserName,
 } from '@/utils/helpers'
-import { BusinessUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/BusinessUsersOffsetPaginateListResponse'
-import { ConsumerUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/ConsumerUsersOffsetPaginateListResponse'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import {
   getClickhouseClient,
@@ -284,7 +282,7 @@ export class UserService {
 
   public async getBusinessUsers(
     params: DefaultApiGetBusinessUsersListRequest
-  ): Promise<BusinessUsersOffsetPaginateListResponse> {
+  ): Promise<BusinessUserTableItem[]> {
     const result = await this.userRepository.getMongoUsersPaginate(
       params,
       this.mapBusinessUserToTableItem,
@@ -332,9 +330,15 @@ export class UserService {
     return result
   }
 
+  public async getBusinessUsersCount(
+    params: DefaultApiGetBusinessUsersListRequest
+  ): Promise<number> {
+    return this.userRepository.getMongoUsersCount(params, 'BUSINESS')
+  }
+
   public async getBusinessUsersV2(
     params: DefaultApiGetBusinessUsersListRequest
-  ): Promise<BusinessUsersOffsetPaginateListResponse> {
+  ): Promise<BusinessUserTableItem[]> {
     const columns = {
       ...this.getUserCommonColumns(),
       businessUserName:
@@ -393,11 +397,29 @@ export class UserService {
       }
     }
 
-    return this.userClickhouseRepository.getUsersV2<BusinessUserTableItem>(
+    return this.userClickhouseRepository.getUsersV2Data<BusinessUserTableItem>(
       params,
       columns,
       callback,
       'BUSINESS'
+    )
+  }
+
+  public async getBusinessUsersV2Count(
+    params: DefaultApiGetBusinessUsersListRequest
+  ): Promise<number> {
+    return this.userClickhouseRepository.getClickhouseUsersCount(
+      params,
+      'BUSINESS'
+    )
+  }
+
+  public async getConsumerUsersV2Count(
+    params: DefaultApiGetConsumerUsersListRequest
+  ): Promise<number> {
+    return this.userClickhouseRepository.getClickhouseUsersCount(
+      params,
+      'CONSUMER'
     )
   }
 
@@ -423,7 +445,7 @@ export class UserService {
 
   public async getConsumerUsersV2(
     params: DefaultApiGetConsumerUsersListRequest
-  ): Promise<ConsumerUsersOffsetPaginateListResponse> {
+  ): Promise<ConsumerUserTableItem[]> {
     const columns = {
       ...this.getUserCommonColumns(),
       consumerUserName: "JSONExtractString(data, 'userDetails', 'name')",
@@ -466,7 +488,7 @@ export class UserService {
       }
     }
 
-    return this.userClickhouseRepository.getUsersV2<ConsumerUserTableItem>(
+    return this.userClickhouseRepository.getUsersV2Data<ConsumerUserTableItem>(
       params,
       columns,
       callback,
@@ -1059,7 +1081,7 @@ export class UserService {
 
   public async getConsumerUsers(
     params: DefaultApiGetConsumerUsersListRequest
-  ): Promise<ConsumerUsersOffsetPaginateListResponse> {
+  ): Promise<ConsumerUserTableItem[]> {
     const result = await this.userRepository.getMongoUsersPaginate(
       params,
       this.mapConsumerUserToTableItem,
@@ -1103,13 +1125,20 @@ export class UserService {
     return result
   }
 
+  public async getConsumerUsersCount(
+    params: DefaultApiGetConsumerUsersListRequest
+  ): Promise<number> {
+    return this.userRepository.getMongoUsersCount(params, 'CONSUMER')
+  }
+
   @auditLog('USER', 'USER_LIST', 'DOWNLOAD')
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
-  ): Promise<AuditLogReturnData<AllUsersOffsetPaginateListResponse>> {
+  ): Promise<AuditLogReturnData<AllUsersTableItem[]>> {
     if (isClickhouseEnabled()) {
+      const items = await this.getClickhouseUsers(params)
       return {
-        result: await this.getClickhouseUsers(params),
+        result: items,
         entities:
           params.view === 'DOWNLOAD'
             ? [{ entityId: 'USER_DOWNLOAD', entityAction: 'DOWNLOAD' }]
@@ -1161,6 +1190,12 @@ export class UserService {
     }
   }
 
+  public async getUsersCount(
+    params: DefaultApiGetAllUsersListRequest
+  ): Promise<number> {
+    return this.userRepository.getMongoUsersCount(params)
+  }
+
   public async getUsersPreview(params: DefaultApiGetAllUsersListRequest) {
     const data = await this.userRepository.getMongoUsersPaginate(
       params,
@@ -1179,14 +1214,17 @@ export class UserService {
         },
       }
     )
-    return data
+    const count = await this.userRepository.getMongoUsersCount(params)
+    return {
+      items: data,
+      count,
+    }
   }
 
   public async getClickhouseUsers(
     params: DefaultApiGetAllUsersListRequest
-  ): Promise<AllUsersOffsetPaginateListResponse> {
+  ): Promise<AllUsersTableItem[]> {
     const columns = this.getUserCommonColumns()
-
     const callback = (
       data: Record<string, string | number>
     ): AllUsersTableItem => {
@@ -1206,22 +1244,13 @@ export class UserService {
         riskLevel: data.riskLevel as RiskLevel,
       }
     }
-    const result =
-      await this.userClickhouseRepository.getClickhouseUsersPaginate<AllUsersTableItem>(
-        params,
-        params.filterOperator ?? 'AND',
-        params.includeCasesCount ?? false,
-        columns,
-        callback,
-        params.filterUserType
-      )
-
-    // count field is returned as string - converting it to number to match the expected response
-    // TODO: see if we can fix this in the clickhouse repository for all queries
-    return {
-      ...result,
-      count: Number(result.count),
-    }
+    const result = await this.userClickhouseRepository.getClickhouseUsersData(
+      params,
+      columns,
+      callback,
+      params.filterUserType
+    )
+    return result
   }
 
   public async getClickhouseUsersPreview(
@@ -1238,6 +1267,12 @@ export class UserService {
       ...result,
       count: Number(result.count),
     }
+  }
+
+  public async getClickhouseUsersCount(
+    params: DefaultApiGetAllUsersListRequest
+  ): Promise<number> {
+    return await this.userClickhouseRepository.getClickhouseUsersCount(params)
   }
 
   public async getRuleInstancesTransactionUsersHit(
@@ -2826,12 +2861,24 @@ export class UserService {
         page: request.page,
         pageSize: request.pageSize,
       })
-      return result
+      const count = await this.getClickhouseUsersCount({
+        filterIds: userIds,
+      })
+      return {
+        items: result,
+        count,
+      }
     } else {
       const result = await this.getUsers({
         filterIds: userIds,
       })
-      return result.result
+      const count = await this.getUsersCount({
+        filterIds: userIds,
+      })
+      return {
+        items: result.result,
+        count,
+      }
     }
   }
 

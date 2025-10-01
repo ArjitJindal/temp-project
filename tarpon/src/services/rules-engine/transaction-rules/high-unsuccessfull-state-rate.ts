@@ -147,7 +147,9 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
       }
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async *getRawTransactionsData(

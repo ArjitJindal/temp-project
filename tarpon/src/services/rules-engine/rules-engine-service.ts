@@ -40,7 +40,7 @@ import { TRANSACTION_RULES, TransactionRuleBase } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
-import { RuleHitResult, RuleHitResultItem } from './rule'
+import { RuleExecutionResult, RuleHitResult, RuleHitResultItem } from './rule'
 import {
   TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
@@ -1320,7 +1320,7 @@ export class RulesEngineService {
     let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedLogicVars[] | undefined
-
+    let ruleExecutionResult: RuleExecutionResult | undefined
     if (
       runOnV8Engine(ruleInstance) &&
       logic &&
@@ -1436,10 +1436,16 @@ export class RulesEngineService {
       if (shouldRunRule && tracing) {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
-
-      ruleResult = shouldRunRule
-        ? await ruleClassInstance.computeRule()
-        : undefined
+      const ruleComputeResult = await ruleClassInstance.computeRule()
+      const result =
+        shouldRunRule && ruleComputeResult
+          ? ruleComputeResult
+          : {
+              ruleHitResult: undefined,
+              ruleExecutionResult: undefined,
+            }
+      ruleResult = result.ruleHitResult
+      ruleExecutionResult = result.ruleExecutionResult
       runSegment?.close()
     }
 
@@ -1513,6 +1519,7 @@ export class RulesEngineService {
           : undefined,
         vars,
         isShadow: isShadowRule(ruleInstance),
+        sanctionsDetails: ruleExecutionResult?.sanctionsDetails,
       },
     }
   }

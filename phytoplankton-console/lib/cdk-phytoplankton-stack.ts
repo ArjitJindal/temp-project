@@ -87,6 +87,12 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       config.SITE_CERTIFICATE_ARN,
     );
 
+    const spaRewriteFunction = new cloudfront.Function(this, 'SpaRewriteFunction', {
+      code: cloudfront.FunctionCode.fromInline(
+        "function handler(event) { var request = event.request; var uri = request.uri; if (uri === '/' || uri === '/index.html') { return request; } if (uri.indexOf('.') === -1) { request.uri = '/index.html'; } return request; }",
+      ),
+    });
+
     const extraBehaviours =
       process.env.ENV === 'dev:user'
         ? {
@@ -102,18 +108,20 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
 
       certificate,
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
       domainNames: [config.SITE_DOMAIN],
+      defaultRootObject: 'index.html',
 
       errorResponses: [
         {
           httpStatus: 403,
-          ttl: Duration.seconds(0),
+          ttl: Duration.seconds(60),
           responseHttpStatus: 200,
           responsePagePath: '/index.html',
         },
         {
           httpStatus: 404,
-          ttl: Duration.seconds(0),
+          ttl: Duration.seconds(60),
           responseHttpStatus: 200,
           responsePagePath: '/index.html',
         },
@@ -122,10 +130,18 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
         origin: new S3Origin(siteBucket, {
           connectionAttempts: 3,
           connectionTimeout: Duration.seconds(10),
+          originShieldRegion: config.env.region,
+          originShieldEnabled: true,
         }),
         compress: true,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [
+          {
+            eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+            function: spaRewriteFunction,
+          },
+        ],
         ...extraBehaviours,
       },
     });

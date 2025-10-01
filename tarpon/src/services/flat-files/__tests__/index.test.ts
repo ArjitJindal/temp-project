@@ -320,7 +320,7 @@ describe('FlatFilesService', () => {
           page: 1,
         })
         expect(user).toBeDefined()
-        expect(user.result.items).toHaveLength(2)
+        expect(user.result).toHaveLength(2)
       })
     })
 

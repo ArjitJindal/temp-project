@@ -67,6 +67,7 @@ export default function CaseTableWrapper(props: {
         ruleNature,
         filterCaseSlaPolicyId,
         filterCaseSlaPolicyStatus,
+        filterClosingReason,
       } = params;
 
       const [sortField, sortOrder] = sort[0] ?? [];
@@ -112,6 +113,7 @@ export default function CaseTableWrapper(props: {
         filterCaseSlaPolicyStatus: filterCaseSlaPolicyStatus?.length
           ? filterCaseSlaPolicyStatus
           : undefined,
+        filterCaseClosureReasons: filterClosingReason?.length ? filterClosingReason : undefined,
       });
 
       return {

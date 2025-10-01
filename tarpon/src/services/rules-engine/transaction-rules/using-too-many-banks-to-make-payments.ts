@@ -86,10 +86,16 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

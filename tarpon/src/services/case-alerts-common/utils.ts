@@ -14,17 +14,11 @@ import {
 } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { Case } from '@/@types/openapi-internal/Case'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
-
-export type CaseSubject =
-  | { type: 'USER'; user: InternalUser }
-  | { type: 'PAYMENT'; paymentDetails: PaymentDetails }
 
 async function truncateDynamoConsumerMessageItems(
   dynamoDbConsumerMessage: DynamoConsumerMessage[] = []

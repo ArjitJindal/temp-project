@@ -408,8 +408,13 @@ export class DynamoDbTransactionRepository
     delete transaction.createdAt
     delete transaction.PartitionKeyID
     delete transaction.SortKeyID
-
-    return transaction as TransactionWithRulesResult
+    return {
+      ...transaction,
+      executedRules: transaction.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined, // delete sanctionsDetails from each executedRule in transaction
+      })),
+    } as TransactionWithRulesResult
   }
 
   public async getTransactionsByIds(
@@ -420,7 +425,7 @@ export class DynamoDbTransactionRepository
         (attribute) => attribute.name
       )
     // Checking both partition as we don't have timestamp to check which partition to use
-    return await batchGet<TransactionWithRulesResult>(
+    const transactions = await batchGet<TransactionWithRulesResult>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       transactionIds.flatMap((transactionId) => [
@@ -441,6 +446,13 @@ export class DynamoDbTransactionRepository
         ConsistentRead: true,
       }
     )
+    return transactions.map((transaction) => ({
+      ...transaction,
+      executedRules: transaction.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    }))
   }
 
   public async checkTransactionStatus(

@@ -56,6 +56,8 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

@@ -182,10 +182,16 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
   }
 
   public async computeRule() {
-    return Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   public async rebuildUserAggregation(

@@ -63,18 +63,30 @@ function collectFilterParamsForPath(path: string): string[] {
     .map((p) => (p.includes(':') ? p.split(':')[0] : p)) // strip dynamic ids
 
   let currentLevel: PermissionsNode[] | undefined = PERMISSIONS_LIBRARY
-  for (const part of parts) {
+  for (let i = 0; i < parts.length; i++) {
     if (!currentLevel || !currentLevel.length) {
       break
     }
+    const part = parts[i]
     const node = currentLevel.find((n) => n.id === part)
     if (!node) {
       break
     }
+
     // If this node defines a filter param, collect it
     if ((node as any).filter?.param) {
       params.add((node as any).filter.param as string)
     }
+
+    // Check if any children of this node have filters (for cases like case-management having case-status child with filter)
+    if (node.children) {
+      for (const child of node.children) {
+        if ((child as any).filter?.param) {
+          params.add((child as any).filter.param as string)
+        }
+      }
+    }
+
     currentLevel = node.children
   }
   return Array.from(params)

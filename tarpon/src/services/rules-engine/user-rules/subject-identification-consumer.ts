@@ -95,6 +95,8 @@ export default class SubjectIdentificationConsumerUser extends UserRule<SubjectI
         ],
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

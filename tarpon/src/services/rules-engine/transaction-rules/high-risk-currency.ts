@@ -46,6 +46,8 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
         vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

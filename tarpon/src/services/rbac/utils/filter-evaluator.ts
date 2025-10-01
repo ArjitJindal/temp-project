@@ -114,13 +114,14 @@ export function enforceAndInjectFilters(
   allowParams?: string[]
 ): { filters: FilterConditions; nextQueryParams: Record<string, string> } {
   const allowedIndex = buildAllowedIndexFromStatements(statements)
-  const scopedIndex: AllowedIndex = allowParams?.length
-    ? new Map(
-        Array.from(allowedIndex.entries()).filter(([param]) =>
-          allowParams.includes(param)
+  const scopedIndex: AllowedIndex =
+    allowParams !== undefined
+      ? new Map(
+          Array.from(allowedIndex.entries()).filter(([param]) =>
+            allowParams.includes(param)
+          )
         )
-      )
-    : allowedIndex
+      : allowedIndex
 
   const built = buildRequestFiltersFromQuery(queryParams, scopedIndex)
 

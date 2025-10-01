@@ -45,6 +45,7 @@ import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
+import { useReasons } from '@/utils/reasons';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -260,6 +261,8 @@ export const useCaseAlertFilters = (
   const [roles] = useRoles();
   const roleAssignedToOptions = map(roles, 'name');
   roleAssignedToOptions.unshift('Unassigned');
+
+  const closureReasons = useReasons('CLOSURE');
 
   return denseArray([
     {
@@ -510,6 +513,17 @@ export const useCaseAlertFilters = (
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
+    },
+    {
+      title: 'Reason',
+      key: 'filterClosingReason',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: closureReasons.map((reason) => ({ value: reason, label: reason })),
+      },
+      showFilterByDefault: true,
     },
     isAlertSlaEnabled && {
       title: 'SLA status',

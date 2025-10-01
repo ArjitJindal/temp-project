@@ -31,6 +31,7 @@ import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
 import { AccountsService } from '../accounts'
+import { getPaymentMethodAddress } from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
 import {
@@ -109,15 +110,28 @@ import {
   AuditLogReturnData,
   getCaseAuditLogMetadata,
 } from '@/utils/audit-log'
-import { CaseSubject } from '@/services/case-alerts-common/utils'
+import { CaseSubject } from '@/@types/cases/CasesInternal'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isConsoleMigrationEnabled } from '@/utils/clickhouse/utils'
 
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'
+import {
+  getPaymentDetailsName,
+  getPaymentEmailId,
+} from '@/utils/payment-details'
+import { Address } from '@/@types/openapi-public/Address'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
+
+const CASE_CREATION_PRIORITY: Record<CaseSubject['type'], number> = {
+  USER: 0,
+  PAYMENT: 1,
+  NAME: 2,
+  EMAIL: 3,
+  ADDRESS: 4,
+}
 
 type CaseAuditLogReturnData = AuditLogReturnData<
   Case,
@@ -478,7 +492,7 @@ export class CaseCreationService {
 
   public async getTransactionSubjects(
     transaction: TransactionWithRulesResult
-  ): Promise<Record<RuleHitDirection, CaseSubject | undefined>> {
+  ): Promise<Record<RuleHitDirection, CaseSubject[] | undefined>> {
     const {
       originUserId,
       destinationUserId,
@@ -497,50 +511,88 @@ export class CaseCreationService {
       originUserId,
     })
 
-    let origin: CaseSubject | undefined = undefined
+    const origin: CaseSubject[] = []
+    const originAddress: Address | undefined =
+      getPaymentMethodAddress(originPaymentDetails)
+    const originEmail: string | undefined =
+      getPaymentEmailId(originPaymentDetails)
+    const originName: string | undefined =
+      getPaymentDetailsName(originPaymentDetails)
+
     if (isAnyRuleHasOriginHit) {
       if (originUserId) {
         const user = await this.getUser(originUserId)
         if (user != null) {
-          origin = {
-            type: 'USER',
-            user: user,
-          }
-        }
-      } else {
-        if (originPaymentDetails != null) {
-          origin = {
-            type: 'PAYMENT',
-            paymentDetails: originPaymentDetails,
-          }
+          origin.push({ type: 'USER', user: user })
         }
       }
+      if (originPaymentDetails != null) {
+        origin.push({ type: 'PAYMENT', paymentDetails: originPaymentDetails })
+      }
+
+      if (originAddress != null) {
+        origin.push({ type: 'ADDRESS', address: originAddress })
+      }
+
+      if (originEmail != null) {
+        origin.push({ type: 'EMAIL', email: originEmail })
+      }
+
+      if (originName != null) {
+        origin.push({ type: 'NAME', name: originName })
+      }
     }
-    let destination: CaseSubject | undefined
+    const destination: CaseSubject[] = []
     {
       if (destinationUserId) {
         if (!(isAnyRuleHasOriginHit && originUserId === destinationUserId)) {
           const user = await this.getUser(destinationUserId)
           if (user != null) {
-            destination = {
-              type: 'USER',
-              user: user,
-            }
+            destination.push({ type: 'USER', user: user })
           }
         }
-      } else {
-        if (
-          !(
-            isAnyRuleHasOriginHit &&
-            isEqual(destinationPaymentDetails, originPaymentDetails)
-          )
-        ) {
-          if (destinationPaymentDetails != null) {
-            destination = {
-              type: 'PAYMENT',
-              paymentDetails: destinationPaymentDetails,
-            }
-          }
+      }
+
+      if (
+        !(
+          isAnyRuleHasOriginHit &&
+          isEqual(destinationPaymentDetails, originPaymentDetails)
+        )
+      ) {
+        if (destinationPaymentDetails != null) {
+          destination.push({
+            type: 'PAYMENT',
+            paymentDetails: destinationPaymentDetails,
+          })
+        }
+      }
+      const destinationAddress: Address | undefined = getPaymentMethodAddress(
+        destinationPaymentDetails
+      )
+      const destinationEmail: string | undefined = getPaymentEmailId(
+        destinationPaymentDetails
+      )
+      const destinationName: string | undefined = getPaymentDetailsName(
+        destinationPaymentDetails
+      )
+
+      if (
+        !(isAnyRuleHasOriginHit && isEqual(originAddress, destinationAddress))
+      ) {
+        if (destinationAddress != null) {
+          destination.push({ type: 'ADDRESS', address: destinationAddress })
+        }
+      }
+
+      if (!(isAnyRuleHasOriginHit && isEqual(originEmail, destinationEmail))) {
+        if (destinationEmail != null) {
+          destination.push({ type: 'EMAIL', email: destinationEmail })
+        }
+      }
+
+      if (!(isAnyRuleHasOriginHit && isEqual(originName, destinationName))) {
+        if (destinationName != null) {
+          destination.push({ type: 'NAME', name: destinationName })
         }
       }
     }
@@ -980,22 +1032,65 @@ export class CaseCreationService {
       : ruleHitMeta
   }
 
+  private createCaseEntity<T>(
+    subjectType: CaseSubject['type'],
+    direction: RuleHitDirection,
+    value: T,
+    status: CaseStatus = 'OPEN'
+  ): Case {
+    const keyMap: Record<CaseSubject['type'], string> = {
+      USER: 'caseUsers',
+      ADDRESS: 'address',
+      EMAIL: 'email',
+      NAME: 'name',
+      PAYMENT: 'paymentDetails',
+    }
+
+    const key = keyMap[subjectType]
+    const directionValue = {
+      origin: direction === 'ORIGIN' ? value : undefined,
+      destination: direction === 'DESTINATION' ? value : undefined,
+    }
+
+    return {
+      caseStatus: status,
+      caseType: 'SYSTEM',
+      subjectType,
+      [key]: directionValue,
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
+    }
+  }
+
   private getNewUserCase(
     direction: RuleHitDirection,
     user: InternalConsumerUser | InternalBusinessUser,
     status: CaseStatus = 'OPEN'
   ): Case {
-    const caseEntity: Case = {
-      caseStatus: status,
-      caseType: 'SYSTEM',
-      subjectType: 'USER',
-      caseUsers: {
-        origin: direction === 'ORIGIN' ? user : undefined,
-        destination: direction === 'DESTINATION' ? user : undefined,
-      },
-      caseAggregates: DEFAULT_CASE_AGGREGATES,
-    }
-    return caseEntity
+    return this.createCaseEntity('USER', direction, user, status)
+  }
+
+  private getNewAddressCase(
+    direction: RuleHitDirection,
+    address: Address,
+    status: CaseStatus = 'OPEN'
+  ): Case {
+    return this.createCaseEntity('ADDRESS', direction, address, status)
+  }
+
+  private getNewEmailCase(
+    direction: RuleHitDirection,
+    email: string,
+    status: CaseStatus = 'OPEN'
+  ): Case {
+    return this.createCaseEntity('EMAIL', direction, email, status)
+  }
+
+  private getNewNameCase(
+    direction: RuleHitDirection,
+    name: string,
+    status: CaseStatus = 'OPEN'
+  ): Case {
+    return this.createCaseEntity('NAME', direction, name, status)
   }
 
   private getNewPaymentCase(
@@ -1003,17 +1098,7 @@ export class CaseCreationService {
     paymentDetails: PaymentDetails,
     status: CaseStatus = 'OPEN'
   ): Case {
-    const caseEntity: Case = {
-      caseStatus: status,
-      caseType: 'SYSTEM',
-      subjectType: 'PAYMENT',
-      paymentDetails: {
-        origin: direction === 'ORIGIN' ? paymentDetails : undefined,
-        destination: direction === 'DESTINATION' ? paymentDetails : undefined,
-      },
-      caseAggregates: DEFAULT_CASE_AGGREGATES,
-    }
-    return caseEntity
+    return this.createCaseEntity('PAYMENT', direction, paymentDetails, status)
   }
 
   private getCaseAggregates(
@@ -1206,16 +1291,26 @@ export class CaseCreationService {
   private async getCasesBySubject(
     subject: CaseSubject,
     params: SubjectCasesQueryParams
-  ) {
+  ): Promise<Case[]> {
     if (isConsoleMigrationEnabled()) {
       return this.dynamoCaseRepository.getCasesBySubject(subject, params)
     }
-    return subject.type === 'USER'
-      ? await this.caseRepository.getCasesByUserId(subject.user.userId, params)
-      : await this.caseRepository.getCasesByPaymentDetails(
+
+    switch (subject.type) {
+      case 'USER':
+        return this.caseRepository.getCasesByUserId(subject.user.userId, params)
+      case 'PAYMENT':
+        return this.caseRepository.getCasesByPaymentDetails(
           subject.paymentDetails,
           params
         )
+      case 'ADDRESS':
+        return this.caseRepository.getCasesByAddress(subject.address, params)
+      case 'EMAIL':
+        return this.caseRepository.getCasesByEmail(subject.email, params)
+      case 'NAME':
+        return this.caseRepository.getCasesByName(subject.name, params)
+    }
   }
 
   private flattenHitRules(
@@ -1278,6 +1373,20 @@ export class CaseCreationService {
     )
   }
 
+  /**
+   * Creates or updates cases based on rule hits and subjects.
+   *
+   * This method handles the complex logic of:
+   * 1. Grouping hit subjects by direction to ensure one case per direction
+   * 2. Selecting the highest priority subject type for each direction
+   * 3. Creating new cases or updating existing ones with new alerts
+   * 4. Managing case aggregation and transaction tracking
+   *
+   * @param hitSubjects - Array of subjects that hit rules with their directions
+   * @param params - Parameters including timestamps, priority, transaction, and hit rules
+   * @param hitRuleInstances - Rule instances that were hit
+   * @returns Promise<Case[]> - Array of created or updated cases
+   */
   private async getOrCreateCases(
     hitSubjects: Array<{
       subject: CaseSubject
@@ -1296,271 +1405,598 @@ export class CaseCreationService {
     logger.debug(`Hit directions to create or update cases`, {
       hitDirections: hitSubjects.map((hitUser) => hitUser.direction),
     })
+
+    // Filter rule instances that allow alert creation
     const ruleInstances = hitRuleInstances.filter(
       (r) => r.alertCreationOnHit !== false
     )
-    /**
-     * The logic to handle the R-169 and R-170 for counterparties
-     * - If they have PER_SEARCH_ALERT, we will create a composite ruleInstanceId which is combination of ruleInstanceId + search term
-     */
+
+    // Flatten hit rules to handle composite rule instances (e.g., R-169, R-170 for counterparties)
     const flattenedHitRules: ExtendedHitRulesDetails[] = this.flattenHitRules(
       params.hitRules,
       ruleInstances
     )
 
+    // Group subjects by direction and collect relevant rule instance IDs
+    const groupedHitSubjects = this.groupHitSubjectsByDirection(
+      hitSubjects,
+      flattenedHitRules,
+      ruleInstances
+    )
+
     const result: Case[] = []
-    for (const { subject, direction } of hitSubjects) {
+
+    // Process each direction group
+    for (const [direction, subjectsForDirection] of groupedHitSubjects) {
+      const directionRuleInstances = this.getRuleInstancesForDirection(
+        ruleInstances,
+        subjectsForDirection
+      )
+
+      // Find the highest priority subject type for this direction
+      const selectedSubject = this.selectHighestPrioritySubject(
+        subjectsForDirection,
+        directionRuleInstances
+      )
+
+      if (!selectedSubject) {
+        continue
+      }
+
+      const { subject } = selectedSubject
+
+      // Acquire lock to prevent concurrent case creation for the same subject
       await acquireLock(this.dynamoDb, generateChecksum(subject), {
         startingDelay: 100,
         maxDelay: 5000,
       })
 
       try {
-        // keep only user related hits
-        let filteredHitRules = this.sanitizeHitRules(
+        const casesForDirection = await this.processCasesForDirection(
+          subject,
+          direction,
+          directionRuleInstances,
           flattenedHitRules,
-          direction
-        ).filter((hitRule) => {
-          if (
-            !hitRule.ruleHitMeta?.hitDirections?.some(
-              (hitDirection) => hitDirection === direction
-            )
-          ) {
-            return false
-          }
-          const ruleInstance = ruleInstances.find(
-            (x) => x.id === hitRule.ruleInstanceId
-          )
-          if (ruleInstance == null) {
-            return false
-          }
-          // Create AlertFor Logic
-          let { alertCreatedFor } = ruleInstance.alertConfig ?? {}
-          alertCreatedFor =
-            !alertCreatedFor || alertCreatedFor.length === 0
-              ? ['USER']
-              : alertCreatedFor
-
-          if (
-            !alertCreatedFor.includes('PAYMENT_DETAILS') &&
-            subject.type === 'PAYMENT'
-          ) {
-            return false
-          }
-
-          if (!alertCreatedFor.includes('USER') && subject.type === 'USER') {
-            return false
-          }
-
-          return true
-        })
-        if (filteredHitRules.length === 0) {
-          continue
-        }
-
-        const filteredTransaction = params.transaction
-          ? {
-              ...params.transaction,
-              hitRules: filteredHitRules,
-            }
-          : undefined
-
-        if (filteredTransaction) {
-          const casesHavingSameTransaction = await this.getCasesBySubject(
-            subject,
-            {
-              filterTransactionId: filteredTransaction.transactionId,
-              filterCaseType: 'SYSTEM',
-            }
-          )
-          filteredHitRules = filteredHitRules.filter((hitRule) => {
-            return casesHavingSameTransaction.every((c) =>
-              c.alerts?.every(
-                (alert) => alert.ruleInstanceId !== hitRule.ruleInstanceId
-              )
-            )
-          })
-          if (filteredHitRules.length === 0) {
-            continue
-          }
-        }
-        const now = Date.now()
-        const timezone = await tenantTimezone(this.tenantId)
-        const delayTimestamps = filteredHitRules.map((hitRule) => {
-          const ruleInstanceMatch: RuleInstance | undefined =
-            ruleInstances.find((x) => hitRule.ruleInstanceId === x.id)
-          const availableAfterTimestamp: number | undefined =
-            ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
-              ? calculateCaseAvailableDate(
-                  now,
-                  ruleInstanceMatch?.alertConfig?.alertCreationInterval,
-                  timezone
-                )
-              : undefined
-
-          return {
-            hitRule,
-            ruleInstance: ruleInstanceMatch,
-            availableAfterTimestamp,
-          }
-        })
-        const delayTimestampsGroups = Object.entries(
-          groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
-        ).map(([key, values]) => ({
-          availableAfterTimestamp:
-            key === 'undefined' ? undefined : parseInt(key),
-          hitRules: values.map((x) => x.hitRule).filter(notNullish),
-          ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
-        }))
-
-        const casesParams: SubjectCasesQueryParams = {
-          filterOutCaseStatus: 'CLOSED',
-          filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
-          filterAvailableAfterTimestamp: delayTimestampsGroups.map(
-            ({ availableAfterTimestamp }) => availableAfterTimestamp
-          ),
-          filterCaseType: 'SYSTEM',
-        }
-        const cases = await this.getCasesBySubject(subject, casesParams)
-
-        for (const group of delayTimestampsGroups) {
-          const { availableAfterTimestamp, hitRules, ruleInstances } = group
-          const existedCases = cases.filter(
-            (x) =>
-              x.availableAfterTimestamp === availableAfterTimestamp ||
-              (x.availableAfterTimestamp == null &&
-                availableAfterTimestamp == null)
-          )
-
-          if (existedCases?.length) {
-            logger.debug(`Existed cases for user`, {
-              existedCaseIds: existedCases.map((c) => c.caseId) ?? null,
-              existedCaseTransactionsIdsLength: (
-                existedCases.flatMap((c) => c.caseTransactionsIds) || []
-              ).length,
-            })
-
-            const unclosedAlerts =
-              compact(
-                existedCases.flatMap(({ alerts }) =>
-                  alerts?.filter((a) => a.alertStatus !== 'CLOSED')
-                )
-              ) ?? []
-            const closedAlerts =
-              compact(
-                existedCases.flatMap(({ alerts }) =>
-                  alerts?.filter((a) => a.alertStatus === 'CLOSED')
-                )
-              ) ?? []
-            const updatedAlerts = await this.getOrCreateAlertsForExistingCase(
-              hitRules,
-              unclosedAlerts,
-              ruleInstances,
-              params.createdTimestamp,
-              filteredTransaction,
-              params.latestTransactionArrivalTimestamp,
-              params.checkListTemplates
-            )
-            const newAlerts = updatedAlerts.filter((a) => !a.caseId)
-            const existedCase = existedCases[0]
-            const alerts = [...updatedAlerts, ...closedAlerts]
-            const caseAlerts = [
-              ...alerts.filter((a) => a.caseId === existedCase.caseId),
-              ...newAlerts,
-            ]
-            const caseTransactionsIds = uniq(
-              compact(caseAlerts?.flatMap((a) => a.transactionIds))
-            )
-            logger.debug('Update existed case with transaction')
-            const transactionArrivalTimestamps = compact(
-              caseAlerts.map((a) => a.latestTransactionArrivalTimestamp)
-            )
-            result.push({
-              ...existedCase,
-              latestTransactionArrivalTimestamp:
-                transactionArrivalTimestamps.length > 0
-                  ? Math.max(...transactionArrivalTimestamps)
-                  : 0,
-              caseTransactionsIds,
-              caseAggregates:
-                filteredTransaction?.transactionId &&
-                caseTransactionsIds.includes(filteredTransaction.transactionId)
-                  ? generateCaseAggreates(
-                      [filteredTransaction as InternalTransaction],
-                      existedCase.caseAggregates,
-                      existedCase.caseUsers
-                    )
-                  : existedCase.caseAggregates,
-              caseTransactionsCount: caseTransactionsIds.length,
-              priority:
-                minBy(caseAlerts, 'priority')?.priority ?? last(PRIORITYS),
-              alerts: caseAlerts,
-              updatedAt: now,
-            })
-          } else {
-            const newAlerts = await this.getAlertsForNewCase(
-              hitRules,
-              ruleInstances,
-              params.createdTimestamp,
-              params.latestTransactionArrivalTimestamp,
-              params.transaction,
-              params.checkListTemplates
-            )
-            logger.debug('Create a new case for a transaction')
-
-            // Check if all alerts are closed
-            const allAlertsClosed = newAlerts.every(
-              (alert) => alert.alertStatus === 'CLOSED'
-            )
-            const initialStatus: CaseStatus = allAlertsClosed
-              ? 'CLOSED'
-              : 'OPEN'
-
-            result.push({
-              ...(subject.type === 'USER'
-                ? this.getNewUserCase(direction, subject.user, initialStatus)
-                : this.getNewPaymentCase(
-                    direction,
-                    subject.paymentDetails,
-                    initialStatus
-                  )),
-              createdTimestamp:
-                availableAfterTimestamp ?? params.createdTimestamp,
-              latestTransactionArrivalTimestamp:
-                params.latestTransactionArrivalTimestamp,
-              caseAggregates: {
-                originPaymentMethods: filteredTransaction?.originPaymentDetails
-                  ?.method
-                  ? [filteredTransaction?.originPaymentDetails?.method]
-                  : [],
-                destinationPaymentMethods: filteredTransaction
-                  ?.destinationPaymentDetails?.method
-                  ? [filteredTransaction?.destinationPaymentDetails?.method]
-                  : [],
-                tags: uniqObjects(
-                  compact(filteredTransaction?.tags ?? []).concat(
-                    subject.type === 'USER' && subject.user.tags
-                      ? subject.user.tags
-                      : []
-                  )
-                ),
-              },
-              caseTransactionsIds: filteredTransaction
-                ? [filteredTransaction.transactionId as string]
-                : [],
-              caseTransactionsCount: filteredTransaction ? 1 : 0,
-              priority: params.priority,
-              availableAfterTimestamp,
-              alerts: newAlerts,
-              updatedAt: now,
-            })
-          }
-        }
+          params
+        )
+        result.push(...casesForDirection)
       } finally {
         await releaseLock(this.dynamoDb, generateChecksum(subject))
       }
     }
+
     return result
+  }
+
+  /**
+   * Groups hit subjects by direction and collects relevant rule instance IDs.
+   * This ensures we only create one case per direction while tracking all relevant rules.
+   */
+  private groupHitSubjectsByDirection(
+    hitSubjects: Array<{ subject: CaseSubject; direction: RuleHitDirection }>,
+    flattenedHitRules: ExtendedHitRulesDetails[],
+    ruleInstances: ReadonlyArray<RuleInstance>
+  ): Map<
+    RuleHitDirection,
+    Array<{
+      subject: CaseSubject
+      direction: RuleHitDirection
+      ruleInstanceIds: string[]
+    }>
+  > {
+    const groupedHitSubjects = new Map<
+      RuleHitDirection,
+      Array<{
+        subject: CaseSubject
+        direction: RuleHitDirection
+        ruleInstanceIds: string[]
+      }>
+    >()
+
+    for (const { subject, direction } of hitSubjects) {
+      const relevantRuleInstanceIds: string[] = []
+
+      // Find all rule instances that hit this direction
+      for (const hitRule of flattenedHitRules) {
+        if (
+          !hitRule.ruleHitMeta?.hitDirections?.some(
+            (hitDirection) => hitDirection === direction
+          )
+        ) {
+          continue
+        }
+
+        const ruleInstance = ruleInstances.find(
+          (x) => x.id === hitRule.ruleInstanceId
+        )
+        if (ruleInstance == null) {
+          continue
+        }
+
+        if (!relevantRuleInstanceIds.includes(hitRule.ruleInstanceId)) {
+          relevantRuleInstanceIds.push(hitRule.ruleInstanceId)
+        }
+      }
+
+      if (relevantRuleInstanceIds.length > 0) {
+        if (!groupedHitSubjects.has(direction)) {
+          groupedHitSubjects.set(direction, [])
+        }
+        groupedHitSubjects.get(direction)?.push({
+          subject,
+          direction,
+          ruleInstanceIds: relevantRuleInstanceIds,
+        })
+      }
+    }
+
+    return groupedHitSubjects
+  }
+
+  /**
+   * Gets all rule instances that are relevant for a specific direction.
+   */
+  private getRuleInstancesForDirection(
+    ruleInstances: ReadonlyArray<RuleInstance>,
+    subjectsForDirection: Array<{
+      subject: CaseSubject
+      direction: RuleHitDirection
+      ruleInstanceIds: string[]
+    }>
+  ): ReadonlyArray<RuleInstance> {
+    return ruleInstances.filter(
+      (ri) =>
+        ri.id &&
+        subjectsForDirection.some((s) =>
+          s.ruleInstanceIds.includes(ri.id as string)
+        )
+    )
+  }
+
+  /**
+   * Selects the highest priority subject type for a direction based on rule configurations.
+   * Priority order: USER > PAYMENT > NAME > EMAIL > ADDRESS
+   */
+  private selectHighestPrioritySubject(
+    subjectsForDirection: Array<{
+      subject: CaseSubject
+      direction: RuleHitDirection
+      ruleInstanceIds: string[]
+    }>,
+    directionRuleInstances: ReadonlyArray<RuleInstance>
+  ): { subject: CaseSubject; direction: RuleHitDirection } | null {
+    // Find all available subject types based on rule configurations
+    const allAvailableSubjectTypes = new Set<CaseSubject['type']>()
+
+    for (const ruleInstance of directionRuleInstances) {
+      let { alertCreatedFor } = ruleInstance.alertConfig ?? {}
+      alertCreatedFor =
+        !alertCreatedFor || alertCreatedFor.length === 0
+          ? ['USER']
+          : alertCreatedFor
+
+      // Add subject types that match this rule's alertCreatedFor configuration
+      for (const subject of subjectsForDirection) {
+        switch (subject.subject.type) {
+          case 'PAYMENT':
+            if (alertCreatedFor.includes('PAYMENT_DETAILS')) {
+              allAvailableSubjectTypes.add('PAYMENT')
+            }
+            break
+          case 'USER':
+            if (alertCreatedFor.includes('USER')) {
+              allAvailableSubjectTypes.add('USER')
+            }
+            break
+          case 'ADDRESS':
+            if (alertCreatedFor.includes('ADDRESS')) {
+              allAvailableSubjectTypes.add('ADDRESS')
+            }
+            break
+          case 'EMAIL':
+            if (alertCreatedFor.includes('EMAIL')) {
+              allAvailableSubjectTypes.add('EMAIL')
+            }
+            break
+          case 'NAME':
+            if (alertCreatedFor.includes('NAME')) {
+              allAvailableSubjectTypes.add('NAME')
+            }
+            break
+        }
+      }
+    }
+
+    if (allAvailableSubjectTypes.size === 0) {
+      return null
+    }
+
+    // Select the highest priority subject type (lower number = higher priority)
+    const selectedSubjectType = Array.from(allAvailableSubjectTypes).reduce(
+      (highest, current) => {
+        return CASE_CREATION_PRIORITY[current] < CASE_CREATION_PRIORITY[highest]
+          ? current
+          : highest
+      }
+    )
+
+    // Find the subject with the selected type
+    const selectedSubject = subjectsForDirection.find(
+      (s) => s.subject.type === selectedSubjectType
+    )
+
+    return selectedSubject || null
+  }
+
+  /**
+   * Processes case creation/updates for a specific direction.
+   * Handles filtering hit rules, managing delays, and creating/updating cases.
+   */
+  private async processCasesForDirection(
+    subject: CaseSubject,
+    direction: RuleHitDirection,
+    directionRuleInstances: ReadonlyArray<RuleInstance>,
+    flattenedHitRules: ExtendedHitRulesDetails[],
+    params: {
+      createdTimestamp: number
+      latestTransactionArrivalTimestamp?: number
+      priority: Priority
+      transaction?: InternalTransaction
+      hitRules: HitRulesDetails[]
+      checkListTemplates?: ChecklistTemplate[]
+    }
+  ): Promise<Case[]> {
+    // Filter hit rules for this direction
+    let filteredHitRules = this.sanitizeHitRules(
+      flattenedHitRules,
+      direction
+    ).filter((hitRule) => {
+      if (
+        !hitRule.ruleHitMeta?.hitDirections?.some(
+          (hitDirection) => hitDirection === direction
+        )
+      ) {
+        return false
+      }
+      return directionRuleInstances.some(
+        (ri) => ri.id && ri.id === hitRule.ruleInstanceId
+      )
+    })
+
+    if (filteredHitRules.length === 0) {
+      return []
+    }
+
+    // Create filtered transaction with hit rules
+    const filteredTransaction = params.transaction
+      ? {
+          ...params.transaction,
+          hitRules: filteredHitRules,
+        }
+      : undefined
+
+    // Remove hit rules that already have cases for the same transaction
+    if (filteredTransaction) {
+      filteredHitRules = await this.filterDuplicateHitRules(
+        subject,
+        filteredTransaction,
+        filteredHitRules
+      )
+
+      if (filteredHitRules.length === 0) {
+        return []
+      }
+    }
+
+    // Group hit rules by their delay timestamps
+    const delayTimestampsGroups = await this.groupHitRulesByDelay(
+      filteredHitRules,
+      directionRuleInstances
+    )
+
+    // Get existing cases for this subject
+    const casesParams: SubjectCasesQueryParams = {
+      filterOutCaseStatus: 'CLOSED',
+      filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
+      filterAvailableAfterTimestamp: delayTimestampsGroups.map(
+        ({ availableAfterTimestamp }) => availableAfterTimestamp
+      ),
+      filterCaseType: 'SYSTEM',
+    }
+    const existingCases = await this.getCasesBySubject(subject, casesParams)
+
+    const result: Case[] = []
+
+    // Process each delay group
+    for (const group of delayTimestampsGroups) {
+      const { availableAfterTimestamp, hitRules, ruleInstances } = group
+      const casesForTimestamp = existingCases.filter(
+        (x) =>
+          x.availableAfterTimestamp === availableAfterTimestamp ||
+          (x.availableAfterTimestamp == null && availableAfterTimestamp == null)
+      )
+
+      if (casesForTimestamp?.length) {
+        // Update existing case
+        const updatedCase = await this.updateExistingCase(
+          casesForTimestamp[0],
+          hitRules,
+          ruleInstances,
+          params,
+          filteredTransaction
+        )
+        result.push(updatedCase)
+      } else {
+        // Create new case
+        const newCase = await this.createNewCase(
+          subject,
+          direction,
+          hitRules,
+          ruleInstances,
+          params,
+          filteredTransaction,
+          availableAfterTimestamp
+        )
+        result.push(newCase)
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Filters out hit rules that already have cases for the same transaction.
+   */
+  private async filterDuplicateHitRules(
+    subject: CaseSubject,
+    filteredTransaction: InternalTransaction,
+    filteredHitRules: ExtendedHitRulesDetails[]
+  ): Promise<ExtendedHitRulesDetails[]> {
+    const casesHavingSameTransaction = await this.getCasesBySubject(subject, {
+      filterTransactionId: filteredTransaction.transactionId,
+      filterCaseType: 'SYSTEM',
+    })
+
+    return filteredHitRules.filter((hitRule) => {
+      return casesHavingSameTransaction.every((c) =>
+        c.alerts?.every(
+          (alert) => alert.ruleInstanceId !== hitRule.ruleInstanceId
+        )
+      )
+    })
+  }
+
+  /**
+   * Groups hit rules by their delay timestamps based on alert creation intervals.
+   */
+  private async groupHitRulesByDelay(
+    filteredHitRules: ExtendedHitRulesDetails[],
+    directionRuleInstances: ReadonlyArray<RuleInstance>
+  ): Promise<
+    Array<{
+      availableAfterTimestamp: number | undefined
+      hitRules: ExtendedHitRulesDetails[]
+      ruleInstances: RuleInstance[]
+    }>
+  > {
+    const now = Date.now()
+    const timezone = await tenantTimezone(this.tenantId)
+
+    const delayTimestamps = filteredHitRules.map((hitRule) => {
+      const ruleInstanceMatch: RuleInstance | undefined =
+        directionRuleInstances.find((x) => hitRule.ruleInstanceId === x.id)
+      const availableAfterTimestamp: number | undefined =
+        ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
+          ? calculateCaseAvailableDate(
+              now,
+              ruleInstanceMatch?.alertConfig?.alertCreationInterval,
+              timezone
+            )
+          : undefined
+
+      return {
+        hitRule,
+        ruleInstance: ruleInstanceMatch,
+        availableAfterTimestamp,
+      }
+    })
+
+    return Object.entries(
+      groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
+    ).map(([key, values]) => ({
+      availableAfterTimestamp: key === 'undefined' ? undefined : parseInt(key),
+      hitRules: values.map((x) => x.hitRule).filter(notNullish),
+      ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
+    }))
+  }
+
+  /**
+   * Updates an existing case with new alerts and transaction information.
+   */
+  private async updateExistingCase(
+    existedCase: Case,
+    hitRules: ExtendedHitRulesDetails[],
+    ruleInstances: RuleInstance[],
+    params: {
+      createdTimestamp: number
+      latestTransactionArrivalTimestamp?: number
+      priority: Priority
+      transaction?: InternalTransaction
+      hitRules: HitRulesDetails[]
+      checkListTemplates?: ChecklistTemplate[]
+    },
+    filteredTransaction?: InternalTransaction
+  ): Promise<Case> {
+    logger.debug(`Updating existing case`, {
+      caseId: existedCase.caseId,
+      transactionId: filteredTransaction?.transactionId,
+    })
+
+    // Separate closed and unclosed alerts
+    const unclosedAlerts = compact(
+      existedCase.alerts?.filter((a) => a.alertStatus !== 'CLOSED') || []
+    )
+    const closedAlerts = compact(
+      existedCase.alerts?.filter((a) => a.alertStatus === 'CLOSED') || []
+    )
+
+    // Get or create new alerts for the existing case
+    const updatedAlerts = await this.getOrCreateAlertsForExistingCase(
+      hitRules,
+      unclosedAlerts,
+      ruleInstances,
+      params.createdTimestamp,
+      filteredTransaction,
+      params.latestTransactionArrivalTimestamp,
+      params.checkListTemplates
+    )
+
+    const newAlerts = updatedAlerts.filter((a) => !a.caseId)
+    const allAlerts = [...updatedAlerts, ...closedAlerts]
+    const caseAlerts = [
+      ...allAlerts.filter((a) => a.caseId === existedCase.caseId),
+      ...newAlerts,
+    ]
+
+    // Update case aggregates and transaction tracking
+    const caseTransactionsIds = uniq(
+      compact(caseAlerts?.flatMap((a) => a.transactionIds))
+    )
+
+    const transactionArrivalTimestamps = compact(
+      caseAlerts.map((a) => a.latestTransactionArrivalTimestamp)
+    )
+
+    const now = Date.now()
+
+    return {
+      ...existedCase,
+      latestTransactionArrivalTimestamp:
+        transactionArrivalTimestamps.length > 0
+          ? Math.max(...transactionArrivalTimestamps)
+          : 0,
+      caseTransactionsIds,
+      caseAggregates:
+        filteredTransaction?.transactionId &&
+        caseTransactionsIds.includes(filteredTransaction.transactionId)
+          ? generateCaseAggreates(
+              [filteredTransaction as InternalTransaction],
+              existedCase.caseAggregates,
+              existedCase.caseUsers
+            )
+          : existedCase.caseAggregates,
+      caseTransactionsCount: caseTransactionsIds.length,
+      priority: minBy(caseAlerts, 'priority')?.priority ?? last(PRIORITYS),
+      alerts: caseAlerts,
+      updatedAt: now,
+    }
+  }
+
+  /**
+   * Creates a new case with alerts and initial configuration.
+   */
+  private async createNewCase(
+    subject: CaseSubject,
+    direction: RuleHitDirection,
+    hitRules: ExtendedHitRulesDetails[],
+    ruleInstances: RuleInstance[],
+    params: {
+      createdTimestamp: number
+      latestTransactionArrivalTimestamp?: number
+      priority: Priority
+      transaction?: InternalTransaction
+      hitRules: HitRulesDetails[]
+      checkListTemplates?: ChecklistTemplate[]
+    },
+    filteredTransaction?: InternalTransaction,
+    availableAfterTimestamp?: number
+  ): Promise<Case> {
+    logger.debug('Creating new case for transaction', {
+      subjectType: subject.type,
+      direction,
+      transactionId: filteredTransaction?.transactionId,
+    })
+
+    // Create alerts for the new case
+    const newAlerts = await this.getAlertsForNewCase(
+      hitRules,
+      ruleInstances,
+      params.createdTimestamp,
+      params.latestTransactionArrivalTimestamp,
+      params.transaction,
+      params.checkListTemplates
+    )
+
+    // Determine initial case status based on alert statuses
+    const allAlertsClosed = newAlerts.every(
+      (alert) => alert.alertStatus === 'CLOSED'
+    )
+    const initialStatus: CaseStatus = allAlertsClosed ? 'CLOSED' : 'OPEN'
+
+    const now = Date.now()
+
+    return {
+      ...this.getPartialCase(subject, direction, initialStatus),
+      createdTimestamp: availableAfterTimestamp ?? params.createdTimestamp,
+      latestTransactionArrivalTimestamp:
+        params.latestTransactionArrivalTimestamp,
+      caseAggregates: this.createInitialCaseAggregates(
+        filteredTransaction,
+        subject
+      ),
+      caseTransactionsIds: filteredTransaction
+        ? [filteredTransaction.transactionId as string]
+        : [],
+      caseTransactionsCount: filteredTransaction ? 1 : 0,
+      priority: params.priority,
+      availableAfterTimestamp,
+      alerts: newAlerts,
+      updatedAt: now,
+    }
+  }
+
+  /**
+   * Creates initial case aggregates from transaction and subject data.
+   */
+  private createInitialCaseAggregates(
+    filteredTransaction?: InternalTransaction,
+    subject?: CaseSubject
+  ): CaseAggregates {
+    return {
+      originPaymentMethods: filteredTransaction?.originPaymentDetails?.method
+        ? [filteredTransaction?.originPaymentDetails?.method]
+        : [],
+      destinationPaymentMethods: filteredTransaction?.destinationPaymentDetails
+        ?.method
+        ? [filteredTransaction?.destinationPaymentDetails?.method]
+        : [],
+      tags: uniqObjects(
+        compact(filteredTransaction?.tags ?? []).concat(
+          subject?.type === 'USER' && subject.user.tags ? subject.user.tags : []
+        )
+      ),
+    }
+  }
+
+  private getPartialCase(
+    subject: CaseSubject,
+    direction: RuleHitDirection,
+    status: CaseStatus = 'OPEN'
+  ): Case {
+    switch (subject.type) {
+      case 'USER':
+        return this.getNewUserCase(direction, subject.user, status)
+      case 'PAYMENT':
+        return this.getNewPaymentCase(direction, subject.paymentDetails, status)
+      case 'ADDRESS':
+        return this.getNewAddressCase(direction, subject.address, status)
+      case 'EMAIL':
+        return this.getNewEmailCase(direction, subject.email, status)
+      case 'NAME':
+        return this.getNewNameCase(direction, subject.name, status)
+      default:
+        throw new Error(`Invalid subject type`)
+    }
   }
 
   private async sendAlertOpenedWebhook(alerts: Alert[], cases: Case[]) {
@@ -1580,7 +2016,7 @@ export class CaseCreationService {
   async handleTransaction(
     transaction: InternalTransaction,
     ruleInstances: RuleInstance[],
-    transactionSubjects: Record<RuleHitDirection, CaseSubject | undefined>
+    transactionSubjects: Record<RuleHitDirection, CaseSubject[] | undefined>
   ): Promise<Case[]> {
     logger.debug(`Handling transaction for case creation`, {
       transactionId: transaction.transactionId,
@@ -1618,10 +2054,12 @@ export class CaseCreationService {
     for (const ruleHitDirection of hitDirections) {
       const hitDirectionSubject = transactionSubjects[ruleHitDirection]
       if (hitDirectionSubject) {
-        hitSubjects.push({
-          subject: hitDirectionSubject,
-          direction: ruleHitDirection,
-        })
+        hitSubjects.push(
+          ...hitDirectionSubject.map((subject) => ({
+            subject,
+            direction: ruleHitDirection,
+          }))
+        )
       }
     }
 

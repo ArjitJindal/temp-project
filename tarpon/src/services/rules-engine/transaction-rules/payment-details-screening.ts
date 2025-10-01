@@ -8,6 +8,7 @@ import {
   PaymentDetailsScreeningRuleParameters,
 } from './payment-details-screening-base'
 import { traceable } from '@/core/xray'
+import { RuleExecutionSanctionsDetails } from '@/@types/openapi-internal/RuleExecutionSanctionsDetails'
 @traceable
 export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase {
   public static getSchema(): JSONSchemaType<PaymentDetailsScreeningRuleParameters> {
@@ -21,11 +22,15 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
     const hitRules: RuleHitResult = []
 
     if (this.senderUser || this.receiverUser) {
-      return hitRules
+      return {
+        ruleHitResult: hitRules,
+      }
     }
 
     if (!this.parameters.ruleStages.includes(this.stage)) {
-      return hitRules
+      return {
+        ruleHitResult: hitRules,
+      }
     }
 
     const isThresholdHit = this.parameters?.transactionAmountThreshold
@@ -42,19 +47,23 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
       : true
 
     if (!isThresholdHit) {
-      return hitRules
+      return {
+        ruleHitResult: hitRules,
+      }
     }
-
+    let originRuleExecutionResult: RuleExecutionSanctionsDetails[] = []
     if (this.transaction.originPaymentDetails) {
-      const sanctionsDetails = await this.checkCounterPartyTransaction(
-        this.transaction.originPaymentDetails
-      )
-      if (sanctionsDetails.length > 0) {
+      const { ruleHitSanctionsDetails, ruleExecutionSanctionsDetails } =
+        await this.checkCounterPartyTransaction(
+          this.transaction.originPaymentDetails
+        )
+      originRuleExecutionResult = ruleExecutionSanctionsDetails ?? []
+      if (ruleHitSanctionsDetails.length > 0) {
         hitRules.push({
           direction: 'ORIGIN',
           vars: super.getTransactionVars('origin'),
           sanctionsDetails: uniqBy(
-            sanctionsDetails,
+            ruleHitSanctionsDetails,
             (detail) => detail.name
           ).map((detail) => ({
             ...detail,
@@ -63,17 +72,19 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
         })
       }
     }
-
+    let destinationRuleExecutionResult: RuleExecutionSanctionsDetails[] = []
     if (this.transaction.destinationPaymentDetails) {
-      const sanctionsDetails = await this.checkCounterPartyTransaction(
-        this.transaction.destinationPaymentDetails
-      )
-      if (sanctionsDetails.length > 0) {
+      const { ruleHitSanctionsDetails, ruleExecutionSanctionsDetails } =
+        await this.checkCounterPartyTransaction(
+          this.transaction.destinationPaymentDetails
+        )
+      destinationRuleExecutionResult = ruleExecutionSanctionsDetails ?? []
+      if (ruleHitSanctionsDetails.length > 0) {
         hitRules.push({
           direction: 'DESTINATION',
           vars: super.getTransactionVars('destination'),
           sanctionsDetails: uniqBy(
-            sanctionsDetails,
+            ruleHitSanctionsDetails,
             (detail) => detail.name
           ).map((detail) => ({
             ...detail,
@@ -83,6 +94,14 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
       }
     }
 
-    return hitRules
+    return {
+      ruleHitResult: hitRules,
+      ruleExecutionResult: {
+        sanctionsDetails: [
+          ...originRuleExecutionResult,
+          ...destinationRuleExecutionResult,
+        ],
+      },
+    }
   }
 }
