@@ -273,24 +273,11 @@ export async function offsetPaginateClickhouse<T>(
     .join(', ')
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  const findSql = `
-    WITH sorted_ids AS (
-      SELECT DISTINCT id
-      FROM ${queryTableName} FINAL
-      ${where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'}
-      ORDER BY ${sortField} ${direction}
-      OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY
-    ),
-    ranked_ids AS (
-      SELECT id, ROW_NUMBER() OVER (ORDER BY ${sortField} ${direction}) as rn
-      FROM sorted_ids s
-      JOIN ${queryTableName} q ON s.id = q.id
-    )
-    SELECT ${columnsProjectionString.length > 0 ? columnsProjectionString : '*'}
-    FROM ${dataTableName} FINAL d
-    JOIN ranked_ids r ON d.id = r.id
-    ORDER BY r.rn
-  `
+  const findSql = `SELECT ${
+    columnsProjectionString.length > 0 ? columnsProjectionString : '*'
+  } FROM ${dataTableName} FINAL WHERE id IN (SELECT DISTINCT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
   const countWhere = countWhereClause === undefined ? where : countWhereClause
   const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
