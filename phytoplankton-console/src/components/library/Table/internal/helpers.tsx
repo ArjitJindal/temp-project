@@ -281,9 +281,11 @@ export function useTanstackTable<
           ...UNKNOWN,
           ...column.type,
         };
-        return columnHelper.display({
+        return columnHelper.accessor((row) => column.value(row.content), {
           id: columnId,
           header: column.title,
+          enableSorting: column.sorting === true || column.sorting === 'desc',
+          sortDescFirst: column.sorting === 'desc',
           enableResizing: column.enableResizing ?? true,
           cell: showSkeleton ? SkeletonCell : DerivedColumnCellComponent,
           meta: {
@@ -292,7 +294,7 @@ export function useTanstackTable<
             tooltip: column.tooltip,
             subtitle: column.subtitle,
           },
-        });
+        }) as TanTable.ColumnDef<TableRow<Item>>;
       } else {
         return columnHelper.group({
           id: columnId,
