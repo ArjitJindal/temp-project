@@ -328,28 +328,36 @@ export async function getClickhouseDataOnly<T>(
     .map(([key, value]) => `${value} AS ${key}`)
     .join(', ')
 
-  const sortFieldMapper: Record<string, string> = {
-    originAmountDetails_transactionAmount: 'originAmountDetails_amount',
-    destinationAmountDetails_transactionAmount:
-      'destinationAmountDetails_amount',
-    ars_score: 'arsScore',
-  }
+  // const sortFieldMapper: Record<string, string> = {
+  //   originAmountDetails_transactionAmount: 'originAmountDetails_amount',
+  //   destinationAmountDetails_transactionAmount:
+  //     'destinationAmountDetails_amount',
+  //   ars_score: 'arsScore',
+  // }
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+  const sortedOrderQuery = `(SELECT DISTINCT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
+  const sortedOrder = await executeClickhouseQuery<
+    Record<string, string | number>[]
+  >(client, {
+    query: sortedOrderQuery,
+    format: 'JSONEachRow',
+  })
+  const sortedIds = sortedOrder.map((row) => row.id)
   const findSql = `SELECT ${
     columnsProjectionString.length > 0 ? columnsProjectionString : '*'
-  } FROM ${dataTableName} FINAL WHERE id IN (SELECT DISTINCT id FROM ${queryTableName} FINAL ${
-    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
-  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)
-  ORDER BY ${sortFieldMapper[sortField] || sortField} ${direction}`
+  }, id FROM ${dataTableName} FINAL WHERE id IN (${sortedIds
+    .map((id) => `'${id}'`)
+    .join(',')})`
 
-  const items = await executeClickhouseQuery<Record<string, string | number>[]>(
-    client,
-    {
+  const items = (
+    await executeClickhouseQuery<Record<string, string | number>[]>(client, {
       query: findSql,
       format: 'JSONEachRow',
-    }
-  )
+    })
+  ).sort((a, b) => sortedIds.indexOf(a.id) - sortedIds.indexOf(b.id))
 
   return callbackMap
     ? items.map((item) => callbackMap(item))
