@@ -919,6 +919,12 @@ export const getForneticsEntityId = (tenantSettings?: TenantSettings) => {
               )}
             </FeatureEnabled>
           );
+        case 'caseId':
+          return (
+            <Id to={addBackUrlToRoute(getCaseUrl(value ?? '#'))} testName="case-id" toNewTab={true}>
+              {value}
+            </Id>
+          );
         case 'Case ID':
         case 'Related case':
           return (
