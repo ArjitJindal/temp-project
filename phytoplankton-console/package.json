@@ -50,6 +50,8 @@
     "tsc:watch": "tsc --noEmit --watch",
     "cypress:open": "node cypress-run.js open",
     "cypress:run": "node cypress-run.js run",
+    "cypress:run:local": "ENV=local cypress-run.js run",
+    "cypress:open:local": "ENV=local node cypress-run.js open",
     "semgrep": "semgrep scan --config ../rule.yaml --error",
     "test": "npm run tsc && npm run test:unit && npm run format:check",
     "test:coverage": "jest src --silent --coverage && node ../scripts/generate-coverage-stats.js",
