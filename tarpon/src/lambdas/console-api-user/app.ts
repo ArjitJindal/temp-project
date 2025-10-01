@@ -5,7 +5,6 @@ import {
 import { BadRequest, Forbidden, NotFound } from 'http-errors'
 import compact from 'lodash/compact'
 import { UserService } from '../../services/users'
-import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { CrmService } from '@/services/crm'
@@ -26,10 +25,7 @@ export const businessUsersViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
-
     const userService = await UserService.fromEvent(event)
-    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetBusinessUsersList(async (ctx, request) => {
@@ -61,16 +57,16 @@ export const businessUsersViewHandler = lambdaApi()(
 
     handlers.registerGetBusinessUsersItem(async (ctx, request) => {
       const user = await userService.getBusinessUser(request.userId)
-      if (user == null) {
+      if (user.result == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      await userAuditLogService.handleAuditLogForUserViewed(request.userId)
-      return user
+      return user.result
     })
 
     handlers.registerPostBusinessUsersUserId(async (ctx, request) => {
       const user = await userService.getUser(request.userId, false)
-      return await userService.updateUser(user, request.UserUpdateRequest)
+      return (await userService.updateUser(user, request.UserUpdateRequest))
+        .result
     })
 
     handlers.registerGetUsersUniques(async (ctx, request) =>
@@ -87,9 +83,7 @@ export const consumerUsersViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
     const userService = await UserService.fromEvent(event)
-    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetConsumerUsersList(async (ctx, request) => {
@@ -121,16 +115,16 @@ export const consumerUsersViewHandler = lambdaApi()(
 
     handlers.registerGetConsumerUsersItem(async (ctx, request) => {
       const user = await userService.getConsumerUser(request.userId)
-      if (user == null) {
+      if (user.result == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      await userAuditLogService.handleAuditLogForUserViewed(request.userId)
-      return user
+      return user.result
     })
 
     handlers.registerPostConsumerUsersUserId(async (ctx, request) => {
       const user = await userService.getUser(request.userId, false)
-      return await userService.updateUser(user, request.UserUpdateRequest)
+      return (await userService.updateUser(user, request.UserUpdateRequest))
+        .result
     })
 
     return await handlers.handle(event)
@@ -195,7 +189,7 @@ export const allUsersViewHandler = lambdaApi()(
         request.userId,
         comment
       )
-      return createdComment
+      return createdComment.result
     })
 
     handlers.registerDeleteUsersUserIdCommentsCommentId(
@@ -284,7 +278,7 @@ export const allUsersViewHandler = lambdaApi()(
         request.commentId,
         comment
       )
-      return createdComment
+      return createdComment.result
     })
 
     handlers.registerPostUserAttachment(async (ctx, request) => {

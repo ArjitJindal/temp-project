@@ -16299,6 +16299,7 @@ components:
             - LIST_ITEM
             - TRANSACTION_LIST
             - USER_LIST
+            - USER_VIEW
             - RULE_INSTANCES
             - RULE_LIBRARY
         action:
