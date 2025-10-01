@@ -432,6 +432,27 @@ export async function* paginateQueryGenerator(
   }
 }
 
+export async function* itemLevelQueryGenerator(
+  dynamoDb: DynamoDBDocumentClient,
+  query: QueryCommandInput
+): AsyncGenerator<any> {
+  let lastEvaluatedKey: any = undefined
+
+  do {
+    const paginatedQuery: QueryCommandInput = {
+      ...query,
+      ExclusiveStartKey: lastEvaluatedKey,
+    }
+    const result = await dynamoDb.send(new QueryCommand(paginatedQuery))
+
+    for (const item of result.Items ?? []) {
+      yield item
+    }
+
+    lastEvaluatedKey = result.LastEvaluatedKey || null
+  } while (lastEvaluatedKey !== null)
+}
+
 const MAX_BATCH_WRITE_RETRY_COUNT = 20
 const MAX_BATCH_WRITE_RETRY_DELAY = 10 * 1000
 export async function batchWrite(

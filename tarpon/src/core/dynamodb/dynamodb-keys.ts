@@ -7,7 +7,12 @@
 
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 import { logger } from '../logger'
-import { getPrimaryTransactionSwitchTimestamp } from './key-constants'
+import {
+  AUXILLARY_TXN_PARTITION_COUNT,
+  BUCKET_IDENTIFIER,
+  getBucketNumber,
+  getPrimaryTransactionSwitchTimestamp,
+} from './key-utils'
 import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -265,6 +270,12 @@ export const DynamoDbKeys = {
     if (!identifiers) {
       return null
     }
+    const transactionIdHash = generateChecksum(sortKeyData?.transactionId, 20)
+    const bucketCount = getBucketNumber(
+      transactionIdHash,
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+    const useNewPartitioning = sortKeyData?.timestamp // As we only want these partitions when we are writing data
     if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
       const { accountNumber, accountType, bankCode, bankId } = identifiers
       // We keep the legacy identifier to avoid migrating data in DynamoDB
@@ -280,14 +291,18 @@ export const DynamoDbKeys = {
         return null
       }
       return {
-        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}`,
+        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}${
+          useNewPartitioning ? `${BUCKET_IDENTIFIER}${bucketCount}` : ''
+        }`,
         SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     } else {
       return {
         PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${getPaymentDetailsIdentifiersKey(
           paymentDetails
-        )}#${direction}`,
+        )}#${direction}${
+          useNewPartitioning ? `${BUCKET_IDENTIFIER}${bucketCount}` : ''
+        }`,
         SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     }
@@ -300,9 +315,17 @@ export const DynamoDbKeys = {
     transactionType?: string,
     sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => {
+    const transactionIdHash = generateChecksum(sortKeyData?.transactionId, 20)
+    const bucketCount = getBucketNumber(
+      transactionIdHash,
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+    const useNewPartitioning = sortKeyData?.timestamp //  As we only want these partitions when we are writing data
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     return {
-      PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}`,
+      PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}${
+        useNewPartitioning ? `${BUCKET_IDENTIFIER}${bucketCount}` : ''
+      }`,
       SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
     }
   },

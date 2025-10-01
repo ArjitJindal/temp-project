@@ -5608,6 +5608,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datastructures-js/heap@npm:^4.3.3":
+  version: 4.3.5
+  resolution: "@datastructures-js/heap@npm:4.3.5"
+  checksum: 9360ae87e517aaf547251db4faea77388511dd7e4e554da1a3857e072cf34edba4e33faf8c93d738c3a78ddcdee903faefd02238371f0b201bb129d73f03a2ef
+  languageName: node
+  linkType: hard
+
+"@datastructures-js/priority-queue@npm:^6.3.4":
+  version: 6.3.4
+  resolution: "@datastructures-js/priority-queue@npm:6.3.4"
+  dependencies:
+    "@datastructures-js/heap": "npm:^4.3.3"
+  checksum: 7c2fbfc1c3a1f9d1f1d0c540a38f41865400d72dc40c13d621657386513ed5faddba4366dcf76b4e52accefa1be67d13602f73bc4a43afa96603071f78b427fe
+  languageName: node
+  linkType: hard
+
 "@esbuild/android-arm@npm:0.15.18":
   version: 0.15.18
   resolution: "@esbuild/android-arm@npm:0.15.18"
@@ -23923,6 +23939,7 @@ __metadata:
     "@aws-sdk/util-arn-parser": "npm:^3.679.0"
     "@aws-sdk/util-dynamodb": "npm:^3.687.0"
     "@clickhouse/client": "npm:^1.5.0"
+    "@datastructures-js/priority-queue": "npm:^6.3.4"
     "@faker-js/faker": "npm:^7.6.0"
     "@fast-csv/format": "npm:^4.3.5"
     "@fast-csv/parse": "npm:^4.3.6"
