@@ -1,13 +1,13 @@
 import chunk from 'lodash/chunk'
-import { SQSClient } from '@aws-sdk/client-sqs'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { MongoClient } from 'mongodb'
+import { SQSClient } from '@aws-sdk/client-sqs'
 import { BatchRerunUsersService } from '../batch-users-rerun'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { getSQSClient, bulkSendMessages } from '@/utils/sns-sqs-client'
 import { BatchRerunUsers } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
-import { bulkSendMessages } from '@/utils/sns-sqs-client'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
@@ -55,7 +55,7 @@ export class BatchRerunUsersBatchJobRunner extends BatchJobRunner {
   }
 
   protected async run(job: BatchRerunUsers) {
-    const sqsClient = new SQSClient({})
+    const sqsClient = getSQSClient()
     const { tenantId } = job
     const dynamoDb = getDynamoDbClient()
     const subJobType = job.parameters.jobType

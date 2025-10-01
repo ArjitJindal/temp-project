@@ -60,6 +60,7 @@ import {
   GatewayVpcEndpoint,
   GatewayVpcEndpointAwsService,
   InterfaceVpcEndpoint,
+  InterfaceVpcEndpointAwsService,
   InterfaceVpcEndpointService,
   IpAddresses,
   Peer,
@@ -812,13 +813,35 @@ export class CdkTarponStack extends cdk.Stack {
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     const dynamoDbVpcEndpoint = this.createDynamoDbVpcEndpoint(vpc)
+    const sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
+      vpc,
+      vpcCidr
+    )
+    const sqsInterfaceVpcEndpointDnsEntries =
+      sqsInterfaceVpcEndpoint?.vpcEndpointDnsEntries?.map(
+        (entry) => entry.split(':')[1] ?? entry
+      )
 
-    if (dynamoDbVpcEndpoint) {
+    if (dynamoDbVpcEndpoint || sqsInterfaceVpcEndpoint) {
       this.functionProps = {
         ...this.functionProps,
         environment: {
           ...this.functionProps.environment,
-          DYNAMODB_VPC_ENDPOINT_ID: dynamoDbVpcEndpoint.vpcEndpointId,
+          ...(dynamoDbVpcEndpoint
+            ? { DYNAMODB_VPC_ENDPOINT_ID: dynamoDbVpcEndpoint.vpcEndpointId }
+            : {}),
+          ...(sqsInterfaceVpcEndpoint
+            ? {
+                SQS_VPC_ENDPOINT_ID: sqsInterfaceVpcEndpoint.vpcEndpointId,
+                ...(sqsInterfaceVpcEndpointDnsEntries?.length
+                  ? {
+                      SQS_VPC_ENDPOINT_URL: `https://${sqsInterfaceVpcEndpointDnsEntries[0]}`,
+                      SQS_VPC_ENDPOINT_DNS_ENTRIES:
+                        sqsInterfaceVpcEndpointDnsEntries.join(','),
+                    }
+                  : {}),
+              }
+            : {}),
         },
       }
     }
@@ -2024,6 +2047,70 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     return dynamoDbVpcEndpoint
+  }
+
+  private createSqsInterfaceVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null
+  ): InterfaceVpcEndpoint | null {
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      envIsNot('sandbox')
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+    })
+
+    const sqsEndpointSecurityGroup = new SecurityGroup(
+      this,
+      getResourceNameForTarpon('SqsInterfaceEndpointSecurityGroup'),
+      {
+        vpc,
+        allowAllOutbound: true,
+        description: 'Security group for SQS Interface Endpoint',
+      }
+    )
+
+    if (vpcCidr) {
+      sqsEndpointSecurityGroup.addIngressRule(
+        Peer.ipv4(vpcCidr),
+        Port.tcp(443),
+        'Allow HTTPS from within VPC'
+      )
+    }
+
+    const sqsInterfaceVpcEndpoint = vpc.addInterfaceEndpoint(
+      getResourceNameForTarpon('SqsInterfaceEndpoint'),
+      {
+        service: InterfaceVpcEndpointAwsService.SQS,
+        subnets: { subnets: privateSubnets.subnets },
+        securityGroups: [sqsEndpointSecurityGroup],
+        privateDnsEnabled: false,
+      }
+    )
+
+    this.addTagsToResource(sqsEndpointSecurityGroup, {
+      Name: 'SqsInterfaceEndpointSecurityGroup',
+      Stage: this.config.stage,
+    })
+
+    this.addTagsToResource(sqsInterfaceVpcEndpoint, {
+      Name: 'SqsInterfaceEndpoint',
+      Service: 'SQS',
+      Stage: this.config.stage,
+    })
+
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, 'SQS Interface VPC Endpoint ID', {
+        value: sqsInterfaceVpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return sqsInterfaceVpcEndpoint
   }
 
   private createMongoAtlasVpc() {

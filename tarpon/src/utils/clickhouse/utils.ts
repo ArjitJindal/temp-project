@@ -7,7 +7,7 @@ import {
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
 import { backOff, BackoffOptions } from 'exponential-backoff'
-import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { ConnectionCredentials, JsonMigrationService } from 'thunder-schema'
@@ -17,7 +17,7 @@ import memoize from 'lodash/memoize'
 import map from 'lodash/map'
 import groupBy from 'lodash/groupBy'
 import { envIs, envIsNot } from '../env'
-import { bulkSendMessages } from '../sns-sqs-client'
+import { bulkSendMessages, getSQSClient } from '../sns-sqs-client'
 import {
   ClickHouseTables,
   TableName,
@@ -762,7 +762,7 @@ export function getSortedData<T>({
 export const sanitizeSqlName = (tableName: string) =>
   tableName.replace(/[^0-9a-zA-Z]/g, '_')
 
-const sqs = new SQS({ region: process.env.AWS_REGION })
+const sqs = getSQSClient()
 
 export const sendMessageToMongoConsumer = async (
   message: MongoConsumerMessage

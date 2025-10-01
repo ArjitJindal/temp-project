@@ -1,11 +1,12 @@
 import { MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { SQSClient } from '@aws-sdk/client-sqs'
 import { ClickHouseClient } from '@clickhouse/client'
+import { SQSClient } from '@aws-sdk/client-sqs'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { getSQSClient, bulkSendMessages } from '@/utils/sns-sqs-client'
 import { GoCardlessBackfillBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -25,7 +26,6 @@ import {
 import { generateChecksum } from '@/utils/object'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { bulkSendMessages } from '@/utils/sns-sqs-client'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 interface SendEntityToSQSParams {
@@ -362,7 +362,7 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
   protected async run(job: GoCardlessBackfillBatchJob): Promise<void> {
     const { tenantId } = job
     const mongoDb = await getMongoDbClient()
-    const sqsClient = new SQSClient({})
+    const sqsClient = getSQSClient()
     const dynamoDb = getDynamoDbClient()
     const clickhouseClient = await getClickhouseClient(tenantId)
     const clients = {
