@@ -40,7 +40,6 @@ import {
   DefaultApiGetSanctionsSearchRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
-import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { traceable } from '@/core/xray'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
@@ -363,10 +362,6 @@ export class SanctionsService {
       })
     }
 
-    if (!existedSearch?.response && request.monitoring) {
-      await this.updateSearch(searchId, request.monitoring, providerOverrides)
-    }
-
     if (context && context.ruleInstanceId && context.isOngoingScreening) {
       // Save the screening details check when running a rule
       const details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'> = {
@@ -478,33 +473,6 @@ export class SanctionsService {
   ): Promise<SanctionsScreeningDetailsResponse> {
     return this.sanctionsScreeningDetailsRepository.getSanctionsScreeningDetails(
       params
-    )
-  }
-
-  public async updateSearch(
-    searchId: string,
-    update: SanctionsSearchMonitoring,
-    providerOverrides?: ProviderConfig
-  ): Promise<void> {
-    const search = await this.getSearchHistory(searchId)
-    if (!search) {
-      logger.error(`Cannot find search ${searchId}. Skip updating search.`)
-      return
-    }
-    const providerSearchId = search.response?.providerSearchId || ''
-    if (providerSearchId == null) {
-      throw new Error(`Unable to get search id from response`)
-    }
-
-    const provider = await this.getProvider(
-      search.provider,
-      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
-      providerOverrides
-    )
-    await provider.setMonitoring(providerSearchId, update.enabled)
-    await this.sanctionsSearchRepository.updateSearchMonitoring(
-      searchId,
-      update
     )
   }
 
