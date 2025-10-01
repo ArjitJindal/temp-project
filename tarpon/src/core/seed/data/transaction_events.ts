@@ -55,7 +55,9 @@ const data: () => TransactionEventWithRulesResult[] = memoize(() => {
         },
       },
       {
-        transactionState: t.transactionState || 'REFUNDED',
+        transactionState:
+          t.transactionState ||
+          (t.status === 'SUSPEND' ? 'SUSPENDED' : 'REFUNDED'),
         timestamp: t.timestamp + 3600000 + 3600000,
         transactionId: t.transactionId,
         eventId: rng.r(2).randomGuid(),
