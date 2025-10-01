@@ -273,11 +273,24 @@ export async function offsetPaginateClickhouse<T>(
     .join(', ')
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  const findSql = `SELECT ${
-    columnsProjectionString.length > 0 ? columnsProjectionString : '*'
-  } FROM ${dataTableName} FINAL WHERE id IN (SELECT DISTINCT id FROM ${queryTableName} FINAL ${
-    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
-  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
+  const findSql = `
+    WITH sorted_ids AS (
+      SELECT DISTINCT id
+      FROM ${queryTableName} FINAL
+      ${where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'}
+      ORDER BY ${sortField} ${direction}
+      OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY
+    ),
+    ranked_ids AS (
+      SELECT id, ROW_NUMBER() OVER (ORDER BY ${sortField} ${direction}) as rn
+      FROM sorted_ids s
+      JOIN ${queryTableName} q ON s.id = q.id
+    )
+    SELECT ${columnsProjectionString.length > 0 ? columnsProjectionString : '*'}
+    FROM ${dataTableName} FINAL d
+    JOIN ranked_ids r ON d.id = r.id
+    ORDER BY r.rn
+  `
 
   const countWhere = countWhereClause === undefined ? where : countWhereClause
   const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
@@ -328,36 +341,34 @@ export async function getClickhouseDataOnly<T>(
     .map(([key, value]) => `${value} AS ${key}`)
     .join(', ')
 
-  // const sortFieldMapper: Record<string, string> = {
-  //   originAmountDetails_transactionAmount: 'originAmountDetails_amount',
-  //   destinationAmountDetails_transactionAmount:
-  //     'destinationAmountDetails_amount',
-  //   ars_score: 'arsScore',
-  // }
-
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  const sortedOrderQuery = `(SELECT DISTINCT id FROM ${queryTableName} FINAL ${
-    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
-  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
-  const sortedOrder = await executeClickhouseQuery<
-    Record<string, string | number>[]
-  >(client, {
-    query: sortedOrderQuery,
-    format: 'JSONEachRow',
-  })
-  const sortedIds = sortedOrder.map((row) => row.id)
-  const findSql = `SELECT ${
-    columnsProjectionString.length > 0 ? columnsProjectionString : '*'
-  }, id FROM ${dataTableName} FINAL WHERE id IN (${sortedIds
-    .map((id) => `'${id}'`)
-    .join(',')})`
+  // Problem: IN clause don't preserve the ordering of result from the inner query, thus the sorting was not working as intended
+  // Solution: Keep OFFSET/FETCH for performance, then apply ranking to preserve sort order
+  const findSql = `
+    WITH sorted_ids AS (
+      SELECT DISTINCT id, ${sortField}
+      FROM ${queryTableName} FINAL
+      ${where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'}
+      ORDER BY ${sortField} ${direction}
+      OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY
+    ),
+    ranked_ids AS (
+      SELECT sorted_ids.id, ROW_NUMBER() OVER (ORDER BY sorted_ids.${sortField} ${direction}) as rn
+      FROM sorted_ids
+    )
+    SELECT ${columnsProjectionString.length > 0 ? columnsProjectionString : '*'}
+    FROM ${dataTableName} FINAL
+    JOIN ranked_ids ON ${dataTableName}.id = ranked_ids.id
+    ORDER BY ranked_ids.rn
+  `
 
-  const items = (
-    await executeClickhouseQuery<Record<string, string | number>[]>(client, {
+  const items = await executeClickhouseQuery<Record<string, string | number>[]>(
+    client,
+    {
       query: findSql,
       format: 'JSONEachRow',
-    })
-  ).sort((a, b) => sortedIds.indexOf(a.id) - sortedIds.indexOf(b.id))
+    }
+  )
 
   return callbackMap
     ? items.map((item) => callbackMap(item))
