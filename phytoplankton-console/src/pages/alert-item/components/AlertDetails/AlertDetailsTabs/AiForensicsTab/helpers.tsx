@@ -1,12 +1,12 @@
 import { ReactNode, useMemo } from 'react';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
-import { Alert, InternalBusinessUser, InternalConsumerUser, RuleInstance } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
+import { Alert, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
+import { useAlertTransactionStats } from '@/hooks/api/sanctions';
 import { useCheckedTransactionsQuery } from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions/helpers';
 import { AsyncResource, isSuccess, loading, map, success } from '@/utils/asyncResource';
 import Money from '@/components/ui/Money';
-import { ALERT_ITEM_TRANSACTION_STATS, USERS_ITEM } from '@/utils/queries/keys';
+import { useConsoleUser } from '@/hooks/api';
 import {
   QuestionResponse,
   QuestionResponseRuleHit,
@@ -25,20 +25,10 @@ export default function useStats(alert: Alert, caseUserId: string): StatsItem[] 
 
   const { queryResult } = useCheckedTransactionsQuery(alert, caseUserId);
 
-  const api = useApi();
-
-  const transactionsStatsQueryResult = useQuery(
-    ALERT_ITEM_TRANSACTION_STATS(alert.alertId ?? ''),
-    () => {
-      if (alert.alertId == null) {
-        throw new Error(`Alert id can not be empty`);
-      }
-      return api.getAlertTransactionStats({
-        alertId: alert.alertId,
-        referenceCurrency: 'USD',
-      });
-    },
-  );
+  const _api = useApi();
+  const transactionsStatsQueryResult = useAlertTransactionStats(alert.alertId ?? '', {
+    enabled: !!alert.alertId,
+  });
 
   result.push({
     title: 'Transactions checked',
@@ -80,16 +70,7 @@ export function usePreloadedHistory(
 
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const riskEnabled = useFeatureEnabled('RISK_LEVELS');
-  const api = useApi();
-  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM(caseUserId),
-    () => {
-      if (caseUserId == null) {
-        throw new Error(`Id is not defined`);
-      }
-      return api.getUsersItem({ userId: caseUserId });
-    },
-  );
+  const queryResult = useConsoleUser(caseUserId);
 
   const riskLevelRes = map(queryResult.data, (x) => {
     return x.drsScore?.manualRiskLevel ?? x.drsScore?.derivedRiskLevel ?? DEFAULT_RISK_LEVEL;

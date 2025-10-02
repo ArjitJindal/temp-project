@@ -4,9 +4,7 @@ import { LockFilled } from '@ant-design/icons';
 import s from './index.module.less';
 import { exportRolesDetails } from './utils';
 import { getSantiziedRoleName, formatRoleName } from '@/pages/accounts/utils';
-import { useApi } from '@/api';
 import { AccountRole } from '@/apis';
-import { ROLE } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import VerticalMenu from '@/components/library/VerticalMenu';
 import RoleForm from '@/pages/accounts/Roles/RoleForm';
@@ -16,7 +14,7 @@ import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.r
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
 import { useRolesQueryResult } from '@/utils/user-utils';
-import { useQuery } from '@/utils/queries/hooks';
+import { useRole } from '@/hooks/api';
 
 export default function Roles() {
   const result = useRolesQueryResult();
@@ -104,10 +102,7 @@ type RoleFormAsyncProps = {
 
 const RoleFormAsync = (props: RoleFormAsyncProps) => {
   const { roleId, onChange, existingRoleNames } = props;
-  const api = useApi();
-  const result = useQuery<AccountRole>(ROLE(roleId), async () => {
-    return await api.getRole({ roleId });
-  });
+  const result = useRole(roleId);
 
   return (
     <AsyncResourceRenderer key={roleId} resource={result.data}>

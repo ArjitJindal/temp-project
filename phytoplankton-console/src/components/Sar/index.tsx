@@ -10,7 +10,8 @@ import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/Proper
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
 import { Report, ReportTypesResponse } from '@/apis';
-import { useCaseItem, useReportTypesAll } from '@/hooks/api';
+import { useReportTypesAll } from '@/hooks/api';
+import { useCase } from '@/hooks/api/cases';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -36,7 +37,7 @@ export function SarButton(props: UserProps | CaseProps) {
   const api = useApi();
   const queryResult = useReportTypesAll();
 
-  const caseQueryResult = useCaseItem('caseId' in props ? props.caseId : '', {
+  const caseQueryResult = useCase('caseId' in props ? props.caseId : '', {
     enabled: 'caseId' in props,
   });
 

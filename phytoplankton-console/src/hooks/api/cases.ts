@@ -4,9 +4,9 @@ import { CASES_ITEM, CASES_LIST } from '@/utils/queries/keys';
 import { Case } from '@/apis';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 
-export function useCase(caseId: string) {
+export function useCase(caseId: string, options?: { enabled?: boolean }) {
   const api = useApi();
-  return useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
+  return useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }), options);
 }
 
 export function useCasesList(filter: DefaultApiGetCaseListRequest) {

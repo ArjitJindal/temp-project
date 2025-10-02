@@ -1,7 +1,7 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL, CASES_ITEM } from '@/utils/queries/keys';
-import { Case, ReportType, CountryCode } from '@/apis';
+import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
+import { ReportType, CountryCode } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
 
 export function useReportTypesAll(options?: { enabled?: boolean }) {
@@ -52,13 +52,4 @@ export function useSARReportCountries(allReportType?: boolean): SARReportCountry
   return [];
 }
 
-export function useCaseItem(caseId: string, options?: { enabled?: boolean }) {
-  const api = useApi();
-  return useQuery<Case>(
-    CASES_ITEM(caseId),
-    async () => {
-      return await api.getCase({ caseId });
-    },
-    options,
-  );
-}
+// useCase moved to hooks/api/cases.ts

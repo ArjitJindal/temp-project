@@ -1,7 +1,7 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { isSuccess } from '@/utils/asyncResource';
-import { GraphNodes, GraphEdges } from '@/apis';
+import type { GraphNodes, GraphEdges } from '@/apis';
 
 export type EntityFilters = { afterTimestamp?: number; beforeTimestamp?: number };
 
@@ -17,7 +17,12 @@ export function useUserEntity(
     { enabled: (options?.enabled ?? true) && !!userId },
   );
 
-  return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
+  return isSuccess(queryResult.data)
+    ? {
+        nodes: queryResult.data.value.nodes || [],
+        edges: queryResult.data.value.edges || [],
+      }
+    : undefined;
 }
 
 export function useTxnEntity(
@@ -31,5 +36,10 @@ export function useTxnEntity(
     () => api.getTxnLinking({ userId, ...(filters || {}) }),
     { enabled: (options?.enabled ?? true) && !!userId },
   );
-  return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
+  return isSuccess(queryResult.data)
+    ? {
+        nodes: queryResult.data.value.nodes || [],
+        edges: queryResult.data.value.edges || [],
+      }
+    : undefined;
 }

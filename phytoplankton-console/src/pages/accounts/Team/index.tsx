@@ -34,7 +34,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Tag from '@/components/library/Tag';
 import { QueryResult } from '@/utils/queries/types';
 import { isSuccess, loading, success } from '@/utils/asyncResource';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';

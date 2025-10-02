@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
-import { useQueryClient } from '@tanstack/react-query';
 import styles from './index.module.less';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
@@ -10,13 +9,7 @@ import ActivityTab from './ActivityTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
-import { CursorPaginatedData, useCursorQuery, useQuery } from '@/utils/queries/hooks';
-import {
-  ALERT_ITEM_COMMENTS,
-  CASES_ITEM,
-  SANCTIONS_HITS_ALL,
-  SANCTIONS_HITS_SEARCH,
-} from '@/utils/queries/keys';
+import type { CursorPaginatedData } from '@/utils/queries/hooks';
 import { AllParams, SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
@@ -25,16 +18,14 @@ import {
   SanctionHitStatusUpdateRequest,
   SanctionsDetailsEntityType,
   SanctionsHit,
-  SanctionsHitListResponse,
   SanctionsHitStatus,
   TransactionTableItem,
 } from '@/apis';
-import { Mutation, QueryResult } from '@/utils/queries/types';
-import { useMutation } from '@/utils/queries/mutations/hooks';
-import { message } from '@/components/library/Message';
-import { getErrorMessage } from '@/utils/lang';
+import { QueryResult } from '@/utils/queries/types';
 import { isScreeningAlert } from '@/utils/api/alerts';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
+import { useSanctionsHitsSearch } from '@/hooks/api/sanctions';
+import { useCase } from '@/hooks/api/cases';
 import UserDetails from '@/pages/users-item/UserDetails';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Linking from '@/pages/users-item/UserDetails/Linking';
@@ -119,105 +110,10 @@ export function useSanctionHitsQuery(
   alertId?: string,
   enabled?: boolean,
 ): QueryResult<CursorPaginatedData<SanctionsHit>> {
-  const api = useApi();
-  const filters = {
-    alertId: alertId,
-    filterStatus: params.statuses ?? ['OPEN' as const],
-    filterSearchId: params.searchIds,
-    filterPaymentMethodId: params.paymentMethodIds,
-    filterScreeningHitEntityType: params.entityType,
-  };
-  return useCursorQuery(
-    SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
-    async (paginationParams): Promise<SanctionsHitListResponse> => {
-      if (!filters.alertId) {
-        return {
-          items: [],
-          next: '',
-          prev: '',
-          last: '',
-          hasNext: false,
-          hasPrev: false,
-          count: 0,
-          limit: 100000,
-        };
-      }
-      const request = {
-        ...filters,
-        ...params,
-        ...paginationParams,
-      };
-      return await api.searchSanctionsHits({
-        ...request,
-        start: request.from,
-      });
-    },
-    {
-      enabled: enabled !== false,
-    },
-  );
+  return useSanctionsHitsSearch(params, alertId, enabled);
 }
 
-export function useChangeSanctionsHitsStatusMutation(): {
-  changeHitsStatusMutation: Mutation<
-    unknown,
-    unknown,
-    {
-      toChange: { alertId: string; sanctionHitIds: string[] }[];
-      updates: SanctionHitStatusUpdateRequest;
-    }
-  >;
-} {
-  const api = useApi();
-  const queryClient = useQueryClient();
-
-  const changeHitsStatusMutation = useMutation<
-    unknown,
-    unknown,
-    {
-      toChange: { alertId: string; sanctionHitIds: string[] }[];
-      updates: SanctionHitStatusUpdateRequest;
-    },
-    unknown
-  >(
-    async (variables: {
-      toChange: { alertId: string; sanctionHitIds: string[] }[];
-      updates: SanctionHitStatusUpdateRequest;
-    }) => {
-      const hideMessage = message.loading(`Saving...`);
-      const { toChange, updates } = variables;
-      try {
-        for (const { alertId, sanctionHitIds } of toChange) {
-          await api.changeSanctionsHitsStatus({
-            SanctionHitsStatusUpdateRequest: {
-              alertId,
-              sanctionHitIds,
-              updates,
-            },
-          });
-        }
-      } finally {
-        hideMessage();
-      }
-    },
-    {
-      onError: (e) => {
-        message.error(`Failed to update hits! ${getErrorMessage(e)}`);
-      },
-      onSuccess: async (_, variables) => {
-        message.success(`Done!`);
-        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
-        for (const { alertId } of variables.toChange) {
-          await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
-        }
-      },
-    },
-  );
-
-  return {
-    changeHitsStatusMutation,
-  };
-}
+export { useChangeSanctionsHitsStatusMutation } from '@/hooks/api/sanctions';
 
 type SelectedSanctionHits = {
   [alertId: string]: {
@@ -285,7 +181,7 @@ export function useAlertTabs(props: Props): TabItem[] {
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
 
-  const api = useApi();
+  const _api = useApi();
   const settings = useSettings();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
@@ -293,12 +189,7 @@ export function useAlertTabs(props: Props): TabItem[] {
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
-  const caseQueryResult = useQuery(CASES_ITEM(alert.caseId ?? ''), () => {
-    if (alert.caseId == null) {
-      throw new Error(`Alert doesn't have case assigned`);
-    }
-    return api.getCase({ caseId: alert.caseId });
-  });
+  const caseQueryResult = useCase(alert.caseId ?? '', { enabled: !!alert.caseId });
   const userQueryResult = useConsoleUser(caseUserId);
 
   const tabs: TabItem[] = useMemo(() => {

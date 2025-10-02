@@ -4,12 +4,9 @@ import {
   updateSanctionsData,
   useChangeSanctionsHitsStatusMutation,
 } from './AlertDetailsTabs/helpers';
-import { Alert, Case, SanctionsHitStatus } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
-import { CASES_ITEM } from '@/utils/queries/keys';
+import { Alert, SanctionsHitStatus } from '@/apis';
+import { useCase } from '@/hooks/api/cases';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-
-import { useApi } from '@/api';
 import { notEmpty } from '@/utils/array';
 import SanctionsHitStatusChangeModal from '@/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
@@ -23,15 +20,8 @@ interface Props {
 function AlertDetails(props: Props) {
   const { alertItem, headerStickyElRef } = props;
 
-  const api = useApi();
-
   const { caseId } = alertItem;
-  const caseQueryResults = useQuery(CASES_ITEM(caseId ?? ''), (): Promise<Case> => {
-    if (caseId == null) {
-      throw new Error(`Alert case id could not be empty`);
-    }
-    return api.getCase({ caseId });
-  });
+  const caseQueryResults = useCase(caseId ?? '', { enabled: !!caseId });
   const { changeHitsStatusMutation } = useChangeSanctionsHitsStatusMutation();
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   const [selectedSanctionHits, setSelectedSanctionHits] = useState<{

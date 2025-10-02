@@ -10,8 +10,8 @@ import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { PERMISSIONS, ROLES_LIST } from '@/utils/queries/keys';
+import { ROLES_LIST } from '@/utils/queries/keys';
+import { usePermissions } from '@/hooks/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { AccountRole, CreateAccountRole, PermissionStatements, PermissionsAction } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
@@ -47,9 +47,7 @@ export default function RoleDetails({
     role?.statements || [],
   );
 
-  const permissionsQuery = useQuery(PERMISSIONS(query), async () => {
-    return await api.getAllPermissions({ search: query });
-  });
+  const permissionsQuery = usePermissions(query);
 
   const tenantName = auth0User?.tenantName?.toLowerCase() || '';
   const statementManager = useMemo(() => new PermissionStatementManager(tenantName), [tenantName]);

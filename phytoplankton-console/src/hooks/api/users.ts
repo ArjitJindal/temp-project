@@ -13,12 +13,15 @@ import {
   USER_AUDIT_LOGS_LIST,
   USER_CHANGES_PROPOSALS,
   USER_CHANGES_PROPOSALS_BY_ID,
+  ROLE,
+  PERMISSIONS,
 } from '@/utils/queries/keys';
 import {
   InternalConsumerUser,
   InternalBusinessUser,
   AllUsersTableItemPreview,
   UserType,
+  AccountRole,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
@@ -119,6 +122,16 @@ export function useUserEntityLinkedChildren(userId: string | undefined, params?:
     const result = await api.getUserEntityChildUsers({ userId: userId ?? '', ...(params as any) });
     return result;
   });
+}
+
+export function useRole(roleId: string, options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery<AccountRole>(ROLE(roleId), async () => api.getRole({ roleId }), options);
+}
+
+export function usePermissions(search: string) {
+  const api = useApi();
+  return useQuery(PERMISSIONS(search), async () => api.getAllPermissions({ search }));
 }
 
 export interface EoddFormValues {

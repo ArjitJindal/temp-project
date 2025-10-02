@@ -9,9 +9,7 @@ import PageWrapper from '@/components/PageWrapper';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import Confirm from '@/components/utils/Confirm';
 import { notEmpty } from '@/utils/array';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { ROLE } from '@/utils/queries/keys';
+import { useRole } from '@/hooks/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isSuccess } from '@/utils/asyncResource';
 import PageTabs from '@/components/ui/PageTabs';
@@ -29,19 +27,9 @@ const AccountsRolesItemPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | undefined;
-  const api = useApi();
   const [pendingNavigationTarget, setPendingNavigationTarget] = useState<string | null>(null);
 
-  const roleQuery = useQuery(
-    ROLE(roleId || 'new'),
-    async () => {
-      if (!!roleId && roleId !== 'new') {
-        return await api.getRole({ roleId: roleId as string });
-      }
-      return undefined;
-    },
-    { enabled: roleId !== 'new' && !!roleId },
-  );
+  const roleQuery = useRole(roleId || 'new', { enabled: roleId !== 'new' && !!roleId });
 
   const handleSuccess = () => {
     navigate('/accounts/roles');

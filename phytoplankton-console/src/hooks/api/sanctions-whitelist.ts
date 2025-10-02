@@ -12,11 +12,11 @@ export function useSanctionsWhitelistSearch(params: {
   const api = useApi();
   return useCursorQuery(SANCTIONS_WHITELIST_SEARCH(params), async ({ from }) => {
     return api.searchSanctionsWhitelist({
-      start: from || params.from,
+      start: from ?? params.from ?? undefined,
       pageSize: params.pageSize,
-      filterUserId: params.userId ? [params.userId] : undefined,
-      filterEntity: params.entity ? [params.entity] : undefined,
-      filterEntityType: params.entityType ? [params.entityType] : undefined,
+      filterUserId: params.userId != null ? [params.userId] : undefined,
+      filterEntity: params.entity != null ? [params.entity] : undefined,
+      filterEntityType: params.entityType != null ? [params.entityType] : undefined,
     });
   });
 }
