@@ -24,7 +24,7 @@ import {
   PARAMETER_RENDERERS,
   findParameter,
 } from '@/components/ui/RiskScoreDisplay/DetailsModal/helpers';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { MAXIMUM_EXPORT_ITEMS } from '@/utils/data-export';
 import { QueryResult } from '@/utils/queries/types';
 import { DATE_TIME_FORMAT } from '@/components/library/DateRangePicker/DateTimeTextInput';

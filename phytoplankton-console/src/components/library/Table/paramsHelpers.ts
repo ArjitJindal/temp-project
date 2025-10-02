@@ -1,7 +1,7 @@
 /*
   Param utils
  */
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import { PaginatedParams, SortingParams, SortedParams } from '@/components/library/Table/types';
 
 export function pickPaginatedParams(params: PaginatedParams<unknown>): PaginationParams {

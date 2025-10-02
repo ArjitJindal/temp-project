@@ -8,10 +8,15 @@ import { COLORS_V2_ALERT_CRITICAL } from '../../../../ui/colors';
 import Checkbox from '../../../../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
-import { useQuery } from '@/utils/queries/hooks';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
+import {
+  useSecondaryQueueTenants,
+  useTenantsList,
+  useTenantsDeletionData,
+  useSARReportCountries,
+} from '@/hooks/api';
 import Button from '@/components/library/Button';
 import {
   BatchJobNames,
@@ -36,8 +41,6 @@ import { isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
-import { useSARReportCountries } from '@/components/Sar/utils';
-import { SECONDARY_QUEUE_TENANTS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 export enum FeatureTag {
@@ -248,10 +251,7 @@ export default function SuperAdminPanel() {
     failedToDeleteContainer: true,
   });
   const [downloadFeatureLoading, setDownloadFeatureState] = useState(false);
-  const secondaryQueueTenants = useQuery(SECONDARY_QUEUE_TENANTS(), async () => {
-    const tenants = await api.getTenantsSecondaryQueueTenants();
-    return tenants;
-  });
+  const secondaryQueueTenants = useSecondaryQueueTenants();
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
   const hasExternalSanctionsProvider =
     features?.includes('ACURIS') ||
@@ -272,9 +272,7 @@ export default function SuperAdminPanel() {
 
   const user = useAuth0User();
   const api = useApi();
-  const queryResult = useQuery(['tenants'], () => api.getTenantsList(), {
-    enabled: isModalVisible,
-  });
+  const queryResult = useTenantsList({ enabled: isModalVisible });
   const tenants: Array<Tenant & { whitelabel?: { host: string; name: string } }> = useMemo(() => {
     if (isSuccess(queryResult.data)) {
       return (
@@ -396,9 +394,7 @@ export default function SuperAdminPanel() {
     document.body.removeChild(link);
   };
 
-  const tenantsDeletionQueryResult = useQuery(['tenantsFailedToDelete'], async () => {
-    return await api.getTenantsDeletionData();
-  });
+  const tenantsDeletionQueryResult = useTenantsDeletionData();
 
   const { tenantsDeletedRecently, tenantsFailedToDelete, tenantsMarkedForDelete } = useMemo(() => {
     if (isSuccess(tenantsDeletionQueryResult.data)) {

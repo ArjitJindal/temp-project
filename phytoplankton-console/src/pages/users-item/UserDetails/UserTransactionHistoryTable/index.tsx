@@ -13,11 +13,8 @@ import {
   TransactionAmountDetails,
   TransactionState,
 } from '@/apis';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { CASES_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -47,6 +44,7 @@ import { useRuleOptions } from '@/utils/rules';
 import TagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
+import { useCasesList } from '@/hooks/api';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 import { useTransactionsQuery } from '@/pages/transactions/utils';
 import { TableDataItem } from '@/components/library/Table/types';
@@ -75,7 +73,6 @@ type TableParams = TransactionsTableParams;
 
 export function Content(props: { userId: string }) {
   const { userId } = props;
-  const api = useApi();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const riskClassificationValues = useRiskClassificationScores();
 
@@ -92,7 +89,7 @@ export function Content(props: { userId: string }) {
     filterUserId: userId,
   };
 
-  const cases = useQuery(CASES_LIST(filter), async () => api.getCaseList(filter));
+  const cases = useCasesList(filter);
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 

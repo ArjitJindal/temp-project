@@ -4,7 +4,7 @@ import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
 import TagsInput from './components/TagsInput';
-import { useUserLists } from '@/utils/queries/hooks';
+import { useUserLists } from '@/hooks/api';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
 import Select from '@/components/library/Select';

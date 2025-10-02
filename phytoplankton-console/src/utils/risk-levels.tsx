@@ -17,10 +17,7 @@ import {
   COLORS_V2_RISK_LEVEL_BG_VERY_HIGH,
   COLORS_V2_RISK_LEVEL_BG_VERY_LOW,
 } from '@/components/ui/colors';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { getOr } from '@/utils/asyncResource';
-import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
+import { useRiskClassificationConfig } from '@/hooks/api';
 
 export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
 
@@ -75,19 +72,7 @@ export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = Object
   },
 });
 
-export function useRiskClassificationConfig(): {
-  refetch: () => void;
-  data: RiskClassificationConfig;
-} {
-  const api = useApi();
-  const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
-    api.getPulseRiskClassification(),
-  );
-  return {
-    refetch: riskValuesQueryResults.refetch,
-    data: getOr(riskValuesQueryResults.data, DEFAULT_RISK_CLASSIFICATION_CONFIG),
-  };
-}
+export { useRiskClassificationConfig };
 
 export function useRiskClassificationScores(): Array<RiskClassificationScore> {
   const config = useRiskClassificationConfig();

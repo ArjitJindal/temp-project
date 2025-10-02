@@ -91,12 +91,10 @@ import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/Invest
 import { getOr, map } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { denseArray, neverReturn } from '@/utils/lang';
-import { useRuleQueues } from '@/components/rules/util';
+import { useRuleQueues } from '@/hooks/api';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
-import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import {
@@ -384,11 +382,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     actionRef.current?.reload();
   }, []);
 
-  const slaPoliciesQueryResult = useQuery(SLA_POLICY_LIST(), async () => {
-    return await api.getSlaPolicies({
-      pageSize: 100,
-    });
-  });
+  const slaPoliciesQueryResult = useSlaPolicies({ pageSize: 100 });
   const slaPolicies = getOr(slaPoliciesQueryResult.data, {
     items: [],
     total: 0,

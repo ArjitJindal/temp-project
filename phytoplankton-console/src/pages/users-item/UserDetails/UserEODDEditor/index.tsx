@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import s from './index.module.less';
-import EODDChangeModal, {
-  FormValues as EoodFormValues,
-  useEODDChangeMutation,
-} from './EODDChangeModal';
+import EODDChangeModal, { FormValues as EoodFormValues } from './EODDChangeModal';
+import { useEODDChangeMutation } from '@/hooks/api';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useHasResources } from '@/utils/user-utils';

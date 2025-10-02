@@ -9,9 +9,8 @@ import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import { Case, Report, ReportTypesResponse } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
-import { CASES_ITEM, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
+import { Report, ReportTypesResponse } from '@/apis';
+import { useCaseItem, useReportTypesAll } from '@/hooks/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -35,17 +34,11 @@ interface CaseProps extends CommonProps {
 export function SarButton(props: UserProps | CaseProps) {
   const { alertIds, transactionIds, isDisabled } = props;
   const api = useApi();
-  const queryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS_ALL(), () => {
-    return api.getReportTypes({ allReportType: true });
-  });
+  const queryResult = useReportTypesAll();
 
-  const caseQueryResult = useQuery<Case>(
-    CASES_ITEM('caseId' in props ? props.caseId : ''),
-    async () => {
-      return await api.getCase({ caseId: 'caseId' in props ? props.caseId : '' });
-    },
-    { enabled: 'caseId' in props },
-  );
+  const caseQueryResult = useCaseItem('caseId' in props ? props.caseId : '', {
+    enabled: 'caseId' in props,
+  });
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setLoading] = useState(false);

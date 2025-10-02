@@ -4,7 +4,7 @@ import React from 'react';
 import { ExportDataStructure, ExportKey } from './export';
 import { AutoFilterDataType } from '@/components/library/Filter/types';
 import { ExportDataRow } from '@/utils/data-export';
-import { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
+import type { PaginatedData, PaginationParams } from '@/utils/queries/hooks';
 import { StatePair } from '@/utils/state';
 /*
   Contexts

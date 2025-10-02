@@ -1,9 +1,7 @@
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { uniq } from 'lodash';
 import { useMemo } from 'react';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { UNIQUES } from '@/utils/queries/keys';
+import { useTransactionsUniques, useUsersUniques } from '@/hooks/api';
 import { TransactionsUniquesField, UsersUniquesField } from '@/apis';
 import { getOr } from '@/utils/asyncResource';
 import Select from '@/components/library/Select';
@@ -18,28 +16,27 @@ type UniqueTypeProps =
   | { type: 'users'; uniqueType: UsersUniquesField };
 
 const useUniquesData = (uniqueTypeProps: UniqueTypeProps, filterKey?: string) => {
-  const api = useApi();
-
   // For TAGS_VALUE fields, don't fetch data if no filter is provided
   const shouldFetch = uniqueTypeProps.uniqueType !== 'TAGS_VALUE' || !!filterKey;
-
-  const result = useQuery(
-    UNIQUES(uniqueTypeProps.type, uniqueTypeProps.uniqueType, { filter: filterKey }),
-    () => {
-      if (uniqueTypeProps.type === 'transactions') {
-        return api.getTransactionsUniques({
-          field: uniqueTypeProps.uniqueType,
-          filter: filterKey,
-        });
-      } else {
-        return api.getUsersUniques({
-          field: uniqueTypeProps.uniqueType,
-          filter: filterKey,
-        });
-      }
+  const enableTransactions =
+    uniqueTypeProps.type === 'transactions' && !!uniqueTypeProps.uniqueType && shouldFetch;
+  const enableUsers =
+    uniqueTypeProps.type === 'users' && !!uniqueTypeProps.uniqueType && shouldFetch;
+  const transactionsResult = useTransactionsUniques(
+    uniqueTypeProps.uniqueType,
+    { filter: filterKey },
+    {
+      enabled: enableTransactions,
     },
-    { enabled: !!uniqueTypeProps.uniqueType && shouldFetch },
   );
+  const usersResult = useUsersUniques(
+    uniqueTypeProps.uniqueType,
+    { filter: filterKey },
+    {
+      enabled: enableUsers,
+    },
+  );
+  const result = uniqueTypeProps.type === 'transactions' ? transactionsResult : usersResult;
   return getOr(result.data, []);
 };
 

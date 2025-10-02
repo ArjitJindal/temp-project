@@ -1,8 +1,6 @@
 import React from 'react';
-import { useApi } from '@/api';
+import { useUserDrs } from '@/hooks/api';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
-import { USERS_ITEM_RISKS_DRS } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useHasResources } from '@/utils/user-utils';
 import DynamicRiskHistoryDisplay from '@/components/ui/DynamicRiskHistoryDisplay';
@@ -12,9 +10,7 @@ interface Props {
 }
 
 export default function DynamicRiskDisplay({ userId }: Props) {
-  const api = useApi();
-
-  const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const queryResult = useUserDrs(userId);
   const isDrsPermissionEnabled = useHasResources(['read:::risk-scoring/risk-score-details/*']);
 
   return (

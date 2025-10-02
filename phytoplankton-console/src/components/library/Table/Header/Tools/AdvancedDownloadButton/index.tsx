@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PaginatedParams, TableColumn, TableData } from '../../../types';
 import AdvancedExportModal from './AdvancedExportModal';
 import s from './styles.module.less';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 
 type Props<Item extends object, Params extends object> = {

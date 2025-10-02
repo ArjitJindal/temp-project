@@ -4,7 +4,7 @@ import { CommonParams, SelectionInfo, SortingParams, TableRow } from './types';
 import s from './index.module.less';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/ExpandIcon';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
 import { TableListViewEnum } from '@/apis';
 

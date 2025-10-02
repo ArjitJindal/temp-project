@@ -3,9 +3,7 @@ import { uniq } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Value } from '../types';
 import s from './style.module.less';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
+import { useTransactionsUniques } from '@/hooks/api';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
@@ -22,12 +20,7 @@ interface Props {
 export default function PopupContent(props: Props) {
   const { initialState, onCancel, onConfirm, uniqueType, defaults = [] } = props;
 
-  const api = useApi();
-  const result = useQuery(TRANSACTIONS_UNIQUES(uniqueType), async () => {
-    return await api.getTransactionsUniques({
-      field: uniqueType,
-    });
-  });
+  const result = useTransactionsUniques(uniqueType);
 
   const [value, setValue] = useState(initialState.uniques);
 

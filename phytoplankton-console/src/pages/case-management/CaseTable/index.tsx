@@ -34,7 +34,7 @@ import { getUserLink } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/library/Tag/UserStateTag';
-import { PaginatedData, useQuery } from '@/utils/queries/hooks';
+import { PaginatedData } from '@/utils/queries/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -82,7 +82,8 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { getOr } from '@/utils/asyncResource';
 import { withRenderPerf } from '@/perf/withRenderPerf';
-import { SLA_POLICY_LIST } from '@/utils/queries/keys';
+// SLA policies now use useSlaPolicies hook
+import { useSlaPolicies } from '@/hooks/api';
 import { useCaseStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 
 interface Props<FirstModalProps, SecondModalProps> {
@@ -178,11 +179,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
 
   const slaEnabled = useFeatureEnabled('PNB');
 
-  const slaPoliciesQueryResult = useQuery(SLA_POLICY_LIST(), async () => {
-    return await api.getSlaPolicies({
-      pageSize: 100,
-    });
-  });
+  const slaPoliciesQueryResult = useSlaPolicies({ pageSize: 100 });
   const slaPolicies = getOr(slaPoliciesQueryResult.data, {
     items: [],
     total: 0,

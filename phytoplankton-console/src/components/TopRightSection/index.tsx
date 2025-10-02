@@ -11,10 +11,8 @@ import { CloseMessage, message } from '../library/Message';
 import Link from '../ui/Link';
 import s from './styles.module.less';
 import Toggle from '@/components/library/Toggle';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
-import { SIMULATION_COUNT } from '@/utils/queries/keys';
+import { useSimulationCount } from '@/hooks/api';
 import Tooltip from '@/components/library/Tooltip';
 import Label from '@/components/library/Label';
 import { FileInfo } from '@/apis';
@@ -45,14 +43,8 @@ export type TopRightSectionProps = PageWrapperProps & {
 
 export const TopRightSection = forwardRef<TopRightSectionRef, TopRightSectionProps>(
   (props, ref) => {
-    const api = useApi();
     const isSimulationFeatureEnabled = useFeatureEnabled('SIMULATOR');
-    const simulationCountResults = useQuery(SIMULATION_COUNT(), async () => {
-      if (!isSimulationFeatureEnabled) {
-        return { runJobsCount: 0 };
-      }
-      return api.getSimulationJobsCount();
-    });
+    const simulationCountResults = useSimulationCount(isSimulationFeatureEnabled);
     useImperativeHandle(ref, () => ({
       refetchSimulationCount: () => {
         simulationCountResults.refetch();

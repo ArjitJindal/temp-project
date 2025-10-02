@@ -1,7 +1,7 @@
 import { UseMutationResult } from '@tanstack/react-query';
 import * as ar from '@/utils/asyncResource';
 import { AsyncResource } from '@/utils/asyncResource';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 
 export interface Cursor {
   prev?: string;

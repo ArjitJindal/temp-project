@@ -12,7 +12,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
-import { useSARReportCountries } from '@/components/Sar/utils';
+import { useSARReportCountries } from '@/hooks/api';
 import { H3, P } from '@/components/ui/Typography';
 
 interface Props {

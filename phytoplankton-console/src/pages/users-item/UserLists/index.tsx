@@ -1,11 +1,9 @@
 import s from './index.module.less';
 import { ListHeaderInternal } from '@/apis';
-import { useApi } from '@/api';
 import Id from '@/components/ui/Id';
 import { TableColumn } from '@/components/library/Table/types';
-import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { LISTS } from '@/utils/queries/keys';
+import { useListsByUserId } from '@/hooks/api';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
 import Toggle from '@/components/library/Toggle';
@@ -19,15 +17,7 @@ interface Props {
 
 export default function UserLists(props: Props) {
   const { userId } = props;
-  const api = useApi();
-
-  const queryResults = useQuery([LISTS(), userId], async () => {
-    const response = await api.getLists({ filterUserIds: [userId] });
-    return {
-      items: Array.isArray(response) ? response : [],
-      total: Array.isArray(response) ? response.length : 0,
-    };
-  });
+  const queryResults = useListsByUserId(userId);
 
   const helper = new ColumnHelper<ListHeaderInternal>();
   const columns: TableColumn<ListHeaderInternal>[] = helper.list([

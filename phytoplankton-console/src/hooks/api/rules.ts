@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
-import { isLoading, isSuccess } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_QUEUE, RULE_QUEUES, USERS_UNIQUES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { RULE_QUEUE, RULE_QUEUES } from '@/utils/queries/keys';
+import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { RuleQueue } from '@/apis';
 
-export function useRuleQueue(queueId?: string): [RuleQueue | null, boolean] {
+export function useRuleQueue(
+  queueId?: string,
+): [ruleQueue: RuleQueue | null, isLoadingState: boolean] {
   const api = useApi();
   const ruleQueueResult = useQuery(RULE_QUEUE(queueId), async () => {
     if (!queueId) {
@@ -23,7 +25,7 @@ export function useRuleQueue(queueId?: string): [RuleQueue | null, boolean] {
 
 export function useRuleQueues(): RuleQueue[] {
   const api = useApi();
-  const params = { pageSize: 1000 };
+  const params = { pageSize: 1000 } as const;
   const queryResult = useQuery(RULE_QUEUES(params), async () => {
     return await api.getRuleQueues(params);
   });
@@ -32,8 +34,8 @@ export function useRuleQueues(): RuleQueue[] {
 
 export function useBusinessIndustries(): string[] {
   const api = useApi();
-  const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
-    api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' }),
-  );
-  return isSuccess(result.data) ? result.data.value : [];
+  const result = useQuery(['users', 'uniques', 'BUSINESS_INDUSTRY'], async () => {
+    return await api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' as any });
+  });
+  return isSuccess(result.data) ? (result.data.value as unknown as string[]) : [];
 }

@@ -7,7 +7,7 @@ import LastSearchList from './LastSearchList';
 import { useLastSearches } from './helpers';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import Select from '@/components/library/Select';
 
 interface Props<T> {

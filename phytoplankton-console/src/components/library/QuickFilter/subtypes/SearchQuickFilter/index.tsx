@@ -4,7 +4,7 @@ import { MessageRenderers } from './PopupContent/SearchResultList';
 import { ItemType } from './types';
 import QuickFilter from '@/components/library/QuickFilter';
 import { QueryResult } from '@/utils/queries/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 
 interface Props<T> {
   title: string;

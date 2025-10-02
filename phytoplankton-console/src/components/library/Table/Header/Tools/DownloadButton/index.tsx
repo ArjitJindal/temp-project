@@ -25,7 +25,7 @@ import { flatDataItems } from '@/components/library/Table/internal/helpers';
 import * as Form from '@/components/ui/Form';
 import { getErrorMessage } from '@/utils/lang';
 import { downloadAsCSV } from '@/utils/csv';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import { downloadAsXLSX } from '@/utils/xlsx';
 import Alert from '@/components/library/Alert';
 import { message } from '@/components/library/Message';

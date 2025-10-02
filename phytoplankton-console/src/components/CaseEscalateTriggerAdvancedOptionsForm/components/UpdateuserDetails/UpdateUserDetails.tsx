@@ -11,7 +11,7 @@ import { ModalWidth, isModalWidthGreatherThan } from '@/components/library/Modal
 import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
-import { useUserLists } from '@/utils/queries/hooks';
+import { useUserLists } from '@/hooks/api';
 import { getOr } from '@/utils/asyncResource';
 
 type UpdateUserDetailsProps = {

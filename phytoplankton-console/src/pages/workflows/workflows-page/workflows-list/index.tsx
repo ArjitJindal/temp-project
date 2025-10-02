@@ -2,26 +2,20 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import s from './index.module.less';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
-import { useApi } from '@/api';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { ID, NUMBER, TAG } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Id from '@/components/ui/Id';
 import { WorkflowItem } from '@/utils/api/workflows';
-import { useQuery } from '@/utils/queries/hooks';
-import { WORKFLOWS_LIST } from '@/utils/queries/keys';
+import { useWorkflowsList } from '@/hooks/api';
 import { map } from '@/utils/queries/types';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/library/Button';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 export default function WorkflowsList() {
-  const api = useApi();
-  const workflowsQueryResult = useQuery(WORKFLOWS_LIST({}), async (): Promise<WorkflowItem[]> => {
-    const workflowResponse = await api.getAllWorkflowTypes();
-    return workflowResponse.workflows ?? [];
-  });
+  const workflowsQueryResult = useWorkflowsList();
 
   const navigate = useNavigate();
 

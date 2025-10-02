@@ -5,10 +5,9 @@ import s from './styles.module.less';
 import CreateScreeningProfileModal from './CreateScreeningProfileModal';
 import Tooltip from '@/components/library/Tooltip';
 import Toggle from '@/components/library/Toggle';
-import { useQuery } from '@/utils/queries/hooks';
+import { useScreeningProfiles } from '@/hooks/api';
 import { useApi } from '@/api';
 import { ScreeningProfileResponse } from '@/apis';
-import { SCREENING_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
 import { useUsers } from '@/utils/user-utils';
@@ -30,20 +29,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
     undefined,
   );
 
-  const queryResult = useQuery(SCREENING_PROFILES(), async () => {
-    try {
-      const response = await api.getScreeningProfiles();
-      return {
-        items: response.items || [],
-        total: response.items?.length || 0,
-      };
-    } catch (error) {
-      return {
-        items: [],
-        total: 0,
-      };
-    }
-  });
+  const queryResult = useScreeningProfiles();
 
   const isReadOnly = false; // !useHasResources(['screening:screening-profiles:write']);
 

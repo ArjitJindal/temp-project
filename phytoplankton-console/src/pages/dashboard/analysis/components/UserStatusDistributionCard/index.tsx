@@ -19,9 +19,7 @@ import WidgetRangePicker, {
 import { useUsersQuery } from '@/pages/dashboard/analysis/components/dashboardutils';
 import { dayjs } from '@/utils/dayjs';
 import { map, getOr } from '@/utils/asyncResource';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { USERS_STATS } from '@/utils/queries/keys';
+import { useDashboardUsersStats } from '@/hooks/api';
 import DonutChart from '@/components/charts/DonutChart';
 import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -54,10 +52,7 @@ export default function UserStatusDistributionCard(props: Props) {
   };
   const usersResult = useUsersQuery(userType, dateRange);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
-  const api = useApi();
-  const queryResult = useQuery(USERS_STATS(params), async () => {
-    return await api.getDashboardStatsUsersByTime(params);
-  });
+  const queryResult = useDashboardUsersStats(params);
   const settings = useSettings();
   const dataResource = map(queryResult.data, (data: DashboardStatsUsersStats[]) => {
     const statusMap = data.reduce((acc, curr) => {

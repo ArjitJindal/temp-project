@@ -35,7 +35,7 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
+import { useBusinessIndustries, useRuleQueues } from '@/hooks/api';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';

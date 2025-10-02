@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import s from './index.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
-import { useApi } from '@/api';
 import { TenantApiKey } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { useQuery } from '@/utils/queries/hooks';
+import { useTenantApiKeys } from '@/hooks/api';
 import EyeOutlined from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { message } from '@/components/library/Message';
@@ -20,21 +19,11 @@ import { copyTextToClipboard } from '@/utils/browser';
 import { getErrorMessage } from '@/utils/lang';
 
 export const ApiKeysSettings = () => {
-  const api = useApi();
   const user = useAuth0User();
   const [unmaskingId, setUnmaskingId] = useState<string | null>(null);
   const [unmaskedApiKey, setUnmaskedApiKey] = useState<string | undefined>(undefined);
 
-  const queryResult = useQuery(
-    ['apiKeys', { unmaskedApiKey }],
-    async () =>
-      await api.getTenantApiKeys({
-        ...(unmaskedApiKey && { unmask: true, unmaskApiKeyId: unmaskedApiKey }),
-      }),
-    {
-      refetchOnWindowFocus: false,
-    },
-  );
+  const queryResult = useTenantApiKeys(unmaskedApiKey);
 
   const settings = useSettings();
 

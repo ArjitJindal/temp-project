@@ -1,13 +1,10 @@
 import { useNavigate } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { NEW_VERSION_ID, VERSION_HISTORY_ITEM } from './queries/keys';
-import { getOr } from './asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { NEW_VERSION_ID, VERSION_HISTORY_ITEM } from '@/utils/queries/keys';
 import { VersionHistory, VersionHistoryRestorePayload, VersionHistoryType } from '@/apis';
 import { message } from '@/components/library/Message';
-import { useRiskFactors } from '@/pages/risk-levels/risk-factors/utils';
 
 export function useNewVersionId(type: VersionHistoryType) {
   const api = useApi();
@@ -34,7 +31,6 @@ export function useVersionHistoryItem(type: VersionHistoryType, versionId: strin
       },
     },
   );
-
   return queryResult;
 }
 
@@ -50,18 +46,4 @@ export function useVersionHistoryRestore(onSuccess: () => void) {
     },
   );
   return queryResult;
-}
-
-export function useMaxVersionIdRiskFactors() {
-  const riskFactorsQueryResult = useRiskFactors();
-  const riskFactors = getOr(riskFactorsQueryResult.data, []);
-  const maxVersionId = useMemo(() => {
-    const id = riskFactors.reduce(
-      (max, rf) => Math.max(max, Number(rf.versionId?.split('-')[1] ?? 0)),
-      0,
-    );
-    return id.toString().padStart(3, '0');
-  }, [riskFactors]);
-
-  return maxVersionId;
 }

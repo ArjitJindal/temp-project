@@ -1,8 +1,8 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { isEmpty } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
-import { useReportType } from '../utils';
 import s from './style.module.less';
+import { useReportType } from '@/hooks/api';
 import Drawer from '@/components/library/Drawer';
 import { Report, ReportStatus } from '@/apis';
 import { useApi } from '@/api';

@@ -9,8 +9,7 @@ import Button from '@/components/library/Button';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { WORKFLOWS_ITEM } from '@/utils/queries/keys';
+import { useWorkflowItem } from '@/hooks/api';
 import { parseWorkflowType, WorkflowItem } from '@/utils/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isLoading, isSuccess, map, useIsResourceChangedStatus } from '@/utils/asyncResource';
@@ -33,15 +32,7 @@ export default function WorkflowsItemPage() {
   const navigate = useNavigate();
 
   const api = useApi();
-  const workflowsQueryResult = useQuery(
-    WORKFLOWS_ITEM(workflowType, id),
-    async (): Promise<WorkflowItem> => {
-      return await api.getWorkflowById({
-        workflowType: workflowType,
-        workflowId: id,
-      });
-    },
-  );
+  const workflowsQueryResult = useWorkflowItem(workflowType, id);
 
   // Keep state wrapped in an AsyncResource
   const [state, dispatch] = useReducerWrapper();

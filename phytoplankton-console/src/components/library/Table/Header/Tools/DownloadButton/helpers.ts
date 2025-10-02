@@ -15,7 +15,7 @@ import {
   TableData,
 } from '../../../types';
 import { getCurrentDomain } from '@/utils/routing';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import { ExportData, ExportDataRow, exportValue } from '@/utils/data-export';
 
 export function generateTableExportData<T extends object>(

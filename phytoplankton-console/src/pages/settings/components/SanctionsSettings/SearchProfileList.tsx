@@ -5,10 +5,9 @@ import s from './styles.module.less';
 import CreateSearchProfileModal from './CreateSearchProfileModal';
 import Tooltip from '@/components/library/Tooltip';
 import Toggle from '@/components/library/Toggle';
-import { useQuery } from '@/utils/queries/hooks';
+import { useSearchProfiles } from '@/hooks/api';
 import { useApi } from '@/api';
 import { SearchProfileResponse } from '@/apis';
-import { SEARCH_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
 import { useHasResources, useUsers } from '@/utils/user-utils';
@@ -29,20 +28,7 @@ export const SearchProfileList = ({ hasFeature }) => {
     undefined,
   );
 
-  const queryResult = useQuery(SEARCH_PROFILES(), async () => {
-    try {
-      const response = await api.getSearchProfiles();
-      return {
-        items: response.items || [],
-        total: response.items?.length || 0,
-      };
-    } catch (error) {
-      return {
-        items: [],
-        total: 0,
-      };
-    }
-  });
+  const queryResult = useSearchProfiles();
 
   const isReadOnly = !useHasResources(['write:::screening/search-profiles/*']);
 

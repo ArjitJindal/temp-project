@@ -14,7 +14,7 @@ import { TableRefType } from '@/components/library/Table/types';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { statusInReview } from '@/utils/case-utils';
-import { ChecklistItem, HydratedChecklist, useAlertChecklist } from '@/utils/checklist-templates';
+import { ChecklistItem, HydratedChecklist, useAlertChecklist } from '@/hooks/api';
 import { useQaMode } from '@/utils/qa-mode';
 import { ALERT_CHECKLIST } from '@/utils/queries/keys';
 interface Props {

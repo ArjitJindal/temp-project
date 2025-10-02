@@ -16,8 +16,7 @@ import { AllParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { SLA_POLICY_LIST } from '@/utils/queries/keys';
+import { useSlaPoliciesPaginated } from '@/hooks/api';
 import {
   getDisplayedUserInfo,
   useAuth0User,
@@ -66,12 +65,7 @@ export function SlaPolicySettings() {
     pageSize: 50,
   });
   const isPnb = useFeatureEnabled('PNB');
-  const slaPoliciesResult = usePaginatedQuery<SLAPolicy>(
-    SLA_POLICY_LIST(params),
-    async (paginationParams) => {
-      return await api.getSlaPolicies({ ...params, ...paginationParams });
-    },
-  );
+  const slaPoliciesResult = useSlaPoliciesPaginated(params, {});
   const isReadOnly = !useHasResources(['write:::settings/case-management/*']);
   const formRef = useRef<FormRef<any>>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
