@@ -1,14 +1,17 @@
 import { useApi } from '@/api';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery, useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import {
   ALERT_ITEM,
   ALERT_LIST,
   COPILOT_ALERT_QUESTIONS,
   COPILOT_SUGGESTIONS,
+  ALERT_ITEM_TRANSACTION_LIST,
+  AIF_SEARCH_KEY,
 } from '@/utils/queries/keys';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { NotFoundError } from '@/utils/errors';
-import { Alert, InternalTransaction, RuleAction } from '@/apis';
+import { Alert, InternalTransaction, RuleAction, TransactionTableItem, CurrencyCode } from '@/apis';
+import { dayjs } from '@/utils/dayjs';
 
 export function useAlert(alertId: string, options?: { enabled?: boolean }) {
   const api = useApi();
@@ -71,4 +74,84 @@ export function useAlertList(
       total: response.total,
     };
   });
+}
+
+export function useAlertTransactionList(
+  alertId: string | undefined,
+  params: any,
+  options?: { fixedParams?: Record<string, any>; enabled?: boolean },
+) {
+  const api = useApi();
+  return useCursorQuery<TransactionTableItem>(
+    ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', params),
+    async ({ from, view }) => {
+      if (alertId == null) {
+        throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
+      }
+      const [sortField, sortOrder] = params.sort?.[0] ?? [];
+      return await api.getAlertTransactionList({
+        ...(options?.fixedParams ?? {}),
+        ...params,
+        alertId,
+        start: from ?? params.from,
+        page: params.page,
+        pageSize: params.pageSize,
+        view,
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+        filterOriginPaymentMethods: params.originMethodFilter,
+        filterDestinationPaymentMethods: params.destinationMethodFilter,
+        filterTransactionId: params.transactionId,
+        filterOriginCurrencies: params.originCurrenciesFilter as CurrencyCode[],
+        filterDestinationCurrencies: params.destinationCurrenciesFilter as CurrencyCode[],
+        beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
+        afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
+        filterDestinationCountries: params['destinationAmountDetails.country'],
+        filterOriginCountries: params['originAmountDetails.country'],
+        filterSanctionsHitId: params.filterSanctionsHitId,
+        filterPaymentDetailName: params.filterPaymentDetailName,
+        filterPaymentMethodId: params.filterPaymentMethodId,
+        filterReference: params.reference,
+      });
+    },
+    { enabled: options?.enabled ?? true },
+  );
+}
+
+export function useCreateAlertComment() {
+  const api = useApi();
+  return async (request: { alertId: string; CommentRequest: { body: string; files?: any[] } }) => {
+    return await api.createAlertsComment(request);
+  };
+}
+
+export function useQuestionVariableAutocomplete(
+  questionId: string,
+  variableKey: string,
+  search: string,
+  options?: { enabled?: boolean },
+) {
+  const api = useApi();
+  return useQuery(
+    AIF_SEARCH_KEY(questionId, variableKey, search),
+    async () => {
+      const results = await api.getQuestionVariableAutocomplete({
+        questionId,
+        variableKey,
+        search,
+      });
+      return (results.suggestions ?? []).map((s: string) => ({ value: s, label: s }));
+    },
+    options,
+  );
+}
+
+export function usePostQuestion() {
+  const api = useApi();
+  return async (request: {
+    alertId: string;
+    QuestionRequest: { question: string; variables: any[] };
+  }) => {
+    return await api.postQuestion(request);
+  };
 }

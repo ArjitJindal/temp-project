@@ -7,7 +7,7 @@ import { ID, NUMBER, TAG } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Id from '@/components/ui/Id';
-import { WorkflowItem } from '@/utils/api/workflows';
+import { WorkflowItem } from '@/hooks/api/workflows';
 import { useWorkflowsList } from '@/hooks/api';
 import { map } from '@/utils/queries/types';
 import { makeUrl } from '@/utils/routing';

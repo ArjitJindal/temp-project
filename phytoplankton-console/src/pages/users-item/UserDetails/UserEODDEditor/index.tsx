@@ -12,7 +12,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import {
   useUserFieldChangesPendingApprovals,
   useUserFieldChangesStrategy,
-} from '@/utils/api/workflows';
+} from '@/hooks/api/workflows';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import Confirm from '@/components/utils/Confirm';

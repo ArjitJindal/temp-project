@@ -4,7 +4,7 @@ import { AllParams, TableData } from '@/components/library/Table/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { useApi } from '@/api';
 import { FlagrightAuth0User, useAuth0User } from '@/utils/user-utils';
-import { PaginationParams, usePaginatedQuery } from '@/utils/queries/hooks';
+import { type PaginationParams, usePaginatedQuery } from '@/utils/queries/hooks';
 import { ALERT_LIST } from '@/utils/queries/keys';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { getStatuses } from '@/utils/case-utils';

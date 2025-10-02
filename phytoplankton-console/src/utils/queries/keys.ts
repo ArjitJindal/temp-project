@@ -16,7 +16,7 @@ import {
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 import { CRMModelType } from '@/apis/models/CRMModelType';
-import { WorkflowType } from '@/utils/api/workflows';
+import { WorkflowType } from '@/hooks/api/workflows';
 
 type AnyParameters = unknown;
 

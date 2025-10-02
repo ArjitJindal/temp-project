@@ -7,15 +7,13 @@ import CasesStatusChangeModal, {
 import AlertsStatusChangeModal, {
   Props as AlertsStatusChangeModalProps,
 } from './components/AlertsStatusChangeButton/AlertsStatusChangeModal';
-import { dayjs } from '@/utils/dayjs';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
-import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
+import { type PaginatedData } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
-import { CASES_LIST } from '@/utils/queries/keys';
+import { useCasesListPaginated } from '@/hooks/api/cases';
 import { useRuleOptions } from '@/utils/rules';
 import { useAuth0User } from '@/utils/user-utils';
-import { getStatuses } from '@/utils/case-utils';
 import { QueryResult } from '@/utils/queries/types';
 
 interface CaseTableChildrenProps extends ModalHandlers<CasesStatusChangeModalProps> {
@@ -32,104 +30,10 @@ export default function CaseTableWrapper(props: {
 }) {
   const { params, onChangeParams } = props;
 
-  const api = useApi({ debounce: 500 });
-  const auth0user = useAuth0User();
+  const _api = useApi({ debounce: 500 });
+  const _auth0user = useAuth0User();
 
-  const queryResults = usePaginatedQuery<Case>(
-    CASES_LIST(params),
-    async (paginationParams) => {
-      const {
-        sort,
-        page,
-        pageSize,
-        view,
-        createdTimestamp,
-        caseId,
-        rulesHitFilter,
-        rulesExecutedFilter,
-        userId,
-        parentUserId,
-        originMethodFilter,
-        destinationMethodFilter,
-        tagKey,
-        tagValue,
-        caseStatus,
-        businessIndustryFilter,
-        riskLevels,
-        userStates,
-        showCases,
-        assignedTo,
-        roleAssignedTo,
-        updatedAt,
-        caseTypesFilter,
-        ruleQueueIds,
-        alertPriority,
-        ruleNature,
-        filterCaseSlaPolicyId,
-        filterCaseSlaPolicyStatus,
-        filterClosingReason,
-      } = params;
-
-      const [sortField, sortOrder] = sort[0] ?? [];
-
-      const afterTimestamp =
-        createdTimestamp && createdTimestamp[0] !== undefined && createdTimestamp[0] !== null
-          ? dayjs(createdTimestamp[0]).valueOf()
-          : 0;
-      const beforeTimestamp =
-        createdTimestamp && createdTimestamp[1] !== undefined && createdTimestamp[1] !== null
-          ? dayjs(createdTimestamp[1]).valueOf()
-          : Number.MAX_SAFE_INTEGER;
-
-      const response = await api.getCaseList({
-        page,
-        pageSize,
-        view,
-        ...paginationParams,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId: caseId,
-        filterRulesHit: rulesHitFilter,
-        filterRulesExecuted: rulesExecutedFilter,
-        filterCaseStatus: getStatuses(caseStatus),
-        filterUserId: userId,
-        filterParentUserId: parentUserId,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        filterOriginPaymentMethods: originMethodFilter,
-        filterDestinationPaymentMethods: destinationMethodFilter,
-        filterTransactionTagKey: tagKey,
-        filterTransactionTagValue: tagValue,
-        filterBusinessIndustries: businessIndustryFilter,
-        filterRiskLevel: riskLevels,
-        filterCaseTypes: caseTypesFilter,
-        filterUserState: userStates,
-        filterRuleQueueIds: ruleQueueIds,
-        filterRuleNature: ruleNature,
-        filterAssignmentsIds:
-          showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
-        filterAssignmentsRoles: roleAssignedTo?.length ? roleAssignedTo : undefined,
-        ...(updatedAt && {
-          filterCasesByLastUpdatedStartTimestamp: updatedAt ? dayjs(updatedAt[0]).valueOf() : 0,
-          filterCasesByLastUpdatedEndTimestamp: updatedAt
-            ? dayjs(updatedAt[1]).valueOf()
-            : Number.MAX_SAFE_INTEGER,
-        }),
-        filterAlertPriority: alertPriority,
-        filterCaseSlaPolicyId: filterCaseSlaPolicyId?.length ? filterCaseSlaPolicyId : undefined,
-        filterCaseSlaPolicyStatus: filterCaseSlaPolicyStatus?.length
-          ? filterCaseSlaPolicyStatus
-          : undefined,
-        filterCaseClosureReasons: filterClosingReason?.length ? filterClosingReason : undefined,
-      });
-
-      return {
-        total: response.total,
-        items: response.data,
-      };
-    },
-    { meta: { atf: true } },
-  );
+  const queryResults = useCasesListPaginated(params, { meta: { atf: true } });
   const ruleOptions = useRuleOptions();
 
   return (

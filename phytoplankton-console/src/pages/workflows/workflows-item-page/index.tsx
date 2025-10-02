@@ -10,7 +10,7 @@ import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
 import { useApi } from '@/api';
 import { useWorkflowItem } from '@/hooks/api';
-import { parseWorkflowType, WorkflowItem } from '@/utils/api/workflows';
+import { parseWorkflowType, WorkflowItem } from '@/hooks/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isLoading, isSuccess, map, useIsResourceChangedStatus } from '@/utils/asyncResource';
 import { useReducerWrapper } from '@/pages/workflows/workflows-item-page/helpers';

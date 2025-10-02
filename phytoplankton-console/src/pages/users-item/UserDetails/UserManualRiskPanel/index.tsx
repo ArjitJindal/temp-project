@@ -38,7 +38,7 @@ import {
   useUserFieldChangesPendingApprovals,
   useUserFieldChangesStrategy,
   WorkflowChangesStrategy,
-} from '@/utils/api/workflows';
+} from '@/hooks/api/workflows';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';

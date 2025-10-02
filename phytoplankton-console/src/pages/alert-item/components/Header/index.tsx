@@ -10,9 +10,9 @@ import Dropdown from '@/components/library/Dropdown';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
-import { ALERT_ITEM, ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_LIST } from '@/utils/queries/keys';
 import { getAlertUrl, getCaseUrl } from '@/utils/routing';
-import { useQuery } from '@/utils/queries/hooks';
+import { useCase } from '@/hooks/api/cases';
 import CommentButton from '@/components/CommentButton';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
@@ -49,18 +49,7 @@ export default function Header(props: Props) {
   );
   const { alertId, caseId } = alertItem ?? {};
   const isLoading = isAsyncResourceLoading(alertItemRes);
-  const caseQueryResults = useQuery(
-    CASES_ITEM(caseId ?? ''),
-    (): Promise<Case> => {
-      if (caseId == null) {
-        throw new Error(`Alert case id could not be empty`);
-      }
-      return api.getCase({ caseId });
-    },
-    {
-      enabled: !isLoading,
-    },
-  );
+  const caseQueryResults = useCase(caseId ?? '', { enabled: !isLoading && !!caseId });
   const api = useApi();
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);

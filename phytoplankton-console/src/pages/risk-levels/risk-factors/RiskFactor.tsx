@@ -16,7 +16,7 @@ import { useApi } from '@/api';
 import { riskFactorsAtom, riskFactorsEditEnabled, riskFactorsStore } from '@/store/risk-factors';
 import { getOr } from '@/utils/asyncResource';
 import { RISK_FACTOR_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
-import { useRiskFactorsChangesStrategy } from '@/utils/api/workflows';
+import { useRiskFactorsChangesStrategy } from '@/hooks/api/workflows';
 
 interface Props {
   type: string;

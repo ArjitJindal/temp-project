@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
+import { usePostQuestion } from '@/hooks/api/alerts';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { scrollTo, useElementSize } from '@/utils/browser';
@@ -156,6 +157,7 @@ export default function InvestigativeCoPilot(props: Props) {
     }
   }, [isBottom, handleScrollTo, isHeightChanged]);
 
+  const postQuestion = usePostQuestion();
   const postQuestionMutation = useMutation<unknown, unknown, FormValues[]>(
     async (requests) => {
       for (const request of requests) {
@@ -168,16 +170,15 @@ export default function InvestigativeCoPilot(props: Props) {
             requestString: request.searchString,
           },
         ]);
-        api
-          .postQuestion({
-            QuestionRequest: {
-              question: request.searchString,
-              variables: Object.entries(DEFAULT_PARAMS_STATE)
-                .filter(([_, value]) => value != null)
-                .map(([name, value]) => ({ name, value })),
-            },
-            alertId,
-          })
+        postQuestion({
+          QuestionRequest: {
+            question: request.searchString,
+            variables: Object.entries(DEFAULT_PARAMS_STATE)
+              .filter(([_, value]) => value != null)
+              .map(([name, value]) => ({ name, value })),
+          },
+          alertId,
+        })
           .then((response) => {
             const parsedResponses = parseQuestionResponse(response);
             setHistory((items) => {

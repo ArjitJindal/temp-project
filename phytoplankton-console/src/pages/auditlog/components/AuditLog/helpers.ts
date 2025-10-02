@@ -2,7 +2,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { TableItem, TableSearchParams } from './types';
 import { map, QueryResult } from '@/utils/queries/types';
 import { AuditLog, AuditLogActionEnum, AuditLogType } from '@/apis';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { RawParsedQuery } from '@/utils/routing';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';

@@ -25,7 +25,7 @@ import {
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
-import { WorkflowChangesStrategy } from '@/utils/api/workflows';
+import { WorkflowChangesStrategy } from '@/hooks/api/workflows';
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
 
