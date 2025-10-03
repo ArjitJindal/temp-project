@@ -23,6 +23,8 @@ import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
+import { hasFeature } from '@/core/utils/context'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 async function runRulesForUser(
   tenantId: string,
@@ -99,6 +101,9 @@ export class UserRuleReRunBatchJobRunner extends BatchJobRunner {
     const consumerRuleInstances = ruleInstances.filter((ruleInstance) =>
       RuleIdsFor314AConsumer.includes(ruleInstance.ruleId ?? '')
     )
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
 
     const ruleRepository = new RuleRepository(tenantId, { mongoDb, dynamoDb })
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
@@ -106,7 +111,8 @@ export class UserRuleReRunBatchJobRunner extends BatchJobRunner {
       tenantId,
       dynamoDb,
       logicEvaluator,
-      mongoDb
+      mongoDb,
+      opensearchClient
     )
 
     if (consumerRuleInstances.length > 0) {

@@ -9,7 +9,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { publicLambdaApi } from '@/core/middlewares/public-lambda-api-middleware'
 import { RulesEngineService } from '@/services/rules-engine'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { updateLogMetadata } from '@/core/utils/context'
+import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { pickKnownEntityFields } from '@/utils/object'
@@ -24,6 +24,7 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { MAX_BATCH_IMPORT_COUNT } from '@/utils/transaction'
 import { assertValidTimestampTags } from '@/utils/tags'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 type TransactionUserMap = Record<
   string,
@@ -40,7 +41,9 @@ export const transactionEventHandler = publicLambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
-
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const createTransactionEvent = async (
       transactionEvent: TransactionEvent
     ) => {
@@ -60,7 +63,8 @@ export const transactionEventHandler = publicLambdaApi()(
         tenantId,
         dynamoDb,
         logicEvaluator,
-        mongoDb
+        mongoDb,
+        opensearchClient
       )
       const result = await rulesEngine.verifyTransactionEvent(transactionEvent)
 
