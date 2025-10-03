@@ -43,9 +43,8 @@ import {
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
-import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
 import { StackConstants } from '@lib/constants'
-import { getSQSClient } from './sns-sqs-client'
 import { getCredentialsFromEvent } from './credentials'
 import { generateChecksum, removeUndefinedFields } from './object'
 import { addNewSubsegment } from '@/core/xray'
@@ -1097,7 +1096,7 @@ export async function sendMessageToDynamoDbConsumer(
     message,
   })
 
-  const sqs = getSQSClient()
+  const sqs = new SQS({ region: process.env.AWS_REGION })
 
   await sqs.send(
     new SendMessageCommand({

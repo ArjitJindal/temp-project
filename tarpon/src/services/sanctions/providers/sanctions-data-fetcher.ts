@@ -16,6 +16,7 @@ import {
 } from '@opensearch-project/opensearch/api'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
+import { Client } from '@opensearch-project/opensearch/.'
 import {
   SanctionsDataProviders,
   SanctionsSearchProps,
@@ -74,17 +75,22 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   protected readonly tenantId: string
   protected readonly mongoDb: MongoClient
   private readonly dynamoDb: DynamoDBDocumentClient
-
+  private readonly opensearchClient?: Client
   constructor(
     provider: SanctionsDataProviderName,
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: {
+      mongoDb: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+      opensearchClient?: Client
+    }
   ) {
     this.providerName = provider
     this.searchRepository = new SanctionsProviderSearchRepository()
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
+    this.opensearchClient = connections.opensearchClient
   }
 
   abstract fullLoad(
@@ -1569,7 +1575,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     props: SanctionsSearchPropsWithRequest
   ) {
     const { request } = props
-    const client = await getOpensearchClient()
+    const client = this.opensearchClient ?? (await getOpensearchClient())
     const searchTerm = normalize(request.searchTerm)
     const providers = getDefaultProviders()
     const { shouldConditions, mustConditions } =

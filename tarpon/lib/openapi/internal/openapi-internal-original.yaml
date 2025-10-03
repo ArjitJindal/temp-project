@@ -10811,6 +10811,12 @@ components:
         - FRESHDESK
         - SALESFORCE
         - ZENDESK
+    ChatbotNames:
+      title: ChatbotNames
+      type: string
+      enum:
+        - FRESHWORK
+        - INTERCOMM
     DashboardStatsTransactionsCount:
       type: object
       title: DashboardStatsTransactionsCount
@@ -12007,6 +12013,8 @@ components:
           type: array
           items:
             type: string
+        chatbotName:
+          $ref: '#/components/schemas/ChatbotNames'
         llmProvider:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:

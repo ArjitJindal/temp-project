@@ -20,6 +20,7 @@ import {
 import Button from '@/components/library/Button';
 import {
   BatchJobNames,
+  ChatbotNames,
   CrmIntegrationNames,
   Feature,
   Tenant,
@@ -42,6 +43,7 @@ import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { CHATBOT_NAMESS } from '@/apis/models-custom/ChatbotNames';
 
 export enum FeatureTag {
   ENG = 'Eng',
@@ -260,6 +262,7 @@ export default function SuperAdminPanel() {
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
   const isCrmToBeEnabled = features?.includes('CRM');
   const isSARToBeEnabled = features?.includes('SAR');
+  const isChatbotToBeEnabled = features?.includes('CHATBOT');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
   const SARCountries = useSARReportCountries(true);
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
@@ -268,6 +271,9 @@ export default function SuperAdminPanel() {
   );
   const [sarJurisdictions, setSarJurisdictions] = useState<Array<string>>(
     settings.sarJurisdictions ?? [],
+  );
+  const [chatbot, setChatbot] = useState<ChatbotNames | undefined>(
+    settings.chatbotName ?? undefined,
   );
 
   const user = useAuth0User();
@@ -410,6 +416,7 @@ export default function SuperAdminPanel() {
       sanctions: sanctionsSettings,
       crmIntegrationName,
       sarJurisdictions,
+      chatbotName: chatbot,
     });
   };
   const showModal = () => {
@@ -578,6 +585,19 @@ export default function SuperAdminPanel() {
                       : sarJurisdictions
                   }
                   onChange={(v) => v && setSarJurisdictions(v)}
+                />
+              </Label>
+            )}
+
+            {isChatbotToBeEnabled && (
+              <Label label="Select chatbot">
+                <Select
+                  options={CHATBOT_NAMESS.map((chatbot) => ({
+                    label: humanizeConstant(chatbot),
+                    value: chatbot,
+                  }))}
+                  value={chatbot}
+                  onChange={(v) => v && setChatbot(v)}
                 />
               </Label>
             )}
