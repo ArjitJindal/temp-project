@@ -14,7 +14,7 @@ import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -34,7 +34,6 @@ import { AccountsService } from '../accounts'
 import { getPaymentMethodAddress } from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
-import { getSQSClient } from '@/utils/sns-sqs-client'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -2145,7 +2144,9 @@ export class CaseCreationService {
           tenantId,
           caseId: caseItem.caseId as string,
         }
-        const sqs = getSQSClient()
+        const sqs = new SQS({
+          region: process.env.AWS_REGION,
+        })
         const sqsSendMessageCommand = new SendMessageCommand({
           MessageBody: JSON.stringify(payload),
           QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
