@@ -50,11 +50,13 @@ import { traceable } from '@/core/xray'
 import {
   AlertCommentFileInternal,
   AlertCommentsInternal,
+  SanctionsDetailsInternal,
 } from '@/@types/alert/AlertsInternal'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { envIs } from '@/utils/env'
 import { removeUndefinedFields } from '@/utils/object'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
 type caseUpdateOptions = {
   updateCase: boolean
@@ -119,7 +121,14 @@ export class DynamoAlertRepository {
 
       let alertToSave = { ...alert }
       const comments = alertToSave.comments || []
-      alertToSave = omit(alertToSave, ['comments'])
+
+      alertToSave = omit(alertToSave, ['comments', 'transactionIds'])
+
+      if (alertToSave.ruleHitMeta?.sanctionsDetails) {
+        alertToSave.ruleHitMeta = omit(alertToSave.ruleHitMeta, [
+          'sanctionsDetails',
+        ])
+      }
 
       // Add alert to both the keys
       batch.put({
@@ -139,6 +148,16 @@ export class DynamoAlertRepository {
 
       // Add alert comments if they exist
       await this.saveCommentsForAlert(alertId, comments, batch)
+
+      // Add alert sanctions details if they exist
+      await this.saveSanctionsDetailsForAlert(
+        alertId,
+        alert.ruleHitMeta?.sanctionsDetails,
+        batch
+      )
+
+      // Add alert transaction ids if they exist
+      await this.saveTransactionIds(alertId, alert.transactionIds, batch)
     }
 
     const message: DynamoConsumerMessage[] = generateDynamoConsumerMessage(
@@ -228,6 +247,57 @@ export class DynamoAlertRepository {
           { keyLists: caseKeyLists, tableName: this.CasesClickhouseTableName },
         ])
       await batch.executeWithClickhouse(dynamoDbConsumerMessage)
+    }
+  }
+
+  /**
+   * Saves sanctions details for an alert
+   *
+   * @param alertId The ID of the alert to save the sanctions details for
+   * @param sanctionsDetails The sanctions details to save
+   * @param batch The batch to save the sanctions details to
+   * @returns Promise that resolves when the sanctions details are saved
+   */
+  public async saveSanctionsDetailsForAlert(
+    alertId: string,
+    sanctionsDetails?: SanctionsDetails[],
+    batch?: DynamoTransactionBatch
+  ): Promise<void> {
+    if (!sanctionsDetails || sanctionsDetails.length === 0) {
+      return
+    }
+    if (batch) {
+      for (const sanctionsDetail of sanctionsDetails) {
+        const key = DynamoDbKeys.ALERT_SANCTIONS_DETAILS(
+          this.tenantId,
+          alertId,
+          sanctionsDetail.searchId
+        )
+        batch.put({
+          Item: {
+            ...key,
+            ...sanctionsDetail,
+            alertId,
+          },
+        })
+      }
+    } else {
+      const newBatch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
+      for (const sanctionsDetail of sanctionsDetails) {
+        const key = DynamoDbKeys.ALERT_SANCTIONS_DETAILS(
+          this.tenantId,
+          alertId,
+          sanctionsDetail.searchId
+        )
+        newBatch.put({
+          Item: {
+            ...key,
+            ...sanctionsDetail,
+            alertId,
+          },
+        })
+      }
+      await newBatch.execute()
     }
   }
 
@@ -389,23 +459,35 @@ export class DynamoAlertRepository {
    */
   public async saveTransactionIds(
     alertId: string,
-    transactionIds: string[]
-  ): Promise<TransactWriteOperation[]> {
+    transactionIds?: string[],
+    batch?: DynamoTransactionBatch
+  ): Promise<void> {
     if (!transactionIds || transactionIds.length === 0) {
-      return []
+      return
     }
-    const writeRequests: TransactWriteOperation[] = []
     const key = DynamoDbKeys.ALERT_TRANSACTION_IDS(this.tenantId, alertId)
-    writeRequests.push({
-      Put: {
-        TableName: this.tableName,
+
+    if (batch) {
+      // Add to existing batch
+      batch.put({
         Item: {
           ...key,
           transactionIds,
+          alertId,
         },
-      },
-    })
-    return writeRequests
+      })
+    } else {
+      // Create new batch only if none provided
+      const newBatch = new DynamoTransactionBatch(this.dynamoDb, this.tableName)
+      newBatch.put({
+        Item: {
+          ...key,
+          transactionIds,
+          alertId,
+        },
+      })
+      await newBatch.execute()
+    }
   }
 
   /**
@@ -800,17 +882,35 @@ export class DynamoAlertRepository {
     const alertId = alert.alertId as string
     const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
 
-    alert = omit(alert, ['comments'])
+    let alertToSave = { ...alert }
+    const comments = alertToSave.comments || []
+    alertToSave = omit(alert, ['comments', 'transactionIds'])
+
+    if (alert.ruleHitMeta?.sanctionsDetails) {
+      alert.ruleHitMeta = omit(alert.ruleHitMeta, ['sanctionsDetails'])
+    }
 
     await this.dynamoDb.send(
       new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         Item: {
           ...key,
-          ...alert,
+          ...alertToSave,
         },
       })
     )
+
+    // Add alert comments if they exist
+    await this.saveCommentsForAlert(alertId, comments)
+
+    // Add alert sanctions details if they exist
+    await this.saveSanctionsDetailsForAlert(
+      alertId,
+      alert.ruleHitMeta?.sanctionsDetails
+    )
+
+    // Add alert transaction ids if they exist
+    await this.saveTransactionIds(alertId, alert.transactionIds)
   }
 
   /**
@@ -1392,7 +1492,10 @@ export class DynamoAlertRepository {
     if (getComments) {
       const comments = await this.getComments(alertIds)
       const files = await this.getFiles(alertIds)
-
+      const sanctionsDetails = await this.getSanctionsDetails(alertIds)
+      const transactionIds = await this.getAlertTransactionIdsForAlerts(
+        alertIds
+      )
       alerts = alerts.map((alertItem) => {
         const enrichedComments = comments
           .filter((comment) => comment.alertId === alertItem.alertId)
@@ -1407,6 +1510,12 @@ export class DynamoAlertRepository {
 
         return {
           ...alertItem,
+          ruleHitMeta: {
+            ...alertItem.ruleHitMeta,
+            sanctionsDetails:
+              sanctionsDetails.get(alertItem.alertId as string) || [],
+          },
+          transactionIds: transactionIds[alertItem.alertId as string] || [],
           comments: enrichedComments,
         }
       })
@@ -1436,12 +1545,50 @@ export class DynamoAlertRepository {
     return [...new Set(transactionIds)]
   }
 
+  public async getAlertTransactionIdsForAlerts(
+    alertIds: string[]
+  ): Promise<Record<string, string[]>> {
+    const queryPromises = alertIds.map((alertId) => {
+      const key = DynamoDbKeys.ALERT_TRANSACTION_IDS(this.tenantId, alertId)
+      const queryInput: QueryCommandInput = {
+        TableName: this.tableName,
+        KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID = :sk',
+        ExpressionAttributeValues: {
+          ':pk': key.PartitionKeyID,
+          ':sk': key.SortKeyID,
+        },
+      }
+      return paginateQuery(this.dynamoDb, queryInput)
+    })
+    const results = await Promise.all(queryPromises)
+
+    const transactionIds: Record<string, string[]> = {}
+
+    results.forEach((result, index) => {
+      const alertId = alertIds[index]
+      if (result.Items) {
+        transactionIds[alertId] = result.Items.map(
+          (item) => item.transactionIds
+        ).flat()
+      } else {
+        transactionIds[alertId] = []
+      }
+    })
+
+    return transactionIds
+  }
+
   public async getAlertsByCaseIds(
     caseIds: string[],
     {
       getComments = false,
       getTransactionIds = false,
-    }: { getComments?: boolean; getTransactionIds?: boolean } = {}
+      getSanctionsDetails = false,
+    }: {
+      getComments?: boolean
+      getTransactionIds?: boolean
+      getSanctionsDetails?: boolean
+    } = {}
   ): Promise<Alert[]> {
     const queryPromises = caseIds.map((caseId) => {
       const partitionKey = DynamoDbKeys.CASE_ALERT(
@@ -1479,18 +1626,25 @@ export class DynamoAlertRepository {
       comments = await this.getComments(alertIds)
       files = await this.getFiles(alertIds)
     }
+    if (getSanctionsDetails) {
+      const sanctionsDetails: Map<string, SanctionsDetailsInternal[]> =
+        await this.getSanctionsDetails(alertIds)
+      alerts = alerts.map((item) => ({
+        ...item,
+        ruleHitMeta: {
+          ...item.ruleHitMeta,
+          sanctionsDetails: sanctionsDetails.get(item.alertId as string) || [],
+        },
+      }))
+    }
     if (getTransactionIds) {
-      alerts = await Promise.all(
-        alerts.map(async (item) => {
-          const transactionIds = await this.getAlertTransactionIds(
-            item.alertId as string
-          )
-          return {
-            ...item,
-            transactionIds,
-          }
-        })
+      const transactionIds = await this.getAlertTransactionIdsForAlerts(
+        alertIds
       )
+      alerts = alerts.map((item) => ({
+        ...item,
+        transactionIds: transactionIds[item.alertId as string] || [],
+      }))
     }
 
     // Create maps for efficient lookup
@@ -1776,6 +1930,48 @@ export class DynamoAlertRepository {
     })
   }
 
+  public async getSanctionsDetails(
+    alertIds: string[]
+  ): Promise<Map<string, SanctionsDetailsInternal[]>> {
+    const alertsSanctionsDetails = new Map<string, SanctionsDetailsInternal[]>()
+    const queryPromises = alertIds.map((alertId) => {
+      const partitionKey = DynamoDbKeys.ALERT_SANCTIONS_DETAILS(
+        this.tenantId,
+        alertId,
+        ''
+      ).PartitionKeyID
+      const queryInput: QueryCommandInput = {
+        TableName: this.tableName,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': partitionKey,
+        },
+      }
+
+      return paginateQuery(this.dynamoDb, queryInput)
+    })
+
+    const results = await Promise.all(queryPromises)
+
+    results.forEach((result) => {
+      if (result.Items) {
+        const items = result.Items as SanctionsDetailsInternal[]
+        items.forEach((item) => {
+          if (!alertsSanctionsDetails.has(item.alertId)) {
+            alertsSanctionsDetails.set(item.alertId, [])
+          }
+          item = omit(item, [
+            'PartitionKeyID',
+            'SortKeyID',
+          ]) as SanctionsDetailsInternal
+          alertsSanctionsDetails.get(item.alertId)?.push(item)
+        })
+      }
+    })
+
+    return alertsSanctionsDetails
+  }
+
   public async getAlertIdsByCaseIds(caseIds: string[]): Promise<string[]> {
     const alertIds: string[] = []
 
@@ -1844,6 +2040,16 @@ export class DynamoAlertRepository {
       dangerouslyDeletePartitionKey(
         this.dynamoDb,
         DynamoDbKeys.ALERT(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb,
+        DynamoDbKeys.ALERT_SANCTIONS_DETAILS(tenantId, alertId, ''),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb,
+        DynamoDbKeys.ALERT_TRANSACTION_IDS(tenantId, alertId),
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       ),
     ])

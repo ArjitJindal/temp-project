@@ -804,11 +804,13 @@ export class DynamoCaseRepository {
       joinComments = false,
       joinFiles = false,
       joinTransactionIds = false,
+      joinSanctionsDetails = false,
     }: {
       joinAlerts?: boolean
       joinComments?: boolean
       joinFiles?: boolean
       joinTransactionIds?: boolean
+      joinSanctionsDetails?: boolean
     } = {}
   ): Promise<Case[]> {
     // Extract case IDs from the results
@@ -869,6 +871,7 @@ export class DynamoCaseRepository {
       caseIds,
       {
         getTransactionIds: joinTransactionIds,
+        getSanctionsDetails: joinSanctionsDetails,
       }
     )
 
@@ -1013,6 +1016,7 @@ export class DynamoCaseRepository {
       joinComments: true,
       joinFiles: true,
       joinTransactionIds: true,
+      joinSanctionsDetails: true,
     })
   }
 

@@ -93,6 +93,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ACTIVE_SESSIONS'
   | 'ALERT_COMMENT'
   | 'ALERT_COMMENT_FILE'
+  | 'ALERT_SANCTIONS_DETAILS'
   // TODO to implement
   | 'ORGANIZATION'
   | 'ORGANIZATION_ACCOUNTS'
@@ -508,6 +509,16 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       dangerouslyDeletePartitionKey(
         this.dynamoDb(),
         DynamoDbKeys.ALERT(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT_TRANSACTION_IDS(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT_SANCTIONS_DETAILS(tenantId, alertId, ''),
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       ),
     ])
