@@ -1,5 +1,6 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
+import type { QueryResult } from '@/utils/queries/types';
 import {
   TRANSACTIONS_UNIQUES,
   TRANSACTIONS_LIST,
@@ -12,7 +13,7 @@ export function useTransactionsUniques(
   field: any,
   params?: { filter?: string },
   options?: { enabled?: boolean },
-) {
+): QueryResult<any> {
   const api = useApi();
   return useQuery(
     TRANSACTIONS_UNIQUES(field, params ?? {}),
@@ -23,26 +24,29 @@ export function useTransactionsUniques(
   );
 }
 
-export function useTransactionsList(filterId: string | undefined) {
+export function useTransactionsList(filterId: string | undefined): QueryResult<any> {
   const api = useApi();
   return useQuery(TRANSACTIONS_LIST(filterId ?? ''), async () => {
     return api.getTransactionsList({ filterId });
   });
 }
 
-export function useTransactionItem(transactionId: string) {
+export function useTransactionItem(transactionId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(TRANSACTIONS_ITEM(transactionId), () => api.getTransaction({ transactionId }));
 }
 
-export function useTransactionAlerts(transactionId: string, extra?: Record<string, unknown>) {
+export function useTransactionAlerts(
+  transactionId: string,
+  extra?: Record<string, unknown>,
+): QueryResult<any> {
   const api = useApi();
   return useQuery(TRANSACTIONS_ALERTS_LIST(transactionId), () =>
     api.getAlertList({ ...(extra ?? {}), filterTransactionIds: [transactionId] } as any),
   );
 }
 
-export function useTransactionArs(transactionId: string) {
+export function useTransactionArs(transactionId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(TRANSACTIONS_ITEM_RISKS_ARS(transactionId), () =>
     api.getArsValue({ transactionId }),

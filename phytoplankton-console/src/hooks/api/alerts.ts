@@ -10,13 +10,18 @@ import {
   AIF_SEARCH_KEY,
 } from '@/utils/queries/keys';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
+import type { QueryOptions, QueryResult } from '@/utils/queries/types';
+import type { PaginatedData, CursorPaginatedData } from '@/utils/queries/hooks';
 import { NotFoundError } from '@/utils/errors';
 import { Alert, InternalTransaction, RuleAction, TransactionTableItem, CurrencyCode } from '@/apis';
 import { dayjs } from '@/utils/dayjs';
 
-export function useAlert(alertId: string, options?: { enabled?: boolean }) {
+export function useAlert(
+  alertId: string,
+  options?: QueryOptions<Alert, Alert>,
+): QueryResult<Alert> {
   const api = useApi();
-  return useQuery(
+  return useQuery<Alert>(
     ALERT_ITEM(alertId),
     async () => {
       try {
@@ -39,16 +44,18 @@ export function useAlertPrimed(alertId: string | undefined, alertData: unknown) 
   });
 }
 
-export function useCopilotQuestions(alertId: string) {
+export function useCopilotQuestions(
+  alertId: string,
+): QueryResult<ReturnType<typeof parseQuestionResponse>> {
   const api = useApi();
   return useQuery(COPILOT_ALERT_QUESTIONS(alertId), async () =>
     parseQuestionResponse(await api.getQuestions({ alertId })),
   );
 }
 
-export function useCopilotSuggestions(question: string, alertId: string) {
+export function useCopilotSuggestions(question: string, alertId: string): QueryResult<string[]> {
   const api = useApi();
-  return useQuery(COPILOT_SUGGESTIONS(question, alertId), async () => {
+  return useQuery<string[]>(COPILOT_SUGGESTIONS(question, alertId), async () => {
     const response = await api.getQuestionAutocomplete({ question, alertId });
     return response.suggestions ?? [];
   });
@@ -57,7 +64,7 @@ export function useCopilotSuggestions(question: string, alertId: string) {
 export function useAlertList(
   params: { action?: RuleAction; transactionId?: string } & Record<string, unknown>,
   transaction?: InternalTransaction,
-) {
+): QueryResult<PaginatedData<Alert>> {
   const api = useApi();
   return usePaginatedQuery<Alert>(ALERT_LIST({ ...params }), async ({ page }) => {
     const response = await api.getAlertList({
@@ -81,7 +88,7 @@ export function useAlertTransactionList(
   alertId: string | undefined,
   params: any,
   options?: { fixedParams?: Record<string, any>; enabled?: boolean },
-) {
+): QueryResult<CursorPaginatedData<TransactionTableItem>> {
   const api = useApi();
   return useCursorQuery<TransactionTableItem>(
     ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', params),
@@ -155,9 +162,9 @@ export function useQuestionVariableAutocomplete(
   variableKey: string,
   search: string,
   options?: { enabled?: boolean },
-) {
+): QueryResult<{ value: string; label: string }[]> {
   const api = useApi();
-  return useQuery(
+  return useQuery<{ value: string; label: string }[]>(
     AIF_SEARCH_KEY(questionId, variableKey, search),
     async () => {
       const results = await api.getQuestionVariableAutocomplete({

@@ -1,5 +1,6 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
+import type { QueryOptions } from '@/utils/queries/types';
 import { isSuccess } from '@/utils/asyncResource';
 import type { GraphNodes, GraphEdges } from '@/apis';
 
@@ -8,7 +9,7 @@ export type EntityFilters = { afterTimestamp?: number; beforeTimestamp?: number 
 export function useUserEntity(
   userId: string,
   filters?: EntityFilters,
-  options?: { enabled?: boolean },
+  options?: QueryOptions,
 ): { nodes: GraphNodes[]; edges: GraphEdges[] } | undefined {
   const api = useApi();
   const queryResult = useQuery(
@@ -28,7 +29,7 @@ export function useUserEntity(
 export function useTxnEntity(
   userId: string,
   filters?: EntityFilters,
-  options?: { enabled?: boolean },
+  options?: QueryOptions,
 ): { nodes: GraphNodes[]; edges: GraphEdges[] } | undefined {
   const api = useApi();
   const queryResult = useQuery(

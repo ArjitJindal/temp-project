@@ -1,8 +1,9 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
+import type { QueryResult } from '@/utils/queries/types';
 import { LISTS } from '@/utils/queries/keys';
 
-export function useUserLists() {
+export function useUserLists(): QueryResult<any> {
   const api = useApi();
   return useQuery(LISTS('USER_ID'), async () => {
     return await api.getLists({
@@ -11,7 +12,7 @@ export function useUserLists() {
   });
 }
 
-export function useListsByUserId(userId: string) {
+export function useListsByUserId(userId: string): QueryResult<{ items: any[]; total: number }> {
   const api = useApi();
   return useQuery([LISTS(), userId], async () => {
     const response = await api.getLists({ filterUserIds: [userId] });
@@ -22,7 +23,7 @@ export function useListsByUserId(userId: string) {
   });
 }
 
-export function useLists(listType?: 'WHITELIST' | 'BLACKLIST' | undefined) {
+export function useLists(listType?: 'WHITELIST' | 'BLACKLIST' | undefined): QueryResult<any> {
   const api = useApi();
   return useQuery(LISTS(), () => {
     if (listType === 'WHITELIST') {

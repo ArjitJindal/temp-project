@@ -1,9 +1,11 @@
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
+import type { QueryResult } from '@/utils/queries/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import type { AuditLog } from '@/apis';
 
-export function useAuditLogsList(params: any) {
+export function useAuditLogsList(params: any): QueryResult<PaginatedData<AuditLog>> {
   const api = useApi();
   return usePaginatedQuery<AuditLog>(AUDIT_LOGS_LIST(params), async (paginationParams) => {
     const {

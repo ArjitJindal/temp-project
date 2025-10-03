@@ -33,11 +33,4 @@ export function useCreateActionReasons(options?: any) {
   );
 }
 
-export function useTenantApiKeys(unmaskedApiKey?: string) {
-  const api = useApi();
-  return useQuery(['apiKeys', { unmaskedApiKey }], async () => {
-    return await api.getTenantApiKeys(
-      unmaskedApiKey ? { unmask: true, unmaskApiKeyId: unmaskedApiKey } : {},
-    );
-  });
-}
+// Consolidated in hooks/api/tenant-settings.ts

@@ -13,16 +13,17 @@ import {
   SANCTIONS_HITS_ALL,
 } from '@/utils/queries/keys';
 import type { SanctionsHitListResponse } from '@/apis';
-import type { Mutation } from '@/utils/queries/types';
+import type { Mutation, QueryOptions, QueryResult } from '@/utils/queries/types';
+import type { CursorPaginatedData } from '@/utils/queries/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 
 export function useSearchProfiles(
   params?: { filterSearchProfileStatus?: 'ENABLED' | 'DISABLED' },
   options?: { enabled?: boolean; staleTime?: number },
-) {
+): QueryResult<{ items: any[]; total: number }> {
   const api = useApi();
-  return useQuery(
+  return useQuery<{ items: any[]; total: number }>(
     SEARCH_PROFILES(params),
     async () => {
       const response = await api.getSearchProfiles(params ?? {});
@@ -38,9 +39,9 @@ export function useSearchProfiles(
 export function useScreeningProfiles(
   params?: { filterScreeningProfileStatus?: 'ENABLED' | 'DISABLED' },
   options?: { enabled?: boolean; staleTime?: number },
-) {
+): QueryResult<{ items: any[]; total: number }> {
   const api = useApi();
-  return useQuery(
+  return useQuery<{ items: any[]; total: number }>(
     SCREENING_PROFILES(params),
     async () => {
       const response = await api.getScreeningProfiles(params ?? {});
@@ -53,7 +54,7 @@ export function useScreeningProfiles(
   );
 }
 
-export function useDefaultManualScreeningFilters(options?: { enabled?: boolean }) {
+export function useDefaultManualScreeningFilters(options?: QueryOptions): QueryResult<any> {
   const api = useApi();
   return useQuery(
     DEFAULT_MANUAL_SCREENING_FILTERS(),
@@ -65,8 +66,8 @@ export function useDefaultManualScreeningFilters(options?: { enabled?: boolean }
 export function useSanctionsSearchHistory(
   searchId: string | undefined,
   params: { page?: number; pageSize?: number } | undefined,
-  options?: { enabled?: boolean },
-) {
+  options?: QueryOptions,
+): QueryResult<any> {
   const api = useApi();
   return useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId, params),
@@ -87,7 +88,7 @@ export function useSanctionsSearchHistory(
 export function useSelectedSearchProfile(
   searchProfileId: string | undefined,
   options?: { enabled?: boolean },
-) {
+): QueryResult<any> {
   const api = useApi();
   return useQuery(
     ['selected-search-profile', searchProfileId],
@@ -104,7 +105,10 @@ export function useSelectedSearchProfile(
   );
 }
 
-export function useAlertTransactionStats(alertId: string, options?: { enabled?: boolean }) {
+export function useAlertTransactionStats(
+  alertId: string,
+  options?: { enabled?: boolean },
+): QueryResult<any> {
   const api = useApi();
   return useQuery(
     ALERT_ITEM_TRANSACTION_STATS(alertId),
@@ -122,7 +126,7 @@ export function useSanctionsHitsSearch(
   params: Record<string, any>,
   alertId?: string,
   enabled?: boolean,
-) {
+): QueryResult<CursorPaginatedData<any>> {
   const api = useApi();
   const filters = {
     alertId,
@@ -131,7 +135,7 @@ export function useSanctionsHitsSearch(
     filterPaymentMethodId: params.paymentMethodIds,
     filterScreeningHitEntityType: params.entityType,
   };
-  return useCursorQuery(
+  return useCursorQuery<any>(
     SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
     async (paginationParams): Promise<SanctionsHitListResponse> => {
       if (!filters.alertId) {

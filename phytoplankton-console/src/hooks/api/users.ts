@@ -24,18 +24,14 @@ import {
   AccountRole,
   DrsScore,
 } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import { QueryResult, QueryOptions } from '@/utils/queries/types';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { WorkflowChangesStrategy } from '@/hooks/api/workflows';
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
 import type { UserApprovalUpdateRequest } from '@/apis';
 
-export function useUsersUniques(
-  field: any,
-  params?: { filter?: string },
-  options?: { enabled?: boolean },
-) {
+export function useUsersUniques(field: any, params?: { filter?: string }, options?: QueryOptions) {
   const api = useApi();
   return useQuery(
     USERS_UNIQUES(field, params ?? {}),
@@ -46,7 +42,7 @@ export function useUsersUniques(
   );
 }
 
-export function useUsersFind(search: string) {
+export function useUsersFind(search: string): QueryResult<any> {
   const api = useApi();
   return useQuery(USERS_FIND(search), async () => {
     if (search === '') {
@@ -100,17 +96,17 @@ export const useConsoleUser = (
   });
 };
 
-export function useUserDrs(userId: string, options?: { enabled?: boolean }) {
+export function useUserDrs(userId: string, options?: QueryOptions) {
   const api = useApi();
   return useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }), options);
 }
 
-export function useUserKrs(userId: string, options?: { enabled?: boolean }) {
+export function useUserKrs(userId: string, options?: QueryOptions) {
   const api = useApi();
   return useQuery(USERS_ITEM_RISKS_KRS(userId), () => api.getKrsValue({ userId }), options);
 }
 
-export function usePulseRiskAssignment(userId: string) {
+export function usePulseRiskAssignment(userId: string): QueryResult<DrsScore> {
   const api = useApi();
   return useQuery<DrsScore>(['pulse-risk-assignment', userId], () =>
     api.getPulseRiskAssignment({ userId }),
@@ -147,7 +143,7 @@ export function useProcessUserApprovalMutation() {
   );
 }
 
-export function useUserScreeningStatus(userId: string) {
+export function useUserScreeningStatus(userId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(['user-status', userId], async () => {
     return await api.getUserScreeningStatus({ userId });
@@ -161,7 +157,7 @@ export function useUpdateConsumerUserMutation() {
   );
 }
 
-export function useUserEntityLinkedParents(userId: string | undefined) {
+export function useUserEntityLinkedParents(userId: string | undefined): QueryResult<any> {
   const api = useApi();
   return useQuery(USERS_ENTITY_LINKED_ENTITIES_PARENT(userId), async () => {
     const result = await api.getUserEntityParentUser({ userId: userId ?? '' });
@@ -169,7 +165,10 @@ export function useUserEntityLinkedParents(userId: string | undefined) {
   });
 }
 
-export function useUserEntityLinkedChildren(userId: string | undefined, params?: unknown) {
+export function useUserEntityLinkedChildren(
+  userId: string | undefined,
+  params?: unknown,
+): QueryResult<any> {
   const api = useApi();
   return useQuery(USERS_ENTITY_LINKED_ENTITIES_CHILD(userId, params), async () => {
     const result = await api.getUserEntityChildUsers({ userId: userId ?? '', ...(params as any) });
@@ -177,12 +176,12 @@ export function useUserEntityLinkedChildren(userId: string | undefined, params?:
   });
 }
 
-export function useRole(roleId: string, options?: { enabled?: boolean }) {
+export function useRole(roleId: string, options?: QueryOptions) {
   const api = useApi();
   return useQuery<AccountRole>(ROLE(roleId), async () => api.getRole({ roleId }), options);
 }
 
-export function usePermissions(search: string) {
+export function usePermissions(search: string): QueryResult<any> {
   const api = useApi();
   return useQuery(PERMISSIONS(search), async () => api.getAllPermissions({ search }));
 }

@@ -4,8 +4,11 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
 import { ReportType, CountryCode } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
+import type { QueryOptions } from '@/utils/queries/types';
 
-export function useReportTypesAll(options?: { enabled?: boolean }) {
+export function useReportTypesAll(
+  options?: QueryOptions,
+): import('@/utils/queries/types').QueryResult<any> {
   const api = useApi();
   return useQuery(
     REPORT_SCHEMAS_ALL(),
@@ -16,7 +19,9 @@ export function useReportTypesAll(options?: { enabled?: boolean }) {
   );
 }
 
-export function useReportTypes(options?: { enabled?: boolean }) {
+export function useReportTypes(
+  options?: QueryOptions,
+): import('@/utils/queries/types').QueryResult<any> {
   const api = useApi();
   return useQuery(REPORT_SCHEMAS(), () => api.getReportTypes(), options);
 }

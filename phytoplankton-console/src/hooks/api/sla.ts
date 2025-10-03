@@ -1,4 +1,4 @@
-import { useApi, useApi } from '@/api';
+import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import type { SLAPolicy } from '@/apis';
 
@@ -22,23 +22,28 @@ export function useDeleteSlaPolicy() {
 }
 
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import type { QueryResult } from '@/utils/queries/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { SLA_POLICY, SLA_POLICY_LIST } from '@/utils/queries/keys';
 
-export function useSlaPolicies(params?: any) {
+export function useSlaPolicies(params?: any): QueryResult<any> {
   const api = useApi();
   return useQuery(SLA_POLICY_LIST(params), async () => {
     return await api.getSlaPolicies(params ?? {});
   });
 }
 
-export function useSlaPoliciesPaginated(params: any, pageParams: any) {
+export function useSlaPoliciesPaginated(
+  params: any,
+  pageParams: any,
+): QueryResult<PaginatedData<any>> {
   const api = useApi();
   return usePaginatedQuery(SLA_POLICY_LIST(params), async (_) => {
     return await api.getSlaPolicies({ ...params, ...pageParams });
   });
 }
 
-export function useSlaPolicy(slaId: string) {
+export function useSlaPolicy(slaId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(SLA_POLICY(slaId), async () => api.getSlaPolicy({ slaId }));
 }

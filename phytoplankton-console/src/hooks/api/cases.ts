@@ -3,22 +3,27 @@ import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { CASES_ITEM, CASES_LIST } from '@/utils/queries/keys';
 import { Case } from '@/apis';
+import type { QueryOptions, PaginatedQueryOptions, QueryResult } from '@/utils/queries/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import { dayjs } from '@/utils/dayjs';
 import { getStatuses } from '@/utils/case-utils';
 import { useAuth0User } from '@/utils/user-utils';
 
-export function useCase(caseId: string, options?: { enabled?: boolean }) {
+export function useCase(caseId: string, options?: QueryOptions<Case, Case>): QueryResult<Case> {
   const api = useApi();
-  return useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }), options);
+  return useQuery<Case>(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }), options);
 }
 
-export function useCasesList(filter: DefaultApiGetCaseListRequest) {
+export function useCasesList(filter: DefaultApiGetCaseListRequest): QueryResult<any> {
   const api = useApi();
   return useQuery(CASES_LIST(filter), async () => api.getCaseList(filter));
 }
 
-export function useCasesListPaginated(params: any, options?: any) {
+export function useCasesListPaginated(
+  params: any,
+  options?: PaginatedQueryOptions<Case>,
+): QueryResult<PaginatedData<Case>> {
   const api = useApi();
   const auth0user = useAuth0User();
   return usePaginatedQuery<Case>(
