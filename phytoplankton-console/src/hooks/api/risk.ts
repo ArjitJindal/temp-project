@@ -16,7 +16,6 @@ import {
 import type {
   RiskClassificationConfig,
   RiskClassificationScore,
-  RiskLevel as ApiRiskLevel,
   RiskLevelAlias,
   VersionHistory,
   VersionHistoryRestorePayload,
@@ -25,9 +24,6 @@ import type {
   RiskLevel,
 } from '@/apis';
 import { message } from '@/components/library/Message';
-
-// Risk levels
-export type RiskLevel = ApiRiskLevel;
 
 export const DEFAULT_RISK_CLASSIFICATION_CONFIG: RiskClassificationConfig = {
   classificationValues: [],
