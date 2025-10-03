@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import type { FileInfo } from '@/apis';
 import { RULE_QUEUE, RULE_QUEUES } from '@/utils/queries/keys';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { RuleQueue } from '@/apis';
@@ -38,4 +40,13 @@ export function useBusinessIndustries(): string[] {
     return await api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' as any });
   });
   return isSuccess(result.data) ? (result.data.value as unknown as string[]) : [];
+}
+
+export function useImportRules() {
+  const api = useApi();
+  return useMutation((file: FileInfo) =>
+    api.postRulesImport({
+      ImportConsoleDataRequest: { file },
+    }),
+  );
 }

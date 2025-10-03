@@ -1,7 +1,8 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
+import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL, REPORTS_ITEM } from '@/utils/queries/keys';
+import type { Report } from '@/apis';
 import { ReportType, CountryCode } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
 import type { QueryOptions } from '@/utils/queries/types';
@@ -75,3 +76,13 @@ export function useReportsDraftMutation() {
 }
 
 // useCase moved to hooks/api/cases.ts
+
+export function useReportItem(reportId: string) {
+  const api = useApi();
+  return useQuery<Report | null>(REPORTS_ITEM(reportId), async () => {
+    if (!reportId) {
+      return null;
+    }
+    return await api.getReportsReportId({ reportId });
+  });
+}

@@ -6,8 +6,10 @@ import {
   WORKFLOWS_ITEM,
   WORKFLOWS_LIST,
   WORKFLOWS_ITEM_BY_REF,
+  USER_CHANGES_PROPOSALS,
   USER_CHANGES_PROPOSALS_BY_ID,
   USER_FIELDS_CHANGES_PROPOSALS,
+  RISK_FACTOR_WORKFLOW_PROPOSAL_LIST,
 } from '@/utils/queries/keys';
 import {
   AlertWorkflow,
@@ -175,6 +177,24 @@ export function useUserChangesPendingApprovals(userId: string): QueryResult<User
   });
 }
 
+export function useAllUserChangesProposals(): QueryResult<UserApproval[]> {
+  const api = useApi();
+  return useQuery(USER_CHANGES_PROPOSALS(), async () => {
+    return await api.getAllUserApprovalProposals();
+  });
+}
+
+export function usePendingProposalsUserIds(params: { pendingApproval?: 'true' | 'false' }) {
+  const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const { data: pendingProposalRes } = useAllUserChangesProposals();
+  return useMemo(() => {
+    if (isUserChangesApprovalEnabled && params.pendingApproval === 'true') {
+      return map(pendingProposalRes, (approvals) => approvals.map((x) => x.userId));
+    }
+    return success(undefined);
+  }, [pendingProposalRes, params.pendingApproval, isUserChangesApprovalEnabled]);
+}
+
 export function useUserFieldChangesPendingApprovals(
   userId: string,
   fields: (keyof WorkflowSettingsUserApprovalWorkflows)[],
@@ -290,6 +310,15 @@ export function useRiskClassificationWorkflowProposal(options?: { enabled?: bool
   return useQuery(
     RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
     async () => api.getPulseRiskClassificationWorkflowProposal(),
+    { enabled: options?.enabled },
+  );
+}
+
+export function useRiskFactorsWorkflowProposals(options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery(
+    RISK_FACTOR_WORKFLOW_PROPOSAL_LIST(),
+    async () => api.getPulseRiskFactorsWorkflowProposal(),
     { enabled: options?.enabled },
   );
 }

@@ -1,7 +1,9 @@
 import { useApi } from '@/api';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useQuery } from '@/utils/queries/hooks';
 import type { QueryResult } from '@/utils/queries/types';
-import { LISTS } from '@/utils/queries/keys';
+import { LISTS, LISTS_OF_TYPE } from '@/utils/queries/keys';
+import type { ListMetadata, ListType } from '@/apis';
 
 export function useUserLists(): QueryResult<any> {
   const api = useApi();
@@ -23,9 +25,9 @@ export function useListsByUserId(userId: string): QueryResult<{ items: any[]; to
   });
 }
 
-export function useLists(listType?: 'WHITELIST' | 'BLACKLIST' | undefined): QueryResult<any> {
+export function useLists(listType?: ListType): QueryResult<any> {
   const api = useApi();
-  return useQuery(LISTS(), () => {
+  return useQuery(LISTS_OF_TYPE(listType), () => {
     if (listType === 'WHITELIST') {
       return api.getWhitelist();
     }
@@ -33,5 +35,18 @@ export function useLists(listType?: 'WHITELIST' | 'BLACKLIST' | undefined): Quer
       return api.getBlacklist();
     }
     return api.getLists();
+  });
+}
+
+export function usePatchListMetadata(listType: ListType) {
+  const api = useApi();
+  return useMutation((vars: { listId: string; metadata: ListMetadata }) => {
+    if (listType === 'WHITELIST') {
+      return api.patchWhiteList({ listId: vars.listId, ListData: { metadata: vars.metadata } });
+    }
+    if (listType === 'BLACKLIST') {
+      return api.patchBlacklist({ listId: vars.listId, ListData: { metadata: vars.metadata } });
+    }
+    throw new Error('Changing metadata is not supported for this list type');
   });
 }

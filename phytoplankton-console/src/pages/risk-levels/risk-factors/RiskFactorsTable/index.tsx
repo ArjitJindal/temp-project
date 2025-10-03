@@ -9,9 +9,7 @@ import { isSingleRow, TableData, TableRefType } from '@/components/library/Table
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { map, QueryResult } from '@/utils/queries/types';
 import { makeUrl } from '@/utils/routing';
-import { useQuery } from '@/utils/queries/hooks';
-import { RISK_FACTOR_WORKFLOW_PROPOSAL_LIST } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useRiskFactorsWorkflowProposals } from '@/hooks/api/workflows';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   failed,
@@ -70,17 +68,9 @@ export default function RiskFactorsTable(props: Props) {
     return queryResultsFactory(selectedSection);
   }, [queryResultsFactory, selectedSection]);
 
-  const api = useApi();
-  const { data: pendingProposalRes } = useQuery(
-    RISK_FACTOR_WORKFLOW_PROPOSAL_LIST(),
-    async () => {
-      const proposals = await api.getPulseRiskFactorsWorkflowProposal();
-      return proposals;
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
+  const { data: pendingProposalRes } = useRiskFactorsWorkflowProposals({
+    enabled: isApprovalWorkflowsEnabled,
+  });
 
   // Merging query results with pending proposals
   const queryResultsWithProposals: QueryResult<TableData<RiskFactorRow>> = useMemo(() => {

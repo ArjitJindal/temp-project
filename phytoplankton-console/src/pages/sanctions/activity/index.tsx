@@ -2,9 +2,7 @@ import { useMemo } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { KpiCard } from './KpiCard';
-import { useApi } from '@/api';
-import { SANCTIONS_SCREENING_DETAILS, SANCTIONS_SCREENING_STATS } from '@/utils/queries/keys';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { useSanctionsScreeningDetails, useSanctionsScreeningStats } from '@/hooks/api/sanctions';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
@@ -46,41 +44,12 @@ function getEntityName(entity: SanctionsScreeningEntity, userAlias?: string) {
 }
 
 export const SanctionsScreeningActivity = ({ params, setParams }) => {
-  const api = useApi({ debounce: 500 });
   const settings = useSettings();
-  const statsResult = useQuery(
-    SANCTIONS_SCREENING_STATS({
-      afterTimestamp: params.afterTimestamp,
-      beforeTimestamp: params.beforeTimestamp,
-    }),
-    () => {
-      return api.getSanctionsScreeningActivityStats({
-        afterTimestamp: params.afterTimestamp,
-        beforeTimestamp: params.beforeTimestamp,
-      });
-    },
-  );
-  const detailsResult = usePaginatedQuery(
-    SANCTIONS_SCREENING_DETAILS(params),
-    async (paginationParams) => {
-      const result = await api.getSanctionsScreeningActivityDetails({
-        page: params.page,
-        pageSize: params.pageSize,
-        from: params.from,
-        filterEntities: params.entity,
-        filterName: params.name,
-        filterIsHit: params.isHit,
-        filterIsNew: params.isNew,
-        afterTimestamp: params.afterTimestamp,
-        beforeTimestamp: params.beforeTimestamp,
-        ...paginationParams,
-      });
-      return {
-        items: result.data,
-        total: result.total,
-      };
-    },
-  );
+  const statsResult = useSanctionsScreeningStats({
+    afterTimestamp: params.afterTimestamp,
+    beforeTimestamp: params.beforeTimestamp,
+  });
+  const detailsResult = useSanctionsScreeningDetails(params);
   const { ruleInstances } = useRules();
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const detailsColumns: TableColumn<SanctionsScreeningDetails>[] = useMemo(() => {

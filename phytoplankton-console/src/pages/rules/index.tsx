@@ -20,7 +20,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { getOr } from '@/utils/asyncResource';
 import { exportJsonlFile } from '@/utils/json';
 import { dayjs } from '@/utils/dayjs';
-import { useApi } from '@/api';
+import { useImportRules } from '@/hooks/api/rules';
 import { hasMinimumPermission } from '@/utils/user-utils';
 
 const TableList = () => {
@@ -36,7 +36,7 @@ const TableList = () => {
     params: DEFAULT_PARAMS_STATE,
   });
 
-  const api = useApi();
+  const importRules = useImportRules();
 
   return (
     <BreadCrumbsWrapper
@@ -64,11 +64,7 @@ const TableList = () => {
       simulationDefaultUrl={`/rules/${tab}`}
       importExport={{
         import: async (file) => {
-          await api.postRulesImport({
-            ImportConsoleDataRequest: {
-              file,
-            },
-          });
+          await importRules.mutateAsync(file);
         },
         export: () => {
           const rules = getOr(rulesResult.data, {

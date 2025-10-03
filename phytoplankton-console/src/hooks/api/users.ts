@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
   USERS_UNIQUES,
@@ -15,6 +15,7 @@ import {
   USER_CHANGES_PROPOSALS_BY_ID,
   ROLE,
   PERMISSIONS,
+  USERS,
 } from '@/utils/queries/keys';
 import {
   InternalConsumerUser,
@@ -23,13 +24,16 @@ import {
   UserType,
   AccountRole,
   DrsScore,
+  AllUsersTableItem,
+  UserApprovalUpdateRequest,
 } from '@/apis';
 import { QueryResult, QueryOptions } from '@/utils/queries/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
-import { WorkflowChangesStrategy } from '@/hooks/api/workflows';
+import { WorkflowChangesStrategy, usePendingProposalsUserIds } from '@/hooks/api/workflows';
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
-import type { UserApprovalUpdateRequest } from '@/apis';
+import { dayjs } from '@/utils/dayjs';
 
 export function useUsersUniques(field: any, params?: { filter?: string }, options?: QueryOptions) {
   const api = useApi();
@@ -80,6 +84,92 @@ export function useUsersPreviewSearch(
         ...(userType && { filterUserType: userType }),
       });
       return { total: users.count, users: users.items };
+    },
+  );
+}
+
+export function useUsersList(
+  type: 'business' | 'consumer' | 'all',
+  params: any,
+  pendingProposalsUserIdsRes?: AsyncResource<string[] | undefined>,
+): QueryResult<PaginatedData<AllUsersTableItem>> {
+  const api = useApi({ debounce: 500 });
+  const computedPendingRes = usePendingProposalsUserIds({
+    pendingApproval: params?.pendingApproval,
+  });
+  const pendingRes = pendingProposalsUserIdsRes ?? computedPendingRes;
+  return usePaginatedQuery<AllUsersTableItem>(
+    USERS(type, { ...params, pendingProposalsUserIds: pendingRes }),
+    async (paginationParams) => {
+      const pendingProposalsUserIds = getOr(pendingRes, undefined);
+      if (
+        params?.pendingApproval === 'true' &&
+        pendingProposalsUserIds != null &&
+        pendingProposalsUserIds.length === 0
+      ) {
+        return { items: [], total: 0 };
+      }
+
+      const filterUserIds = pendingProposalsUserIds;
+
+      const queryObj: any = {
+        pageSize: params.pageSize,
+        page: params.page,
+        sortField: params.sort?.[0]?.[0],
+        sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
+        afterTimestamp: params.createdTimestamp ? dayjs(params.createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: params.createdTimestamp
+          ? dayjs(params.createdTimestamp[1]).valueOf()
+          : undefined,
+        filterId: filterUserIds == null ? params.userId : undefined,
+        filterParentId: params.parentUserId,
+        filterTagKey: params.tagKey,
+        filterTagValue: params.tagValue,
+        filterRiskLevel: params.riskLevels,
+        filterRiskLevelLocked: params.riskLevelLocked,
+        filterIsPepHit: params.isPepHit,
+        filterPepCountry: params.pepCountry,
+        filterPepRank: params.pepRank,
+        filterCountryOfResidence: params.countryOfResidence,
+        filterCountryOfNationality: params.countryOfNationality,
+        filterUserState: params.userState,
+        filterKycStatus: params.kycStatus,
+        filterName: params.userName,
+        filterIds: filterUserIds,
+        ...paginationParams,
+      };
+
+      const response =
+        type === 'business'
+          ? await api.getBusinessUsersList({
+              ...queryObj,
+              filterUserRegistrationStatus: params.userRegistrationStatus,
+              responseType: 'data',
+            })
+          : type === 'consumer'
+          ? await api.getConsumerUsersList({
+              ...queryObj,
+              filterIsPepHit: params.isPepHit,
+              responseType: 'data',
+            })
+          : await api.getAllUsersList({ ...queryObj, responseType: 'data' });
+
+      const countResponse =
+        type === 'business'
+          ? await api.getBusinessUsersList({
+              ...queryObj,
+              filterUserRegistrationStatus: params.userRegistrationStatus,
+              responseType: 'count',
+            })
+          : type === 'consumer'
+          ? await api.getConsumerUsersList({
+              ...queryObj,
+              filterIsPepHit: params.isPepHit,
+              responseType: 'count',
+            })
+          : await api.getAllUsersList({ ...queryObj, responseType: 'count' });
+
+      return { total: countResponse.count, items: response.items };
     },
   );
 }
@@ -176,7 +266,7 @@ export function useUserEntityLinkedChildren(
   });
 }
 
-export function useRole(roleId: string, options?: QueryOptions) {
+export function useRole(roleId: string, options?: QueryOptions<AccountRole, AccountRole>) {
   const api = useApi();
   return useQuery<AccountRole>(ROLE(roleId), async () => api.getRole({ roleId }), options);
 }

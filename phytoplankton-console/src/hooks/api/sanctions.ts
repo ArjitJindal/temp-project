@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/api';
-import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
+import { useCursorQuery, useQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
   DEFAULT_MANUAL_SCREENING_FILTERS,
@@ -11,10 +11,13 @@ import {
   SANCTIONS_HITS_SEARCH,
   ALERT_ITEM_COMMENTS,
   SANCTIONS_HITS_ALL,
+  SANCTIONS_SCREENING_DETAILS,
+  SANCTIONS_SCREENING_STATS,
+  SANCTIONS_WHITELIST_SEARCH,
 } from '@/utils/queries/keys';
-import type { SanctionsHitListResponse } from '@/apis';
+import type { SanctionsHitListResponse, SanctionsScreeningDetails } from '@/apis';
 import type { Mutation, QueryOptions, QueryResult } from '@/utils/queries/types';
-import type { CursorPaginatedData } from '@/utils/queries/hooks';
+import type { CursorPaginatedData, PaginatedData } from '@/utils/queries/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 
@@ -211,4 +214,66 @@ export function useChangeSanctionsHitsStatusMutation(): {
   );
 
   return { changeHitsStatusMutation };
+}
+
+export function useSanctionsWhitelistSearch(params: {
+  from?: string | null;
+  pageSize: number;
+  userId?: string | null;
+  entity?: string | null;
+  entityType?: string | null;
+}) {
+  const api = useApi();
+  return useCursorQuery(SANCTIONS_WHITELIST_SEARCH(params), async ({ from }) => {
+    return api.searchSanctionsWhitelist({
+      start: from ?? params.from ?? undefined,
+      pageSize: params.pageSize,
+      filterUserId: params.userId != null ? [params.userId] : undefined,
+      filterEntity: params.entity != null ? [params.entity] : undefined,
+      filterEntityType: params.entityType != null ? [params.entityType] : undefined,
+    });
+  });
+}
+
+export function useSanctionsScreeningStats(dateRange: {
+  afterTimestamp?: number;
+  beforeTimestamp?: number;
+}) {
+  const api = useApi();
+  return useQuery(
+    SANCTIONS_SCREENING_STATS({
+      afterTimestamp: dateRange.afterTimestamp,
+      beforeTimestamp: dateRange.beforeTimestamp,
+    }),
+    () =>
+      api.getSanctionsScreeningActivityStats({
+        afterTimestamp: dateRange.afterTimestamp,
+        beforeTimestamp: dateRange.beforeTimestamp,
+      }),
+  );
+}
+
+export function useSanctionsScreeningDetails(params: any) {
+  const api = useApi({ debounce: 500 });
+  return usePaginatedQuery<SanctionsScreeningDetails>(
+    SANCTIONS_SCREENING_DETAILS(params),
+    async (paginationParams) => {
+      const result = await api.getSanctionsScreeningActivityDetails({
+        page: params.page,
+        pageSize: params.pageSize,
+        from: params.from,
+        filterEntities: params.entity,
+        filterName: params.name,
+        filterIsHit: params.isHit,
+        filterIsNew: params.isNew,
+        afterTimestamp: params.afterTimestamp,
+        beforeTimestamp: params.beforeTimestamp,
+        ...paginationParams,
+      });
+      return {
+        items: result.data,
+        total: result.total,
+      } as PaginatedData<SanctionsScreeningDetails>;
+    },
+  );
 }

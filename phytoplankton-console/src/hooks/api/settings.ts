@@ -1,7 +1,7 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { ACTION_REASONS } from '@/utils/queries/keys';
+import { ACTION_REASONS, NANGO_CONNECTIONS } from '@/utils/queries/keys';
 import type { ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
 
 export function useActionReasons() {
@@ -34,3 +34,32 @@ export function useCreateActionReasons(options?: any) {
 }
 
 // Consolidated in hooks/api/tenant-settings.ts
+
+export function useNangoConnections() {
+  const api = useApi();
+  return useQuery(NANGO_CONNECTIONS(), () => api.getTenantsNangoConnections());
+}
+
+export function useDeleteNangoConnection() {
+  const api = useApi();
+  return useMutation((vars: { providerConfigKey: string; connectionId: string }) =>
+    api.deleteTenantsNangoConnections({
+      NangoPostConnect: {
+        providerConfigKey: vars.providerConfigKey,
+        connectionId: vars.connectionId,
+      },
+    }),
+  );
+}
+
+export function useCreateNangoConnection() {
+  const api = useApi();
+  return useMutation((vars: { providerConfigKey: string; connectionId: string }) =>
+    api.postTenantsNangoConnections({
+      NangoPostConnect: {
+        connectionId: vars.connectionId,
+        providerConfigKey: vars.providerConfigKey,
+      },
+    }),
+  );
+}
