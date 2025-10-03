@@ -1,5 +1,6 @@
 import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 import { CASES_ITEM, CASES_LIST } from '@/utils/queries/keys';
 import { Case } from '@/apis';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
@@ -112,5 +113,26 @@ export function useCasesListPaginated(params: any, options?: any) {
       };
     },
     options,
+  );
+}
+
+export function useCasesAssignmentUpdate() {
+  const api = useApi();
+  return useMutation((vars: { caseIds: string[]; assignments: any[] }) =>
+    api.patchCasesAssignment({
+      CasesAssignmentsUpdateRequest: { caseIds: vars.caseIds, assignments: vars.assignments },
+    }),
+  );
+}
+
+export function useCasesReviewAssignmentUpdate() {
+  const api = useApi();
+  return useMutation((vars: { caseIds: string[]; reviewAssignments: any[] }) =>
+    api.patchCasesReviewAssignment({
+      CasesReviewAssignmentsUpdateRequest: {
+        caseIds: vars.caseIds,
+        reviewAssignments: vars.reviewAssignments,
+      },
+    }),
   );
 }

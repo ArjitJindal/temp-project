@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { flatten, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import AlertsCard from './AlertsCard';
@@ -38,6 +38,7 @@ import {
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
+// import { useAuditLogsList } from '@/hooks/api/audit-logs';
 import {
   useFeatureEnabled,
   useFreshdeskCrmEnabled,
@@ -436,15 +437,15 @@ function useTabs(
               defaultActivityLogParams={DEFAULT_ACTIVITY_LOG_PARAMS}
               logs={{
                 request: async (params) => {
-                  const { alertId, filterCaseStatus, filterAlertStatus, filterActivityBy } = params;
+                  const { alertId, filterActivityBy, filterCaseStatus, filterAlertStatus } = params;
                   const response = await api.getAuditlog({
                     sortField: 'timestamp',
                     sortOrder: 'descend',
                     searchEntityId: alertId ? [alertId] : entityIds,
                     filterActions: ['CREATE', 'UPDATE', 'ESCALATE', 'DELETE'],
                     filterActionTakenBy: filterActivityBy,
-                    alertStatus: flatten(filterAlertStatus),
-                    caseStatus: flatten(filterCaseStatus),
+                    caseStatus: filterCaseStatus,
+                    alertStatus: filterAlertStatus,
                     includeRootUserRecords: true,
                     pageSize: 100,
                     entityIdExactMatch: true,

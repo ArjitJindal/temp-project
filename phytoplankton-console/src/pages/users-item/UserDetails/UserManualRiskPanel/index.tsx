@@ -23,12 +23,16 @@ import {
 import { DrsScore } from '@/apis';
 import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
 import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.react.svg';
-import { useQuery } from '@/utils/queries/hooks';
+import {
+  usePulseManualRiskAssignment,
+  usePulseRiskAssignment,
+  useUserDrs,
+  usePostUserApprovalProposalMutation,
+} from '@/hooks/api/users';
 import {
   USER_AUDIT_LOGS_LIST,
   USER_CHANGES_PROPOSALS,
   USER_CHANGES_PROPOSALS_BY_ID,
-  USERS_ITEM_RISKS_DRS,
 } from '@/utils/queries/keys';
 import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/const';
 import { useHasResources } from '@/utils/user-utils';
@@ -50,9 +54,12 @@ interface Props {
 
 export default function UserManualRiskPanel(props: Props) {
   const { userId } = props;
-  const api = useApi();
+  const _api = useApi();
   const [isLocked, setIsLocked] = useState(false);
-  const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const queryResult = useUserDrs(userId);
+  const pulseAssignmentQuery = usePulseRiskAssignment(userId);
+  const postUserApprovalProposal = usePostUserApprovalProposalMutation();
+  const manualRiskAssignment = usePulseManualRiskAssignment();
   const settings = useSettings();
   const canUpdateManualRiskLevel = useHasResources(['write:::users/user-manual-risk-levels/*']);
   const drsScore = useMemo(() => {
@@ -64,32 +71,12 @@ export default function UserManualRiskPanel(props: Props) {
 
   const queryClient = useQueryClient();
   const [syncState, setSyncState] = useState<AsyncResource<DrsScore>>(init());
-  const [syncTrigger, setSyncTrigger] = useState(0);
   useEffect(() => {
-    let isCanceled = false;
-    setSyncState((syncState) => loading(getOr(syncState, null)));
-    api
-      .getPulseRiskAssignment({ userId })
-      .then((result) => {
-        if (isCanceled) {
-          return;
-        }
-        setSyncState(success(result));
-        setIsLocked(result ? !result.isUpdatable : false);
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        console.error(e);
-        // todo: i18n
-        setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.fatal(`Unable to get ${settings.userAlias} risk level`, e);
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [userId, api, settings.userAlias, syncTrigger]);
+    setSyncState(pulseAssignmentQuery.data);
+    if (isSuccess(pulseAssignmentQuery.data)) {
+      setIsLocked(!pulseAssignmentQuery.data.value.isUpdatable);
+    }
+  }, [pulseAssignmentQuery.data]);
 
   const defaultRiskScore = useRiskScore(DEFAULT_RISK_LEVEL);
   const defaultRiskLevel =
@@ -123,9 +110,9 @@ export default function UserManualRiskPanel(props: Props) {
       if (changesStrategy === 'APPROVE' && !vars.comment) {
         throw new Error(`Comment is required`);
       }
-      const approvalResponse = await api.postUserApprovalProposal({
-        userId: userId,
-        UserApprovalUpdateRequest: {
+      const approvalResponse = await postUserApprovalProposal.mutateAsync({
+        userId,
+        changes: {
           proposedChanges: [
             {
               field: 'CraLock',
@@ -141,13 +128,13 @@ export default function UserManualRiskPanel(props: Props) {
         await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(userId));
         return;
       } else {
-        setSyncTrigger((x) => x + 1);
+        pulseAssignmentQuery.refetch();
       }
     } else {
       try {
-        const response = await api.pulseManualRiskAssignment({
-          userId: userId,
-          ManualRiskAssignmentPayload: {
+        const response = await manualRiskAssignment.mutateAsync({
+          userId,
+          payload: {
             riskLevel: getOr(
               map(
                 syncState,
@@ -159,6 +146,7 @@ export default function UserManualRiskPanel(props: Props) {
           },
         });
         setSyncState(success(response));
+        pulseAssignmentQuery.refetch();
       } catch (e) {
         console.error(e);
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
@@ -199,9 +187,9 @@ export default function UserManualRiskPanel(props: Props) {
         if (changesStrategy !== 'AUTO_APPROVE' && !comment) {
           throw new Error('Comment is required');
         }
-        const approvalResponse = await api.postUserApprovalProposal({
-          userId: userId,
-          UserApprovalUpdateRequest: {
+        const approvalResponse = await postUserApprovalProposal.mutateAsync({
+          userId,
+          changes: {
             proposedChanges: [
               {
                 field: 'Cra',
@@ -215,16 +203,17 @@ export default function UserManualRiskPanel(props: Props) {
           await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
           await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(userId));
         } else {
-          setSyncTrigger((x) => x + 1);
+          pulseAssignmentQuery.refetch();
         }
       } else {
-        const response = await api.pulseManualRiskAssignment({
-          userId: userId,
-          ManualRiskAssignmentPayload: {
+        const response = await manualRiskAssignment.mutateAsync({
+          userId,
+          payload: {
             riskLevel: newRiskLevel,
           },
         });
         setSyncState(success(response));
+        pulseAssignmentQuery.refetch();
       }
       if (changesStrategy !== 'APPROVE') {
         message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully`);
@@ -355,8 +344,8 @@ export default function UserManualRiskPanel(props: Props) {
               pendingProposalsRes={pendingProposals}
               requiredResources={['write:::users/user-manual-risk-levels/*']}
               onSuccess={() => {
-                setSyncTrigger((x) => x + 1);
-                queryClient.invalidateQueries(USERS_ITEM_RISKS_DRS(userId));
+                pulseAssignmentQuery.refetch();
+                queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
               }}
             />
           )}

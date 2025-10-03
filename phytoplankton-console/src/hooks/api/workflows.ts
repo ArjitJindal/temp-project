@@ -32,6 +32,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import { AsyncResource, map, success } from '@/utils/asyncResource';
 import { useUserApprovalSettings } from '@/pages/settings/components/UserUpdateApprovalSettings';
 import { useAccountRawRole } from '@/utils/user-utils';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 
 export type CaseAlertWorkflowItem = CaseWorkflow | AlertWorkflow;
 
@@ -309,4 +310,46 @@ export function useWorkflowItem(workflowType: string, id: string) {
       workflowId: id,
     });
   });
+}
+
+export function useCreateWorkflow(workflowType: WorkflowType) {
+  const api = useApi();
+  return useMutation((serialized: any) =>
+    api.createWorkflow({
+      workflowType,
+      CreateWorkflowType:
+        workflowType === 'alert'
+          ? {
+              alertWorkflow: {
+                ...serialized,
+                name: 'not_required_for_creation',
+                description: 'not_required_for_creation',
+                enabled: true,
+              },
+            }
+          : {
+              caseWorkflow: {
+                ...serialized,
+                name: 'not_required_for_creation',
+                description: 'not_required_for_creation',
+                enabled: true,
+                autoClose: false,
+              },
+            },
+    }),
+  );
+}
+
+export function useCreateWorkflowVersion(workflowType: WorkflowType, workflowId: string) {
+  const api = useApi();
+  return useMutation((payload: { item: any; serialized: any }) =>
+    api.postWorkflowVersion({
+      workflowType,
+      workflowId,
+      CreateWorkflowType:
+        payload.item.workflowType === 'alert'
+          ? { alertWorkflow: { ...payload.item, ...payload.serialized } }
+          : { caseWorkflow: { ...payload.item, ...payload.serialized } },
+    }),
+  );
 }

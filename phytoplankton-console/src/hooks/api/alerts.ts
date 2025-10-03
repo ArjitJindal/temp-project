@@ -1,5 +1,6 @@
 import { useApi } from '@/api';
 import { usePaginatedQuery, useCursorQuery, useQuery } from '@/utils/queries/hooks';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
   ALERT_ITEM,
   ALERT_LIST,
@@ -123,6 +124,30 @@ export function useCreateAlertComment() {
   return async (request: { alertId: string; CommentRequest: { body: string; files?: any[] } }) => {
     return await api.createAlertsComment(request);
   };
+}
+
+export function useAlertsAssignmentUpdate() {
+  const api = useApi();
+  return useMutation((vars: { alertIds: string[]; assignments: any[] }) =>
+    api.alertsAssignment({
+      AlertsAssignmentsUpdateRequest: {
+        alertIds: vars.alertIds,
+        assignments: vars.assignments,
+      },
+    }),
+  );
+}
+
+export function useAlertsReviewAssignmentUpdate() {
+  const api = useApi();
+  return useMutation((vars: { alertIds: string[]; reviewAssignments: any[] }) =>
+    api.alertsReviewAssignment({
+      AlertsReviewAssignmentsUpdateRequest: {
+        alertIds: vars.alertIds,
+        reviewAssignments: vars.reviewAssignments,
+      },
+    }),
+  );
 }
 
 export function useQuestionVariableAutocomplete(

@@ -1,4 +1,26 @@
-import { useApi } from '@/api';
+import { useApi, useApi } from '@/api';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import type { SLAPolicy } from '@/apis';
+
+export function useCreateSlaPolicy() {
+  const api = useApi();
+  return useMutation((payload: { policy: SLAPolicy }) =>
+    api.postSlaPolicy({ SLAPolicy: payload.policy }),
+  );
+}
+
+export function useUpdateSlaPolicy() {
+  const api = useApi();
+  return useMutation((payload: { slaId: string; policy: SLAPolicy }) =>
+    api.putSlaPolicy({ slaId: payload.slaId, SLAPolicy: payload.policy }),
+  );
+}
+
+export function useDeleteSlaPolicy() {
+  const api = useApi();
+  return useMutation((slaId: string) => api.deleteSlaPolicy({ slaId }));
+}
+
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { SLA_POLICY, SLA_POLICY_LIST } from '@/utils/queries/keys';
 

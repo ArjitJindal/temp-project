@@ -4,14 +4,15 @@ import ActionReasonModal from './ActionReasonModal';
 import SettingsCard from '@/components/library/SettingsCard';
 import { P } from '@/components/ui/Typography';
 import Button from '@/components/library/Button';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { ACTION_REASONS } from '@/utils/queries/keys';
+import {
+  useActionReasons,
+  useCreateActionReasons,
+  useToggleActionReason,
+} from '@/hooks/api/settings';
 import { getOr } from '@/utils/asyncResource';
 import { ConsoleActionReason, ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
 import Label from '@/components/library/Label';
 import Checkbox from '@/components/library/Checkbox';
-import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 
 const REASON_TYPE_LABEL_MAP: { label: string; type: ReasonType }[] = [
@@ -21,50 +22,31 @@ const REASON_TYPE_LABEL_MAP: { label: string; type: ReasonType }[] = [
 
 export const ReasonsSettings = () => {
   const [createMode, setCreateMode] = useState<ReasonType | undefined>();
-  const api = useApi();
-  const asyncResourceReasons = useQuery(ACTION_REASONS(), async () => {
-    return await api.getActionReasons({});
+  const asyncResourceReasons = useActionReasons();
+  const toggleReasonMutation = useToggleActionReason({
+    retry: false,
+    onSuccess: (actionReason: ConsoleActionReason) => {
+      message.success(`Reason ${actionReason.isActive ? 'activated' : 'deactivated'} successfully`);
+      asyncResourceReasons.refetch();
+    },
+    onError: (e: any) => {
+      message.fatal('Failed to toggle reason', e);
+    },
   });
-  const toggleReasonMutation = useMutation(
-    async (values: { reasonId: string; isActive: boolean; reasonType: ReasonType }) => {
-      const { reasonId, isActive, reasonType } = values;
-      return await api.toggleActionReason({
-        reasonId,
-        ConsoleActionReasonPutRequest: { isActive, reasonType },
-      });
-    },
-    {
-      retry: false,
-      onSuccess: (actionReason: ConsoleActionReason) => {
-        message.success(
-          `Reason ${actionReason.isActive ? 'activated' : 'deactivated'} successfully`,
-        );
-        asyncResourceReasons.refetch();
-      },
-      onError: (e) => {
-        message.fatal('Failed to toggle reason', e);
-      },
-    },
-  );
 
-  const addReasonsMutation = useMutation(
-    async (data: ConsoleActionReasonCreationRequest[]) => {
-      return await api.createActionReasons({ ConsoleActionReasonCreationRequest: data });
+  const addReasonsMutation = useCreateActionReasons({
+    retry: false,
+    onSuccess: (data: ConsoleActionReason[]) => {
+      message.success(
+        `${data.length > 1 ? 'New' : 'A new'} case and alert closure reason added successfully`,
+      );
+      asyncResourceReasons.refetch();
+      setCreateMode(undefined);
     },
-    {
-      retry: false,
-      onSuccess: (data) => {
-        message.success(
-          `${data.length > 1 ? 'New' : 'A new'} case and alert closure reason added successfully`,
-        );
-        asyncResourceReasons.refetch();
-        setCreateMode(undefined);
-      },
-      onError: (e) => {
-        message.fatal('Failed to create reasons', e);
-      },
+    onError: (e: any) => {
+      message.fatal('Failed to create reasons', e);
     },
-  );
+  });
 
   const addReasons = (type: ReasonType, reasons: string[]) => {
     const actionReasons = reasons.map(

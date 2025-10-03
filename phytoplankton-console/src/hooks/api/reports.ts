@@ -1,5 +1,6 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
 import { ReportType, CountryCode } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
@@ -50,6 +51,22 @@ export function useSARReportCountries(allReportType?: boolean): SARReportCountry
   }
 
   return [];
+}
+
+export function useReportsDraftMutation() {
+  const api = useApi();
+  return useMutation(
+    (vars: {
+      reportTypeId: string;
+      params:
+        | { userId: string; alertIds?: string[]; transactionIds?: string[] }
+        | { caseId: string; alertIds?: string[]; transactionIds?: string[] };
+    }) =>
+      api.getReportsDraft({
+        ...(vars.params as any),
+        reportTypeId: vars.reportTypeId,
+      }),
+  );
 }
 
 // useCase moved to hooks/api/cases.ts

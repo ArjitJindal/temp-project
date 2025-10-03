@@ -22,12 +22,14 @@ import {
   AllUsersTableItemPreview,
   UserType,
   AccountRole,
+  DrsScore,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
 import { WorkflowChangesStrategy } from '@/hooks/api/workflows';
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
+import type { UserApprovalUpdateRequest } from '@/apis';
 
 export function useUsersUniques(
   field: any,
@@ -106,6 +108,57 @@ export function useUserDrs(userId: string, options?: { enabled?: boolean }) {
 export function useUserKrs(userId: string, options?: { enabled?: boolean }) {
   const api = useApi();
   return useQuery(USERS_ITEM_RISKS_KRS(userId), () => api.getKrsValue({ userId }), options);
+}
+
+export function usePulseRiskAssignment(userId: string) {
+  const api = useApi();
+  return useQuery<DrsScore>(['pulse-risk-assignment', userId], () =>
+    api.getPulseRiskAssignment({ userId }),
+  );
+}
+
+export function usePulseManualRiskAssignment() {
+  const api = useApi();
+  return useMutation(
+    (vars: { userId: string; payload: { riskLevel?: any; isUpdatable?: boolean } }) =>
+      api.pulseManualRiskAssignment({
+        userId: vars.userId,
+        ManualRiskAssignmentPayload: vars.payload as any,
+      }),
+  );
+}
+
+export function usePostUserApprovalProposalMutation() {
+  const api = useApi();
+  return useMutation((vars: { userId: string; changes: UserApprovalUpdateRequest }) =>
+    api.postUserApprovalProposal({ userId: vars.userId, UserApprovalUpdateRequest: vars.changes }),
+  );
+}
+
+export function useProcessUserApprovalMutation() {
+  const api = useApi();
+  return useMutation(
+    (vars: { userId: string; id: string; action: 'accept' | 'reject' | 'cancel' }) =>
+      api.postUserApprovalProcess({
+        userId: vars.userId,
+        id: vars.id,
+        UserApprovalRequest: { action: vars.action },
+      }),
+  );
+}
+
+export function useUserScreeningStatus(userId: string) {
+  const api = useApi();
+  return useQuery(['user-status', userId], async () => {
+    return await api.getUserScreeningStatus({ userId });
+  });
+}
+
+export function useUpdateConsumerUserMutation() {
+  const api = useApi();
+  return useMutation((vars: { userId: string; updates: UserUpdateRequest }) =>
+    api.postConsumerUsersUserId({ userId: vars.userId, UserUpdateRequest: vars.updates }),
+  );
 }
 
 export function useUserEntityLinkedParents(userId: string | undefined) {

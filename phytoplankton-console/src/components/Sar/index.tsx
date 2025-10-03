@@ -7,10 +7,10 @@ import Label from '../library/Label';
 import Alert from '@/components/library/Alert';
 import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
-import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
 import { Report, ReportTypesResponse } from '@/apis';
 import { useReportTypesAll } from '@/hooks/api';
+import { useReportsDraftMutation } from '@/hooks/api/reports';
 import { useCase } from '@/hooks/api/cases';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
@@ -34,8 +34,8 @@ interface CaseProps extends CommonProps {
 
 export function SarButton(props: UserProps | CaseProps) {
   const { alertIds, transactionIds, isDisabled } = props;
-  const api = useApi();
   const queryResult = useReportTypesAll();
+  const reportsDraftMutation = useReportsDraftMutation();
 
   const caseQueryResult = useCase('caseId' in props ? props.caseId : '', {
     enabled: 'caseId' in props,
@@ -56,12 +56,15 @@ export function SarButton(props: UserProps | CaseProps) {
 
   const draft = useMutation<Report, unknown, string>(
     async (reportTypeId) => {
-      return api.getReportsDraft({
-        ...('caseId' in props ? { caseId: props.caseId } : { userId: props.userId }),
+      const res = await reportsDraftMutation.mutateAsync({
         reportTypeId,
-        alertIds: alertIds ?? [],
-        transactionIds: transactionIds ?? [],
+        params: {
+          ...('caseId' in props ? { caseId: props.caseId } : { userId: props.userId }),
+          alertIds: alertIds ?? [],
+          transactionIds: transactionIds ?? [],
+        },
       });
+      return res;
     },
     {
       onSuccess: () => {

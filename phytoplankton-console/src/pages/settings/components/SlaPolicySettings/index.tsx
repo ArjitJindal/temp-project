@@ -5,7 +5,7 @@ import { capitalizeNameFromEmail, humanizeSnakeCase } from '@flagright/lib/utils
 import s from './styles.module.less';
 import PolicyForm from './PolicyForm';
 import { FormValues, formValuesToSlaPolicy } from './utils/utils';
-import { useApi } from '@/api';
+import { useCreateSlaPolicy, useDeleteSlaPolicy, useUpdateSlaPolicy } from '@/hooks/api/sla';
 import { SLAPolicy } from '@/apis';
 import Button from '@/components/library/Button';
 import { EmptyEntitiesInfo } from '@/components/library/EmptyDataInfo';
@@ -57,8 +57,10 @@ const defaultValues: FormValues = {
 };
 
 export function SlaPolicySettings() {
-  const api = useApi();
   const auth0User = useAuth0User();
+  const createSlaPolicy = useCreateSlaPolicy();
+  const updateSlaPolicy = useUpdateSlaPolicy();
+  const deleteSlaPolicy = useDeleteSlaPolicy();
   const [users, loadingUsers] = useUsers();
   const [params, setParams] = useState<AllParams<DefaultApiGetSlaPoliciesRequest>>({
     ...DEFAULT_PARAMS_STATE,
@@ -73,8 +75,8 @@ export function SlaPolicySettings() {
   const [hasChanges, setHasChanges] = useState(false);
   const creationMutation = useMutation(
     async (values: FormValues) => {
-      return await api.postSlaPolicy({
-        SLAPolicy: formValuesToSlaPolicy(values, currentUser?.id ?? ''),
+      return await createSlaPolicy.mutateAsync({
+        policy: formValuesToSlaPolicy(values, currentUser?.id ?? ''),
       });
     },
     {
@@ -98,9 +100,9 @@ export function SlaPolicySettings() {
       if (selectedSlaPolicy == null) {
         throw new Error(`Unable to update selected policy since it is null`);
       }
-      return await api.putSlaPolicy({
+      return await updateSlaPolicy.mutateAsync({
         slaId: selectedSlaPolicy.id,
-        SLAPolicy: formValuesToSlaPolicy(values, currentUser?.id ?? ''),
+        policy: formValuesToSlaPolicy(values, currentUser?.id ?? ''),
       });
     },
     {
@@ -121,7 +123,7 @@ export function SlaPolicySettings() {
   );
   const deletionMutation = useMutation(
     async (slaId: string) => {
-      await api.deleteSlaPolicy({ slaId });
+      await deleteSlaPolicy.mutateAsync(slaId);
     },
     {
       onSuccess: () => {

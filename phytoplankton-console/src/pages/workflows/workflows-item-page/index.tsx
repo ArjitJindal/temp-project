@@ -8,9 +8,8 @@ import Breadcrumbs from '@/components/library/Breadcrumbs';
 import Button from '@/components/library/Button';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
-import { useApi } from '@/api';
 import { useWorkflowItem } from '@/hooks/api';
-import { parseWorkflowType, WorkflowItem } from '@/hooks/api/workflows';
+import { parseWorkflowType, WorkflowItem, useCreateWorkflowVersion } from '@/hooks/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isLoading, isSuccess, map, useIsResourceChangedStatus } from '@/utils/asyncResource';
 import { useReducerWrapper } from '@/pages/workflows/workflows-item-page/helpers';
@@ -18,8 +17,6 @@ import { WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { CreateAlertWorkflow } from '@/apis/models/CreateAlertWorkflow';
-import { CreateCaseWorkflow } from '@/apis/models/CreateCaseWorkflow';
 
 export default function WorkflowsItemPage() {
   const { type, id } = useParams<'id' | 'type'>() as {
@@ -31,8 +28,8 @@ export default function WorkflowsItemPage() {
 
   const navigate = useNavigate();
 
-  const api = useApi();
   const workflowsQueryResult = useWorkflowItem(workflowType, id);
+  const createWorkflowVersion = useCreateWorkflowVersion(workflowType, id);
 
   // Keep state wrapped in an AsyncResource
   const [state, dispatch] = useReducerWrapper();
@@ -63,24 +60,7 @@ export default function WorkflowsItemPage() {
       if (item.workflowType !== 'alert' && item.workflowType !== 'case') {
         throw new Error(`Workflow type not supported yet: ${item.workflowType}`);
       }
-      await api.postWorkflowVersion({
-        workflowType: workflowType,
-        workflowId: id,
-        CreateWorkflowType:
-          item.workflowType === 'alert'
-            ? {
-                alertWorkflow: {
-                  ...(item as CreateAlertWorkflow),
-                  ...serialize(state),
-                },
-              }
-            : {
-                caseWorkflow: {
-                  ...(item as CreateCaseWorkflow),
-                  ...serialize(state),
-                },
-              },
-      });
+      await createWorkflowVersion.mutateAsync({ item, serialized: serialize(state) });
     },
     {
       onError: (error) => {

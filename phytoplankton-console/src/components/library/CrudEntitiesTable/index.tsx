@@ -20,7 +20,7 @@ import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useCrudPaginated } from '@/hooks/api/crud';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { useHasResources } from '@/utils/user-utils';
@@ -92,13 +92,11 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
   const isReadOnly = !useHasResources(writeResources?.() ?? []);
   const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
   const [params, setParams] = useState<AllParams<GetParams>>(DEFAULT_PARAMS_STATE as any);
-  const queryResult = usePaginatedQuery<Entity>([entityName, params], async (paginationParams) => {
-    const { total, data } = await apiOperations.GET({ ...params, ...paginationParams });
-    return {
-      total,
-      items: data,
-    };
-  });
+  const queryResult = useCrudPaginated<Entity>(
+    entityName,
+    params,
+    async (mergedParams) => await apiOperations.GET(mergedParams),
+  );
   const creationMutation = useMutation(
     async (entity: Entity) => {
       return await apiOperations.CREATE(entity);
