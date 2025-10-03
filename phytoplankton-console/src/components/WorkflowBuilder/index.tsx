@@ -15,7 +15,7 @@ import {
 } from '@/components/WorkflowBuilder/types';
 import { notEmpty } from '@/utils/array';
 import { FINAL_STATE, START_STATE } from '@/components/WorkflowBuilder/consts';
-import { WorkflowType } from '@/utils/api/workflows';
+import { WorkflowType } from '@/hooks/api/workflows';
 
 const AVAILABLE_STATUSES = [
   START_STATE,

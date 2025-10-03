@@ -6,7 +6,7 @@ import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { RiskClassificationScore } from '@/apis';
-import { useVersionHistoryItem } from '@/utils/version';
+import { useVersionHistoryItem } from '@/hooks/api/version-history';
 import VersionHistoryHeader from '@/components/VersionHistory/RestoreButton';
 import { useRiskClassificationConfig } from '@/utils/risk-levels';
 

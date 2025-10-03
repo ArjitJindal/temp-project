@@ -2,7 +2,7 @@ import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
-import { useWorkflow } from '@/utils/api/workflows';
+import { useWorkflow } from '@/hooks/api/workflows';
 import { RiskFactorApproval, RiskFactorsApprovalRequestActionEnum } from '@/apis';
 import Alert from '@/components/library/Alert';
 import Button from '@/components/library/Button';

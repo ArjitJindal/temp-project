@@ -17,7 +17,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { parseWorkflowType } from '@/utils/api/workflows';
+import { parseWorkflowType } from '@/hooks/api/workflows';
 
 export default function WorkflowsCreatePage() {
   const { type, templateId } = useParams<'type' | 'templateId'>() as {

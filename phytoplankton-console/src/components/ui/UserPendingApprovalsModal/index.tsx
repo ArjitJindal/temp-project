@@ -17,7 +17,7 @@ import {
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
 import { neverReturn } from '@/utils/lang';
-import { useWorkflows, WorkflowItem } from '@/utils/api/workflows';
+import { useWorkflows, WorkflowItem } from '@/hooks/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';

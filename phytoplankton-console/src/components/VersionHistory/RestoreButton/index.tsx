@@ -7,7 +7,7 @@ import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import { VersionHistory, VersionHistoryType } from '@/apis';
-import { useVersionHistoryItem, useVersionHistoryRestore } from '@/utils/version';
+import { useVersionHistoryItem, useVersionHistoryRestore } from '@/hooks/api/version-history';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import { AsyncResource, match, success, map, init } from '@/utils/asyncResource';

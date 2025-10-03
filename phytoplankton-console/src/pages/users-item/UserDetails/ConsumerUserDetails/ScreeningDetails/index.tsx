@@ -26,7 +26,7 @@ import {
   WorkflowChangesStrategy,
   useUserFieldChangesPendingApprovals,
   useUserFieldChangesStrategy,
-} from '@/utils/api/workflows';
+} from '@/hooks/api/workflows';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 

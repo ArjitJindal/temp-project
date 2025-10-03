@@ -4,6 +4,7 @@ import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { NEW_VERSION_ID, VERSION_HISTORY, VERSION_HISTORY_ITEM } from '@/utils/queries/keys';
 import { VersionHistory, VersionHistoryRestorePayload, VersionHistoryType } from '@/apis';
+import { getOr } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 
 export function useNewVersionId(type: VersionHistoryType) {
@@ -16,7 +17,7 @@ export function useVersionHistoryItem(type: VersionHistoryType, versionId: strin
   const api = useApi();
   const navigate = useNavigate();
   const queryResult = useQuery<VersionHistory>(
-    VERSION_HISTORY_ITEM('RiskClassification', versionId ?? ''),
+    VERSION_HISTORY_ITEM(type, versionId ?? ''),
     () =>
       api.getVersionHistoryByVersionId({
         versionId: versionId ?? '',
@@ -32,6 +33,11 @@ export function useVersionHistoryItem(type: VersionHistoryType, versionId: strin
     },
   );
   return queryResult;
+}
+
+export function useMaxVersionIdRiskFactors() {
+  const result = useNewVersionId('RiskFactors');
+  return getOr(result.data, { id: '' }).id;
 }
 
 export function useVersionHistory(type: VersionHistoryType, params: any) {

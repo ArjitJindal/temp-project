@@ -1,6 +1,6 @@
 import { uniq } from 'lodash';
 import { WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
-import { CaseAlertWorkflowItem } from '@/utils/api/workflows';
+import { CaseAlertWorkflowItem } from '@/hooks/api/workflows';
 import { notEmpty } from '@/utils/array';
 
 import { FINAL_STATE } from '@/components/WorkflowBuilder/consts';

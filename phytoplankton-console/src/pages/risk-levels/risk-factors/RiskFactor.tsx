@@ -10,7 +10,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { map } from '@/utils/queries/types';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import VersionHistoryFooter from '@/components/VersionHistory/Footer';
-import { useNewVersionId } from '@/utils/version';
+import { useNewVersionId } from '@/hooks/api/version-history';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { riskFactorsAtom, riskFactorsEditEnabled, riskFactorsStore } from '@/store/risk-factors';
