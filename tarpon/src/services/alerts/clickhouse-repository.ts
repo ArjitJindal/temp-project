@@ -413,9 +413,9 @@ export class ClickhouseAlertRepository {
 
     if (params.filterClosingReason != null) {
       whereConditions.push(
-        `(alertStatus = 'CLOSED' AND hasAny(lastStatusChangeReasons, ['${params.filterClosingReason.join(
+        `hasAny(lastStatusChangeReasons, ['${params.filterClosingReason.join(
           "','"
-        )}']))`
+        )}'])`
       )
     }
 

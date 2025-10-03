@@ -5,10 +5,9 @@ import { AxisBottom as VisxAxisBottom, AxisLeft as VisxAvisLeft } from '@visx/ax
 import { AxisScale, SharedAxisProps } from '@visx/axis/lib/types';
 import { TextProps } from '@visx/text/lib/Text';
 import { ScaleInput } from '@visx/scale';
-import { Text } from '@visx/text';
 import cn from 'clsx';
 import s from './index.module.less';
-import { DEFAULT_AXIS_FONT_STYLE } from '@/components/charts/shared/text';
+import { DEFAULT_AXIS_FONT_STYLE, measureTextSize } from '@/components/charts/shared/text';
 import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { SKELETON_TICK_COMPONENT } from '@/components/charts/BarChart/helpers';
 import { generateEvenTicks } from '@/components/charts/shared/helpers';
@@ -28,25 +27,119 @@ type Props<Scale extends AxisScale> = SharedAxisProps<Scale> & {
   grouping?: BarGrouping;
 };
 
-const WrappedTickComponent = ({ x, y, formattedValue, ...props }: any) => {
+const MAX_TICK_LINES = 3;
+
+function wrapTickLabel(text: string, width: number): string {
+  if (!text || !width) {
+    return text;
+  }
+  const words = text.split(/(\s+|[-/])/); // keep separators to preserve meaning
+  const lines: string[] = [''];
+
+  const measure = (s: string) => measureTextSize(s, DEFAULT_AXIS_FONT_STYLE).width;
+
+  const splitWordWithHyphen = (word: string): string[] => {
+    const parts: string[] = [];
+    let buf = '';
+    for (const ch of word) {
+      const candidate = buf + ch + '-';
+      if (measure(candidate) <= width) {
+        buf = buf + ch;
+      } else {
+        if (buf.length === 0) {
+          parts.push(ch + '-');
+        } else {
+          parts.push(buf + '-');
+          buf = ch;
+        }
+      }
+    }
+    if (buf.length > 0) {
+      parts.push(buf);
+    }
+    return parts;
+  };
+
+  for (const token of words) {
+    const isSpace = /^\s+$/.test(token);
+    const isWord = !isSpace && !/^[-/]$/.test(token);
+    const toAppend = token;
+
+    if (isWord && measure(token) > width) {
+      const hyphenParts = splitWordWithHyphen(token);
+      for (let pIndex = 0; pIndex < hyphenParts.length; pIndex++) {
+        const part = hyphenParts[pIndex];
+        const currentLine = lines[lines.length - 1];
+        const next = currentLine + part;
+        if (measure(next) <= width) {
+          lines[lines.length - 1] = next;
+        } else if (lines.length < MAX_TICK_LINES) {
+          lines.push(part);
+        } else {
+          const last = lines[lines.length - 1];
+          let acc = last;
+          for (const ch of part) {
+            if (measure(acc + ch + '…') <= width) {
+              acc = acc + ch;
+            } else {
+              break;
+            }
+          }
+          lines[lines.length - 1] = acc + '…';
+          return lines.join('\n');
+        }
+      }
+      continue;
+    }
+
+    const currentLine = lines[lines.length - 1];
+    const next = currentLine + toAppend;
+    if (measure(next) <= width || currentLine.length === 0) {
+      lines[lines.length - 1] = next;
+    } else if (lines.length < MAX_TICK_LINES) {
+      lines.push(toAppend.trimStart());
+    } else {
+      let acc = currentLine;
+      for (const ch of toAppend) {
+        if (measure(acc + ch + '…') <= width) {
+          acc = acc + ch;
+        } else {
+          break;
+        }
+      }
+      lines[lines.length - 1] = acc + '…';
+      return lines.join('\n');
+    }
+  }
+
+  return lines.join('\n');
+}
+
+const HtmlTick = ({ x, y, formattedValue, width, fill }: any) => {
+  const w = width ?? 70;
+  const text = wrapTickLabel(String(formattedValue ?? ''), w);
+  const linePx = Math.round((DEFAULT_AXIS_FONT_STYLE.fontSize as number) * 1.3);
+  const height = linePx * MAX_TICK_LINES;
   return (
-    <Text
-      x={x}
-      y={y}
-      width={70}
-      maxWidth={70}
-      verticalAnchor="start"
-      textAnchor="middle"
-      {...props}
-      style={{
-        fontSize: DEFAULT_AXIS_FONT_STYLE.fontSize,
-        fontWeight: DEFAULT_AXIS_FONT_STYLE.fontWeight,
-        fontFamily: DEFAULT_AXIS_FONT_STYLE.fontFamily,
-      }}
-      className={s.tick}
-    >
-      {formattedValue}
-    </Text>
+    <g transform={`translate(${x}, ${y})`}>
+      <foreignObject x={-w / 2} y={4} width={w} height={height}>
+        <div
+          style={{
+            color: fill,
+            fontFamily: DEFAULT_AXIS_FONT_STYLE.fontFamily,
+            fontWeight: DEFAULT_AXIS_FONT_STYLE.fontWeight as any,
+            fontSize: DEFAULT_AXIS_FONT_STYLE.fontSize as any,
+            lineHeight: `${linePx}px`,
+            textAlign: 'center',
+            wordBreak: 'break-word',
+            overflowWrap: 'anywhere',
+            hyphens: 'auto',
+          }}
+        >
+          {text}
+        </div>
+      </foreignObject>
+    </g>
   );
 };
 
@@ -54,12 +147,20 @@ export function DefaultAxisBottom<Scale extends AxisScale>(props: Props<Scale>) 
   const { showSkeleton = false, tickLabelProps, scale, ...rest } = props;
   const axisColor = showSkeleton ? COLORS_V2_SKELETON_COLOR : COLORS_V2_GRAY_6;
 
+  const step = (scale as any).step ? (scale as any).step() : 0;
+  const MIN_GAP = 6;
+  const MAX_TICK_WIDTH = 90;
+  const tickWidth = Math.max(
+    48,
+    Math.min(MAX_TICK_WIDTH, step ? Math.max(32, step - MIN_GAP) : MAX_TICK_WIDTH),
+  );
+
   return (
     <VisxAxisBottom
       stroke={axisColor}
       tickStroke={axisColor}
       hideTicks={showSkeleton}
-      tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : WrappedTickComponent}
+      tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : HtmlTick}
       scale={scale}
       {...rest}
       tickLabelProps={(...args): Partial<TextProps> => {
@@ -70,6 +171,8 @@ export function DefaultAxisBottom<Scale extends AxisScale>(props: Props<Scale>) 
           fill: axisColor,
           dy: '0.5em',
           textAnchor: 'middle',
+          width: tickWidth,
+          lineHeight: 1.1,
           className: cn(s.tick, tickLabelPropsResult?.className),
         };
       }}

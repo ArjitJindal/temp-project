@@ -1423,6 +1423,12 @@ paths:
           in: query
           name: filterReference
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterActionReasons
+        - schema:
             type: string
             enum:
               - data
@@ -2079,6 +2085,14 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
     parameters: []
   /users:
     get:
@@ -2202,6 +2216,14 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
   /users-preview:
     get:
       summary: All Users - List (Lite)
@@ -2615,6 +2637,14 @@ paths:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+        - schema:
+            type: string
+            enum:
+              - data
+              - count
+          in: query
+          name: responseType
+          description: Type of response - 'data' for table data only, 'count' for count only
     parameters: []
   /users/{userId}:
     get:
@@ -9839,6 +9869,9 @@ components:
                 enum:
                   - USER
                   - PAYMENT_DETAILS
+                  - ADDRESS
+                  - EMAIL
+                  - NAME
             frozenStatuses:
               type: array
               items:
@@ -10778,6 +10811,12 @@ components:
         - FRESHDESK
         - SALESFORCE
         - ZENDESK
+    ChatbotNames:
+      title: ChatbotNames
+      type: string
+      enum:
+        - FRESHWORK
+        - INTERCOMM
     DashboardStatsTransactionsCount:
       type: object
       title: DashboardStatsTransactionsCount
@@ -11974,6 +12013,8 @@ components:
           type: array
           items:
             type: string
+        chatbotName:
+          $ref: '#/components/schemas/ChatbotNames'
         llmProvider:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:
@@ -13619,6 +13660,27 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Alert'
+        address:
+          type: object
+          properties:
+            origin:
+              $ref: '#/components/schemas/Address'
+            destination:
+              $ref: '#/components/schemas/Address'
+        email:
+          type: object
+          properties:
+            origin:
+              type: string
+            destination:
+              type: string
+        name:
+          type: object
+          properties:
+            origin:
+              type: string
+            destination:
+              type: string
         paymentDetails:
           type: object
           properties:
@@ -14816,6 +14878,8 @@ components:
           type: array
           items:
             type: string
+        entityType:
+          type: string
     DefaultManualScreeningFiltersResponse:
       title: DefaultManualScreeningFiltersResponse
       type: object
@@ -16245,6 +16309,7 @@ components:
             - LIST_ITEM
             - TRANSACTION_LIST
             - USER_LIST
+            - USER_VIEW
             - RULE_INSTANCES
             - RULE_LIBRARY
         action:
@@ -18146,6 +18211,9 @@ components:
       enum:
         - USER
         - PAYMENT
+        - NAME
+        - ADDRESS
+        - EMAIL
     RiskScoreDetails:
       title: RiskScoreDetails
       type: object

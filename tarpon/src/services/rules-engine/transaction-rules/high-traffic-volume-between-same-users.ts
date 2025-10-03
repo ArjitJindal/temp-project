@@ -106,7 +106,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     let countHit = true
     if (Number.isFinite(transactionsLimit)) {
       const highTrafficCountRule = this.getDependencyRule()
-      const countResult = await highTrafficCountRule.computeRule()
+      const countResult = (await highTrafficCountRule.computeRule())
+        ?.ruleHitResult
       countHit = Boolean(countResult && countResult.length > 0)
     }
 
@@ -151,7 +152,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         falsePositiveDetails: falsePositiveDetails,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async *getRawTransactionsData(): AsyncGenerator<

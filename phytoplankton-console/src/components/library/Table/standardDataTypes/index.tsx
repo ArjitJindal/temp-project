@@ -69,7 +69,6 @@ import {
   statusInProgressOrOnHold,
   statusInReview,
 } from '@/utils/case-utils';
-import { useCaseStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useApi } from '@/api';
 import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
@@ -652,10 +651,9 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
 
 export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
   statusesToShow?: CaseStatus[];
+  allowedStatuses?: CaseStatus[];
   reload: () => void;
 }): ColumnDataType<CaseStatus, T> => {
-  const allowedStatuses = useCaseStatusesFromPermissions();
-
   return {
     render: (caseStatus, { item: entity }) => {
       return caseStatus && entity ? (
@@ -688,7 +686,7 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
     autoFilterDataType: {
       kind: 'select',
       options: uniqBy<Option<string>>(
-        (options?.statusesToShow ?? allowedStatuses).map((status) => ({
+        (options?.statusesToShow ?? options?.allowedStatuses ?? []).map((status) => ({
           value: status,
           label: humanizeConstant(
             statusInReview(status)
@@ -918,6 +916,12 @@ export const getForneticsEntityId = (tenantSettings?: TenantSettings) => {
                 </Id>
               )}
             </FeatureEnabled>
+          );
+        case 'caseId':
+          return (
+            <Id to={addBackUrlToRoute(getCaseUrl(value ?? '#'))} testName="case-id" toNewTab={true}>
+              {value}
+            </Id>
           );
         case 'Case ID':
         case 'Related case':

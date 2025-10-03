@@ -52,7 +52,7 @@ export const getE2ETestProject = (
             'npm run migration:seed:demo-data',
             'cd ..',
             'cd phytoplankton-console',
-            'ENV=dev CI=true npm run cypress:run',
+            'ENV=dev npm run cypress:run',
           ],
         },
       },

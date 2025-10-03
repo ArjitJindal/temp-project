@@ -5,7 +5,6 @@ import {
 import { BadRequest, Forbidden, NotFound } from 'http-errors'
 import compact from 'lodash/compact'
 import { UserService } from '../../services/users'
-import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { CrmService } from '@/services/crm'
@@ -15,7 +14,7 @@ import { LinkerService } from '@/services/linker'
 import { getOngoingScreeningUserRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMentionsFromComments } from '@/utils/helpers'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 import { EddService } from '@/services/edd'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -26,31 +25,48 @@ export const businessUsersViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
-
     const userService = await UserService.fromEvent(event)
-    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetBusinessUsersList(async (ctx, request) => {
       if (isClickhouseEnabled()) {
-        return await userService.getBusinessUsersV2(request)
+        if (request.responseType === 'count') {
+          const count = await userService.getBusinessUsersV2Count(request)
+          return { items: [], count }
+        }
+        if (request.responseType === 'data') {
+          const items = await userService.getBusinessUsersV2(request)
+          return { items, count: 0 }
+        }
+        const count = await userService.getBusinessUsersV2Count(request)
+        const items = await userService.getBusinessUsersV2(request)
+        return { items, count }
       }
-      return await userService.getBusinessUsers(request)
+      if (request.responseType === 'count') {
+        const count = await userService.getBusinessUsersCount(request)
+        return { items: [], count }
+      }
+      if (request.responseType === 'data') {
+        const items = await userService.getBusinessUsers(request)
+        return { items, count: 0 }
+      }
+      const count = await userService.getBusinessUsersCount(request)
+      const items = await userService.getBusinessUsers(request)
+      return { items, count }
     })
 
     handlers.registerGetBusinessUsersItem(async (ctx, request) => {
       const user = await userService.getBusinessUser(request.userId)
-      if (user == null) {
+      if (user.result == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      await userAuditLogService.handleAuditLogForUserViewed(request.userId)
-      return user
+      return user.result
     })
 
     handlers.registerPostBusinessUsersUserId(async (ctx, request) => {
       const user = await userService.getUser(request.userId, false)
-      return await userService.updateUser(user, request.UserUpdateRequest)
+      return (await userService.updateUser(user, request.UserUpdateRequest))
+        .result
     })
 
     handlers.registerGetUsersUniques(async (ctx, request) =>
@@ -67,30 +83,48 @@ export const consumerUsersViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
     const userService = await UserService.fromEvent(event)
-    const userAuditLogService = new UserAuditLogService(tenantId)
     const handlers = new Handlers()
 
     handlers.registerGetConsumerUsersList(async (ctx, request) => {
       if (isClickhouseEnabled()) {
-        return await userService.getConsumerUsersV2(request)
+        if (request.responseType === 'count') {
+          const count = await userService.getConsumerUsersV2Count(request)
+          return { items: [], count }
+        }
+        if (request.responseType === 'data') {
+          const items = await userService.getConsumerUsersV2(request)
+          return { items, count: 0 }
+        }
+        const count = await userService.getConsumerUsersV2Count(request)
+        const items = await userService.getConsumerUsersV2(request)
+        return { items, count }
       }
-      return await userService.getConsumerUsers(request)
+      if (request.responseType === 'count') {
+        const count = await userService.getConsumerUsersCount(request)
+        return { items: [], count }
+      }
+      if (request.responseType === 'data') {
+        const items = await userService.getConsumerUsers(request)
+        return { items, count: 0 }
+      }
+      const count = await userService.getConsumerUsersCount(request)
+      const items = await userService.getConsumerUsers(request)
+      return { items, count }
     })
 
     handlers.registerGetConsumerUsersItem(async (ctx, request) => {
       const user = await userService.getConsumerUser(request.userId)
-      if (user == null) {
+      if (user.result == null) {
         throw new NotFound(`Unable to find user by id`)
       }
-      await userAuditLogService.handleAuditLogForUserViewed(request.userId)
-      return user
+      return user.result
     })
 
     handlers.registerPostConsumerUsersUserId(async (ctx, request) => {
       const user = await userService.getUser(request.userId, false)
-      return await userService.updateUser(user, request.UserUpdateRequest)
+      return (await userService.updateUser(user, request.UserUpdateRequest))
+        .result
     })
 
     return await handlers.handle(event)
@@ -110,9 +144,29 @@ export const allUsersViewHandler = lambdaApi()(
 
     handlers.registerGetAllUsersList(async (ctx, request) => {
       if (isClickhouseEnabled()) {
-        return await userService.getClickhouseUsers(request)
+        if (request.responseType === 'count') {
+          const count = await userService.getClickhouseUsersCount(request)
+          return { items: [], count }
+        }
+        if (request.responseType === 'data') {
+          const items = await userService.getClickhouseUsers(request)
+          return { items, count: 0 }
+        }
+        const count = await userService.getClickhouseUsersCount(request)
+        const items = await userService.getClickhouseUsers(request)
+        return { items, count }
       }
-      return (await userService.getUsers(request)).result
+      if (request.responseType === 'count') {
+        const count = await userService.getUsersCount(request)
+        return { items: [], count }
+      }
+      if (request.responseType === 'data') {
+        const items = (await userService.getUsers(request)).result
+        return { items, count: 0 }
+      }
+      const count = await userService.getUsersCount(request)
+      const items = (await userService.getUsers(request)).result
+      return { items, count }
     })
 
     handlers.registerGetAllUsersPreviewList(async (ctx, request) => {
@@ -135,7 +189,7 @@ export const allUsersViewHandler = lambdaApi()(
         request.userId,
         comment
       )
-      return createdComment
+      return createdComment.result
     })
 
     handlers.registerDeleteUsersUserIdCommentsCommentId(
@@ -199,7 +253,7 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUserScreeningStatus(async (_ctx, _request) => {
-      const dynamoDb = getDynamoDbClient()
+      const dynamoDb = getDynamoDbClientByEvent(event)
       const ongoingScreeningUserRules =
         await getOngoingScreeningUserRuleInstances(tenantId, dynamoDb)
 
@@ -224,7 +278,7 @@ export const allUsersViewHandler = lambdaApi()(
         request.commentId,
         comment
       )
-      return createdComment
+      return createdComment.result
     })
 
     handlers.registerPostUserAttachment(async (ctx, request) => {

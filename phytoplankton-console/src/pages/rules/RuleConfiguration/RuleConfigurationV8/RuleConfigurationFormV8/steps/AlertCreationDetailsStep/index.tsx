@@ -110,8 +110,8 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                             value: 'AUTO_DESTINATION',
                             label: `Auto (based on the rule logic, but only create for destination ${settings.userAlias})`,
                           },
-                          { value: 'ORIGIN', label: `Origin ${settings.userAlias}` },
-                          { value: 'DESTINATION', label: `Destination ${settings.userAlias}` },
+                          { value: 'ORIGIN', label: `Origin` },
+                          { value: 'DESTINATION', label: `Destination` },
                           {
                             value: 'ALL',
                             label: `Both origin ${settings.userAlias} and destination ${settings.userAlias}`,

@@ -102,6 +102,8 @@ export const config: Config = {
   clickhouse: {
     awsPrivateLinkEndpointName:
       'com.amazonaws.vpce.eu-central-1.vpce-svc-09b4c3c24933d2ee2',
+    maxTotalMemoryGb: 48,
+    numReplicas: 3,
   },
   application: {
     MONGO_ATLAS_PROJECT: 'Tarpon-Sandbox',

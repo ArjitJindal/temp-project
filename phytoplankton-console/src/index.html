@@ -9,6 +9,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
     />
+    <link rel="dns-prefetch" href="https://{{ AUTH0_DOMAIN }}" />
+    <link rel="preconnect" href="https://{{ AUTH0_DOMAIN }}" crossorigin />
     <title>Console</title>
     <link rel="stylesheet" href="/{{ bundleCss }}" />
     {{ preload }} {{ livereloadScript }}

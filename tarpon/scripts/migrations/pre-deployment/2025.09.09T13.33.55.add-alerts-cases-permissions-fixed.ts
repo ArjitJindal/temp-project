@@ -4,6 +4,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RoleService } from '@/services/roles'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { FilterCondition } from '@/@types/openapi-internal/FilterCondition'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 const STATUS_RESOURCES = [
   'frn:console:<default>:::case-management/case-status/*',
@@ -106,6 +107,9 @@ function mergeStatusIntoStatement(
 }
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
+  if (isDemoTenant(tenant.id)) {
+    return
+  }
   const dynamoDb = await getDynamoDbClient()
   const roleService = RoleService.getInstance(dynamoDb, auth0Domain)
 

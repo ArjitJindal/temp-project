@@ -12,12 +12,13 @@
   "author": "",
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.749.0",
-    "aws-cdk-lib": "~2.178.1",
+    "aws-cdk-lib": "~2.217.0",
     "constructs": "^10.4.2",
     "dayjs": "^1.11.12",
     "fastest-levenshtein": "^1.0.16",
     "lodash": "^4.17.21",
-    "nanoid": "^3.3.8"
+    "nanoid": "^3.3.8",
+    "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.5",

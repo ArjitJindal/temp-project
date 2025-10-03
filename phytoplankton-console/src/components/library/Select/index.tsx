@@ -104,11 +104,20 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     fixedHeight = false,
     hideBorders = false,
     width,
+    onSearch,
   } = props;
 
   const id = useId(`select-`);
 
   const [searchText, setSearchText] = useState<string | undefined>(undefined);
+
+  const handleChangeSearchText = useCallback(
+    (text) => {
+      setSearchText(text);
+      onSearch?.(text);
+    },
+    [onSearch],
+  );
 
   const [virtualOptions, setVirtualOptions] = useState<Option<Value>[]>([]);
 
@@ -159,12 +168,12 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       } else {
         newValue = value;
       }
-      setSearchText('');
+      handleChangeSearchText('');
       if (!isEqual(value, newValue)) {
         onChange?.(newValue);
       }
     },
-    [mode, availableOptions, onChange, allowNewOptions],
+    [mode, availableOptions, onChange, allowNewOptions, handleChangeSearchText],
   );
 
   const [isOpen, setIsOpen] = useState(false);
@@ -245,13 +254,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     return 1 + (showClearIcon ? 1 : 0) + (isLoading ? 1 : 0) + (showCopyIcon ? 1 : 0);
   }, [showClearIcon, isLoading, showCopyIcon]);
 
-  const handleChangeSearchText = (value: string) => {
-    setSearchText(value);
-    if (value.includes(SEPARATOR)) {
-      applySearchStringValue(value, props.value);
-    }
-  };
-
   const handleCopy = useCallback(
     async (e: React.MouseEvent<ReactSVGElement>) => {
       e.stopPropagation();
@@ -328,7 +330,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                   if (props.mode === 'SINGLE' || props.mode === undefined) {
                     props.onChange?.(selectedValue);
                     setIsOpen(false);
-                    setSearchText('');
+                    handleChangeSearchText('');
                   } else if (props.mode === 'MULTIPLE') {
                     const newValue = props.value?.includes(selectedValue)
                       ? props.value?.filter((v) => v !== selectedValue)
@@ -348,7 +350,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                     }
                     const newValue = selectedValue?.toString() ?? '';
                     setIsOpen(false);
-                    setSearchText('');
+                    handleChangeSearchText('');
                     props.onChange?.(newValue);
                   }
                 }}
@@ -376,6 +378,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             props.testId ?? `select-root-${id}`,
             'select-root',
             isEmpty && 'empty',
+            isDisabled && 'disabled',
             isLoading && CY_LOADING_FLAG_CLASS,
           )}
           data-portal-id={portalId}
@@ -434,7 +437,13 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             ref={setInputRef}
             disabled={isDisabled}
             value={searchText ?? ''}
-            onChange={(e) => handleChangeSearchText(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              handleChangeSearchText(value);
+              if (value.includes(SEPARATOR)) {
+                applySearchStringValue(value, props.value);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Tab') {
                 handleOpenChange(false);

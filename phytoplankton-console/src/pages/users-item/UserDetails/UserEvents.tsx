@@ -16,16 +16,49 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { processTagsRecursively } from '@/utils/object';
 
 type Props = {
   userId: string;
+};
+
+const UserEventActions = ({ item }: { item: InternalUserEvent | undefined }) => {
+  const settings = useSettings();
+
+  const newImage = processTagsRecursively({
+    ...(item?.updatedConsumerUserAttributes || item?.updatedBusinessUserAttributes || {}),
+    isKrsLocked: item?.isKrsLocked,
+  });
+
+  if (
+    !item?.updatedConsumerUserAttributes &&
+    !item?.updatedBusinessUserAttributes &&
+    item?.isKrsLocked === null
+  ) {
+    return (
+      <Tooltip title={`No changes were made to the ${settings.userAlias} details.`}>
+        <span className={s.secondaryText}>View Changes</span>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <AuditLogModal
+      data={{
+        type: firstLetterUpper(settings.userAlias),
+        oldImage: {},
+        newImage: newImage,
+        showNotChanged: false,
+        showOldImage: false,
+      }}
+    />
+  );
 };
 
 export const UserEvents = (props: Props) => {
   const { userId } = props;
   const helper = new ColumnHelper<InternalUserEvent>();
   const api = useApi();
-  const settings = useSettings();
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -104,34 +137,7 @@ export const UserEvents = (props: Props) => {
       value: (item) => item,
       exporting: false,
       type: {
-        render: (item) => {
-          if (
-            !item?.updatedConsumerUserAttributes &&
-            !item?.updatedBusinessUserAttributes &&
-            item?.isKrsLocked === null
-          ) {
-            return (
-              <Tooltip title={`No changes were made to the ${settings.userAlias} details.`}>
-                <span className={s.secondaryText}>View Changes</span>
-              </Tooltip>
-            );
-          }
-          const newImage = {
-            ...(item?.updatedConsumerUserAttributes || item?.updatedBusinessUserAttributes || {}),
-            isKrsLocked: item?.isKrsLocked,
-          };
-          return (
-            <AuditLogModal
-              data={{
-                type: firstLetterUpper(settings.userAlias),
-                oldImage: {},
-                newImage: newImage,
-                showNotChanged: false,
-                showOldImage: false,
-              }}
-            />
-          );
-        },
+        render: (item) => <UserEventActions item={item} />,
       },
     }),
   ]);

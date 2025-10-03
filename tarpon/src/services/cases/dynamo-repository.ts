@@ -36,7 +36,10 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
-import { getPaymentDetailsIdentifiersSubject } from '@/services/logic-evaluator/variables/payment-details'
+import {
+  getAddressIdentifiersSubject,
+  getPaymentDetailsIdentifiersSubject,
+} from '@/services/logic-evaluator/variables/payment-details'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { logger } from '@/core/logger'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -46,8 +49,8 @@ import { traceable } from '@/core/xray'
 import {
   CaseCommentFileInternal,
   CaseCommentsInternal,
+  CaseSubject,
 } from '@/@types/cases/CasesInternal'
-import { CaseSubject } from '@/services/case-alerts-common/utils'
 import { removeUndefinedFields } from '@/utils/object'
 import { DynamoConsumerMessage, dynamoKeyList } from '@/@types/dynamo'
 type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
@@ -979,12 +982,28 @@ export class DynamoCaseRepository {
     subject: CaseSubject,
     params: SubjectCasesQueryParams
   ): Promise<Case[]> {
-    const subjectId =
-      subject.type === 'USER'
-        ? `user:${subject.user.userId}`
-        : `payment:${getPaymentDetailsIdentifiersSubject(
-            subject.paymentDetails
-          )}`
+    let subjectId: string | undefined
+
+    switch (subject.type) {
+      case 'USER':
+        subjectId = `user:${subject.user.userId}`
+        break
+      case 'PAYMENT':
+        subjectId = `payment:${getPaymentDetailsIdentifiersSubject(
+          subject.paymentDetails
+        )}`
+        break
+      case 'ADDRESS':
+        subjectId = `address:${getAddressIdentifiersSubject(subject.address)}`
+        break
+      case 'EMAIL':
+        subjectId = `email:${subject.email}`
+        break
+      case 'NAME':
+        subjectId = `name:${subject.name}`
+        break
+    }
+
     if (!subjectId) {
       return []
     }

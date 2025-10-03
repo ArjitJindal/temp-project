@@ -144,7 +144,8 @@ async function updateCloudWatchMetrics(failedTests) {
 }
 
 async function afterCypressRun() {
-  if (process.env.CI === true) {
+  console.info('Process CI', process.env.ENV);
+  if (process.env.ENV !== 'local') {
     const filePath = path.resolve(__dirname, 'cypress', 'failed-e2e-tests.json');
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf8');
@@ -263,12 +264,16 @@ async function getCypressCreds() {
   try {
     // const spec = ` --spec "cypress/e2e/cases/case-details*.cy.ts"`;
     const spec = ``;
-    execSync(
-      `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag} ${spec}`,
-      {
-        stdio: 'inherit',
-      },
-    );
+    try {
+      execSync(
+        `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag} ${spec}`,
+        {
+          stdio: 'inherit',
+        },
+      );
+    } catch (e) {
+      console.error(e);
+    }
     await afterCypressRun();
   } catch (e) {
     await afterCypressRun();

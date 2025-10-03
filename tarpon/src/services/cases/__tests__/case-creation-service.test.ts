@@ -2250,14 +2250,14 @@ describe('Test payment cases', () => {
         TEST_TENANT_ID,
         [
           {
-            alertCreatedFor: ['PAYMENT_DETAILS'],
+            alertCreatedFor: ['USER', 'PAYMENT_DETAILS'],
           },
         ],
         async () => {
           const cases = await createCases(TEST_TENANT_ID)
-          expect(cases).toHaveLength(1)
+          expect(cases).toHaveLength(2)
           const caseItem = cases[0]
-          expect(caseItem.subjectType).toEqual('PAYMENT')
+          expect(caseItem.subjectType).toEqual('USER')
         }
       )
     })

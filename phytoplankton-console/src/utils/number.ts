@@ -7,7 +7,8 @@ export function formatNumber(
       return '-';
     }
 
-    const compact = options?.compact ?? false;
+    const { compact = false, keepDecimals = true } = options ?? {};
+
     let amount = 0;
 
     try {
@@ -20,35 +21,26 @@ export function formatNumber(
       return '-';
     }
 
-    let formattedNumber = amount.toFixed(2);
-
-    if (formattedNumber === '-') {
-      return formattedNumber;
-    }
-
-    if (compact) {
-      const absAmount = Math.abs(amount);
-      if (absAmount >= 1000000) {
-        formattedNumber = `${Math.round(amount / 10000) / 100}`;
-      } else if (absAmount >= 1000) {
-        formattedNumber = `${Math.round(amount / 10) / 100}`;
-      }
-    }
+    let formattedNumber;
 
     try {
-      formattedNumber = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: options?.keepDecimals ? 2 : 0,
-      }).format(Number(formattedNumber));
+      const numberFormat = new Intl.NumberFormat('en-US', {
+        maximumFractionDigits: keepDecimals ? 2 : 0,
+      });
+      formattedNumber = numberFormat.format(amount);
     } catch (error) {
       return '-';
     }
 
     if (compact) {
+      const numberFormat = new Intl.NumberFormat('en-US', {
+        maximumFractionDigits: 2,
+      });
       const absAmount = Math.abs(amount);
       if (absAmount >= 1000000) {
-        formattedNumber = `${formattedNumber}m`;
+        formattedNumber = `${numberFormat.format(amount / 1000_000)}m`;
       } else if (absAmount >= 1000) {
-        formattedNumber = `${formattedNumber}k`;
+        formattedNumber = `${numberFormat.format(amount / 1000)}k`;
       }
     }
 

@@ -1,5 +1,6 @@
 import { generateChecksum } from './object'
 import { ClickHouseTables } from './clickhouse/definition'
+import { getClickhouseClient, getClickhouseDbName } from './clickhouse/utils'
 
 export interface ClickHouseTableChecksum {
   tableName: string
@@ -100,11 +101,21 @@ export class ClickHouseChecksum {
     }
   }
 
-  analyzeTenantSyncNeeds(
+  async analyzeTenantSyncNeeds(
     tenantId: string,
     storedChecksums: ClickHouseSyncChecksum | null
-  ): TenantSyncAnalysis {
+  ): Promise<TenantSyncAnalysis> {
     const currentChecksums = this.generateClickHouseTableChecksums()
+    const databaseTablesQuery = `SHOW FULL TABLES FROM ${getClickhouseDbName(
+      tenantId
+    )}`
+
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    const databaseTables = await (
+      await clickhouseClient.query({
+        query: databaseTablesQuery,
+      })
+    ).json()
 
     const analysis: TenantSyncAnalysis = {
       tenantId,
@@ -144,7 +155,16 @@ export class ClickHouseChecksum {
     for (const [tableName, currentChecksum] of currentChecksumMap) {
       const storedChecksum = storedChecksumMap.get(tableName)
 
-      if (!storedChecksum) {
+      const isTableCreated =
+        databaseTables.data.findIndex(
+          (table) => (table as any).name === tableName
+        ) !== -1
+
+      if (!isTableCreated) {
+        analysis.needsSync = true
+        analysis.tablesToCreate.push(tableName)
+        analysis.reasons[tableName] = "Database doesn't have the table"
+      } else if (!storedChecksum) {
         analysis.needsSync = true
         analysis.tablesToCreate.push(tableName)
         analysis.reasons[tableName] = 'New table detected'
@@ -168,11 +188,14 @@ export class ClickHouseChecksum {
     return analysis
   }
 
-  isClickHouseSyncNeeded(
+  async isClickHouseSyncNeeded(
     tenantId: string,
     storedChecksums: ClickHouseSyncChecksum | null
-  ): { needsSync: boolean; reason?: string } {
-    const analysis = this.analyzeTenantSyncNeeds(tenantId, storedChecksums)
+  ): Promise<{ needsSync: boolean; reason?: string }> {
+    const analysis = await this.analyzeTenantSyncNeeds(
+      tenantId,
+      storedChecksums
+    )
 
     if (!analysis.needsSync) {
       return { needsSync: false }
@@ -188,12 +211,15 @@ export class ClickHouseChecksum {
     return { needsSync: true, reason }
   }
 
-  getTableSyncAnalysis(
+  async getTableSyncAnalysis(
     tenantId: string,
     tableName: string,
     storedChecksums: ClickHouseSyncChecksum | null
-  ): TableSyncResult | null {
-    const analysis = this.analyzeTenantSyncNeeds(tenantId, storedChecksums)
+  ): Promise<TableSyncResult | null> {
+    const analysis = await this.analyzeTenantSyncNeeds(
+      tenantId,
+      storedChecksums
+    )
 
     if (analysis.tablesToCreate.includes(tableName)) {
       return {

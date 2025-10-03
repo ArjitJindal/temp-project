@@ -36,6 +36,7 @@ import { SanctionsScreeningDetailsV2 } from '@/@types/openapi-internal/Sanctions
 import { CounterRepository } from '@/services/counter/repository'
 import { bulkSendMessages } from '@/utils/sns-sqs-client'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RuleExecutionSanctionsDetails } from '@/@types/openapi-internal/RuleExecutionSanctionsDetails'
 
 @traceable
 export class SanctionsScreeningDetailsRepository {
@@ -697,5 +698,35 @@ SETTINGS output_format_json_quote_64bit_integers = 0
         .next(),
     ])
     return { total: totalResult?.count ?? 0, data }
+  }
+
+  public async addScreeningDetails(details: RuleExecutionSanctionsDetails[]) {
+    if (details.length === 0) {
+      return
+    }
+
+    for (const detail of details) {
+      if (!detail?.hitContext?.entity || !detail?.hitContext?.ruleInstanceId) {
+        continue
+      }
+      const details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'> = {
+        name: detail.name,
+        entity: detail.hitContext.entity,
+        ruleInstanceIds: [detail.hitContext.ruleInstanceId],
+        userIds: detail.hitContext.userId
+          ? [detail.hitContext.userId]
+          : undefined,
+        transactionIds: detail.hitContext.transactionId
+          ? [detail.hitContext.transactionId]
+          : undefined,
+        isOngoingScreening: false,
+        isHit: detail.isRuleHit,
+        searchId: detail.searchId,
+      }
+      await Promise.all([
+        this.addSanctionsScreeningDetails(details, Date.now()),
+        this.addSanctionsScreeningDetailsV2(details, Date.now()),
+      ])
+    }
   }
 }

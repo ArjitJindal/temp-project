@@ -42,7 +42,9 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
       listHeader?.listType !== 'BLACKLIST' ||
       !listHeader?.metadata?.status
     ) {
-      return hitResult
+      return {
+        ruleHitResult: hitResult,
+      }
     }
 
     const transactionFieldsToMatch =
@@ -70,7 +72,9 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
       }
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private getTransactionFieldByListSubtype(

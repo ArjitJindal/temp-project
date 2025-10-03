@@ -69,6 +69,7 @@ function augmentAggregationVariables(
 }
 
 interface VariableTagsProps {
+  usedVariables?: string[];
   entityVariables?: LogicEntityVariableInUse[];
   aggregationVariables?: LogicAggregationVariable[];
   mlVariables?: RuleMachineLearningVariable[];
@@ -81,6 +82,7 @@ interface VariableTagsProps {
 }
 
 export const VariableTags: React.FC<VariableTagsProps> = ({
+  usedVariables,
   entityVariables,
   aggregationVariables,
   mlVariables,
@@ -138,6 +140,10 @@ export const VariableTags: React.FC<VariableTagsProps> = ({
                           key: 'delete',
                           icon: <DeleteBinLineIcon />,
                           action: () => onDelete?.(entityVar.key),
+                          disabled:
+                            usedVariables != null && usedVariables?.includes(entityVar.key)
+                              ? 'The variable is currently in use within the rule. To proceed with deletion, please remove its usage first.'
+                              : undefined,
                         },
                       ]
                 }
@@ -183,6 +189,10 @@ export const VariableTags: React.FC<VariableTagsProps> = ({
                             key: 'delete',
                             icon: <DeleteBinLineIcon />,
                             action: () => onDelete?.(aggVar.key),
+                            disabled:
+                              usedVariables != null && usedVariables?.includes(aggVar.key)
+                                ? 'The variable is currently in use within the rule. To proceed with deletion, please remove its usage first.'
+                                : undefined,
                           },
                         ]
                   }
@@ -245,6 +255,7 @@ type EditingEntityVariable = {
 type EditingMLVariable = { type: 'ml'; variable?: RuleMachineLearningVariable };
 
 interface RuleAggregationVariablesEditorProps {
+  usedVariables?: string[];
   ruleType: RuleType;
   readOnly?: boolean;
   entityVariables: LogicEntityVariableInUse[] | undefined;
@@ -259,6 +270,7 @@ interface RuleAggregationVariablesEditorProps {
 }
 
 export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
+  usedVariables,
   ruleType,
   readOnly,
   entityVariables,
@@ -467,6 +479,7 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
           </Dropdown>
         </div>
         <VariableTags
+          usedVariables={usedVariables}
           entityVariables={entityVariables}
           aggregationVariables={aggregationVariables}
           mlVariables={mlVariables}

@@ -102,7 +102,7 @@ import { TimestampRange } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
   getPaymentEmailId,
-  getPaymentMethodAddress,
+  getPaymentMethodAddressString,
 } from '@/utils/payment-details'
 import { UserInfoTypes } from '@/services/batch-jobs/rule-pre-aggregation-batch-job-runner'
 import {
@@ -635,7 +635,7 @@ export class LogicEvaluator {
         if (paymentDetails) {
           switch (type) {
             case 'PAYMENT_DETAILS_ADDRESS': {
-              const address = getPaymentMethodAddress(paymentDetails)
+              const address = getPaymentMethodAddressString(paymentDetails)
               return address
             }
             case 'PAYMENT_DETAILS_EMAIL':
@@ -716,7 +716,7 @@ export class LogicEvaluator {
       case 'PAYMENT_DETAILS_ADDRESS': {
         userKeyId = aggregationPaymentIdentifier?.value
           ? aggregationPaymentIdentifier.value
-          : paymentDetails && getPaymentMethodAddress(paymentDetails)
+          : paymentDetails && getPaymentMethodAddressString(paymentDetails)
         break
       }
       case 'PAYMENT_DETAILS_EMAIL':
@@ -1625,14 +1625,14 @@ export class LogicEvaluator {
         if (direction === 'origin') {
           aggregationPaymentIdentifier = {
             type: 'ADDRESS',
-            value: getPaymentMethodAddress(
+            value: getPaymentMethodAddressString(
               data.transaction.originPaymentDetails
             ),
           }
         } else {
           aggregationPaymentIdentifier = {
             type: 'ADDRESS',
-            value: getPaymentMethodAddress(
+            value: getPaymentMethodAddressString(
               data.transaction.destinationPaymentDetails
             ),
           }

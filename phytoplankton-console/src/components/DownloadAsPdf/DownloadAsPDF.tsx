@@ -246,7 +246,6 @@ const DownloadAsPDF = async (props: Props) => {
 
   const inputArray = (Array.isArray(pdfRef) ? pdfRef : [pdfRef]).filter(notNullish);
 
-  // Extract native table data and hide HTML tables to prevent pagination issues
   const extractedTables = extractNativeTables(inputArray);
   extractedTables.forEach((table) => {
     table.element.style.display = 'none';
@@ -278,6 +277,7 @@ const DownloadAsPDF = async (props: Props) => {
     const doc = new jsPDF(orientation, 'mm');
 
     const pageWidth = doc.internal.pageSize.getWidth() - 20;
+    const pageHeight = doc.internal.pageSize.getHeight();
 
     let position = 30;
     addAndSetFonts(doc);
@@ -300,16 +300,25 @@ const DownloadAsPDF = async (props: Props) => {
         }
         position += reportTitle ? 16 : 0;
 
-        const canvas = await html2canvas(input);
+        const canvas = await html2canvas(input, {
+          scale: Math.min(2, (window as any).devicePixelRatio || 2),
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
         const imgData = canvas.toDataURL('image/png');
-        imgHeight = (canvas.height * pageWidth) / canvas.width;
+        const remainingHeight = pageHeight - position - 10;
+        const scaleX = pageWidth / canvas.width;
+        const scaleY = remainingHeight / canvas.height;
+        const scale = Math.min(scaleX, scaleY);
+        const imgWidth = canvas.width * scale;
+        imgHeight = canvas.height * scale;
 
         // Filter tables for this input element
         const pageTables = extractedTables.filter((table) => input.contains(table.element));
 
         // Add the first page
         const currentPageY = position;
-        doc.addImage(imgData, 'PNG', 10, position, pageWidth, imgHeight);
+        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
         renderNativeTablesForPage({
           doc,
           tables: pageTables,
@@ -319,6 +328,7 @@ const DownloadAsPDF = async (props: Props) => {
           logoImage,
           documentTimestamp,
         });
+        position = position + imgHeight + 10;
       }
     }
 

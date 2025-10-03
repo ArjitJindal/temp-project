@@ -152,6 +152,20 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
           ? USER_RISK_PARAMETERS
           : TRANSACTION_RISK_PARAMETERS;
       const name = dataSource.find((dt) => dt.parameter === val.parameter)?.title ?? val.parameter;
+      if (
+        val.parameter === 'originAmountDetails.transactionAmount' ||
+        val.parameter === 'destinationAmountDetails.transactionAmount'
+      ) {
+        return {
+          name,
+          value: val.value?.transactionAmount ?? '-',
+          riskScore: val.score,
+          weight: val.weight,
+          riskLevel: val.riskLevel,
+          rowKey: val.parameter,
+          isCustom: false,
+        };
+      }
       return {
         name,
         value: val.value,

@@ -206,7 +206,15 @@ const MultipleSelect: React.FC<
     allowNewOptions?: boolean;
   }
 > = (props) => {
-  const { value, disabled, onChange, options, existedValues = [], mode = 'MULTIPLE' } = props;
+  const {
+    value,
+    disabled,
+    onChange,
+    options,
+    existedValues = [],
+    mode = 'MULTIPLE',
+    allowNewOptions,
+  } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );
@@ -223,6 +231,7 @@ const MultipleSelect: React.FC<
       isDisabled={disabled}
       options={optionsFixed}
       mode={mode}
+      allowNewOptions={allowNewOptions}
     />
   );
 };

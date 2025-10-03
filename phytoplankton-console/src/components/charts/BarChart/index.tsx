@@ -5,7 +5,11 @@ import GroupedBarChart from './GroupedBarChart';
 import { Configuration } from './helpers';
 import { AsyncResource } from '@/utils/asyncResource';
 import { neverThrow } from '@/utils/lang';
-import { DEFAULT_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
+import {
+  DEFAULT_FORMATTER,
+  DEFAULT_NUMBER_FORMATTER,
+  Formatter,
+} from '@/components/charts/shared/formatting';
 
 export * from './types';
 // type BarOrientation = 'VERTICAL' | 'HORIZONTAL';
@@ -36,7 +40,7 @@ export default function BarChart<
 >(props: Props<Category, Series>) {
   const {
     rotateLabel,
-    formatValue = DEFAULT_FORMATTER,
+    formatValue = DEFAULT_NUMBER_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
     formatCategory = DEFAULT_FORMATTER,
     grouping = DEFAULT_GROUPING,

@@ -7,7 +7,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { AuditLogService } from '@/services/audit-log'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export const auditLogHandler = lambdaApi()(
   async (
@@ -16,7 +16,7 @@ export const auditLogHandler = lambdaApi()(
     >
   ) => {
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const handlers = new Handlers()
 
     handlers.registerGetAuditlog(async (ctx, request) => {

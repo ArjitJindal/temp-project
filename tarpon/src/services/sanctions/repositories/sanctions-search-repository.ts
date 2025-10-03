@@ -26,7 +26,6 @@ import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/Sancti
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { cursorPaginate } from '@/utils/pagination'
-import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
@@ -463,19 +462,5 @@ export class SanctionsSearchRepository {
     //   )
     // }
     return searches[0]
-  }
-
-  public async updateSearchMonitoring(
-    searchId: string,
-    monitoring: SanctionsSearchMonitoring
-  ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-    await collection.updateOne(
-      { _id: searchId },
-      { $set: { 'request.monitoring': monitoring } }
-    )
   }
 }

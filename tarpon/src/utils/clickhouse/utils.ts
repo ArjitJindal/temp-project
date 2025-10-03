@@ -1165,9 +1165,7 @@ export async function processClickhouseInBatch<
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
 
     const query = `
-      SELECT ${
-        additionalSelect ? `${additionalSelect},` : ''
-      } id, timestamp, data
+      SELECT ${additionalSelect ? `${additionalSelect},` : ''} id, timestamp
       FROM ${tableName} FINAL
       ${additionalJoin ? `ARRAY JOIN ${additionalJoin}` : ''}
       ${whereClause}

@@ -74,6 +74,8 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         falsePositiveDetails: falsePositiveDetails,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

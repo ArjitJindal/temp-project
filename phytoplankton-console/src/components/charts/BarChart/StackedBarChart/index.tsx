@@ -19,7 +19,7 @@ import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { StatePair } from '@/utils/state';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
 import { DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
-import { DEFAULT_FORMATTER } from '@/components/charts/shared/formatting';
+import { DEFAULT_FORMATTER, DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
 import { formatNumber } from '@/utils/number';
@@ -58,7 +58,7 @@ export default function StackedBarChart<
     colors,
     height,
     hideLegend,
-    formatValue = DEFAULT_FORMATTER,
+    formatValue = DEFAULT_NUMBER_FORMATTER,
     formatSeries = DEFAULT_FORMATTER,
     formatCategory = DEFAULT_FORMATTER,
     customBarColors,

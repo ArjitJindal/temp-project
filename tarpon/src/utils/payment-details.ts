@@ -1,5 +1,6 @@
 import { formatConsumerName, getAddressStringForAggregation } from './helpers'
 import { neverReturn } from './lang'
+import { Address } from '@/@types/openapi-public/Address'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const getPaymentDetailsName = (
@@ -62,6 +63,32 @@ export function getPaymentMethodId(
 }
 
 export const getPaymentMethodAddress = (
+  pm: PaymentDetails | undefined
+): Address | undefined => {
+  if (!pm) {
+    return
+  }
+
+  switch (pm.method) {
+    case 'CHECK':
+      return pm.shippingAddress
+    case 'CASH':
+    case 'NPP':
+    case 'GENERIC_BANK_ACCOUNT':
+    case 'MPESA':
+    case 'CARD':
+    case 'SWIFT':
+    case 'WALLET':
+      return pm.address
+    case 'IBAN':
+    case 'ACH':
+      return pm.bankAddress
+    case 'UPI':
+      return pm.address
+  }
+}
+
+export const getPaymentMethodAddressString = (
   pm: PaymentDetails | undefined
 ): string | undefined => {
   if (!pm) {
