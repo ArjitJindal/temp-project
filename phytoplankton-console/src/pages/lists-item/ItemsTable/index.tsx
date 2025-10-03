@@ -1,13 +1,13 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { UseMutationResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Resource } from '@flagright/lib/utils';
 import ImportCsvModal from '../ImportCsvModal';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
-import { TableParams } from './types';
+import type { TableParams } from './types';
+import type { Mutation } from '@/utils/queries/types';
 import { useApi } from '@/api';
 import { ColumnType, ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
 import {
@@ -77,7 +77,7 @@ interface Props {
   listId: string;
   listType: ListType;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
-  clearListMutation: UseMutationResult<unknown, unknown, void, unknown>;
+  clearListMutation: Mutation<unknown, unknown, void> & { isLoading: boolean };
   isCustomList: boolean;
   setIsFlatFileProgressLoading: (isLoading: boolean) => void;
 }

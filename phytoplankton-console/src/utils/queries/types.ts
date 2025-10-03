@@ -42,7 +42,10 @@ export type Mutation<
   TError = unknown,
   TVariables = unknown,
   TContext = unknown,
-> = Pick<UseMutationResult<TData, TError, TVariables, TContext>, 'mutate' | 'mutateAsync'> & {
+> = Pick<
+  UseMutationResult<TData, TError, TVariables, TContext>,
+  'mutate' | 'mutateAsync' | 'isLoading'
+> & {
   dataResource: AsyncResource;
 };
 

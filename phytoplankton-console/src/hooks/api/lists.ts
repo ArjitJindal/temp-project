@@ -1,9 +1,9 @@
 import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useQuery } from '@/utils/queries/hooks';
-import type { QueryResult } from '@/utils/queries/types';
-import { LISTS, LISTS_OF_TYPE } from '@/utils/queries/keys';
-import type { ListMetadata, ListType } from '@/apis';
+import type { QueryResult, QueryOptions } from '@/utils/queries/types';
+import { FLAT_FILE_PROGRESS, LISTS, LISTS_ITEM, LISTS_OF_TYPE } from '@/utils/queries/keys';
+import type { ListMetadata, ListType, ListHeaderInternal, FlatFileProgressResponse } from '@/apis';
 
 export function useUserLists(): QueryResult<any> {
   const api = useApi();
@@ -49,4 +49,48 @@ export function usePatchListMetadata(listType: ListType) {
     }
     throw new Error('Changing metadata is not supported for this list type');
   });
+}
+
+export function useListHeader(listType: ListType | null, listId: string | undefined) {
+  const api = useApi();
+  return useQuery<ListHeaderInternal>(LISTS_ITEM(listId, listType as any), async () => {
+    if (!listId || !listType) {
+      throw new Error('listId and listType are required');
+    }
+    return listType === 'WHITELIST'
+      ? await api.getWhitelistListHeader({ listId })
+      : await api.getBlacklistListHeader({ listId });
+  });
+}
+
+export function useFlatFileProgress(
+  entityId: string | undefined,
+  schema: 'CUSTOM_LIST_UPLOAD',
+  options?: QueryOptions<FlatFileProgressResponse, FlatFileProgressResponse>,
+) {
+  const api = useApi();
+  return useQuery(
+    FLAT_FILE_PROGRESS(entityId ?? ''),
+    async () => {
+      if (!entityId) {
+        throw new Error('entityId is required');
+      }
+      return await api.getFlatFilesProgress({ schema, entityId });
+    },
+    options,
+  );
+}
+
+export function useClearListMutation(listType: ListType, listId: string, options?: any) {
+  const api = useApi();
+  return useMutation<unknown, unknown, void>(async () => {
+    if (!listId) {
+      throw new Error('List ID is required');
+    }
+    const promise =
+      listType === 'WHITELIST'
+        ? api.clearBlacklistItems({ listId })
+        : api.clearWhiteListItems({ listId });
+    await promise;
+  }, options);
 }
