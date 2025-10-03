@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import Intercom, { onHide, onShow } from '@intercom/messenger-js-sdk';
+import Intercom from '@intercom/messenger-js-sdk';
 import { useAuth0User } from '@/utils/user-utils';
 
-interface IntercomProviderProps {
-  setOpen: (state: boolean) => void;
-}
+interface IntercomProviderProps {}
 
 const IntercomComponent: React.FC<IntercomProviderProps> = (props) => {
   const auth0User = useAuth0User();
@@ -28,14 +26,6 @@ const IntercomComponent: React.FC<IntercomProviderProps> = (props) => {
       Intercom({
         app_id: widgetKey,
         ...userData,
-      });
-
-      onShow(() => {
-        props.setOpen(true);
-      });
-
-      onHide(() => {
-        props.setOpen(false);
       });
 
       setWidgetInitialization(true);
