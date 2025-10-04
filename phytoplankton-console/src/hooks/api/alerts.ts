@@ -8,12 +8,24 @@ import {
   COPILOT_SUGGESTIONS,
   ALERT_ITEM_TRANSACTION_LIST,
   AIF_SEARCH_KEY,
+  ALERT_QA_SAMPLE,
+  QA_SAMPLE_IDS,
 } from '@/utils/queries/keys';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import type { QueryOptions, QueryResult } from '@/utils/queries/types';
 import type { PaginatedData, CursorPaginatedData } from '@/utils/queries/hooks';
 import { NotFoundError } from '@/utils/errors';
-import { Alert, InternalTransaction, RuleAction, TransactionTableItem, CurrencyCode } from '@/apis';
+import {
+  Alert,
+  InternalTransaction,
+  RuleAction,
+  TransactionTableItem,
+  CurrencyCode,
+  AlertsQaSampling,
+  AlertsQaSamplingRequest,
+  AlertsQaSamplingUpdateRequest,
+} from '@/apis';
+import type { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
 import { dayjs } from '@/utils/dayjs';
 
 export function useAlert(
@@ -186,4 +198,49 @@ export function usePostQuestion() {
   }) => {
     return await api.postQuestion(request);
   };
+}
+
+export function useQaSample(sampleId: string, options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery(
+    ALERT_QA_SAMPLE(sampleId),
+    async () => await api.getAlertsQaSample({ sampleId }),
+    {
+      enabled: options?.enabled ?? true,
+    },
+  );
+}
+
+export function useQaSampleIds() {
+  const api = useApi();
+  return useQuery(QA_SAMPLE_IDS(), async () => await api.getAlertsQaSampleIds());
+}
+
+export function usePatchAlertQaAssignments(options?: Parameters<typeof useMutation>[1]) {
+  const api = useApi();
+  return useMutation(
+    (vars: DefaultApiPatchAlertsQaAssignmentsRequest) => api.patchAlertsQaAssignments(vars),
+    options as any,
+  );
+}
+
+export function useCreateQaSample(options?: Parameters<typeof useMutation>[1]) {
+  const api = useApi();
+  return useMutation<AlertsQaSampling, unknown, AlertsQaSamplingRequest>(
+    async (data) => await api.createAlertsQaSampling({ AlertsQaSamplingRequest: data }),
+    options as any,
+  );
+}
+
+export function useUpdateQaSample(options?: Parameters<typeof useMutation>[1]) {
+  const api = useApi();
+  return useMutation<
+    AlertsQaSampling,
+    unknown,
+    { sampleId: string; body: AlertsQaSamplingUpdateRequest }
+  >(
+    async ({ sampleId, body }) =>
+      await api.patchAlertsQaSample({ sampleId, AlertsQaSamplingUpdateRequest: body }),
+    options as any,
+  );
 }

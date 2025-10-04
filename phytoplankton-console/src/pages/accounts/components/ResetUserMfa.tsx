@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useResetAccountMfa } from '@/hooks/api/users';
 import { Account } from '@/apis';
 import { FlagrightAuth0User } from '@/utils/user-utils';
-import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import Modal from '@/components/library/Modal';
 import { P } from '@/components/ui/Typography';
@@ -18,30 +17,24 @@ interface ResetMFAProps {
 export function ResetUserMfa(props: ResetMFAProps) {
   const { item, user, onSuccess } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const api = useApi();
 
   let messageVar: CloseMessage | null = null;
 
-  const resetUserMfa = useMutation<unknown, unknown, { userId: string }>(
-    async (payload: { userId: string }) => {
+  const resetUserMfa = useResetAccountMfa({
+    onMutate: () => {
       messageVar = message.loading(`Please wait while we are resetting user's MFA methods`);
-      return await api.resetAccountMfa({
-        accountId: payload.userId,
-      });
     },
-    {
-      onSuccess: () => {
-        messageVar?.();
-        message.success(`User MFA methods resetted successfully`);
-        setIsModalVisible(false);
-        onSuccess();
-      },
-      onError: (error) => {
-        messageVar?.();
-        message.error(`Error while resetting the user's MFA methods: ${(error as Error)?.message}`);
-      },
+    onSuccess: () => {
+      messageVar?.();
+      message.success(`User MFA methods resetted successfully`);
+      setIsModalVisible(false);
+      onSuccess();
     },
-  );
+    onError: (error: any) => {
+      messageVar?.();
+      message.error(`Error while resetting the user's MFA methods: ${error?.message}`);
+    },
+  }) as any;
 
   const handleDelete = () => {
     setIsModalVisible(true);

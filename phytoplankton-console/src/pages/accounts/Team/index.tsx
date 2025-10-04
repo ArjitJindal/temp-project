@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
 import { ResetUserMfa } from '../components/ResetUserMfa';
@@ -13,7 +13,6 @@ import {
   useInvalidateUsers,
   UserRole,
 } from '@/utils/user-utils';
-import { useApi } from '@/api';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { Account } from '@/apis';
 import {
@@ -37,6 +36,7 @@ import { isSuccess, loading, success } from '@/utils/asyncResource';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
+import { useDeactivateAccount } from '@/hooks/api/users';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
@@ -44,7 +44,6 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
   const user = useAuth0User();
-  const api = useApi();
   const [deletedUserId, setDeletedUserId] = useState<string | null>(null);
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const invalidateUsers = useInvalidateUsers().invalidate;
@@ -88,50 +87,38 @@ export default function Team() {
     };
   }, [allAccountsResult]);
 
-  const deactivateUserMutation = useMutation<
-    Account,
-    Error,
-    { accountId: string; deactivate: boolean }
-  >(
-    async (payload: { accountId: string; deactivate: boolean }) => {
+  const deactivateUserMutation = useDeactivateAccount({
+    onMutate: (payload) => {
       messageVar = message.loading(
         `Please wait while we are ${payload.deactivate ? 'deactivating' : 'reactivating'} the user`,
       );
-      return await api.accountsDeactivate({
-        accountId: payload.accountId,
-        InlineObject2: {
-          deactivate: payload.deactivate,
-        },
+    },
+    onSuccess: (data, { deactivate }) => {
+      queryClient.setQueryData<Account[]>(ACCOUNT_LIST(), (oldData: Account[] | undefined) => {
+        if (oldData) {
+          return oldData.map((account: Account) => {
+            if (account.id === data.id) {
+              return {
+                ...account,
+                blocked: data.blocked,
+                blockedReason: data.blockedReason,
+              };
+            }
+            return account;
+          });
+        }
+        return oldData;
       });
+      messageVar?.();
+      message.success(`User ${deactivate ? 'deactivated' : 'reactivated'} successfully`);
     },
-    {
-      onSuccess: (data: Account, { deactivate }) => {
-        queryClient.setQueryData<Account[]>(ACCOUNT_LIST(), (oldData: Account[] | undefined) => {
-          if (oldData) {
-            return oldData.map((account: Account) => {
-              if (account.id === data.id) {
-                return {
-                  ...account,
-                  blocked: data.blocked,
-                  blockedReason: data.blockedReason,
-                };
-              }
-              return account;
-            });
-          }
-          return oldData;
-        });
-        messageVar?.();
-        message.success(`User ${deactivate ? 'deactivated' : 'reactivated'} successfully`);
-      },
-      onError: (error: Error, { deactivate }) => {
-        messageVar?.();
-        message.error(
-          `Failed to ${deactivate ? 'deactivate' : 'reactivate'} user: ${error.message}`,
-        );
-      },
+    onError: (error, { deactivate }) => {
+      messageVar?.();
+      message.error(
+        `Failed to ${deactivate ? 'deactivate' : 'reactivate'} user: ${(error as Error).message}`,
+      );
     },
-  );
+  });
 
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   const isAccountPermissionsEnabled = useHasResources(['write:::accounts/overview/*']);

@@ -34,7 +34,7 @@ import { WorkflowChangesStrategy, usePendingProposalsUserIds } from '@/hooks/api
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
-import type { EDDReview, EDDReviewUpdateRequest } from '@/apis';
+import type { Account, AccountDeletePayload, EDDReview, EDDReviewUpdateRequest } from '@/apis';
 
 export function useUsersUniques(field: any, params?: { filter?: string }, options?: QueryOptions) {
   const api = useApi();
@@ -364,6 +364,47 @@ export function useEODDChangeMutation(
         message.fatal(`Error updating EODD: ${error.message}`);
       },
     },
+  );
+}
+
+// Accounts management
+export function useResetAccountMfa(options?: Parameters<typeof useMutation>[1]) {
+  const api = useApi();
+  return useMutation<unknown, unknown, { userId: string }>(
+    async (payload) => api.resetAccountMfa({ accountId: payload.userId }),
+    options as any,
+  );
+}
+
+export function useDeactivateAccount(
+  options?: Parameters<
+    typeof useMutation<Account, Error, { accountId: string; deactivate: boolean }>
+  >[1],
+) {
+  const api = useApi();
+  return useMutation<Account, Error, { accountId: string; deactivate: boolean }>(
+    async (payload) =>
+      api.accountsDeactivate({
+        accountId: payload.accountId,
+        InlineObject2: { deactivate: payload.deactivate },
+      }),
+    options,
+  );
+}
+
+export function useDeleteAccount(
+  options?: Parameters<
+    typeof useMutation<unknown, unknown, AccountDeletePayload & { userId: string }>
+  >[1],
+) {
+  const api = useApi();
+  return useMutation<unknown, unknown, AccountDeletePayload & { userId: string }>(
+    async (payload) =>
+      api.accountsDelete({
+        AccountDeletePayload: { reassignTo: payload.reassignTo },
+        accountId: payload.userId,
+      }),
+    options,
   );
 }
 

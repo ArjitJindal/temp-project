@@ -5,12 +5,10 @@ import { Empty } from 'antd';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { useApi } from '@/api';
 import { isSuccess, getOr, map } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';
+import { useDashboardTransactionsTypeDistribution } from '@/hooks/api/dashboard';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_02,
@@ -29,7 +27,6 @@ export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 export default function DistributionByTransactionTypeWidget(props: WidgetProps) {
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
 
-  const api = useApi();
   const [start, end] = dateRange ?? [];
   const startTimestamp = start?.startOf('day').valueOf();
   const endTimestamp = end?.endOf('day').valueOf();
@@ -39,9 +36,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
     endTimestamp,
   };
 
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS(params), async () => {
-    return await api.getDashboardTransactionsTypeDistribution(params);
-  });
+  const queryResult = useDashboardTransactionsTypeDistribution(params);
 
   const preparedDataRes = map(queryResult.data, (value): DonutData<string> => {
     const result: DonutData<string> = [];

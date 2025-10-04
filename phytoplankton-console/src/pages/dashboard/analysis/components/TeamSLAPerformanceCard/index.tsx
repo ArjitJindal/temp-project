@@ -7,11 +7,8 @@ import {
 } from '@/components/library/Table/types';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TEAM_SLA_STATS } from '@/utils/queries/keys';
+import { useDashboardTeamSlaStats } from '@/hooks/api/dashboard';
 import { DashboardStatsTeamSLAItem } from '@/apis';
-import { DashboardStatsTeamSLAItemResponse } from '@/apis/models/DashboardStatsTeamSLAItemResponse';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Widget from '@/components/library/Widget';
 import DatePicker from '@/components/ui/DatePicker';
@@ -40,27 +37,14 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
     sort: [],
   });
 
-  const api = useApi();
-  const queryResult = useQuery(
-    DASHBOARD_TEAM_SLA_STATS({ ...params, ...paginationParams }),
-    async (): Promise<DashboardStatsTeamSLAItemResponse> => {
-      const [start, end] = params.dateRange ?? [];
-      let startTimestamp, endTimestamp;
-      if (start != null && end != null) {
-        startTimestamp = start.startOf('day').valueOf();
-        endTimestamp = end.endOf('day').valueOf();
-      }
-      const data = await api.getDashboardTeamSlaStats({
-        startTimestamp,
-        endTimestamp,
-        ...paginationParams,
-      });
-      return {
-        items: data.items,
-        total: data.total,
-      };
-    },
-  );
+  const [start, end] = params.dateRange ?? [];
+  const startTimestamp = start?.startOf('day').valueOf();
+  const endTimestamp = end?.endOf('day').valueOf();
+  const queryResult = useDashboardTeamSlaStats({
+    startTimestamp,
+    endTimestamp,
+    ...paginationParams,
+  });
 
   const helper = new ColumnHelper<DashboardStatsTeamSLAItem>();
   const columns = helper.list([
