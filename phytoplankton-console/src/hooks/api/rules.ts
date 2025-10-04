@@ -3,9 +3,17 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import type { FileInfo } from '@/apis';
-import { RULE_QUEUE, RULE_QUEUES } from '@/utils/queries/keys';
+import {
+  NEW_RULE_ID,
+  RULE_FILTERS,
+  RULE_QUEUE,
+  RULE_QUEUES,
+  THRESHOLD_RECOMMENDATIONS,
+} from '@/utils/queries/keys';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { RuleQueue } from '@/apis';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
 
 export function useRuleQueue(
   queueId?: string,
@@ -48,5 +56,36 @@ export function useImportRules() {
     api.postRulesImport({
       ImportConsoleDataRequest: { file },
     }),
+  );
+}
+
+export function useRuleFilters() {
+  const api = useApi();
+  return useQuery(RULE_FILTERS(), () => api.getRuleFilters());
+}
+
+export function useNewRuleId(ruleId?: string) {
+  const api = useApi();
+  return useQuery(NEW_RULE_ID(ruleId), async () => {
+    return await api.getRuleInstancesNewRuleId({ ruleId });
+  });
+}
+
+export function useRuleThresholdRecommendations(ruleInstanceId: string) {
+  const api = useApi();
+  return useQuery(
+    THRESHOLD_RECOMMENDATIONS(ruleInstanceId),
+    async () => {
+      const result = await api.getRuleInstanceRuleInstanceIdRecommendation({ ruleInstanceId });
+      return result;
+    },
+    {
+      onError: (e) => {
+        message.fatal(
+          `Failed to calculate recommendations for the rule. ${getErrorMessage(e as any)}`,
+          e as any,
+        );
+      },
+    },
   );
 }

@@ -19,10 +19,8 @@ import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-
 import Button from '@/components/library/Button';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { NEW_RULE_ID } from '@/utils/queries/keys';
+import { useNewRuleId } from '@/hooks/api/rules';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Spinner from '@/components/library/Spinner';
 
@@ -49,12 +47,7 @@ export default function RuleConfigurationV8(props: Props) {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance);
   const [isValuesSame, setIsValuesSame] = useState(true);
-  const api = useApi();
-  const queryResult = useQuery(NEW_RULE_ID(ruleInstance?.ruleId), async () => {
-    return await api.getRuleInstancesNewRuleId({
-      ruleId: ruleInstance?.ruleId,
-    });
-  });
+  const queryResult = useNewRuleId(ruleInstance?.ruleId);
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
   const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
   const handleSubmit = useCallback(

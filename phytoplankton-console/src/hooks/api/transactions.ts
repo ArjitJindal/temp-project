@@ -1,3 +1,4 @@
+import type { Currency } from '@flagright/lib/constants';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import type { QueryResult } from '@/utils/queries/types';
@@ -7,7 +8,13 @@ import {
   TRANSACTIONS_ITEM,
   TRANSACTIONS_ALERTS_LIST,
   TRANSACTIONS_ITEM_RISKS_ARS,
+  TRANSACTIONS_STATS,
 } from '@/utils/queries/keys';
+import type {
+  TransactionsStatsByTypesResponseData,
+  TransactionsStatsByTimeResponseData,
+} from '@/apis';
+import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 
 export function useTransactionsUniques(
   field: any,
@@ -50,5 +57,61 @@ export function useTransactionArs(transactionId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(TRANSACTIONS_ITEM_RISKS_ARS(transactionId), () =>
     api.getArsValue({ transactionId }),
+  );
+}
+
+export function useTransactionsStatsByType(params: {
+  selectorParams: any;
+  userId: string;
+  referenceCurrency: Currency;
+}): QueryResult<TransactionsStatsByTypesResponseData[]> {
+  const api = useApi();
+  const { selectorParams, userId, referenceCurrency } = params;
+  return useQuery(
+    TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
+    async () => {
+      const response = await api.getTransactionsStatsByType({
+        ...FIXED_API_PARAMS,
+        pageSize: selectorParams.transactionsCount,
+        filterUserId: userId,
+        filterStatus: selectorParams.selectedRuleActions,
+        filterTransactionState: selectorParams.selectedTransactionStates,
+        referenceCurrency,
+        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
+        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
+      });
+      return response.data;
+    },
+  );
+}
+
+export function useTransactionsStatsByTime(params: {
+  selectorParams: any;
+  userId: string;
+  currency: Currency;
+}): QueryResult<TransactionsStatsByTimeResponseData[]> {
+  const api = useApi();
+  const { selectorParams, userId, currency } = params;
+  return useQuery(
+    TRANSACTIONS_STATS('by-date', {
+      ...selectorParams,
+      userId,
+      currency,
+      aggregateBy: selectorParams.aggregateBy,
+    }),
+    async () => {
+      const response = await api.getTransactionsStatsByTime({
+        ...FIXED_API_PARAMS,
+        pageSize: selectorParams.transactionsCount,
+        filterUserId: userId,
+        filterStatus: selectorParams.selectedRuleActions,
+        filterTransactionState: selectorParams.selectedTransactionStates,
+        referenceCurrency: currency,
+        aggregateBy: selectorParams.aggregateBy,
+        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
+        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
+      });
+      return response.data;
+    },
   );
 }

@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import { useSidebarWidth } from './useSidebarWidth';
-import { EDDReview, EDDReviewUpdateRequest } from '@/apis';
 import Dropdown from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import { H4 } from '@/components/ui/Typography';
@@ -13,8 +11,7 @@ import ExpandAltOutlined from '@/components/ui/icons/expand-diagonal-s-line.reac
 import CloseIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
+import { useEddReview, useEddReviews, usePatchEddReview } from '@/hooks/api/users';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { dayjs } from '@/utils/dayjs';
 
@@ -22,40 +19,9 @@ export const EDDDetails = (props: { userId: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const sidebarWidth = useSidebarWidth();
-  const api = useApi();
+  const queryResults = useEddReviews(props.userId);
 
-  const queryResults = useQuery(['edd-reviews', props.userId], async () => {
-    const response = await api.getUsersUserIdEddReviews({ userId: props.userId });
-    const latestEddReview = response.data.sort((a, b) => {
-      return dayjs(b.createdAt).diff(dayjs(a.createdAt));
-    })[0];
-    setSelectedEddId(latestEddReview?.id || null);
-    return response;
-  });
-
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation<EDDReview, unknown, EDDReviewUpdateRequest>(
-    async (data) => {
-      if (!selectedEddId) {
-        throw new Error('No EDD review selected');
-      }
-
-      const response = await api.patchUsersUserIdEddReviewsEddReviewId({
-        userId: props.userId,
-        eddReviewId: selectedEddId,
-        EDDReviewUpdateRequest: data,
-      });
-      return response;
-    },
-    {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ['edd-reviews', props.userId] });
-        setSelectedEddId(data.id);
-        setIsEditing(false);
-      },
-    },
-  );
+  const mutation = usePatchEddReview(props.userId, () => selectedEddId);
 
   const [selectedEddId, setSelectedEddId] = useState<string | null>(null);
   const [markdown, setMarkdown] = useState<string>('');
@@ -160,16 +126,7 @@ type MarkdownSectionProps = {
 };
 
 const MarkdownSection = (props: MarkdownSectionProps) => {
-  const api = useApi();
-  const queryResults = useQuery(
-    ['edd-review', props.eddId],
-    () =>
-      api.getUsersUserIdEddReviewsEddReviewId({
-        userId: props.userId,
-        eddReviewId: props.eddId ?? '',
-      }),
-    { enabled: !!props.eddId },
-  );
+  const queryResults = useEddReview(props.userId, props.eddId);
 
   return (
     <AsyncResourceRenderer resource={queryResults.data}>

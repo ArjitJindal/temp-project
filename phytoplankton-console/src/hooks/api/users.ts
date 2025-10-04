@@ -34,6 +34,7 @@ import { WorkflowChangesStrategy, usePendingProposalsUserIds } from '@/hooks/api
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
+import type { EDDReview, EDDReviewUpdateRequest } from '@/apis';
 
 export function useUsersUniques(field: any, params?: { filter?: string }, options?: QueryOptions) {
   const api = useApi();
@@ -361,6 +362,47 @@ export function useEODDChangeMutation(
       },
       onError: (error: Error) => {
         message.fatal(`Error updating EODD: ${error.message}`);
+      },
+    },
+  );
+}
+
+// EDD Reviews
+export function useEddReviews(userId: string) {
+  const api = useApi();
+  return useQuery(['edd-reviews', userId], async () => {
+    return await api.getUsersUserIdEddReviews({ userId });
+  });
+}
+
+export function useEddReview(userId: string, eddId: string | null) {
+  const api = useApi();
+  return useQuery(
+    ['edd-review', eddId],
+    async () => await api.getUsersUserIdEddReviewsEddReviewId({ userId, eddReviewId: eddId ?? '' }),
+    { enabled: !!eddId },
+  );
+}
+
+export function usePatchEddReview(userId: string, getSelectedEddId: () => string | null) {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation<EDDReview, unknown, EDDReviewUpdateRequest>(
+    async (data) => {
+      const eddId = getSelectedEddId();
+      if (!eddId) {
+        throw new Error('No EDD review selected');
+      }
+      const response = await api.patchUsersUserIdEddReviewsEddReviewId({
+        userId,
+        eddReviewId: eddId,
+        EDDReviewUpdateRequest: data,
+      });
+      return response;
+    },
+    {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: ['edd-reviews', userId] });
       },
     },
   );

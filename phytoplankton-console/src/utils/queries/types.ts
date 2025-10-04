@@ -1,11 +1,9 @@
 import { UseMutationResult } from '@tanstack/react-query';
 import type { UseQueryOptions } from '@tanstack/react-query/src/types';
 import type { QueryKey } from '@tanstack/query-core';
-// Typed re-exports to avoid circular imports; keep a single import from hooks
 import type { PaginatedData, CursorPaginatedData, PaginationParams } from '@/utils/queries/hooks';
 import * as ar from '@/utils/asyncResource';
 import { AsyncResource } from '@/utils/asyncResource';
-// removed duplicate import of PaginationParams
 
 export interface Cursor {
   prev?: string;

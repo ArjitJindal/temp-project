@@ -8,16 +8,8 @@ import { TRANSACTION_STATE_COLORS } from './Chart/Column';
 import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import * as Form from '@/components/ui/Form';
-import { QueryResult } from '@/utils/queries/types';
-import {
-  TransactionState as LastTransactionState,
-  RuleAction,
-  TransactionsStatsByTimeResponseData,
-} from '@/apis';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
-import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
+import { TransactionState as LastTransactionState, RuleAction } from '@/apis';
+import { useTransactionsStatsByTime } from '@/hooks/api/transactions';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
@@ -50,7 +42,7 @@ interface Props {
 
 export default function TransactionsSelector(props: Props) {
   const { userId, params, onChangeParams, currency } = props;
-  const response = useStatsQuery(params, userId, currency);
+  const response = useTransactionsStatsByTime({ selectorParams: params, userId, currency });
   const selectedKeys =
     params.aggregateBy === 'status' ? params.selectedRuleActions : params.selectedTransactionStates;
   const options = params.aggregateBy === 'status' ? PARTIAL_RULE_ACTIONS : TRANSACTION_STATES;
@@ -240,33 +232,4 @@ export default function TransactionsSelector(props: Props) {
   );
 }
 
-function useStatsQuery(
-  selectorParams: Params,
-  userId: string,
-  currency: Currency,
-): QueryResult<TransactionsStatsByTimeResponseData[]> {
-  const api = useApi();
-  return useQuery(
-    TRANSACTIONS_STATS('by-date', {
-      ...selectorParams,
-      userId,
-      currency,
-      aggregateBy: selectorParams.aggregateBy,
-    }),
-    async (): Promise<TransactionsStatsByTimeResponseData[]> => {
-      const response = await api.getTransactionsStatsByTime({
-        ...FIXED_API_PARAMS,
-        pageSize: selectorParams.transactionsCount,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        filterTransactionState: selectorParams.selectedTransactionStates,
-        referenceCurrency: currency,
-        aggregateBy: selectorParams.aggregateBy,
-        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
-        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
-      });
-
-      return response.data;
-    },
-  );
-}
+// moved to hooks/api/transactions.ts
