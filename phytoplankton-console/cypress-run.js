@@ -264,6 +264,7 @@ async function getCypressCreds() {
   try {
     // const spec = ` --spec "cypress/e2e/cases/case-details*.cy.ts"`;
     const spec = ``;
+    let e2eFailed = false;
     try {
       execSync(
         `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag} ${spec}`,
@@ -272,9 +273,13 @@ async function getCypressCreds() {
         },
       );
     } catch (e) {
+      e2eFailed = true;
       console.error(e);
     }
     await afterCypressRun();
+    if (e2eFailed) {
+      throw new Error('E2E failed');
+    }
   } catch (e) {
     await afterCypressRun();
     console.error(e);
