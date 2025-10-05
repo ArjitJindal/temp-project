@@ -6,7 +6,7 @@ import { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 
 const helper = new ColumnHelper<DashboardTeamStatsItem>();

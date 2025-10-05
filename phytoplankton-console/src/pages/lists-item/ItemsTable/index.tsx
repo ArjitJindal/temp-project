@@ -34,7 +34,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { notEmpty } from '@/utils/array';
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
-import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
+import { type CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';

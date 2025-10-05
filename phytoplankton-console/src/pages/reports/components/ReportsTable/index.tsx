@@ -21,8 +21,9 @@ import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { useApi } from '@/api';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { REPORT_SCHEMAS, REPORTS_LIST } from '@/utils/queries/keys';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { REPORTS_LIST } from '@/utils/queries/keys';
+import { useReportTypes } from '@/hooks/api/reports';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { getOr } from '@/utils/asyncResource';
@@ -97,10 +98,13 @@ export default function ReportsTable() {
     });
   });
 
-  const reportTypesQueryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS(), () => {
-    return api.getReportTypes();
-  });
-  const reportTypes = getOr(reportTypesQueryResult.data, { data: [], total: 0 });
+  const reportTypesQueryResult = useReportTypes() as unknown as {
+    data: { kind: 'SUCCESS'; value: ReportTypesResponse } | any;
+  };
+  const reportTypes = getOr(reportTypesQueryResult.data, {
+    data: [],
+    total: 0,
+  }) as ReportTypesResponse;
 
   const deleteMutation = useMutation<unknown, unknown, { reportIds: string[] }>(
     async (variables) => {
@@ -242,10 +246,10 @@ export default function ReportsTable() {
             autoFilterDataType: {
               kind: 'select',
               options: uniqBy<Option<string>>(
-                reportTypes.data?.map((type) => ({
+                (reportTypes.data ?? []).map((type) => ({
                   value: type.countryCode,
                   label: type.country,
-                })) ?? [],
+                })),
                 'value',
               ),
               mode: 'SINGLE',
@@ -350,7 +354,7 @@ export default function ReportsTable() {
       <ReportStatusChangeModal
         report={displayStatusInfoReport}
         reportStatuses={
-          reportTypes.data.find(
+          (reportTypes.data ?? []).find(
             (type) => type.countryCode === displayStatusInfoReport?.reportTypeId.split('-')[0],
           )?.reportStatuses ?? []
         }

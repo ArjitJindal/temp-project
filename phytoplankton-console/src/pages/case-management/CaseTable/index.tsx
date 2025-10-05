@@ -34,7 +34,7 @@ import { getUserLink } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/library/Tag/UserStateTag';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';

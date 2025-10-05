@@ -6,8 +6,8 @@ import { DashboardLatestTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
-import { PaginatedData } from '@/utils/queries/hooks';
-import { CommonParams } from '@/components/library/Table/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
+import type { CommonParams } from '@/components/library/Table/types';
 
 type AggregatedLatestTeamStats = {
   role: string;

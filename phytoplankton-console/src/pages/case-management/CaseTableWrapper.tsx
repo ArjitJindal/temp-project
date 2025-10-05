@@ -9,7 +9,7 @@ import AlertsStatusChangeModal, {
 } from './components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
-import { type PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
 import { useCasesListPaginated } from '@/hooks/api/cases';
 import { useRuleOptions } from '@/utils/rules';

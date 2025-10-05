@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import s from './index.module.less';
-import { useApi } from '@/api';
 import { CaseType, InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
+import { useTransactionsListPaginated } from '@/hooks/api/transactions';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import { P } from '@/components/ui/Typography';
@@ -24,19 +22,15 @@ type Props = {
 };
 
 export const CaseTransactionsCard = (props: Props) => {
-  const api = useApi();
   const { caseTransactionsCount, caseType, caseId, user } = props;
   const [tableParams, setTableParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
-  const queryResults = useQuery(
-    TRANSACTIONS_LIST({ ...tableParams, filterCaseId: caseId, type: 'case-transactions' }),
-    () =>
-      api.getCaseTransactions({
-        ...tableParams,
-        caseId,
-        filterDestinationCountries: tableParams['destinationAmountDetails.country'],
-        filterOriginCountries: tableParams['originAmountDetails.country'],
-      }),
-  );
+  const queryResults = useTransactionsListPaginated({
+    ...tableParams,
+    caseId,
+    filterDestinationCountries: (tableParams as any)['destinationAmountDetails.country'],
+    filterOriginCountries: (tableParams as any)['originAmountDetails.country'],
+    type: 'case-transactions',
+  }) as any;
 
   return caseType === 'MANUAL' && caseTransactionsCount === 0 ? (
     <Card.Root noBorder className={s.cardEmpty}>

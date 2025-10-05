@@ -21,7 +21,7 @@ import { useId } from '@/utils/hooks';
 import Label from '@/components/library/Label';
 import Select from '@/components/library/Select';
 import { getOr, isLoading } from '@/utils/asyncResource';
-import { useUserLists } from '@/utils/queries/hooks';
+import { useUserLists } from '@/hooks/api/lists';
 import * as Card from '@/components/ui/Card';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';

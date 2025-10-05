@@ -11,6 +11,7 @@ import {
   DASHBOARD_STATS_QA_OVERVIEW,
   DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE,
   DASHBOARD_STATS_QA_ALERT_STATS_BY_CHECKLIST_REASON,
+  ALERT_PRIORITY_DISTRIBUTION,
 } from '@/utils/queries/keys';
 
 export function useDashboardTransactionsStats(params: any) {
@@ -131,4 +132,11 @@ export function useQaAlertStatsByChecklistReason(params: {
       return { total: result.data.length, items: result.data } as any;
     },
   );
+}
+
+export function useAlertPriorityDistribution(params: any) {
+  const api = useApi();
+  return useQuery(ALERT_PRIORITY_DISTRIBUTION(params), async () => {
+    return await api.getDashboardStatsAlertPriorityDistributionStats(params);
+  });
 }

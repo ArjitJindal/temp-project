@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
-import { DashboardLatestTeamStatsItem } from '@/apis';
+import type { DashboardLatestTeamStatsItem } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
-import { CommonParams } from '@/components/library/Table/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { CommonParams } from '@/components/library/Table/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 
 interface Props {

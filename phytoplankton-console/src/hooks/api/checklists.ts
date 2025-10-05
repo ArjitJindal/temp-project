@@ -65,7 +65,9 @@ export const useAlertChecklist = (alertId: string | undefined) => {
   });
 };
 
-export function useChecklistTemplates() {
+export function useChecklistTemplates(params?: { filterName?: string }) {
   const api = useApi();
-  return useQuery(CHECKLIST_TEMPLATES(), async () => api.getChecklistTemplates());
+  return useQuery(CHECKLIST_TEMPLATES(params), async () =>
+    api.getChecklistTemplates(params as any),
+  );
 }

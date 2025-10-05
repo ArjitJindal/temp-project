@@ -5,7 +5,7 @@ import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL, REPORTS_ITEM } from '@/utils/querie
 import type { Report } from '@/apis';
 import { ReportType, CountryCode } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
-import type { QueryOptions } from '@/utils/queries/types';
+import type { QueryOptions, QueryResult } from '@/utils/queries/types';
 
 export function useReportTypesAll(
   options?: QueryOptions,
@@ -22,7 +22,7 @@ export function useReportTypesAll(
 
 export function useReportTypes(
   options?: QueryOptions,
-): import('@/utils/queries/types').QueryResult<any> {
+): QueryResult<{ data: ReportType[]; total: number }> {
   const api = useApi();
   return useQuery(REPORT_SCHEMAS(), () => api.getReportTypes(), options);
 }
