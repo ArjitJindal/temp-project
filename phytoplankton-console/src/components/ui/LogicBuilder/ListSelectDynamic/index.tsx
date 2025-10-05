@@ -15,7 +15,7 @@ type UniqueTypeProps =
   | { type: 'transactions'; uniqueType: TransactionsUniquesField }
   | { type: 'users'; uniqueType: UsersUniquesField };
 
-const useUniquesData = (uniqueTypeProps: UniqueTypeProps, filterKey?: string) => {
+const useUniquesData = (uniqueTypeProps: UniqueTypeProps, filterKey?: string): string[] => {
   // For TAGS_VALUE fields, don't fetch data if no filter is provided
   const shouldFetch = uniqueTypeProps.uniqueType !== 'TAGS_VALUE' || !!filterKey;
   const enableTransactions =
@@ -23,21 +23,21 @@ const useUniquesData = (uniqueTypeProps: UniqueTypeProps, filterKey?: string) =>
   const enableUsers =
     uniqueTypeProps.type === 'users' && !!uniqueTypeProps.uniqueType && shouldFetch;
   const transactionsResult = useTransactionsUniques(
-    uniqueTypeProps.uniqueType,
+    uniqueTypeProps.uniqueType as TransactionsUniquesField,
     { filter: filterKey },
     {
       enabled: enableTransactions,
     },
   );
   const usersResult = useUsersUniques(
-    uniqueTypeProps.uniqueType,
+    uniqueTypeProps.uniqueType as UsersUniquesField,
     { filter: filterKey },
     {
       enabled: enableUsers,
     },
   );
   const result = uniqueTypeProps.type === 'transactions' ? transactionsResult : usersResult;
-  return getOr(result.data, []);
+  return getOr<string[]>(result.data, []);
 };
 
 const useOptions = (data: string[], uniqueType: TransactionsUniquesField | UsersUniquesField) => {

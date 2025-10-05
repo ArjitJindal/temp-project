@@ -15,12 +15,14 @@ import {
   RiskLevel,
   RiskScoreComponent,
   UserTag,
+  DrsScore,
+  KrsScore,
 } from '@/apis';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useUserDrs, useUserKrs } from '@/hooks/api';
-import { AsyncResource, all, map } from '@/utils/asyncResource';
+import { all, getOr, map } from '@/utils/asyncResource';
 import { sortByDate } from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CommentType } from '@/utils/user-utils';
@@ -54,16 +56,20 @@ export const HeaderMenu = (props: Props) => {
   const settings = useSettings();
   const drsQueryResult = useUserDrs(userId, { enabled: isRiskScoringEnabled });
   const kycQueryResult = useUserKrs(userId, { enabled: isRiskScoringEnabled });
-  const drsRiskScore: AsyncResource<RiskScore | null> = useMemo(
+
+  const drsRiskScore = useMemo(
     () =>
       map(drsQueryResult.data, (v) => {
-        const values = v
-          ? v.map((x) => ({
+        const list: DrsScore[] = Array.isArray(v)
+          ? v
+          : getOr(drsQueryResult.data as any, [] as DrsScore[]);
+        const values = list.length
+          ? list.map((x) => ({
               score: x.drsScore,
-              manualRiskLevel: x?.manualRiskLevel,
+              manualRiskLevel: (x as any)?.manualRiskLevel,
               createdAt: x.createdAt,
               components: x.components,
-              riskLevel: x.derivedRiskLevel,
+              riskLevel: (x as any).derivedRiskLevel,
             }))
           : null;
         return values ? sortByDate(values)[values.length - 1] : null;
@@ -71,18 +77,19 @@ export const HeaderMenu = (props: Props) => {
     [drsQueryResult.data],
   );
 
-  const kycRiskScore: AsyncResource<RiskScore | null> = useMemo(
+  const kycRiskScore = useMemo(
     () =>
-      map(kycQueryResult.data, (v) =>
-        v
+      map(kycQueryResult.data, (v) => {
+        const k: KrsScore | null = v as any;
+        return k
           ? {
-              score: v.krsScore,
-              riskLevel: v.riskLevel,
-              components: v.components,
-              createdAt: v.createdAt,
+              score: k.krsScore,
+              riskLevel: k.riskLevel,
+              components: k.components,
+              createdAt: k.createdAt,
             }
-          : null,
-      ),
+          : null;
+      }),
     [kycQueryResult.data],
   );
 

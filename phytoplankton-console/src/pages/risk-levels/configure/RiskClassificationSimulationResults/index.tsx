@@ -14,16 +14,12 @@ import {
   SimulationPostResponse,
   SimulationRiskLevelsAndRiskFactorsResult,
   SimulationRiskLevelsIteration,
-  SimulationRiskLevelsJob,
   SimulationRiskLevelsStatisticsRiskTypeEnum,
 } from '@/apis';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import {
-  RISK_CLASSIFICATION_VALUES,
-  SIMULATION_JOB,
-  SIMULATION_JOB_ITERATION_RESULT,
-} from '@/utils/queries/keys';
+import { useSimulationJob } from '@/hooks/api/simulation';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { RISK_CLASSIFICATION_VALUES, SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -46,8 +42,6 @@ type Props = {
 type IterationProps = {
   iteration: SimulationRiskLevelsIteration;
 };
-
-const SIMULATION_REFETCH_INTERVAL = 5;
 
 const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
 const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([
@@ -177,28 +171,23 @@ const IterationComponent = (props: IterationProps) => {
   );
 
   const api = useApi();
-  const iterationQueryResults = useQuery(
+  const iterationQueryResults = usePaginatedQuery(
     SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
-    async () => {
+    async (paginationParams) => {
       if (iteration?.taskId) {
         const response = await api.getSimulationTaskIdResult({
           taskId: iteration.taskId,
-          page: params.page,
-          pageSize: params.pageSize,
+          page: paginationParams.page,
+          pageSize: paginationParams.pageSize,
           sortField: params.sort?.[0]?.[0] ?? 'userId',
           sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
         });
-
         return {
           items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
           total: response.total,
         };
-      } else {
-        return {
-          items: [],
-          total: 0,
-        };
       }
+      return { items: [], total: 0 };
     },
   );
 
@@ -284,27 +273,8 @@ export default function RiskClassificationSimulationResults(props: Props) {
   const { onClose, isVisible, result } = props;
   const api = useApi();
   const settings = useSettings();
-  function isAllIterationsCompleted(iterations: SimulationRiskLevelsIteration[]): boolean {
-    return iterations.every(
-      (iteration) =>
-        iteration.latestStatus.status === 'SUCCESS' || iteration.latestStatus.status === 'FAILED',
-    );
-  }
 
-  const jobIdQueryResults = useQuery(
-    SIMULATION_JOB(result.jobId),
-    () =>
-      api.getSimulationTestId({
-        jobId: result.jobId,
-      }) as Promise<SimulationRiskLevelsJob>,
-    {
-      refetchInterval: (data) =>
-        isAllIterationsCompleted(data?.iterations || [])
-          ? false
-          : SIMULATION_REFETCH_INTERVAL * 1000,
-      enabled: Boolean(result.jobId),
-    },
-  );
+  const jobIdQueryResults = useSimulationJob(result.jobId, 5000);
 
   const [activeTab, setActiveTab] = useState<string>(result.taskIds[0]);
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
@@ -325,7 +295,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
 
       if (iteration) {
         try {
-          const classificationValues = iteration.parameters.classificationValues;
+          const classificationValues = (iteration as any)?.parameters?.classificationValues;
           if (classificationValues) {
             await api.postPulseRiskClassification({
               RiskClassificationRequest: {
@@ -366,7 +336,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
     return [];
   }, [jobIdQueryResults.data]);
 
-  const items: TabItem[] = iterations.map((iteration) => ({
+  const items: TabItem[] = iterations.map((iteration: any) => ({
     isClosable: false,
     isDisabled: false,
     key: iteration.taskId ?? '',
@@ -383,7 +353,11 @@ export default function RiskClassificationSimulationResults(props: Props) {
           />
         </div>
       ) : (
-        <>{iteration.taskId && <IterationComponent iteration={iteration} />}</>
+        <>
+          {iteration.taskId && (
+            <IterationComponent iteration={iteration as unknown as SimulationRiskLevelsIteration} />
+          )}
+        </>
       ),
     title: iteration.name,
   }));

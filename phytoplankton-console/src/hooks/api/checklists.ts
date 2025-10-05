@@ -1,7 +1,7 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_CHECKLIST, CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
-import { ChecklistDoneStatus, ChecklistStatus } from '@/apis';
+import { ChecklistDoneStatus, ChecklistStatus, ChecklistTemplate } from '@/apis';
 
 export type ChecklistItem = {
   id?: string;
@@ -67,7 +67,8 @@ export const useAlertChecklist = (alertId: string | undefined) => {
 
 export function useChecklistTemplates(params?: { filterName?: string }) {
   const api = useApi();
-  return useQuery(CHECKLIST_TEMPLATES(params), async () =>
-    api.getChecklistTemplates(params as any),
-  );
+  return useQuery<ChecklistTemplate[]>(CHECKLIST_TEMPLATES(params), async () => {
+    const res = await api.getChecklistTemplates(params as any);
+    return res.data;
+  });
 }

@@ -14,7 +14,7 @@ export default function ScreeningProfileSelect({ value, onChange, ...props }: Pr
 
   useEffect(() => {
     if (isSuccess(queryResults.data) && !setDefaultProfile.current && !value) {
-      const profiles = getOr(queryResults.data, { items: [] }).items;
+      const profiles = getOr(queryResults.data, { items: [], total: 0 }).items;
       const defaultProfile = profiles.find((profile) => profile.isDefault);
       if (defaultProfile) {
         onChange?.(defaultProfile.screeningProfileId);
@@ -28,7 +28,7 @@ export default function ScreeningProfileSelect({ value, onChange, ...props }: Pr
     return <Alert type="ERROR">{res.message}</Alert>;
   }
 
-  const options = getOr(res, { items: [] }).items.map((list) => ({
+  const options = getOr(res, { items: [], total: 0 }).items.map((list) => ({
     value: list.screeningProfileId,
     label: list.screeningProfileName ?? list.screeningProfileId,
     alternativeLabels: [list.screeningProfileId],

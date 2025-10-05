@@ -1,6 +1,8 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { SECONDARY_QUEUE_TENANTS } from '@/utils/queries/keys';
+import { SECONDARY_QUEUE_TENANTS, TENANT } from '@/utils/queries/keys';
+import type { QueryResult } from '@/utils/queries/types';
+import type { Tenant } from '@/apis';
 
 export function useTenantsList(options?: { enabled?: boolean }) {
   const api = useApi();
@@ -19,5 +21,17 @@ export function useTenantsDeletionData() {
   const api = useApi();
   return useQuery(['tenantsFailedToDelete'], async () => {
     return await api.getTenantsDeletionData();
+  });
+}
+
+export function useTenant(): QueryResult<Tenant | null> {
+  const api = useApi();
+  return useQuery(TENANT('current'), async () => {
+    try {
+      return await api.getTenant();
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   });
 }

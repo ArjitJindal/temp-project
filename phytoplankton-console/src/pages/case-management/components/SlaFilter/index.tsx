@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import PopupContent from './PopupContent';
 import { SLAPolicyStatus } from '@/apis';
-import { slaPoliciesOptions, useSlas } from '@/utils/sla';
+import { slaPoliciesOptions } from '@/utils/sla';
+import { useSlas } from '@/hooks/api/sla';
 import { Option } from '@/components/library/Select';
 import QuickFilter from '@/components/library/QuickFilter';
 import { FormRef } from '@/components/library/Form';

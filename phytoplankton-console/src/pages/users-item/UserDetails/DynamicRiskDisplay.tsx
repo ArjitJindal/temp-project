@@ -15,19 +15,21 @@ export default function DynamicRiskDisplay({ userId }: Props) {
 
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>
-      {(result) =>
-        result?.length > 0 ? (
+      {(result) => {
+        if (!Array.isArray(result) || result.length === 0) {
+          return null;
+        }
+        const value = {
+          score: result[0].drsScore,
+          manualRiskLevel: result[0]?.manualRiskLevel,
+          createdAt: result[0].createdAt,
+          components: result[0].components,
+          factorScoreDetails: result[0].factorScoreDetails,
+          transactionId: result[0].transactionId,
+        };
+        return (
           <DynamicRiskHistoryDisplay
-            value={
-              result?.map((x) => ({
-                score: x.drsScore,
-                manualRiskLevel: x?.manualRiskLevel,
-                createdAt: x.createdAt,
-                components: x.components,
-                factorScoreDetails: x.factorScoreDetails,
-                transactionId: x.transactionId,
-              }))[0]
-            }
+            value={value}
             icon={<User3LineIcon />}
             title="CRA score"
             showFormulaBackLink
@@ -35,8 +37,8 @@ export default function DynamicRiskDisplay({ userId }: Props) {
             hideInfo={!isDrsPermissionEnabled}
             userId={userId}
           />
-        ) : null
-      }
+        );
+      }}
     </AsyncResourceRenderer>
   );
 }

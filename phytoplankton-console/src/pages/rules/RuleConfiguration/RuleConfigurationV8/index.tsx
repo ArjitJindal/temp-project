@@ -101,7 +101,7 @@ export default function RuleConfigurationV8(props: Props) {
           </Spinner>
         )}
       >
-        {({ id: ruleInstanceId }) => (
+        {(ruleInstanceId) => (
           <>
             <RuleConfigurationFormV8
               ref={formRef}

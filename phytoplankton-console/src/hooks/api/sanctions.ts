@@ -16,7 +16,7 @@ import {
   SANCTIONS_WHITELIST_SEARCH,
   SANCTIONS_SOURCES,
 } from '@/utils/queries/keys';
-import type { SanctionsSourceType } from '@/apis/models-custom/SanctionsSourceType';
+import type { SanctionsSourceType } from '@/apis/models/SanctionsSourceType';
 import type { SanctionsHitListResponse, SanctionsScreeningDetails } from '@/apis';
 import type { Mutation, QueryOptions, QueryResult } from '@/utils/queries/types';
 import type { CursorPaginatedData, PaginatedData } from '@/utils/queries/hooks';

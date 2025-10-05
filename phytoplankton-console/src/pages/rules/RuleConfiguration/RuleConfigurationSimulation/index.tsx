@@ -224,14 +224,18 @@ export function RuleConfigurationSimulation(props: Props) {
     },
   );
 
-  const jobResult = useSimulationJob(
-    jobId,
-    allIterationsCompleted(getOr(jobResult?.data, { iterations: [] } as any)?.iterations || [])
-      ? false
-      : isDemoMode
-      ? 9000
-      : POLL_STATUS_INTERVAL_SECONDS * 1000,
+  const [refetchMs, setRefetchMs] = useState<number | undefined>(
+    jobId ? (isDemoMode ? 9000 : POLL_STATUS_INTERVAL_SECONDS * 1000) : undefined,
   );
+  const jobResult = useSimulationJob(jobId, refetchMs);
+  useEffect(() => {
+    if (jobId && isSuccess(jobResult.data)) {
+      const done = allIterationsCompleted(jobResult.data.value?.iterations ?? []);
+      if (done && refetchMs != null) {
+        setRefetchMs(undefined);
+      }
+    }
+  }, [jobId, jobResult.data, refetchMs]);
   const handleStartSimulation = useCallback(() => {
     const formRef = iterationFormRefs[activeTabIndex];
     const newIterations = syncFormValues();

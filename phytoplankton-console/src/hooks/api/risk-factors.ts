@@ -44,11 +44,9 @@ export function useRiskFactorLogic(riskFactorId: string, versionId: string, risk
   });
 }
 
-export function useRiskFactors(
-  type?: 'consumer' | 'business' | 'transaction',
-): ReturnType<typeof useQuery> {
+export function useRiskFactors(type?: 'consumer' | 'business' | 'transaction') {
   const api = useApi();
-  return useQuery(RISK_FACTORS_V8(type), async () => {
+  return useQuery<RiskFactor[]>(RISK_FACTORS_V8(type), async () => {
     const entityType =
       type === 'consumer'
         ? 'CONSUMER_USER'

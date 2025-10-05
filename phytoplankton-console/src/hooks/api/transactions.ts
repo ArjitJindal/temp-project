@@ -23,12 +23,13 @@ export function useTransactionsUniques(
   field: any,
   params?: { filter?: string },
   options?: { enabled?: boolean },
-): QueryResult<any> {
+): QueryResult<string[]> {
   const api = useApi();
-  return useQuery(
+  return useQuery<string[]>(
     TRANSACTIONS_UNIQUES(field, params ?? {}),
     async () => {
-      return await api.getTransactionsUniques({ field, ...(params ?? {}) });
+      const res = await api.getTransactionsUniques({ field, ...(params ?? {}) });
+      return res as any[] as string[];
     },
     options,
   );

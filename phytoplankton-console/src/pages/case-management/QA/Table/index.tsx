@@ -35,7 +35,7 @@ import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
-import { useReasons } from '@/utils/reasons';
+import { useReasons } from '@/hooks/api/settings';
 
 interface Props {
   params: AllParams<TableSearchParams>;

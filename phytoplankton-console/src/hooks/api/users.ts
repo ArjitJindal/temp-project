@@ -18,6 +18,8 @@ import {
   PERMISSIONS,
   USERS,
   USER_TRS_RISK_SCORES,
+  ROLES_LIST,
+  ACCOUNT_LIST,
 } from '@/utils/queries/keys';
 import {
   InternalConsumerUser,
@@ -37,14 +39,25 @@ import { WorkflowChangesStrategy, usePendingProposalsUserIds } from '@/hooks/api
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { message } from '@/components/library/Message';
 import { dayjs } from '@/utils/dayjs';
-import type { Account, AccountDeletePayload, EDDReview, EDDReviewUpdateRequest } from '@/apis';
+import type {
+  Account,
+  AccountDeletePayload,
+  EDDReview,
+  EDDReviewUpdateRequest,
+  AllUsersOffsetPaginateListResponse,
+} from '@/apis';
 
-export function useUsersUniques(field: any, params?: { filter?: string }, options?: QueryOptions) {
+export function useUsersUniques(
+  field: any,
+  params?: { filter?: string },
+  options?: QueryOptions<string[], string[]>,
+): QueryResult<string[]> {
   const api = useApi();
-  return useQuery(
+  return useQuery<string[]>(
     USERS_UNIQUES(field, params ?? {}),
     async () => {
-      return await api.getUsersUniques({ field, ...(params ?? {}) });
+      const res = await api.getUsersUniques({ field, ...(params ?? {}) });
+      return res as string[];
     },
     options,
   );
@@ -62,6 +75,22 @@ export function useUsersFind(search: string): QueryResult<any> {
       responseType: 'data',
     });
   });
+}
+
+export function useUsersByTimeRange(
+  userType: 'CONSUMER' | 'BUSINESS',
+  dateRange?: { startTimestamp?: number; endTimestamp?: number },
+): QueryResult<AllUsersOffsetPaginateListResponse> {
+  const api = useApi();
+  const start = dateRange?.startTimestamp ?? 0;
+  const end = dateRange?.endTimestamp ?? Date.now();
+  return useQuery(USERS(userType, { start, end }), async () => {
+    if (userType === 'CONSUMER') {
+      return await api.getConsumerUsersList({ afterTimestamp: start, beforeTimestamp: end });
+    } else {
+      return await api.getBusinessUsersList({ afterTimestamp: start, beforeTimestamp: end });
+    }
+  }) as unknown as QueryResult<AllUsersOffsetPaginateListResponse>;
 }
 
 export type UsersPreviewSearchResponse = {
@@ -95,6 +124,27 @@ export function useUsersPreviewSearch(
 export function useUserTrsScores(userId: string) {
   const api = useApi();
   return useQuery(USER_TRS_RISK_SCORES(userId), () => api.getTrsScores({ userId }));
+}
+
+// Accounts and roles
+export function useRolesList(): QueryResult<{ items: AccountRole[]; total: number }> {
+  const api = useApi();
+  return useQuery(ROLES_LIST(), async () => {
+    const roles = await api.getRoles();
+    return { items: roles, total: roles.length };
+  });
+}
+
+export function useAccountsList(): QueryResult<Account[]> {
+  const api = useApi();
+  return useQuery(ACCOUNT_LIST(), async () => {
+    try {
+      return await api.getAccounts();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  });
 }
 
 export function useUsersList(

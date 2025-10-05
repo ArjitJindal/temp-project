@@ -95,12 +95,9 @@ export function Content(props: { userId: string }) {
 
   const { queryResult, countQueryResult } = useTransactionsQuery<TableDataItem<DataItem>>(
     { ...params, userId, includeRuleHitDetails: true, showDetailedView: showDetailsView },
-    {
-      isReadyToFetch: true,
-      mapper: (data) => {
-        const tableData = prepareTableData(userId, data, riskClassificationValues);
-        return tableData;
-      },
+    (data) => {
+      const tableData = prepareTableData(userId, data, riskClassificationValues);
+      return tableData;
     },
   );
 

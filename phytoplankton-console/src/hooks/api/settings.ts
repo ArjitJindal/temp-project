@@ -8,6 +8,7 @@ import {
   TENANT_USAGE_DATA,
 } from '@/utils/queries/keys';
 import type { AiSourcesResponse, ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
+import { getOr } from '@/utils/asyncResource';
 
 export function useToggleActionReason(options?: any) {
   const api = useApi();
@@ -77,4 +78,10 @@ export function useTenantUsageData() {
 export function useActionReasons(type?: ReasonType) {
   const api = useApi();
   return useQuery(ACTION_REASONS(type), async () => api.getActionReasons({ type }));
+}
+
+export function useReasons(type?: ReasonType, filterInactive: boolean = true): string[] {
+  const reasonsRes = useActionReasons(type);
+  const actionReasons = getOr(reasonsRes.data, [] as { isActive: boolean; reason: string }[]);
+  return actionReasons.filter((val) => (filterInactive ? val.isActive : true)).map((d) => d.reason);
 }

@@ -18,7 +18,6 @@ import {
   WorkflowSettingsUserApprovalWorkflows,
 } from '@/apis';
 import { formatRoleName } from '@/pages/accounts/utils';
-import { useUserApprovalSettings } from '@/hooks/api/workflows';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
   SETTINGS,
@@ -35,6 +34,7 @@ import Alert from '@/components/library/Alert';
 import ArrowRightLineIcon from '@/components/ui/icons/Remix/system/arrow-right-line.react.svg';
 import { notEmpty } from '@/utils/array';
 import { useDeepEqualEffect } from '@/utils/hooks';
+import { useQuery } from '@/utils/queries/hooks';
 
 const MAX_ROLES_LIMIT = 3;
 

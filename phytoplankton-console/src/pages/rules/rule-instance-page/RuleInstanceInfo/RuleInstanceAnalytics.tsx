@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isEqual, round } from 'lodash';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { FROZEN_STATUSES, isShadowRule as checkShadowRule } from '../../utils';
@@ -9,8 +9,8 @@ import { useApi } from '@/api';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { RULE_STATS, USERS } from '@/utils/queries/keys';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { USERS } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { H4 } from '@/components/ui/Typography';
 import { UserSearchParams } from '@/pages/users/users-list';
@@ -34,6 +34,7 @@ import { dayjs } from '@/utils/dayjs';
 import LineChart from '@/components/charts/Line';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useTransactionsQuery } from '@/hooks/api/transactions';
+import { useRuleInstanceStats } from '@/hooks/api/rules';
 
 const HIT_RATE_SERIES = 'Hit rate';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate';
@@ -54,27 +55,21 @@ const ALL_STATUS = [
 
 export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => {
   const { ruleInstance } = props;
-  const api = useApi();
   const [timeRange, setTimeRange] = useState<WidgetRangePickerValue>(DEFAULT_TIME_RANGE);
   const settings = useSettings();
 
-  const handleDateReset = useCallback(() => {
+  const handleDateReset = () => {
     setTimeRange({
       startTimestamp: ruleInstance.createdAt,
       endTimestamp: dayjs().valueOf(),
     });
-  }, [ruleInstance.createdAt]);
+  };
 
-  const analyticsQueryResult = useQuery(
-    RULE_STATS({ ...timeRange, ruleInstanceId: ruleInstance.id }),
-    () => {
-      return api.getRuleInstancesRuleInstanceIdStats({
-        ruleInstanceId: ruleInstance.id as string,
-        afterTimestamp: timeRange.startTimestamp ?? DEFAULT_TIME_RANGE.startTimestamp,
-        beforeTimestamp: timeRange.endTimestamp ?? DEFAULT_TIME_RANGE.endTimestamp,
-      });
-    },
-  );
+  const analyticsQueryResult = useRuleInstanceStats({
+    ruleInstanceId: ruleInstance.id as string,
+    afterTimestamp: timeRange.startTimestamp ?? DEFAULT_TIME_RANGE.startTimestamp,
+    beforeTimestamp: timeRange.endTimestamp ?? DEFAULT_TIME_RANGE.endTimestamp,
+  });
   const dataRes = analyticsQueryResult.data;
   const isShadowRule = checkShadowRule(ruleInstance);
   const items: WidgetGroupItem[] = [

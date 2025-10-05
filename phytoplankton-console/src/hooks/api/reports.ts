@@ -24,7 +24,10 @@ export function useReportTypes(
   options?: QueryOptions,
 ): QueryResult<{ data: ReportType[]; total: number }> {
   const api = useApi();
-  return useQuery(REPORT_SCHEMAS(), () => api.getReportTypes(), options);
+  return useQuery(REPORT_SCHEMAS(), () => api.getReportTypes(), options) as unknown as QueryResult<{
+    data: ReportType[];
+    total: number;
+  }>;
 }
 
 export function useReportType(reportTypeId: string): ReportType | undefined {

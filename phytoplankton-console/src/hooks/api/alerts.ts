@@ -54,8 +54,8 @@ export function useAlert(
 }
 
 // For cases where we already have alert data but want it cached under ALERT_ITEM key
-export function useAlertPrimed(alertId: string | undefined, alertData: unknown) {
-  return useQuery(ALERT_ITEM(alertId ?? ''), async () => {
+export function useAlertPrimed<T>(alertId: string | undefined, alertData: T) {
+  return useQuery<T>(ALERT_ITEM(alertId ?? ''), async () => {
     return alertData;
   });
 }

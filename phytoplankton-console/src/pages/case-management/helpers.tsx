@@ -45,7 +45,7 @@ import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
-import { useReasons } from '@/utils/reasons';
+import { useReasons } from '@/hooks/api/settings';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {

@@ -18,7 +18,7 @@ function TransactionIdsSelect(props: LocalProps) {
     value: val.transactionId,
   }));
   return (
-    <Select
+    <Select<string>
       {...props}
       options={options}
       onSearch={(searchTerm: string) => {

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import type { FileInfo, Rule, RuleInstance } from '@/apis';
+import type { FileInfo, Rule, RuleInstance, RuleQueue } from '@/apis';
 import {
   NEW_RULE_ID,
   RULE_FILTERS,
@@ -13,11 +13,50 @@ import {
   GET_RULE_INSTANCE,
   RULES_UNIVERSAL_SEARCH,
   MACHINE_LEARNING_MODELS,
+  RULE_STATS,
+  RULES,
+  RULES_WITH_ALERTS,
 } from '@/utils/queries/keys';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
-import { RuleQueue } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+
+export function useRulesList() {
+  const api = useApi();
+  return useQuery(RULES(), (): Promise<Rule[]> => api.getRules({}));
+}
+
+export function useRulesWithAlerts(options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery<string[]>(RULES_WITH_ALERTS(), () => api.getRulesWithAlerts({}), {
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useRuleInstanceStats(params: {
+  ruleInstanceId: string;
+  afterTimestamp: number;
+  beforeTimestamp: number;
+}) {
+  const api = useApi();
+  const { ruleInstanceId, afterTimestamp, beforeTimestamp } = params;
+  return useQuery(
+    RULE_STATS({ ruleInstanceId, startTimestamp: afterTimestamp, endTimestamp: beforeTimestamp }),
+    () =>
+      api.getRuleInstancesRuleInstanceIdStats({
+        ruleInstanceId,
+        afterTimestamp,
+        beforeTimestamp,
+      }),
+  );
+}
+
+export function useRuleInstances() {
+  const api = useApi();
+  return useQuery(['rules', 'instances', 'ALL'], async () => {
+    return await api.getRuleInstances({});
+  });
+}
 
 export function useRuleQueue(
   queueId?: string,
@@ -71,7 +110,8 @@ export function useRuleFilters() {
 export function useNewRuleId(ruleId?: string) {
   const api = useApi();
   return useQuery(NEW_RULE_ID(ruleId), async () => {
-    return await api.getRuleInstancesNewRuleId({ ruleId });
+    const res = await api.getRuleInstancesNewRuleId({ ruleId });
+    return res.id;
   });
 }
 

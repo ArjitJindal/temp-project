@@ -2,13 +2,13 @@ import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { CASES_ITEM, CASES_LIST, CASES_USERS_CASEIDS } from '@/utils/queries/keys';
-import { Case } from '@/apis';
 import type { QueryOptions, PaginatedQueryOptions, QueryResult } from '@/utils/queries/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import { dayjs } from '@/utils/dayjs';
 import { getStatuses } from '@/utils/case-utils';
 import { useAuth0User } from '@/utils/user-utils';
+import type { Case, CaseType } from '@/apis';
 
 export function useCase(caseId: string, options?: QueryOptions<Case, Case>): QueryResult<Case> {
   const api = useApi();
@@ -142,9 +142,12 @@ export function useCasesReviewAssignmentUpdate() {
   );
 }
 
-export function useCaseIds(params: { userId: string; caseType: 'MANUAL' | 'AUTO' }) {
+export function useCaseIds(params: { userId: string; caseType: CaseType }) {
   const api = useApi();
   return useQuery(CASES_USERS_CASEIDS(params), async () =>
-    api.getCaseIds({ userId: params.userId, filterCaseTypes: params.caseType }),
+    api.getCaseIds({
+      userId: params.userId,
+      filterCaseTypes: params.caseType,
+    }),
   );
 }

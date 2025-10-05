@@ -2,7 +2,8 @@ import React from 'react';
 import { MAX_SLA_POLICIES_PER_ENTITY } from '@flagright/lib/constants';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
-import { slaPoliciesOptions, useSlas } from '@/utils/sla';
+import { slaPoliciesOptions } from '@/utils/sla';
+import { useSlas } from '@/hooks/api/sla';
 import { getOr, isLoading } from '@/utils/asyncResource';
 function SlaPolicyInput<FormValues extends { slaPolicies?: string[] }>() {
   const slaPoliciesData = useSlas();

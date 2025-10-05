@@ -1,6 +1,5 @@
 import { useParams } from 'react-router';
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import Header from './components/Header';
 import AlertDetails from './components/AlertDetails';
 import { Authorized } from '@/components/utils/Authorized';
@@ -13,8 +12,6 @@ import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils
 
 function AlertItemPage() {
   const { id: alertId } = useParams<'id'>() as { id: string };
-
-  const queryClient = useQueryClient();
 
   const alertQueryResults = useAlert(alertId);
 
@@ -37,7 +34,7 @@ function AlertItemPage() {
   };
 
   const onReload = () => {
-    queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
+    alertQueryResults.refetch();
   };
 
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);

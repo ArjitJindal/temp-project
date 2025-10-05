@@ -1,6 +1,6 @@
 import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import type { SLAPolicy } from '@/apis';
+import type { SLAPolicy, SLAPoliciesResponse } from '@/apis';
 
 export function useCreateSlaPolicy() {
   const api = useApi();
@@ -25,12 +25,19 @@ import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import type { QueryResult } from '@/utils/queries/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import { SLA_POLICY, SLA_POLICY_LIST } from '@/utils/queries/keys';
+import { AsyncResource, map } from '@/utils/asyncResource';
 
 export function useSlaPolicies(params?: any): QueryResult<any> {
   const api = useApi();
   return useQuery(SLA_POLICY_LIST(params), async () => {
     return await api.getSlaPolicies(params ?? {});
   });
+}
+
+export function useSlas(): AsyncResource<SLAPolicy[]> {
+  const api = useApi();
+  const result = useQuery<SLAPoliciesResponse>(SLA_POLICY_LIST(), async () => api.getSlaPolicies());
+  return map(result.data, ({ items }) => items);
 }
 
 export function useSlaPoliciesPaginated(
