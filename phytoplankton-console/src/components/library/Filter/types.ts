@@ -57,6 +57,7 @@ export type AutoFilterDataType =
       options: Option<string>[];
       mode: 'SINGLE' | 'MULTIPLE' | 'TAGS';
       displayMode: 'select' | 'list';
+      closeOnSingleSelect?: boolean;
     }>;
 
 export interface AutoFilterProps extends BaseFilter {

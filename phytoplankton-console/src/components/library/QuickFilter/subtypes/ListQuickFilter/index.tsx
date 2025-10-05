@@ -10,6 +10,7 @@ import List from '@/components/library/List';
 interface SharedProps<Value extends Comparable> extends QuickFilterProps {
   options: Option<Value>[];
   onUpdateFilterClose?: (status: boolean) => void;
+  closeOnSingleSelect?: boolean;
 }
 
 interface MultipleProps<Value extends Comparable> extends SharedProps<Value>, InputProps<Value[]> {
@@ -23,7 +24,7 @@ interface SingleProps<Value extends Comparable> extends SharedProps<Value>, Inpu
 type Props<Value extends Comparable> = MultipleProps<Value> | SingleProps<Value>;
 
 export default function ListQuickFilter<Value extends Comparable>(props: Props<Value>) {
-  const { options, onChange = () => {}, onUpdateFilterClose, ...rest } = props;
+  const { options, onChange = () => {}, onUpdateFilterClose, closeOnSingleSelect, ...rest } = props;
 
   const valueArray: Value[] = props.value
     ? props.mode === 'SINGLE'
@@ -63,11 +64,16 @@ export default function ListQuickFilter<Value extends Comparable>(props: Props<V
               setOpen(false);
               onUpdateFilterClose && onUpdateFilterClose(true);
             } else {
-              props.onChange?.(
-                !valueArray.includes(value)
-                  ? [...(valueArray ?? []), value]
-                  : valueArray.filter((x) => x !== value),
-              );
+              const newValue = !valueArray.includes(value)
+                ? [...(valueArray ?? []), value]
+                : valueArray.filter((x) => x !== value);
+              props.onChange?.(newValue);
+
+              // Close if closeOnSingleSelect is true and this is the first selection
+              if (closeOnSingleSelect && valueArray.length === 0) {
+                setOpen(false);
+                onUpdateFilterClose && onUpdateFilterClose(true);
+              }
             }
           }}
         />

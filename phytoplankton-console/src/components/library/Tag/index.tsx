@@ -2,11 +2,13 @@ import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import Confirm, { Props as ConfirmProps } from '@/components/utils/Confirm';
+import Tooltip from '@/components/library/Tooltip';
 
 export interface TagAction {
   key: string;
   icon: React.ReactNode;
   confirm?: Omit<ConfirmProps, 'onConfirm' | 'children'>;
+  disabled?: boolean | string;
   action: () => void;
 }
 
@@ -65,20 +67,22 @@ export default function Tag(props: Props) {
         </div>
         {actions.length > 0 && (
           <div className={s.actions}>
-            {props.actions?.map(({ icon, action, key, confirm }) => {
+            {props.actions?.map(({ icon, action, key, confirm, disabled }) => {
               if (confirm == null) {
                 return (
-                  <button
-                    className={s.action}
-                    key={key}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      action();
-                    }}
-                  >
-                    {icon}
-                  </button>
+                  <Tooltip key={key} title={typeof disabled === 'string' ? disabled : undefined}>
+                    <button
+                      disabled={disabled === true || typeof disabled === 'string'}
+                      className={s.action}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        action();
+                      }}
+                    >
+                      {icon}
+                    </button>
+                  </Tooltip>
                 );
               }
               return (

@@ -69,6 +69,7 @@ export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
 export const ALERT_KEY_IDENTIFIER = '#alert-data'
 export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
 export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
+export const ALERT_SANCTIONS_DETAILS_KEY_IDENTIFIER = '#alert-sanctions-details'
 export const CASE_KEY_IDENTIFIER = '#cases'
 export const CASE_COMMENT_KEY_IDENTIFIER = '#case-comment'
 export const CASE_COMMENT_FILE_KEY_IDENTIFIER = '#case-comment-file'
@@ -159,6 +160,14 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}${ALERT_FILE_ID_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
     SortKeyID: `${commentId}#${fileS3Key}`,
+  }),
+  ALERT_SANCTIONS_DETAILS: (
+    tenantId: string,
+    alertId: string,
+    searchId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}${ALERT_SANCTIONS_DETAILS_KEY_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
+    SortKeyID: searchId,
   }),
   ALERT_TRANSACTION_IDS: (tenantId: string, alertId: string) => ({
     PartitionKeyID: `${tenantId}${ALERT_TRANSACTION_IDS_KEY_IDENTIFIER}`,

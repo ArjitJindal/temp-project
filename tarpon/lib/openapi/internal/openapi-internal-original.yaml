@@ -14878,6 +14878,8 @@ components:
           type: array
           items:
             type: string
+        entityType:
+          type: string
     DefaultManualScreeningFiltersResponse:
       title: DefaultManualScreeningFiltersResponse
       type: object
