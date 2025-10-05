@@ -46,7 +46,7 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import { useCasesList } from '@/hooks/api';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { useTransactionsQuery } from '@/hooks/api/transactions';
 import { TableDataItem } from '@/components/library/Table/types';
 
 export type DataItem = {

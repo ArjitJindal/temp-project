@@ -2,12 +2,10 @@ import { BasicConfig, Settings } from '@react-awesome-query-builder/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { compact, sortBy, uniq } from 'lodash';
 import { AsyncResource, all, init, map } from '@/utils/asyncResource';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
+import { useRuleLogicConfig } from '@/hooks/api/logic';
 import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
-import {
+import type {
   LogicAggregationVariable,
   LogicConfig,
   LogicEntityVariable,
@@ -16,7 +14,7 @@ import {
   RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
-import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import type { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import {
   getOperatorsByValueType,
@@ -39,25 +37,13 @@ function useLogicConfigRes(
   },
 ): AsyncResource<LogicConfig> {
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
-  const api = useApi();
   const settings = useSettings();
 
-  const queryResult = useQuery<LogicConfig>(
-    RULE_LOGIC_CONFIG(params),
-    async (): Promise<LogicConfig> => {
-      const response = await api.getLogicConfig({
-        LogicConfigRequest: {
-          excludeSelectOptions: params.excludeSelectOptions,
-          filterVarNames: params.filterVarNames,
-        },
-      });
-      if (!response.logicConfig) {
-        throw new Error('No logic config found');
-      }
-      return response.logicConfig;
-    },
-    { refetchOnMount: false, enabled: v8Enabled, staleTime: Infinity },
-  );
+  const queryResult = useRuleLogicConfig(params, {
+    refetchOnMount: false,
+    enabled: v8Enabled,
+    staleTime: Infinity as any,
+  });
 
   return useMemo(() => {
     return map(queryResult.data, (value) => {

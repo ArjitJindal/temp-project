@@ -1,7 +1,7 @@
 import type { Currency } from '@flagright/lib/constants';
 import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import type { QueryResult } from '@/utils/queries/types';
+import type { QueryResult, QueryResult } from '@/utils/queries/types';
 import {
   TRANSACTIONS_UNIQUES,
   TRANSACTIONS_LIST,
@@ -16,6 +16,8 @@ import type {
   TransactionsStatsByTimeResponseData,
 } from '@/apis';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
+import type { PaginatedData } from '@/utils/queries/hooks';
+import { transactionParamsToRequest } from '@/pages/transactions/components/TransactionsTable';
 
 export function useTransactionsUniques(
   field: any,
@@ -62,6 +64,33 @@ export function useTransactionsCount(params: any) {
     const countData = await api.getTransactionsList({ ...params, page: 0, pageSize: 0 });
     return { total: parseInt(`${countData.count}`) } as { total: number };
   });
+}
+
+export function useTransactionsQuery<T extends object = any>(
+  params: any,
+  mapper?: (data: any[]) => T[],
+): {
+  queryResult: QueryResult<PaginatedData<T>>;
+  countQueryResult: QueryResult<{ total: number }>;
+  cacheKey: any;
+} {
+  const dataParams = transactionParamsToRequest(
+    { ...params, responseType: 'data' },
+    { ignoreDefaultTimestamps: true },
+  );
+  const queryResult = useTransactionsListPaginated(dataParams, mapper) as QueryResult<
+    PaginatedData<T>
+  >;
+  const countParams = transactionParamsToRequest(
+    { ...params, page: 0, pageSize: 0, responseType: 'count' },
+    { ignoreDefaultTimestamps: true },
+  );
+  const countQueryResult = useTransactionsCount(countParams) as QueryResult<{ total: number }>;
+  return {
+    queryResult,
+    countQueryResult,
+    cacheKey: TRANSACTIONS_LIST(params),
+  };
 }
 
 export function useTransactionItem(transactionId: string): QueryResult<any> {

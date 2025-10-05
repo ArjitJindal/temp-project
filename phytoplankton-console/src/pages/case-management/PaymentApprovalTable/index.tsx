@@ -8,7 +8,7 @@ import PaymentApprovalButton from '@/pages/case-management/components/PaymentApp
 import { TransactionsResponse } from '@/apis';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { useTransactionsQuery } from '@/hooks/api/transactions';
 
 interface Props {
   params: TransactionsTableParams;
@@ -22,10 +22,11 @@ export default function PaymentApprovalsTable(props: Props) {
   const queryClient = useQueryClient();
   const filterStatus = params.status ?? 'SUSPEND';
 
-  const { queryResult, countQueryResult, cacheKey } = useTransactionsQuery(
-    { ...params, status: filterStatus, isPaymentApprovals: true },
-    { isReadyToFetch: true, debounce: 500 },
-  );
+  const { queryResult, countQueryResult, cacheKey } = useTransactionsQuery({
+    ...params,
+    status: filterStatus,
+    isPaymentApprovals: true,
+  });
 
   const updateCacheData = useCallback(() => {
     queryClient.setQueryData<TransactionsResponse>(

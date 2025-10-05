@@ -1,7 +1,7 @@
 import { Alert } from '@/apis';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { useTransactionsQuery } from '@/hooks/api/transactions';
 
 export function useCheckedTransactionsQuery(
   alert: Alert,
@@ -21,5 +21,5 @@ export function useCheckedTransactionsQuery(
   }
   newParams.userId = caseUserId;
 
-  return useTransactionsQuery(newParams, { isReadyToFetch: true });
+  return useTransactionsQuery(newParams);
 }
