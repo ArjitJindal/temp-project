@@ -1,8 +1,8 @@
 import React from 'react';
 import { Resizable } from 'react-resizable';
 import type { ResizeCallbackData } from 'react-resizable';
-import { map, QueryResult } from '@/utils/queries/types';
-import { TableDataItem } from '@/components/library/Table/types';
+import { map, type QueryResult } from '@/utils/queries/types';
+import type { TableDataItem } from '@/components/library/Table/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
 
 export const DEFAULT_BULK_ACTIONS_LIMIT = 20;

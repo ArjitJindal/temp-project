@@ -7,7 +7,7 @@ import s from './styles.module.less';
 import Pie, { Data as PieData } from './Pie';
 import COLORS, { ALL_CHART_COLORS } from '@/components/ui/colors';
 import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';

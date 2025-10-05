@@ -9,10 +9,10 @@ import { CommentType, getDisplayedUserInfo, useUsers } from '@/utils/user-utils'
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/library/Avatar';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import Spinner from '@/components/library/Spinner';
-import { Comment as ApiComment } from '@/apis';
-import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
+import type { Comment as ApiComment } from '@/apis';
+import type { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tooltip from '@/components/library/Tooltip';
 import ConfirmModal from '@/components/utils/Confirm/ConfirmModal';

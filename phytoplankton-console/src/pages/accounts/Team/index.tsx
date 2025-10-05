@@ -31,7 +31,7 @@ import CheckCircleOutlined from '@/components/ui/icons/Remix/system/checkbox-cir
 import MinusCircleOutlined from '@/components/ui/icons/Remix/system/indeterminate-circle-line.react.svg';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Tag from '@/components/library/Tag';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { isSuccess, loading, success } from '@/utils/asyncResource';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';

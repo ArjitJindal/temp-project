@@ -5,7 +5,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { makeUrl } from '@/utils/routing';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';

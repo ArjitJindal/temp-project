@@ -3,7 +3,7 @@ import { groupBy } from 'lodash';
 import LatestOverviewTable from '../LatestTeamOverview';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardLatestTeamStatsItem } from '@/apis';
-import { map, QueryResult } from '@/utils/queries/types';
+import { map, type QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
 import type { PaginatedData } from '@/utils/queries/hooks';

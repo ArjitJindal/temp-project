@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
 import type { DashboardLatestTeamStatsItem } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
 import type { CommonParams } from '@/components/library/Table/types';

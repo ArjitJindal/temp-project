@@ -7,7 +7,7 @@ import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Chart from './Chart';
 import COLORS from '@/components/ui/colors';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';

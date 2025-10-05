@@ -4,7 +4,7 @@ import { SanctionsHitReasons, SanctionsHitStatus } from '@/apis';
 import Narrative, { NarrativeFormValues, NarrativeRef } from '@/components/Narrative';
 import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { isLoading } from '@/utils/asyncResource';
 import { FormRef } from '@/components/library/Form';
 import Label from '@/components/library/Label';

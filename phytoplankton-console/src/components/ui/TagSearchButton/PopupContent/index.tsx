@@ -6,7 +6,7 @@ import Form, { FormRef } from '@/components/library/Form';
 import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
 import InputField from '@/components/library/Form/InputField';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
 
 interface Props {

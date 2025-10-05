@@ -3,7 +3,7 @@ import PopupContent from './PopupContent';
 import { MessageRenderers } from './PopupContent/SearchResultList';
 import { ItemType } from './types';
 import QuickFilter from '@/components/library/QuickFilter';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
 
 interface Props<T> {

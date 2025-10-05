@@ -16,7 +16,7 @@ import { BOOLEAN, COUNTRY, DATE, PEP_RANK } from '@/components/library/Table/sta
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
-import { map, QueryResult } from '@/utils/queries/types';
+import { map, type QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';

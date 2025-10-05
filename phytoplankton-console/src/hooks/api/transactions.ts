@@ -1,7 +1,7 @@
 import type { Currency } from '@flagright/lib/constants';
 import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import type { QueryResult, QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import {
   TRANSACTIONS_UNIQUES,
   TRANSACTIONS_LIST,

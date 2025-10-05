@@ -8,7 +8,7 @@ import { AllUsersTableItemPreview, ListSubtypeInternal, TransactionsUniquesField
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { useTransactionsUniques } from '@/hooks/api/transactions';
 import { neverThrow } from '@/utils/lang';

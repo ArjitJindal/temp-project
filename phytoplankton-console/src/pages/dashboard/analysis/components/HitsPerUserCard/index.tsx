@@ -15,7 +15,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getCurrentDomain } from '@/utils/routing';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsHitsPerUserData } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {

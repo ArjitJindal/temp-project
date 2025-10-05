@@ -11,7 +11,7 @@ import { InfiniteData } from '@tanstack/query-core/src/types';
 import { useInterval } from 'ahooks';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
 import { AsyncResource, failed, init, loading, map, success } from '@/utils/asyncResource';
-import { Cursor, QueryResult } from '@/utils/queries/types';
+import type { Cursor, QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
 import { TableListViewEnum } from '@/apis';
 import { NotFoundError } from '@/utils/errors';

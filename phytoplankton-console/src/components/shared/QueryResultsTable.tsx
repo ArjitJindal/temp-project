@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { ParamsType } from '@ant-design/pro-provider';
 import Table, { Props as TableProps } from '@/components/library/Table';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { CommonParams, TableData, TableDataItem } from '@/components/library/Table/types';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 

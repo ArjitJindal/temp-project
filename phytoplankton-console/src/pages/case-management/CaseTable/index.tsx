@@ -15,7 +15,7 @@ import {
   CaseStatus,
   Comment,
 } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { useAccounts, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
 import {
   AllParams,

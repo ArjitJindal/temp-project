@@ -3,7 +3,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { RiskFactorsApprovalRequestActionEnum } from '@/apis';
 import { useApi } from '@/api';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { RISK_FACTOR_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
 
 // todo: generalise with risk-levels proposals

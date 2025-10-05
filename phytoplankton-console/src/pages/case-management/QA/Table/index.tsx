@@ -8,7 +8,7 @@ import { AddToSampleModal } from '../AddToSampleModal';
 import { QAFormValues } from '../types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { useCaseAlertFilters } from '@/pages/case-management/helpers';

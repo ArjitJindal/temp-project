@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { humanizeConstant, firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { TableColumn } from '@/components/library/Table/types';
 import {
   SanctionsDetailsEntityType,

@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { TableItem } from './types';
-import { map, QueryResult } from '@/utils/queries/types';
+import { map, type QueryResult } from '@/utils/queries/types';
 import { TableData, TableDataItem, TableRefType } from '@/components/library/Table/types';
 import { Case, CasesAssignmentsUpdateRequest, CasesReviewAssignmentsUpdateRequest } from '@/apis';
 import type { PaginatedData } from '@/utils/queries/hooks';

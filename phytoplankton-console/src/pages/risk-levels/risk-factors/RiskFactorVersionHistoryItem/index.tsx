@@ -3,7 +3,7 @@ import RiskFactorsTable from '../RiskFactorsTable';
 import { ScopeSelectorValue, scopeToRiskEntityType } from '../RiskFactorsTable/utils';
 import s from './index.module.less';
 import { useMaxVersionIdRiskFactors, useVersionHistoryItem } from '@/hooks/api/version-history';
-import { RiskFactor } from '@/apis';
+import type { RiskFactor } from '@/apis';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import VersionHistoryHeader from '@/components/VersionHistory/RestoreButton';
 import { map } from '@/utils/queries/types';

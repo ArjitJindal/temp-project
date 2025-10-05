@@ -1,6 +1,6 @@
-import { MutateOptions } from '@tanstack/query-core/src/types';
-import { UseMutationResult } from '@tanstack/react-query/src/types';
-import { Mutation } from '@/utils/queries/types';
+import type { MutateOptions } from '@tanstack/query-core/src/types';
+import type { UseMutationResult } from '@tanstack/react-query/src/types';
+import type { Mutation } from '@/utils/queries/types';
 import { AsyncResource, init, loading, failed, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
 

@@ -2,13 +2,15 @@ import { AlertsQaSampling } from '@/apis';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useCreateQaSample, useUpdateQaSample } from '@/hooks/api/alerts';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
+import { useApi } from '@/api';
 
 export const useAlertsSamplingCreateMutation = (setIsModalOpen: (isOpen: boolean) => void) => {
   return useCreateQaSample({
-    onSuccess: (data: AlertsQaSampling) => {
+    onSuccess: (data) => {
+      const sampling = data as AlertsQaSampling;
       setIsModalOpen(false);
-      message.success('Sample created successfully with id: ' + data.samplingId);
+      message.success('Sample created successfully with id: ' + sampling.samplingId);
     },
     onError: () => {
       setIsModalOpen(false);

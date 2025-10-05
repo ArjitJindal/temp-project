@@ -21,7 +21,7 @@ import {
   SanctionsHitStatus,
   TransactionTableItem,
 } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { isScreeningAlert } from '@/utils/api/alerts';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 import { useSanctionsHitsSearch } from '@/hooks/api/sanctions';

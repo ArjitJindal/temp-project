@@ -6,7 +6,7 @@ import SearchResultList, { MessageRenderers } from './SearchResultList';
 import LastSearchList from './LastSearchList';
 import { useLastSearches } from './helpers';
 import { getOr, isSuccess } from '@/utils/asyncResource';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import Select from '@/components/library/Select';
 

@@ -32,7 +32,7 @@ import { AsyncResource, getOr, isFailed, isLoading, success } from '@/utils/asyn
 import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Alert from '@/components/library/Alert';
-import { Cursor } from '@/utils/queries/types';
+import type { Cursor } from '@/utils/queries/types';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickSortingParams } from '@/components/library/Table/paramsHelpers';
 import { shouldShowSkeleton } from '@/components/library/Skeleton';

@@ -1,5 +1,5 @@
 import { TableUser } from './CaseTable/types';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { AllParams, TableData } from '@/components/library/Table/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { useApi } from '@/api';
@@ -11,7 +11,7 @@ import { getStatuses } from '@/utils/case-utils';
 import { AlertListResponseItem, ChecklistStatus } from '@/apis';
 import dayjs from '@/utils/dayjs';
 import { getUserName } from '@/utils/api/users';
-import { TableSearchParams } from '@/pages/case-management/types';
+import type { TableSearchParams } from '@/pages/case-management/types';
 
 export const getAlertsQueryParams = (
   params: AllParams<TableSearchParams>,

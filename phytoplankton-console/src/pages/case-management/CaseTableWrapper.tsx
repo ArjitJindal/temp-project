@@ -14,7 +14,7 @@ import { AllParams } from '@/components/library/Table/types';
 import { useCasesListPaginated } from '@/hooks/api/cases';
 import { useRuleOptions } from '@/utils/rules';
 import { useAuth0User } from '@/utils/user-utils';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 
 interface CaseTableChildrenProps extends ModalHandlers<CasesStatusChangeModalProps> {
   params: AllParams<TableSearchParams>;

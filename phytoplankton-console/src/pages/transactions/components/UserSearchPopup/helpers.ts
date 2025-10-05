@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useUsersPreviewSearch } from '@/hooks/api';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { AllUsersTableItemPreview, UserType } from '@/apis';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 

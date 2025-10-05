@@ -9,7 +9,7 @@ import Confirm from '@/components/utils/Confirm';
 import { VersionHistory, VersionHistoryType } from '@/apis';
 import { useVersionHistoryItem, useVersionHistoryRestore } from '@/hooks/api/version-history';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { AsyncResource, match, success, map, init } from '@/utils/asyncResource';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tooltip from '@/components/library/Tooltip';

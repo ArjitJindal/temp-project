@@ -3,7 +3,7 @@ import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { CellInput, Styles } from 'jspdf-autotable';
 import { getRiskLevelFromScore, isNotArsChangeTxId } from '@flagright/lib/utils';
 import { RiskScores } from '../Header/HeaderMenu';
-import {
+import type {
   ExtendedDrsScore,
   InternalBusinessUser,
   InternalConsumerUser,
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/RiskScoreDisplay/DetailsModal/helpers';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import { MAXIMUM_EXPORT_ITEMS } from '@/utils/data-export';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { DATE_TIME_FORMAT } from '@/components/library/DateRangePicker/DateTimeTextInput';
 
 export const drsTableHeaders = [

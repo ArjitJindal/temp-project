@@ -6,7 +6,7 @@ import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { PAYMENT_DETAILS_OR_METHOD } from './helpers/tableDataTypes';
 import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
-import {
+import type {
   Alert,
   Amount,
   ExecutedRulesResult,
@@ -31,7 +31,7 @@ import {
 } from '@/components/library/Table/types';
 import { getUserLink } from '@/utils/api/users';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
