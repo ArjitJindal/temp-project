@@ -12,9 +12,7 @@ import Checkbox from '@/components/library/Checkbox';
 import Label from '@/components/library/Label';
 import Button from '@/components/library/Button';
 import Tooltip from '@/components/library/Tooltip';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { COPILOT_AI_RESOURCES } from '@/utils/queries/keys';
+import { useCopilotAiSources } from '@/hooks/api/settings';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import SettingsCard from '@/components/library/SettingsCard';
 import { isValidAIAttribute } from '@/apis/models-custom/AIAttribute';
@@ -23,10 +21,7 @@ export const AISources = () => {
   const settings = useSettings();
   const updateSettings = useUpdateTenantSettings('AI sources settings saved successfully');
   const [aiSourcesDisabled, setAiSourcesDisabled] = useState(settings.aiSourcesDisabled ?? []);
-  const api = useApi();
-  const AI_SOURCES = useQuery<AiSourcesResponse>(COPILOT_AI_RESOURCES(), async () => {
-    return await api.getAiSources();
-  });
+  const AI_SOURCES = useCopilotAiSources();
   return (
     <SettingsCard
       title="AI Sources"
@@ -34,7 +29,8 @@ export const AISources = () => {
       minRequiredResources={['read:::settings/case-management/ai-sources/*']}
     >
       <AsyncResourceRenderer resource={AI_SOURCES.data}>
-        {({ aiSources }) => {
+        {(value) => {
+          const { aiSources } = value as AiSourcesResponse;
           return (
             <>
               {AI_ATTRIBUTE_CATEGORYS.map((category, index) => (

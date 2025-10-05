@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import { QueryKey } from '@tanstack/react-query';
-import { useApi } from '@/api';
 import { TransactionTableItem } from '@/apis';
-import { TRANSACTIONS_LIST, TRANSACTIONS_COUNT } from '@/utils/queries/keys';
-import { PaginatedData, usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
+import { PaginatedData } from '@/utils/queries/hooks';
 import {
   TransactionsTableParams,
   transactionParamsToRequest,
 } from '@/pages/transactions/components/TransactionsTable';
 import { QueryResult } from '@/utils/queries/types';
+import { useTransactionsCount, useTransactionsListPaginated } from '@/hooks/api/transactions';
 
 type UseTransactionsQueryParams<T extends object = TransactionTableItem> = {
   isReadyToFetch?: boolean;
@@ -18,32 +18,19 @@ type UseTransactionsQueryParams<T extends object = TransactionTableItem> = {
 
 export function useTransactionsQuery<T extends object = TransactionTableItem>(
   params: TransactionsTableParams,
-  { isReadyToFetch, debounce, mapper }: UseTransactionsQueryParams<T> = {},
+  { mapper }: UseTransactionsQueryParams<T> = {},
 ): {
   queryResult: QueryResult<PaginatedData<T>>;
   countQueryResult: QueryResult<{ total: number }>;
   cacheKey: QueryKey;
 } {
-  const api = useApi({ ...(debounce ? { debounce } : undefined) });
-
-  const queryResultOffset = usePaginatedQuery<T>(
-    TRANSACTIONS_LIST({ ...params, ...(mapper ? { mapper: mapper.toString() } : {}) }),
-    async (paginationParams) => {
-      const data = await api.getTransactionsList({
-        ...transactionParamsToRequest(
-          { ...params, view: paginationParams.view, responseType: 'data' },
-          { ignoreDefaultTimestamps: true },
-        ),
-        ...paginationParams,
-      });
-
-      return {
-        items: (mapper ? mapper(data.items) : data.items) as T[],
-        total: data.count ? parseInt(`${data.count}`) : 0,
-      };
-    },
-    { enabled: isReadyToFetch },
-  );
+  const queryResultOffset = useTransactionsListPaginated(
+    transactionParamsToRequest(
+      { ...params, responseType: 'data' },
+      { ignoreDefaultTimestamps: true },
+    ),
+    mapper as any,
+  ) as QueryResult<PaginatedData<T>>;
   const countParams = useMemo(() => {
     return {
       ...params,
@@ -51,26 +38,12 @@ export function useTransactionsQuery<T extends object = TransactionTableItem>(
       pageSize: 0,
     };
   }, [params]);
-  const countQueryResult = useQuery<{ total: number }>(
-    TRANSACTIONS_COUNT(countParams),
-    async () => {
-      const countData = await api.getTransactionsList({
-        ...transactionParamsToRequest(
-          { ...countParams, responseType: 'count' },
-          { ignoreDefaultTimestamps: true },
-        ),
-      });
-
-      return {
-        total: parseInt(`${countData.count}`),
-      };
-    },
-    {
-      enabled: isReadyToFetch,
-      staleTime: 5 * 60 * 1000,
-      cacheTime: 10 * 60 * 1000,
-    },
-  );
+  const countQueryResult = useTransactionsCount(
+    transactionParamsToRequest(
+      { ...countParams, responseType: 'count' },
+      { ignoreDefaultTimestamps: true },
+    ),
+  ) as QueryResult<{ total: number }>;
 
   return {
     queryResult: queryResultOffset,

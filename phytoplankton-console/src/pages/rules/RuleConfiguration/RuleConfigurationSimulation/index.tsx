@@ -27,8 +27,7 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
-import { useQuery } from '@/utils/queries/hooks';
-import { SIMULATION_JOB } from '@/utils/queries/keys';
+import { useSimulationJob } from '@/hooks/api/simulation';
 import { getOr, isLoading as isResourceLoading, isSuccess } from '@/utils/asyncResource';
 import Label from '@/components/library/Label';
 import { H4 } from '@/components/ui/Typography';
@@ -38,7 +37,6 @@ import { notEmpty } from '@/utils/array';
 import {
   Rule,
   RuleInstance,
-  SimulationBeaconJob,
   SimulationBeaconParameters,
   SimulationIteration,
   SimulationPostResponse,
@@ -226,21 +224,13 @@ export function RuleConfigurationSimulation(props: Props) {
     },
   );
 
-  const jobResult = useQuery(
-    SIMULATION_JOB(jobId ?? ''),
-    () =>
-      api.getSimulationTestId({
-        jobId: jobId ?? '',
-      }) as Promise<SimulationBeaconJob>,
-    {
-      refetchInterval: (data) =>
-        allIterationsCompleted(data?.iterations || [])
-          ? false
-          : isDemoMode
-          ? 9000
-          : POLL_STATUS_INTERVAL_SECONDS * 1000,
-      enabled: Boolean(jobId),
-    },
+  const jobResult = useSimulationJob(
+    jobId,
+    allIterationsCompleted(getOr(jobResult?.data, { iterations: [] } as any)?.iterations || [])
+      ? false
+      : isDemoMode
+      ? 9000
+      : POLL_STATUS_INTERVAL_SECONDS * 1000,
   );
   const handleStartSimulation = useCallback(() => {
     const formRef = iterationFormRefs[activeTabIndex];

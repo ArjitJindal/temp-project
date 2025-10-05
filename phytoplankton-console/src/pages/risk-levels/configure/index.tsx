@@ -6,17 +6,14 @@ import { parseApiState, State } from './RiskClassificationTable';
 import styles from './index.module.less';
 import { Authorized } from '@/components/utils/Authorized';
 import { TopRightSectionRef } from '@/components/TopRightSection';
-import { useApi } from '@/api';
 import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
-import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { useRiskClassificationConfig } from '@/hooks/api/risk-levels';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isEqual } from '@/utils/lang';
 
 type ScopeSelectorValue = 'risk-factor' | 'risk-level';
@@ -101,46 +98,39 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
     pageWrapperRef.current?.refetchSimulationCount();
   }, []);
 
-  const api = useApi();
   const [state, setState] = useState<State | null>(null);
   const [newState, setNewState] = useState<State | null>(null);
-  const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
-    api.getPulseRiskClassification(),
-  );
+  const riskConfig = useRiskClassificationConfig();
 
   useEffect(() => {
-    if (isFailed(riskValuesQueryResults.data)) {
+    if (isFailed(riskConfig.data as any)) {
       message.fatal('Failed to fetch risk values', new Error('Failed to fetch risk values'));
     }
-    if (!isSuccess(riskValuesQueryResults.data)) {
+    if (!isSuccess(riskConfig.data as any)) {
       return;
     }
-    const newValue = riskValuesQueryResults.data.value;
+    const newValue = riskConfig.data;
     const parsedState = parseApiState(newValue.classificationValues);
     if (!isEqual(parsedState, state)) {
       setState(parsedState);
       setNewState(parsedState);
     }
-  }, [state, riskValuesQueryResults.data]);
+  }, [state, riskConfig.data]);
 
   return (
     <Authorized minRequiredResources={['read:::risk-scoring/risk-levels/*']} showForbiddenPage>
       <div>
         {!isSimulationMode ? (
-          <AsyncResourceRenderer resource={riskValuesQueryResults.data}>
-            {(data) => (
-              <RiskClassification
-                riskValuesRefetch={riskValuesQueryResults.refetch}
-                state={newState}
-                setState={setNewState}
-                riskValues={data}
-              />
-            )}
-          </AsyncResourceRenderer>
+          <RiskClassification
+            riskValuesRefetch={riskConfig.refetch}
+            state={newState}
+            setState={setNewState}
+            riskValues={riskConfig.data}
+          />
         ) : (
           <SimulateRiskClassification
             refetchSimulationCount={refetchSimulationCount}
-            riskValuesRefetch={riskValuesQueryResults.refetch}
+            riskValuesRefetch={riskConfig.refetch}
             defaultState={newState}
           />
         )}

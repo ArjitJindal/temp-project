@@ -6,9 +6,7 @@ import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-u
 import Widget from '@/components/library/Widget';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useQaAlertsByAssignee } from '@/hooks/api/dashboard';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useUsers } from '@/utils/user-utils';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
@@ -22,26 +20,7 @@ const QaAlertsByAssignee = (props: Props) => {
     dayjs(),
   ]);
 
-  const api = useApi();
-
-  const qaAlertsByAssignee = useQuery(
-    DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE(dateRange),
-    async () => {
-      const [start, end] = dateRange ?? [];
-      const startTimestamp = start?.startOf('day').valueOf();
-      const endTimestamp = end?.endOf('day').valueOf();
-
-      const result = await api.getDashboardStatsQaAlertsByAssignee({
-        startTimestamp,
-        endTimestamp,
-      });
-
-      return {
-        total: result.data.length,
-        items: result.data,
-      };
-    },
-  );
+  const qaAlertsByAssignee = useQaAlertsByAssignee(dateRange);
 
   const [users] = useUsers();
 

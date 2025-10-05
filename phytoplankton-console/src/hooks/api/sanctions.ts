@@ -14,7 +14,9 @@ import {
   SANCTIONS_SCREENING_DETAILS,
   SANCTIONS_SCREENING_STATS,
   SANCTIONS_WHITELIST_SEARCH,
+  SANCTIONS_SOURCES,
 } from '@/utils/queries/keys';
+import type { SanctionsSourceType } from '@/apis/models-custom/SanctionsSourceType';
 import type { SanctionsHitListResponse, SanctionsScreeningDetails } from '@/apis';
 import type { Mutation, QueryOptions, QueryResult } from '@/utils/queries/types';
 import type { CursorPaginatedData, PaginatedData } from '@/utils/queries/hooks';
@@ -275,5 +277,22 @@ export function useSanctionsScreeningDetails(params: any) {
         total: result.total,
       } as PaginatedData<SanctionsScreeningDetails>;
     },
+  );
+}
+
+export function useSanctionsSources(
+  type: SanctionsSourceType,
+  searchTerm?: string,
+  options?: QueryOptions,
+) {
+  const api = useApi();
+  return useQuery(
+    SANCTIONS_SOURCES(type, searchTerm),
+    () =>
+      api.getSanctionsSources({
+        filterSourceType: type,
+        searchTerm: searchTerm,
+      }),
+    options,
   );
 }

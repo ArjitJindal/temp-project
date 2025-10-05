@@ -1,6 +1,6 @@
 import type { Currency } from '@flagright/lib/constants';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import type { QueryResult } from '@/utils/queries/types';
 import {
   TRANSACTIONS_UNIQUES,
@@ -9,6 +9,7 @@ import {
   TRANSACTIONS_ALERTS_LIST,
   TRANSACTIONS_ITEM_RISKS_ARS,
   TRANSACTIONS_STATS,
+  TRANSACTIONS_COUNT,
 } from '@/utils/queries/keys';
 import type {
   TransactionsStatsByTypesResponseData,
@@ -35,6 +36,31 @@ export function useTransactionsList(filterId: string | undefined): QueryResult<a
   const api = useApi();
   return useQuery(TRANSACTIONS_LIST(filterId ?? ''), async () => {
     return api.getTransactionsList({ filterId });
+  });
+}
+
+export function useTransactionsListPaginated(params: any, mapper?: (items: any[]) => any[]) {
+  const api = useApi();
+  return usePaginatedQuery(
+    TRANSACTIONS_LIST({ ...params, ...(mapper ? { mapper: mapper.toString() } : {}) }),
+    async (paginationParams) => {
+      const data = await api.getTransactionsList({
+        ...params,
+        ...paginationParams,
+      });
+      return {
+        items: mapper ? mapper(data.items) : data.items,
+        total: data.count ? parseInt(`${data.count}`) : 0,
+      };
+    },
+  );
+}
+
+export function useTransactionsCount(params: any) {
+  const api = useApi();
+  return useQuery(TRANSACTIONS_COUNT(params), async () => {
+    const countData = await api.getTransactionsList({ ...params, page: 0, pageSize: 0 });
+    return { total: parseInt(`${countData.count}`) } as { total: number };
   });
 }
 

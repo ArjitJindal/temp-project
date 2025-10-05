@@ -5,9 +5,7 @@ import { useShouldUseV8Configuration } from '../utils';
 import { Authorized } from '@/components/utils/Authorized';
 import { makeUrl } from '@/utils/routing';
 import { RuleConfigurationSimulation } from '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation';
-import { useQuery } from '@/utils/queries/hooks';
-import { SIMULATION_JOB } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useSimulationJob } from '@/hooks/api/simulation';
 import { SimulationBeaconJob } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useRules } from '@/utils/rules';
@@ -18,22 +16,7 @@ export default function SimulationHistoryItemPage() {
   const location = useLocation();
 
   const rulesTab = location.pathname.includes('rules-library') ? 'rules-library' : 'my-rules';
-  const api = useApi();
-  const queryResult = useQuery<SimulationBeaconJob>(
-    SIMULATION_JOB(jobId),
-    async (): Promise<SimulationBeaconJob> => {
-      if (jobId == null) {
-        throw new Error(`jobId can not be empty`);
-      }
-      const simulation = await api.getSimulationTestId({
-        jobId,
-      });
-      if (simulation.type !== 'BEACON') {
-        throw new Error(`Wrong job type`);
-      }
-      return simulation;
-    },
-  );
+  const queryResult = useSimulationJob(jobId);
   return (
     <BreadCrumbsWrapper
       simulationStorageKey="SIMULATION_RULES"

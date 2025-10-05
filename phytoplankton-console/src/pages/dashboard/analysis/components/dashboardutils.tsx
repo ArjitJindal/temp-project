@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import style from '../style.module.less';
 import { Value as WidgetRangePickerValue } from '../components/widgets/WidgetRangePicker';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_INSTANCES, USERS } from '@/utils/queries/keys';
+import { USERS } from '@/utils/queries/keys';
 import { AsyncResource, map } from '@/utils/asyncResource';
 import { useApi } from '@/api';
 import { AllUsersOffsetPaginateListResponse, RuleInstance } from '@/apis';
+import { useQuery } from '@/utils/queries/hooks';
 
 export function header(input: string): React.ReactNode {
   return (
@@ -27,7 +27,7 @@ export function useFilteredRuleInstances(
   dateRange: WidgetRangePickerValue | undefined,
 ): AsyncResource<RuleInstance[]> {
   const api = useApi();
-  const ruleInstanceResults = useQuery(RULE_INSTANCES('ALL'), async () => {
+  const ruleInstanceResults = useQuery(['rules', 'instances', 'ALL'], async () => {
     return await api.getRuleInstances({});
   });
   const filteredResult = useMemo(() => {

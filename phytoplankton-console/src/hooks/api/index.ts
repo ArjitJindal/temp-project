@@ -19,3 +19,4 @@ export * from './reports';
 export * from './risk';
 export * from './checklists';
 export * from './entity-linking';
+export * from './settings';

@@ -12,9 +12,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_28,
   COLORS_V2_ANALYTICS_CHARTS_29,
 } from '@/components/ui/colors';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';
+import { useDashboardTransactionsTotalStats } from '@/hooks/api/dashboard';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { getPaymentMethodTitle, PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import { map, getOr } from '@/utils/asyncResource';
@@ -57,10 +55,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
     endTimestamp,
   };
 
-  const api = useApi();
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_TOTAL_STATS(params), async () => {
-    return await api.getDashboardStatsTransactionsTotal(params);
-  });
+  const queryResult = useDashboardTransactionsTotalStats(params);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   const preparedDataRes = map(queryResult.data, (value): TreemapData<PaymentMethod> => {
     const resultMap: {

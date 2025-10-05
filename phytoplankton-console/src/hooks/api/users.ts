@@ -11,11 +11,13 @@ import {
   USERS_ENTITY_LINKED_ENTITIES_PARENT,
   USERS_ENTITY_LINKED_ENTITIES_CHILD,
   USER_AUDIT_LOGS_LIST,
+  USER_EVENTS_LIST,
   USER_CHANGES_PROPOSALS,
   USER_CHANGES_PROPOSALS_BY_ID,
   ROLE,
   PERMISSIONS,
   USERS,
+  USER_TRS_RISK_SCORES,
 } from '@/utils/queries/keys';
 import {
   InternalConsumerUser,
@@ -23,6 +25,7 @@ import {
   AllUsersTableItemPreview,
   UserType,
   AccountRole,
+  SortOrder,
   DrsScore,
   AllUsersTableItem,
   UserApprovalUpdateRequest,
@@ -87,6 +90,11 @@ export function useUsersPreviewSearch(
       return { total: users.count, users: users.items };
     },
   );
+}
+
+export function useUserTrsScores(userId: string) {
+  const api = useApi();
+  return useQuery(USER_TRS_RISK_SCORES(userId), () => api.getTrsScores({ userId }));
 }
 
 export function useUsersList(
@@ -447,4 +455,17 @@ export function usePatchEddReview(userId: string, getSelectedEddId: () => string
       },
     },
   );
+}
+
+export function useUserEvents(userId: string, params: any) {
+  const api = useApi();
+  return useQuery(USER_EVENTS_LIST({ userId, params }), async () => {
+    return await api.getEventsList({
+      userId,
+      page: params.page,
+      pageSize: params.pageSize,
+      sortField: params.sort?.[0]?.[0],
+      sortOrder: params.sort?.[0]?.[1] as SortOrder,
+    });
+  });
 }

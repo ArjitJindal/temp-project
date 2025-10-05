@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { isEmpty } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,16 +19,14 @@ import {
   CaseStatus,
   Comment as ApiComment,
   Comment,
-  CommentsResponseItem,
   InternalBusinessUser,
   InternalConsumerUser,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_COMMENTS, ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
+import { useAlertsComments } from '@/hooks/api/alerts';
 import {
-  all,
   AsyncResource,
   getOr,
   isSuccess,
@@ -61,7 +59,6 @@ import AlertIdSearchFilter from '@/components/ActivityCard/Filters/AlertIdSearch
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useUsers } from '@/utils/user-utils';
-import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
@@ -143,52 +140,10 @@ function CaseDetails(props: Props) {
   );
 }
 
-function useAlertsComments(
-  caseRes: AsyncResource<Case>,
-  alertIds: string[],
-): AsyncResource<CommentGroup[]> {
-  const queryClient = useQueryClient();
-  const api = useApi();
+function useAlertCommentGroups(caseRes: AsyncResource<Case>, alertIds: string[]) {
   const isJustLoaded = useFinishedSuccessfully(caseRes);
-  const alertsCommentsRes = useQuery<CommentsResponseItem[]>(
-    ALERT_COMMENTS(alertIds),
-    async (): Promise<CommentsResponseItem[]> => {
-      const result = await api.getComments({
-        filterEntityIds: alertIds,
-        filterEntityTypes: ['ALERT'],
-      });
-      return result.items;
-    },
-    {
-      enabled: alertIds.length > 0,
-    },
-  );
-  const commentsData = getOr(alertsCommentsRes.data, undefined);
-
-  useEffect(() => {
-    if (isJustLoaded && commentsData) {
-      for (const item of commentsData) {
-        if (item.entityId) {
-          queryClient.setQueryData<ApiComment[]>(
-            ALERT_ITEM_COMMENTS(item.entityId),
-            item.comments ?? [],
-          );
-        }
-      }
-    }
-  }, [queryClient, isJustLoaded, commentsData]);
-
-  const commentsResources: AsyncResource<CommentGroup>[] = alertIds.map(
-    (alertId: string): AsyncResource<CommentGroup> => {
-      return success({
-        title: 'Alert comments',
-        id: alertId,
-        comments: commentsData?.find((item) => item.entityId === alertId)?.comments ?? [],
-      });
-    },
-  );
-
-  return all(commentsResources);
+  const res = useAlertsComments(alertIds);
+  return isJustLoaded ? success(getOr(res.data, [])) : res.data;
 }
 
 function useTabs(
@@ -202,7 +157,7 @@ function useTabs(
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const isEnhancedDueDiligenceEnabled = useFeatureEnabled('EDD_REPORT');
-  const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
+  const alertCommentsRes = useAlertCommentGroups(caseItemRes, alertIds);
   const [users] = useUsers();
   const riskClassificationValues = useRiskClassificationScores();
   const queryClient = useQueryClient();

@@ -6,9 +6,7 @@ import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-u
 import Widget from '@/components/library/Widget';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_STATS_QA_ALERT_STATS_BY_CHECKLIST_REASON } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useQaAlertStatsByChecklistReason } from '@/hooks/api/dashboard';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { ChecklistTemplate } from '@/apis';
 import Select from '@/components/library/Select';
@@ -41,7 +39,6 @@ interface ParamsProps extends WidgetProps {
 
 export const ChecklistChart = (props: ParamsProps) => {
   const { data: templateOptionsRes } = props;
-  const api = useApi();
 
   const [params, setParams] = useState<Params>({
     dateRange: [dayjs().subtract(1, 'month'), dayjs()],
@@ -63,35 +60,11 @@ export const ChecklistChart = (props: ParamsProps) => {
     }));
   };
 
-  const qaAlertStatsByChecklistReason = useQuery(
-    DASHBOARD_STATS_QA_ALERT_STATS_BY_CHECKLIST_REASON(
-      params.dateRange,
-      params.checklistTemplateId ?? '',
-      params.checklistCategory ?? '',
-    ),
-    async () => {
-      if (!(params.checklistTemplateId != null && params.checklistCategory != null)) {
-        return {
-          total: 0,
-          items: [],
-        };
-      }
-      const [start, end] = params.dateRange ?? [];
-      const startTimestamp = start?.startOf('day').valueOf();
-      const endTimestamp = end?.endOf('day').valueOf();
-      const result = await api.getDashboardStatsQaAlertsStatsByChecklistReason({
-        startTimestamp,
-        endTimestamp,
-        checklistTemplateId: params.checklistTemplateId,
-        checklistCategory: params.checklistCategory,
-      });
-
-      return {
-        total: result.data.length,
-        items: result.data,
-      };
-    },
-  );
+  const qaAlertStatsByChecklistReason = useQaAlertStatsByChecklistReason({
+    dateRange: params.dateRange,
+    checklistTemplateId: params.checklistTemplateId,
+    checklistCategory: params.checklistCategory,
+  });
   const templateOptions = getOr(templateOptionsRes, []);
   const options = templateOptions
     .filter((checklist) => checklist.status === 'ACTIVE')

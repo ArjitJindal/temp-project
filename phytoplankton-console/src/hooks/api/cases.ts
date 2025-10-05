@@ -1,7 +1,7 @@
 import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { CASES_ITEM, CASES_LIST } from '@/utils/queries/keys';
+import { CASES_ITEM, CASES_LIST, CASES_USERS_CASEIDS } from '@/utils/queries/keys';
 import { Case } from '@/apis';
 import type { QueryOptions, PaginatedQueryOptions, QueryResult } from '@/utils/queries/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
@@ -139,5 +139,12 @@ export function useCasesReviewAssignmentUpdate() {
         reviewAssignments: vars.reviewAssignments,
       },
     }),
+  );
+}
+
+export function useCaseIds(params: { userId: string; caseType: 'MANUAL' | 'AUTO' }) {
+  const api = useApi();
+  return useQuery(CASES_USERS_CASEIDS(params), async () =>
+    api.getCaseIds({ userId: params.userId, filterCaseTypes: params.caseType }),
   );
 }

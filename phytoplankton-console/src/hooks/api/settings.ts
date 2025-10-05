@@ -1,13 +1,13 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { ACTION_REASONS, NANGO_CONNECTIONS } from '@/utils/queries/keys';
-import type { ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
-
-export function useActionReasons() {
-  const api = useApi();
-  return useQuery(ACTION_REASONS(), async () => api.getActionReasons({}));
-}
+import {
+  ACTION_REASONS,
+  COPILOT_AI_RESOURCES,
+  NANGO_CONNECTIONS,
+  TENANT_USAGE_DATA,
+} from '@/utils/queries/keys';
+import type { AiSourcesResponse, ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
 
 export function useToggleActionReason(options?: any) {
   const api = useApi();
@@ -62,4 +62,19 @@ export function useCreateNangoConnection() {
       },
     }),
   );
+}
+
+export function useCopilotAiSources() {
+  const api = useApi();
+  return useQuery<AiSourcesResponse>(COPILOT_AI_RESOURCES(), async () => api.getAiSources());
+}
+
+export function useTenantUsageData() {
+  const api = useApi();
+  return useQuery(TENANT_USAGE_DATA(), async () => api.getTenantUsageData());
+}
+
+export function useActionReasons(type?: ReasonType) {
+  const api = useApi();
+  return useQuery(ACTION_REASONS(type), async () => api.getActionReasons({ type }));
 }

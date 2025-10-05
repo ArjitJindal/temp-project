@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { OverviewCard } from '../../widgets/OverviewCard';
 import s from './styles.module.less';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_STATS_QA_OVERVIEW } from '@/utils/queries/keys';
+import { useQaOverview } from '@/hooks/api/dashboard';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import WidgetBase from '@/components/library/Widget/WidgetBase';
 import DatePicker from '@/components/ui/DatePicker';
-import { useApi } from '@/api';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { map } from '@/utils/asyncResource';
 
@@ -18,13 +16,7 @@ export default function QaOverview(props: Props) {
     dayjs().subtract(1, 'month'),
     dayjs(),
   ]);
-  const api = useApi();
-  const queryResult = useQuery(DASHBOARD_STATS_QA_OVERVIEW(dateRange), async () => {
-    const [start, end] = dateRange ?? [];
-    const startTimestamp = start?.startOf('day').valueOf();
-    const endTimestamp = end?.endOf('day').valueOf();
-    return await api.getDashboardStatsQaOverview({ startTimestamp, endTimestamp });
-  });
+  const queryResult = useQaOverview(dateRange);
   const dataRes = map(
     queryResult.data,
     ({ totalAlertsForQa, totalQaFailedAlerts, totalQaPassedAlerts }) => {

@@ -18,7 +18,7 @@ import {
   WorkflowSettingsUserApprovalWorkflows,
 } from '@/apis';
 import { formatRoleName } from '@/pages/accounts/utils';
-import { useQuery } from '@/utils/queries/hooks';
+import { useUserApprovalSettings } from '@/hooks/api/workflows';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
   SETTINGS,

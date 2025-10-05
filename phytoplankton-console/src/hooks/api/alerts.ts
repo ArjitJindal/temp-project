@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/api';
 import { usePaginatedQuery, useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
@@ -10,6 +11,8 @@ import {
   AIF_SEARCH_KEY,
   ALERT_QA_SAMPLE,
   QA_SAMPLE_IDS,
+  ALERT_COMMENTS,
+  ALERT_ITEM_COMMENTS,
 } from '@/utils/queries/keys';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import type { QueryOptions, QueryResult } from '@/utils/queries/types';
@@ -25,6 +28,7 @@ import {
   AlertsQaSamplingRequest,
   AlertsQaSamplingUpdateRequest,
 } from '@/apis';
+// duplicate import removed
 import type { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
 import { dayjs } from '@/utils/dayjs';
 
@@ -242,5 +246,32 @@ export function useUpdateQaSample(options?: Parameters<typeof useMutation>[1]) {
     async ({ sampleId, body }) =>
       await api.patchAlertsQaSample({ sampleId, AlertsQaSamplingUpdateRequest: body }),
     options as any,
+  );
+}
+
+export type CommentGroup = { title: string; id: string; comments: any[] };
+
+export function useAlertsComments(alertIds: string[], options?: { enabled?: boolean }) {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useQuery<CommentGroup[]>(
+    ALERT_COMMENTS(alertIds),
+    async () => {
+      const result = await api.getComments({
+        filterEntityIds: alertIds,
+        filterEntityTypes: ['ALERT'],
+      });
+      for (const item of result.items ?? []) {
+        if (item.entityId) {
+          queryClient.setQueryData(ALERT_ITEM_COMMENTS(item.entityId), item.comments ?? []);
+        }
+      }
+      return (alertIds ?? []).map((alertId) => ({
+        title: 'Alert comments',
+        id: alertId,
+        comments: (result.items ?? []).find((i) => i.entityId === alertId)?.comments ?? [],
+      }));
+    },
+    { enabled: options?.enabled ?? alertIds.length > 0 },
   );
 }
