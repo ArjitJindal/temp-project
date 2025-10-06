@@ -87,7 +87,11 @@ export default function SearchResultDetailsDrawer(props: Props) {
     async function job() {
       if (isDownloading && pdfRef) {
         try {
-          await DownloadAsPDF({ pdfRef, fileName: `${pdfName} Screening Details.pdf` });
+          await DownloadAsPDF({
+            pdfRef,
+            fileName: `${pdfName} Screening Details.pdf`,
+            addRecurringPages: true,
+          });
         } catch (err) {
           message.fatal(`Unable to complete the download!`, err);
         } finally {
