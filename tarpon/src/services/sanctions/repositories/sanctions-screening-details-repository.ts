@@ -4,6 +4,7 @@ import omitBy from 'lodash/omitBy'
 import sum from 'lodash/sum'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SendMessageBatchRequestEntry, SQSClient } from '@aws-sdk/client-sqs'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
   SANCTIONS_SCREENING_DETAILS_V2_COLLECTION,
@@ -34,7 +35,6 @@ import { getTriggerSource } from '@/utils/lambda'
 import { SanctionsScreeningDetailsV2 } from '@/@types/openapi-internal/SanctionsScreeningDetailsV2'
 import { CounterRepository } from '@/services/counter/repository'
 import { bulkSendMessages } from '@/utils/sns-sqs-client'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleExecutionSanctionsDetails } from '@/@types/openapi-internal/RuleExecutionSanctionsDetails'
 
 @traceable
@@ -42,10 +42,15 @@ export class SanctionsScreeningDetailsRepository {
   private readonly tenantId: string
   private readonly mongoDb: MongoClient
   private readonly sqsClient: SQSClient
+  private readonly dynamoDb: DynamoDBDocumentClient
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
     this.sqsClient = new SQSClient({})
   }
 
@@ -125,7 +130,7 @@ export class SanctionsScreeningDetailsRepository {
 
     const counterRepository = new CounterRepository(this.tenantId, {
       mongoDb: this.mongoDb,
-      dynamoDb: getDynamoDbClient(),
+      dynamoDb: this.dynamoDb,
     })
 
     const commonUpdatePart: Partial<SanctionsScreeningDetailsV2> = {

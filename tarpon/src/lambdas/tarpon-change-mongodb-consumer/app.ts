@@ -338,7 +338,10 @@ export class TarponChangeMongoDbConsumer {
     await casesRepo.syncCaseUsers(internalUser)
 
     const sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+      new SanctionsScreeningDetailsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
     await sanctionsScreeningDetailsRepository.addScreeningDetails(
       newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
         []
@@ -547,7 +550,10 @@ export class TarponChangeMongoDbConsumer {
     )
 
     const sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+      new SanctionsScreeningDetailsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
     await sanctionsScreeningDetailsRepository.addScreeningDetails(
       transaction.executedRules?.flatMap(
         (rule) => rule.sanctionsDetails ?? []

@@ -65,7 +65,7 @@ import {
 } from '@/utils/mongodb-utils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/@types/cases/case-config'
 import {
@@ -2226,10 +2226,9 @@ export class AlertsService extends CaseAlertsCommonService {
     alert: Alert,
     newlyApprovedTxIds: string[]
   ) {
-    const dynamoDb = getDynamoDbClient()
     const transactionRepository = new DynamoDbTransactionRepository(
       this.tenantId,
-      dynamoDb
+      this.dynamoDb
     )
     const filteredTransactionIds = difference(
       alert.transactionIds,

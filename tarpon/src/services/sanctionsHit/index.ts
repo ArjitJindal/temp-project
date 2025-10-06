@@ -21,7 +21,7 @@ import {
 } from '../sanctions/repositories/sanctions-whitelist-entity-repository'
 import { S3Config } from '@/services/aws/s3-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/@types/cases/case-config'
 import { getCredentialsFromEvent } from '@/utils/credentials'
@@ -49,10 +49,7 @@ export class SanctionsHitService {
 
   constructor(
     tenantId: string,
-    connection: {
-      mongoDb: MongoClient
-      dynamoDb: DynamoDBDocumentClient
-    },
+    connection: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
     s3: S3,
     s3Config: S3Config,
     awsCredentials?: LambdaCredentials
@@ -112,7 +109,7 @@ export class SanctionsHitService {
   ) {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const s3 = getS3ClientByEvent(event)
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
 
@@ -271,8 +268,8 @@ export class SanctionsHitService {
   ): Promise<SanctionsHitListResponse> {
     if (params.alertId) {
       const alertsRepository = new AlertsRepository(this.tenantId, {
-        mongoDb: await getMongoDbClient(),
-        dynamoDb: getDynamoDbClient(),
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
       })
       const alert = await alertsRepository.getAlertById(params.alertId)
       if (alert) {
