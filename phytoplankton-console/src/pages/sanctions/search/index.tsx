@@ -39,6 +39,9 @@ interface TableSearchParams {
   searchProfileId?: string;
   screeningProfileId?: string;
   entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -272,6 +275,9 @@ export function SearchResultTable(props: Props) {
             ? searchParams.screeningProfileId
             : undefined,
           entityType: searchParams.entityType,
+          gender: searchParams.gender,
+          countryOfResidence: searchParams.countryOfResidence,
+          registrationId: searchParams.registrationId,
         },
       });
     },

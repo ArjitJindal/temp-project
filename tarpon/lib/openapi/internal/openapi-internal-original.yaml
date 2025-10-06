@@ -14775,6 +14775,12 @@ components:
           type: boolean
         enablePhoneticMatching:
           type: boolean
+        countryOfResidence:
+          type: array
+          items:
+            type: string
+        registrationId:
+          type: string
         addresses:
           type: array
           items:
