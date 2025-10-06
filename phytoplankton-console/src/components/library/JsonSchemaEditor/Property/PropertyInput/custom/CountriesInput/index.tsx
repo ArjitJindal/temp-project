@@ -16,13 +16,12 @@ interface Props extends InputProps<any> {
 }
 
 export default function CountriesInput(props: Props) {
-  const mode = props.uiSchema['ui:subtype'] === 'COUNTRIES' ? 'MULTIPLE' : 'SINGLE';
+  const mode = props.uiSchema['ui:subtype'] === 'COUNTRIES' ? 'MULTIPLE_DYNAMIC' : 'SINGLE';
   return (
     <Select<CountryCode>
       mode={mode}
       options={OPTIONS}
-      allowNewOptions={mode === 'MULTIPLE'}
-      placeholder={`Select ${mode === 'MULTIPLE' ? 'countries' : 'country'}`}
+      placeholder={`Select ${mode === 'MULTIPLE_DYNAMIC' ? 'countries' : 'country'}`}
       {...props}
     />
   );

@@ -1,6 +1,7 @@
 import { screen, userEvent, within } from 'testing-library-wrapper';
 import { expect } from '@jest/globals';
 import s from '../style.module.less';
+import tagsS from '../Tags/index.module.less';
 import { notEmpty } from '@/utils/array';
 
 /**
@@ -56,7 +57,7 @@ export async function clickClear(): Promise<void> {
  * @param text Text of the value to remove
  */
 export async function clickValueRemove(text: string): Promise<void> {
-  const tagEls = screen.getAllByClassName(s.tagWrapper);
+  const tagEls = screen.getAllByClassName(tagsS.tagWrapper);
   const tagEl = tagEls.find((item) => item.textContent === text);
   if (tagEl == null) {
     throw new Error(`Tag with text "${text}" not found`);
@@ -109,7 +110,7 @@ export function expectValues(values: string[]): void {
  * @param values Expected tag values as displayed text
  */
 export function expectTags(values: string[]): void {
-  const items = screen.queryAllByClassName(s.tagWrapper);
+  const items = screen.queryAllByClassName(tagsS.tagWrapper);
   const itemsText = items.map((item) => item.textContent).filter(notEmpty);
   expect(itemsText).toEqual(values);
 }

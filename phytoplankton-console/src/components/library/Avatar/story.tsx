@@ -9,13 +9,14 @@ export default function (): JSX.Element {
     <>
       <UseCase title="Sizes">
         <PropertyMatrix
-          yLabel="picture"
+          yLabel="isLoading"
           xLabel="size"
           y={[true, false]}
           x={['small', 'large'] as ('small' | 'large')[]}
         >
-          {(size, hasPicture) => (
+          {(size, isLoading) => (
             <Avatar
+              isLoading={isLoading}
               size={size}
               user={{
                 id: '123',
@@ -24,7 +25,7 @@ export default function (): JSX.Element {
                 blocked: false,
                 emailVerified: true,
                 role: 'admin',
-                picture: hasPicture ? ImageUrl : null,
+                picture: ImageUrl,
                 orgName: 'flagright',
                 tenantId: 'flagright',
               }}

@@ -1,0 +1,87 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
+@border-width: 1px;
+
+.root {
+  display: flex;
+  gap: 4px;
+  position: relative;
+  height: 24px;
+  flex: 1;
+
+  &.isDisabled {
+    pointer-events: none;
+    opacity: 0.2;
+
+    &,
+    .hiddenInfo,
+    .tagWrapper {
+      background: @figma-vars--tokens-colorBackgroundDisabled;
+    }
+  }
+
+  &.transparentBackground {
+    .defaultTagWrapper {
+      background: transparent;
+    }
+  }
+}
+
+.hiddenInfo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  font-size: 10px;
+  color: @fr-colors-v2-gray-6;
+  height: 100%;
+  padding-left: 12px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, white 22%, white 100%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.tagWrapper {
+  position: absolute;
+  left: calc(18px * var(--position));
+  z-index: calc(var(--position));
+  transform: translateY(-50%);
+  top: 50%;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    z-index: 999;
+  }
+}
+
+.defaultTagWrapper {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: 4px;
+
+  > * {
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+    transition-property: opacity;
+  }
+
+  &.isShadowed > * {
+    opacity: 0.2;
+  }
+}

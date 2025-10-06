@@ -5,6 +5,7 @@ import MenuItemContainer from './MenuItemContainer';
 import { Comparable, key } from '@/utils/comparable';
 import CheckIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import Checkbox from '@/components/library/Checkbox';
+import { getOptionLabelNode } from '@/components/library/Select/helpers';
 
 type OptionGroup<Value extends Comparable = string> = {
   kind: 'GROUP';
@@ -57,7 +58,7 @@ function OptionItem<Value extends Comparable = string>(props: {
   isSelected?: boolean;
   onClick?: () => void;
 }) {
-  const labelNode = props.option.label || props.option.labelText || props.option.value;
+  const labelNode = getOptionLabelNode(props.option);
   let labelTitle = `${props.option.value}`;
   if (typeof props.option.labelText === 'string') {
     labelTitle = props.option.labelText;
