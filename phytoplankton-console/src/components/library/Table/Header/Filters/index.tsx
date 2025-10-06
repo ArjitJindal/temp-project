@@ -64,8 +64,13 @@ export default function Filters<Params extends object>(props: Props<Params>) {
     setFilterClose(close);
   }
   const handleClickReset = () => {
-    // Reset all parameters
-    handleResetParams(fulfilledFilters);
+    const readOnlyKeys = new Set(
+      (filters as any[])
+        .filter((f) => (f?.dataType?.readOnly ?? (f as any)?.renderer?.readOnly) === true)
+        .map((f) => f.key),
+    );
+    const resettable = fulfilledFilters.filter((key) => !readOnlyKeys.has(key));
+    handleResetParams(resettable);
   };
 
   const sortedFilters = [...filters];

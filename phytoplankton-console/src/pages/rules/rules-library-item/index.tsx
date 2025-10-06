@@ -46,12 +46,11 @@ export default function RulesLibraryItemPage() {
               to: '/rules/rules-library',
             },
             {
-              title:
-                ruleId === 'create'
-                  ? 'Create scenario'
-                  : isSimulationEnabled
-                  ? 'Simulate'
-                  : 'Configure',
+              title: isSimulationEnabled
+                ? 'Simulate scenario'
+                : ruleId === 'create'
+                ? 'Create scenario'
+                : 'Configure',
               to: makeUrl(`/rules/rules-library/:id`, { id: ruleId }),
             },
           ]}

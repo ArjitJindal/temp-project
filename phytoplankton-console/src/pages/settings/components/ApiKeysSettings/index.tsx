@@ -11,7 +11,7 @@ import EyeOutlined from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { message } from '@/components/library/Message';
 import Tooltip from '@/components/library/Tooltip';
-import { useReloadSettings, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Alert from '@/components/library/Alert';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { useAuth0User } from '@/utils/user-utils';
@@ -22,9 +22,8 @@ import { getErrorMessage } from '@/utils/lang';
 export const ApiKeysSettings = () => {
   const api = useApi();
   const user = useAuth0User();
-
+  const [unmaskingId, setUnmaskingId] = useState<string | null>(null);
   const [unmaskedApiKey, setUnmaskedApiKey] = useState<string | undefined>(undefined);
-  const reloadSettings = useReloadSettings();
 
   const queryResult = useQuery(
     ['apiKeys', { unmaskedApiKey }],
@@ -33,9 +32,7 @@ export const ApiKeysSettings = () => {
         ...(unmaskedApiKey && { unmask: true, unmaskApiKeyId: unmaskedApiKey }),
       }),
     {
-      onSuccess: () => {
-        reloadSettings();
-      },
+      refetchOnWindowFocus: false,
     },
   );
 
@@ -117,11 +114,25 @@ export const ApiKeysSettings = () => {
                                   <EyeOutlined
                                     height={16}
                                     width={16}
-                                    onClick={() => {
-                                      if (!timesLeft) {
+                                    style={{
+                                      opacity: unmaskingId === data.item.id ? 0.5 : 1,
+                                      cursor: unmaskingId ? 'wait' : 'pointer',
+                                    }}
+                                    onClick={async () => {
+                                      if (!timesLeft || unmaskingId) {
                                         return;
                                       }
+                                      setUnmaskingId(data.item.id);
                                       setUnmaskedApiKey(data.item.id);
+                                      try {
+                                        await queryResult.refetch();
+                                      } catch (error) {
+                                        message.error(
+                                          `Failed to unmask: ${getErrorMessage(error)}`,
+                                        );
+                                      } finally {
+                                        setUnmaskingId(null);
+                                      }
                                     }}
                                   />
                                 </Tooltip>

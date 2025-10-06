@@ -1265,103 +1265,144 @@ export const convertToFrns = (
 }
 
 /**
- * getOptimizedPermissions
- *
- * Purpose:
- * - Groups and optimizes role statements by action hash.
- * - Builds filter conditions from filterable nodes present in the FRN paths, using
- *   child.allowedValues or the normalized child id if allowedValues are not present.
- * - Preserves and merges any pre-existing statement.filter entries.
- *
- * How it works in brief:
- * 1) Group statements by identical actions (generateChecksum(actions)).
- * 2) For each group's resources:
- *    - For each FRN, resolve the library node path and if an ancestor defines a filter,
- *      derive the values from the child node and merge into FilterConditions.
- *    - Keep the original resources, then build a grantedTree and optimize it to minimal FRNs.
- * 3) Return optimized PermissionStatements with resources + aggregate filters.
- *
- * Example:
- *  resources:
- *   - frn:console:tenant:::case-management/case-status/open/*
- *   - frn:console:tenant:::case-management/alert-status/escalated/*
- *  library:
- *   - case-status.filter.param = filterCaseStatus
- *   - alert-status.filter.param = filterAlertStatus
- *  => filters:
- *   - filterCaseStatus: ['OPEN']
- *   - filterAlertStatus: ['ESCALATED']
+ * Resolves the allowed values for a specific child of a filterable static node.
+ * @param staticNode - The static permissions node.
+ * @param childId - The ID of the child node.
+ * @returns An array of allowed values.
  */
-export const getOptimizedPermissions = (
-  tenantId: string,
-  statements: PermissionStatements[]
-): PermissionStatements[] => {
-  // Helper: resolve values for a specific child under a filterable static node
-  const resolveChildValues = (
-    staticNode: StaticPermissionsNode,
-    childId: string
-  ): string[] => {
-    const child = staticNode.children?.find((c) => c.id === childId)
-    const allowed =
-      child && child.type === 'STATIC'
-        ? (child as StaticPermissionsNode).allowedValues
-        : undefined
-    return allowed && allowed.length > 0
-      ? allowed
-      : [childId.toUpperCase().replace(/-/g, '_')]
-  }
+const resolveChildValues = (
+  staticNode: StaticPermissionsNode,
+  childId: string
+): string[] => {
+  const child = staticNode.children?.find((c) => c.id === childId)
+  const allowed =
+    child && child.type === 'STATIC'
+      ? (child as StaticPermissionsNode).allowedValues
+      : undefined
+  return allowed && allowed.length > 0
+    ? allowed
+    : [childId.toUpperCase().replace(/-/g, '_')]
+}
 
-  // Helper: resolve all children values for a filterable static node (for wildcard grants)
-  const resolveAllChildValues = (
-    staticNode: StaticPermissionsNode
-  ): string[] => {
-    const set = new Set<string>()
-    staticNode.children?.forEach((c) => {
-      if (c.type === 'STATIC') {
-        const s = c as StaticPermissionsNode
-        if (s.allowedValues && s.allowedValues.length > 0) {
-          s.allowedValues.forEach((v) => set.add(v))
-        } else {
-          set.add(c.id.toUpperCase().replace(/-/g, '_'))
+/**
+ * Resolves all allowed values for all children of a filterable static node.
+ * This is used for wildcard grants.
+ * @param staticNode - The static permissions node.
+ * @returns An array of all allowed values for the children.
+ */
+const resolveAllChildValues = (staticNode: StaticPermissionsNode): string[] => {
+  const set = new Set<string>()
+  staticNode.children?.forEach((c) => {
+    if (c.type === 'STATIC') {
+      const s = c as StaticPermissionsNode
+      if (s.allowedValues && s.allowedValues.length > 0) {
+        s.allowedValues.forEach((v) => set.add(v))
+      } else {
+        set.add(c.id.toUpperCase().replace(/-/g, '_'))
+      }
+    }
+  })
+  return Array.from(set)
+}
+
+/**
+ * Merges values into the filter conditions for a given permission ID.
+ * If a filter for the permission ID already exists, the new values are added to it.
+ * Otherwise, a new filter condition is created.
+ * @param filters - The array of filter conditions.
+ * @param staticNode - The static permissions node containing filter information.
+ * @param values - The values to merge.
+ */
+const mergeFilterValues = (
+  filters: FilterCondition[],
+  staticNode: StaticPermissionsNode,
+  values: string[]
+) => {
+  const existing = filters.find((f) => f.permissionId === staticNode.id)
+  if (existing) {
+    const s = new Set(existing.values)
+    values.forEach((v) => s.add(v))
+    existing.values = Array.from(s)
+    return
+  }
+  filters.push({
+    permissionId: staticNode.id,
+    operator: staticNode.filter?.operator || 'Equals',
+    param: staticNode.filter?.param || '',
+    values,
+  })
+}
+
+/**
+ * Builds filter conditions from a list of resource paths.
+ * It parses resource paths to identify filterable nodes and extracts the corresponding values.
+ * @param tenantId - The tenant ID.
+ * @param resourcePaths - An array of resource paths (FRNs).
+ * @returns An array of filter conditions.
+ */
+const buildFiltersFromResources = (
+  tenantId: string,
+  resourcePaths: string[]
+): FilterCondition[] => {
+  const filters: FilterCondition[] = []
+  for (const r of resourcePaths) {
+    const path = r.replace(`frn:console:${tenantId}:::`, '')
+    const parts = path.split('/')
+    const isWildcard = parts[parts.length - 1] === '*'
+
+    // Handle specific child paths (e.g. case-status/open/*)
+    if (isWildcard && parts.length > 2) {
+      const childId = parts[parts.length - 2] // Get specific status (e.g. 'open')
+      const parentPath = parts.slice(0, -2).join('/') // Get parent path (e.g. 'case-management/case-status')
+      const parentNode = getPermissionsNodeByPath(parentPath)
+
+      if (parentNode?.type === 'STATIC') {
+        const staticNode = parentNode as StaticPermissionsNode
+        if (staticNode.filter) {
+          const values = resolveChildValues(staticNode, childId)
+          mergeFilterValues(filters, staticNode, values)
+          continue
         }
       }
-    })
-    return Array.from(set)
-  }
-
-  // Helper: merge values into filters for a given permissionId
-  const mergeFilterValues = (
-    filters: FilterCondition[],
-    staticNode: StaticPermissionsNode,
-    values: string[]
-  ) => {
-    const existing = filters.find((f) => f.permissionId === staticNode.id)
-    if (existing) {
-      const s = new Set(existing.values)
-      values.forEach((v) => s.add(v))
-      existing.values = Array.from(s)
-      return
     }
-    filters.push({
-      permissionId: staticNode.id,
-      operator: staticNode.filter?.operator || 'Equals',
-      param: staticNode.filter?.param || '',
-      values,
-    })
-  }
 
-  // Group all statements by action hash
-  const actionMap = new Map<
-    string,
-    {
-      actions: PermissionsAction[]
-      resources: Set<string>
-      filters: FilterCondition[]
+    // Handle wildcard paths (e.g. case-status/*)
+    if (isWildcard) {
+      const wildcardNodePath = parts.slice(0, -1).join('/')
+      const wildcardNode = getPermissionsNodeByPath(wildcardNodePath)
+      if (wildcardNode?.type === 'STATIC') {
+        const staticNode = wildcardNode as StaticPermissionsNode
+        if (staticNode.filter) {
+          const values = resolveAllChildValues(staticNode)
+          mergeFilterValues(filters, staticNode, values)
+          continue
+        }
+      }
     }
-  >()
-  const optimizedPermissions: PermissionStatements[] = []
+  }
+  return filters
+}
 
-  // Group resources by action hash and handle wildcards
+type PermissionGroup = {
+  actions: PermissionsAction[]
+  resources: Set<string>
+  filters: FilterCondition[]
+}
+
+/**
+ * Groups permission statements by their action hash.
+ * This allows processing all statements with the same actions together.
+ * Wildcard resources (`*`) are handled specially to consolidate permissions.
+ * @param tenantId - The tenant ID.
+ * @param statements - An array of permission statements.
+ * @returns A map of action hashes to permission groups.
+ */
+const groupStatementsByAction = (
+  tenantId: string,
+  statements: PermissionStatements[]
+): Map<string, PermissionGroup> => {
+  const actionMap = new Map<string, PermissionGroup>()
+
   statements.forEach((statement) => {
     const actionHash = generateChecksum(statement.actions)
     const hasWildcard = statement.resources.some((resource) =>
@@ -1387,72 +1428,73 @@ export const getOptimizedPermissions = (
     }
   })
 
-  // Process each action group
-  for (const { actions, resources, filters } of actionMap.values()) {
-    const resourceArray = Array.from(resources)
+  return actionMap
+}
 
-    if (resourceArray.includes(`frn:console:${tenantId}:::*`)) {
-      optimizedPermissions.push({
-        actions,
-        resources: [`frn:console:${tenantId}:::*`],
-        filter: filters.length > 0 ? filters : undefined,
-      })
-      continue
-    }
+/**
+ * Processes a single group of permissions with the same actions.
+ * It optimizes the resources to their most compact form and ensures that
+ * the filter conditions are consistent with the final set of resources.
+ * @param tenantId - The tenant ID.
+ * @param group - The permission group to process.
+ * @returns An optimized permission statement.
+ */
+const processPermissionGroup = (
+  tenantId: string,
+  group: PermissionGroup
+): PermissionStatements => {
+  const { actions, resources, filters } = group
+  const resourceArray = Array.from(resources)
 
-    // Build filters from allowedValues where applicable
-    const newFilters: FilterCondition[] = [...filters]
-    const updatedResources = new Set<string>()
-    for (const r of resourceArray) {
-      const path = r.replace(`frn:console:${tenantId}:::`, '')
-      const parts = path.split('/')
-      const isWildcard = parts[parts.length - 1] === '*'
-      const childId =
-        (isWildcard ? parts[parts.length - 2] : parts[parts.length - 1]) || ''
-      const parentPath = (
-        isWildcard ? parts.slice(0, -2) : parts.slice(0, -1)
-      ).join('/')
-
-      const nodeAtPath = getPermissionsNodeByPath(parentPath)
-      // Uniform behavior: if resource grants the entire filterable node (e.g., case-management/alert-status/*),
-      // infer all child values as allowed and emit a filter entry accordingly.
-      if (isWildcard) {
-        const wildcardNodePath = parts.slice(0, -1).join('/')
-        const wildcardNode = getPermissionsNodeByPath(wildcardNodePath)
-        if (
-          wildcardNode &&
-          wildcardNode.type === 'STATIC' &&
-          (wildcardNode as StaticPermissionsNode).filter
-        ) {
-          const staticNode = wildcardNode as StaticPermissionsNode
-          const values = resolveAllChildValues(staticNode)
-          mergeFilterValues(newFilters, staticNode, values)
-          // keep original resource and continue to next
-          updatedResources.add(r)
-          continue
-        }
-      }
-      const isStatic = nodeAtPath?.type === 'STATIC'
-      if (isStatic && (nodeAtPath as StaticPermissionsNode).filter && childId) {
-        const staticNode = nodeAtPath as StaticPermissionsNode
-        const values = resolveChildValues(staticNode, childId)
-        mergeFilterValues(newFilters, staticNode, values)
-        // keep original resource
-        updatedResources.add(r)
-      } else {
-        updatedResources.add(r)
-      }
-    }
-
-    const grantedTree = buildGrantedTree(Array.from(updatedResources))
-    const { optimized } = optimizePermissions(grantedTree, PERMISSIONS_LIBRARY)
-    const finalResources = convertToFrns(tenantId, optimized)
-
-    optimizedPermissions.push({
+  if (resourceArray.includes(`frn:console:${tenantId}:::*`)) {
+    return {
       actions,
-      resources: finalResources,
-      filter: newFilters.length > 0 ? newFilters : undefined,
-    })
+      resources: [`frn:console:${tenantId}:::*`],
+      filter: filters.length > 0 ? filters : undefined,
+    }
+  }
+
+  const grantedTree = buildGrantedTree(resourceArray)
+  const { optimized } = optimizePermissions(grantedTree, PERMISSIONS_LIBRARY)
+  const finalResources = convertToFrns(tenantId, optimized)
+
+  const resourceFilters = buildFiltersFromResources(tenantId, finalResources)
+  const resourceFilterIds = new Set(resourceFilters.map((f) => f.permissionId))
+  const otherFilters = filters.filter(
+    (f) => !resourceFilterIds.has(f.permissionId)
+  )
+  const finalFilters = [...resourceFilters, ...otherFilters]
+
+  return {
+    actions,
+    resources: finalResources,
+    filter: finalFilters.length > 0 ? finalFilters : undefined,
+  }
+}
+
+/**
+ * Optimizes a list of permission statements.
+ *
+ * This function performs several key optimizations:
+ * 1.  **Grouping by Action**: It groups statements that have the same set of actions to reduce redundancy.
+ * 2.  **Resource Consolidation**: It takes the resources within each group and optimizes them into the most compact representation (e.g., collapsing specific resource grants into a wildcard if possible).
+ * 3.  **Filter Synchronization**: It ensures that the filter conditions attached to the statements are consistent with the final, optimized set of resources. Any filters that are no longer relevant after resource optimization are removed.
+ *
+ * This process results in a minimal and consistent set of permission statements that are easier to manage and evaluate.
+ *
+ * @param tenantId - The tenant ID.
+ * @param statements - An array of permission statements to be optimized.
+ * @returns An array of optimized permission statements.
+ */
+export const getOptimizedPermissions = (
+  tenantId: string,
+  statements: PermissionStatements[]
+): PermissionStatements[] => {
+  const actionMap = groupStatementsByAction(tenantId, statements)
+
+  const optimizedPermissions: PermissionStatements[] = []
+  for (const group of actionMap.values()) {
+    optimizedPermissions.push(processPermissionGroup(tenantId, group))
   }
 
   return optimizedPermissions
@@ -1558,18 +1600,34 @@ export const getDynamicPermissionsType = (
 const getPermissionsNodeByPath = (
   path: string
 ): PermissionsNode | undefined => {
-  const segments = path.split('/').filter(Boolean)
-  let current: PermissionsNode[] | undefined = PERMISSIONS_LIBRARY
-  let node: PermissionsNode | undefined
-  for (const seg of segments) {
-    if (!current) {
-      return undefined
-    }
-    node = current.find((n) => n.id === seg)
-    if (!node) {
-      return undefined
-    }
-    current = node.children
+  if (!permissionsPathMap) {
+    createPermissionsPathMap()
   }
-  return node
+  return permissionsPathMap?.get(path)
 }
+
+let permissionsPathMap: Map<string, PermissionsNode> | undefined
+
+const createPermissionsPathMap = (): Map<string, PermissionsNode> => {
+  if (permissionsPathMap) {
+    return permissionsPathMap
+  }
+
+  const map = new Map<string, PermissionsNode>()
+  const traverse = (nodes: PermissionsNode[], path: string) => {
+    for (const node of nodes) {
+      const currentPath = path ? `${path}/${node.id}` : node.id
+      map.set(currentPath, node)
+      if (node.children) {
+        traverse(node.children, currentPath)
+      }
+    }
+  }
+
+  traverse(PERMISSIONS_LIBRARY, '')
+  permissionsPathMap = map
+  return permissionsPathMap
+}
+
+// Initialize the map on startup
+createPermissionsPathMap()

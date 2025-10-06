@@ -14,6 +14,7 @@ import { GenericSanctionsSearchType } from '@/apis/models/GenericSanctionsSearch
 import { getErrorMessage } from '@/utils/lang';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
+import { ENTITY_TYPE_OPTIONS } from '@/components/ScreeningHitTable';
 
 type ScreeningProfileDefaultFiltersParams = {
   screeningProfileId?: string;
@@ -22,6 +23,7 @@ type ScreeningProfileDefaultFiltersParams = {
   nationality?: string[];
   documentId?: string[];
   types?: GenericSanctionsSearchType[];
+  entityType?: string;
 };
 const ScreeningProfileDefaultFilters = () => {
   const api = useApi();
@@ -123,6 +125,7 @@ const ScreeningProfileDefaultFilters = () => {
           nationality: defaultScreeningFilters.nationality,
           documentId: defaultScreeningFilters.documentId,
           types: defaultScreeningFilters.types,
+          entityType: defaultScreeningFilters.entityType,
         };
         hasSetDefaultFilters.current = true;
         setParams(updatedParams);
@@ -222,6 +225,16 @@ const ScreeningProfileDefaultFilters = () => {
           value: option,
         })),
         mode: 'MULTIPLE',
+        displayMode: 'select',
+      },
+    },
+    {
+      title: 'User type',
+      key: 'entityType',
+      renderer: {
+        kind: 'select',
+        options: ENTITY_TYPE_OPTIONS,
+        mode: 'SINGLE',
         displayMode: 'select',
       },
     },

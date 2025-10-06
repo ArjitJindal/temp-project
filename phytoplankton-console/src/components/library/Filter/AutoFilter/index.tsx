@@ -87,6 +87,7 @@ export function AutoFilter(props: Props): JSX.Element {
           key={filter.key}
           options={filter.dataType.options ?? []}
           mode={filter.dataType.mode ?? 'SINGLE'}
+          closeOnSingleSelect={filter.dataType.closeOnSingleSelect}
         />
       );
     }

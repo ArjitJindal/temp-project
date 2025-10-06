@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { EllipsisOutlined } from '@ant-design/icons';
-import StatusChangeMenu from './StatusChangeMenu';
 import SubHeader from './SubHeader';
 import AiForensicsPdfDownloadButton from './AiForensicsPdfDownloadButton';
 import s from './index.module.less';
@@ -28,6 +27,13 @@ import {
   isLoading as isAsyncResourceLoading,
   map,
 } from '@/utils/asyncResource';
+import {
+  canMutateEscalatedCases,
+  isEscalatedCases,
+  isEscalatedL2Cases,
+  isInReviewCases,
+} from '@/utils/case-utils';
+import { useAuth0User } from '@/utils/user-utils';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
 import { useQaMode } from '@/utils/qa-mode';
 import { useBackUrl } from '@/utils/backUrl';
@@ -63,8 +69,20 @@ export default function Header(props: Props) {
   );
   const api = useApi();
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
+  const user = useAuth0User();
   const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);
   const aiForensicsRef = useRef<HTMLDivElement>(null);
+  const statusChangeRef = useRef<HTMLDivElement>(null);
+
+  const escalationOptions = buildEscalationOptions(
+    alertItem,
+    escalationEnabled,
+    isMultiLevelEscalationEnabled,
+    user.userId,
+    props.onReload,
+  );
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
@@ -122,18 +140,28 @@ export default function Header(props: Props) {
           requiredResources={['write:::case-management/case-overview/*']}
         />,
         ...getOr(actionsRes, []),
-        alertId && isAiForensicsEnabled && (
+        alertId && (
           <div key="hamburger-menu" className={s.hamburgerMenu}>
             <Dropdown
               options={[
-                {
-                  value: 'ai-forensics-report',
-                  label: 'AIF Report',
-                },
+                ...(isAiForensicsEnabled
+                  ? [
+                      {
+                        value: 'ai-forensics-report',
+                        label: <div className={s.centeredLabel}>AIF Report</div>,
+                      },
+                    ]
+                  : []),
+                ...escalationOptions,
               ]}
               onSelect={(option) => {
                 if (option.value === 'ai-forensics-report') {
                   const button = aiForensicsRef.current?.querySelector('button');
+                  if (button) {
+                    button.click();
+                  }
+                } else if (option.value === 'escalate' || option.value === 'escalate-l2') {
+                  const button = statusChangeRef.current?.querySelector('button');
                   if (button) {
                     button.click();
                   }
@@ -144,6 +172,24 @@ export default function Header(props: Props) {
             </Dropdown>
             <div ref={aiForensicsRef} className={s.hiddenButton}>
               <AiForensicsPdfDownloadButton alertId={alertId} />
+            </div>
+            <div ref={statusChangeRef} className={s.hiddenButton}>
+              <AsyncResourceRenderer resource={caseQueryResults.data}>
+                {(caseItem) => (
+                  <AlertsStatusChangeButton
+                    status={alertItem?.alertStatus}
+                    ids={alertId ? [alertId] : []}
+                    transactionIds={{}}
+                    onSaved={props.onReload}
+                    haveModal={true}
+                    user={
+                      (caseItem?.caseUsers?.origin as TableUser) ||
+                      (caseItem?.caseUsers?.destination as TableUser) ||
+                      undefined
+                    }
+                  />
+                )}
+              </AsyncResourceRenderer>
             </div>
           </div>
         ),
@@ -244,17 +290,50 @@ function useActions(
         );
       }
     }
-    {
-      result.push(
-        <StatusChangeMenu
-          key={'status-change-menu'}
-          alertItem={alertItem}
-          isDisabled={false}
-          onReload={onReload}
-        />,
-      );
-    }
 
     return result;
   });
+}
+
+function buildEscalationOptions(
+  alertItem: Alert | undefined,
+  escalationEnabled: boolean,
+  isMultiLevelEscalationEnabled: boolean,
+  userId: string,
+  _onReload: () => void,
+) {
+  if (!alertItem || !alertItem.caseId || !alertItem.alertId) {
+    return [];
+  }
+
+  const { alertId, alertStatus, caseId } = alertItem;
+  const isAlertEscalated = isEscalatedCases({ [alertId]: alertItem }, true);
+  const isAlertEscalatedL2 = isEscalatedL2Cases({ [alertId]: alertItem }, true);
+  const isAlertInReview = isInReviewCases({ [alertId]: alertItem }, true);
+
+  const canEscalate = canMutateEscalatedCases(
+    { [caseId]: alertItem },
+    userId,
+    isMultiLevelEscalationEnabled,
+  );
+
+  const result: Array<{ value: string; label: React.ReactNode }> = [];
+
+  if (escalationEnabled && canEscalate && alertStatus && !isAlertInReview) {
+    if (!isAlertEscalated && !isAlertEscalatedL2) {
+      // Basic escalation
+      result.push({
+        value: 'escalate',
+        label: <div className={s.centeredLabel}>Escalate</div>,
+      });
+    } else if (isMultiLevelEscalationEnabled && isAlertEscalated && !isAlertEscalatedL2) {
+      // L2 escalation
+      result.push({
+        value: 'escalate-l2',
+        label: <div className={s.centeredLabel}>Escalate L2</div>,
+      });
+    }
+  }
+
+  return result;
 }

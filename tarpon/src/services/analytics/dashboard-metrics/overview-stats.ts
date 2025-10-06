@@ -93,9 +93,6 @@ export class OverviewStatsDashboardMetric {
   ): Promise<DashboardStatsOverview> {
     const db = await getMongoDbClientDb()
     const reportsCollection = db.collection<Report>(REPORT_COLLECTION(tenantId))
-    const totalSarReported = hasFeature('SAR')
-      ? await reportsCollection.countDocuments({ status: 'COMPLETE' })
-      : 0
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const [casesCount, alertsCount] = await Promise.all([
       casesCollection.countDocuments({
@@ -136,16 +133,28 @@ export class OverviewStatsDashboardMetric {
       if (isConsoleMigrationEnabled()) {
         return {
           ...clickhouseStats,
-          totalSarReported,
         }
       }
       return {
         ...clickhouseStats,
-        totalSarReported,
         totalOpenCases: casesCount,
         totalOpenAlerts: alertsCount,
       }
     }
+
+    const totalSarReported = hasFeature('SAR')
+      ? await reportsCollection.countDocuments({
+          status: {
+            $in: [
+              'COMPLETE',
+              'SUBMISSION_ACCEPTED',
+              'SUBMISSION_REJECTED',
+              'SUBMISSION_SUCCESSFUL',
+              'SUBMITTING',
+            ],
+          },
+        })
+      : 0
 
     const [averageInvestigationTimeCases, averageInvestigationTimeAlerts] =
       await Promise.all([
@@ -182,16 +191,22 @@ export class OverviewStatsDashboardMetric {
       WHERE alertStatus IN ('OPEN', 'REOPENED')
       AND timestamp <= toUnixTimestamp64Milli(now64())
     ;`
-    // const sarReportsQuery = `
-    //   SELECT count(*) as count
-    //   FROM ${CLICKHOUSE_DEFINITIONS.REPORTS.tableName} FINAL
-    //   WHERE status = 'COMPLETE'
-    // `
+    const sarReportsQuery = `
+      SELECT count(*) as count
+      FROM ${CLICKHOUSE_DEFINITIONS.REPORTS.tableName} FINAL
+      WHERE status IN (
+      'COMPLETE',
+      'SUBMISSION_ACCEPTED',
+      'SUBMISSION_REJECTED',
+      'SUBMISSION_SUCCESSFUL',
+      'SUBMITTING'
+      )
+    `
 
     const [
       casesCountResult,
       alertsCountResult,
-      // sarReportsResult,
+      sarReportsResult,
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
     ] = await Promise.all([
@@ -205,14 +220,14 @@ export class OverviewStatsDashboardMetric {
         format: 'JSONEachRow',
       }),
 
-      // hasFeature('SAR')
-      //   ? clickhouseClient
-      //       .query({
-      //         query: sarReportsQuery,
-      //         format: 'JSONEachRow',
-      //       })
-      //       .then((r) => r.json<{ count: number }>())
-      //   : Promise.resolve([{ count: 0 }]),
+      hasFeature('SAR')
+        ? clickhouseClient
+            .query({
+              query: sarReportsQuery,
+              format: 'JSONEachRow',
+            })
+            .then((r) => r.json<{ count: number }>())
+        : Promise.resolve([{ count: 0 }]),
 
       this.getAverageInvestigationTimeClickhouse(tenantId, 'cases', accountIds),
       this.getAverageInvestigationTimeClickhouse(
@@ -227,7 +242,7 @@ export class OverviewStatsDashboardMetric {
       totalOpenAlerts: alertsCountResult[0]?.count ?? 0,
       averageInvestigationTimeCases,
       averageInvestigationTimeAlerts,
-      totalSarReported: 0,
+      totalSarReported: sarReportsResult[0]?.count ?? 0,
     }
   }
 

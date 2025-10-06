@@ -8,7 +8,7 @@ import { v4 as uuid4, v4 as uuidv4 } from 'uuid'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { publicLambdaApi } from '@/core/middlewares/public-lambda-api-middleware'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { updateLogMetadata } from '@/core/utils/context'
+import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -27,6 +27,7 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { MAX_BATCH_IMPORT_COUNT } from '@/utils/transaction'
 import { batchCreateUserOptions } from '@/utils/user'
 import { assertValidTimestampTags } from '@/utils/tags'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 export const userEventsHandler = publicLambdaApi()(
   async (
@@ -38,7 +39,9 @@ export const userEventsHandler = publicLambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
-
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const createUserEvent = async (
       userEvent: ConsumerUserEvent,
       allowUserTypeConversion?: string,
@@ -61,7 +64,8 @@ export const userEventsHandler = publicLambdaApi()(
         tenantId,
         dynamoDb,
         mongoDb,
-        logicEvaluator
+        logicEvaluator,
+        opensearchClient
       )
 
       const { updatedConsumerUserAttributes } = userEvent
@@ -200,7 +204,8 @@ export const userEventsHandler = publicLambdaApi()(
           tenantId,
           dynamoDb,
           mongoDb,
-          logicEvaluator
+          logicEvaluator,
+          opensearchClient
         )
         const { updatedBusinessUserAttributes } = userEvent
         if (updatedBusinessUserAttributes?.linkedEntities) {

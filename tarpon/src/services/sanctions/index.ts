@@ -24,6 +24,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Upload } from '@aws-sdk/lib-storage'
+import { Client } from '@opensearch-project/opensearch/.'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
@@ -77,6 +78,7 @@ import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
 import { CaseConfig } from '@/@types/cases/case-config'
 import { getSecretByName } from '@/utils/secrets-manager'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -98,14 +100,20 @@ export class SanctionsService {
   initializationPromise: Promise<void> | null = null
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  opensearchClient?: Client
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: {
+      mongoDb: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+      opensearchClient?: Client
+    }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
+    this.opensearchClient = connections.opensearchClient
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
       { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
@@ -140,16 +148,24 @@ export class SanctionsService {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const sanctionsService = new SanctionsService(tenantId, {
       mongoDb,
       dynamoDb,
+      opensearchClient,
     })
     return sanctionsService
   }
 
   private async getProvider(
     provider: SanctionsDataProviderName,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    connections: {
+      mongoDb: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+      opensearchClient?: Client
+    },
     providerConfig?: ProviderConfig
   ): Promise<SanctionsDataProvider> {
     switch (provider) {
@@ -174,6 +190,9 @@ export class SanctionsService {
     providerSearchId: string,
     providerName: SanctionsDataProviderName
   ): Promise<boolean> {
+    if (!this.opensearchClient && hasFeature('OPEN_SEARCH')) {
+      this.opensearchClient = await getSharedOpensearchClient()
+    }
     const result =
       await this.sanctionsSearchRepository.getSearchResultByProviderSearchId(
         providerName,
@@ -185,6 +204,7 @@ export class SanctionsService {
     const provider = await this.getProvider(providerName, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
+      opensearchClient: this.opensearchClient,
     })
     const response = await provider.getSearch(providerSearchId)
 
@@ -268,6 +288,9 @@ export class SanctionsService {
     providerOverrides?: ProviderConfig,
     screeningEntity: 'USER' | 'TRANSACTION' = 'USER'
   ): Promise<SanctionsSearchResponse> {
+    if (!this.opensearchClient && hasFeature('OPEN_SEARCH')) {
+      this.opensearchClient = await getSharedOpensearchClient()
+    }
     const page = request.page ?? 1
     const pageSize = request.pageSize ?? 20
 
@@ -305,7 +328,11 @@ export class SanctionsService {
 
     const provider = await this.getProvider(
       providerName,
-      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
+      {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+        opensearchClient: this.opensearchClient,
+      },
       providerOverrides
     )
     const [sanctionsSearchResponse, existedSearch] = await Promise.all([
