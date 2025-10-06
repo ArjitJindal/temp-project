@@ -1,5 +1,5 @@
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { getContext } from '@/core/utils/context-storage'
 
 export async function paginatedClickhouseQuery<T extends object>(

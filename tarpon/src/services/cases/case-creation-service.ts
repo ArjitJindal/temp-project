@@ -22,7 +22,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { COUNTERPARTY_RULES } from '@flagright/lib/constants'
+import { COUNTERPARTY_RULES } from '@flagright/lib/constants/rules-engine'
 import { backOff } from 'exponential-backoff'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
@@ -116,7 +116,7 @@ import {
 import { CaseSubject } from '@/@types/cases/CasesInternal'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isConsoleMigrationEnabled } from '@/utils/clickhouse/utils'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
 
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'

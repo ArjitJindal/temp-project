@@ -1,29 +1,23 @@
-import {
-  ClickHouseClient,
-  ClickHouseSettings,
-  createClient,
-  InsertParams,
-  ResponseJSON,
-} from '@clickhouse/client'
-import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
-import { backOff, BackoffOptions } from 'exponential-backoff'
+import { ClickHouseClient, ResponseJSON } from '@clickhouse/client'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
-import { getTarponConfig } from '@flagright/lib/constants/config'
-import { stageAndRegion } from '@flagright/lib/utils/env'
-import { ConnectionCredentials, JsonMigrationService } from 'thunder-schema'
+import { JsonMigrationService } from 'thunder-schema'
 import get from 'lodash/get'
 import maxBy from 'lodash/maxBy'
 import memoize from 'lodash/memoize'
 import map from 'lodash/map'
 import groupBy from 'lodash/groupBy'
-import { envIs, envIsNot } from '../env'
+import { envIs } from '../env'
 import { bulkSendMessages } from '../sns-sqs-client'
-import {
-  ClickHouseTables,
-  TableName,
-  CLICKHOUSE_DEFINITIONS,
-} from './definition'
 import { generateColumnsFromModel } from './model-schema-parser'
+import {
+  getClickhouseClient,
+  getClickhouseCredentials,
+  getClickhouseDefaultCredentials,
+} from './client'
+import { sanitizeSqlName } from './sanitize'
+import { getClickhouseDbName } from './database-utils'
+import { executeClickhouseDefaultClientQuery } from './execute'
+import { executeWithBackoff } from './executeWithBackoff'
 import {
   MaterializedViewDefinition,
   ProjectionsDefinition,
@@ -38,245 +32,11 @@ import {
   MONTH_DATE_FORMAT_JS,
 } from '@/core/constants'
 import { hasFeature } from '@/core/utils/context'
-import { getContext } from '@/core/utils/context-storage'
-import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { MongoConsumerMessage } from '@/@types/mongo'
-import { addNewSubsegment } from '@/core/xray'
 import { MigrationTrackerTable } from '@/models/migration-tracker'
 
-const DEFAULT_BACKOFF_OPTIONS: BackoffOptions = {
-  numOfAttempts: 10,
-  maxDelay: 240000,
-  startingDelay: 10000,
-  timeMultiple: 2,
-  jitter: 'full',
-}
-
-type ClickHouseSyncOptions = {
-  /** Wait for actions to manipulate the partitions.
-   * 0 - do not wait,
-   * 1 - wait for execution only of itself,
-   * 2 - wait for everyone. */
-  alter_sync?: string
-  /** Wait for synchronous execution of ALTER TABLE UPDATE/DELETE queries (mutations).
-   * 0 - execute asynchronously.
-   * 1 - wait current server.
-   * 2 - wait all replicas if they exist. */
-  mutations_sync?: string
-}
-
-async function executeWithBackoff<T>(
-  operation: () => Promise<T>,
-  operationName: string,
-  context?: Record<string, unknown>,
-  backoffOptions?: Partial<BackoffOptions>
-): Promise<T> {
-  const options = { ...DEFAULT_BACKOFF_OPTIONS, ...backoffOptions }
-
-  return backOff(operation, {
-    ...options,
-    retry: (error, attemptNumber) => {
-      logger.warn(
-        `ClickHouse ${operationName} failed, retrying... Attempt ${attemptNumber}: ${error.message}`,
-        { error, attemptNumber, operationName, ...context }
-      )
-      return true
-    },
-  })
-}
-
-export const isClickhouseEnabledInRegion = () => {
-  if (envIsNot('prod')) {
-    return true
-  }
-
-  const [stage, region] = stageAndRegion()
-
-  const config = getTarponConfig(stage, region)
-  return !!config.clickhouse
-}
-
-export const getClickhouseDbName = (tenantId: string) => {
-  return sanitizeSqlName(
-    envIs('test') ? `tarpon_test_${tenantId}` : `tarpon_${tenantId}`
-  )
-}
-
-let client: Record<string, ClickHouseClient> = {}
-
-export const closeClickhouseClient = async (tenantId: string) => {
-  if (client[tenantId]) {
-    await client[tenantId].close()
-    delete client[tenantId]
-  }
-}
-
-const getUrl = (config: NodeClickHouseClientConfigOptions) => {
-  if (useNormalLink()) {
-    return config.url?.toString().replace('vpce.', '')
-  }
-  return config.url
-}
-
-const getLocalConfig = (
-  database: string,
-  options?: {
-    keepAlive?: boolean
-    idleSocketTtl?: number
-    requestTimeout?: number
-  }
-): NodeClickHouseClientConfigOptions => ({
-  url: 'http://localhost:8123',
-  username: 'default',
-  password: '',
-  database,
-  request_timeout: options?.requestTimeout ?? 300_000, // 5 minutes
-  clickhouse_settings: {
-    max_execution_time: 300, // 5 minutes in seconds
-    send_timeout: 300,
-    receive_timeout: 300,
-  },
-  keep_alive: {
-    enabled: options?.keepAlive ?? true,
-    idle_socket_ttl: options?.idleSocketTtl ?? 2_500,
-  },
-})
-
-export const getClickhouseClientConfig = async (
-  database: string,
-  options?: {
-    keepAlive?: boolean
-    idleSocketTtl?: number
-    requestTimeout?: number
-  } & ClickHouseSyncOptions
-): Promise<NodeClickHouseClientConfigOptions> => {
-  if (envIs('local') || envIs('test')) {
-    return getLocalConfig(database, options)
-  }
-
-  const config = await getSecret<NodeClickHouseClientConfigOptions>(
-    'clickhouse'
-  )
-
-  return {
-    ...config,
-    database,
-    url: getUrl(config),
-    // Add timeout configurations
-    request_timeout: options?.requestTimeout ?? 30_000, // 30 seconds
-    clickhouse_settings: {
-      ...config.clickhouse_settings,
-      alter_sync: options?.alter_sync ?? '2',
-      mutations_sync: options?.mutations_sync ?? '2',
-      // Add query-level timeout settings
-      max_execution_time: 300, // 5 minutes in seconds
-      send_timeout: 300, // 5 minutes
-      receive_timeout: 300, // 5 minutes
-    },
-    keep_alive: {
-      enabled: options?.keepAlive ?? true,
-      idle_socket_ttl: options?.idleSocketTtl ?? 2_500,
-    },
-  }
-}
-
-const createAndExecuteWithClient = async <T>(
-  config: NodeClickHouseClientConfigOptions,
-  callback: (client: ClickHouseClient) => Promise<T>
-): Promise<T> => {
-  const clickHouseClient = createClient(config)
-  const result = await callback(clickHouseClient)
-  await clickHouseClient.close()
-  return result
-}
-
-export const executeClickhouseDefaultClientQuery = async <T>(
-  callback: (client: ClickHouseClient) => Promise<T>
-) => {
-  if (envIs('local') || envIs('test')) {
-    return createAndExecuteWithClient(getLocalConfig('default'), callback)
-  }
-
-  const config = await getClickhouseClientConfig('default')
-  return createAndExecuteWithClient(config, callback)
-}
-
-const useNormalLink = () => {
-  if (envIs('local', 'test', 'dev') || process.env.MIGRATION_TYPE) {
-    return true
-  }
-  return false
-}
-
-const getConnectionCredentials = (
-  config: NodeClickHouseClientConfigOptions,
-  database: string
-): ConnectionCredentials => ({
-  url: config.url?.toString() ?? '',
-  username: config.username,
-  password: config.password,
-  database,
-})
-
-export async function getClickhouseCredentials(
-  tenantId: string
-): Promise<ConnectionCredentials> {
-  const dbName = getClickhouseDbName(tenantId)
-  const config = await getClickhouseClientConfig(dbName)
-
-  if (!config.url) {
-    throw new Error('Clickhouse URL is not set')
-  }
-
-  return getConnectionCredentials(config, dbName)
-}
-
-export async function getClickhouseDefaultCredentials(): Promise<ConnectionCredentials> {
-  const config = await getClickhouseClientConfig('default')
-  return getConnectionCredentials(config, 'default')
-}
-
-export async function getDefualtConfig(): Promise<ConnectionCredentials> {
-  const config = await getClickhouseClientConfig('default')
-  return getConnectionCredentials(config, 'default')
-}
-
-export async function getClickhouseClient(
-  tenantId: string,
-  options?: {
-    keepAlive?: boolean
-    idleSocketTtl?: number
-    requestTimeout?: number
-  } & ClickHouseSyncOptions
-) {
-  if (client[tenantId]) {
-    return client[tenantId]
-  }
-
-  if (envIs('test')) {
-    await executeClickhouseDefaultClientQuery(async (clickHouseClient) => {
-      await clickHouseClient.query({
-        query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(tenantId)}`,
-      })
-    })
-  }
-
-  const config = await getClickhouseClientConfig(
-    getClickhouseDbName(tenantId),
-    options
-  )
-  client = { [tenantId]: createClient(config) }
-  return client[tenantId]
-}
-
-/**
- *
- * @param tableName with tenantId
- * @param projection {The projection to insert the object to}
- */
-
-export const getProjectionName = (
+const getProjectionName = (
   tableName: string,
   projection: ProjectionsDefinition
 ) => {
@@ -285,130 +45,7 @@ export const getProjectionName = (
 
   return sanitizeSqlName(`${tableName}_${projectionName}_v${version}_proj`)
 }
-
-function assertTableName(
-  tableName: string,
-  tenantId: string = getContext()?.tenantId as string
-): ClickhouseTableDefinition {
-  let trimmedTableName = tableName
-    .replace(/-/g, '_')
-    .replace(tenantId.replace(/-/g, '_'), '')
-
-  if (trimmedTableName.startsWith('_')) {
-    trimmedTableName = trimmedTableName.slice(1)
-  }
-
-  const tableDefinition = ClickHouseTables.find(
-    (t) => t.table === trimmedTableName
-  )
-
-  if (!tableDefinition) {
-    throw new Error(`Table definition not found for table ${tableName}`)
-  }
-
-  return tableDefinition
-}
-
-const clickhouseInsert = async (
-  tenantId: string,
-  table: string,
-  values: object[],
-  columns: InsertParams['columns']
-) => {
-  const client = await getClickhouseClient(tenantId)
-
-  const CLICKHOUSE_SETTINGS: ClickHouseSettings = {
-    wait_for_async_insert: 1,
-    async_insert: envIs('test', 'local') ? 0 : 1,
-  }
-
-  await executeWithBackoff(
-    async () => {
-      await client.insert({
-        table,
-        values,
-        columns: columns,
-        format: 'JSON',
-        clickhouse_settings: CLICKHOUSE_SETTINGS,
-      })
-    },
-    'insert',
-    { table, tenantId }
-  )
-}
-
-const testCache = new Set()
-
-export async function prepareClickhouseInsert(
-  tableName: TableName,
-  tenantId: string
-) {
-  if (!isClickhouseEnabledInRegion()) {
-    return false
-  }
-
-  const tableDefinition = assertTableName(tableName, tenantId)
-  const cacheKey = `${tenantId}-${tableName}`
-
-  if (envIs('test')) {
-    if (!isClickhouseEnabled()) {
-      return false
-    }
-    if (!testCache.has(cacheKey)) {
-      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
-      testCache.add(cacheKey)
-    }
-  }
-
-  return tableDefinition
-}
-
-export async function batchInsertToClickhouse(
-  tenantId: string,
-  table: TableName,
-  objects: object[]
-) {
-  const tableDefinition = await prepareClickhouseInsert(table, tenantId)
-  if (!tableDefinition) {
-    return
-  }
-
-  const insertData = objects.map((object) => ({
-    id: object[tableDefinition.idColumn],
-    data: JSON.stringify(object),
-    is_deleted: 0,
-  }))
-
-  await clickhouseInsert(tenantId, sanitizeSqlName(table), insertData, [
-    'id',
-    'data',
-    'is_deleted',
-  ])
-
-  // For transactions, also write to transactions_desc table
-  if (table === CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName) {
-    const transactionsDescTableDefinition = await prepareClickhouseInsert(
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName,
-      tenantId
-    )
-    if (transactionsDescTableDefinition) {
-      await clickhouseInsert(
-        tenantId,
-        sanitizeSqlName(CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName),
-        insertData,
-        ['id', 'data', 'is_deleted']
-      )
-    }
-  }
-}
-
-export function isClickhouseEnabled() {
-  return hasFeature('CLICKHOUSE_ENABLED') && isClickhouseEnabledInRegion()
-}
-
-export function isClickhouseMigrationEnabled() {
-  return isClickhouseEnabledInRegion() && hasFeature('CLICKHOUSE_MIGRATION')
-}
+export default getProjectionName
 
 const getAllColumns = (table: ClickhouseTableDefinition) => {
   // If model is specified, generate columns from the model
@@ -448,10 +85,6 @@ const getAllColumns = (table: ClickhouseTableDefinition) => {
   ]
 }
 
-export function isConsoleMigrationEnabled() {
-  return isClickhouseEnabledInRegion() && hasFeature('CONSOLE_MIGRATION')
-}
-
 export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
   const tableName = table.table
   const columns = getAllColumns(table)
@@ -488,24 +121,6 @@ export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
   `
 }
 
-const createDbIfNotExists = async (tenantId: string) => {
-  await executeClickhouseDefaultClientQuery(async (client) => {
-    await client.query({
-      query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(tenantId)}`,
-    })
-  })
-}
-
-export async function createTenantDatabase(tenantId: string) {
-  await createDbIfNotExists(tenantId)
-
-  for (const table of ClickHouseTables) {
-    await createOrUpdateClickHouseTable(tenantId, table, {
-      skipDefaultClient: true,
-    })
-  }
-}
-
 export async function syncThunderSchemaTables(tenantId: string) {
   const defaultConfig = await getClickhouseDefaultCredentials()
   const clickhouseCredentials = await getClickhouseCredentials(tenantId)
@@ -531,8 +146,8 @@ export async function createOrUpdateClickHouseTable(
     await createDbIfNotExists(tenantId)
   }
   const client = await getClickhouseClient(tenantId, {
-    alter_sync: '0',
-    mutations_sync: '0',
+    alter_sync: '2',
+    mutations_sync: '2',
   })
   await createTableIfNotExists(client, tableName, table)
   await addMissingColumnsTable(client, tableName, table)
@@ -856,9 +471,6 @@ export function getSortedData<T>({
   return sortedItems
 }
 
-export const sanitizeSqlName = (tableName: string) =>
-  tableName.replace(/[^0-9a-zA-Z]/g, '_')
-
 const sqs = new SQS({ region: process.env.AWS_REGION })
 
 export const sendMessageToMongoConsumer = async (
@@ -1119,116 +731,6 @@ export const getTimeformatsByGranularity = (
   }
 }
 
-/**
- * Safely executes a Clickhouse query with error handling
- * @param clientOrTenantId Either a Clickhouse client instance or tenant ID string
- * @param queryOrParams Query string or query parameters object
- * @param options Optional configuration
- * @returns Query result or null on error (if throwOnError is false)
- */
-export async function executeClickhouseQuery<T extends object>(
-  clientOrTenantId: ClickHouseClient | string,
-  queryOrParams: string | Parameters<ClickHouseClient['query']>[0],
-  params: Record<string, any> = {},
-  options: { throwOnError?: boolean; logError?: boolean } = {
-    throwOnError: false,
-    logError: true,
-  }
-): Promise<T> {
-  const [segment, segment2] = await Promise.all([
-    addNewSubsegment('Query time for clickhouse', 'Query'),
-    addNewSubsegment('Query time for clickhouse', 'Overall'),
-  ])
-  const start = Date.now()
-  let client: ClickHouseClient
-  let queryParams: Parameters<ClickHouseClient['query']>[0]
-  if (typeof queryOrParams === 'string') {
-    let formattedQuery = queryOrParams
-    for (const [key, value] of Object.entries(params)) {
-      formattedQuery = formattedQuery.replace(
-        new RegExp(`{{ ${key} }}`, 'g'),
-        value
-      )
-    }
-    queryParams = {
-      query: `${formattedQuery} SETTINGS output_format_json_quote_64bit_integers=0`,
-      format: 'JSONEachRow',
-    }
-  } else {
-    queryParams = queryOrParams
-  }
-
-  try {
-    if (typeof clientOrTenantId === 'string') {
-      client = await getClickhouseClient(clientOrTenantId)
-    } else {
-      client = clientOrTenantId
-    }
-    logger.info('Running clickhouse query', { query: queryParams.query })
-
-    const result = await client.query(queryParams)
-    const end = Date.now()
-
-    const clickHouseSummary = result.response_headers['x-clickhouse-summary']
-      ? JSON.parse(result.response_headers['x-clickhouse-summary'] as string)
-      : {}
-
-    const clickhouseQueryExecutionTime = clickHouseSummary['elapsed_ns']
-      ? clickHouseSummary['elapsed_ns'] / 1000000
-      : 0
-
-    const queryTimeData = {
-      ...clickHouseSummary,
-      networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
-      clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
-      totalLatency: `${end - start}ms`,
-    }
-
-    logger.info('Query time data', queryTimeData)
-    segment?.addMetadata('Query time data', queryTimeData)
-    segment?.close()
-    const jsonResult = await result.json()
-    const end2 = Date.now()
-
-    const overallStats = {
-      ...clickHouseSummary,
-      overallTime: `${end2 - start}ms`,
-      networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
-      systemLatency: `${end2 - end}ms`,
-      clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
-    }
-
-    segment2?.addMetadata('Overall stats', overallStats)
-    segment2?.close()
-
-    logger.info('Overall stats', overallStats)
-
-    return jsonResult as T
-  } catch (error) {
-    if (options.logError) {
-      logger.error('Error executing Clickhouse query', {
-        query: queryParams.query,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        executionTime: `${Date.now() - start}ms`,
-      })
-    }
-
-    if (envIs('local')) {
-      throw error
-    }
-
-    if (options.throwOnError) {
-      throw error
-    } else {
-      throw new Error('Failed to fetch data')
-    }
-  } finally {
-    segment?.close()
-    segment2?.close()
-  }
-}
-
 export const runExecClickhouseQuery = async (
   tenantId: string,
   data: { query: string }
@@ -1239,115 +741,10 @@ export const runExecClickhouseQuery = async (
   })
 }
 
-type ClickhouseBatchOptions = {
-  clickhouseBatchSize?: number
-  processBatchSize?: number
-  debug?: boolean
-  initialCursor?: { timestamp: number; id: string | number }
-  additionalWhere?: string
-  additionalSelect?: { name: string; expr: string }[]
-  additionalJoin?: string
-  clickhouseClient: ClickHouseClient
-}
-
-export async function processClickhouseInBatch<
-  T extends { timestamp: number; id: string | number }
->(
-  tableName: string,
-  processBatch: (batch: T[]) => Promise<void>,
-  options: ClickhouseBatchOptions
-): Promise<void> {
-  const clickhouseBatchSize = options?.clickhouseBatchSize ?? 1000
-  const processBatchSize = options?.processBatchSize ?? clickhouseBatchSize
-  const debug = options?.debug ?? false
-  const additionalWhere = options?.additionalWhere
-  const additionalSelect = options?.additionalSelect
-    ?.map((s) => `${s.expr} AS ${s.name}`)
-    .join(', ')
-  const additionalJoin = options?.additionalJoin
-  let lastCursor = options?.initialCursor
-  let batchNumber = 0
-  let totalProcessed = 0
-  let flag = true
-
-  while (flag) {
-    const whereClauses: string[] = []
-
-    // build cursor filter
-    if (lastCursor?.timestamp && lastCursor?.id) {
-      whereClauses.push(
-        `(timestamp, id) > (${lastCursor.timestamp}, '${lastCursor.id}')`
-      )
-    }
-
-    // append additional filtering if provided
-    if (additionalWhere) {
-      whereClauses.push(`(${additionalWhere})`)
-    }
-
-    const whereClause =
-      whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
-
-    const query = `
-      SELECT ${additionalSelect ? `${additionalSelect},` : ''} id, timestamp
-      FROM ${tableName} FINAL
-      ${additionalJoin ? `ARRAY JOIN ${additionalJoin}` : ''}
-      ${whereClause}
-      ORDER BY timestamp, id
-      LIMIT ${clickhouseBatchSize}
-    `
-
-    const clickhouseBatch = await executeClickhouseQuery<
-      { id: string; timestamp: number; data: any }[]
-    >(options.clickhouseClient, query)
-
-    if (!clickhouseBatch || clickhouseBatch.length === 0) {
-      flag = false
-      break
-    }
-
-    for (let i = 0; i < clickhouseBatch.length; i += processBatchSize) {
-      const slice = clickhouseBatch.slice(i, i + processBatchSize)
-      await processBatch(
-        slice.map((item) => {
-          const parsedData =
-            typeof item.data === 'string' ? JSON.parse(item.data) : item.data
-          const additionalFields = options.additionalSelect
-            ? options.additionalSelect.reduce((acc, s) => {
-                acc[s.name] = item[s.name]
-                return acc
-              }, {} as Record<string, any>)
-            : {}
-
-          return {
-            ...parsedData,
-            ...additionalFields,
-          }
-        })
-      )
-      batchNumber++
-      totalProcessed += slice.length
-
-      if (debug) {
-        console.warn(
-          `Processed batch #${batchNumber}, processed ${totalProcessed} records`
-        )
-      }
-    }
-    const lastItem = clickhouseBatch.at(-1)
-    if (lastItem) {
-      lastCursor = {
-        timestamp: lastItem.timestamp,
-        id: lastItem.id,
-      }
-    } else {
-      flag = false
-    }
-  }
-
-  if (debug) {
-    console.warn(
-      `Completed processing. Total batches: ${batchNumber}, total records: ${totalProcessed}`
-    )
-  }
+export const createDbIfNotExists = async (tenantId: string) => {
+  await executeClickhouseDefaultClientQuery(async (client) => {
+    await client.query({
+      query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(tenantId)}`,
+    })
+  })
 }

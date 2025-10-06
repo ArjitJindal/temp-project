@@ -8,7 +8,7 @@ import {
   CASES_COLLECTION,
   CHECKLIST_TEMPLATE_COLLECTION,
   DASHBOARD_QA_ALERTS_BY_CHECKLIST_REASON_COLLECTION_HOURLY,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'

@@ -35,10 +35,10 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { logger } from '@/core/logger'
-import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { UserOptional } from '@/@types/openapi-internal/UserOptional'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'

@@ -39,7 +39,7 @@ import {
   dynamoKey,
   dynamoKeyList,
 } from '@/@types/dynamo'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { logger } from '@/core/logger'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
@@ -53,9 +53,10 @@ import {
   SanctionsDetailsInternal,
 } from '@/@types/alert/AlertsInternal'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { envIs } from '@/utils/env'
 import { removeUndefinedFields } from '@/utils/object'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
 type caseUpdateOptions = {
@@ -68,9 +69,9 @@ export class DynamoAlertRepository {
   private readonly tenantId: string
   private readonly dynamoDb: DynamoDBDocumentClient
   private readonly tableName: string
-  private readonly AlertsQaSamplingTableName: string
-  private readonly CasesClickhouseTableName: string
-  private readonly AlertsClickhouseTableName: string
+  private readonly AlertsQaSamplingTableName: ClickhouseTableNames
+  private readonly CasesClickhouseTableName: ClickhouseTableNames
+  private readonly AlertsClickhouseTableName: ClickhouseTableNames
 
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.tenantId = tenantId

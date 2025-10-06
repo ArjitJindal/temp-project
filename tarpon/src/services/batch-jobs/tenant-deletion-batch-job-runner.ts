@@ -16,12 +16,9 @@ import {
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../rules-engine/utils'
-import {
-  executeClickhouseDefaultClientQuery,
-  getClickhouseClient,
-  getClickhouseDbName,
-} from '../../utils/clickhouse/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/execute'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { allCollections, getMongoDbClient } from '@/utils/mongodb-utils'
@@ -41,7 +38,7 @@ import { getContext } from '@/core/utils/context-storage'
 import {
   TENANT_DELETION_COLLECTION,
   DYNAMODB_PARTITIONKEYS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { envIsNot } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
@@ -50,6 +47,7 @@ import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { CRM_MODEL_TYPES } from '@/@types/openapi-internal-custom/CRMModelType'
 import { toggleApiKeys } from '@/utils/api-usage'
+import { getClickhouseDbName } from '@/utils/clickhouse/database-utils'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,

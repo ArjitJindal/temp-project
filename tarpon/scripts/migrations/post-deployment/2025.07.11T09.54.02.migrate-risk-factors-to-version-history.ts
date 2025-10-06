@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RiskService } from '@/services/risk'
 import { VersionHistoryService } from '@/services/version-history'

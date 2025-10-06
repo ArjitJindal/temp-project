@@ -18,7 +18,7 @@ import dayjs from '@/utils/dayjs'
 import {
   DELTA_SANCTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { preprocessUsers } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { GenericSanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/generic-sanctions-consumer-user'
 import { SanctionsDataProviders } from '@/services/sanctions/types'

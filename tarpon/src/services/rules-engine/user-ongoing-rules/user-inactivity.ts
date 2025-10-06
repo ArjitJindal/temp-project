@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { Document } from 'mongodb'
 import { UserOngoingRule } from '../user-rules/rule'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import dayjs from '@/utils/dayjs'
 
 export interface UserInactivityRuleParameters {

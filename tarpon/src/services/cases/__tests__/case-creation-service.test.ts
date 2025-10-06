@@ -50,7 +50,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SanctionsService } from '@/services/sanctions'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
-import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviders } from '@/services/sanctions/types'

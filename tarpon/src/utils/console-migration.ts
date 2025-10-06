@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { isBackfillDone } from './dynamodb'
-import { isClickhouseEnabledInRegion } from './clickhouse/utils'
+import { isClickhouseEnabledInRegion } from './clickhouse/checks'
 
 export async function isTenantMigratedToDynamo(
   tenantId: string,

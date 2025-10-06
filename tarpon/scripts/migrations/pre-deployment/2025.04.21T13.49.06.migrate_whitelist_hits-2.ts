@@ -1,13 +1,13 @@
 import { AnyBulkWriteOperation, Db } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
   SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-public-management/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'

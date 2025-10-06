@@ -1,6 +1,6 @@
 import { ApiUsageMetricsService } from '../api-usage-metrics-service'
 import { getApiUsageMetricsService } from './utils'
-import { Metric } from '@/core/cloudwatch/metrics'
+import { Metric } from '@/@types/cloudwatch'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'

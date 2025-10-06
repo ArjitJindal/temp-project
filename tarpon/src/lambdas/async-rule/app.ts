@@ -15,11 +15,8 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { logger } from '@/core/logger'
-import {
-  AsyncBatchRecord,
-  AsyncRuleRecord,
-  sendAsyncRuleTasks,
-} from '@/services/rules-engine/utils'
+import { sendAsyncRuleTasks } from '@/services/rules-engine/utils'
+import { AsyncBatchRecord, AsyncRuleRecord } from '@/@types/batch-import'
 import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import { BatchImportService } from '@/services/batch-import'

@@ -49,7 +49,7 @@ import {
   AuditLogReturnData,
   getReportAuditLogMetadata,
 } from '@/utils/audit-log'
-import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
+import { AUDITLOG_COLLECTION } from '@/utils/mongo-table-names'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { SAR_COUNTRIESS } from '@/@types/openapi-internal-custom/SarCountries'
 

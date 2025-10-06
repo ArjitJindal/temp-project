@@ -1,15 +1,13 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
-  getClickhouseClient,
-  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
-import {
-  CLICKHOUSE_DEFINITIONS,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-public-management-custom/KYCStatus'

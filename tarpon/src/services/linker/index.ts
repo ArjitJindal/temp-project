@@ -9,7 +9,7 @@ import { getMongoDbClient, lookupPipelineStage } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getUserName } from '@/utils/helpers'
@@ -19,12 +19,10 @@ import { GraphEdges } from '@/@types/openapi-internal/GraphEdges'
 import { Address } from '@/@types/openapi-internal/Address'
 import { traceable } from '@/core/xray'
 import dayjs from '@/utils/dayjs'
-import {
-  executeClickhouseQuery,
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 type UsersProjectedData = Pick<
   InternalUser,

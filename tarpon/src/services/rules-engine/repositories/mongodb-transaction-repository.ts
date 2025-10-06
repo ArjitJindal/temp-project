@@ -47,10 +47,10 @@ import {
 } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
+  UNIQUE_TAGS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  UNIQUE_TAGS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   DefaultApiGetTransactionsListRequest,
@@ -62,13 +62,13 @@ import { duration } from '@/utils/dayjs'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'
+import { cursorPaginate } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import {
-  COUNT_QUERY_LIMIT,
-  cursorPaginate,
   CursorPaginationResponse,
   OptionalPagination,
   OptionalPaginationParams,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import {
   PaymentDetails,
   PaymentMethod,

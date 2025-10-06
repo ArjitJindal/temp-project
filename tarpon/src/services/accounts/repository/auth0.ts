@@ -3,15 +3,15 @@ import {
   UserEnrollmentStatusEnum,
 } from 'auth0'
 import { BadRequest, Conflict, NotFound } from 'http-errors'
+import { BaseAccountsRepository } from '.'
 import {
   Auth0TenantMetadata,
-  BaseAccountsRepository,
   InternalAccountCreate,
   InternalOrganizationCreate,
   MicroTenantInfo,
   PatchAccountData,
   Tenant,
-} from '.'
+} from '@/@types/tenant'
 import {
   AppMetadata,
   auth0AsyncWrapper,

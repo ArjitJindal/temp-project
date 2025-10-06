@@ -16,7 +16,6 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import {
@@ -27,14 +26,12 @@ import {
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { UserTag } from '@/@types/openapi-internal/all'
-import { User } from '@/@types/openapi-public/User'
-import { Business } from '@/@types/openapi-public/Business'
-import { UserType } from '@/@types/user/user-type'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
+import {
+  AsyncRuleRecordTransaction,
+  AsyncRuleRecordTransactionEvent,
+  AsyncRuleRecord,
+} from '@/@types/batch-import'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import {
   getPaymentDetailsName,
@@ -43,6 +40,7 @@ import {
 } from '@/utils/payment-details'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { sanitiseBucketedKey } from '@/core/dynamodb/key-utils'
+import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 
 export function getSenderKeys(
   tenantId: string,
@@ -516,85 +514,6 @@ export async function sendTransactionAggregationTasks(
     )
     logger.debug(`Sent transaction aggregation tasks to SQS`)
   }
-}
-
-type AsyncRuleRecordTransaction = {
-  type: 'TRANSACTION'
-  transaction: Transaction
-  senderUser?: User | Business
-  receiverUser?: User | Business
-  riskDetails?: TransactionRiskScoringResult
-  backfillNamespace?: string
-}
-type AsyncRuleRecordTransactionBatch = {
-  type: 'TRANSACTION_BATCH'
-  transaction: Transaction
-}
-
-type AsyncRuleRecordTransactionEvent = {
-  type: 'TRANSACTION_EVENT'
-  updatedTransaction: Transaction
-  senderUser?: User | Business
-  receiverUser?: User | Business
-  transactionEventId: string
-}
-
-type AsyncRuleRecordTransactionEventBatch = {
-  type: 'TRANSACTION_EVENT_BATCH'
-  transactionEvent: TransactionEvent
-  originUserId?: string
-  destinationUserId?: string
-}
-
-type UserParameters = {
-  lockCraRiskLevel?: boolean
-  lockKycRiskLevel?: boolean
-}
-
-type AsyncRuleRecordUser = {
-  type: 'USER'
-  userType: UserType
-  user: User | Business
-}
-
-export type AsyncRuleRecordUserBatch = {
-  type: 'USER_BATCH'
-  userType: UserType
-  user: User | Business
-  parameters?: UserParameters
-}
-
-type AsyncRuleRecordUserEvent = {
-  type: 'USER_EVENT'
-  updatedUser: User | Business
-  userEventTimestamp: number
-  userType: UserType
-}
-
-export type AsyncRuleRecordUserEventBatch = {
-  type: 'USER_EVENT_BATCH'
-  userType: UserType
-  userEvent: ConsumerUserEvent | BusinessUserEvent
-  parameters?: UserParameters
-}
-
-export type AsyncBatchRecord = (
-  | AsyncRuleRecordTransactionBatch
-  | AsyncRuleRecordTransactionEventBatch
-  | AsyncRuleRecordUserBatch
-  | AsyncRuleRecordUserEventBatch
-) & {
-  batchId: string
-}
-
-export type AsyncRuleRecord = (
-  | AsyncRuleRecordTransaction
-  | AsyncRuleRecordTransactionEvent
-  | AsyncRuleRecordUser
-  | AsyncRuleRecordUserEvent
-  | AsyncBatchRecord
-) & {
-  tenantId: string
 }
 
 function getGroupIdForGcTxAndTxEvent(

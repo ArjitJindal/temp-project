@@ -1,9 +1,9 @@
 import {
   BUSINESS_RISK_PARAMETERS,
-  isNotArsChangeTxId,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
-} from '@flagright/lib/utils/risk';
+} from '@flagright/lib/utils/risk-parameters';
+import { isNotArsChangeTxId } from '@flagright/lib/utils/risk';
 import { keyBy } from 'lodash';
 import s from './index.module.less';
 import { useApi } from '@/api';

@@ -1,13 +1,13 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { AccountsService } from '@/services/accounts'
 import { logger } from '@/core/logger'
 import { isDemoTenant } from '@/utils/tenant-id'
+import { Tenant } from '@/@types/tenant'
+import { AUDITLOG_COLLECTION } from '@/utils/mongo-table-names'
 
 const timestamps = {
   prod: { $gte: 1759050000000, $lte: 1759053600000 }, // timestamp when the migration ran on prod

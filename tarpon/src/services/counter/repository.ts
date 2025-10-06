@@ -1,10 +1,10 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+import { COUNTER_COLLECTION } from '@/utils/mongo-table-names'
 import {
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+} from '@/utils/clickhouse/checks'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { logger } from '@/core/logger'
 

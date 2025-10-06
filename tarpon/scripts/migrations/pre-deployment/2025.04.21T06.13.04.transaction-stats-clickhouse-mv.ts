@@ -1,15 +1,13 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
-import {
-  CLICKHOUSE_DEFINITIONS,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
+import { Tenant } from '@/@types/tenant'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
-  getClickhouseClient,
-  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 async function migrateTenant(tenant: Tenant) {
   if (!isClickhouseEnabledInRegion()) {

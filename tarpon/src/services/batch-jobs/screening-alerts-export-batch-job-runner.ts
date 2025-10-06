@@ -13,7 +13,7 @@ import {
   SANCTIONS_HITS_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'

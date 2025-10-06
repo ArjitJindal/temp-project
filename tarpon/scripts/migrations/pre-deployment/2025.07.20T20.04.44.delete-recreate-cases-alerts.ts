@@ -1,11 +1,9 @@
 import { ResponseJSON } from '@clickhouse/client'
 import { migrateAllTenants } from '../utils/tenant'
-import {
-  getCreateTableQuery,
-  getClickhouseClient,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { Tenant } from '@/services/accounts/repository'
+import { getCreateTableQuery } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { Tenant } from '@/@types/tenant'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { logger } from '@/core/logger'

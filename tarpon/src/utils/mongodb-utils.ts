@@ -25,12 +25,14 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
-  DELTA_SANCTIONS_COLLECTION,
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
   getSearchIndexName,
-  SANCTIONS_COLLECTION,
 } from './mongodb-definitions'
+import {
+  DELTA_SANCTIONS_COLLECTION,
+  SANCTIONS_COLLECTION,
+} from './mongo-table-names'
 import {
   sendBulkMessagesToMongoConsumer,
   sendMessageToMongoConsumer,
@@ -40,13 +42,9 @@ import { isDemoTenant } from './tenant-id'
 import { getSQSClient } from './sns-sqs-client'
 import { generateChecksum } from './object'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
-import {
-  DEFAULT_PAGE_SIZE,
-  getPageSizeNumber,
-  MAX_PAGE_SIZE,
-  OptionalPaginationParams,
-  PageSize,
-} from '@/utils/pagination'
+import { getPageSizeNumber } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants/pagination'
+import { OptionalPaginationParams, PageSize } from '@/@types/pagination'
 import {
   HOUR_DATE_FORMAT,
   DAY_DATE_FORMAT,

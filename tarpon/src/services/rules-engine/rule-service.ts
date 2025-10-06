@@ -20,13 +20,7 @@ import {
   getVariableKeysFromLogic,
 } from '../logic-evaluator/engine/utils'
 import { STOPWORDS } from '../../utils/stopwords'
-import {
-  RuleChecksForField,
-  RuleNature,
-  RULES_LIBRARY,
-  RuleTypeField,
-  RuleTypology,
-} from './transaction-rules/library'
+import { RULES_LIBRARY } from './transaction-rules/library'
 import {
   TRANSACTION_FILTER_DEFAULT_VALUES,
   TRANSACTION_FILTERS,
@@ -37,7 +31,13 @@ import { assertValidRiskLevelParameters, isV8Rule } from './utils'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { getTimeRangeByTimeWindows } from './utils/time-utils'
-import { TimeWindow } from './utils/rule-parameter-schemas'
+import { TimeWindow } from '@/@types/rule/params'
+import {
+  RuleChecksForField,
+  RuleNature,
+  RuleTypeField,
+  RuleTypology,
+} from '@/constants/rules'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'

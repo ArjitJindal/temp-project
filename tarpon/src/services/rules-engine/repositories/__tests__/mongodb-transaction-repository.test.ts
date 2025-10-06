@@ -5,7 +5,7 @@ import { TimeRange } from '../transaction-repository-interface'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 
 describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
   let repository: MongoDbTransactionRepository

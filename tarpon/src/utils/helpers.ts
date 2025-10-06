@@ -1,7 +1,7 @@
 import { isValidEmail } from '@flagright/lib/utils'
 import compact from 'lodash/compact'
 import uniq from 'lodash/uniq'
-import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
+import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants/mentions'
 import { envIs } from './env'
 import { isDemoTenant } from './tenant-id'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'

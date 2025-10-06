@@ -14,10 +14,12 @@ import {
   DefaultApiGetTransactionsStatsByTimeRequest,
   DefaultApiGetTransactionsStatsByTypeRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { OptionalPagination } from '@/@types/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { executeClickhouseQuery, getSortedData } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { getSortedData } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'

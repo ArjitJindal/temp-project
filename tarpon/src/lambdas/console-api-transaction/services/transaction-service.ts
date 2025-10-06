@@ -26,14 +26,12 @@ import { traceable } from '@/core/xray'
 import {
   CursorPaginationResponse,
   OptionalPagination,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { Currency, CurrencyService } from '@/services/currency'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'

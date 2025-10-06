@@ -1,20 +1,20 @@
 import { Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickhouseWebhookDeliveryRepository } from './clickhouse-webhook-delivery-repository'
-import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongodb-definitions'
+import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongo-table-names'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 import { traceable } from '@/core/xray'
 import { DefaultApiGetWebhooksWebhookIdDeliveriesRequest } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { prefixRegexMatchFilterForArray } from '@/utils/mongodb-utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import {
-  batchInsertToClickhouse,
-  isClickhouseMigrationEnabled,
-  getClickhouseClient,
   isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+  isClickhouseMigrationEnabled,
+} from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 @traceable
 export class WebhookDeliveryRepository {

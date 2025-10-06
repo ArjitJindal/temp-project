@@ -2,7 +2,7 @@ import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { TenantService } from '../tenants'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { logger } from '@/core/logger'
 
 export class OptimizeClickhouseBatchJobRunner extends BatchJobRunner {

@@ -54,7 +54,7 @@ import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanct
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import {
   GenericSanctionsSearchType,
   UserRuleStage,

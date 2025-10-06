@@ -5,7 +5,7 @@ import {
   COUNTRY_REGIONS,
   CountryCode,
   isCountryCode,
-} from '@flagright/lib/constants'
+} from '@flagright/lib/constants/countries'
 
 /*
   If val is a country code, returns as is, if not, tries to convert to country code

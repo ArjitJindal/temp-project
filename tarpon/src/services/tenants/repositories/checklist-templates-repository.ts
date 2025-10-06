@@ -7,7 +7,7 @@ import {
   prefixRegexMatchFilter,
   regexMatchFilter,
 } from '@/utils/mongodb-utils'
-import { CHECKLIST_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
+import { CHECKLIST_TEMPLATE_COLLECTION } from '@/utils/mongo-table-names'
 import { DefaultApiGetChecklistTemplatesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { ChecklistTemplate } from '@/@types/openapi-internal/ChecklistTemplate'

@@ -51,7 +51,7 @@ import { addNewSubsegment } from '@/core/xray'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
   DYNAMODB_WRITE_CAPACITY_METRIC,
-} from '@/core/cloudwatch/metrics'
+} from '@/constants/cloudwatch/metrics'
 import { logger } from '@/core/logger'
 import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'

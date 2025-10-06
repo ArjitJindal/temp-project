@@ -9,7 +9,6 @@ import {
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -18,6 +17,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResultItem } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { zipGenerators } from '@/utils/generator'
 import { traceable } from '@/core/xray'
 

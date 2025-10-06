@@ -84,7 +84,7 @@ import { LinkerService } from '@/services/linker'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import {
   auditLog,
   AuditLogEntity,

@@ -3,7 +3,7 @@ import compact from 'lodash/compact'
 import mergeWith from 'lodash/mergeWith'
 import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
@@ -12,6 +12,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { getNonUserSenderKeyId, getUserSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { traceable } from '@/core/xray'
 

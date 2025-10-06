@@ -1,7 +1,7 @@
 import {
-  TransactionAmountRange,
   TransactionTimeRange,
-} from '../utils/rule-parameter-schemas'
+  TransactionAmountRange,
+} from '@/@types/rule/params'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import {
   PaymentDetails,

@@ -1,17 +1,11 @@
 import startCase from 'lodash/startCase'
-import { COUNTRY_CODES } from '@flagright/lib/constants'
+import { COUNTRY_CODES } from '@flagright/lib/constants/countries'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { SCREENING_FIELDS } from '../transaction-rules/payment-details-screening-base'
-import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
-import {
-  uiSchema,
-  UiSchemaNumberSlider,
-  UiSchemaParams,
-  UiSchemaParamsAgeRange,
-} from '@/services/rules-engine/utils/rule-schema-utils'
+import { uiSchema } from '@/services/rules-engine/utils/rule-schema-utils'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
@@ -25,30 +19,12 @@ import { FUZZINESS_SETTING_OPTIONSS } from '@/@types/openapi-internal-custom/Fuz
 import { PRODUCT_TYPES } from '@/@types/openapi-internal-custom/ProductType'
 import { USER_RULE_STAGES } from '@/@types/openapi-internal-custom/UserRuleStage'
 import { TRANSACTION_RULE_STAGES } from '@/@types/openapi-internal-custom/TransactionRuleStage'
-
-type SchemaOptions = {
-  title?: string
-  description?: string
-  uiSchema?: UiSchemaParams<unknown>
-}
-
-export type TimeWindow = {
-  units: number
-  granularity: TimeWindowGranularity
-  rollingBasis?: boolean
-  fiscalYear?: TimeWindowFiscalYear
-}
-
-export type TransactionsCounterPartiesThreshold = {
-  transactionsCounterPartiesCount: number
-  checkPaymentMethodDetails?: boolean
-}
-
-export type DayWindow = {
-  units: number
-  granularity: 'day'
-  rollingBasis?: boolean
-}
+import {
+  AgeRangeSchemaOptions,
+  Comparator,
+  NumberSliderSchemaOptions,
+  SchemaOptions,
+} from '@/@types/rule/params'
 
 export const TRANSACTION_COUNTERPARTIES_THRESHOLD_SCHEMA = (
   options?: SchemaOptions
@@ -236,14 +212,6 @@ export const AGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     ...AGE_SCHEMA(options),
     nullable: true,
   } as const)
-
-type AgeRangeSchemaOptions = SchemaOptions & {
-  uiSchema?: Partial<UiSchemaParamsAgeRange>
-}
-
-type NumberSliderSchemaOptions = SchemaOptions & {
-  uiSchema?: Partial<UiSchemaNumberSlider>
-}
 
 export const AGE_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
   ({
@@ -651,13 +619,6 @@ export const CHECK_RECEIVER_OPTIONAL_SCHEMA = () =>
     nullable: true,
   } as const)
 
-export type TransactionAmountRange = {
-  [currency: string]: {
-    max?: number
-    min?: number
-  }
-}
-
 export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
@@ -683,15 +644,6 @@ export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
     ...TRANSACTION_AMOUNT_RANGE_SCHEMA(options),
     nullable: true,
   } as const)
-
-export interface TimeRangeHourAndMinute {
-  utcHours: number
-  utcMinutes: number
-}
-export interface TransactionTimeRange {
-  startTime: TimeRangeHourAndMinute
-  endTime: TimeRangeHourAndMinute
-}
 
 export const TRANSACTION_TIME_RANGE_SCHEMA = (options?: SchemaOptions) =>
   ({
@@ -806,7 +758,6 @@ export const LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
-export type Comparator = 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO'
 export const COMPARATORS: Comparator[] = [
   'GREATER_THAN_OR_EQUAL_TO',
   'LESS_THAN_OR_EQUAL_TO',
@@ -820,11 +771,6 @@ export const COMPARATOR_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'Comparator',
     description: options?.description,
   } as const)
-
-export type ValueComparator = {
-  value: number
-  comparator: Comparator
-}
 
 export const VALUE_COMPARATOR_SCHEMA = (options?: SchemaOptions) =>
   ({

@@ -33,7 +33,7 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import {
@@ -53,6 +53,8 @@ import {
 } from '@/@types/cases/CasesInternal'
 import { removeUndefinedFields } from '@/utils/object'
 import { DynamoConsumerMessage, dynamoKeyList } from '@/@types/dynamo'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
+
 type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 type SubjectCasesQueryParams = {
@@ -72,7 +74,7 @@ export class DynamoCaseRepository {
   private readonly dynamoDb: DynamoDBDocumentClient
   private readonly dynamoAlertRepository: DynamoAlertRepository
   private readonly tableName: string
-  private readonly alertsClickhouseTableName: string
+  private readonly alertsClickhouseTableName: ClickhouseTableNames
 
   /**
    * Initializes a new DynamoCaseRepository instance

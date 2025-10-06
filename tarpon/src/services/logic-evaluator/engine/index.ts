@@ -85,7 +85,7 @@ import {
   getTimeRangeByTimeWindows,
   subtractTime,
 } from '@/services/rules-engine/utils/time-utils'
-import { TimeWindow } from '@/services/rules-engine/utils/rule-parameter-schemas'
+import { TimeWindow } from '@/@types/rule/params'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { LogicEntityVariableEntityEnum } from '@/@types/openapi-internal/LogicEntityVariable'
