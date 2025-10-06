@@ -5,6 +5,7 @@ import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import Address from '@/components/ui/Address';
+import BankDetails from '@/components/ui/BankDetails';
 import {
   Address as ApiAddress,
   CardExpiry,
@@ -12,6 +13,7 @@ import {
   ConsumerName,
   Tag as ApiTag,
   CurrencyCode,
+  CorrespondenceBankDetails,
 } from '@/apis';
 import { notNullish } from '@/utils/array';
 import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
@@ -157,6 +159,14 @@ function renderValue(
     const address = value as ApiAddress;
     return <Address address={address} />;
   }
+
+  if (key === 'correspondenceBankDetails') {
+    const correspondenceBankDetails = value as CorrespondenceBankDetails[];
+    return correspondenceBankDetails.map((correspondenceBankDetail) => (
+      <BankDetails key={correspondenceBankDetail.bankName} bankDetails={correspondenceBankDetail} />
+    ));
+  }
+
   return stringifyValue(value);
 }
 

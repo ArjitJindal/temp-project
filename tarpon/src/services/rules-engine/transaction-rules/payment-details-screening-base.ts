@@ -146,8 +146,9 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       : []
 
     const bankInfos = screeningFields.includes('BANK_NAME')
-      ? compact([extractBankInfoFromPaymentDetails(paymentDetails)])
+      ? compact(extractBankInfoFromPaymentDetails(paymentDetails))
       : []
+
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
     const providers = getDefaultProviders()
     const data: (SanctionsRuleResult | undefined)[] = await Promise.all([

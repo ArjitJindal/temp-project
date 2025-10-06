@@ -5031,6 +5031,21 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - method
+    CorrespondenceBankDetails:
+      description: Model for Correspondence bank details
+      type: object
+      x-examples: {}
+      title: CorrespondenceBankDetails
+      properties:
+        bankName:
+          type: string
+          minLength: 1
+          description: Name of the bank
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     SWIFTDetails:
       description: Model for SWIFT payment method
       type: object
@@ -5071,6 +5086,10 @@ components:
           description: Special instructions if any
         address:
           $ref: '#/components/schemas/Address'
+        correspondenceBankDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/CorrespondenceBankDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
