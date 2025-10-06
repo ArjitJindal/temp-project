@@ -467,6 +467,13 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             onKeyDown={(e) => {
               if (e.key === 'Tab') {
                 handleOpenChange(false);
+              } else if (e.key === 'Enter') {
+                if (isOpen && searchText != null && searchText !== '') {
+                  applySearchStringValue(searchText, props.value);
+                }
+                handleOpenChange(!isOpen);
+              } else if (e.key === 'Escape') {
+                setSearchText('');
               }
             }}
           />
