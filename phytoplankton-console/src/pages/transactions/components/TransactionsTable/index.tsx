@@ -24,6 +24,7 @@ import {
   CommonParams,
   DerivedColumn,
   SelectionAction,
+  SortingParamsItem,
   TableColumn,
   TableData,
   TableRefType,
@@ -117,6 +118,8 @@ export const defaultTimestamps = memoize(() => ({
   beforeTimestamp: dayjs().endOf('day').valueOf(),
 }));
 
+const DEFAULT_TRANSACTIONS_SORTING: SortingParamsItem = ['timestamp', 'descend'];
+
 export const transactionParamsToRequest = (
   params: TransactionsTableParams,
   options?: {
@@ -155,7 +158,7 @@ export const transactionParamsToRequest = (
     responseType,
     reference,
   } = params;
-  const [sortField, sortOrder] = params.sort[0] ?? [];
+  const [sortField, sortOrder] = params.sort[0] ?? DEFAULT_TRANSACTIONS_SORTING;
   const requestParams: DefaultApiGetTransactionsListRequest = {
     view: view ?? DEFAULT_PAGINATION_VIEW,
     page,
