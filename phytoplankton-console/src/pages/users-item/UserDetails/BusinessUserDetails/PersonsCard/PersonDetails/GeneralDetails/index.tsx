@@ -1,5 +1,5 @@
 import React from 'react';
-import { Person } from '@/apis';
+import { Tag, UserDetails } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { formatConsumerName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -8,12 +8,12 @@ import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import GenderTag from '@/components/library/Tag/GenderTag';
 
 interface Props {
-  person: Person;
+  generalDetails: UserDetails;
+  tags?: Tag[];
 }
 
 export default function GeneralDetails(props: Props) {
-  const { person } = props;
-  const { generalDetails } = person;
+  const { generalDetails, tags } = props;
   return (
     <EntityPropertiesCard
       title={'General details'}
@@ -36,7 +36,7 @@ export default function GeneralDetails(props: Props) {
           label: 'Tags',
           value: (
             <TagList>
-              {person.tags?.map((tag) => (
+              {tags?.map((tag) => (
                 <KeyValueTag key={tag.key} tag={tag} />
               ))}
             </TagList>
