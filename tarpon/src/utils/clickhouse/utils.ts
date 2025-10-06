@@ -53,6 +53,19 @@ const DEFAULT_BACKOFF_OPTIONS: BackoffOptions = {
   jitter: 'full',
 }
 
+type ClickHouseSyncOptions = {
+  /** Wait for actions to manipulate the partitions.
+   * 0 - do not wait,
+   * 1 - wait for execution only of itself,
+   * 2 - wait for everyone. */
+  alter_sync?: string
+  /** Wait for synchronous execution of ALTER TABLE UPDATE/DELETE queries (mutations).
+   * 0 - execute asynchronously.
+   * 1 - wait current server.
+   * 2 - wait all replicas if they exist. */
+  mutations_sync?: string
+}
+
 async function executeWithBackoff<T>(
   operation: () => Promise<T>,
   operationName: string,
@@ -136,7 +149,7 @@ export const getClickhouseClientConfig = async (
     keepAlive?: boolean
     idleSocketTtl?: number
     requestTimeout?: number
-  }
+  } & ClickHouseSyncOptions
 ): Promise<NodeClickHouseClientConfigOptions> => {
   if (envIs('local') || envIs('test')) {
     return getLocalConfig(database, options)
@@ -154,8 +167,8 @@ export const getClickhouseClientConfig = async (
     request_timeout: options?.requestTimeout ?? 30_000, // 30 seconds
     clickhouse_settings: {
       ...config.clickhouse_settings,
-      alter_sync: '2',
-      mutations_sync: '2',
+      alter_sync: options?.alter_sync ?? '2',
+      mutations_sync: options?.mutations_sync ?? '2',
       // Add query-level timeout settings
       max_execution_time: 300, // 5 minutes in seconds
       send_timeout: 300, // 5 minutes
@@ -235,7 +248,7 @@ export async function getClickhouseClient(
     keepAlive?: boolean
     idleSocketTtl?: number
     requestTimeout?: number
-  }
+  } & ClickHouseSyncOptions
 ) {
   if (client[tenantId]) {
     return client[tenantId]
@@ -517,7 +530,10 @@ export async function createOrUpdateClickHouseTable(
   if (!options?.skipDefaultClient) {
     await createDbIfNotExists(tenantId)
   }
-  const client = await getClickhouseClient(tenantId)
+  const client = await getClickhouseClient(tenantId, {
+    alter_sync: '0',
+    mutations_sync: '0',
+  })
   await createTableIfNotExists(client, tableName, table)
   await addMissingColumnsTable(client, tableName, table)
   await addMissingProjections(client, tableName, table)
