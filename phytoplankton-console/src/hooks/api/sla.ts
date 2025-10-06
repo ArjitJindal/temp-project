@@ -1,6 +1,6 @@
 import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import type { SLAPolicy, SLAPoliciesResponse } from '@/apis';
+import type { SLAPolicy, SLAPoliciesResponse, SLAPolicyIdResponse } from '@/apis';
 
 export function useCreateSlaPolicy() {
   const api = useApi();
@@ -24,7 +24,7 @@ export function useDeleteSlaPolicy() {
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import type { QueryResult } from '@/utils/queries/types';
 import type { PaginatedData } from '@/utils/queries/hooks';
-import { SLA_POLICY, SLA_POLICY_LIST } from '@/utils/queries/keys';
+import { SLA_POLICY, SLA_POLICY_ID, SLA_POLICY_LIST } from '@/utils/queries/keys';
 import { AsyncResource, map } from '@/utils/asyncResource';
 
 export function useSlaPolicies(params?: any): QueryResult<any> {
@@ -53,4 +53,19 @@ export function useSlaPoliciesPaginated(
 export function useSlaPolicy(slaId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(SLA_POLICY(slaId), async () => api.getSlaPolicy({ slaId }));
+}
+
+export function useNewSlaId(options?: { enabled?: boolean }): QueryResult<SLAPolicyIdResponse> {
+  const api = useApi();
+  return useQuery<SLAPolicyIdResponse>(
+    SLA_POLICY_ID('new'),
+    async () => {
+      return await api.getNewSlaId();
+    },
+    {
+      enabled: options?.enabled ?? true,
+      staleTime: 0,
+      cacheTime: 0,
+    },
+  );
 }

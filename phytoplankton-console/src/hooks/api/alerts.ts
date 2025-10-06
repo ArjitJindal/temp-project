@@ -13,6 +13,7 @@ import {
   QA_SAMPLE_IDS,
   ALERT_COMMENTS,
   ALERT_ITEM_COMMENTS,
+  ALERT_QA_SAMPLING,
 } from '@/utils/queries/keys';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import type { QueryOptions, QueryResult } from '@/utils/queries/types';
@@ -218,6 +219,28 @@ export function useQaSample(sampleId: string, options?: { enabled?: boolean }) {
 export function useQaSampleIds() {
   const api = useApi();
   return useQuery(QA_SAMPLE_IDS(), async () => await api.getAlertsQaSampleIds());
+}
+
+export function useQaSamples(params: any) {
+  const api = useApi();
+  return usePaginatedQuery(ALERT_QA_SAMPLING({ ...params }), async (paginationParams) => {
+    const data = await api.getAlertsQaSampling({
+      ...paginationParams,
+      sortField: params.sort?.[0]?.[0],
+      sortOrder: params.sort?.[0]?.[1] ?? 'descend',
+      filterSampleName: params.samplingName,
+      filterSampleId: params.samplingId,
+      filterPriority: params.priority,
+      filterCreatedById: params.createdBy,
+      filterCreatedBeforeTimestamp: params.createdAt?.[1],
+      filterCreatedAfterTimestamp: params.createdAt?.[0],
+    });
+
+    return {
+      items: data.data,
+      total: data.total,
+    };
+  });
 }
 
 export function usePatchAlertQaAssignments(options?: Parameters<typeof useMutation>[1]) {

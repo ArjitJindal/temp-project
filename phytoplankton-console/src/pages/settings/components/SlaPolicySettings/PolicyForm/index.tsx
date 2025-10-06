@@ -3,7 +3,6 @@ import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { FormValues } from '../utils/utils';
 import PolicyConfigurationTable from './components/PolicyConfigurationTable';
 import s from './styles.module.less';
-import { SLAPolicyIdResponse } from '@/apis';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import NestedForm from '@/components/library/Form/NestedForm';
@@ -11,9 +10,7 @@ import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/Proper
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import { H4 } from '@/components/ui/Typography';
-import { useQuery } from '@/utils/queries/hooks';
-import { SLA_POLICY_ID } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useNewSlaId } from '@/hooks/api/sla';
 import { getOr } from '@/utils/asyncResource';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
 import Select from '@/components/library/Select';
@@ -33,18 +30,7 @@ interface Props {
 function PolicyConfigurationForm(props: Props) {
   const { handleCreate, handleEdit, initialValues, mode, onChange } = props;
   const isPnb = useFeatureEnabled('PNB');
-  const api = useApi();
-  const queryResult = useQuery<SLAPolicyIdResponse>(
-    SLA_POLICY_ID(initialValues.id || 'new'),
-    async () => {
-      return await api.getNewSlaId();
-    },
-    {
-      enabled: mode === 'CREATE',
-      staleTime: 0,
-      cacheTime: 0,
-    },
-  );
+  const queryResult = useNewSlaId({ enabled: mode === 'CREATE' });
   const [showErrors, setShowErrors] = useState(false);
   const newId = getOr(queryResult.data, { id: '' }).id;
   initialValues.id = mode === 'CREATE' ? newId : initialValues.id;

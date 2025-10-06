@@ -1,7 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
 import { Alert, RuleInstance } from '@/apis';
-import { useApi } from '@/api';
 import { useAlertTransactionStats } from '@/hooks/api/sanctions';
 import { useCheckedTransactionsQuery } from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions/helpers';
 import { AsyncResource, isSuccess, loading, map, success } from '@/utils/asyncResource';
@@ -25,7 +24,6 @@ export default function useStats(alert: Alert, caseUserId: string): StatsItem[] 
 
   const { queryResult } = useCheckedTransactionsQuery(alert, caseUserId);
 
-  const _api = useApi();
   const transactionsStatsQueryResult = useAlertTransactionStats(alert.alertId ?? '', {
     enabled: !!alert.alertId,
   });

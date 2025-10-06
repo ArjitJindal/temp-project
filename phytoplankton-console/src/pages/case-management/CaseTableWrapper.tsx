@@ -8,12 +8,10 @@ import AlertsStatusChangeModal, {
   Props as AlertsStatusChangeModalProps,
 } from './components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import { Case } from '@/apis';
-import { useApi } from '@/api';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
 import { useCasesListPaginated } from '@/hooks/api/cases';
 import { useRuleOptions } from '@/utils/rules';
-import { useAuth0User } from '@/utils/user-utils';
 import type { QueryResult } from '@/utils/queries/types';
 
 interface CaseTableChildrenProps extends ModalHandlers<CasesStatusChangeModalProps> {
@@ -29,9 +27,6 @@ export default function CaseTableWrapper(props: {
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
 }) {
   const { params, onChangeParams } = props;
-
-  const _api = useApi({ debounce: 500 });
-  const _auth0user = useAuth0User();
 
   const queryResults = useCasesListPaginated(params, { meta: { atf: true } });
   const ruleOptions = useRuleOptions();

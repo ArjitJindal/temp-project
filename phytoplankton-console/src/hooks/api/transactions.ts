@@ -10,10 +10,12 @@ import {
   TRANSACTIONS_ITEM_RISKS_ARS,
   TRANSACTIONS_STATS,
   TRANSACTIONS_COUNT,
+  TRANSACTIONS_EVENTS_FIND,
 } from '@/utils/queries/keys';
 import type {
   TransactionsStatsByTypesResponseData,
   TransactionsStatsByTimeResponseData,
+  InternalTransactionEvent,
 } from '@/apis';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import type { PaginatedData } from '@/utils/queries/hooks';
@@ -113,6 +115,24 @@ export function useTransactionArs(transactionId: string): QueryResult<any> {
   const api = useApi();
   return useQuery(TRANSACTIONS_ITEM_RISKS_ARS(transactionId), () =>
     api.getArsValue({ transactionId }),
+  );
+}
+
+export function useTransactionEvents(
+  transactionId: string,
+  params: { page?: number; pageSize?: number },
+): QueryResult<PaginatedData<InternalTransactionEvent>> {
+  const api = useApi();
+  return usePaginatedQuery<InternalTransactionEvent>(
+    TRANSACTIONS_EVENTS_FIND(transactionId, params),
+    async (paginationParams) => {
+      const result = await api.getTransactionEvents({
+        transactionId,
+        page: paginationParams.page,
+        pageSize: paginationParams.pageSize,
+      });
+      return result as PaginatedData<InternalTransactionEvent>;
+    },
   );
 }
 

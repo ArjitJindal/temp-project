@@ -8,7 +8,6 @@ import CommentsTab from './CommentsTab';
 import ActivityTab from './ActivityTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
-import { useApi } from '@/api';
 import type { CursorPaginatedData } from '@/utils/queries/hooks';
 import { AllParams, SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 import { isSuccess } from '@/utils/asyncResource';
@@ -181,7 +180,6 @@ export function useAlertTabs(props: Props): TabItem[] {
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
 
-  const _api = useApi();
   const settings = useSettings();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();

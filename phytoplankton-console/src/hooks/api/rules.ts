@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import type { FileInfo, Rule, RuleInstance, RuleQueue } from '@/apis';
 import {
@@ -186,4 +186,24 @@ export function useRulesUniversalSearch(
 export function useMachineLearningModels() {
   const api = useApi();
   return useQuery(MACHINE_LEARNING_MODELS(), async () => await api.getRuleMlModels());
+}
+
+export function useMachineLearningModelsPaginated(params?: {
+  modelId?: string;
+  modelType?: string;
+  modelName?: string;
+}) {
+  const api = useApi();
+  return usePaginatedQuery(MACHINE_LEARNING_MODELS(params), async (paginationParams) => {
+    const all = await api.getRuleMlModels({
+      modelId: params?.modelId,
+      modelType: params?.modelType,
+      modelName: params?.modelName,
+    });
+    const page = paginationParams.page ?? 1;
+    const pageSize = paginationParams.pageSize ?? all.length;
+    const start = (page - 1) * pageSize;
+    const items = all.slice(start, start + pageSize);
+    return { items, total: all.length };
+  });
 }

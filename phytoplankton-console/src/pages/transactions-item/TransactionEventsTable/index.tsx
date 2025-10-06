@@ -10,9 +10,7 @@ import {
   RISK_LEVEL,
   TRANSACTION_STATE,
 } from '@/components/library/Table/standardDataTypes';
-import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_EVENTS_FIND } from '@/utils/queries/keys';
+import { useTransactionEvents } from '@/hooks/api/transactions';
 import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
@@ -62,19 +60,8 @@ export default function TransactionEventsTable(props: Props) {
     sort: [],
   });
 
-  const api = useApi();
-
   const riskClassificationValues = useRiskClassificationScores();
-
-  const queryResults = usePaginatedQuery(
-    TRANSACTIONS_EVENTS_FIND(transactionId, params),
-    (params) =>
-      api.getTransactionEvents({
-        transactionId,
-        page: params.page,
-        pageSize: params.pageSize,
-      }),
-  );
+  const queryResults = useTransactionEvents(transactionId, params);
   const columns: TableColumn<InternalTransactionEvent>[] = useMemo(() => {
     const helper = new ColumnHelper<InternalTransactionEvent>();
     return helper.list([

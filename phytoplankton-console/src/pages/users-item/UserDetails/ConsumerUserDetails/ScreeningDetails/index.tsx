@@ -21,7 +21,6 @@ import Modal from '@/components/library/Modal';
 import EditIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import Form from '@/components/library/Form';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Confirm from '@/components/utils/Confirm';
@@ -90,7 +89,6 @@ export default function ScreeningDetails(props: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const proposalChangesStrategyRes = useUserFieldChangesStrategy('PepStatus');
 
-  const _api = useApi();
   const formRef = useRef(null);
 
   const ongoingSanctionsScreeningQueryResult = useUserScreeningStatus(user.userId);

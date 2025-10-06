@@ -5,7 +5,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import Tooltip from '@/components/library/Tooltip';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
-import { useApi } from '@/api';
 import { RiskLevel, useRiskLevel, useRiskScore } from '@/utils/risk-levels';
 import { message } from '@/components/library/Message';
 import {
@@ -54,7 +53,6 @@ interface Props {
 
 export default function UserManualRiskPanel(props: Props) {
   const { userId } = props;
-  const _api = useApi();
   const [isLocked, setIsLocked] = useState(false);
   const queryResult = useUserDrs(userId);
   const pulseAssignmentQuery = usePulseRiskAssignment(userId);
