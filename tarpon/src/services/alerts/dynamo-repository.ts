@@ -271,7 +271,9 @@ export class DynamoAlertRepository {
         const key = DynamoDbKeys.ALERT_SANCTIONS_DETAILS(
           this.tenantId,
           alertId,
-          sanctionsDetail.searchId
+          sanctionsDetail.searchId,
+          sanctionsDetail.hitContext?.paymentMethodId,
+          sanctionsDetail.entityType
         )
         batch.put({
           Item: {
@@ -287,7 +289,9 @@ export class DynamoAlertRepository {
         const key = DynamoDbKeys.ALERT_SANCTIONS_DETAILS(
           this.tenantId,
           alertId,
-          sanctionsDetail.searchId
+          sanctionsDetail.searchId,
+          sanctionsDetail.hitContext?.paymentMethodId,
+          sanctionsDetail.entityType
         )
         newBatch.put({
           Item: {

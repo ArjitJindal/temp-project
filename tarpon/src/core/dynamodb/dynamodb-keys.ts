@@ -164,10 +164,12 @@ export const DynamoDbKeys = {
   ALERT_SANCTIONS_DETAILS: (
     tenantId: string,
     alertId: string,
-    searchId: string
+    searchId?: string,
+    paymentMethodId?: string,
+    entityType?: string
   ) => ({
     PartitionKeyID: `${tenantId}${ALERT_SANCTIONS_DETAILS_KEY_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
-    SortKeyID: searchId,
+    SortKeyID: `${searchId}_${paymentMethodId || 'unknown'}_${entityType}`,
   }),
   ALERT_TRANSACTION_IDS: (tenantId: string, alertId: string) => ({
     PartitionKeyID: `${tenantId}${ALERT_TRANSACTION_IDS_KEY_IDENTIFIER}`,
