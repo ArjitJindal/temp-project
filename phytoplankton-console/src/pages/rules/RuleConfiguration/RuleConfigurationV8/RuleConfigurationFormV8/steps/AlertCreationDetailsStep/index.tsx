@@ -50,6 +50,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
 
 export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) {
   const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
+  const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
   const settings = useSettings();
   return (
     <Card.Root>
@@ -132,25 +133,27 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
               >
                 {(inputProps) => <CreationIntervalInput {...inputProps} />}
               </InputField>
-              <InputField<FormValues, 'falsePositiveCheckEnabled'>
-                name={'falsePositiveCheckEnabled'}
-                label={'False positive check'}
-                description={
-                  'Calculates the false positive probability for a given alert using machine learning. Learns over time with usage.'
-                }
-                labelProps={{ required: true }}
-              >
-                {(inputProps) => (
-                  <SelectionGroup<'true' | 'false'>
-                    mode="SINGLE"
-                    options={[
-                      { value: 'true', label: 'Yes' },
-                      { value: 'false', label: 'No' },
-                    ]}
-                    {...inputProps}
-                  />
-                )}
-              </InputField>
+              {isFalsePositiveEnabled && (
+                <InputField<FormValues, 'falsePositiveCheckEnabled'>
+                  name={'falsePositiveCheckEnabled'}
+                  label={'False positive check'}
+                  description={
+                    'Calculates the false positive probability for a given alert using machine learning. Learns over time with usage.'
+                  }
+                  labelProps={{ required: true }}
+                >
+                  {(inputProps) => (
+                    <SelectionGroup<'true' | 'false'>
+                      mode="SINGLE"
+                      options={[
+                        { value: 'true', label: 'Yes' },
+                        { value: 'false', label: 'No' },
+                      ]}
+                      {...inputProps}
+                    />
+                  )}
+                </InputField>
+              )}
               <DefaultAlertStatusInput />
             </div>
             <AlertAssignedToInput />
