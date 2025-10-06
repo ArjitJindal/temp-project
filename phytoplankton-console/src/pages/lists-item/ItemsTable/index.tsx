@@ -604,10 +604,16 @@ function useColumns(options: {
                       value={draft.value}
                       isDisabled={Boolean(rowApi?.isBusy)}
                       onChange={(value) => {
-                        rowApi?.setDraft?.({ ...draft, value: value ?? [] });
+                        rowApi?.setDraft?.((prev) => {
+                          const current = (prev as NewTableItemData) ?? draft;
+                          return { ...current, value: value ?? [] };
+                        });
                       }}
                       onChangeMeta={(meta) => {
-                        rowApi?.setDraft?.({ ...draft, meta });
+                        rowApi?.setDraft?.((prev) => {
+                          const current = (prev as NewTableItemData) ?? draft;
+                          return { ...current, meta };
+                        });
                       }}
                       listSubtype={listSubtype}
                       excludeCountries={existingCountryCodes}

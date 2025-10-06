@@ -312,7 +312,10 @@ function Table<Item extends object, Params extends object = CommonParams>(
             isCreateRow: true,
             isBusy: createBusy,
             getDraft: () => createDraft ?? original,
-            setDraft: (newValue: Item) => setCreateDraft(newValue),
+            setDraft: (newValue: Item | ((prev: Item) => Item)) =>
+              setCreateDraft((prev) =>
+                typeof newValue === 'function' ? newValue(prev ?? original) : newValue,
+              ),
             startEdit: () => {},
             cancelEdit: () => setCreateDraft(original),
             save: async () => {
@@ -340,7 +343,11 @@ function Table<Item extends object, Params extends object = CommonParams>(
           isCreateRow: false,
           isBusy: Boolean(editBusy[id]),
           getDraft: () => (isEditing ? (editDrafts[id] as Item) : original),
-          setDraft: (newValue: Item) => setEditDrafts((prev) => ({ ...prev, [id]: newValue })),
+          setDraft: (newValue: Item | ((prev: Item) => Item)) =>
+            setEditDrafts((prev) => ({
+              ...prev,
+              [id]: typeof newValue === 'function' ? newValue(prev[id] ?? original) : newValue,
+            })),
           startEdit: () => setEditDrafts((prev) => (prev[id] ? prev : { ...prev, [id]: original })),
           cancelEdit: () => {
             if (editBusy[id]) {

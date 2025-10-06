@@ -523,8 +523,10 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
     isBusy: isBusy,
     onConfirm: async (newValue: Value) => {
       if (rowApi?.setDraft) {
-        const updated = setByFieldAccessor(draftItem, column.key, newValue as any);
-        rowApi.setDraft(updated as any);
+        rowApi.setDraft((prevUnknown: unknown) => {
+          const prev = (prevUnknown as Item) ?? draftItem;
+          return setByFieldAccessor(prev, column.key, newValue);
+        });
         return;
       }
       if (onEdit) {

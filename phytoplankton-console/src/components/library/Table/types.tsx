@@ -39,7 +39,7 @@ export interface PublicRowEditApi {
   isCreateRow?: boolean;
   isBusy?: boolean;
   getDraft: () => unknown;
-  setDraft: (newValue: unknown) => void;
+  setDraft: (newValue: unknown | ((prev: unknown) => unknown)) => void;
   startEdit: () => void;
   cancelEdit: () => void;
   save: () => void | Promise<void>;
