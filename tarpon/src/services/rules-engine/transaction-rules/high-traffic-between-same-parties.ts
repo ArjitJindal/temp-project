@@ -103,6 +103,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     yield* await this.transactionRepository.getGenericUserSendingTransactionsGenerator(
       originUserId,
       this.transaction.originPaymentDetails,
+      undefined,
       {
         beforeTimestamp: timestamp,
         afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),

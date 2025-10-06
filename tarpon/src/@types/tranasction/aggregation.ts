@@ -5,6 +5,8 @@ import { UserRuleStage } from '../openapi-internal/UserRuleStage'
 import { Transaction } from '../openapi-public/Transaction'
 import { TransactionRiskScoringResult } from '../openapi-public/TransactionRiskScoringResult'
 import { TransactionMonitoringResult } from '../openapi-public/TransactionMonitoringResult'
+import { Address } from '../openapi-public/Address'
+import { ConsumerName } from '../openapi-internal/ConsumerName'
 import { PaymentDetails } from './payment-type'
 import { LegacyFilters } from '@/services/rules-engine/filters'
 
@@ -29,6 +31,12 @@ export type V8TransactionAggregationTask = {
   filters?: LegacyFilters
   transactionRiskScore?: number
 }
+
+export type EntityData =
+  | { type: 'ADDRESS'; address: Address }
+  | { type: 'EMAIL'; email: string }
+  | { type: 'NAME'; name: ConsumerName | string }
+
 export type V8LogicAggregationRebuildTask = {
   type: 'PRE_AGGREGATION'
   tenantId: string
@@ -42,10 +50,7 @@ export type V8LogicAggregationRebuildTask = {
   totalSliceCount?: number
   userId?: string
   paymentDetails?: PaymentDetails
-  aggregationData?: {
-    type: 'ADDRESS' | 'EMAIL' | 'NAME'
-    value: string | undefined
-  }
+  entityData?: EntityData
 }
 
 export type TransactionAggregationTaskEntry = {

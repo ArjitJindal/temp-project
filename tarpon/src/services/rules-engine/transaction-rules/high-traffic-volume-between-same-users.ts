@@ -163,6 +163,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     yield* await this.transactionRepository.getGenericUserSendingTransactionsGenerator(
       this.transaction.originUserId,
       this.transaction.originPaymentDetails,
+      undefined,
       {
         beforeTimestamp: this.transaction.timestamp,
         afterTimestamp: subtractTime(

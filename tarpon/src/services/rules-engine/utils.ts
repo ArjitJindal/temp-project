@@ -35,6 +35,12 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  getPaymentDetailsName,
+  getPaymentEmailId,
+  getPaymentMethodAddress,
+} from '@/utils/payment-details'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { sanitiseBucketedKey } from '@/core/dynamodb/key-utils'
 
@@ -58,6 +64,72 @@ export function getSenderKeys(
       transactionId: transaction.transactionId,
     }
   )
+}
+
+export function getSendingEntityKeys(
+  tenantId: string,
+  transaction: Transaction,
+  paymentDetails?: PaymentDetails
+): { PartitionKeyID: string; SortKeyID: string }[] {
+  if (!paymentDetails) {
+    return []
+  }
+  const address = getPaymentMethodAddress(paymentDetails)
+  const email = getPaymentEmailId(paymentDetails)
+  const name = getPaymentDetailsName(paymentDetails)
+  return compact([
+    address
+      ? DynamoDbKeys.ADDRESS_TRANSACTION(tenantId, address, 'sending', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    email
+      ? DynamoDbKeys.EMAIL_TRANSACTION(tenantId, email, 'sending', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    name
+      ? DynamoDbKeys.NAME_TRANSACTION(tenantId, name, 'sending', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+  ])
+}
+
+export function getReceivingEntityKeys(
+  tenantId: string,
+  transaction: Transaction,
+  paymentDetails?: PaymentDetails
+): { PartitionKeyID: string; SortKeyID: string }[] {
+  if (!paymentDetails) {
+    return []
+  }
+  const address = getPaymentMethodAddress(paymentDetails)
+  const email = getPaymentEmailId(paymentDetails)
+  const name = getPaymentDetailsName(paymentDetails)
+  return compact([
+    address
+      ? DynamoDbKeys.ADDRESS_TRANSACTION(tenantId, address, 'receiving', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    email
+      ? DynamoDbKeys.EMAIL_TRANSACTION(tenantId, email, 'receiving', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    name
+      ? DynamoDbKeys.NAME_TRANSACTION(tenantId, name, 'receiving', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+  ])
 }
 
 export function getSenderKeyId(

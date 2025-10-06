@@ -31,7 +31,10 @@ import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
 import { AccountsService } from '../accounts'
-import { getPaymentMethodAddress } from '../../utils/payment-details'
+import {
+  getPaymentDetailsNameString,
+  getPaymentMethodAddress,
+} from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
 import {
@@ -117,10 +120,7 @@ import { isConsoleMigrationEnabled } from '@/utils/clickhouse/utils'
 
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'
-import {
-  getPaymentDetailsName,
-  getPaymentEmailId,
-} from '@/utils/payment-details'
+import { getPaymentEmailId } from '@/utils/payment-details'
 import { Address } from '@/@types/openapi-public/Address'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
@@ -517,7 +517,7 @@ export class CaseCreationService {
     const originEmail: string | undefined =
       getPaymentEmailId(originPaymentDetails)
     const originName: string | undefined =
-      getPaymentDetailsName(originPaymentDetails)
+      getPaymentDetailsNameString(originPaymentDetails)
 
     if (isAnyRuleHasOriginHit) {
       if (originUserId) {
@@ -572,7 +572,7 @@ export class CaseCreationService {
       const destinationEmail: string | undefined = getPaymentEmailId(
         destinationPaymentDetails
       )
-      const destinationName: string | undefined = getPaymentDetailsName(
+      const destinationName: string | undefined = getPaymentDetailsNameString(
         destinationPaymentDetails
       )
 

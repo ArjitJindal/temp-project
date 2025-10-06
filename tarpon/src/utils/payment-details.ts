@@ -1,11 +1,12 @@
-import { formatConsumerName, getAddressStringForAggregation } from './helpers'
+import { formatConsumerName, getAddressString } from './helpers'
 import { neverReturn } from './lang'
 import { Address } from '@/@types/openapi-public/Address'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 
 export const getPaymentDetailsName = (
   paymentDetails: PaymentDetails | undefined
-): string | undefined => {
+): string | ConsumerName | undefined => {
   if (!paymentDetails) {
     return
   }
@@ -22,12 +23,26 @@ export const getPaymentDetailsName = (
     case 'MPESA':
       return paymentDetails.name
     case 'CARD':
-      return formatConsumerName(paymentDetails.nameOnCard)
+      return paymentDetails.nameOnCard
     case 'NPP':
-      return formatConsumerName(paymentDetails.name)
+      return paymentDetails.name
+  }
+}
+
+export const getPaymentDetailsNameString = (
+  paymentDetails: PaymentDetails | undefined
+): string | undefined => {
+  if (!paymentDetails) {
+    return
   }
 
-  return neverReturn(paymentDetails, undefined)
+  const name = getPaymentDetailsName(paymentDetails)
+
+  if (typeof name === 'string') {
+    return name
+  }
+
+  return formatConsumerName(name)
 }
 
 export function getPaymentMethodId(
@@ -78,41 +93,23 @@ export const getPaymentMethodAddress = (
     case 'MPESA':
     case 'CARD':
     case 'SWIFT':
-    case 'WALLET':
       return pm.address
     case 'IBAN':
     case 'ACH':
       return pm.bankAddress
-    case 'UPI':
-      return pm.address
-  }
-}
-
-export const getPaymentMethodAddressString = (
-  pm: PaymentDetails | undefined
-): string | undefined => {
-  if (!pm) {
-    return
-  }
-  switch (pm.method) {
-    case 'CHECK':
-      return getAddressStringForAggregation(pm.shippingAddress)
-    case 'CASH':
-    case 'NPP':
-    case 'GENERIC_BANK_ACCOUNT':
-    case 'MPESA':
-    case 'CARD':
-    case 'SWIFT':
-      return getAddressStringForAggregation(pm.address)
-    case 'IBAN':
-    case 'ACH':
-      return getAddressStringForAggregation(pm.bankAddress)
     case 'UPI':
     case 'WALLET':
       return undefined
   }
 
   return neverReturn(pm, undefined)
+}
+
+export const getPaymentMethodAddressString = (
+  pm: PaymentDetails | undefined
+): string | undefined => {
+  const address = getPaymentMethodAddress(pm)
+  return getAddressString(address)
 }
 
 export const getPaymentEmailId = (

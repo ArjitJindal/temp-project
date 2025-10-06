@@ -28,12 +28,15 @@ import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/variables/payment-details'
-import { generateChecksum } from '@/utils/object'
+import { generateChecksum, generateHashFromString } from '@/utils/object'
 import dayjs from '@/utils/dayjs'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
 import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 import { Address } from '@/@types/openapi-public/Address'
+
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { formatConsumerName, getAddressString } from '@/utils/helpers'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -268,7 +271,56 @@ export const DynamoDbKeys = {
           sortKeyData
         )
   },
-  // Attributes: [transactionId]
+  ADDRESS_TRANSACTION: (
+    tenantId: string,
+    address: Address,
+    direction: 'sending' | 'receiving' | 'all',
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
+  ) => {
+    const addressString = getAddressString(address)
+    if (!addressString) {
+      return null
+    }
+    const hashedAddress = generateHashFromString(addressString, 16)
+    return {
+      PartitionKeyID: `${tenantId}#transaction#address#${hashedAddress}#${direction}`,
+      SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
+    }
+  },
+  EMAIL_TRANSACTION: (
+    tenantId: string,
+    email: string,
+    direction: 'sending' | 'receiving' | 'all',
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
+  ) => {
+    if (!email) {
+      return null
+    }
+    const hashedEmail = generateHashFromString(email, 16)
+    return {
+      PartitionKeyID: `${tenantId}#transaction#email#${hashedEmail}#${direction}`,
+      SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
+    }
+  },
+  NAME_TRANSACTION: (
+    tenantId: string,
+    name: string | ConsumerName,
+    direction: 'sending' | 'receiving' | 'all',
+    sortKeyData?: AuxiliaryIndexTransactionSortKeyData
+  ) => {
+    const nameString =
+      typeof name === 'string' ? name : formatConsumerName(name)
+
+    if (!nameString) {
+      return null
+    }
+
+    const hashedName = generateHashFromString(nameString, 16)
+    return {
+      PartitionKeyID: `${tenantId}#transaction#name#${hashedName}#${direction}`,
+      SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
+    }
+  },
   NON_USER_TRANSACTION: (
     tenantId: string,
     paymentDetails: PaymentDetails,
@@ -739,8 +791,7 @@ export const DynamoDbKeys = {
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys
 
-export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
-  PaymentMethod,
+type AllKeys =
   | Array<keyof IBANDetails>
   | Array<keyof CardDetails>
   | Array<keyof ACHDetails>
@@ -752,19 +803,21 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   | Array<keyof CheckDetails>
   | Array<keyof CashDetails>
   | Array<keyof NPPDetails>
-> = {
-  IBAN: ['BIC', 'IBAN'],
-  CARD: ['cardFingerprint'],
-  ACH: ['routingNumber', 'accountNumber'],
-  UPI: ['upiID'],
-  WALLET: ['walletId'],
-  GENERIC_BANK_ACCOUNT: ['accountNumber', 'accountType', 'bankCode'],
-  SWIFT: ['accountNumber', 'swiftCode'],
-  MPESA: ['businessShortCode', 'phoneNumber'],
-  CHECK: ['accountNumber'],
-  CASH: ['identifier'],
-  NPP: ['payId'],
-}
+
+export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<PaymentMethod, AllKeys> =
+  {
+    IBAN: ['BIC', 'IBAN'],
+    CARD: ['cardFingerprint'],
+    ACH: ['routingNumber', 'accountNumber'],
+    UPI: ['upiID'],
+    WALLET: ['walletId'],
+    GENERIC_BANK_ACCOUNT: ['accountNumber', 'accountType', 'bankCode'],
+    SWIFT: ['accountNumber', 'swiftCode'],
+    MPESA: ['businessShortCode', 'phoneNumber'],
+    CHECK: ['accountNumber'],
+    CASH: ['identifier'],
+    NPP: ['payId'],
+  }
 
 export function getPaymentMethodId(
   pm: PaymentDetails | undefined
