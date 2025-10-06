@@ -45,6 +45,34 @@ import { MongoConsumerMessage } from '@/@types/mongo'
 import { addNewSubsegment } from '@/core/xray'
 import { MigrationTrackerTable } from '@/models/migration-tracker'
 
+const DEFAULT_BACKOFF_OPTIONS: BackoffOptions = {
+  numOfAttempts: 10,
+  maxDelay: 240000,
+  startingDelay: 10000,
+  timeMultiple: 2,
+  jitter: 'full',
+}
+
+async function executeWithBackoff<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  context?: Record<string, unknown>,
+  backoffOptions?: Partial<BackoffOptions>
+): Promise<T> {
+  const options = { ...DEFAULT_BACKOFF_OPTIONS, ...backoffOptions }
+
+  return backOff(operation, {
+    ...options,
+    retry: (error, attemptNumber) => {
+      logger.warn(
+        `ClickHouse ${operationName} failed, retrying... Attempt ${attemptNumber}: ${error.message}`,
+        { error, attemptNumber, operationName, ...context }
+      )
+      return true
+    },
+  })
+}
+
 export const isClickhouseEnabledInRegion = () => {
   if (envIsNot('prod')) {
     return true
@@ -281,14 +309,7 @@ const clickhouseInsert = async (
     async_insert: envIs('test', 'local') ? 0 : 1,
   }
 
-  const options: BackoffOptions = {
-    numOfAttempts: 10,
-    maxDelay: 240000,
-    startingDelay: 10000,
-    timeMultiple: 2,
-  }
-
-  await backOff(
+  await executeWithBackoff(
     async () => {
       await client.insert({
         table,
@@ -298,16 +319,8 @@ const clickhouseInsert = async (
         clickhouse_settings: CLICKHOUSE_SETTINGS,
       })
     },
-    {
-      ...options,
-      retry: (error, attemptNumber) => {
-        logger.warn(
-          `ClickHouse insert failed, retrying... Attempt ${attemptNumber}: ${error.message}`,
-          { error, attemptNumber, table, tenantId }
-        )
-        return true
-      },
-    }
+    'insert',
+    { table, tenantId }
   )
 }
 
@@ -520,7 +533,14 @@ async function createTableIfNotExists(
   const tableExists = await checkTableExists(client, tableName)
   if (!tableExists) {
     const createTableQuery = getCreateTableQuery(table)
-    await client.query({ query: createTableQuery })
+
+    await executeWithBackoff(
+      async () => {
+        await client.query({ query: createTableQuery })
+      },
+      'create table',
+      { tableName }
+    )
   }
 }
 
@@ -579,7 +599,13 @@ async function addMissingColumns(
       ', ADD COLUMN '
     )}`
 
-    await client.query({ query: addColumnsQuery })
+    await executeWithBackoff(
+      async () => {
+        await client.query({ query: addColumnsQuery })
+      },
+      'add columns',
+      { tableName }
+    )
     logger.info(
       `Added missing columns to table ${tableName}. ${columnsToAdd
         .map((c) => c.split(' ')[0])
@@ -591,7 +617,14 @@ async function addMissingColumns(
     const updateColumnsQuery = `ALTER TABLE ${tableName} MODIFY COLUMN ${columnsToUpdate.join(
       ', MODIFY COLUMN '
     )}`
-    await client.query({ query: updateColumnsQuery })
+
+    await executeWithBackoff(
+      async () => {
+        await client.query({ query: updateColumnsQuery })
+      },
+      'update columns',
+      { tableName }
+    )
     logger.info(
       `Updated columns to table ${tableName}. ${columnsToUpdate
         .map((c) => c.split(' ')[0])
@@ -677,10 +710,22 @@ async function addProjection(
     ALTER TABLE ${tableName} ADD PROJECTION ${projectionName}
     (SELECT ${columns} ${projection.definition.aggregator} BY ${projection.definition.aggregatorBy})
   `
-  await client.query({ query: addProjectionQuery })
-  await client.query({
-    query: `ALTER TABLE ${tableName} MATERIALIZE PROJECTION ${projectionName}`,
-  })
+  await executeWithBackoff(
+    async () => {
+      await client.query({ query: addProjectionQuery })
+    },
+    'add projection',
+    { tableName }
+  )
+  await executeWithBackoff(
+    async () => {
+      await client.query({
+        query: `ALTER TABLE ${tableName} MATERIALIZE PROJECTION ${projectionName}`,
+      })
+    },
+    'materialize projection',
+    { tableName }
+  )
   logger.info(
     `Added missing projection ${projection.name} to table ${tableName}.`
   )
@@ -748,13 +793,25 @@ async function createMaterializedViews(
       continue
     }
     const createViewQuery = createMaterializedTableQuery(view)
-    await client.query({ query: createViewQuery })
+    await executeWithBackoff(
+      async () => {
+        await client.query({ query: createViewQuery })
+      },
+      'create materialized table',
+      { table: table.table, tenantId }
+    )
     const matQuery = await createMaterializedViewQuery(
       view,
       table.table,
       tenantId
     )
-    await client.query({ query: matQuery })
+    await executeWithBackoff(
+      async () => {
+        await client.query({ query: matQuery })
+      },
+      'create materialized view',
+      { table: table.table, tenantId }
+    )
 
     await addMissingColumns(client, view.table, view.columns)
   }
@@ -926,7 +983,13 @@ async function addIndex(
   indexDefinition: string
 ): Promise<void> {
   const addIndexQuery = `ALTER TABLE ${tableName} ADD INDEX ${indexName} ${indexDefinition}`
-  await client.query({ query: addIndexQuery })
+  await executeWithBackoff(
+    async () => {
+      await client.query({ query: addIndexQuery })
+    },
+    'add index',
+    { tableName }
+  )
   logger.info(`Added missing index ${indexName} to table ${tableName}.`)
 }
 
@@ -936,12 +999,33 @@ async function updateIndex(
   indexName: string,
   indexDefinition: string
 ): Promise<void> {
-  await client.query({
-    query: `ALTER TABLE ${tableName} DROP INDEX ${indexName}`,
-  })
-  await client.query({
-    query: `ALTER TABLE ${tableName} ADD INDEX ${indexName} ${indexDefinition}`,
-  })
+  await executeWithBackoff(
+    async () => {
+      await client.query({
+        query: `ALTER TABLE ${tableName} DROP INDEX ${indexName}`,
+      })
+    },
+    'drop index',
+    { tableName }
+  )
+  await executeWithBackoff(
+    async () => {
+      await client.query({
+        query: `ALTER TABLE ${tableName} ADD INDEX ${indexName} ${indexDefinition}`,
+      })
+    },
+    'update index',
+    { tableName }
+  )
+  await executeWithBackoff(
+    async () => {
+      await client.query({
+        query: `ALTER TABLE ${tableName} DROP INDEX ${indexName} ${indexDefinition}`,
+      })
+    },
+    'drop index',
+    { tableName }
+  )
   logger.info(`Updated index ${indexName} in table ${tableName}.`)
 }
 
