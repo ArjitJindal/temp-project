@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
+import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
@@ -105,7 +106,6 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
-import { formatDuration, getDuration } from '@/utils/time-utils';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -546,14 +546,16 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                   return <>-</>;
                 }
                 const duration = dayjs.duration(value);
-                return <>{formatDuration(getDuration(duration.asMilliseconds()), 2)}</>;
+                const days = Math.floor(duration.asDays());
+                return <>{pluralize('day', days, true)}</>;
               },
               stringify: (value) => {
                 if (value == null) {
                   return '-';
                 }
                 const duration = dayjs.duration(value);
-                return formatDuration(getDuration(duration.asMilliseconds()), 2);
+                const days = Math.floor(duration.asDays());
+                return pluralize('day', days, true);
               },
             },
           }),
