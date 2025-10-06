@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { startCase } from 'lodash';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
@@ -31,6 +31,7 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 interface SimulationTransactionsHitProps {
   taskId: string;
+  isSimulationRunning?: boolean;
 }
 
 interface TableParams extends CommonParams {
@@ -44,7 +45,7 @@ interface TableParams extends CommonParams {
 }
 
 export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps) => {
-  const { taskId } = props;
+  const { taskId, isSimulationRunning = false } = props;
   const settings = useSettings();
   const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -75,6 +76,54 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
         total: response.total,
       };
     },
+  );
+
+  // Define extraFilters with useMemo to prevent recreation on every render
+  const extraFilters = useMemo(
+    () => [
+      {
+        key: 'userId',
+        title: `${firstLetterUpper(settings.userAlias)} ID`,
+        renderer: ({ params, setParams }) => (
+          <UserSearchButton
+            userId={params.userId ?? null}
+            params={params}
+            onConfirm={setParams}
+            filterType="id"
+          />
+        ),
+      },
+      {
+        key: 'userName',
+        title: `${firstLetterUpper(settings.userAlias)} name`,
+        renderer: ({ params, setParams }) => (
+          <UserSearchButton
+            userId={params.userId ?? null}
+            params={params}
+            onConfirm={setParams}
+            filterType="name"
+          />
+        ),
+      },
+      {
+        key: 'transactionType',
+        title: 'Transaction Type',
+        renderer: ({ params, setParams }) => (
+          <UniquesSearchButton
+            uniqueType={'TRANSACTION_TYPES'}
+            title="Transaction Type"
+            defaults={TRANSACTION_TYPES as string[]}
+            initialState={{
+              uniques: params.transactionTypes ?? undefined,
+            }}
+            onConfirm={(value) => {
+              setParams((state) => ({ ...state, transactionTypes: value.uniques }));
+            }}
+          />
+        ),
+      },
+    ],
+    [settings.userAlias],
   );
 
   const helper = new ColumnHelper<SimulationBeaconTransactionResult>();
@@ -245,6 +294,37 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     }),
   ]);
 
+  // Check if any filters are applied - extract keys from both extraFilters and columns
+  const hasFiltersApplied = useMemo(() => {
+    // Get filter keys from extraFilters
+    const extraFilterKeys = extraFilters.map((filter) => filter.key);
+
+    // Get filter keys from columns with filtering enabled
+    const columnFilterKeys = columns
+      .filter((column: any) => column.filtering && typeof column.key === 'string')
+      .map((column: any) => column.key);
+
+    // Combine all filter keys
+    const allFilterKeys = [...extraFilterKeys, ...columnFilterKeys];
+
+    return allFilterKeys.some((key) => {
+      const value = params[key as keyof TableParams];
+      return (
+        value !== undefined &&
+        value !== null &&
+        (Array.isArray(value) ? value.length > 0 : Boolean(value))
+      );
+    });
+  }, [params, extraFilters, columns]);
+
+  // Determine appropriate empty text based on simulation status and filter state
+  const getEmptyText = () => {
+    if (hasFiltersApplied && !isSimulationRunning) {
+      return 'No data to display';
+    }
+    return 'Simulated entities will be shown after the simulation has finalized';
+  };
+
   return (
     <Card.Root className={s.card}>
       <Card.Section>
@@ -256,50 +336,8 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
           onChangeParams={setParams}
           rowKey="transactionId"
           fitHeight
-          emptyText="Simulated entities will be shown after the simulation has finalized"
-          extraFilters={[
-            {
-              key: 'userId',
-              title: `${firstLetterUpper(settings.userAlias)} ID`,
-              renderer: ({ params, setParams }) => (
-                <UserSearchButton
-                  userId={params.userId ?? null}
-                  params={params}
-                  onConfirm={setParams}
-                  filterType="id"
-                />
-              ),
-            },
-            {
-              key: 'userName',
-              title: `${firstLetterUpper(settings.userAlias)} name`,
-              renderer: ({ params, setParams }) => (
-                <UserSearchButton
-                  userId={params.userId ?? null}
-                  params={params}
-                  onConfirm={setParams}
-                  filterType="name"
-                />
-              ),
-            },
-            {
-              key: 'transactionType',
-              title: 'Transaction Type',
-              renderer: ({ params, setParams }) => (
-                <UniquesSearchButton
-                  uniqueType={'TRANSACTION_TYPES'}
-                  title="Transaction Type"
-                  defaults={TRANSACTION_TYPES as string[]}
-                  initialState={{
-                    uniques: params.transactionTypes ?? undefined,
-                  }}
-                  onConfirm={(value) => {
-                    setParams((state) => ({ ...state, transactionTypes: value.uniques }));
-                  }}
-                />
-              ),
-            },
-          ]}
+          emptyText={getEmptyText()}
+          extraFilters={extraFilters}
         />
       </Card.Section>
     </Card.Root>
