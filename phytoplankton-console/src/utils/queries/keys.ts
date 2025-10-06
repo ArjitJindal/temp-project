@@ -365,6 +365,13 @@ export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
   params,
 ];
 
+export const DASHBOARD_TEAM_STATS_LATEST = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'team',
+  'latest',
+  params,
+];
+
 export const DASHBOARD_TEAM_SLA_STATS = (params: AnyParameters): QueryKey => [
   'dashboard',
   'team',

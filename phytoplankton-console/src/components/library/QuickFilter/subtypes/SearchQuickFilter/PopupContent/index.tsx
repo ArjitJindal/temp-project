@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'ahooks';
-import { ItemType } from '../types';
+import type { ItemType } from '../types';
 import s from './style.module.less';
 import SearchResultList, { MessageRenderers } from './SearchResultList';
 import LastSearchList from './LastSearchList';

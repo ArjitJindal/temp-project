@@ -14,16 +14,8 @@ import {
   CommonParams as TableCommonParams,
 } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
-import {
-  AlertStatus,
-  CaseStatus,
-  DashboardLatestTeamStatsItemResponse,
-  DashboardTeamStatsItem,
-  DashboardTeamStatsItemResponse,
-} from '@/apis';
+import { useLatestTeamStats, useTeamPerformanceStats } from '@/hooks/api/dashboard';
+import { AlertStatus, CaseStatus } from '@/apis';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Select from '@/components/library/Select';
@@ -62,66 +54,20 @@ export default function TeamPerformanceCard(props: WidgetProps) {
   const getDateRangeToShow = (dateRange: RangeValue<Dayjs> | undefined) => {
     return isDatePickerOpen ? dateRange ?? defaultDateRange : dateRange;
   };
-  const api = useApi();
 
-  const dateRangeQueryResult = usePaginatedQuery(
-    DASHBOARD_TEAM_STATS({
-      page: paginationParams.page,
-      pageSize: paginationParams.pageSize,
-      scope: params.scope,
-      caseStatus: params.caseStatus,
-      dateRange: params.dateRange,
-    }),
-    async (p): Promise<DashboardTeamStatsItemResponse> => {
-      const [start, end] = params.dateRange ?? [];
-      let startTimestamp, endTimestamp;
-      if (start != null && end != null) {
-        startTimestamp = start.startOf('day').valueOf();
-        endTimestamp = end.endOf('day').valueOf();
-      }
-      const response = await api.getDashboardTeamStats({
-        scope: params.scope,
-        startTimestamp,
-        endTimestamp,
-        caseStatus: params.caseStatus,
-        page: p?.page ?? paginationParams.page,
-        pageSize: p?.pageSize ?? paginationParams.pageSize,
-      });
+  const dateRangeQueryResult = useTeamPerformanceStats({
+    scope: params.scope,
+    caseStatus: params.caseStatus,
+    dateRange: params.dateRange,
+    page: paginationParams.page,
+    pageSize: paginationParams.pageSize,
+  });
 
-      const updatedItems = response.items?.map((item: DashboardTeamStatsItem) => ({
-        ...item,
-        investigationTime:
-          item.investigationTime && item.caseIds?.length
-            ? item.investigationTime / item.caseIds.length
-            : 0,
-      }));
-
-      return {
-        total: response.total,
-        items: updatedItems,
-      };
-    },
-  );
-
-  const latestQueryResult = usePaginatedQuery(
-    DASHBOARD_TEAM_STATS({
-      page: paginationParams.page,
-      pageSize: paginationParams.pageSize,
-      scope: params.scope,
-    }),
-    async (p): Promise<DashboardLatestTeamStatsItemResponse> => {
-      const response = await api.getDashboardLatestTeamStats({
-        scope: params.scope,
-        page: p?.page ?? paginationParams.page,
-        pageSize: p?.pageSize ?? paginationParams.pageSize,
-      });
-
-      return {
-        total: response.total,
-        items: response.items,
-      };
-    },
-  );
+  const latestQueryResult = useLatestTeamStats({
+    scope: params.scope,
+    page: paginationParams.page,
+    pageSize: paginationParams.pageSize,
+  });
 
   const [showAggregatedView, setShowAggregatedView] = useState(false);
 

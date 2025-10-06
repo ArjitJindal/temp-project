@@ -1,7 +1,7 @@
 import React from 'react';
 import pluralize from 'pluralize';
 import { List } from 'antd';
-import { ItemType } from '../../types';
+import type { ItemType } from '../../types';
 import s from './style.module.less';
 import SearchResultItem from './SearchResultItem';
 import { AsyncResource } from '@/utils/asyncResource';
