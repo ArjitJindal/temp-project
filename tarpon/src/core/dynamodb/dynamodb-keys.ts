@@ -7,7 +7,12 @@
 
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 import { logger } from '../logger'
-import { getPrimaryTransactionSwitchTimestamp } from './key-constants'
+import {
+  AUXILLARY_TXN_PARTITION_COUNT,
+  BUCKET_IDENTIFIER,
+  getBucketNumber,
+  getPrimaryTransactionSwitchTimestamp,
+} from './key-utils'
 import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -28,6 +33,7 @@ import dayjs from '@/utils/dayjs'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
 import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
+import { Address } from '@/@types/openapi-public/Address'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -63,6 +69,7 @@ export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
 export const ALERT_KEY_IDENTIFIER = '#alert-data'
 export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
 export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
+export const ALERT_SANCTIONS_DETAILS_KEY_IDENTIFIER = '#alert-sanctions-details'
 export const CASE_KEY_IDENTIFIER = '#cases'
 export const CASE_COMMENT_KEY_IDENTIFIER = '#case-comment'
 export const CASE_COMMENT_FILE_KEY_IDENTIFIER = '#case-comment-file'
@@ -153,6 +160,14 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}${ALERT_FILE_ID_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
     SortKeyID: `${commentId}#${fileS3Key}`,
+  }),
+  ALERT_SANCTIONS_DETAILS: (
+    tenantId: string,
+    alertId: string,
+    searchId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}${ALERT_SANCTIONS_DETAILS_KEY_IDENTIFIER}#${ALERT_ID_PREFIX}${alertId}`,
+    SortKeyID: searchId,
   }),
   ALERT_TRANSACTION_IDS: (tenantId: string, alertId: string) => ({
     PartitionKeyID: `${tenantId}${ALERT_TRANSACTION_IDS_KEY_IDENTIFIER}`,
@@ -264,6 +279,12 @@ export const DynamoDbKeys = {
     if (!identifiers) {
       return null
     }
+    const transactionIdHash = generateChecksum(sortKeyData?.transactionId, 20)
+    const bucketCount = getBucketNumber(
+      transactionIdHash,
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+    const useNewPartitioning = sortKeyData?.timestamp // As we only want these partitions when we are writing data
     if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
       const { accountNumber, accountType, bankCode, bankId } = identifiers
       // We keep the legacy identifier to avoid migrating data in DynamoDB
@@ -279,14 +300,18 @@ export const DynamoDbKeys = {
         return null
       }
       return {
-        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}`,
+        PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${identifier}#${direction}${
+          useNewPartitioning ? `${BUCKET_IDENTIFIER}${bucketCount}` : ''
+        }`,
         SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     } else {
       return {
         PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#${getPaymentDetailsIdentifiersKey(
           paymentDetails
-        )}#${direction}`,
+        )}#${direction}${
+          useNewPartitioning ? `${BUCKET_IDENTIFIER}${bucketCount}` : ''
+        }`,
         SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
       }
     }
@@ -299,9 +324,17 @@ export const DynamoDbKeys = {
     transactionType?: string,
     sortKeyData?: AuxiliaryIndexTransactionSortKeyData
   ) => {
+    const transactionIdHash = generateChecksum(sortKeyData?.transactionId, 20)
+    const bucketCount = getBucketNumber(
+      transactionIdHash,
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+    const useNewPartitioning = sortKeyData?.timestamp //  As we only want these partitions when we are writing data
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     return {
-      PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}`,
+      PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}${
+        useNewPartitioning ? `${BUCKET_IDENTIFIER}${bucketCount}` : ''
+      }`,
       SortKeyID: getAuxiliaryIndexTransactionSortKey(sortKeyData),
     }
   },
@@ -819,6 +852,21 @@ export function getPaymentDetailsIdentifiers(
     return Object.fromEntries(
       identifierFields.map((field) => [field, (paymentDetails as any)[field]])
     )
+  }
+}
+
+export function getAddressIdentifiers(
+  address: Address | undefined
+): { [key: string]: string | undefined } | null {
+  if (!address) {
+    return null
+  }
+  return {
+    address: address.addressLines.join(', '),
+    city: address.city,
+    state: address.state,
+    postcode: address.postcode,
+    country: address.country,
   }
 }
 

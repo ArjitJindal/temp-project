@@ -89,6 +89,8 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
         })
       }
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

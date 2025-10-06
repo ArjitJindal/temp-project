@@ -83,12 +83,19 @@ const getLocalConfig = (
   options?: {
     keepAlive?: boolean
     idleSocketTtl?: number
+    requestTimeout?: number
   }
 ): NodeClickHouseClientConfigOptions => ({
   url: 'http://localhost:8123',
   username: 'default',
   password: '',
   database,
+  request_timeout: options?.requestTimeout ?? 300_000, // 5 minutes
+  clickhouse_settings: {
+    max_execution_time: 300, // 5 minutes in seconds
+    send_timeout: 300,
+    receive_timeout: 300,
+  },
   keep_alive: {
     enabled: options?.keepAlive ?? true,
     idle_socket_ttl: options?.idleSocketTtl ?? 2_500,
@@ -100,6 +107,7 @@ export const getClickhouseClientConfig = async (
   options?: {
     keepAlive?: boolean
     idleSocketTtl?: number
+    requestTimeout?: number
   }
 ): Promise<NodeClickHouseClientConfigOptions> => {
   if (envIs('local') || envIs('test')) {
@@ -114,10 +122,16 @@ export const getClickhouseClientConfig = async (
     ...config,
     database,
     url: getUrl(config),
+    // Add timeout configurations
+    request_timeout: options?.requestTimeout ?? 30_000, // 30 seconds
     clickhouse_settings: {
       ...config.clickhouse_settings,
       alter_sync: '2',
       mutations_sync: '2',
+      // Add query-level timeout settings
+      max_execution_time: 300, // 5 minutes in seconds
+      send_timeout: 300, // 5 minutes
+      receive_timeout: 300, // 5 minutes
     },
     keep_alive: {
       enabled: options?.keepAlive ?? true,
@@ -187,7 +201,14 @@ export async function getDefualtConfig(): Promise<ConnectionCredentials> {
   return getConnectionCredentials(config, 'default')
 }
 
-export async function getClickhouseClient(tenantId: string) {
+export async function getClickhouseClient(
+  tenantId: string,
+  options?: {
+    keepAlive?: boolean
+    idleSocketTtl?: number
+    requestTimeout?: number
+  }
+) {
   if (client[tenantId]) {
     return client[tenantId]
   }
@@ -200,7 +221,10 @@ export async function getClickhouseClient(tenantId: string) {
     })
   }
 
-  const config = await getClickhouseClientConfig(getClickhouseDbName(tenantId))
+  const config = await getClickhouseClientConfig(
+    getClickhouseDbName(tenantId),
+    options
+  )
   client = { [tenantId]: createClient(config) }
   return client[tenantId]
 }
@@ -1165,9 +1189,7 @@ export async function processClickhouseInBatch<
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
 
     const query = `
-      SELECT ${
-        additionalSelect ? `${additionalSelect},` : ''
-      } id, timestamp, data
+      SELECT ${additionalSelect ? `${additionalSelect},` : ''} id, timestamp
       FROM ${tableName} FINAL
       ${additionalJoin ? `ARRAY JOIN ${additionalJoin}` : ''}
       ${whereClause}

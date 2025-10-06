@@ -463,7 +463,7 @@ describe('Public API - Create a Business User Event', () => {
       ''
     )
     const businessUserMongo = await userService.getBusinessUser('foo')
-    expect(businessUserMongo).toMatchObject(toMatchObject)
+    expect(businessUserMongo.result).toMatchObject(toMatchObject)
     const dynamoDb = getDynamoDbClient()
     const userRepository = new UserRepository(TEST_TENANT_ID, { dynamoDb })
     const businessUserDynamo = await userRepository.getBusinessUser('foo')

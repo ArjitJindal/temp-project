@@ -151,23 +151,35 @@ export type PaymentDetailsName = {
   address?: Address
 }
 
+type BankInfo = { bankName?: string; address?: Address }
+
 export const extractBankInfoFromPaymentDetails = (
   paymentDetails: PaymentDetails
-):
-  | {
-      bankName?: string
-      address?: Address
-    }
-  | undefined => {
+): BankInfo[] | undefined => {
   switch (paymentDetails.method) {
     case 'GENERIC_BANK_ACCOUNT':
     case 'IBAN':
     case 'ACH':
-    case 'SWIFT':
-      return {
+      return [
+        {
+          bankName: paymentDetails.bankName,
+          address: paymentDetails.bankAddress,
+        },
+      ]
+    case 'SWIFT': {
+      const correspondenceBankDetails = paymentDetails.correspondenceBankDetails
+      const bankNames: BankInfo[] =
+        correspondenceBankDetails?.map((correspondenceBankDetail) => ({
+          bankName: correspondenceBankDetail.bankName,
+        })) ?? []
+
+      bankNames.push({
         bankName: paymentDetails.bankName,
         address: paymentDetails.bankAddress,
-      }
+      })
+
+      return bankNames
+    }
     default:
       return undefined
   }

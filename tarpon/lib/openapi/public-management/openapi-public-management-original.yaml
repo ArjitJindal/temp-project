@@ -2151,6 +2151,9 @@ components:
           oneOf:
             - $ref: '#/components/schemas/UserEntityDetails'
             - $ref: '#/components/schemas/PaymentEntityDetails'
+            - $ref: '#/components/schemas/AddressEntityDetails'
+            - $ref: '#/components/schemas/EmailEntityDetails'
+            - $ref: '#/components/schemas/NameEntityDetails'
         relatedCases:
           type: array
           items:
@@ -2212,6 +2215,20 @@ components:
       required:
         - userId
         - type
+    AddressEntityDetails:
+      title: AddressEntityDetails
+      type: object
+      description: ''
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+        type:
+          type: string
+          enum:
+            - ADDRESS
+      required:
+        - address
+        - type
     PaymentEntityDetails:
       title: PaymentEntityDetails
       type: object
@@ -2236,6 +2253,34 @@ components:
       required:
         - type
         - paymentDetails
+    EmailEntityDetails:
+      title: EmailEntityDetails
+      type: object
+      description: ''
+      properties:
+        email:
+          type: string
+        type:
+          type: string
+          enum:
+            - EMAIL
+      required:
+        - email
+        - type
+    NameEntityDetails:
+      title: NameEntityDetails
+      type: object
+      description: ''
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - NAME
+      required:
+        - name
+        - type
     ActionReason:
       title: ActionReason
       type: object

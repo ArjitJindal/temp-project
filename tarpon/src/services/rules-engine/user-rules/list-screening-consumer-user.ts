@@ -116,6 +116,8 @@ export default class ListScreeningConsumerUser extends UserRule<ListScreeningCon
         ],
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

@@ -103,7 +103,7 @@ export const getAlertsQueryParams = (
             : 0,
         }
       : {}),
-    filterClosingReason,
+    filterClosingReason: filterClosingReason?.length ? filterClosingReason : undefined,
     filterAlertPriority: params.alertPriority,
     filterRuleNature: ruleNature,
     filterCaseTypes: caseTypesFilter,

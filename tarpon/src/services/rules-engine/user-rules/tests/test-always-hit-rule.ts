@@ -6,11 +6,13 @@ export default class TestAlwaysHitRule extends UserRule<{
   hitDirections?: RuleHitDirection[]
 }> {
   public async computeRule() {
-    return (this.parameters.hitDirections || ['ORIGIN', 'DESTINATION']).map(
-      (direction) => ({
+    return {
+      ruleHitResult: (
+        this.parameters.hitDirections || ['ORIGIN', 'DESTINATION']
+      ).map((direction) => ({
         direction,
         vars: {},
-      })
-    ) as RuleHitResult
+      })) as RuleHitResult,
+    }
   }
 }

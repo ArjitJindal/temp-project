@@ -13,18 +13,37 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { AlertTransactionsStats } from '@/@types/openapi-internal/AlertTransactionsStats'
 import { hasFeature, userStatements } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
+import {
+  enforceCaseListPermissions,
+  enforceCaseStatusAccessAndGetCase,
+  assertCaseStatusAccessById,
+  filterCaseIdsByPermission,
+} from '@/services/cases/case-permissions'
+import {
+  enforceAlertListPermissions,
+  assertAlertAndCaseAccessByAlertId,
+  enforceAlertAccessAndGetAlert,
+  filterAlertIdsByPermission,
+} from '@/services/alerts/alert-permissions'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getContext } from '@/core/utils/context-storage'
-import {
-  enforceCaseStatusAccessAndGetCase,
-  assertCaseStatusAccessById,
-} from '@/services/cases/case-permissions'
-import {
-  assertAlertAndCaseAccessByAlertId,
-  enforceAlertAccessAndGetAlert,
-} from '@/services/alerts/alert-permissions'
+import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
+import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
+
+/**
+ * Helper function to handle permission errors by returning empty result sets
+ * instead of throwing 403 errors
+ */
+function handlePermissionError(error: any, emptyResponse: any): any {
+  if (error?.name === 'Forbidden' || error?.name === 'ForbiddenError') {
+    // Return empty response with the correct structure
+    return emptyResponse
+  }
+  // Re-throw any other errors
+  throw error
+}
 
 export const casesHandler = lambdaApi()(
   async (
@@ -58,10 +77,19 @@ export const casesHandler = lambdaApi()(
     })
 
     handlers.registerGetCaseList(async (ctx, request) => {
-      const data = await caseService.getCases(request, {
-        hideOptionalData: true,
-      })
-      return data.result
+      try {
+        const statements = await userStatements(ctx.tenantId ?? '')
+        const modifiedRequest = enforceCaseListPermissions(statements, request)
+        const data = await caseService.getCases(modifiedRequest, {
+          hideOptionalData: true,
+        })
+        return data.result
+      } catch (error: any) {
+        return handlePermissionError(error, {
+          data: [], // This is the array the frontend is trying to map over
+          total: 0,
+        } as CasesListResponse)
+      }
     })
 
     handlers.registerPatchAlertsQaStatus(async (_ctx, request) => {
@@ -160,11 +188,26 @@ export const casesHandler = lambdaApi()(
     )
 
     handlers.registerGetAlertList(async (ctx, request) => {
-      const data = await alertsService.getAlerts(request, {
-        hideTransactionIds: true,
-        sampleId: request.sampleId,
-      })
-      return data.result
+      try {
+        // Get user's permission statements
+        const statements = await userStatements(ctx.tenantId ?? '')
+
+        // Apply permission checks and get modified request with appropriate filters
+        const modifiedRequest = enforceAlertListPermissions(statements, request)
+
+        // Use the modified request with the appropriate filters
+        const data = await alertsService.getAlerts(modifiedRequest, {
+          hideTransactionIds: true,
+          sampleId: request.sampleId,
+        })
+        return data.result
+      } catch (error: any) {
+        return handlePermissionError(error, {
+          data: [], // This is the array the frontend is trying to map over
+          total: 0,
+          totalPages: 0,
+        } as AlertListResponse)
+      }
     })
 
     handlers.registerPostCasesManual(async (ctx, request) => {
@@ -254,35 +297,42 @@ export const casesHandler = lambdaApi()(
 
       // Enforce permissions for each requested entity before fetching comments
       const statements = await userStatements(ctx.tenantId)
+
+      // Filter case IDs to only include those the user has permission to access
+      let authorizedCaseIds: string[] = []
       if (request.filterEntityTypes?.includes('CASE') && caseIds?.length) {
-        await Promise.all(
-          caseIds.map((id) =>
-            assertCaseStatusAccessById(statements as any, caseService, id)
-          )
+        authorizedCaseIds = await filterCaseIdsByPermission(
+          statements as any,
+          caseService,
+          caseIds
         )
       }
 
+      // Filter alert IDs to only include those the user has permission to access
+      let authorizedAlertIds: string[] = []
       if (request.filterEntityTypes?.includes('ALERT') && alertIds?.length) {
-        await Promise.all(
-          alertIds.map((id) =>
-            assertAlertAndCaseAccessByAlertId(
-              statements as any,
-              caseService,
-              alertsService,
-              id
-            )
-          )
+        authorizedAlertIds = await filterAlertIdsByPermission(
+          statements as any,
+          caseService,
+          alertsService,
+          alertIds
         )
       }
 
       const promises: Promise<CommentsResponseItem[]>[] = []
 
-      if (request.filterEntityTypes?.includes('CASE') && caseIds?.length) {
-        promises.push(caseService.getComments(caseIds))
+      if (
+        request.filterEntityTypes?.includes('CASE') &&
+        authorizedCaseIds?.length
+      ) {
+        promises.push(caseService.getComments(authorizedCaseIds))
       }
 
-      if (request.filterEntityTypes?.includes('ALERT') && alertIds?.length) {
-        promises.push(alertsService.getComments(alertIds))
+      if (
+        request.filterEntityTypes?.includes('ALERT') &&
+        authorizedAlertIds?.length
+      ) {
+        promises.push(alertsService.getComments(authorizedAlertIds))
       }
       const responses = await Promise.all(promises)
 

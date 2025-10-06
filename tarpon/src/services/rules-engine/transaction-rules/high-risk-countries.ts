@@ -46,6 +46,8 @@ export default class HighRiskCountryRule extends TransactionRule<HighRiskCountry
         vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

@@ -117,20 +117,26 @@ export default class PaymentMethodNameNameRule extends TransactionRule<PaymentMe
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.senderUser &&
-        this.computeUserRule(
-          'origin',
-          this.senderUser,
-          this.transaction.originPaymentDetails
-        ),
-      this.receiverUser &&
-        this.computeUserRule(
-          'destination',
-          this.receiverUser,
-          this.transaction.destinationPaymentDetails
-        ),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.senderUser &&
+            this.computeUserRule(
+              'origin',
+              this.senderUser,
+              this.transaction.originPaymentDetails
+            ),
+          this.receiverUser &&
+            this.computeUserRule(
+              'destination',
+              this.receiverUser,
+              this.transaction.destinationPaymentDetails
+            ),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 }
 

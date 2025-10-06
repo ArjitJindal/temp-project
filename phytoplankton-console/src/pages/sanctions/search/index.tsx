@@ -39,6 +39,9 @@ interface TableSearchParams {
   searchProfileId?: string;
   screeningProfileId?: string;
   entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -57,7 +60,10 @@ export function SearchResultTable(props: Props) {
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
   const navigate = useNavigate();
 
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    entityType: 'PERSON',
+  });
 
   const hasManualScreeningWritePermission = useHasResources([
     'write:::screening/manual-screening/*',
@@ -269,6 +275,9 @@ export function SearchResultTable(props: Props) {
             ? searchParams.screeningProfileId
             : undefined,
           entityType: searchParams.entityType,
+          gender: searchParams.gender,
+          countryOfResidence: searchParams.countryOfResidence,
+          registrationId: searchParams.registrationId,
         },
       });
     },

@@ -234,8 +234,18 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           return false;
         }
 
-        if (filterType && !v.entity?.includes(filterType)) {
-          return false;
+        if (filterType === 'TRANSACTION' && v.entity?.startsWith('TRANSACTION')) {
+          return true;
+        }
+        if (filterType === 'CONSUMER_USER') {
+          if (!(v.entity?.startsWith('USER') || v.entity?.includes(filterType))) {
+            return false;
+          }
+        }
+        if (filterType === 'BUSINESS_USER') {
+          if (!(v.entity?.startsWith('USER') || v.entity?.includes(filterType))) {
+            return false;
+          }
         }
 
         if (searchKey) {
@@ -506,7 +516,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                   });
                   setFilterParams({
                     ...filterParams,
-                    types: type === 'TRANSACTION' ? 'TRANSACTION' : 'USER',
+                    types: type === 'TRANSACTION' ? 'TRANSACTION' : 'CONSUMER_USER',
                   });
                 }}
                 mode={'SINGLE'}

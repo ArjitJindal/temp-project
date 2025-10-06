@@ -36,6 +36,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
 import { isDemoTenant } from '@/utils/tenant-id'
+import { sanitiseBucketedKey } from '@/core/dynamodb/key-utils'
 
 export function getSenderKeys(
   tenantId: string,
@@ -67,8 +68,19 @@ export function getSenderKeyId(
     matchPaymentDetails?: boolean
   }
 ): string | undefined {
-  return getSenderKeys(tenantId, transaction, undefined, options)
-    ?.PartitionKeyID
+  return sanitiseBucketedKey(
+    getSenderKeys(tenantId, transaction, undefined, options)?.PartitionKeyID
+  )
+}
+
+export function getUserSenderKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string
+): string | undefined {
+  return sanitiseBucketedKey(
+    getUserSenderKeys(tenantId, transaction, transactionType)?.PartitionKeyID
+  )
 }
 
 export function getUserSenderKeys(
@@ -91,6 +103,22 @@ export function getUserSenderKeys(
         }
       )
     : null
+}
+
+export function getNonUserSenderKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string,
+  disableDirection?: boolean
+): string | undefined {
+  return sanitiseBucketedKey(
+    getNonUserSenderKeys(
+      tenantId,
+      transaction,
+      transactionType,
+      disableDirection
+    )?.PartitionKeyID
+  )
 }
 
 export function getNonUserSenderKeys(
@@ -152,8 +180,19 @@ export function getReceiverKeyId(
     matchPaymentDetails?: boolean
   }
 ): string | undefined {
-  return getReceiverKeys(tenantId, transaction, undefined, options)
-    ?.PartitionKeyID
+  return sanitiseBucketedKey(
+    getReceiverKeys(tenantId, transaction, undefined, options)?.PartitionKeyID
+  )
+}
+
+export function getUserReceiverKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string
+): string | undefined {
+  return sanitiseBucketedKey(
+    getUserReceiverKeys(tenantId, transaction, transactionType)?.PartitionKeyID
+  )
 }
 
 export function getUserReceiverKeys(
@@ -176,6 +215,22 @@ export function getUserReceiverKeys(
         }
       )
     : null
+}
+
+export function getNonUserReceiverKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string,
+  disableDirection?: boolean
+): string | undefined {
+  return sanitiseBucketedKey(
+    getNonUserReceiverKeys(
+      tenantId,
+      transaction,
+      transactionType,
+      disableDirection
+    )?.PartitionKeyID
+  )
 }
 
 export function getNonUserReceiverKeys(
@@ -320,6 +375,15 @@ type Executions = {
   executedRules: ExecutedRulesResult[]
 }
 
+function filterOutSanctionsDetails(
+  executedRules: ExecutedRulesResult[]
+): ExecutedRulesResult[] {
+  return executedRules.map((rule) => ({
+    ...rule,
+    sanctionsDetails: undefined,
+  }))
+}
+
 export function filterLiveRules(
   executions: Partial<Executions>,
   includeInternal = false
@@ -330,11 +394,13 @@ export function filterLiveRules(
     executions.executedRules?.filter(
       (executedRule) => !executedRule.isShadow
     ) ?? []
+
+  const filteredExecutedRules = includeInternal
+    ? executedRules
+    : filterOutInternalRules(executedRules)
   return {
     hitRules: includeInternal ? hitRules : filterOutInternalRules(hitRules),
-    executedRules: includeInternal
-      ? executedRules
-      : filterOutInternalRules(executedRules),
+    executedRules: filterOutSanctionsDetails(filteredExecutedRules),
   }
 }
 

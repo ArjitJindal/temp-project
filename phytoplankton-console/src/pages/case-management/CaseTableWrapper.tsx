@@ -67,19 +67,27 @@ export default function CaseTableWrapper(props: {
         ruleNature,
         filterCaseSlaPolicyId,
         filterCaseSlaPolicyStatus,
+        filterClosingReason,
       } = params;
 
       const [sortField, sortOrder] = sort[0] ?? [];
+
+      const afterTimestamp =
+        createdTimestamp && createdTimestamp[0] !== undefined && createdTimestamp[0] !== null
+          ? dayjs(createdTimestamp[0]).valueOf()
+          : 0;
+      const beforeTimestamp =
+        createdTimestamp && createdTimestamp[1] !== undefined && createdTimestamp[1] !== null
+          ? dayjs(createdTimestamp[1]).valueOf()
+          : Number.MAX_SAFE_INTEGER;
 
       const response = await api.getCaseList({
         page,
         pageSize,
         view,
         ...paginationParams,
-        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp
-          ? dayjs(createdTimestamp[1]).valueOf()
-          : Number.MAX_SAFE_INTEGER,
+        afterTimestamp,
+        beforeTimestamp,
         filterId: caseId,
         filterRulesHit: rulesHitFilter,
         filterRulesExecuted: rulesExecutedFilter,
@@ -112,6 +120,7 @@ export default function CaseTableWrapper(props: {
         filterCaseSlaPolicyStatus: filterCaseSlaPolicyStatus?.length
           ? filterCaseSlaPolicyStatus
           : undefined,
+        filterCaseClosureReasons: filterClosingReason?.length ? filterClosingReason : undefined,
       });
 
       return {

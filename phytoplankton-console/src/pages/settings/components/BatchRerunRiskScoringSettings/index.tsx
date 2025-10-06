@@ -12,6 +12,7 @@ import { useHasResources } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import { useBulkRerunUsersStatus, useTriggerBulkRerunRiskScoring } from '@/utils/batch-rerun-users';
 import { TenantSettingsBatchRerunRiskScoringFrequencyEnum } from '@/apis';
+import Tooltip from '@/components/library/Tooltip';
 
 export default function BatchRerunRiskScoringSettings() {
   const settings = useSettings();
@@ -26,6 +27,20 @@ export default function BatchRerunRiskScoringSettings() {
   const updateTenantSettings = useUpdateTenantSettings();
   const bulkRerunUsersStatus = useBulkRerunUsersStatus();
   const triggerBulkRerunRiskScoring = useTriggerBulkRerunRiskScoring();
+  const hasNoPermissions = !permissions;
+  const isLoading = bulkRerunUsersStatus.isLoading;
+  const hasRunningJobs = bulkRerunUsersStatus.data.isAnyJobRunning;
+  const hasReachedLimit =
+    bulkRerunUsersStatus.data.count >= (settings.limits?.rerunRiskScoringLimit || 0);
+  const isLegacyAlgorithm = settings.riskScoringAlgorithm?.type === 'FORMULA_LEGACY_MOVING_AVG';
+  const isDisabled =
+    hasNoPermissions ||
+    isLoading ||
+    hasRunningJobs ||
+    hasReachedLimit ||
+    isLegacyAlgorithm ||
+    isRerun;
+
   return (
     <SettingsCard
       title="Re-calculate risk scores"
@@ -91,21 +106,18 @@ export default function BatchRerunRiskScoringSettings() {
             }}
           >
             {({ onClick }) => (
-              <Button
-                type="SECONDARY"
-                isDisabled={
-                  !permissions ||
-                  bulkRerunUsersStatus.isLoading ||
-                  bulkRerunUsersStatus.data.isAnyJobRunning ||
-                  bulkRerunUsersStatus.data.count >=
-                    (settings.limits?.rerunRiskScoringLimit || 0) ||
-                  settings.riskScoringAlgorithm?.type === 'FORMULA_LEGACY_MOVING_AVG' ||
-                  isRerun
+              <Tooltip
+                title={
+                  isDisabled
+                    ? `Your rerun quota has been exhausted. Please contact support@flagright.com to increase your quota.`
+                    : undefined
                 }
-                onClick={onClick}
+                placement="topRight"
               >
-                Rerun now
-              </Button>
+                <Button type="SECONDARY" isDisabled={isDisabled} onClick={onClick}>
+                  Rerun now
+                </Button>
+              </Tooltip>
             )}
           </Confirm>
         </div>

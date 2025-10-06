@@ -9,18 +9,19 @@ import { removeDemoRoles } from './roles-setup'
 import { getReports } from './data/reports'
 import { deleteXMLFileFromS3 } from './samplers/report'
 import { seedMongo } from './mongo'
-import { seedClickhouse } from './clickhouse'
 import { getCounterCollectionData } from './data/counter'
+import { seedClickhouse } from './clickhouse'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { createTenantDatabase } from '@/utils/clickhouse/utils'
 import { envIsNot } from '@/utils/env'
 import { getUsers } from '@/core/seed/data/users'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { createTenantDatabase } from '@/utils/clickhouse/utils'
 
 export async function seedDemoData(tenantId: string) {
+  const startTime = Date.now()
   const dynamo = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   let now = Date.now()
@@ -92,12 +93,13 @@ export async function seedDemoData(tenantId: string) {
   logger.info(`TIME: Reports creation took ~ ${Date.now() - now}`)
 
   now = Date.now()
+  await seedClickhouse(tenantId)
+  logger.info(`TIME: Clickhouse seeding took ~ ${Date.now() - now}`)
+  now = Date.now()
   await seedDynamo(dynamo, tenantId)
   logger.info(`TIME: DynamoDB seeding took ~ ${Date.now() - now}`)
   now = Date.now()
   await seedMongo(tenantId, mongoDb, dynamo)
   logger.info(`TIME: MongoDB seeding took ~ ${Date.now() - now}`)
-  now = Date.now()
-  await seedClickhouse(tenantId)
-  logger.info(`TIME: Clickhouse seeding took ~ ${Date.now() - now}`)
+  logger.info(`Demo data seeding took ~ ${Date.now() - startTime}`)
 }

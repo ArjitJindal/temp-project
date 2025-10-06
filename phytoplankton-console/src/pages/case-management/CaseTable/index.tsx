@@ -83,6 +83,7 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { getOr } from '@/utils/asyncResource';
 import { withRenderPerf } from '@/perf/withRenderPerf';
 import { SLA_POLICY_LIST } from '@/utils/queries/keys';
+import { useCaseStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 
 interface Props<FirstModalProps, SecondModalProps> {
   params: AllParams<TableSearchParams>;
@@ -116,6 +117,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const allowedCaseStatuses = useCaseStatusesFromPermissions();
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
   const isInReview =
     params.caseStatus == null ||
@@ -361,6 +363,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
         key: 'caseStatus',
         type: CASE_STATUS<TableItem>({
           reload: reloadTable,
+          allowedStatuses: allowedCaseStatuses,
         }),
       }),
       helper.simple<'statusChanges'>({
@@ -645,23 +648,24 @@ function CaseTable<FirstModalProps, SecondModalProps>(
 
     return mergedColumns;
   }, [
+    settings.userAlias,
     isRiskLevelsEnabled,
     reloadTable,
+    allowedCaseStatuses,
     slaEnabled,
     slaPolicies.items,
+    accounts,
     isInReview,
     params.caseStatus,
     users,
+    isMultiLevelEscalationEnabled,
     user.userId,
     caseReviewAssignmentUpdateMutation,
     caseAssignmentUpdateMutation,
     loadingUsers,
-    isMultiLevelEscalationEnabled,
-    updateFirstModalState,
     setFirstModalVisibility,
     userAccount?.escalationLevel,
-    settings.userAlias,
-    accounts,
+    updateFirstModalState,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
@@ -681,6 +685,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
     showAssignedToFilter && 'assignedTo',
     showAssignedToFilter && 'roleAssignedTo',
     'caseStatus',
+    'filterClosingReason',
     'caseSla',
   ]);
   const filters = useCaseAlertFilters(filterIds);

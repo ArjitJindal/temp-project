@@ -34,6 +34,7 @@ import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { UserTrsRiskDisplay } from '@/pages/users-item/UserDetails/UserTrsRiskDisplay';
 import { AsyncResource, getOr } from '@/utils/asyncResource';
 import Skeleton from '@/components/library/Skeleton';
+import Address from '@/components/ui/Address';
 
 interface Props {
   caseId: string;
@@ -164,6 +165,12 @@ export default function SubHeader(props: Props) {
           {(caseItem) =>
             caseItem.subjectType === 'PAYMENT'
               ? paymentSubjectLabels(caseItem)
+              : caseItem.subjectType === 'ADDRESS'
+              ? addressSubjectLabels(caseItem)
+              : caseItem.subjectType === 'EMAIL'
+              ? emailSubjectLabels(caseItem)
+              : caseItem.subjectType === 'NAME'
+              ? nameSubjectLabels(caseItem)
               : userSubjectLabels(caseItem, firstLetterUpper(settings.userAlias))
           }
         </Skeleton>
@@ -271,6 +278,36 @@ export default function SubHeader(props: Props) {
         )}
       </Feature>
     </div>
+  );
+}
+
+function addressSubjectLabels(caseItem: Case) {
+  const address = caseItem?.address?.origin ?? caseItem?.address?.destination;
+  return (
+    <>
+      <Form.Layout.Label title={'Address'}>
+        {address ? <Address address={address} /> : '-'}
+      </Form.Layout.Label>
+    </>
+  );
+}
+
+function emailSubjectLabels(caseItem: Case) {
+  return (
+    <>
+      <Form.Layout.Label title={'Email'}>
+        {caseItem.email?.origin ?? caseItem.email?.destination ?? '-'}
+      </Form.Layout.Label>
+    </>
+  );
+}
+
+function nameSubjectLabels(caseItem: Case) {
+  const name = caseItem?.name?.origin ?? caseItem?.name?.destination;
+  return (
+    <>
+      <Form.Layout.Label title={'Name'}>{name ?? '-'}</Form.Layout.Label>
+    </>
   );
 }
 

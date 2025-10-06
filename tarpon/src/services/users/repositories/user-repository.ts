@@ -173,7 +173,7 @@ export class UserRepository {
     mapper: (user: InternalUser) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
-  ): Promise<AllUsersOffsetPaginateListResponse> {
+  ): Promise<AllUsersTableItem[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
@@ -192,18 +192,15 @@ export class UserRepository {
       userType
     )
 
-    const [users, count] = await Promise.all([
-      collection
-        .find(
-          { $and: query as Filter<InternalUser>[] },
-          {
-            projection: options?.projection,
-            ...paginateFindOptions(params),
-          }
-        )
-        .toArray(),
-      collection.countDocuments({ $and: query }),
-    ])
+    const users = await collection
+      .find(
+        { $and: query as Filter<InternalUser>[] },
+        {
+          projection: options?.projection,
+          ...paginateFindOptions(params),
+        }
+      )
+      .toArray()
 
     const userIds = users.map((user) => user.userId)
     const casesCountPipeline = [
@@ -262,10 +259,34 @@ export class UserRepository {
         })
       : users
 
-    return {
-      items: updatedItems.map(mapper),
-      count,
+    return updatedItems.map(mapper)
+  }
+
+  public async getMongoUsersCount(
+    params: OptionalPagination<Params>,
+    userType?: UserType
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const isPulseEnabled = this.isPulseEnabled()
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
     }
+    const query = await this.getMongoUsersQuery(
+      params,
+      isPulseEnabled,
+      riskClassificationValues,
+      userType
+    )
+
+    const count = await collection.countDocuments({ $and: query })
+
+    return count
   }
 
   public async getMongoAllUsers(
@@ -892,25 +913,43 @@ export class UserRepository {
     delete user.PartitionKeyID
     delete user.SortKeyID
     delete user.createdAt
-
+    // delete sanctionsDetails from each executedRule in user
+    ;(
+      user as UserWithRulesResult | BusinessWithRulesResult
+    ).executedRules?.forEach((rule) => {
+      delete rule.sanctionsDetails
+    })
     if (this.tenantId.toLowerCase() === '0789ad73b8') {
       if (user.linkedEntities) {
         ;(user.linkedEntities as any).childUserIds = undefined
       }
     }
 
-    return user as T
+    return {
+      ...user,
+      executedRules: user.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    } as T
   }
 
   public async getUsersByIds<
     T extends UserWithRulesResult | BusinessWithRulesResult
   >(userIds: string[]): Promise<T[]> {
-    return await batchGet<T>(
+    const users = await batchGet<T>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       userIds.map((userId) => DynamoDbKeys.USER(this.tenantId, userId)),
       { ConsistentRead: true }
     )
+    return users.map((user) => ({
+      ...user,
+      executedRules: user.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    }))
   }
 
   public async getChildUsers(userId: string): Promise<InternalUser[]> {
@@ -1714,10 +1753,17 @@ export class UserRepository {
 
     const data = await result.next()
 
-    return this.getMongoUsersPaginate(
-      { ...params, filterUserIds: uniq(data?.userIds.flat()) },
-      mapper
-    )
+    const count = await this.getMongoUsersCount({
+      ...params,
+      filterUserIds: uniq(data?.userIds.flat()),
+    })
+    return {
+      items: await this.getMongoUsersPaginate(
+        { ...params, filterUserIds: uniq(data?.userIds.flat()) },
+        mapper
+      ),
+      count,
+    }
   }
 
   public async getRuleInstanceStats(

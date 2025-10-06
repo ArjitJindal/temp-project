@@ -365,7 +365,10 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
-      transactionState: this.rng.pickRandom(TRANSACTION_STATES),
+      transactionState:
+        getAggregatedRuleStatus(hitRules) === 'SUSPEND'
+          ? 'SUSPENDED'
+          : this.rng.pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
         createdAt: timestamp,
@@ -457,6 +460,7 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
     transactions.forEach((t, idx) => {
       if (idx % 10 === 0) {
         t.status = 'SUSPEND'
+        t.transactionState = 'SUSPENDED'
       }
     })
   }

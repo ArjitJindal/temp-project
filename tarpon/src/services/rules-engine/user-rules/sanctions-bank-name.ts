@@ -55,6 +55,11 @@ export type SanctionsBankUserRuleParameters = {
   enablePhoneticMatching?: boolean
 }
 
+export type SanctionsRuleResult = {
+  sanctionsDetails: SanctionsDetails
+  hitsCount: number
+}
+
 export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRuleParameters> {
   public static getSchema(): JSONSchemaType<SanctionsBankUserRuleParameters> {
     return {
@@ -115,7 +120,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     }
     const user = this.user as User
     const bankInfos = (user.savedPaymentDetails || [])
-      ?.map((paymentDetails) => {
+      ?.flatMap((paymentDetails) => {
         if (paymentDetails.method === 'IBAN') {
           return {
             bankName: paymentDetails.bankName,
@@ -125,14 +130,31 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         }
         if (
           paymentDetails.method === 'GENERIC_BANK_ACCOUNT' ||
-          paymentDetails.method === 'ACH' ||
-          paymentDetails.method === 'SWIFT'
+          paymentDetails.method === 'ACH'
         ) {
           return {
             bankName: paymentDetails.bankName,
             iban: paymentDetails.accountNumber,
             address: paymentDetails.bankAddress,
           }
+        }
+
+        if (paymentDetails.method === 'SWIFT') {
+          const correspondenceBankDetails =
+            paymentDetails.correspondenceBankDetails
+
+          const bankNames: BankInfo[] =
+            correspondenceBankDetails?.map((correspondenceBankDetail) => ({
+              bankName: correspondenceBankDetail.bankName,
+            })) ?? []
+
+          bankNames.push({
+            bankName: paymentDetails.bankName,
+            iban: paymentDetails.accountNumber,
+            address: paymentDetails.bankAddress,
+          })
+
+          return bankNames
         }
       })
       .filter(Boolean) as BankInfo[]
@@ -145,73 +167,85 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     )
 
     const hitResult: RuleHitResult = []
-    const sanctionsDetails: (SanctionsDetails | undefined)[] =
-      await Promise.all(
-        bankInfosToCheck.map((bankInfo) =>
-          caConcurrencyLimit(async () => {
-            const bankName = bankInfo.bankName
-            if (!bankName) {
-              return
-            }
-            const hitContext = {
-              entity: 'BANK' as const,
-              userId: this.user.userId,
-              ruleInstanceId: this.ruleInstance.id ?? '',
-              iban: bankInfo.iban,
-              isOngoingScreening: this.ongoingScreeningMode,
+    const result: (SanctionsRuleResult | undefined)[] = await Promise.all(
+      bankInfosToCheck.map((bankInfo) =>
+        caConcurrencyLimit(async () => {
+          const bankName = bankInfo.bankName
+          if (!bankName) {
+            return
+          }
+          const hitContext = {
+            entity: 'BANK' as const,
+            userId: this.user.userId,
+            ruleInstanceId: this.ruleInstance.id ?? '',
+            iban: bankInfo.iban,
+            isOngoingScreening: this.ongoingScreeningMode,
+            searchTerm: bankName,
+          }
+          const result = await this.sanctionsService.search(
+            {
               searchTerm: bankName,
-            }
-            const result = await this.sanctionsService.search(
-              {
-                searchTerm: bankName,
-                types: screeningTypes,
-                fuzziness: fuzziness / 100,
-                monitoring: { enabled: this.stage === 'ONGOING' },
-                ...getEntityTypeForSearch('BANK'),
-                ...getFuzzinessSettings(fuzzinessSetting),
-                ...getStopwordSettings(stopwords),
-                ...getIsActiveParameters(screeningTypes, isActive),
-                ...getPartialMatchParameters(partialMatch),
-                ...(providers.includes(SanctionsDataProviders.ACURIS)
-                  ? { screeningProfileId: screeningProfileId ?? undefined }
-                  : {}),
-                ...getFuzzyAddressMatchingParameters(
-                  providers,
-                  fuzzyAddressMatching,
-                  bankInfo.address ? [bankInfo.address] : undefined
-                ),
-                ...getEnableShortNameMatchingParameters(
-                  enableShortNameMatching
-                ),
-                ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
-              },
-              hitContext
-            )
-            let sanctionsDetails: SanctionsDetails
-            if (result.hitsCount > 0) {
-              sanctionsDetails = {
-                name: bankName,
-                iban: bankInfo.iban,
-                searchId: result.searchId,
-                hitContext,
-              }
-              return sanctionsDetails
-            }
-          })
-        )
+              types: screeningTypes,
+              fuzziness: fuzziness / 100,
+              monitoring: { enabled: this.stage === 'ONGOING' },
+              ...getEntityTypeForSearch('BANK'),
+              ...getFuzzinessSettings(fuzzinessSetting),
+              ...getStopwordSettings(stopwords),
+              ...getIsActiveParameters(screeningTypes, isActive),
+              ...getPartialMatchParameters(partialMatch),
+              ...(providers.includes(SanctionsDataProviders.ACURIS)
+                ? { screeningProfileId: screeningProfileId ?? undefined }
+                : {}),
+              ...getFuzzyAddressMatchingParameters(
+                providers,
+                fuzzyAddressMatching,
+                bankInfo.address ? [bankInfo.address] : undefined
+              ),
+              ...getEnableShortNameMatchingParameters(enableShortNameMatching),
+              ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
+            },
+            hitContext
+          )
+          const sanctionsDetails: SanctionsDetails = {
+            name: bankName,
+            iban: bankInfo.iban,
+            searchId: result.searchId,
+            hitContext,
+          }
+          return {
+            sanctionsDetails,
+            hitsCount: result.hitsCount,
+          }
+        })
       )
-
-    const filteredSanctionsDetails = sanctionsDetails.filter(
-      (searchResponse): searchResponse is SanctionsDetails => !!searchResponse
     )
 
-    if (filteredSanctionsDetails.length > 0) {
+    const filteredSanctionsDetails = result.filter(
+      (result): result is SanctionsRuleResult => !!result
+    )
+
+    if (
+      filteredSanctionsDetails.length > 0 &&
+      filteredSanctionsDetails.some((detail) => detail.hitsCount > 0)
+    ) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),
-        sanctionsDetails: filteredSanctionsDetails,
+        sanctionsDetails: filteredSanctionsDetails
+          .filter(({ hitsCount }) => hitsCount > 0)
+          .map(({ sanctionsDetails }) => sanctionsDetails),
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+      ruleExecutionResult: {
+        sanctionsDetails: filteredSanctionsDetails.map(
+          ({ sanctionsDetails, hitsCount }) => ({
+            ...sanctionsDetails,
+            isRuleHit: hitsCount > 0,
+          })
+        ),
+      },
+    }
   }
 }

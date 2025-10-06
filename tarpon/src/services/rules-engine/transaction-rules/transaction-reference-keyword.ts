@@ -71,6 +71,8 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

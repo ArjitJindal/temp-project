@@ -26,6 +26,7 @@ import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { DowJonesSanctionsSearchType } from '@/@types/openapi-internal/DowJonesSanctionsSearchType'
 
 type ScreeningValues = 'NRIC' | 'NATIONALITY' | 'YOB' | 'GENDER'
@@ -157,20 +158,29 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
       hitContext,
       undefined
     )
+    const sanctionsDetails: SanctionsDetails = {
+      name,
+      entityType: 'CONSUMER_NAME',
+      searchId: result.searchId,
+      hitContext,
+    }
     if (result.hitsCount > 0) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),
-        sanctionsDetails: [
-          {
-            name,
-            entityType: 'CONSUMER_NAME',
-            searchId: result.searchId,
-            hitContext,
-          },
-        ],
+        sanctionsDetails: [sanctionsDetails],
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+      ruleExecutionResult: {
+        sanctionsDetails: [
+          {
+            ...sanctionsDetails,
+            isRuleHit: result.hitsCount > 0,
+          },
+        ],
+      },
+    }
   }
 }

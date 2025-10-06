@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import cn from 'clsx';
-import { DataSourceItemType } from 'antd/lib/auto-complete';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
+import { useDebounce } from 'ahooks';
 import s from './index.module.less';
 import { QuestionVariableOption } from '@/apis';
 import Label from '@/components/library/Label';
@@ -16,9 +16,11 @@ import { applyUpdater, StatePair, Updater } from '@/utils/state';
 import { useApi } from '@/api';
 import Checkbox from '@/components/library/Checkbox';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Select from '@/components/library/Select';
+import Select, { Option } from '@/components/library/Select';
 import PopoverV2 from '@/components/ui/PopoverV2';
-import AutoComplete from '@/components/ui/AutoComplete';
+import { useQuery } from '@/utils/queries/hooks';
+import { getOr, isLoading } from '@/utils/asyncResource';
+import { AIF_SEARCH_KEY } from '@/utils/queries/keys';
 
 export type VariablesValues = Record<string, any>;
 
@@ -185,10 +187,10 @@ function renderInput(
   if (variable.variableType === 'AUTOCOMPLETE') {
     if (variable.options !== undefined) {
       return (
-        <AutoComplete
+        <Select
           {...inputProps}
-          className={s.autocomplete}
-          dataSource={variable.options.map((o) => ({ value: o, text: o }))}
+          options={variable.options.map((o) => ({ value: o, label: o }))}
+          allowClear={false}
         />
       );
     }
@@ -227,22 +229,30 @@ const Search = ({
 }) => {
   const api = useApi();
   const variableKey = variable.name || '';
-  const [dataSource, setDatasource] = useState<DataSourceItemType[]>();
-  const onSearch = async (search: string) => {
-    const results = await api.getQuestionVariableAutocomplete({
-      questionId,
-      variableKey,
-      search,
-    });
-    setDatasource(results.suggestions?.map((s) => ({ value: s, text: s })));
-  };
+
+  const [search, setSearch] = useState<string>('');
+  const debouncedSearch = useDebounce(search, { wait: 300 });
+  const queryResult = useQuery(
+    AIF_SEARCH_KEY(questionId, variableKey, debouncedSearch),
+    async (): Promise<Option<string>[]> => {
+      const results = await api.getQuestionVariableAutocomplete({
+        questionId,
+        variableKey,
+        search: debouncedSearch,
+      });
+      return (results.suggestions ?? []).map((s) => ({ value: s, label: s }));
+    },
+  );
 
   return (
-    <AutoComplete
-      {...inputProps}
-      onSearch={onSearch}
-      className={s.autocomplete}
-      dataSource={dataSource}
-    />
+    <div className={s.autocomplete}>
+      <Select
+        {...inputProps}
+        mode={'DYNAMIC'}
+        options={getOr(queryResult.data, [])}
+        isLoading={isLoading(queryResult.data)}
+        onSearch={setSearch}
+      />
+    </div>
   );
 };

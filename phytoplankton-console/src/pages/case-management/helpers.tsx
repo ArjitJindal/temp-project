@@ -45,6 +45,7 @@ import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
+import { useReasons } from '@/utils/reasons';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -261,6 +262,8 @@ export const useCaseAlertFilters = (
   const roleAssignedToOptions = map(roles, 'name');
   roleAssignedToOptions.unshift('Unassigned');
 
+  const closureReasons = useReasons('CLOSURE');
+
   return denseArray([
     {
       title: 'Case ID',
@@ -277,6 +280,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'select',
         options: PRIORITYS.map((x) => ({ value: x, label: x })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -288,6 +292,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: CASE_TYPES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -299,6 +304,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'select',
         options: ruleOptions,
+        closeOnSingleSelect: true,
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
@@ -372,6 +378,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: businessIndustries.map((x) => ({ value: x, label: x })),
+        closeOnSingleSelect: true,
       },
     },
     {
@@ -465,6 +472,7 @@ export const useCaseAlertFilters = (
         options: [{ value: 'default', label: 'default' }].concat(
           ruleQueues.map((v) => ({ value: v.id ?? v.name, label: v.name })),
         ),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -476,6 +484,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: RULE_NATURES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -491,6 +500,7 @@ export const useCaseAlertFilters = (
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
         })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
@@ -507,9 +517,21 @@ export const useCaseAlertFilters = (
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
         })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
+    },
+    {
+      title: 'Reason',
+      key: 'filterClosingReason',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: closureReasons.map((reason) => ({ value: reason, label: reason })),
+      },
+      showFilterByDefault: true,
     },
     isAlertSlaEnabled && {
       title: 'SLA status',

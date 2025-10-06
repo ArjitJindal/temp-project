@@ -406,6 +406,7 @@ export class TransactionService {
       )
       params.filterUserIds = userIds
     }
+
     let response =
       type === 'offset'
         ? await this.getTransactionsOffsetPaginated(params, alert)

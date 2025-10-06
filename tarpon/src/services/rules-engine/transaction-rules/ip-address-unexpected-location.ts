@@ -82,7 +82,9 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async getUserPastTransactionCountries(): Promise<Set<string>> {

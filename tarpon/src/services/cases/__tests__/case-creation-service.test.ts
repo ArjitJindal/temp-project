@@ -2250,14 +2250,14 @@ describe('Test payment cases', () => {
         TEST_TENANT_ID,
         [
           {
-            alertCreatedFor: ['PAYMENT_DETAILS'],
+            alertCreatedFor: ['USER', 'PAYMENT_DETAILS'],
           },
         ],
         async () => {
           const cases = await createCases(TEST_TENANT_ID)
-          expect(cases).toHaveLength(1)
+          expect(cases).toHaveLength(2)
           const caseItem = cases[0]
-          expect(caseItem.subjectType).toEqual('PAYMENT')
+          expect(caseItem.subjectType).toEqual('USER')
         }
       )
     })
@@ -2465,6 +2465,106 @@ describe('Testing not adding transactions to alerts in selected status (Frozen S
           expect(cases2[1].alerts?.[0].transactionIds).toHaveLength(2) // 2 transaction in one alert in the case for the other user as that alert is not on hold
         }
       )
+    })
+  })
+
+  describe('Multiple Rule Hits Should create multiple cases for different alertCreatedFor configurations', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setupUsers(TEST_TENANT_ID)
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'NAME-RULE',
+        type: 'TRANSACTION',
+        ruleImplementationName: 'tests/test-always-hit-rule',
+        parameters: {
+          hitDirections: ['ORIGIN'],
+        },
+        alertConfig: {
+          alertCreatedFor: ['NAME'],
+        },
+      },
+      {
+        id: 'ADDRESS-RULE',
+        type: 'TRANSACTION',
+        ruleImplementationName: 'tests/test-always-hit-rule',
+        parameters: {
+          hitDirections: ['ORIGIN'],
+        },
+        alertConfig: {
+          alertCreatedFor: ['ADDRESS'],
+        },
+      },
+    ])
+
+    it('should create separate cases for rule instances with different alertCreatedFor configurations', async () => {
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      MockDate.set(TODAY)
+
+      // Create two rule instances with different alertCreatedFor configurations
+
+      // Create a transaction that will hit both rules
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: TEST_USER_2.userId,
+        originPaymentDetails: {
+          method: 'CARD',
+          nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+          cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29b2',
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+          address: {
+            addressLines: ['123 Main St'],
+            city: 'New York',
+            state: 'NY',
+            postcode: '10001',
+            country: 'US',
+          },
+        },
+        destinationPaymentDetails: {
+          method: 'CARD',
+          nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+          cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29b2',
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+        },
+      })
+
+      // Verify the transaction to get hit rules
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      const [result] = results
+      // Get subjects for the transaction
+      const subjects = await caseCreationService.getTransactionSubjects({
+        ...transaction,
+        ...result,
+      })
+
+      // Get the rule instances that hit
+      const hitRuleInstances = await getHitRuleInstances(TEST_TENANT_ID, result)
+
+      // Create cases using the new logic
+      const cases = await caseCreationService.handleTransaction(
+        {
+          ...transaction,
+          ...result,
+        },
+        hitRuleInstances,
+        subjects
+      )
+
+      // Verify that we get separate cases for different alertCreatedFor configurations
+      expect(cases).toHaveLength(2)
+
+      // Verify that each case has the correct number of alerts
+      expect(cases[0]?.alerts).toHaveLength(1)
+      expect(cases[1]?.alerts).toHaveLength(1)
+
+      // Verify that the alerts are created for different rule instances
+      const ruleInstanceIds = cases
+        .map((case_) => case_.alerts?.[0]?.ruleInstanceId)
+        .sort()
+      expect(ruleInstanceIds).toEqual(['ADDRESS-RULE.1', 'NAME-RULE.1'])
     })
   })
 })

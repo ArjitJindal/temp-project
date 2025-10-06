@@ -403,7 +403,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   TMM: { label: 'Turkmenistani manat', symbol: 'm' },
   TMT: { label: 'Turkmenistani manat', symbol: 'T' },
   TND: { label: 'Tunisian dinar', symbol: 'د.ت' },
-  TON: { label: 'Telegram Open Network', symbol: null },
+  TON: { label: 'Toncoin', symbol: null },
   TONE: { label: 'TE-FOOD', symbol: null },
   TOP: { label: "Tongan Pa'anga", symbol: 'T$' },
   TRAC: { label: 'OriginTrail', symbol: null },
@@ -493,6 +493,12 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   EURA: { label: 'Euroback', symbol: null },
   EURT: { label: 'EuroT', symbol: null },
   ISLM: { label: 'Islem', symbol: null },
+  KLAY: { label: 'Klaytn', symbol: null },
+  ZIL: { label: 'Zilliqa', symbol: null },
+  DYDX: { label: 'dYdX', symbol: null },
+  IOTA: { label: 'IOTA', symbol: null },
+  WAVES: { label: 'Waves', symbol: null },
+  LUNA2: { label: 'LUNA2', symbol: null },
 }
 
 export const CRYPTO_CURRENCIES_KEYS = [
@@ -633,6 +639,14 @@ export const CRYPTO_CURRENCIES_KEYS = [
   'PEPE',
   'EURC',
   'TON',
+  'KLAY',
+  'ZIL',
+  'DYDX',
+  'IOTA',
+  'TON',
+  'WAVES',
+  'LUNA2',
+  'NEO',
 ]
 
 export type Currency = string

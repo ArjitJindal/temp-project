@@ -15,6 +15,8 @@ import {
   offsetPaginateClickhouse,
   CursorPaginationResponse,
   cursorPaginateClickhouse,
+  getClickhouseCountOnly,
+  getClickhouseDataOnly,
 } from '@/utils/pagination'
 import {
   getSortedData,
@@ -310,6 +312,101 @@ export class UserClickhouseRepository {
     }
   }
 
+  public async getUsersV2Data<T>(
+    params: DefaultApiGetAllUsersListRequest,
+    columns: Record<string, string>,
+    callback: (data: Record<string, string | number>) => T,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<T[]> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+
+      return []
+    }
+
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
+    }
+
+    const whereClause = await this.buildWhereClause(params, userType)
+    const sortField =
+      (params.sortField === 'createdTimestamp'
+        ? 'timestamp'
+        : params.sortField) ?? 'timestamp'
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
+    const data = await getClickhouseDataOnly<T>(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
+      CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      { page, pageSize, sortField, sortOrder },
+      whereClause,
+      columns,
+      callback
+    )
+
+    const sortFieldInItem =
+      sortField === 'timestamp' ? 'createdTimestamp' : sortField
+
+    const sortedUsers = getSortedData<T>({
+      data: data.filter((item) => item[sortFieldInItem] != null),
+      sortField: sortFieldInItem,
+      sortOrder,
+      groupByField: 'userId',
+      groupBySortField: sortFieldInItem,
+    })
+
+    return [
+      ...data.filter((item) => item[sortFieldInItem] == null),
+      ...sortedUsers,
+    ]
+  }
+
+  public async getClickhouseUsersData(
+    params: DefaultApiGetAllUsersListRequest,
+    columns: Record<string, string>,
+    callback: (data: Record<string, string | number>) => AllUsersTableItem,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<AllUsersTableItem[]> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+
+      return []
+    }
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
+    }
+    const whereClause = await this.buildWhereClause(params, userType)
+    const sortField =
+      (params.sortField === 'createdTimestamp'
+        ? 'timestamp'
+        : params.sortField) ?? 'timestamp'
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
+    const data = await getClickhouseDataOnly<AllUsersTableItem>(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
+      CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      { page, pageSize, sortField, sortOrder },
+      whereClause,
+      columns,
+      callback
+    )
+    return data
+  }
+
   public async usersSearchExternal(
     params: DefaultApiGetUsersSearchRequest
   ): Promise<
@@ -556,5 +653,25 @@ export class UserClickhouseRepository {
     }
 
     return whereClauses.join(' AND ')
+  }
+
+  public async getClickhouseUsersCount(
+    params: DefaultApiGetAllUsersListRequest,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<number> {
+    const whereClause = await this.buildWhereClause(params, userType)
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return 0
+    }
+    const count = await getClickhouseCountOnly(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      '1',
+      whereClause
+    )
+    return count
   }
 }

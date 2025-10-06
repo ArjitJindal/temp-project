@@ -63,7 +63,9 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
       })
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async getData(): Promise<{

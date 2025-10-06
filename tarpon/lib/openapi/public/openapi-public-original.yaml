@@ -3534,6 +3534,14 @@ components:
           type: object
       required:
         - value
+    RuleExecutionSanctionsDetails:
+      title: RuleExecutionSanctionsDetails
+      allOf:
+        - $ref: '#/components/schemas/SanctionsDetails'
+        - type: object
+          properties:
+            isRuleHit:
+              type: boolean
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -3584,6 +3592,11 @@ components:
           $ref: '#/components/schemas/RuleNature'
         isShadow:
           type: boolean
+        sanctionsDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleExecutionSanctionsDetails'
+          x-fern-ignore: true
       required:
         - ruleInstanceId
         - ruleName
@@ -4921,6 +4934,13 @@ components:
           type: string
           pattern: ^(\d{4}-\d{2}-\d{2})*$
           description: Date of birth of the account holder (YYYY-MM-DD)
+        transactionHash:
+          type: string
+          description:
+            A hash is a cryptographic fingerprint that uniquely identifies a
+            blockchain transaction on the network, whereas a transactionId is
+            just an internal reference used by a wallet or platform to track the
+            transaction in its own system.
       required:
         - method
     WalletNetwork:
@@ -5011,6 +5031,21 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - method
+    CorrespondenceBankDetails:
+      description: Model for Correspondence bank details
+      type: object
+      x-examples: {}
+      title: CorrespondenceBankDetails
+      properties:
+        bankName:
+          type: string
+          minLength: 1
+          description: Name of the bank
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     SWIFTDetails:
       description: Model for SWIFT payment method
       type: object
@@ -5051,6 +5086,10 @@ components:
           description: Special instructions if any
         address:
           $ref: '#/components/schemas/Address'
+        correspondenceBankDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/CorrespondenceBankDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5182,6 +5221,8 @@ components:
         name:
           type: string
           description: Name of the account holder
+        address:
+          $ref: '#/components/schemas/Address'
         emailId:
           $ref: '#/components/schemas/EmailId'
         tags:
@@ -6856,6 +6897,7 @@ components:
         - DOP
         - DOT
         - DREP
+        - DYDX
         - DYP
         - DZD
         - EEK
@@ -6935,6 +6977,7 @@ components:
         - INJ
         - INR
         - INV
+        - IOTA
         - IOTX
         - ISLM
         - IQD
@@ -6952,6 +6995,7 @@ components:
         - KES
         - KGS
         - KHR
+        - KLAY
         - KMF
         - KNC
         - KPW
@@ -6978,6 +7022,7 @@ components:
         - LSL
         - LTC
         - LTL
+        - LUNA2
         - LVL
         - LYD
         - MAD
@@ -7020,6 +7065,7 @@ components:
         - NAD
         - NCT
         - NEAR
+        - NEO
         - NEST
         - NGN
         - NIO
@@ -7175,6 +7221,7 @@ components:
         - VTHO
         - VUV
         - WAMPL
+        - WAVES
         - WAXL
         - WBTC
         - WCFG
@@ -7202,6 +7249,7 @@ components:
         - ZEC
         - ZEN
         - ZETA
+        - ZIL
         - ZMK
         - ZMW
         - ZRX

@@ -158,7 +158,7 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
       ) {
         return {
           name,
-          value: val.value.transactionAmount,
+          value: val.value?.transactionAmount ?? '-',
           riskScore: val.score,
           weight: val.weight,
           riskLevel: val.riskLevel,

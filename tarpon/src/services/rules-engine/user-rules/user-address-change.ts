@@ -59,6 +59,8 @@ export default class UserAddressChange extends UserRule<UserAddressChangeRulePar
       })
     }
 
-    return ruleHit
+    return {
+      ruleHitResult: ruleHit,
+    }
   }
 }

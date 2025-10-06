@@ -49,6 +49,9 @@ jest.mock('@/@types/openapi-internal-custom/DefaultApi', () => ({
     if (path === '/cases' && method === 'GET') {
       return ['frn:console:<default>:::case-management/case-status/*']
     }
+    if (path === '/transactions' && method === 'GET') {
+      return ['frn:console:<default>:::transactions/overview']
+    }
     return []
   },
   getAlwaysAllowedAccess: () => true,
@@ -108,7 +111,7 @@ describe('rbacMiddleware - filter injection', () => {
     )
     const qp = JSON.parse(res.body as string)
     expect(qp.filterCaseStatus).toBeTruthy()
-    expect(qp.filterAlertStatus).toBeUndefined()
+    expect(qp.filterAlertStatus).toBeTruthy()
   })
 
   test('alerts route keeps provided filterAlertStatus and injects missing filterCaseStatus', async () => {
@@ -128,5 +131,24 @@ describe('rbacMiddleware - filter injection', () => {
     const qp = JSON.parse(res.body as string)
     expect(qp.filterAlertStatus).toBe('OPEN')
     expect(qp.filterCaseStatus).toBeTruthy()
+  })
+
+  test('transactions route injects no filters', async () => {
+    const mw = rbacMiddleware()
+    const handler = mw(
+      async (event: APIGatewayProxyWithLambdaAuthorizerEvent<any>) => ({
+        statusCode: 200,
+        body: JSON.stringify(event.queryStringParameters),
+      })
+    )
+
+    const res: any = await handler(
+      mkEvent('/transactions') as any,
+      { functionName: 'Testing-API' } as any,
+      () => undefined
+    )
+    const qp = JSON.parse(res.body as string)
+    expect(qp.filterAlertStatus).toBeUndefined()
+    expect(qp.filterCaseStatus).toBeUndefined()
   })
 })

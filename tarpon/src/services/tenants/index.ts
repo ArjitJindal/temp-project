@@ -627,13 +627,18 @@ export class TenantService {
       )?.count ?? 0
 
     const apiKeysProcessed = apiKeys.map((x) => {
-      let value = x.value
+      const isTargetKey = x.id === unmaskingOptions.apiKeyId
+      let value: string | undefined
 
-      if (
-        !isFlagrightInternalUser() &&
-        unmaskingOptions.unmask &&
-        apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
-      ) {
+      if (isTargetKey && unmaskingOptions.unmask) {
+        const exceededViewLimit =
+          !isFlagrightInternalUser() &&
+          apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
+
+        value = exceededViewLimit
+          ? x.value?.replace(/.(?=.{4})/g, '*')
+          : x.value
+      } else {
         value = x.value?.replace(/.(?=.{4})/g, '*')
       }
 

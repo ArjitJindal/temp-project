@@ -694,19 +694,14 @@ export class AlertsRepository {
       })
     }
 
+    // Store reason filter separately to avoid $elemMatch conflicts
+    let reasonFilter: any = null
     if (params.filterClosingReason != null) {
-      alertConditions.push({
-        $and: [
-          {
-            'alerts.alertStatus': 'CLOSED',
-          },
-          {
-            'alerts.lastStatusChange.reason': {
-              $in: params.filterClosingReason,
-            },
-          },
-        ],
-      })
+      reasonFilter = {
+        'alerts.lastStatusChange.reason': {
+          $in: params.filterClosingReason,
+        },
+      }
     }
 
     if (params.filterOriginPaymentMethods) {
@@ -917,17 +912,22 @@ export class AlertsRepository {
       },
     }
     if (alertConditions.length > 0) {
+      const elemMatchConditions = replaceMagicKeyword(
+        alertConditions,
+        'alerts.',
+        ''
+      )
       pipeline.push({
         $match: {
           alerts: {
             $elemMatch: {
-              $and: replaceMagicKeyword(alertConditions, 'alerts.', ''),
+              $and: elemMatchConditions,
             },
           },
         },
       })
 
-      if (options?.enablePerformanceWorkaround) {
+      if (options?.enablePerformanceWorkaround && !reasonFilter) {
         pipeline.push({
           $addFields: {
             alerts: {
@@ -972,10 +972,16 @@ export class AlertsRepository {
       },
     })
 
-    if (alertConditions.length > 0) {
+    // Combine regular alert conditions with reason filter (applied post-unwind)
+    const finalAlertConditions = [...alertConditions]
+    if (reasonFilter) {
+      finalAlertConditions.push(reasonFilter)
+    }
+
+    if (finalAlertConditions.length > 0) {
       pipeline.push({
         $match: {
-          $and: alertConditions,
+          $and: finalAlertConditions,
         },
       })
     }

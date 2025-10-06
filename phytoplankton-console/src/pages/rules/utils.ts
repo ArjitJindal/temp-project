@@ -110,7 +110,7 @@ export const getRuleTypeOptions = (tenantSettings: TenantSettings): Option<RuleT
   ];
 };
 
-export type AlertCreatedForEnum = 'USER' | 'PAYMENT_DETAILS';
+export type AlertCreatedForEnum = 'USER' | 'PAYMENT_DETAILS' | 'EMAIL' | 'NAME' | 'ADDRESS';
 
 export const RULE_LABELS_OPTIONS = (
   isPnb: boolean,
@@ -156,7 +156,13 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITY
 export const getAlertCreatedFor = (
   tenantSettings: TenantSettings,
 ): { label: string; value: AlertCreatedForEnum }[] => {
-  const alertCreatedFor = ['USER', 'PAYMENT_DETAILS'] as AlertCreatedForEnum[];
+  const alertCreatedFor = [
+    'USER',
+    'PAYMENT_DETAILS',
+    'EMAIL',
+    'NAME',
+    'ADDRESS',
+  ] as AlertCreatedForEnum[];
   return alertCreatedFor.map((alertCreatedFor) => ({
     label:
       alertCreatedFor === 'USER'

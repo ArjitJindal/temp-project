@@ -19,6 +19,7 @@ import {
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
+import { Client } from '@opensearch-project/opensearch/.'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -40,7 +41,7 @@ import { TRANSACTION_RULES, TransactionRuleBase } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
-import { RuleHitResult, RuleHitResultItem } from './rule'
+import { RuleExecutionResult, RuleHitResult, RuleHitResultItem } from './rule'
 import {
   TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
@@ -126,6 +127,7 @@ import {
   RiskScoreDetails,
   DuplicateTransactionReturnType,
 } from '@/@types/tranasction/aggregation'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -182,16 +184,19 @@ export class RulesEngineService {
   sanctionsService: SanctionsService
   geoIpService: GeoIPService
   accountsService: AccountsService
+  opensearchClient?: Client
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     logicEvaluator: LogicEvaluator,
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    opensearchClient?: Client
   ) {
     // this need to be changed
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.tenantId = tenantId
+    this.opensearchClient = opensearchClient
     this.ruleLogicEvaluator = logicEvaluator
     this.transactionRepository = new DynamoDbTransactionRepository(
       tenantId,
@@ -234,6 +239,7 @@ export class RulesEngineService {
     this.sanctionsService = new SanctionsService(this.tenantId, {
       mongoDb,
       dynamoDb,
+      opensearchClient,
     })
     this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
@@ -245,9 +251,18 @@ export class RulesEngineService {
   ): Promise<RulesEngineService> {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const mongoDb = await getMongoDbClient()
-    return new RulesEngineService(tenantId, dynamoDb, logicEvaluator, mongoDb)
+    return new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator,
+      mongoDb,
+      opensearchClient
+    )
   }
 
   public async verifyAllUsersRules(): Promise<
@@ -1320,7 +1335,7 @@ export class RulesEngineService {
     let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedLogicVars[] | undefined
-
+    let ruleExecutionResult: RuleExecutionResult | undefined
     if (
       runOnV8Engine(ruleInstance) &&
       logic &&
@@ -1436,10 +1451,16 @@ export class RulesEngineService {
       if (shouldRunRule && tracing) {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
-
-      ruleResult = shouldRunRule
-        ? await ruleClassInstance.computeRule()
-        : undefined
+      const ruleComputeResult = await ruleClassInstance.computeRule()
+      const result =
+        shouldRunRule && ruleComputeResult
+          ? ruleComputeResult
+          : {
+              ruleHitResult: undefined,
+              ruleExecutionResult: undefined,
+            }
+      ruleResult = result.ruleHitResult
+      ruleExecutionResult = result.ruleExecutionResult
       runSegment?.close()
     }
 
@@ -1513,6 +1534,7 @@ export class RulesEngineService {
           : undefined,
         vars,
         isShadow: isShadowRule(ruleInstance),
+        sanctionsDetails: ruleExecutionResult?.sanctionsDetails,
       },
     }
   }

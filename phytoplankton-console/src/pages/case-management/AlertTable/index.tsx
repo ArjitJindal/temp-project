@@ -1208,6 +1208,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     'destinationMethodFilterId',
     'ruleNature',
     'alertStatus',
+    'filterClosingReason',
     'alertSla',
   ]);
   const filters = useCaseAlertFilters(filterIds);
