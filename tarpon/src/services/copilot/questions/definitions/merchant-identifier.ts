@@ -37,8 +37,6 @@ export const CardMerchantIdentifier: TableQuestion<
     { convert, userId, username },
     { page, pageSize, direction, currency, ...period }
   ) => {
-    const items: [string, string, number, number][] = []
-
     if (!isClickhouseEnabled()) {
       throw new Error('Clickhouse is not enabled')
     }
@@ -72,11 +70,14 @@ export const CardMerchantIdentifier: TableQuestion<
         pageSize
       )
 
+    const items = rows.map((r) => {
+      const convertedSum = convert(r.sum, 'USD', currency) // amount are stored in USD in CH
+      return [r.merchantName, 'CARD', r.count, convertedSum]
+    })
+
     return {
       data: {
-        items: rows.map((r) => {
-          return [r.merchantName, 'CARD', r.count, convert(r.sum, currency)]
-        }),
+        items,
         total: resultTotal,
       },
       summary:

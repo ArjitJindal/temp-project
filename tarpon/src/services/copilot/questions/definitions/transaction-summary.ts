@@ -79,15 +79,21 @@ export const TransactionSummary: PropertiesQuestion<
     return {
       data: [
         { key: 'Transaction count', value: result.count.toFixed(0) },
-        { key: 'Max amount', value: convert(result.max, currency).toFixed(2) },
-        { key: 'Min amount', value: convert(result.min, currency).toFixed(2) },
+        {
+          key: 'Max amount',
+          value: convert(result.max, 'USD', currency).toFixed(2), // value of currency in CH are in USD
+        },
+        {
+          key: 'Min amount',
+          value: convert(result.min, 'USD', currency).toFixed(2),
+        }, // value of currency in CH are in USD
         {
           key: 'Average amount',
-          value: convert(result.avg, currency).toFixed(2),
+          value: convert(result.avg, 'USD', currency).toFixed(2), // value of currency in CH are in USD
         },
         {
           key: 'Total amount',
-          value: convert(result.total, currency).toFixed(2),
+          value: convert(result.total, 'USD', currency).toFixed(2), // value of currency in CH are in USD
         },
       ],
       summary: ``,
