@@ -43,12 +43,12 @@ export const RiskLevelSettings: React.FC = () => {
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleSaveAlias = useCallback(
-    async (level: RiskLevel) => {
+    async (level: RiskLevel, aliasOverride?: string) => {
       setSavingLevel(level);
       try {
         const updatedLevelToAlias = new Map(savedLevelToAlias).set(
           level,
-          newLevelToAlias.get(level) || '',
+          aliasOverride ?? (newLevelToAlias.get(level) || ''),
         );
         const riskLevelAlias = Array.from(updatedLevelToAlias.entries())
           .map((entry) => ({
@@ -111,20 +111,17 @@ export const RiskLevelSettings: React.FC = () => {
         helper.display({
           title: 'Action',
           enableResizing: false,
-          render: (item) => {
+          render: (item, ctx) => {
+            const rowApi = ctx.rowApi;
+            const draft = (rowApi?.getDraft?.() as TableItem) ?? item;
+            const isBusy = rowApi?.isBusy;
+            const isDirty = (draft.levelAlias ?? '') !== (item.levelAlias ?? '');
             return (
               <Button
                 type="PRIMARY"
-                onClick={() => {
-                  handleSaveAlias(item.level);
-                }}
-                isDisabled={
-                  !!savingLevel ||
-                  newLevelToAlias.get(item.level) === undefined ||
-                  (savedLevelToAlias.get(item.level) || '') ===
-                    (newLevelToAlias.get(item.level) || '')
-                }
-                isLoading={item.level === savingLevel}
+                onClick={() => rowApi?.save?.()}
+                isDisabled={!isDirty}
+                isLoading={isBusy || item.level === savingLevel}
                 requiredResources={['write:::settings/risk-scoring/risk-levels-alias/*']}
               >
                 Update
@@ -133,7 +130,7 @@ export const RiskLevelSettings: React.FC = () => {
           },
         }),
       ]),
-    [savingLevel, newLevelToAlias, savedLevelToAlias, handleSaveAlias],
+    [savingLevel],
   );
 
   return (
@@ -146,11 +143,15 @@ export const RiskLevelSettings: React.FC = () => {
         sizingMode="FULL_WIDTH"
         rowKey="level"
         columns={columns}
-        onEdit={(rowKey, newValue) => {
-          handleUpdateAlias(rowKey as RiskLevel, newValue.levelAlias ?? '');
-        }}
         data={{
           items: tableData,
+        }}
+        rowEditing={{
+          mode: 'single',
+          onSave: async (rowKey, drafted) => {
+            handleUpdateAlias(rowKey as RiskLevel, drafted.levelAlias ?? '');
+            await handleSaveAlias(rowKey as RiskLevel, drafted.levelAlias ?? '');
+          },
         }}
         pagination={false}
         toolsOptions={{

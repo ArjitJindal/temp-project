@@ -509,8 +509,9 @@ function SimpleColumnCellComponent<Item extends object, Accessor extends FieldAc
   } as ColumnDataType<Value, Item>;
 
   const rowApi = props.table.options.meta?.getRowApi?.(props.cell.row);
-  const isRowEditing = Boolean(rowApi?.isCreateRow || rowApi?.isEditing);
-  const isBusy = Boolean(rowApi?.isBusy);
+  const forceAlwaysEdit = column.defaultEditState === true;
+  const isRowEditing = forceAlwaysEdit || rowApi?.isCreateRow || rowApi?.isEditing;
+  const isBusy = rowApi?.isBusy;
   const draftItem: Item = (rowApi?.getDraft?.() as Item) ?? props.row.original.content;
   const currentValue: Value = isRowEditing
     ? (applyFieldAccessor(draftItem, column.key as FieldAccessor<Item>) as Value)
