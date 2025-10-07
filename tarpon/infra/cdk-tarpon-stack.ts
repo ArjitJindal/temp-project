@@ -1254,6 +1254,14 @@ export class CdkTarponStack extends cdk.Stack {
         StackConstants.FARGATE_BATCH_JOB_CLUSTER_NAME,
         { vpc }
       )
+      const ecsSecurityGroups = this.config.resource.LAMBDA_VPC_ENABLED
+        ? [securityGroup, clickhouseSecurityGroup].filter(
+            (sg): sg is SecurityGroup => Boolean(sg)
+          )
+        : undefined
+      const ecsSubnetSelection = this.config.resource.LAMBDA_VPC_ENABLED
+        ? { subnetType: SubnetType.PRIVATE_WITH_EGRESS }
+        : undefined
       ecsBatchJobTask = new EcsRunTask(
         this,
         getResourceNameForTarpon('BatchJobFargateRunner'),
@@ -1263,6 +1271,12 @@ export class CdkTarponStack extends cdk.Stack {
           launchTarget: new EcsFargateLaunchTarget({
             platformVersion: FargatePlatformVersion.LATEST,
           }),
+          assignPublicIp: false,
+          securityGroups:
+            ecsSecurityGroups && ecsSecurityGroups.length > 0
+              ? ecsSecurityGroups
+              : undefined,
+          subnets: ecsSubnetSelection,
           inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
           integrationPattern: IntegrationPattern.RUN_JOB,
           containerOverrides: [
