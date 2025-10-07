@@ -18,7 +18,7 @@ import { NangoRepository } from '../../services/nango/repository'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -338,7 +338,10 @@ export class TarponChangeMongoDbConsumer {
     await casesRepo.syncCaseUsers(internalUser)
 
     const sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+      new SanctionsScreeningDetailsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
     await sanctionsScreeningDetailsRepository.addScreeningDetails(
       newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
         []
@@ -547,7 +550,10 @@ export class TarponChangeMongoDbConsumer {
     )
 
     const sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(tenantId, mongoDb)
+      new SanctionsScreeningDetailsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
     await sanctionsScreeningDetailsRepository.addScreeningDetails(
       transaction.executedRules?.flatMap(
         (rule) => rule.sanctionsDetails ?? []

@@ -12,6 +12,7 @@ interface Props {
   onCustomPdfGeneration?: (doc: jsPDF) => number;
   orientation?: 'portrait' | 'landscape' | 'auto';
   addPageNumber?: boolean;
+  addRecurringPages?: boolean;
 }
 
 export interface TableOptions {
@@ -26,6 +27,8 @@ interface ExtractedTableData {
   element: HTMLElement;
   boundingRect: DOMRect;
 }
+
+const PAGE_HEIGHT = 295;
 
 // Note: PAGE_WIDTH and PAGE_HEIGHT are now calculated dynamically based on orientation
 export const FONT_FAMILY_REGULAR = 'NotoSans-Regular';
@@ -242,11 +245,11 @@ const DownloadAsPDF = async (props: Props) => {
     onCustomPdfGeneration,
     orientation: orientationProp = 'auto',
     addPageNumber = false,
+    addRecurringPages,
   } = props;
 
   const inputArray = (Array.isArray(pdfRef) ? pdfRef : [pdfRef]).filter(notNullish);
 
-  // Extract native table data and hide HTML tables to prevent pagination issues
   const extractedTables = extractNativeTables(inputArray);
   extractedTables.forEach((table) => {
     table.element.style.display = 'none';
@@ -278,6 +281,7 @@ const DownloadAsPDF = async (props: Props) => {
     const doc = new jsPDF(orientation, 'mm');
 
     const pageWidth = doc.internal.pageSize.getWidth() - 20;
+    const pageHeight = doc.internal.pageSize.getHeight();
 
     let position = 30;
     addAndSetFonts(doc);
@@ -299,26 +303,72 @@ const DownloadAsPDF = async (props: Props) => {
           position = 0;
         }
         position += reportTitle ? 16 : 0;
+        if (!addRecurringPages) {
+          const canvas = await html2canvas(input, {
+            scale: Math.min(2, (window as any).devicePixelRatio || 2),
+            useCORS: true,
+            backgroundColor: '#ffffff',
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const remainingHeight = pageHeight - position - 10;
+          const scaleX = pageWidth / canvas.width;
+          const scaleY = remainingHeight / canvas.height;
+          const scale = Math.min(scaleX, scaleY);
+          const imgWidth = canvas.width * scale;
+          imgHeight = canvas.height * scale;
 
-        const canvas = await html2canvas(input);
-        const imgData = canvas.toDataURL('image/png');
-        imgHeight = (canvas.height * pageWidth) / canvas.width;
+          // Filter tables for this input element
+          const pageTables = extractedTables.filter((table) => input.contains(table.element));
 
-        // Filter tables for this input element
-        const pageTables = extractedTables.filter((table) => input.contains(table.element));
+          // Add the first page
+          const currentPageY = position;
+          doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          renderNativeTablesForPage({
+            doc,
+            tables: pageTables,
+            currentPageY: currentPageY,
+            pageIndex: 0,
+            autoTable,
+            logoImage,
+            documentTimestamp,
+          });
+          position = position + imgHeight + 10;
+        } else {
+          const canvas = await html2canvas(input);
 
-        // Add the first page
-        const currentPageY = position;
-        doc.addImage(imgData, 'PNG', 10, position, pageWidth, imgHeight);
-        renderNativeTablesForPage({
-          doc,
-          tables: pageTables,
-          currentPageY: currentPageY,
-          pageIndex: 0,
-          autoTable,
-          logoImage,
-          documentTimestamp,
-        });
+          const imgData = canvas.toDataURL('image/png');
+          imgHeight = (canvas.height * pageWidth) / canvas.width;
+          if (addRecurringPages) {
+            let heightLeft = imgHeight;
+            // Add the first page
+            doc.addImage(imgData, 'PNG', 10, position, pageWidth, imgHeight);
+            heightLeft -= PAGE_HEIGHT - position;
+
+            // Add pages from 2 to n
+            while (heightLeft >= 0) {
+              position = heightLeft - imgHeight;
+              doc.addPage();
+              addTopFormatting(doc, logoImage, orientation, documentTimestamp);
+              doc.addImage(imgData, 'PNG', 10, position, pageWidth, imgHeight);
+              heightLeft -= PAGE_HEIGHT;
+            }
+          }
+          // Filter tables for this input element
+          const pageTables = extractedTables.filter((table) => input.contains(table.element));
+
+          // Add the first page
+          const currentPageY = position;
+          doc.addImage(imgData, 'PNG', 10, position, pageWidth, imgHeight);
+          renderNativeTablesForPage({
+            doc,
+            tables: pageTables,
+            currentPageY: currentPageY,
+            pageIndex: 0,
+            autoTable,
+            logoImage,
+            documentTimestamp,
+          });
+        }
       }
     }
 
@@ -334,7 +384,7 @@ const DownloadAsPDF = async (props: Props) => {
     addTable({ position: tableStartY, doc, tableOptions, logoImage, autoTable, documentTimestamp });
 
     const pageCount = doc.internal.pages.length - 1;
-    for (let i = 1; i <= pageCount; i++) {
+    for (let i = 1; i <= pageCount && !addRecurringPages; i++) {
       if (addPageNumber) {
         doc.setPage(i);
       }

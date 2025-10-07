@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { RoleService } from '@/services/roles'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {

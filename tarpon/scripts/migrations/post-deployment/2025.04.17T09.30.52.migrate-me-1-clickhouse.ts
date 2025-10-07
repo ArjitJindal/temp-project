@@ -1,8 +1,8 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { envIs } from '@/utils/env'
-import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
+import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhouse/clickhouse-mongo-map'
 
 async function migrateTenant(tenant: Tenant) {
   if (!envIs('prod:me-1')) {

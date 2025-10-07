@@ -1,8 +1,9 @@
-import { useContext, useEffect, useState } from 'react';
-import { hide, show, shutdown } from '@intercom/messenger-js-sdk';
+import { useContext, useEffect } from 'react';
+import { shutdown, show as openIntercommWidget } from '@intercom/messenger-js-sdk';
 import TopLevelLink from '../TopLevelLink';
-import { useFeatureEnabled } from '../../Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '../../Providers/SettingsProvider';
 import { CluesoContext } from '../../Providers/CluesoTokenProvider';
+import FreshworkComponent, { openFreshworksWidget } from './Freshwork';
 import IntercomComponent from './Intercomm';
 import QuestionLineIcon from '@/components/ui/icons/Remix/system/question-line.react.svg';
 import { useI18n } from '@/locales';
@@ -18,20 +19,45 @@ interface HelpProps {
 const Help = (props: HelpProps) => {
   const { isCollapsed, isActiveHighlightingEnabled } = props;
 
-  const [isOpen, setOpen] = useState(false);
   const cluesoToken = useContext(CluesoContext);
   const hasFeatureChatbot = useFeatureEnabled('CHATBOT');
+  const chatbotName = useSettings().chatbotName;
   const i18n = useI18n();
 
   useEffect(() => {
-    if (window.Intercom && !hasFeatureChatbot) {
+    if (window.Intercom && (!hasFeatureChatbot || chatbotName !== 'INTERCOMM')) {
       shutdown();
     }
-  }, [hasFeatureChatbot]);
+  }, [hasFeatureChatbot, chatbotName]);
+
+  // const handleChatbotClose = () => {
+  //   switch (chatbotName) {
+  //     case 'INTERCOMM':
+  //       closeIntercommWidget();
+  //       break;
+  //     case 'FRESHWORK':
+  //       closeFreshworksWidget();
+  //       break;
+  //     default:
+  //   }
+  // };
+
+  const handleChatbotOpen = () => {
+    switch (chatbotName) {
+      case 'INTERCOMM':
+        openIntercommWidget();
+        break;
+      case 'FRESHWORK':
+        openFreshworksWidget();
+        break;
+      default:
+    }
+  };
 
   return (
     <>
-      {hasFeatureChatbot && <IntercomComponent setOpen={(state) => setOpen(state)} />}
+      {hasFeatureChatbot && chatbotName === 'INTERCOMM' && <IntercomComponent />}
+      {hasFeatureChatbot && chatbotName === 'FRESHWORK' && <FreshworkComponent />}
       <TopLevelLink
         key="help"
         icon={<QuestionLineIcon />}
@@ -40,12 +66,7 @@ const Help = (props: HelpProps) => {
         {...(hasFeatureChatbot
           ? {
               onClick: () => {
-                if (isOpen) {
-                  hide();
-                } else {
-                  show();
-                }
-                setOpen(!isOpen);
+                handleChatbotOpen();
               },
             }
           : {

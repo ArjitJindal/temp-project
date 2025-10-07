@@ -1,8 +1,8 @@
 import { NotificationRepository } from '../notifications-repository'
-import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/insert'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 export const getNotificationRepository = async (tenantId: string) => {
   await prepareClickhouseInsert(

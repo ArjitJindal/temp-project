@@ -28,8 +28,7 @@ export default function ListSelect(props: Props) {
   }
   return (
     <Select<string>
-      mode={'MULTIPLE'}
-      allowNewOptions={true}
+      mode={'MULTIPLE_DYNAMIC'}
       allowClear={true}
       options={getOr(res, [])
         .filter((list) => list.subtype !== 'CUSTOM')

@@ -11,7 +11,7 @@ import { getS3Client } from '@/utils/s3'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { FlatFilesRecords } from '@/models/flat-files-records'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 
 @traceable
 export class CsvFormat extends FlatFileFormat {

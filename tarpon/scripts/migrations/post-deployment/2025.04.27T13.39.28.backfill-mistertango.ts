@@ -1,6 +1,6 @@
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
+import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhouse/clickhouse-mongo-map'
 import { envIsNot } from '@/utils/env'
 export const up = async () => {
   const [_, region] = stageAndRegion()

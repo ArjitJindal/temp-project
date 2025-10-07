@@ -19,6 +19,7 @@ import {
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
+import { Client } from '@opensearch-project/opensearch/.'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -84,7 +85,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import {
   RULE_ERROR_COUNT_METRIC,
   RULE_EXECUTION_TIME_MS_METRIC,
-} from '@/core/cloudwatch/metrics'
+} from '@/constants/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -126,6 +127,7 @@ import {
   RiskScoreDetails,
   DuplicateTransactionReturnType,
 } from '@/@types/tranasction/aggregation'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -182,16 +184,19 @@ export class RulesEngineService {
   sanctionsService: SanctionsService
   geoIpService: GeoIPService
   accountsService: AccountsService
+  opensearchClient?: Client
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     logicEvaluator: LogicEvaluator,
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    opensearchClient?: Client
   ) {
     // this need to be changed
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.tenantId = tenantId
+    this.opensearchClient = opensearchClient
     this.ruleLogicEvaluator = logicEvaluator
     this.transactionRepository = new DynamoDbTransactionRepository(
       tenantId,
@@ -234,6 +239,7 @@ export class RulesEngineService {
     this.sanctionsService = new SanctionsService(this.tenantId, {
       mongoDb,
       dynamoDb,
+      opensearchClient,
     })
     this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
@@ -245,9 +251,18 @@ export class RulesEngineService {
   ): Promise<RulesEngineService> {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const mongoDb = await getMongoDbClient()
-    return new RulesEngineService(tenantId, dynamoDb, logicEvaluator, mongoDb)
+    return new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator,
+      mongoDb,
+      opensearchClient
+    )
   }
 
   public async verifyAllUsersRules(): Promise<
@@ -1976,7 +1991,8 @@ export class RulesEngineService {
 
   public async applyTransactionAction(
     data: TransactionAction,
-    userId: string
+    userId: string,
+    paymentApprovalAction: boolean = false
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
     const txns = await this.transactionRepository.getTransactionsByIds(
@@ -2000,6 +2016,7 @@ export class RulesEngineService {
     }
 
     const promises = [
+      // updating the transaction event
       this.transactionEventRepository.saveTransactionEvents(
         txns
           .filter(
@@ -2025,6 +2042,7 @@ export class RulesEngineService {
             },
           }))
       ),
+      // saving the transaction
       this.transactionRepository.saveTransactions(
         txns
           .filter(
@@ -2038,6 +2056,9 @@ export class RulesEngineService {
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
             },
+            paymentApprovalTimestamp: paymentApprovalAction
+              ? Date.now()
+              : transaction.paymentApprovalTimestamp,
           }))
       ),
     ]

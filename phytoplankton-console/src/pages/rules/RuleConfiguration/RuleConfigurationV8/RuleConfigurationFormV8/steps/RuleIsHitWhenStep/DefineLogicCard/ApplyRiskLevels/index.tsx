@@ -25,7 +25,6 @@ export default function ApplyToOtherLevelsCard(props: Props) {
         <div className={s.inputs}>
           <Select<RiskLevel>
             mode="MULTIPLE"
-            allowNewOptions
             options={RISK_LEVELS.filter((x) => x !== currentRiskLevel).map((riskLevel) => ({
               value: riskLevel,
               label: getRiskLevelLabel(riskLevel, settings),

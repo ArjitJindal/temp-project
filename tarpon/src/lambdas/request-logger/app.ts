@@ -4,12 +4,12 @@ import { captureException as captureExceptionSentry } from '@sentry/aws-serverle
 import { handleRequestLoggerTaskClickhouse } from './utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
-import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
+import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongo-table-names'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getAllTenantIds } from '@/utils/tenant'
 import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { ApiRequestLog } from '@/@types/request-logger'
-import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { envIs } from '@/utils/env'
 
 const captureException = (log: ApiRequestLog) => {

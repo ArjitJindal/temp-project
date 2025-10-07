@@ -7,22 +7,19 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 import {
-  COUNT_QUERY_LIMIT,
-  DEFAULT_PAGE_SIZE,
   offsetPaginateClickhouse,
-  CursorPaginationResponse,
   cursorPaginateClickhouse,
   getClickhouseCountOnly,
   getClickhouseDataOnly,
 } from '@/utils/pagination'
-import {
-  getSortedData,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { COUNT_QUERY_LIMIT, DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { CursorPaginationResponse } from '@/@types/pagination'
+import { getSortedData } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import { hasFeature } from '@/core/utils/context'
 import {
   AllUsersTableItem,

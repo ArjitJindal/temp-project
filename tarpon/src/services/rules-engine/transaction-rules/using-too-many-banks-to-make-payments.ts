@@ -7,7 +7,6 @@ import { AuxiliaryIndexTransaction } from '../repositories/transaction-repositor
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   BANKS_THRESHOLD_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -19,6 +18,7 @@ import {
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { mergeObjects } from '@/utils/object'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'

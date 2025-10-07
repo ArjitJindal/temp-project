@@ -12,9 +12,9 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { getUpdateAttributesUpdateItemInput } from '@/utils/dynamodb'
 import {
-  METADATA_COLLECTION,
   TENANT_DELETION_COLLECTION,
-} from '@/utils/mongodb-definitions'
+  METADATA_COLLECTION,
+} from '@/utils/mongo-table-names'
 import { traceable } from '@/core/xray'
 import { envIs } from '@/utils/env'
 import { getTestEnabledFeatures } from '@/core/utils/context'

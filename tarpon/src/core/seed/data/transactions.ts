@@ -48,7 +48,7 @@ import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResu
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { getPaymentDetailsName } from '@/utils/helpers'
+import { getPaymentDetailsNameString } from '@/utils/helpers'
 import { hasFeature } from '@/core/utils/context'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 
@@ -217,7 +217,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       ruleInstanceId: string,
       transactionId: string
     ): SanctionsDetails[] => {
-      const namesToSearch = getPaymentDetailsName(paymentDetails)
+      const namesToSearch = getPaymentDetailsNameString(paymentDetails)
       const sanctionsDetails: SanctionsDetails[] = []
 
       for (const n of namesToSearch) {

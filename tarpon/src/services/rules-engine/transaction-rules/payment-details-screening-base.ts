@@ -36,7 +36,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import {
   extractBankInfoFromPaymentDetails,
-  getPaymentDetailsName,
+  getPaymentDetailsNameString,
 } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { notNullish } from '@/utils/array'
@@ -142,12 +142,13 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       enablePhoneticMatching,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
-      ? getPaymentDetailsName(paymentDetails)
+      ? getPaymentDetailsNameString(paymentDetails)
       : []
 
     const bankInfos = screeningFields.includes('BANK_NAME')
-      ? compact([extractBankInfoFromPaymentDetails(paymentDetails)])
+      ? compact(extractBankInfoFromPaymentDetails(paymentDetails))
       : []
+
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
     const providers = getDefaultProviders()
     const data: (SanctionsRuleResult | undefined)[] = await Promise.all([

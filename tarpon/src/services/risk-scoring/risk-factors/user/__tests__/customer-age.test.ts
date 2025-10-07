@@ -1,7 +1,7 @@
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { getRiskFactorLogicByKeyAndType } from '../..'
 import { CONSUMER_CUSTOMER_AGE_RISK_FACTOR } from '../../user/customer-age'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'

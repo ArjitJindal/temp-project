@@ -6,14 +6,14 @@ import memoize from 'lodash/memoize'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
+import { DynamoAccountsRepository } from './repository/dynamo'
+import { Auth0AccountsRepository } from './repository/auth0'
 import {
   Auth0TenantMetadata,
   InternalUserCreate,
   MicroTenantInfo,
   Tenant,
-} from './repository'
-import { DynamoAccountsRepository } from './repository/dynamo'
-import { Auth0AccountsRepository } from './repository/auth0'
+} from '@/@types/tenant'
 import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -41,12 +41,6 @@ import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
 import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
-
-export type TenantBasic = {
-  id: string
-  name: string
-  auth0Domain?: string
-}
 
 @traceable
 export class AccountsService {

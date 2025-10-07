@@ -5,7 +5,7 @@ export const CONCAT_STRING: LogicFunction<string> = {
   group: 'string',
   uiDefinition: {
     label: 'Concat String',
-    returnType: 'string',
+    returnType: 'text',
     args: {
       v1: {
         label: 'String 1',

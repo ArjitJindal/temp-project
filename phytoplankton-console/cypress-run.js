@@ -66,10 +66,10 @@ ${Object.entries(failedTests)
           thread_ts: postedMessage.ts,
         });
       };
-      // sending errors in the thread limit of a message is 12,000 characters
+      // sending errors in the thread limit of a message is 3001 characters
       let threadGroupMessages = [];
       let currentThreadCharacters = 0;
-      const MESSAGE_MAX_CHARS = 11000; // account for new line charcters max limit is 120000
+      const MESSAGE_MAX_CHARS = 2800; // account for new line charcters max limit is 3001
       Object.entries(failedTests).forEach(async ([test, description]) => {
         const header = `***${test} -> errors*** \n`;
         const errors = description.errors.join('\n');
@@ -264,6 +264,7 @@ async function getCypressCreds() {
   try {
     // const spec = ` --spec "cypress/e2e/cases/case-details*.cy.ts"`;
     const spec = ``;
+    let e2eFailed = false;
     try {
       execSync(
         `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag} ${spec}`,
@@ -272,9 +273,13 @@ async function getCypressCreds() {
         },
       );
     } catch (e) {
+      e2eFailed = true;
       console.error(e);
     }
     await afterCypressRun();
+    if (e2eFailed) {
+      throw new Error('E2E failed');
+    }
   } catch (e) {
     await afterCypressRun();
     console.error(e);

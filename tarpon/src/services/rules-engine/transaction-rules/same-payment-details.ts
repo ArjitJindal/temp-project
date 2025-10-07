@@ -5,14 +5,14 @@ import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   TIME_WINDOW_SCHEMA,
-  TimeWindow,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
-import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { getNonUserReceiverKeyId, getNonUserSenderKeyId } from '../utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,
@@ -220,10 +220,13 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
 
   override getUserKeyId(direction: 'origin' | 'destination') {
     return direction === 'origin'
-      ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
-          ?.PartitionKeyID
-      : getNonUserReceiverKeys(this.tenantId, this.transaction, undefined, true)
-          ?.PartitionKeyID
+      ? getNonUserSenderKeyId(this.tenantId, this.transaction, undefined, true)
+      : getNonUserReceiverKeyId(
+          this.tenantId,
+          this.transaction,
+          undefined,
+          true
+        )
   }
 
   override getMaxTimeWindow(): TimeWindow {

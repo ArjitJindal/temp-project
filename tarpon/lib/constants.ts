@@ -1,6 +1,7 @@
 import { Config } from '@flagright/lib/config/config'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { stageAndRegion } from '@flagright/lib/utils/env'
+import { envIs } from '@/utils/env'
 
 export function getSuffix(): string {
   let suffix = ''
@@ -373,7 +374,7 @@ export const SQSQueues: {
   },
   DOWNSTREAM_TARPON_QUEUE_NAME: {
     name: getResourceName('DownstreamTarponQueue'),
-    oldestMsgAgeAlarmThresholdMinutes: 45, // Lets do 45 Minutes it should not be more then that ideally
+    oldestMsgAgeAlarmThresholdMinutes: envIs('dev') ? 60 : 45,
   },
   SECONDARY_TARPON_QUEUE_NAME: {
     name: getResourceName('SecondaryTarponQueue') + '.fifo',

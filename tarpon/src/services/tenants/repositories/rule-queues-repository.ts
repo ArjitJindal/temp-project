@@ -8,7 +8,7 @@ import {
   prefixRegexMatchFilter,
   regexMatchFilter,
 } from '@/utils/mongodb-utils'
-import { RULE_QUEUES_COLLECTION } from '@/utils/mongodb-definitions'
+import { RULE_QUEUES_COLLECTION } from '@/utils/mongo-table-names'
 import { traceable } from '@/core/xray'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
 import { DefaultApiGetRuleQueuesRequest } from '@/@types/openapi-internal/RequestParameters'

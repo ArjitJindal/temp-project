@@ -6,13 +6,13 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import {
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
   SANCTIONS_SCREENING_DETAILS_V2_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { SanctionsScreeningDetailsMigrationBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { SanctionsScreeningDetailsV2 } from '@/@types/openapi-internal/SanctionsScreeningDetailsV2'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import {
   getMigrationLastCompletedId,
   updateMigrationLastCompletedId,

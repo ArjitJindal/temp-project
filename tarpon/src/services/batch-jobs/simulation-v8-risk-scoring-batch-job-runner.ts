@@ -41,7 +41,7 @@ import { getUserName } from '@/utils/helpers'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SimulationRiskFactorsSampling } from '@/@types/openapi-internal/SimulationRiskFactorsSampling'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 
 const MAX_USERS = 100000
 const CONCURRENCY = 200

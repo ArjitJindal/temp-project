@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { List, Avatar } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
-import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
+import { colorSchema } from '@/components/AssigneesDropdown/utils';
 import { useSortedUsers } from '@/utils/user-utils';
 
 interface Props {

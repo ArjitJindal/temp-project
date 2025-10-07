@@ -32,7 +32,7 @@ import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { getSLAStatusFromElapsedTime } from '@/services/sla/sla-utils'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { Account } from '@/@types/openapi-internal/Account'
 
 let counter = 1

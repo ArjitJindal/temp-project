@@ -1,5 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { TransactionStatsDashboardMetric } from '@/services/analytics/dashboard-metrics/transaction-stats'
 import { hasFeature } from '@/core/utils/context'
 

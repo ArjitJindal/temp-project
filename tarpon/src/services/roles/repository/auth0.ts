@@ -15,7 +15,7 @@ import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/Managed
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { traceable } from '@/core/xray'
 import { Auth0AccountsRepository } from '@/services/accounts/repository/auth0'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 @traceable
 export class Auth0RolesRepository extends BaseRolesRepository {

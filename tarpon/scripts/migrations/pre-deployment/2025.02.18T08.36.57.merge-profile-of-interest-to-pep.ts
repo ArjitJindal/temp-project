@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'

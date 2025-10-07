@@ -32,7 +32,7 @@ import {
 import { isSpecificUserTableItem, TableItem } from '@/pages/case-management/CaseTable/types';
 import { getUserLink } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import UserStateTag from '@/components/library/Tag/UserStateTag';
 import { PaginatedData, useQuery } from '@/utils/queries/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
@@ -312,7 +312,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
                     isMultiLevelEscalationEnabled,
                   )
                 }
-                onChange={(assignees) => {
+                onChange={async (assignees) => {
                   const [assignments, isReview] = createAssignments(
                     entity.caseStatus ?? 'OPEN',
                     assignees,
@@ -326,12 +326,12 @@ function CaseTable<FirstModalProps, SecondModalProps>(
                   }
 
                   if (isReview) {
-                    caseReviewAssignmentUpdateMutation.mutate({
+                    await caseReviewAssignmentUpdateMutation.mutateAsync({
                       caseIds: [entity.caseId],
                       reviewAssignments: assignments,
                     });
                   } else {
-                    caseAssignmentUpdateMutation.mutate({
+                    await caseAssignmentUpdateMutation.mutateAsync({
                       caseIds: [entity.caseId],
                       assignments,
                     });

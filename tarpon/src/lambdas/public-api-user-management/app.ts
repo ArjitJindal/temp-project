@@ -11,7 +11,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { publicLambdaApi } from '@/core/middlewares/public-lambda-api-middleware'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { updateLogMetadata } from '@/core/utils/context'
+import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import {
@@ -27,6 +27,7 @@ import {
 } from '@/@types/openapi-public/RequestParameters'
 import { batchCreateUserOptions } from '@/utils/user'
 import { assertValidTimestampTags } from '@/utils/tags'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 export const MAX_BATCH_IMPORT_COUNT = 200
 
@@ -91,11 +92,15 @@ export const userHandler = publicLambdaApi()(
       }
 
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      const opensearchClient = hasFeature('OPEN_SEARCH')
+        ? await getSharedOpensearchClient()
+        : undefined
       const userManagementService = new UserManagementService(
         tenantId,
         dynamoDb,
         mongoDb,
-        logicEvaluator
+        logicEvaluator,
+        opensearchClient
       )
       return await userManagementService.createAndVerifyUser(
         userPayload,

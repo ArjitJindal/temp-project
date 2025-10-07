@@ -13,7 +13,7 @@ import {
   CASES_COLLECTION,
   DASHBOARD_TEAM_ALERTS_STATS_HOURLY,
   DASHBOARD_TEAM_CASES_STATS_HOURLY,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
@@ -21,11 +21,9 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
 import { traceable } from '@/core/xray'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getMaterialisedViewQuery } from '@/utils/clickhouse/materialised-views-queries'
 
 interface TimestampCondition {

@@ -50,9 +50,9 @@ import {
   isSanctionsDataFetchTenantSpecific,
 } from '@/services/sanctions/utils'
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 import { createApiUsageJobs, toggleApiKeys } from '@/utils/api-usage'
-import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
+import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhouse/clickhouse-mongo-map'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { logger } from '@/core/logger'

@@ -2,7 +2,7 @@ import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { buildTransactionTypeQuery } from './queries/transaction-type-query'
 import { BarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import {
   humanReadablePeriod,
   matchPeriod,
@@ -12,11 +12,9 @@ import {
   periodVars,
 } from '@/services/copilot/questions/definitions/util'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 export const TransactionType: BarchartQuestion<Period> = {
   type: 'BARCHART',

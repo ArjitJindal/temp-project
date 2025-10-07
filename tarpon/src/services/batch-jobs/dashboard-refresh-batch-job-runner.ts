@@ -9,7 +9,7 @@ import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'

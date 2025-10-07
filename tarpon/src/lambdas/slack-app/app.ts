@@ -28,7 +28,7 @@ import { CaseRepository } from '@/services/cases/repository'
 import { apiFetch } from '@/utils/api-fetch'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import dayjs from '@/utils/dayjs'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { splitSlackMessage } from '@/utils/slack'
 
 const slackifyMarkdown = require('slackify-markdown') // eslint-disable-line

@@ -15,14 +15,12 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { logger } from '@/core/logger'
-import {
-  AsyncBatchRecord,
-  AsyncRuleRecord,
-  sendAsyncRuleTasks,
-} from '@/services/rules-engine/utils'
+import { sendAsyncRuleTasks } from '@/services/rules-engine/utils'
+import { AsyncBatchRecord, AsyncRuleRecord } from '@/@types/batch-import'
 import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import { BatchImportService } from '@/services/batch-import'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 function getLockKeys(record: AsyncRuleRecord): string[] {
   switch (record.type) {
@@ -62,18 +60,23 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
   const { tenantId } = record
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
+  const opensearchClient = hasFeature('OPEN_SEARCH')
+    ? await getSharedOpensearchClient()
+    : undefined
   const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
   const rulesEngineService = new RulesEngineService(
     tenantId,
     dynamoDb,
     logicEvaluator,
-    mongoDb
+    mongoDb,
+    opensearchClient
   )
   const userRulesEngineService = new UserManagementService(
     tenantId,
     dynamoDb,
     mongoDb,
-    logicEvaluator
+    logicEvaluator,
+    opensearchClient
   )
   const { type } = record
 

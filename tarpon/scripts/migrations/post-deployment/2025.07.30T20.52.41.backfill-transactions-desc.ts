@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 async function migrateTenant(tenant: Tenant) {
   console.log(`Starting transactions_desc backfill for tenant: ${tenant.id}`)

@@ -11,7 +11,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 
 withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
   describe('Verify transactions counting statistics', () => {

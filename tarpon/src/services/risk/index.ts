@@ -21,10 +21,8 @@ import { WorkflowService } from '../workflow'
 import { shouldSkipFirstApprovalStep } from '../workflow/approval-utils'
 import { VersionHistoryService } from '../version-history'
 import { riskFactorAggregationVariablesRebuild } from './utils'
-import {
-  DEFAULT_CLASSIFICATION_SETTINGS,
-  RiskRepository,
-} from '@/services/risk-scoring/repositories/risk-repository'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'

@@ -11,17 +11,9 @@ interface Props extends InputProps<any> {
 export default function FreeTextEnumInput(props: Props) {
   const items = props.schema.items?.enum;
   const options = items?.map((item) => ({
-    value: item,
+    value: typeof item === 'string' ? item : `${item}`,
     label: item,
   }));
 
-  return (
-    <Select
-      mode="MULTIPLE"
-      allowNewOptions
-      options={options ?? []}
-      placeholder="Select"
-      {...props}
-    />
-  );
+  return <Select mode="MULTIPLE_DYNAMIC" options={options ?? []} placeholder="Select" {...props} />;
 }

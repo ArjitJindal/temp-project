@@ -9,7 +9,7 @@ import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-ser
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
-import { TenantBasic } from '@/services/accounts'
+import { TenantBasic } from '@/@types/tenant'
 import { TenantService } from '@/services/tenants'
 
 const optionDefinitions = [

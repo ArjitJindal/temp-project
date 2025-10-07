@@ -1,7 +1,7 @@
 import { getSanctionsCollectionName } from '../../utils'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
-import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'

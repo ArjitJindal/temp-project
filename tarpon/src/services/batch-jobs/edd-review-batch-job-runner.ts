@@ -29,10 +29,8 @@ import { Person } from '@/@types/openapi-public/Person'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { CaseRepository } from '@/services/cases/repository'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
-import {
-  getClickhouseClient,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3Client } from '@/utils/s3'

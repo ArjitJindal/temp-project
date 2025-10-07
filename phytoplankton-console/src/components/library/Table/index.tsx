@@ -231,6 +231,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
 
   const Rows = table.getRowModel();
   const [rowExpanded, setrowExpanded] = useState<boolean>(false);
+  const [isPageChangeLoading, setIsPageChangeLoading] = useState<boolean>(false);
   useEffect(() => {
     if (rowExpanded) {
       return;
@@ -249,6 +250,12 @@ function Table<Item extends object, Params extends object = CommonParams>(
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [Rows, expandedRowId, rowExpanded]);
+
+  useEffect(() => {
+    if (!isLoading(dataRes)) {
+      setIsPageChangeLoading(false);
+    }
+  }, [dataRes]);
 
   const cyId = tableId != null ? `table-${tableId}` : `table`;
 
@@ -313,11 +320,13 @@ function Table<Item extends object, Params extends object = CommonParams>(
         {!cursor && pagination && (
           <Pagination
             isLoading={props.countResults ? isLoading(props.countResults) : isLoading(dataRes)}
+            isPageChangeLoading={isPageChangeLoading}
             current={params?.page ?? 1}
             pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
-            onChange={(page, pageSize) =>
-              handleChangeParamsPaginated({ ...params, page, pageSize })
-            }
+            onChange={(page, pageSize) => {
+              setIsPageChangeLoading(true);
+              handleChangeParamsPaginated({ ...params, page, pageSize });
+            }}
             total={
               props.countResults
                 ? getOr(props.countResults, { total: 0 }).total

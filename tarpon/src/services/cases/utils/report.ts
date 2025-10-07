@@ -1,6 +1,6 @@
 import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize'
 import pluralize from 'pluralize'
-import { COUNTRIES } from '@flagright/lib/constants'
+import { COUNTRIES } from '@flagright/lib/constants/countries'
 import { Case } from '@/@types/openapi-internal/Case'
 import {
   Item,

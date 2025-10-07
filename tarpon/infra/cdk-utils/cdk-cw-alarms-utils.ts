@@ -16,9 +16,9 @@ import { SFTP_CONNECTION_ERROR_PREFIX } from '@lib/constants'
 import {
   RULE_ERROR_COUNT_METRIC,
   RuleEngineNamespace,
-} from '@/core/cloudwatch/metrics'
+} from '@/constants/cloudwatch/metrics'
 
-export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
+const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
 const isDevUserStack = isQaEnv()
 const isDev = process.env.ENV === 'dev'
 

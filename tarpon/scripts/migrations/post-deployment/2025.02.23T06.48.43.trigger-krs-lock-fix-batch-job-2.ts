@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { logger } from '@/core/logger'

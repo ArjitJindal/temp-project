@@ -4,18 +4,18 @@ import { captureMessage } from '@sentry/node'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickhouseWebhookRepository } from './clickhouse-webhook-repository'
 import { DynamoWebhookRepository } from './dynamo-webhook-repository'
-import { WEBHOOK_COLLECTION } from '@/utils/mongodb-definitions'
+import { WEBHOOK_COLLECTION } from '@/utils/mongo-table-names'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { traceable } from '@/core/xray'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import {
-  batchInsertToClickhouse,
-  getClickhouseClient,
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+} from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 @traceable

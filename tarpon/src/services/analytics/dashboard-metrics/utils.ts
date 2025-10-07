@@ -9,10 +9,8 @@ import {
 } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
 import { AccountsService } from '@/services/accounts'
-import {
-  getTimeformatsByGranularity,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { getTimeformatsByGranularity } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 
 export function withUpdatedAt(
   pipeline: Document[],

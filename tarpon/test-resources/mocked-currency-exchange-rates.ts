@@ -491,6 +491,13 @@ export const mockedCurrencyExchangeRates: CoinbaseResponse = {
       EURT: '1',
       ISLM: '1',
       NPC: '1',
+      KLAY: '1',
+      ZIL: '1',
+      DYDX: '1',
+      IOTA: '1',
+      WAVES: '1',
+      LUNA2: '1',
+      NEO: '1',
     },
   },
 }

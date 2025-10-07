@@ -6,6 +6,7 @@ import {
 } from '@flagright/lib/utils/humanize';
 import { map, mapKeys, pickBy, range } from 'lodash';
 import { MAX_SLA_POLICIES_PER_ENTITY } from '@flagright/lib/constants';
+import { PAYMENT_APPROVAL_START_TIMESTAMP } from '@flagright/lib/utils';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
 import { getPolicyTime } from './components/SlaStatus/SlaPolicyDetails';
@@ -176,6 +177,9 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
     return {
       current: params.current,
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
+      paymentApprovalTimestamp: params.paymentApprovalTimestamp
+        ?.map((x) => Math.max(dayjs(x).valueOf()), PAYMENT_APPROVAL_START_TIMESTAMP)
+        .join(','),
       transactionId: params.transactionId,
       transactionTypes: params.transactionTypes?.join(','),
       transactionState: params.transactionState?.join(','),
@@ -241,6 +245,12 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
       direction: raw.direction as 'incoming' | 'outgoing' | 'all' | undefined,
       showDetailedView: raw.showDetailedView ? raw.showDetailedView === 'true' : undefined,
       view: isValidTableListViewEnum(raw.view) ? raw.view : undefined,
+      paymentApprovalTimestamp:
+        raw.paymentApprovalTimestamp &&
+        isRuleAction(raw.status) &&
+        (raw.status === 'ALLOW' || raw.status === 'BLOCK')
+          ? raw.paymentApprovalTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+          : undefined,
     };
   },
 };
@@ -280,6 +290,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'select',
         options: PRIORITYS.map((x) => ({ value: x, label: x })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -291,6 +302,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: CASE_TYPES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -302,6 +314,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'select',
         options: ruleOptions,
+        closeOnSingleSelect: true,
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
@@ -375,6 +388,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: businessIndustries.map((x) => ({ value: x, label: x })),
+        closeOnSingleSelect: true,
       },
     },
     {
@@ -468,6 +482,7 @@ export const useCaseAlertFilters = (
         options: [{ value: 'default', label: 'default' }].concat(
           ruleQueues.map((v) => ({ value: v.id ?? v.name, label: v.name })),
         ),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -479,6 +494,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: RULE_NATURES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -494,6 +510,7 @@ export const useCaseAlertFilters = (
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
         })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
@@ -510,6 +527,7 @@ export const useCaseAlertFilters = (
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
         })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,

@@ -43,7 +43,7 @@ export type AutoFilterDataType =
       displayAs?: 'input' | 'slider';
     }>
   | WithSharedAutoFilterProps<{ kind: 'dateRange' }>
-  | WithSharedAutoFilterProps<{ kind: 'dateTimeRange' }>
+  | WithSharedAutoFilterProps<{ kind: 'dateTimeRange'; min?: number }>
   | WithSharedAutoFilterProps<{ kind: 'year' }>
   | WithSharedAutoFilterProps<{
       kind: 'slider';
@@ -57,6 +57,7 @@ export type AutoFilterDataType =
       options: Option<string>[];
       mode: 'SINGLE' | 'MULTIPLE' | 'TAGS';
       displayMode: 'select' | 'list';
+      closeOnSingleSelect?: boolean;
     }>;
 
 export interface AutoFilterProps extends BaseFilter {

@@ -1,8 +1,8 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import pMap from 'p-map'
 import { migrateAllTenants } from '../utils/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 

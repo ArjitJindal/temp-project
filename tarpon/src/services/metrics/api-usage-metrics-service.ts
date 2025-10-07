@@ -41,17 +41,15 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { publishMetrics } from '@/core/cloudwatch/metrics'
 import {
-  publishMetrics,
   TRANSACTIONS_COUNT_METRIC,
   TRANSACTION_EVENTS_COUNT_METRIC,
   USERS_COUNT_METRIC,
   ACTIVE_RULE_INSTANCES_COUNT_METRIC,
-  MetricsData,
   TENANT_SEATS_COUNT_METRIC,
-  Metric,
   USER_EVENTS_COUNT_METRIC,
   COMPLY_ADVANTAGE_SANCTIONS_SEARCHES_COUNT_METRIC,
   ACURIS_SANCTIONS_SEARCHES_COUNT_METRIC,
@@ -68,8 +66,10 @@ import {
   REPORTS_COUNT_METRIC,
   SLA_POLICY_COUNT_METRIC,
   SCREENING_COUNT_METRIC,
-} from '@/core/cloudwatch/metrics'
-import { AccountsService, TenantBasic } from '@/services/accounts'
+} from '@/constants/cloudwatch/metrics'
+import { MetricsData, Metric } from '@/@types/cloudwatch'
+import { AccountsService } from '@/services/accounts'
+import { TenantBasic } from '@/@types/tenant'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
@@ -79,11 +79,9 @@ import {
   DAY_DATE_FORMAT_JS,
 } from '@/core/constants'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import {
-  batchInsertToClickhouse,
-  isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/checks'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
 

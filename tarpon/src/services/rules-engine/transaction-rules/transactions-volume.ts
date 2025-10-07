@@ -18,11 +18,9 @@ import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
-  TransactionsCounterPartiesThreshold,
   TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -31,6 +29,10 @@ import { RuleHitResultItem } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import {
+  TimeWindow,
+  TransactionsCounterPartiesThreshold,
+} from '@/@types/rule/params'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { Transaction } from '@/@types/openapi-public/Transaction'

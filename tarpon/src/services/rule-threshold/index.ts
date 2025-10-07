@@ -30,10 +30,8 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { RuleThresholdRecommendations } from '@/@types/openapi-internal/RuleThresholdRecommendations'
 import { VarThresholdData } from '@/@types/openapi-internal/VarThresholdData'
 import { isDemoMode } from '@/utils/demo'
-import {
-  getClickhouseClient,
-  isConsoleMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { ClickhouseAlertRepository } from '@/services/alerts/clickhouse-repository'
 import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
 import dayjs from '@/utils/dayjs'

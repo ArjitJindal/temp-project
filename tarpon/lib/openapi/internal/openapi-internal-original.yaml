@@ -1436,6 +1436,14 @@ paths:
           in: query
           name: responseType
           description: Type of response - 'data' for table data only, 'count' for count only
+        - schema:
+            type: number
+          in: query
+          name: afterPaymentApprovalTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforePaymentApprovalTimestamp
     post:
       summary: Flat file upload transaction
       operationId: post-transaction-flat-file-upload
@@ -10463,6 +10471,8 @@ components:
               type: number
             updatedAt:
               type: number
+            paymentApprovalTimestamp:
+              type: number
             alertIds:
               type: array
               items:
@@ -10678,6 +10688,8 @@ components:
           type: array
           items:
             type: string
+        paymentApprovalTimestamp:
+          type: number
       required:
         - transactionId
         - timestamp
@@ -10811,6 +10823,12 @@ components:
         - FRESHDESK
         - SALESFORCE
         - ZENDESK
+    ChatbotNames:
+      title: ChatbotNames
+      type: string
+      enum:
+        - FRESHWORK
+        - INTERCOMM
     DashboardStatsTransactionsCount:
       type: object
       title: DashboardStatsTransactionsCount
@@ -12007,6 +12025,8 @@ components:
           type: array
           items:
             type: string
+        chatbotName:
+          $ref: '#/components/schemas/ChatbotNames'
         llmProvider:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:
@@ -14767,6 +14787,12 @@ components:
           type: boolean
         enablePhoneticMatching:
           type: boolean
+        countryOfResidence:
+          type: array
+          items:
+            type: string
+        registrationId:
+          type: string
         addresses:
           type: array
           items:
@@ -14870,6 +14896,8 @@ components:
           type: array
           items:
             type: string
+        entityType:
+          type: string
     DefaultManualScreeningFiltersResponse:
       title: DefaultManualScreeningFiltersResponse
       type: object

@@ -2964,6 +2964,9 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        paymentApprovalTimestamp:
+          x-fern-ignore: true
+          type: number
     TransactionBase:
       title: TransactionBase
       type: object
@@ -4930,6 +4933,10 @@ components:
           $ref: '#/components/schemas/Address'
         countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
+        authorizedRepresentative:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDetails'
         dateOfBirth:
           type: string
           pattern: ^(\d{4}-\d{2}-\d{2})*$
@@ -5031,6 +5038,21 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - method
+    CorrespondenceBankDetails:
+      description: Model for Correspondence bank details
+      type: object
+      x-examples: {}
+      title: CorrespondenceBankDetails
+      properties:
+        bankName:
+          type: string
+          minLength: 1
+          description: Name of the bank
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     SWIFTDetails:
       description: Model for SWIFT payment method
       type: object
@@ -5071,6 +5093,10 @@ components:
           description: Special instructions if any
         address:
           $ref: '#/components/schemas/Address'
+        correspondenceBankDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/CorrespondenceBankDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -6878,6 +6904,7 @@ components:
         - DOP
         - DOT
         - DREP
+        - DYDX
         - DYP
         - DZD
         - EEK
@@ -6957,6 +6984,7 @@ components:
         - INJ
         - INR
         - INV
+        - IOTA
         - IOTX
         - ISLM
         - IQD
@@ -6974,6 +7002,7 @@ components:
         - KES
         - KGS
         - KHR
+        - KLAY
         - KMF
         - KNC
         - KPW
@@ -7000,6 +7029,7 @@ components:
         - LSL
         - LTC
         - LTL
+        - LUNA2
         - LVL
         - LYD
         - MAD
@@ -7042,6 +7072,7 @@ components:
         - NAD
         - NCT
         - NEAR
+        - NEO
         - NEST
         - NGN
         - NIO
@@ -7197,6 +7228,7 @@ components:
         - VTHO
         - VUV
         - WAMPL
+        - WAVES
         - WAXL
         - WBTC
         - WCFG
@@ -7224,6 +7256,7 @@ components:
         - ZEC
         - ZEN
         - ZETA
+        - ZIL
         - ZMK
         - ZMW
         - ZRX
