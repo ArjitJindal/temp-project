@@ -3,6 +3,7 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { UseMutationResult } from '@tanstack/react-query';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Resource } from '@flagright/lib/utils';
+import { nanoid } from 'nanoid';
 import ImportCsvModal from '../ImportCsvModal';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
@@ -23,6 +24,7 @@ import {
   CommonParams,
   TableColumn,
   TableRefType,
+  PublicRowEditApi,
 } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -93,6 +95,95 @@ function isNewDraft(value: unknown): value is NewTableItemData {
   return Array.isArray(v.value) && typeof v.reason === 'string' && typeof v.meta === 'object';
 }
 
+const EMPTY_DRAFT: NewTableItemData = { value: [], reason: '', meta: {} };
+
+function getDraftForInput(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+): NewTableItemData {
+  const maybe = rowApi?.getDraft?.();
+  if (rowApi?.isCreateRow) {
+    return isNewDraft(maybe) ? maybe : isNewItem(entity) ? entity : EMPTY_DRAFT;
+  }
+  const base = isExistedItem(maybe) ? (maybe as ExistedTableItem) : (entity as ExistedTableItem);
+  const values = Array.isArray(base.value) ? base.value : base.value ? [base.value] : [];
+  return { value: values, reason: base.reason, meta: base.meta };
+}
+
+function applyDraftValueUpdate(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+  listSubtype: ListSubtypeInternal | null,
+  newValues: string[] | undefined,
+): void {
+  rowApi?.setDraft?.((prev) => {
+    if (rowApi?.isCreateRow) {
+      const current = isNewDraft(prev) ? prev : getDraftForInput(rowApi, entity);
+      return { ...current, value: newValues ?? [] };
+    }
+    const current = isExistedItem(prev) ? prev : entity;
+    return {
+      ...current,
+      value: listSubtype === 'COUNTRY' ? newValues ?? [] : newValues?.[0] ?? '',
+    } as ExistedTableItem;
+  });
+}
+
+function applyDraftMetaUpdate(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+  meta: Metadata,
+): void {
+  rowApi?.setDraft?.((prev) => {
+    if (rowApi?.isCreateRow) {
+      const current = isNewDraft(prev) ? prev : getDraftForInput(rowApi, entity);
+      return { ...current, meta: { ...(current.meta ?? {}), ...meta } };
+    }
+    const current = isExistedItem(prev) ? prev : entity;
+    return { ...current, meta: { ...(current.meta ?? {}), ...meta } } as ExistedTableItem;
+  });
+}
+
+function isMetaFieldsValid(
+  columns: NonNullable<ListHeaderInternal['metadata']>['columns'] | undefined,
+  meta: Metadata | undefined,
+): boolean {
+  return (columns ?? []).every((c) => {
+    const key = c.key || '';
+    const val = (meta ?? {})[key];
+    return val != null && String(val).trim() !== '';
+  });
+}
+
+function normalizeValues(value: string | string[] | undefined): string[] {
+  const arr = Array.isArray(value) ? value : [value ?? ''];
+  return arr
+    .map((v) => String(v))
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+    .sort();
+}
+
+function isEditSaveDisabled(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+  columns: NonNullable<ListHeaderInternal['metadata']>['columns'] | undefined,
+): boolean {
+  const maybe = rowApi?.getDraft?.();
+  const draft = isExistedItem(maybe) ? maybe : entity;
+  const original = entity as ExistedTableItem;
+
+  const didMetaChange = JSON.stringify(draft.meta ?? {}) !== JSON.stringify(original.meta ?? {});
+  const didReasonChange = (draft.reason ?? '') !== (original.reason ?? '');
+  const didKeyChange =
+    JSON.stringify(normalizeValues(draft.value)) !==
+    JSON.stringify(normalizeValues(original.value));
+
+  const fieldsValid = (columns?.length ?? 0) > 0 ? isMetaFieldsValid(columns, draft.meta) : true;
+
+  return !(fieldsValid && (didMetaChange || didReasonChange || didKeyChange));
+}
+
 const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
   items: [],
   count: 0,
@@ -129,9 +220,6 @@ export default function ItemsTable(props: Props) {
 
     download(`${listId}-template.csv`, response.fileString ?? '');
   }, [listHeaderRes, api]);
-
-  const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
-  // creation row state managed by Table via rowApi
 
   const requiredWriteResources: Resource[] = useMemo(() => {
     if (listType === 'WHITELIST') {
@@ -181,20 +269,6 @@ export default function ItemsTable(props: Props) {
     [getColumns],
   );
 
-  const isEditUserDataValid = useMemo(() => {
-    if (!editUserData) {
-      return false;
-    }
-
-    if (listSubtype === 'CUSTOM') {
-      return validateMetaFields(editUserData.meta);
-    }
-
-    return true;
-  }, [editUserData, listSubtype, validateMetaFields]);
-
-  // validation for creation row handled inline using rowApi draft
-
   const [isAddUserLoading, setAddUserLoading] = useState(false);
 
   const handleAddItemFromDraft = useCallback(
@@ -205,25 +279,32 @@ export default function ItemsTable(props: Props) {
           ? validateMetaFields(newUserData.meta)
           : (Array.isArray(newUserData.value)
               ? newUserData.value.length
-              : (newUserData.value as unknown as string | undefined)?.trim()?.length ?? 0) > 0;
+              : (newUserData.value as string)?.trim()?.length ?? 0) > 0;
       if (!isValid) {
         hideMessage();
         return;
       }
       setAddUserLoading(true);
-      const values: string[] = Array.isArray(newUserData.value)
-        ? (newUserData.value as string[])
+      let values: string[] = Array.isArray(newUserData.value)
+        ? newUserData.value
         : [String(newUserData.value ?? '')];
+      if (listSubtype === 'CUSTOM') {
+        const nonEmpty = values.filter((v) => (v ?? '').trim() !== '');
+        if (nonEmpty.length === 0) {
+          values = [nanoid()];
+        } else {
+          values = nonEmpty;
+        }
+      }
       Promise.all(
         values.map((itemValue) => {
           const payload: DefaultApiPostWhiteListItemRequest = {
             listId,
             ListItem: {
               key: itemValue,
-              metadata: { reason: newUserData.reason, ...newUserData.meta },
+              metadata: { ...newUserData.meta, reason: newUserData.reason },
             },
           };
-
           return listType === 'WHITELIST'
             ? api.postWhiteListItem(payload)
             : api.postBlacklistItem(payload);
@@ -245,29 +326,38 @@ export default function ItemsTable(props: Props) {
     [listSubtype, validateMetaFields, listId, api, listType],
   );
 
-  const handleSaveItem = () => {
-    if (isEditUserDataValid && editUserData) {
-      const payload: DefaultApiPostWhiteListItemRequest = {
-        listId,
-        ListItem: {
-          key: editUserData.value ?? '',
-          metadata: { ...editUserData.meta, reason: editUserData.reason },
-        },
-      };
+  const handleSaveEditedItem = useCallback(
+    async (newUserData: NewTableItemData) => {
+      const hideMessage = message.loading('Saving item...');
+      try {
+        const newKeys: string[] = Array.isArray(newUserData.value)
+          ? newUserData.value
+          : [String(newUserData.value ?? '')];
 
-      const promise =
-        listType === 'WHITELIST' ? api.postWhiteListItem(payload) : api.postBlacklistItem(payload);
+        await Promise.all(
+          newKeys.map((itemValue) => {
+            const payload: DefaultApiPostWhiteListItemRequest = {
+              listId,
+              ListItem: {
+                key: itemValue,
+                metadata: { ...newUserData.meta, reason: newUserData.reason },
+              },
+            };
+            return listType === 'WHITELIST'
+              ? api.postWhiteListItem(payload)
+              : api.postBlacklistItem(payload);
+          }),
+        );
 
-      promise
-        .then(() => {
-          setEditUserData(null);
-          tableRef.current?.reload();
-        })
-        .catch((e) => {
-          message.fatal(`Unable to save user! ${getErrorMessage(e)}`, e);
-        });
-    }
-  };
+        tableRef.current?.reload();
+      } catch (e) {
+        message.fatal(`Unable to save item! ${getErrorMessage(e)}`, e);
+      } finally {
+        hideMessage();
+      }
+    },
+    [api, listId, listType],
+  );
 
   const handleDeleteUser = useCallback(
     (userId: string) => {
@@ -350,7 +440,6 @@ export default function ItemsTable(props: Props) {
     listSubtype,
     listResult,
     isAddUserLoading,
-    isEditUserValid: isEditUserDataValid,
     requiredWriteResources,
     listHeaderRes,
     isCustomList,
@@ -379,7 +468,7 @@ export default function ItemsTable(props: Props) {
               createRow={{
                 item: {
                   rowKey: 'NEW',
-                  type: 'NEW' as const,
+                  type: 'NEW',
                   value: [],
                   reason: '',
                   meta: {},
@@ -394,12 +483,16 @@ export default function ItemsTable(props: Props) {
               }}
               rowEditing={{
                 onSave: (_id, edited: TableItem) => {
-                  if (isExistedItem(edited)) {
-                    setEditUserData(edited);
-                  }
-                  handleSaveItem();
+                  const draft: NewTableItemData = isExistedItem(edited)
+                    ? {
+                        value: Array.isArray(edited.value) ? edited.value : [edited.value ?? ''],
+                        reason: edited.reason,
+                        meta: edited.meta,
+                      }
+                    : edited;
+                  handleSaveEditedItem(draft);
                 },
-                onCancel: () => setEditUserData(null),
+                onCancel: () => {},
               }}
               extraFilters={extraFilters}
               extraTools={[
@@ -450,7 +543,6 @@ function useColumns(options: {
   listSubtype: ListSubtypeInternal | null;
   listResult: QueryResult<CursorPaginatedData<TableItem>>;
   isAddUserLoading: boolean;
-  isEditUserValid: boolean;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
   requiredWriteResources: Resource[];
   isCustomList: boolean;
@@ -460,7 +552,6 @@ function useColumns(options: {
     listSubtype,
     listResult,
     isAddUserLoading,
-    isEditUserValid,
     requiredWriteResources,
     listHeaderRes,
     isCustomList,
@@ -488,17 +579,16 @@ function useColumns(options: {
   return useMemo(() => {
     if (isCustomList) {
       const customColumns =
-        (listHeader?.metadata?.columns ?? []).map((column) =>
-          helper.simple<`meta.${string}`>({
+        (listHeader?.metadata?.columns ?? []).map((column) => {
+          const baseType = (
+            column.type === 'NUMBER' ? NUMBER : column.type === 'DATE' ? DATE : STRING
+          ) as any;
+          return helper.simple<`meta.${string}`>({
             title: column.key || '',
             key: `meta.${column.key || ''}` as `meta.${string}`,
-            type: (column.type === 'NUMBER'
-              ? NUMBER
-              : column.type === 'DATE'
-              ? DATE
-              : STRING) as any,
-          }),
-        ) || [];
+            type: baseType,
+          });
+        }) || [];
 
       return helper.list([
         ...customColumns,
@@ -508,8 +598,7 @@ function useColumns(options: {
           render: (entity, context) => {
             const rowApi = context.rowApi;
             if (rowApi?.isCreateRow) {
-              const draft =
-                (rowApi.getDraft?.() as NewTableItemData) ?? (entity as NewTableItemData);
+              const draft = (rowApi.getDraft?.() as NewTableItemData) ?? entity;
               const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
                 const key = c.key || '';
                 const val = (draft.meta ?? {})[key];
@@ -535,7 +624,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="PRIMARY"
                     onClick={() => rowApi?.save?.()}
-                    isDisabled={!isEditUserValid}
+                    isDisabled={isEditSaveDisabled(rowApi, entity, listHeader?.metadata?.columns)}
                     isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
@@ -592,29 +681,16 @@ function useColumns(options: {
 
                 const rowApi = context.rowApi;
                 if (rowApi?.isCreateRow) {
-                  const maybe = rowApi?.getDraft?.();
-                  const draft: NewTableItemData = isNewDraft(maybe)
-                    ? maybe
-                    : isNewItem(entity)
-                    ? entity
-                    : { value: [], reason: '', meta: {} };
+                  const draft = getDraftForInput(rowApi, entity);
                   return (
                     <NewValueInput
                       key={String(isAddUserLoading)}
                       value={draft.value}
                       isDisabled={Boolean(rowApi?.isBusy)}
-                      onChange={(value) => {
-                        rowApi?.setDraft?.((prev) => {
-                          const current = (prev as NewTableItemData) ?? draft;
-                          return { ...current, value: value ?? [] };
-                        });
-                      }}
-                      onChangeMeta={(meta) => {
-                        rowApi?.setDraft?.((prev) => {
-                          const current = (prev as NewTableItemData) ?? draft;
-                          return { ...current, meta };
-                        });
-                      }}
+                      onChange={(newValues) =>
+                        applyDraftValueUpdate(rowApi, entity, listSubtype, newValues)
+                      }
+                      onChangeMeta={(meta) => applyDraftMetaUpdate(rowApi, entity, meta)}
                       listSubtype={listSubtype}
                       excludeCountries={existingCountryCodes}
                     />
@@ -683,7 +759,7 @@ function useColumns(options: {
                     size="SMALL"
                     type="PRIMARY"
                     onClick={() => rowApi?.save?.()}
-                    isDisabled={!isEditUserValid}
+                    isDisabled={isEditSaveDisabled(rowApi, entity, listHeader?.metadata?.columns)}
                     isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
@@ -728,7 +804,6 @@ function useColumns(options: {
     );
   }, [
     isAddUserLoading,
-    isEditUserValid,
     listSubtype,
     isCustomList,
     requiredWriteResources,

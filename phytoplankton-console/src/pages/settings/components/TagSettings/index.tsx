@@ -65,8 +65,7 @@ const TAG_OPTIONS: ColumnDataType<string[] | undefined, Item> = {
     const options = (state ?? []).map((option) => ({ label: option, value: option }));
     return (
       <Select
-        mode="MULTIPLE"
-        allowNewOptions
+        mode="MULTIPLE_DYNAMIC"
         isDisabled={context.edit.isBusy}
         options={options}
         value={state}
