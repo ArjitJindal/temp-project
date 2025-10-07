@@ -1,13 +1,13 @@
 export function formatNumber(
   rawAmount: number | string | undefined,
-  options?: { compact?: boolean; keepDecimals?: boolean },
+  options?: { compact?: boolean; keepDecimals?: boolean; showAllDecimals?: boolean },
 ): string {
   try {
     if (rawAmount == null) {
       return '-';
     }
 
-    const { compact = false, keepDecimals = true } = options ?? {};
+    const { compact = false, keepDecimals = true, showAllDecimals = false } = options ?? {};
 
     let amount = 0;
 
@@ -25,7 +25,8 @@ export function formatNumber(
 
     try {
       const numberFormat = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: keepDecimals ? 2 : 0,
+        maximumFractionDigits: showAllDecimals ? 20 : keepDecimals ? 2 : 0,
+        minimumFractionDigits: showAllDecimals ? 0 : keepDecimals ? 2 : 0,
       });
       formattedNumber = numberFormat.format(amount);
     } catch (error) {
@@ -34,7 +35,8 @@ export function formatNumber(
 
     if (compact) {
       const numberFormat = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 2,
+        maximumFractionDigits: showAllDecimals ? 20 : 2,
+        minimumFractionDigits: showAllDecimals ? 0 : 2,
       });
       const absAmount = Math.abs(amount);
       if (absAmount >= 1000000) {

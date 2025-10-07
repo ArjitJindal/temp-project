@@ -12031,6 +12031,8 @@ components:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:
           $ref: '#/components/schemas/WorkflowSettings'
+        showAllDecimalPlaces:
+          type: boolean
     LLMProvider:
       type: string
       enum:

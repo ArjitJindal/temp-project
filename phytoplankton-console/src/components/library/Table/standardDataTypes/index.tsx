@@ -49,6 +49,7 @@ import {
   useTransactionStateLabel,
   FeatureEnabled,
   useRuleActionLabel,
+  useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -148,8 +149,14 @@ export const NUMBER: ColumnDataType<number> = {
   },
 };
 
-export const FLOAT: ColumnDataType<number> = {
-  render: (value) => <span>{formatNumber(value ?? 0.0, { keepDecimals: true })}</span>,
+const FloatRender = (value: number | undefined): JSX.Element => {
+  const settings = useSettings();
+  const showAllDecimals = settings.showAllDecimalPlaces ?? false;
+  return <span>{formatNumber(value ?? 0, { keepDecimals: true, showAllDecimals })}</span>;
+};
+
+export const FLOAT: ColumnDataType<number | undefined> = {
+  render: (value) => FloatRender(value),
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (

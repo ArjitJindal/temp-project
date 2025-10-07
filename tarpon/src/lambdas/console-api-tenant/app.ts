@@ -100,6 +100,9 @@ const assertSettings = (
       batchRerunRiskScoringFrequency: [
         'write:::settings/risk-scoring/batch-rerun-risk-scoring-settings/*',
       ],
+      showAllDecimalPlaces: [
+        'write:::settings/transactions/show-all-decimal-places/*',
+      ],
     }
 
   for (const settingsKey in settingsKeys) {
