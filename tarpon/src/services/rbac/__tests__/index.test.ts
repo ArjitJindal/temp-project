@@ -198,20 +198,33 @@ describe('convertToFrns', () => {
 })
 
 describe('getOptimizedPermissions', () => {
-  it('should optimize permissions for admin (unrestricted access)', () => {
+  it('should optimize permissions', () => {
     const admin = DEFAULT_ROLES_V2.find((p) => p.role === 'admin')
     const frns = getOptimizedPermissions(
       'test-tenant',
       admin?.permissions ?? []
     )
-    // Admin should have a single statement with full wildcard access and no filters
-    expect(frns).toEqual([
-      {
-        actions: ['read', 'write'],
-        resources: ['frn:console:test-tenant:::*'],
-        filter: undefined,
-      },
-    ])
+    // Expect one wildcard statement and one read statement for statuses with filters
+    expect(frns).toEqual(
+      expect.arrayContaining([
+        {
+          actions: ['read', 'write'],
+          resources: ['frn:console:test-tenant:::*'],
+          filter: undefined,
+        },
+        {
+          actions: ['read'],
+          resources: expect.arrayContaining([
+            'frn:console:test-tenant:::case-management/case-status/*',
+            'frn:console:test-tenant:::case-management/alert-status/*',
+          ]),
+          filter: expect.arrayContaining([
+            expect.objectContaining({ param: 'filterCaseStatus' }),
+            expect.objectContaining({ param: 'filterAlertStatus' }),
+          ]),
+        },
+      ])
+    )
   })
 
   it('should not change dynamic permissions', () => {

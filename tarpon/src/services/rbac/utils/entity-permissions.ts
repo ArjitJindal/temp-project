@@ -32,6 +32,10 @@ export const assertAccessForValue = (
   opts: { permissionId: string; param: string; label?: string }
 ) => {
   const allowed = getAllowedValues(statements, opts)
+  if (allowed.size === 0) {
+    return
+  }
+
   const normalized = normalize(value)
   if (!allowed.has(normalized)) {
     const label = opts.label || 'value'

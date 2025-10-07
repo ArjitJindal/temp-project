@@ -241,6 +241,14 @@ export const DEFAULT_ROLES_V2: {
     role: 'admin',
     permissions: [
       { actions: ['read', 'write'], resources: ['frn:console:<default>:::*'] },
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:<default>:::case-management/case-status/*',
+          'frn:console:<default>:::case-management/alert-status/*',
+        ],
+        filter: STATUS_FILTERS_FULL,
+      },
     ],
     description:
       'Admin has unrestricted access to all features. They can invite new accounts to the console, and there can be multiple admins.',
