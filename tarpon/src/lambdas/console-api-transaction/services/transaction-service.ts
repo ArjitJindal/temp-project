@@ -298,6 +298,7 @@ export class TransactionService {
     return {
       transactionId: transaction.transactionId,
       timestamp: transaction.timestamp,
+      paymentApprovalTimestamp: transaction.paymentApprovalTimestamp,
       arsScore: {
         arsScore: transaction.arsScore?.arsScore,
       },
@@ -481,6 +482,7 @@ export class TransactionService {
         type: 1,
         transactionId: 1,
         timestamp: 1,
+        paymentApprovalTimestamp: 1,
         originUserId: 1,
         destinationUserId: 1,
         transactionState: 1,

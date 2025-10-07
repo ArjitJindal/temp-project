@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { memoize } from 'lodash';
-import { getRiskLevelFromScore } from '@flagright/lib/utils';
+import { getRiskLevelFromScore, PAYMENT_APPROVAL_START_TIMESTAMP } from '@flagright/lib/utils';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { PAYMENT_DETAILS_OR_METHOD } from './helpers/tableDataTypes';
@@ -100,6 +100,7 @@ export interface TransactionsTableParams extends CommonParams {
   isPaymentApprovals?: boolean;
   responseType?: 'data' | 'count';
   reference?: string;
+  paymentApprovalTimestamp?: string[];
   filterActionReasons?: string[];
 }
 
@@ -157,6 +158,7 @@ export const transactionParamsToRequest = (
     isPaymentApprovals,
     responseType,
     reference,
+    paymentApprovalTimestamp,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? DEFAULT_TRANSACTIONS_SORTING;
   const requestParams: DefaultApiGetTransactionsListRequest = {
@@ -203,6 +205,12 @@ export const transactionParamsToRequest = (
     filterShadowHit: filterShadowHit,
     isPaymentApprovals: isPaymentApprovals,
     filterReference: reference,
+    afterPaymentApprovalTimestamp: paymentApprovalTimestamp
+      ? Math.max(dayjs(paymentApprovalTimestamp[0]).valueOf(), PAYMENT_APPROVAL_START_TIMESTAMP)
+      : undefined,
+    beforePaymentApprovalTimestamp: paymentApprovalTimestamp
+      ? Math.max(dayjs(paymentApprovalTimestamp[1]).valueOf(), PAYMENT_APPROVAL_START_TIMESTAMP)
+      : undefined,
     filterActionReasons: params.filterActionReasons?.length
       ? params.filterActionReasons
       : undefined,
@@ -428,6 +436,23 @@ export default function TransactionsTable(props: Props) {
         filtering: true,
         pinFilterToLeft: true,
       }),
+      ...(isPaymentApprovals && (params?.status === 'ALLOW' || params?.status === 'BLOCK')
+        ? [
+            helper.simple<'paymentApprovalTimestamp'>({
+              title: 'Payment approval timestamp',
+              key: 'paymentApprovalTimestamp',
+              type: {
+                ...DATE,
+                autoFilterDataType: {
+                  kind: 'dateTimeRange',
+                  min: PAYMENT_APPROVAL_START_TIMESTAMP,
+                },
+              },
+              sorting: true,
+              filtering: true,
+            }),
+          ]
+        : []),
       helper.simple<'transactionState'>({
         key: 'transactionState',
         title: 'Last transaction state',
@@ -574,6 +599,8 @@ export default function TransactionsTable(props: Props) {
       }),
     ]);
   }, [
+    params?.status,
+    isPaymentApprovals,
     alert,
     escalatedTransactions,
     isRiskScoringEnabled,

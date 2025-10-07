@@ -370,6 +370,23 @@ export class MongoDbTransactionRepository
       })
     }
 
+    if (params.afterPaymentApprovalTimestamp) {
+      // santize the payment approval timestamps
+      conditions.push({
+        paymentApprovalTimestamp: {
+          $gte: params.afterPaymentApprovalTimestamp || 0,
+        },
+      })
+    }
+    if (params.beforePaymentApprovalTimestamp) {
+      // santize the payment approval timestamps
+      conditions.push({
+        paymentApprovalTimestamp: {
+          $lt: params.beforePaymentApprovalTimestamp || Number.MAX_SAFE_INTEGER,
+        },
+      })
+    }
+
     if (
       params.filterTransactionIds != null &&
       params.filterTransactionIds?.length > 0

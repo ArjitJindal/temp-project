@@ -226,6 +226,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'transactionState',
           'type',
           'hitRules.ruleInstanceId',
+          'paymentApprovalTimestamp',
         ].flatMap((i) => {
           return [{ [i]: 1, timestamp: 1, _id: 1 }]
         })

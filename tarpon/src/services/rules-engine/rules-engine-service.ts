@@ -1991,7 +1991,8 @@ export class RulesEngineService {
 
   public async applyTransactionAction(
     data: TransactionAction,
-    userId: string
+    userId: string,
+    paymentApprovalAction: boolean = false
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
     const txns = await this.transactionRepository.getTransactionsByIds(
@@ -2015,6 +2016,7 @@ export class RulesEngineService {
     }
 
     const promises = [
+      // updating the transaction event
       this.transactionEventRepository.saveTransactionEvents(
         txns
           .filter(
@@ -2040,6 +2042,7 @@ export class RulesEngineService {
             },
           }))
       ),
+      // saving the transaction
       this.transactionRepository.saveTransactions(
         txns
           .filter(
@@ -2053,6 +2056,9 @@ export class RulesEngineService {
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
             },
+            paymentApprovalTimestamp: paymentApprovalAction
+              ? Date.now()
+              : transaction.paymentApprovalTimestamp,
           }))
       ),
     ]

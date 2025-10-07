@@ -274,6 +274,7 @@ const sharedTransactionMaterializedColumns = [
   `updateCount UInt64 MATERIALIZED JSONExtractUInt(data, 'updateCount')`,
   `createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')`,
   `updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')`,
+  `paymentApprovalTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'paymentApprovalTimestamp')`,
 ]
 
 const businessIndustryMaterializedColumn = (

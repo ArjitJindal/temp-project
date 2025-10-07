@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { BadRequest, InternalServerError, NotFound } from 'http-errors'
 import compact from 'lodash/compact'
+import { PAYMENT_APPROVAL_START_TIMESTAMP } from '@flagright/lib/utils'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -80,6 +81,7 @@ const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTransaction
     riskScoreDetails: 'JSON',
     alertIds: 'SKIP',
     updateCount: 'SKIP',
+    paymentApprovalTimestamp: 'INCLUDE',
   }
 
 export const transactionsViewHandler = lambdaApi()(
@@ -104,6 +106,20 @@ export const transactionsViewHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetTransactionsList(async (context, request) => {
+      // santize payment approval filters
+      if (request.afterPaymentApprovalTimestamp) {
+        request.afterPaymentApprovalTimestamp = Math.max(
+          request.afterPaymentApprovalTimestamp,
+          PAYMENT_APPROVAL_START_TIMESTAMP
+        )
+      }
+
+      if (request.beforePaymentApprovalTimestamp) {
+        request.beforePaymentApprovalTimestamp = Math.max(
+          request.beforePaymentApprovalTimestamp,
+          PAYMENT_APPROVAL_START_TIMESTAMP
+        )
+      }
       if (isClickhouseEnabled()) {
         if (request.view === 'DOWNLOAD') {
           const result = await transactionService.getTransactionsListV2(request)
@@ -234,9 +250,11 @@ export const transactionsViewHandler = lambdaApi()(
     })
 
     handlers.registerApplyTransactionsAction(async (ctx, req) => {
+      // payment approval transaction
       const response = await rulesEngineService.applyTransactionAction(
         req.TransactionAction,
-        ctx.userId
+        ctx.userId,
+        true
       )
       await caseService.applyTransactionAction(req.TransactionAction)
       return response

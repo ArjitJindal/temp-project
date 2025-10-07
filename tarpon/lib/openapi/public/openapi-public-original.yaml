@@ -2964,6 +2964,9 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        paymentApprovalTimestamp:
+          x-fern-ignore: true
+          type: number
     TransactionBase:
       title: TransactionBase
       type: object
