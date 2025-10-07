@@ -1,7 +1,7 @@
 import { isValidEmail } from '@flagright/lib/utils'
 import compact from 'lodash/compact'
 import uniq from 'lodash/uniq'
-import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
+import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants/mentions'
 import { envIs } from './env'
 import { isDemoTenant } from './tenant-id'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
@@ -185,7 +185,7 @@ export const extractBankInfoFromPaymentDetails = (
   }
 }
 
-export const getPaymentDetailsName = (
+export const getPaymentDetailsNameString = (
   paymentDetails: PaymentDetails
 ): PaymentDetailsName[] => {
   const namesToSearch: PaymentDetailsName[] = []
@@ -292,24 +292,19 @@ export const getPersonName = (person?: Person) => {
   ]).join(' ')
 }
 
-export const getAddressStringForAggregation = (address?: Address): string => {
+export const getAddressString = (address?: Address): string | undefined => {
   if (!address) {
-    return ''
+    return undefined
   }
-
-  // Encode values safely by replacing delimiters
-  const encode = (val?: string) =>
-    (val ?? '').replace(/\|/g, '__PIPE__').replace(/=/g, '__EQ__')
-
-  const addressLines = (address.addressLines ?? []).map(encode).join('__LINE__')
-
   return [
-    `LINES=${addressLines}`,
-    `CITY=${encode(address.city)}`,
-    `STATE=${encode(address.state)}`,
-    `POSTCODE=${encode(address.postcode)}`,
-    `COUNTRY=${encode(address.country)}`,
-  ].join('|')
+    ...address.addressLines,
+    address.city,
+    address.state,
+    address.postcode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 export const parseAddressStringForAggregation = (
@@ -353,29 +348,4 @@ export const getNameStringForAggregation = (
     `MIDDLE_NAME=${name.middleName}`,
     `LAST_NAME=${name.lastName}`,
   ]).join('|')
-}
-
-export const parseNameStringForAggregation = (
-  nameString: string
-): ConsumerName | string | undefined => {
-  if (!nameString) {
-    return undefined
-  }
-  // If the string does not contain any '=', treat as plain string
-  if (!nameString.includes('=')) {
-    return nameString
-  }
-
-  const parts = nameString.split('|')
-  const map: Record<string, string> = {}
-  for (const part of parts) {
-    const [key, ...rest] = part.split('=')
-    map[key] = rest.join('=') // in case value itself had '='
-  }
-
-  return {
-    firstName: map.FIRST_NAME ?? '',
-    middleName: map.MIDDLE_NAME ?? '',
-    lastName: map.LAST_NAME ?? '',
-  }
 }

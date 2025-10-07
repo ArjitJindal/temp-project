@@ -6,7 +6,10 @@ import { useApi } from '@/api';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 
-type LocalProps = Omit<Extract<Props<string>, { mode: 'SINGLE' | 'MULTIPLE' }>, 'options'>;
+type LocalProps = Omit<
+  Extract<Props<string>, { mode: 'SINGLE' | 'MULTIPLE' | 'MULTIPLE_DYNAMIC' }>,
+  'options'
+>;
 
 function TransactionIdsSelect(props: LocalProps) {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();

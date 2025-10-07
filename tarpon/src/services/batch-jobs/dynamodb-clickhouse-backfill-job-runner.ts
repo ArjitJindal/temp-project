@@ -21,7 +21,7 @@ import {
   CASES_COLLECTION,
   WEBHOOK_COLLECTION,
   WEBHOOK_DELIVERY_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { linkLLMRequestDynamoDB, LLMLogObject } from '@/utils/llms'
 import { ApiRequestLog } from '@/@types/request-logger'
@@ -114,7 +114,7 @@ const handleAlertsQaSamplingBatchJob = async (
 ) => {
   const { DynamoAlertRepository } = await import('../alerts/dynamo-repository')
   const { ALERTS_QA_SAMPLING_COLLECTION } = await import(
-    '@/utils/mongodb-definitions'
+    '@/utils/mongo-table-names'
   )
 
   const dynamoAlertRepository = new DynamoAlertRepository(
@@ -151,9 +151,7 @@ export const handleNotificationsBatchJob = async (
   const { DynamoNotificationRepository } = await import(
     '../notifications/dynamo-repository'
   )
-  const { NOTIFICATIONS_COLLECTION } = await import(
-    '@/utils/mongodb-definitions'
-  )
+  const { NOTIFICATIONS_COLLECTION } = await import('@/utils/mongo-table-names')
   const db = mongoDb.db()
   const notificationsCollection = db.collection<Notification>(
     NOTIFICATIONS_COLLECTION(job.tenantId)
@@ -258,7 +256,7 @@ export const handleMetricsBatchJob = async (
   const { ApiUsageMetricsService } = await import(
     '@/services/metrics/api-usage-metrics-service'
   )
-  const { METRICS_COLLECTION } = await import('@/utils/mongodb-definitions')
+  const { METRICS_COLLECTION } = await import('@/utils/mongo-table-names')
 
   const metricsService = new ApiUsageMetricsService({
     mongoDb,

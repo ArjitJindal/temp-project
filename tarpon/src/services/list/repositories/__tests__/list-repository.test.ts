@@ -4,7 +4,7 @@ import { ListRepository } from '@/services/list/repositories/list-repository'
 import { ListExistedInternal as List } from '@/@types/openapi-internal/ListExistedInternal'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
-import { CursorPaginationResponse } from '@/utils/pagination'
+import { CursorPaginationResponse } from '@/@types/pagination'
 
 dynamoDbSetupHook()
 

@@ -7,14 +7,17 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import groupBy from 'lodash/groupBy'
+import { EntityList, getDynamoKeys, getEntityId } from './utils'
 import {
   AsyncBatchRecord,
   AsyncRuleRecordUserBatch,
   AsyncRuleRecordUserEventBatch,
-} from '../rules-engine/utils'
-import { BatchEntity, EntityList, getDynamoKeys, getEntityId } from './utils'
+  BatchEntity,
+} from '@/@types/batch-import'
 import { UserType } from '@/@types/openapi-internal/UserType'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class BatchRepository {
   private dynamoDb: DynamoDBDocumentClient
   private readonly dynamoTable: string

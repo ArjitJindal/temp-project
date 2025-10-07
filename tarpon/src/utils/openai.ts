@@ -2,21 +2,21 @@ import { StackConstants } from '@lib/constants'
 import { ObjectId } from 'mongodb'
 import { OpenAI } from 'openai'
 import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
-import { CLICKHOUSE_DEFINITIONS } from './clickhouse/definition'
+import { batchInsertToClickhouse } from './clickhouse/insert'
 import {
-  batchInsertToClickhouse,
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from './clickhouse/utils'
+} from './clickhouse/checks'
 import {
   getDynamoDbClient,
   sanitizeMongoObject,
   DynamoTransactionBatch,
 } from './dynamodb'
 import { envIs } from './env'
-import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
+import { GPT_REQUESTS_COLLECTION } from './mongo-table-names'
 import { getSecret } from './secrets-manager'
 import { LLMLogObject } from './llms'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context-storage'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

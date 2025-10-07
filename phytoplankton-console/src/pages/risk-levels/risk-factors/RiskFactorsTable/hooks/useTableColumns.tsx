@@ -187,10 +187,14 @@ export function useTableColumns({
             }
 
             if (isSimulation) {
+              const riskFactorFromMap =
+                simulationRiskFactorsMap[scopeToRiskEntityType(selectedSection)].find(
+                  (rf) => rf.id === entity.id,
+                ) || entity;
               return (
                 <div className={s.centeredRuleStatusSwitch}>
                   <RuleStatusSwitch
-                    entity={entity}
+                    entity={riskFactorFromMap}
                     isDisabled={!canWriteRiskFactors}
                     type="RISK_FACTOR"
                     onToggle={(checked) => {

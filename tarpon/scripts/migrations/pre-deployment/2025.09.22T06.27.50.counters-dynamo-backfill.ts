@@ -1,10 +1,10 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { CounterEntity, EntityCounter } from '@/services/counter/repository'
-import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+import { COUNTER_COLLECTION } from '@/utils/mongo-table-names'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { logger } from '@/core/logger'
 async function migrateTenant(tenant: Tenant) {

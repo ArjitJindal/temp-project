@@ -13,12 +13,12 @@ import { getCounterCollectionData } from './data/counter'
 import { seedClickhouse } from './clickhouse'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { createTenantDatabase } from '@/utils/clickhouse/database'
 import { envIsNot } from '@/utils/env'
 import { getUsers } from '@/core/seed/data/users'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
-import { createTenantDatabase } from '@/utils/clickhouse/utils'
 
 export async function seedDemoData(tenantId: string) {
   const startTime = Date.now()

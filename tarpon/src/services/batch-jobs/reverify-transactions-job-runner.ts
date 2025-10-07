@@ -7,7 +7,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import {
   RulesEngineService,
   getExecutedAndHitRulesResult,

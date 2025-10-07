@@ -1,11 +1,48 @@
 import { Document, MongoClient } from 'mongodb'
-import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import {
+  SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
+  USER_EVENTS_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
+  CASES_COLLECTION,
+  AUDITLOG_COLLECTION,
+  SIMULATION_TASK_COLLECTION,
+  SIMULATION_RESULT_COLLECTION,
+  KRS_SCORES_COLLECTION,
+  ARS_SCORES_COLLECTION,
+  DRS_SCORES_COLLECTION,
+  WEBHOOK_COLLECTION,
+  WEBHOOK_DELIVERY_COLLECTION,
+  SANCTIONS_SEARCHES_COLLECTION,
+  SANCTIONS_HITS_COLLECTION,
+  SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
+  SANCTIONS_SCREENING_DETAILS_COLLECTION,
+  SANCTIONS_SCREENING_DETAILS_V2_COLLECTION,
+  DELTA_SANCTIONS_COLLECTION,
+  NARRATIVE_TEMPLATE_COLLECTION,
+  SLA_POLICIES_COLLECTION,
+  METRICS_COLLECTION,
+  CRM_SUMMARY_COLLECTION,
+  CRM_NOTES_COLLECTION,
+  CRM_ENGAGEMENTS_COLLECTION,
+  CRM_TASKS_COLLECTION,
+  CHECKLIST_TEMPLATE_COLLECTION,
+  RULE_QUEUES_COLLECTION,
+  API_REQUEST_LOGS_COLLECTION,
+  REPORT_COLLECTION,
+  ALERTS_QA_SAMPLING_COLLECTION,
+  COUNTER_COLLECTION,
+  SANCTIONS_SOURCE_DOCUMENTS_COLLECTION,
+  JOBS_COLLECTION,
+  SANCTIONS_COLLECTION,
+  SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION,
+  UNIQUE_TAGS_COLLECTION,
+} from './mongo-table-names'
 import {
   getAllGlobalSanctionsCollectionDefinition,
   shouldBuildSearchIndexForUsers,
 } from '@/services/sanctions/utils'
-import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 
 export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
   isDelta?: boolean
@@ -134,376 +171,6 @@ export const SANCTIONS_INDEX_DEFINITION: Array<{
     },
   },
 ]
-
-export const MONGO_TABLE_SUFFIX_MAP = {
-  TRANSACTIONS: 'transactions',
-  USERS: 'users',
-  TRANSACTION_EVENTS: 'transaction-events',
-  USER_EVENTS: 'user-events',
-  CASES: 'cases',
-  API_REQUEST_LOGS: 'api-request-logs',
-  NARRATIVE_TEMPLATES: 'narrative-templates',
-  METRICS: 'metrics',
-  COUNTER: 'counter',
-  ALERTS_QA_SAMPLING: 'alerts-qa-sampling',
-  CRM_ENGAGEMENTS: 'crm-engagements',
-  CRM_NOTES: 'crm-notes',
-  CRM_TASKS: 'crm-tasks',
-  CRM_SUMMARY: 'crm-summary',
-  IMPORT: 'import',
-  METADATA: 'metadata',
-  ACCOUNTS: 'accounts',
-  KRS_SCORE: 'kyc-risk-values',
-  DRS_SCORE: 'dynamic-risk-values',
-  ARS_SCORE: 'action-risk-values',
-  SANCTIONS_SCREENING_DETAILS: 'sanctions-screening-details',
-  SANCTIONS_SCREENING_DETAILS_V2: 'sanctions-screening-details-v2',
-  REPORTS: 'report',
-  NOTIFICATIONS: 'notifications',
-  JOBS: 'jobs',
-  REASONS: 'reasons',
-  WEBHOOK: 'webhook',
-  WEBHOOK_DELIVERIES: 'webhook-deliveries',
-}
-
-export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS}`
-}
-
-export const API_REQUEST_LOGS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.API_REQUEST_LOGS}`
-}
-
-export const NARRATIVE_TEMPLATE_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.NARRATIVE_TEMPLATES}`
-}
-
-export const CASES_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-${MONGO_TABLE_SUFFIX_MAP.CASES}`
-}
-
-export const METRICS_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-${MONGO_TABLE_SUFFIX_MAP.METRICS}`
-}
-
-export const COUNTER_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.COUNTER}`
-}
-
-export const ALERTS_QA_SAMPLING_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING}`
-}
-
-export const CRM_ENGAGEMENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_ENGAGEMENTS}`
-}
-export const CRM_NOTES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_NOTES}`
-}
-
-export const CRM_TASKS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_TASKS}`
-}
-
-export const CRM_SUMMARY_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_SUMMARY}`
-}
-
-export const USERS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.USERS}`
-}
-
-export const TRANSACTION_EVENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.TRANSACTION_EVENTS}`
-}
-
-export const USER_EVENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.USER_EVENTS}`
-}
-
-/**
- * Dashboard collections
- */
-export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-transaction-stats-monthly`
-}
-export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-transaction-stats-daily`
-}
-export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-transaction-stats-hourly`
-}
-export const DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-rule-stats-hourly`
-}
-
-export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-hits-by-user-stats-hourly`
-}
-export const DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-consumer-user-stats-hourly`
-}
-export const DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_DAILY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-consumer-user-stats-daily`
-}
-export const DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_MONTHLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-business-users-stats-monthly`
-}
-export const DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-business-users-stats-hourly`
-}
-export const DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_DAILY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-business-users-stats-daily`
-}
-export const DASHBOARD_CONSUMER_USERS_STATS_COLLECTION_MONTHLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-consumer-user-stats-monthly`
-}
-
-export const DASHBOARD_TEAM_CASES_STATS_HOURLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-team-cases-stats-hourly`
-}
-export const DASHBOARD_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-team-alerts-stats-hourly`
-}
-
-export const DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-latest-team-cases-stats-hourly`
-}
-
-export const DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-latest-team-alerts-stats-hourly`
-}
-
-export const DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-qa-alerts-by-rule-stats-hourly`
-}
-
-export const VERSION_HISTORY_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-version-history`
-}
-
-export const DASHBOARD_QA_ALERTS_BY_ASSIGNEE_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-qa-alerts-by-assignee-stats-hourly`
-}
-
-export const DASHBOARD_QA_OVERVIEW_STATS_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-qa-overview-stats-hourly`
-}
-
-export const DASHBOARD_QA_ALERTS_BY_CHECKLIST_REASON_COLLECTION_HOURLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-qa-alerts-by-checklist-reason-stats-hourly`
-}
-
-export const DASHBOARD_SLA_TEAM_STATS_HOURLY = (tenantId: string) => {
-  return `${tenantId}-dashboard-sla-team-stats-hourly`
-}
-
-export const REPORT_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-report`
-}
-
-export const JOBS_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-jobs`
-}
-
-// Pulse
-export const KRS_SCORES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.KRS_SCORE}`
-}
-
-export const ARS_SCORES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.ARS_SCORE}`
-}
-export const DRS_SCORES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.DRS_SCORE}`
-}
-
-export const IMPORT_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-import`
-}
-
-export const METADATA_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-metadata`
-}
-
-export const WEBHOOK_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-webhooks`
-}
-
-export const WEBHOOK_DELIVERY_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-webhook-deliveries`
-}
-
-export const WEBHOOK_RETRY_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-webhook-retries`
-}
-
-export const SANCTIONS_SEARCHES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions-searches`
-}
-
-export const SANCTIONS_HITS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions-hits`
-}
-
-export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions-whitelist-entities`
-}
-
-export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS}`
-}
-export const SANCTIONS_SCREENING_DETAILS_V2_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2}`
-}
-
-export const AUDITLOG_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-auditlog`
-}
-
-export const SIMULATION_TASK_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-simulation-task`
-}
-
-export const SIMULATION_RESULT_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-simulation-result`
-}
-
-export const MERCHANT_MONITORING_DATA_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-merchant-monitoring`
-}
-
-export const INVESTIGATION_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-investigation`
-}
-
-export const CHECKLIST_TEMPLATE_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-checklist-templates`
-}
-
-export const SLA_POLICIES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sla-policies`
-}
-
-export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-rule-queues`
-}
-
-export const REASONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-reasons`
-}
-
-export const DYNAMIC_PERMISSIONS_ITEMS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-dynamic-permissions-items`
-}
-
-export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
-export const DELTA_SANCTIONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-delta-sanctions`
-}
-export const SANCTIONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions`
-}
-export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions-provider-searches`
-}
-export const TRIAGE_QUEUE_TICKETS_COLLECTION = () => {
-  return 'flagright-triage-queue-tickets'
-}
-
-export const SANCTIONS_GLOBAL_COLLECTION = (
-  provider: SanctionsDataProviderName,
-  entityType: SanctionsEntityType
-) => {
-  return `sanctions-${provider}-${entityType.toLowerCase()}`
-}
-
-export const DELTA_SANCTIONS_GLOBAL_COLLECTION = () => {
-  return 'delta-sanctions'
-}
-
-export const AGGREGATED_SANCTIONS_COLLECTION = (
-  tenantId: string,
-  screeningProfileId: string
-) => {
-  return `${tenantId}-aggregated-sanctions-${screeningProfileId}`
-}
-
-export const SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION = () => {
-  return `sanctions_source_documents`
-}
-
-export const SANCTIONS_SOURCE_DOCUMENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions-source-documents`
-}
-
-/** Collection to log Requests and Responses to GPT */
-export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-gpt-request-logs`
-}
-
-export const TRANSACTION_TYPE_DISTRIBUTION_STATS_COLLECTION = (
-  tenantId: string
-) => {
-  return `${tenantId}-transaction-type-distribution`
-}
-
-export const NOTIFICATIONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-notifications`
-}
-
-export const ML_MODELS_COLLECTION = () => {
-  return `flagright-ml-models`
-}
-
-/** Rules Collection */
-export const RULES_COLLECTION = FLAGRIGHT_TENANT_ID + '-rules'
-/** DynamoDB Keys Collection */
-export const DYNAMODB_PARTITIONKEYS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-dynamodb-partition-keys`
-}
-
-export const EDD_REVIEWS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-edd-reviews`
-}
-
-/** Tenant Deletion Collection */
-export const TENANT_DELETION_COLLECTION =
-  FLAGRIGHT_TENANT_ID + '-tenant-deletion'
-
-export const UNIQUE_TAGS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-unique-tags`
-}
 
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: {

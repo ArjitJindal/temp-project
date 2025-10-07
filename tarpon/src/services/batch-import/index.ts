@@ -5,11 +5,14 @@ import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
-import { AsyncBatchRecord } from '../rules-engine/utils'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { BatchRepository } from './batch-repository'
-import { BatchEntity } from './utils'
+import {
+  AsyncBatchRecord,
+  BatchEntity,
+  TransactionValidationOptions,
+} from '@/@types/batch-import'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { BatchResponse } from '@/@types/openapi-public/BatchResponse'
 import { Business } from '@/@types/openapi-public/Business'
@@ -24,7 +27,7 @@ import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRul
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { BatchTransactionMonitoringResults } from '@/@types/openapi-public/BatchTransactionMonitoringResults'
 import { UserType } from '@/@types/openapi-internal/UserType'
-import { PaginationParams } from '@/utils/pagination'
+import { PaginationParams } from '@/@types/pagination'
 import { BatchTransactionEventMonitoringResults } from '@/@types/openapi-public/BatchTransactionEventMonitoringResults'
 import { pickKnownEntityFields } from '@/utils/object'
 import { BatchTransactionMonitoringResult } from '@/@types/openapi-public/BatchTransactionMonitoringResult'
@@ -36,27 +39,18 @@ import { BatchConsumerUserEventsWithRulesResult } from '@/@types/openapi-public/
 import { BatchConsumerUserEventWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventWithRulesResult'
 import { BatchBusinessUserEventsWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventsWithRulesResult'
 import { BatchBusinessUserEventWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventWithRulesResult'
+import {
+  BatchImportErrorReason,
+  DUPLICATE_ID_IN_BATCH,
+  ID_ALREADY_EXISTS,
+  RELATED_ID_NOT_FOUND,
+  ORIGIN_USER_ID_NOT_FOUND,
+  DESTINATION_USER_ID_NOT_FOUND,
+  ID_NOT_FOUND,
+} from '@/constants/lists'
+import { traceable } from '@/core/xray'
 
-const ID_ALREADY_EXISTS = 'ID_ALREADY_EXISTS'
-const ID_NOT_FOUND = 'ID_NOT_FOUND'
-const RELATED_ID_NOT_FOUND = 'RELATED_ID_NOT_FOUND'
-const ORIGIN_USER_ID_NOT_FOUND = 'ORIGIN_USER_ID_NOT_FOUND'
-const DESTINATION_USER_ID_NOT_FOUND = 'DESTINATION_USER_ID_NOT_FOUND'
-const DUPLICATE_ID_IN_BATCH = 'DUPLICATE_ID_IN_BATCH'
-
-type BatchImportErrorReason =
-  | typeof ID_ALREADY_EXISTS
-  | typeof DUPLICATE_ID_IN_BATCH
-  | typeof RELATED_ID_NOT_FOUND
-  | typeof ID_NOT_FOUND
-  | typeof ORIGIN_USER_ID_NOT_FOUND
-  | typeof DESTINATION_USER_ID_NOT_FOUND
-
-type TransactionValidationOptions = {
-  validateOriginUserId?: boolean
-  validateDestinationUserId?: boolean
-}
-
+@traceable
 export class BatchImportService {
   private readonly transactionRepository: DynamoDbTransactionRepository
   private readonly userRepository: UserRepository

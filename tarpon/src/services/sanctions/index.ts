@@ -54,7 +54,7 @@ import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanct
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import {
   GenericSanctionsSearchType,
   UserRuleStage,
@@ -124,7 +124,10 @@ export class SanctionsService {
         dynamoDb: this.dynamoDb,
       })
     this.sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(this.tenantId, this.mongoDb)
+      new SanctionsScreeningDetailsRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
     this.counterRepository = new CounterRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
@@ -181,7 +184,8 @@ export class SanctionsService {
         }
         return await SanctionsListProvider.build(
           this.tenantId,
-          providerConfig.listId
+          providerConfig.listId,
+          connections
         )
     }
   }

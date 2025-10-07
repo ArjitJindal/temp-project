@@ -6,7 +6,7 @@ import { getAffectedInterval } from '@/services/dashboard/utils'
 import {
   CASES_COLLECTION,
   DASHBOARD_SLA_TEAM_STATS_HOURLY,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { getMongoDbClientDb, paginatePipeline } from '@/utils/mongodb-utils'
 import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
@@ -14,11 +14,9 @@ import {
   DashboardStatsTeamSLAItemResponse,
 } from '@/@types/openapi-internal/all'
 import dayjs from '@/utils/dayjs'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 @traceable
 export class TeamSLAStatsDashboardMetric {

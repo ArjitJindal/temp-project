@@ -1,4 +1,4 @@
-import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants'
+import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants/rules-engine'
 import groupBy from 'lodash/groupBy'
 import inRange from 'lodash/inRange'
 import last from 'lodash/last'
@@ -7,13 +7,12 @@ import memoizeOne from 'memoize-one'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   AuxiliaryIndexTransaction,
-  NonUserEntityData,
   RulesEngineTransactionRepositoryInterface,
   TransactionWithRiskDetails,
 } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from './time-utils'
-import { TimeWindow } from './rule-parameter-schemas'
+import { TimeWindow } from '@/@types/rule/params'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -24,6 +23,7 @@ import { CurrencyService } from '@/services/currency'
 import { LogicAggregationTimeWindowGranularity } from '@/@types/openapi-internal/LogicAggregationTimeWindowGranularity'
 import { mergeEntities } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import { EntityData } from '@/@types/tranasction/aggregation'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -144,43 +144,10 @@ export function sumTransactionAmountDetails(
   }
 }
 
-export async function* getTransactionsGeneratorByEntity(
-  entityData: NonUserEntityData | undefined,
-  transactionRepository: RulesEngineTransactionRepositoryInterface,
-  options: { afterTimestamp: number; beforeTimestamp: number },
-  attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-): AsyncGenerator<{
-  sendingTransactions: AuxiliaryIndexTransaction[]
-  receivingTransactions: AuxiliaryIndexTransaction[]
-}> {
-  const sendingTransactionsGenerator =
-    transactionRepository.getNonUserSendingTransactionsGeneratorByEntity(
-      entityData,
-      options,
-      attributesToFetch
-    )
-  const receivingTransactionsGenerator =
-    transactionRepository.getNonUserReceivingTransactionsGeneratorByEntity(
-      entityData,
-      options,
-      attributesToFetch
-    )
-
-  for await (const data of zipGenerators(
-    sendingTransactionsGenerator,
-    receivingTransactionsGenerator,
-    { sendingTransactions: [], receivingTransactions: [] }
-  )) {
-    yield {
-      sendingTransactions: data[0],
-      receivingTransactions: data[1],
-    }
-  }
-}
-
 export async function* getTransactionsGenerator(
   userId: string | undefined,
   paymentDetails: PaymentDetails | undefined,
+  entityData: EntityData | undefined,
   transactionRepository: RulesEngineTransactionRepositoryInterface,
   options: {
     afterTimestamp: number
@@ -206,6 +173,7 @@ export async function* getTransactionsGenerator(
       ? transactionRepository.getGenericUserSendingTransactionsGenerator(
           userId,
           paymentDetails,
+          entityData,
           {
             afterTimestamp,
             beforeTimestamp,
@@ -228,6 +196,7 @@ export async function* getTransactionsGenerator(
       ? transactionRepository.getGenericUserReceivingTransactionsGenerator(
           userId,
           paymentDetails,
+          entityData,
           {
             afterTimestamp,
             beforeTimestamp,
@@ -332,6 +301,7 @@ export async function* getTransactionUserPastTransactionsGenerator(
       ? getTransactionsGenerator(
           transaction.originUserId,
           transaction.originPaymentDetails,
+          undefined, // Not Required here so skipping
           transactionRepository,
           {
             afterTimestamp,
@@ -351,6 +321,7 @@ export async function* getTransactionUserPastTransactionsGenerator(
       ? getTransactionsGenerator(
           transaction.destinationUserId,
           transaction.destinationPaymentDetails,
+          undefined, // Not Required here so skipping
           transactionRepository,
           {
             afterTimestamp,

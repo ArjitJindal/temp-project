@@ -66,10 +66,10 @@ ${Object.entries(failedTests)
           thread_ts: postedMessage.ts,
         });
       };
-      // sending errors in the thread limit of a message is 12,000 characters
+      // sending errors in the thread limit of a message is 3001 characters
       let threadGroupMessages = [];
       let currentThreadCharacters = 0;
-      const MESSAGE_MAX_CHARS = 11000; // account for new line charcters max limit is 120000
+      const MESSAGE_MAX_CHARS = 2800; // account for new line charcters max limit is 3001
       Object.entries(failedTests).forEach(async ([test, description]) => {
         const header = `***${test} -> errors*** \n`;
         const errors = description.errors.join('\n');

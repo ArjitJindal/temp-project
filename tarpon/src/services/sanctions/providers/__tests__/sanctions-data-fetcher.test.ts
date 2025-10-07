@@ -13,7 +13,7 @@ import { getContext } from '@/core/utils/context-storage'
 import {
   SANCTIONS_COLLECTION,
   SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'

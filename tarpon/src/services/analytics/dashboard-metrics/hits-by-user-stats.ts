@@ -9,7 +9,7 @@ import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -18,13 +18,11 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { traceable } from '@/core/xray'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getHitsByUserStatsClickhouseQuery } from '@/utils/clickhouse/queries/hits-by-user-stats-clickhouse'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 @traceable
 export class HitsByUserStatsDashboardMetric {

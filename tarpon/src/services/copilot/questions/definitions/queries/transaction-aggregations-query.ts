@@ -1,4 +1,4 @@
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import {
   matchPeriodSQL,
   paymentIdentifierQueryClickhouse,

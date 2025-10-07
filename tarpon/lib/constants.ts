@@ -1,5 +1,5 @@
 import { Config } from '@flagright/lib/config/config'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { stageAndRegion } from '@flagright/lib/utils/env'
 
 export function getSuffix(): string {

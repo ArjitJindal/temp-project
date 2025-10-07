@@ -5,7 +5,7 @@ import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getContext } from '@/core/utils/context-storage'
 import { traceable } from '@/core/xray'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 export type CreateRoleInternal =
   | { type: 'DATABASE'; params: AccountRole }

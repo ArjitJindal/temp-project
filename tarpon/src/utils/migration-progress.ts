@@ -6,15 +6,15 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-import { isClickhouseMigrationEnabled } from './clickhouse/utils'
+import { isClickhouseMigrationEnabled } from './clickhouse/checks'
 import { envIs } from './env'
+import { MIGRATION_TMP_COLLECTION } from './mongo-table-names'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   getDynamoDbClient,
   sanitizeMongoObject,
   DynamoTransactionBatch,
 } from '@/utils/dynamodb'
-import { MIGRATION_TMP_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const TableName = envIs('test')

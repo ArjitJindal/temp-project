@@ -12,19 +12,17 @@ import {
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/DashboardStatsRulesCountResponse'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { DashboardStatsRulesCount } from '@/@types/openapi-internal/DashboardStatsRulesCount'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 

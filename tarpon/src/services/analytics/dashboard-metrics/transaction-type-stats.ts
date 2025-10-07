@@ -4,20 +4,18 @@ import { DashboardStatsTransactionTypeDistribution } from '@/@types/openapi-inte
 import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   TRANSACTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DAY_DATE_FORMAT_JS } from '@/core/constants'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import dayjs from '@/utils/dayjs'
-import {
-  executeClickhouseQuery,
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { traceable } from '@/core/xray'
 import { logger } from '@/core/logger'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 async function createIndexes(tenantId: string) {
   const db = await getMongoDbClientDb()

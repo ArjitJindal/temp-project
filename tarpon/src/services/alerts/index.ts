@@ -30,7 +30,8 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { SLAService } from '../sla/sla-service'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-import { AlertParams, AlertsRepository } from './repository'
+import { AlertsRepository } from './repository'
+import { AlertParams } from '@/@types/alert/alert-params'
 import { API_USER, FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
@@ -64,7 +65,7 @@ import {
 } from '@/utils/mongodb-utils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/@types/cases/case-config'
 import {
@@ -87,7 +88,7 @@ import { AlertOpenedDetails } from '@/@types/openapi-public/AlertOpenedDetails'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { S3Config } from '@/services/aws/s3-service'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import {
   auditLog,
   AuditLogEntity,
@@ -2225,10 +2226,9 @@ export class AlertsService extends CaseAlertsCommonService {
     alert: Alert,
     newlyApprovedTxIds: string[]
   ) {
-    const dynamoDb = getDynamoDbClient()
     const transactionRepository = new DynamoDbTransactionRepository(
       this.tenantId,
-      dynamoDb
+      this.dynamoDb
     )
     const filteredTransactionIds = difference(
       alert.transactionIds,

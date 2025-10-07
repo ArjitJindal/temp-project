@@ -25,11 +25,11 @@ import { traceable } from '@/core/xray'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import {
-  executeClickhouseQuery,
   getClickhouseClient,
   getClickhouseCredentials,
-} from '@/utils/clickhouse/utils'
+} from '@/utils/clickhouse/client'
 import { EntityModel } from '@/@types/model'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'

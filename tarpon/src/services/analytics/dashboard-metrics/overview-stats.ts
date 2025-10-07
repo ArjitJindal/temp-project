@@ -4,21 +4,21 @@ import {
   DASHBOARD_TEAM_ALERTS_STATS_HOURLY,
   DASHBOARD_TEAM_CASES_STATS_HOURLY,
   REPORT_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStatsOverview'
 import { hasFeature } from '@/core/utils/context'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { traceable } from '@/core/xray'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
   isConsoleMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getInvestigationTimes } from '@/utils/clickhouse/materialised-views-queries'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 @traceable
 export class OverviewStatsDashboardMetric {

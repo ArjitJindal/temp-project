@@ -3,7 +3,6 @@ import { JSONSchemaType } from 'ajv'
 import mergeWith from 'lodash/mergeWith'
 import sumBy from 'lodash/sumBy'
 import {
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_STATES_SCHEMA,
   CHECK_SENDER_SCHEMA,
@@ -14,6 +13,7 @@ import { RuleHitResult } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import {
   getTransactionUserPastTransactionsGenerator,
   groupTransactionsByTime,

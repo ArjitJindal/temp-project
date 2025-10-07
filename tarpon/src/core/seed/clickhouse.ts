@@ -15,25 +15,22 @@ import { users } from './data/users'
 import { getUserEvents } from './data/user_events'
 import { getArsScores } from './data/ars_scores'
 import { getTransactions } from './data/transactions'
-import {
-  CLICKHOUSE_DEFINITIONS,
-  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
-import {
-  batchInsertToClickhouse,
-  createTenantDatabase,
-  isClickhouseEnabledInRegion,
-  getClickhouseClient,
-  syncThunderSchemaTables,
-} from '@/utils/clickhouse/utils'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO } from '@/constants/clickhouse/clickhouse-mongo-map'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { syncThunderSchemaTables } from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { createTenantDatabase } from '@/utils/clickhouse/database'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 import { data as transactionEvents } from '@/core/seed/data/transaction_events'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 
-const collections: [string, () => unknown[]][] = [
+const collections: [ClickhouseTableNames, () => unknown[]][] = [
   [CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName, () => getQASamples()],
   [
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
@@ -196,11 +193,11 @@ export const seedClickhouse = async (tenantId: string) => {
     logger.info(
       `TIME: Clickhouse: Tenant database creation took ~ ${Date.now() - now}`
     )
-    now = Date.now()
     await pMap(
       collections,
       async (collection) => {
         const [clickhouseTable, dataFn] = collection
+
         const data = dataFn()
 
         const mongoTable =
@@ -234,7 +231,9 @@ export const seedClickhouse = async (tenantId: string) => {
           `TIME: Clickhouse: ${clickhouseTable} sync took ~ ${Date.now() - now}`
         )
       },
-      { concurrency: 5 }
+      {
+        concurrency: 5,
+      }
     )
     logger.info(`TIME: Clickhouse: data sync took ~ ${Date.now() - now}`)
   }

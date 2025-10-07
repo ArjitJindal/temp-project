@@ -13,7 +13,7 @@ import {
   ARS_SCORES_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -26,7 +26,7 @@ import { generateChecksum } from '@/utils/object'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { bulkSendMessages } from '@/utils/sns-sqs-client'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 interface SendEntityToSQSParams {
   tenantId: string

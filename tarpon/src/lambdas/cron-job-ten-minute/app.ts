@@ -22,13 +22,13 @@ import {
 import { SLAService } from '@/services/sla/sla-service'
 import { envIs, envIsNot } from '@/utils/env'
 import { getSecret } from '@/utils/secrets-manager'
-import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRIAGE_QUEUE_TICKETS_COLLECTION } from '@/utils/mongo-table-names'
 import { TriageQueueTicket } from '@/@types/triage'
 import {
   ENGINEERING_HELP_CHANNEL_ID,
   ENGINEERING_ON_CALL_GROUP_ID,
 } from '@/utils/slack'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import {
   skippedTenantsClickhouseCheckForDashboardRefresh,
   handleBatchJobTrigger,

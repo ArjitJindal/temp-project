@@ -1,5 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RoleService } from '@/services/roles'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'

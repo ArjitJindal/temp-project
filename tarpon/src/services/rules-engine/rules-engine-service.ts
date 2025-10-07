@@ -85,7 +85,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import {
   RULE_ERROR_COUNT_METRIC,
   RULE_EXECUTION_TIME_MS_METRIC,
-} from '@/core/cloudwatch/metrics'
+} from '@/constants/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'

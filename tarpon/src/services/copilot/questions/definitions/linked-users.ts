@@ -1,7 +1,7 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { LinkerService } from '@/services/linker'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getUserName } from '@/utils/helpers'

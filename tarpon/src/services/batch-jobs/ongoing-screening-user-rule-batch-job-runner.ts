@@ -24,10 +24,8 @@ import {
   tenantHasFeature,
 } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import {
-  getSearchIndexName,
-  USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { getSearchIndexName } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 export async function getOngoingScreeningUserRuleInstances(

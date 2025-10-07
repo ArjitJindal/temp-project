@@ -1,9 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
-import {
-  getClickhouseClient,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { Tenant } from '@/@types/tenant'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 async function migrateTenant(tenant: Tenant) {
   const clickhouseClient = await getClickhouseClient(tenant.id)

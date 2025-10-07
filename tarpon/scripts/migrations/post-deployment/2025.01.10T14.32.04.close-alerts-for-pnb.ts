@@ -2,13 +2,13 @@ import chunk from 'lodash/chunk'
 import difference from 'lodash/difference'
 import { migrateAllTenants } from '../utils/tenant'
 import { envIsNot } from '@/utils/env'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { getS3Client } from '@/utils/s3'
 import { CaseConfig } from '@/@types/cases/case-config'

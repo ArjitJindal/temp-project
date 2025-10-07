@@ -11,7 +11,7 @@ import {
   BatchWriteRequestInternal,
   DynamoTransactionBatch,
 } from '@/utils/dynamodb'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 @traceable
 export class DynamoAuditLogRepository {

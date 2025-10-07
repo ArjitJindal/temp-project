@@ -12,11 +12,9 @@ import {
   periodVars,
   paymentIdentifierQueryClickhouse,
 } from '@/services/copilot/questions/definitions/util'
-import {
-  executeClickhouseQuery,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 type Transaction = {
   transactionId: string

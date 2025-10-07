@@ -1,6 +1,6 @@
 import { stageAndRegion } from '@flagright/lib/utils/env'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { ClickhouseTableNames } from '@/utils/clickhouse/definition'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 import { envIsNot } from '@/utils/env'
 export const up = async () => {
   const [_, region] = stageAndRegion()

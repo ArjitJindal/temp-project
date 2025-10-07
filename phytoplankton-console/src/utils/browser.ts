@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getErrorMessage } from '@/utils/lang';
 export async function copyTextToClipboard(text: string): Promise<boolean> {
   if (!text) {
@@ -102,7 +102,16 @@ export function useElementSize(el: HTMLElement | null): { width: number; height:
       };
     }
   }, [el]);
-  return rect;
+
+  const width = rect?.width;
+  const height = rect?.height;
+
+  return useMemo(() => {
+    if (width != null && height != null) {
+      return { width, height };
+    }
+    return null;
+  }, [width, height]);
 }
 
 export function useElementSizeChangeEffect(

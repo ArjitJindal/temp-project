@@ -1,5 +1,5 @@
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
 import { Action } from '@/services/sanctions/providers/types' // Adjust the path
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'

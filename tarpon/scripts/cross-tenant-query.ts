@@ -9,17 +9,15 @@ import { execSync } from 'child_process'
 import { program } from 'commander'
 import { render } from 'prettyjson'
 import { Db, Filter, Document } from 'mongodb'
-import {
-  intersection,
-  isEmpty,
-  keyBy,
-  memoize,
-  merge,
-  mergeWith,
-  sortBy,
-  values,
-  startCase,
-} from 'lodash'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
+import keyBy from 'lodash/keyBy'
+import memoize from 'lodash/memoize'
+import merge from 'lodash/merge'
+import mergeWith from 'lodash/mergeWith'
+import sortBy from 'lodash/sortBy'
+import values from 'lodash/values'
+import startCase from 'lodash/startCase'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   PRODUCTION_REGIONS,
@@ -62,15 +60,13 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CurrencyService } from '@/services/currency'
-import {
-  executeClickhouseQuery,
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 /**
  * Custom query
  */

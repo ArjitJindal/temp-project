@@ -1,10 +1,10 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { ScreeningProfileRepository } from '@/services/screening-profile/repositories/screening-profile-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongo-table-names'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()

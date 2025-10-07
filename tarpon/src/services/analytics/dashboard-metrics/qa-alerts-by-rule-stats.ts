@@ -7,16 +7,14 @@ import { HOUR_DATE_FORMAT, HOUR_DATE_FORMAT_JS } from '@/core/constants'
 import {
   CASES_COLLECTION,
   DASHBOARD_QA_ALERTS_BY_RULE_STATS_COLLECTION_HOURLY,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { DashboardStatsQaAlertsCountByRuleData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByRuleData'
-import {
-  executeClickhouseQuery,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 @traceable
 export class QaAlertsByRuleStatsDashboardMetric {

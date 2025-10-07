@@ -48,6 +48,9 @@ import { TransientRepository } from '@/core/repositories/transient-repository'
 import dayjs, { duration } from '@/utils/dayjs'
 import { generateChecksum } from '@/utils/object'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { Address } from '@/@types/openapi-public/Address'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { getAddressString } from '@/utils/helpers'
 
 const sqs = getSQSClient()
 
@@ -77,30 +80,25 @@ type PaymentDetailsUserInfo = {
   paymentDetails: PaymentDetails
 }
 
-export type UserInfoTypes = 'ADDRESS' | 'EMAIL' | 'NAME'
-
-interface PaymentDetailsInfo {
+type PaymentDetailsEntityUserInfo = {
   userKeyId: string
-  value: string
   type: UserInfoTypes
 }
 
-interface PaymentDetailsAddressUserInfo extends PaymentDetailsInfo {
-  type: 'ADDRESS'
+type PaymentDetailsAddressUserInfo = {
+  userKeyId: string
+  address: Address
 }
 
-interface PaymentDetailsNameUserInfo extends PaymentDetailsInfo {
-  type: 'NAME'
+type PaymentDetailsEmailUserInfo = {
+  userKeyId: string
+  email: string
 }
 
-interface PaymentDetailsEmailUserInfo extends PaymentDetailsInfo {
-  type: 'EMAIL'
+type PaymentDetailsNameUserInfo = {
+  userKeyId: string
+  name: ConsumerName | string
 }
-
-type PaymentDetailsAggregation =
-  | PaymentDetailsAddressUserInfo
-  | PaymentDetailsEmailUserInfo
-  | PaymentDetailsNameUserInfo
 
 type PreAggregationTask =
   | { type: 'USER_TRANSACTIONS'; ids: string[] }
@@ -108,6 +106,8 @@ type PreAggregationTask =
   | { type: 'PAYMENT_DETAILS_ADDRESS'; ids: PaymentDetailsAddressUserInfo[] }
   | { type: 'PAYMENT_DETAILS_EMAIL'; ids: PaymentDetailsEmailUserInfo[] }
   | { type: 'PAYMENT_DETAILS_NAME'; ids: PaymentDetailsNameUserInfo[] }
+
+type UserInfoTypes = 'ADDRESS' | 'EMAIL' | 'NAME'
 
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
@@ -184,7 +184,12 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         tenantId
       )
       for (const idsChunk of chunk<
-        PaymentDetailsUserInfo | string | PaymentDetailsAggregation
+        | PaymentDetailsUserInfo
+        | PaymentDetailsEntityUserInfo
+        | string
+        | PaymentDetailsAddressUserInfo
+        | PaymentDetailsEmailUserInfo
+        | PaymentDetailsNameUserInfo
       >(ids, DEFAULT_CHUNK_SIZE)) {
         let messages: FifoSqsMessage[] = []
         if (type === 'USER_TRANSACTIONS') {
@@ -261,26 +266,53 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
               })
             }
           )
-        } else if (
-          type === 'PAYMENT_DETAILS_ADDRESS' ||
-          type === 'PAYMENT_DETAILS_EMAIL' ||
-          type === 'PAYMENT_DETAILS_NAME'
-        ) {
-          messages = (idsChunk as PaymentDetailsAggregation[]).flatMap(
-            ({ userKeyId, value, type }) => {
+        } else if (type === 'PAYMENT_DETAILS_ADDRESS') {
+          messages = (idsChunk as PaymentDetailsAddressUserInfo[]).flatMap(
+            ({ userKeyId, address }) => {
               return getAggregationTaskMessage({
                 userKeyId,
                 payload: {
                   type: 'PRE_AGGREGATION',
+                  entityData: { type: 'ADDRESS', address },
                   tenantId: job.tenantId,
                   currentTimestamp: currentTimestamp ?? Date.now(),
                   jobId: this.jobId,
                   entity,
                   aggregationVariable,
-                  aggregationData: {
-                    type: type,
-                    value: value,
-                  },
+                },
+              })
+            }
+          )
+        } else if (type === 'PAYMENT_DETAILS_EMAIL') {
+          messages = (idsChunk as PaymentDetailsEmailUserInfo[]).flatMap(
+            ({ userKeyId, email }) => {
+              return getAggregationTaskMessage({
+                userKeyId,
+                payload: {
+                  type: 'PRE_AGGREGATION',
+                  entityData: { type: 'EMAIL', email },
+                  tenantId: job.tenantId,
+                  currentTimestamp: currentTimestamp ?? Date.now(),
+                  jobId: this.jobId,
+                  entity,
+                  aggregationVariable,
+                },
+              })
+            }
+          )
+        } else if (type === 'PAYMENT_DETAILS_NAME') {
+          messages = (idsChunk as PaymentDetailsNameUserInfo[]).flatMap(
+            ({ userKeyId, name }) => {
+              return getAggregationTaskMessage({
+                userKeyId,
+                payload: {
+                  type: 'PRE_AGGREGATION',
+                  entityData: { type: 'NAME', name },
+                  tenantId: job.tenantId,
+                  currentTimestamp: currentTimestamp ?? Date.now(),
+                  jobId: this.jobId,
+                  entity,
+                  aggregationVariable,
                 },
               })
             }
@@ -350,26 +382,58 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
   )
 
-  private uniqueEntityDetails = memoize(
+  private uniqueAddressDetails = memoize(
     async (
       tenantId: string,
       direction: 'ORIGIN' | 'DESTINATION',
-      timeRange: { afterTimestamp: number; beforeTimestamp: number },
-      type: 'ADDRESS' | 'EMAIL' | 'NAME'
+      timeRange: { afterTimestamp: number; beforeTimestamp: number }
     ) => {
       const transactionsRepo = new MongoDbTransactionRepository(
         tenantId,
         this.mongoDb,
         this.dynamoDb
       )
-      return await transactionsRepo.getUniqueEntityDetails(
+      return await transactionsRepo.getUniqueAddressDetails(
         direction,
-        timeRange,
-        type
+        timeRange
       )
     },
-    (tenantId, direction, timeRange, type) =>
-      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}-${type}`
+    (tenantId, direction, timeRange) =>
+      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
+  )
+
+  private uniqueEmailDetails = memoize(
+    async (
+      tenantId: string,
+      direction: 'ORIGIN' | 'DESTINATION',
+      timeRange: { afterTimestamp: number; beforeTimestamp: number }
+    ) => {
+      const transactionsRepo = new MongoDbTransactionRepository(
+        tenantId,
+        this.mongoDb,
+        this.dynamoDb
+      )
+      return await transactionsRepo.getUniqueEmailDetails(direction, timeRange)
+    },
+    (tenantId, direction, timeRange) =>
+      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
+  )
+
+  private uniqueNameDetails = memoize(
+    async (
+      tenantId: string,
+      direction: 'ORIGIN' | 'DESTINATION',
+      timeRange: { afterTimestamp: number; beforeTimestamp: number }
+    ) => {
+      const transactionsRepo = new MongoDbTransactionRepository(
+        tenantId,
+        this.mongoDb,
+        this.dynamoDb
+      )
+      return await transactionsRepo.getUniqueNameDetails(direction, timeRange)
+    },
+    (tenantId, direction, timeRange) =>
+      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
   )
 
   private async internalBulkSendMesasges(
@@ -537,77 +601,79 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         ids: userInfos,
         type: 'PAYMENT_DETAILS_TRANSACTIONS',
       }
-    } else if (this.isPaymentDetailsEntityType(aggregationVariable.type)) {
-      const entityType = this.getEntityTypeFromAggregationType(
-        aggregationVariable.type
-      )
-
-      const [originEntities, destinationEntities] = await Promise.all([
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_ADDRESS') {
+      const originPaymentDetails =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? []
-          : this.uniqueEntityDetails(tenantId, 'ORIGIN', timeRange, entityType),
+          : await this.uniqueAddressDetails(tenantId, 'ORIGIN', timeRange)
+      const destinationPaymentDetails =
         aggregationVariable.transactionDirection === 'SENDING'
           ? []
-          : this.uniqueEntityDetails(
-              tenantId,
-              'DESTINATION',
-              timeRange,
-              entityType
-            ),
-      ])
-
-      const uniqueEntities = uniqBy(
-        [...originEntities, ...destinationEntities],
-        (entity) => entity
+          : await this.uniqueAddressDetails(tenantId, 'DESTINATION', timeRange)
+      const userInfos: PaymentDetailsAddressUserInfo[] = compact(
+        uniqBy(originPaymentDetails.concat(destinationPaymentDetails), (v) =>
+          generateChecksum(v, 10)
+        ).map((v) => {
+          const userKeyId = getAddressString(v)
+          if (userKeyId) {
+            return { userKeyId, address: v }
+          }
+        })
       )
-
-      const mappedEntities = uniqueEntities.map((entity) => ({
-        userKeyId: entity,
-        value: entity,
-        type: entityType,
-      }))
-
-      return this.createPaymentDetailsTask(
-        aggregationVariable.type,
-        mappedEntities
+      return {
+        ids: userInfos,
+        type: 'PAYMENT_DETAILS_ADDRESS',
+      }
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_EMAIL') {
+      const originPaymentDetails =
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? []
+          : await this.uniqueEmailDetails(tenantId, 'ORIGIN', timeRange)
+      const destinationPaymentDetails =
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? []
+          : await this.uniqueEmailDetails(tenantId, 'DESTINATION', timeRange)
+      const userInfos: PaymentDetailsEmailUserInfo[] = compact(
+        uniq(originPaymentDetails.concat(destinationPaymentDetails)).map(
+          (v) => {
+            const userKeyId = v
+            if (userKeyId) {
+              return { userKeyId, email: v }
+            }
+          }
+        )
       )
+      return {
+        ids: userInfos,
+        type: 'PAYMENT_DETAILS_EMAIL',
+      }
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_NAME') {
+      const originPaymentDetails =
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? []
+          : await this.uniqueNameDetails(tenantId, 'ORIGIN', timeRange)
+      const destinationPaymentDetails =
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? []
+          : await this.uniqueNameDetails(tenantId, 'DESTINATION', timeRange)
+      const userInfos = compact(
+        uniqBy(originPaymentDetails.concat(destinationPaymentDetails), (v) =>
+          typeof v === 'string' ? v : JSON.stringify(v)
+        ).map((v) => {
+          const userKeyId = typeof v === 'string' ? v : JSON.stringify(v)
+          if (userKeyId) {
+            return { userKeyId, name: v }
+          }
+        })
+      )
+      return {
+        ids: userInfos,
+        type: 'PAYMENT_DETAILS_NAME',
+      }
     }
 
     throw new Error(
       `Unsupported aggregation variable type: ${aggregationVariable.type}`
     )
-  }
-
-  private isPaymentDetailsEntityType(type: string): boolean {
-    return [
-      'PAYMENT_DETAILS_ADDRESS',
-      'PAYMENT_DETAILS_EMAIL',
-      'PAYMENT_DETAILS_NAME',
-    ].includes(type)
-  }
-
-  private getEntityTypeFromAggregationType(type: string): UserInfoTypes {
-    const typeMap: Record<string, UserInfoTypes> = {
-      PAYMENT_DETAILS_ADDRESS: 'ADDRESS',
-      PAYMENT_DETAILS_EMAIL: 'EMAIL',
-      PAYMENT_DETAILS_NAME: 'NAME',
-    }
-    return typeMap[type] || 'NAME'
-  }
-
-  private createPaymentDetailsTask(
-    aggregationType: string,
-    entities: Array<{ userKeyId: string; value: string; type: UserInfoTypes }>
-  ): PreAggregationTask {
-    const typeMap: Record<string, PreAggregationTask['type']> = {
-      PAYMENT_DETAILS_ADDRESS: 'PAYMENT_DETAILS_ADDRESS',
-      PAYMENT_DETAILS_EMAIL: 'PAYMENT_DETAILS_EMAIL',
-      PAYMENT_DETAILS_NAME: 'PAYMENT_DETAILS_NAME',
-    }
-
-    return {
-      ids: entities as any,
-      type: typeMap[aggregationType] || 'PAYMENT_DETAILS_NAME',
-    }
   }
 }

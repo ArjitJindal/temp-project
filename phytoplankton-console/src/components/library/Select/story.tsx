@@ -1,12 +1,15 @@
 import ReactCountryFlag from 'react-country-flag';
 import SelectMenu from './SelectMenu';
-import Component from './index';
+import Component, { Props } from './index';
 import { UseCase } from '@/pages/storybook/components';
 import AlarmFillIcon from '@/components/ui/icons/Remix/system/alarm-fill.react.svg';
 import Label from '@/components/library/Label';
 import Toggle from '@/components/library/Toggle';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
+
+const MODES: Props<null>['mode'][] = ['SINGLE', 'MULTIPLE', 'DYNAMIC', 'MULTIPLE_DYNAMIC'];
+const SIZES: Props<null>['size'][] = ['DEFAULT', 'LARGE'];
 
 export default function (): JSX.Element {
   return (
@@ -121,12 +124,7 @@ export default function (): JSX.Element {
       <UseCase title={'Modes'} initialState={{}}>
         {([state, setState]) => (
           <>
-            <PropertyMatrix
-              xLabel="size"
-              yLabel="mode"
-              x={['DEFAULT', 'LARGE'] as const}
-              y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
-            >
+            <PropertyMatrix xLabel="size" yLabel="mode" x={SIZES} y={MODES}>
               {(size, mode) => (
                 <Component
                   allowClear={state.allowClear}
@@ -338,6 +336,10 @@ export default function (): JSX.Element {
                     label:
                       'Third option, very, very, very, very, very, very, very, very, very long text here',
                   },
+                  { value: 'option4', label: 'Second option a little longer' },
+                  { value: 'option5', label: 'Short' },
+                  { value: 'option6', label: 'This should be long enough to overflow' },
+                  { value: 'option7', label: 'Last one' },
                 ]}
                 onChange={(newValue) => {
                   setState((prevState) => ({
@@ -348,6 +350,100 @@ export default function (): JSX.Element {
               />
             )}
           </PropertyMatrix>
+        )}
+      </UseCase>
+      <UseCase
+        title={'Tags stack'}
+        initialState={{
+          values: ['option1', 'option2', 'option3'],
+        }}
+      >
+        {([state, setState]) => (
+          <>
+            <div
+              style={{
+                display: 'grid',
+                gap: 16,
+                justifyContent: 'flex-start',
+                gridAutoFlow: 'column',
+              }}
+            >
+              <Label label="Allow clear">
+                <Toggle
+                  value={state.allowClear}
+                  onChange={(value) => {
+                    setState((prevState) => ({ ...prevState, allowClear: value }));
+                  }}
+                />
+              </Label>
+              <Label label="Is error">
+                <Toggle
+                  value={state.isError}
+                  onChange={(value) => {
+                    setState((prevState) => ({ ...prevState, isError: value }));
+                  }}
+                />
+              </Label>
+              <Label label="Is loading">
+                <Toggle
+                  value={state.isLoading}
+                  onChange={(value) => {
+                    setState((prevState) => ({ ...prevState, isLoading: value }));
+                  }}
+                />
+              </Label>
+              <Label label="Is copyable">
+                <Toggle
+                  value={state.isCopyable}
+                  onChange={(value) => {
+                    setState((prevState) => ({ ...prevState, isCopyable: value }));
+                  }}
+                />
+              </Label>
+            </div>
+            <PropertyMatrix
+              xLabel="size"
+              yLabel="mode"
+              y2Label="isDisabled"
+              x={['DEFAULT', 'LARGE'] as const}
+              y={['MULTIPLE', 'MULTIPLE_DYNAMIC'] as const}
+              y2={[false, true] as const}
+            >
+              {(size, mode, isDisabled) => (
+                <Component<string>
+                  size={size}
+                  mode={mode}
+                  isDisabled={isDisabled}
+                  isLoading={state.isLoading}
+                  placeholder={'Placeholder example'}
+                  tagsStack={true}
+                  value={state.values}
+                  allowClear={state.allowClear}
+                  isCopyable={state.isCopyable}
+                  isError={state.isError}
+                  options={[
+                    { value: 'option1', label: 'First option' },
+                    { value: 'option2', label: 'Second option' },
+                    {
+                      value: 'option3',
+                      label:
+                        'Third option, very, very, very, very, very, very, very, very, very long text here',
+                    },
+                    { value: 'option4', label: 'Second option a little longer' },
+                    { value: 'option5', label: 'Short' },
+                    { value: 'option6', label: 'This should be long enough to overflow' },
+                    { value: 'option7', label: 'Last one' },
+                  ]}
+                  onChange={(newValue) => {
+                    setState((prevState) => ({
+                      ...prevState,
+                      ['values']: newValue,
+                    }));
+                  }}
+                />
+              )}
+            </PropertyMatrix>
+          </>
         )}
       </UseCase>
       <UseCase title={'Experiments'} initialState={{}}>

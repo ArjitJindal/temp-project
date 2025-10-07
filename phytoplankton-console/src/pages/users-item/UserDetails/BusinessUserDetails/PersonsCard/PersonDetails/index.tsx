@@ -21,7 +21,7 @@ export default function PersonDetails(props: Props) {
   return (
     <EntityInfoGrid.Root columns={3}>
       <EntityInfoGrid.Cell maxHeight={400}>
-        <GeneralDetails person={person} />
+        <GeneralDetails generalDetails={person.generalDetails} tags={person.tags} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell maxHeight={400}>
         <ContactDetails contactDetails={person.contactDetails} />

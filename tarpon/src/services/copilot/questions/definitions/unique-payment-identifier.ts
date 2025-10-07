@@ -14,7 +14,7 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedClickhouseQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 
 type PaymentIdentifier = {
   paymentIdentifier: string

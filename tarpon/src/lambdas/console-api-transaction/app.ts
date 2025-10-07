@@ -17,9 +17,9 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { CaseService } from '@/services/cases'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
 import { TransactionViewConfig } from '@/@types/tranasction/transaction-config'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 
 const DEVICE_DATA_FIELDS: CsvHeaderSettings<
   InternalTransaction['originDeviceData']

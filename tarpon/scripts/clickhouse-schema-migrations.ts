@@ -3,12 +3,12 @@ import fs from 'fs'
 import { ConnectionManager } from 'thunder-schema'
 import { loadConfigEnv } from './migrations/utils/config'
 import { logger } from '@/core/logger'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { MigrationTrackerTable } from '@/models/migration-tracker'
 import {
   getClickhouseDefaultCredentials,
   getDefualtConfig,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { MigrationTrackerTable } from '@/models/migration-tracker'
+} from '@/utils/clickhouse/client'
 
 export async function migrateClickhouse() {
   loadConfigEnv()

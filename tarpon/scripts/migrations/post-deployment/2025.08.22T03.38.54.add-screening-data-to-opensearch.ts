@@ -6,7 +6,7 @@ import {
 } from '../utils/trigger-sanctions-data-fetch'
 import { isOpensearchAvailableInRegion } from '@/utils/opensearch-utils'
 import { hasFeature } from '@/core/utils/context'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 let hasFeatureAcuris = false
 let hasFeatureOpenSanctions = false

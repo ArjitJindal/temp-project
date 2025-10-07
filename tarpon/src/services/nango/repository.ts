@@ -1,13 +1,11 @@
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { sanitizeString } from '@flagright/lib/utils'
-import {
-  batchInsertToClickhouse,
-  executeClickhouseQuery,
-} from '../../utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { batchGet, batchWrite } from '@/utils/dynamodb'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { traceable } from '@/core/xray'
 import { CrmGetResponse } from '@/@types/openapi-internal/CrmGetResponse'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
@@ -15,7 +13,7 @@ import {
   DefaultApiGetCrmRecordsRequest,
   DefaultApiGetCrmRecordsSearchRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { CRMRecordSearch } from '@/@types/openapi-internal/CRMRecordSearch'

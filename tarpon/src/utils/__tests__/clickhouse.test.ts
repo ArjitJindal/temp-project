@@ -1,11 +1,10 @@
-import {
-  getClickhouseClient,
-  getClickhouseDbName,
-  batchInsertToClickhouse,
-} from '../clickhouse/utils'
+import { getClickhouseDbName } from '../clickhouse/database-utils'
+import { batchInsertToClickhouse } from '../clickhouse/insert'
+import { getClickhouseClient } from '../clickhouse/client'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { logger } from '@/core/logger'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 
 describe('Clickhouse', () => {
   it('should be able to connect to Clickhouse', async () => {
@@ -284,7 +283,11 @@ describe('Clickhouse', () => {
         { id: 'success1', name: 'Success Test', timestamp: Date.now() },
       ]
 
-      await batchInsertToClickhouse(tenantId, 'users', testObjects)
+      await batchInsertToClickhouse(
+        tenantId,
+        ClickhouseTableNames.Users,
+        testObjects
+      )
 
       expect(mockInsert).toHaveBeenCalledTimes(1)
       expect(loggerWarnSpy).not.toHaveBeenCalled()
@@ -317,7 +320,11 @@ describe('Clickhouse', () => {
         { id: 'retry1', name: 'Retry Test', timestamp: Date.now() },
       ]
 
-      await batchInsertToClickhouse(tenantId, 'users', testObjects)
+      await batchInsertToClickhouse(
+        tenantId,
+        ClickhouseTableNames.Users,
+        testObjects
+      )
 
       expect(mockInsert).toHaveBeenCalledTimes(maxFailures + 1)
       expect(loggerWarnSpy).toHaveBeenCalledTimes(maxFailures)

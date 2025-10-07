@@ -17,7 +17,7 @@ import {
   getMigrationLastCompletedId,
   updateMigrationLastCompletedId,
 } from '@/utils/migration-progress'
-import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
+import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongo-table-names'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { FixLocksForKrs } from '@/@types/batch-job'

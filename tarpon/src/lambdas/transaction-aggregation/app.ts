@@ -170,7 +170,7 @@ export async function handleV8PreAggregationTask(
         task.currentTimestamp,
         task.userId,
         task.paymentDetails,
-        task.aggregationData,
+        task.entityData,
         task.timeWindow,
         task.totalSliceCount
       )
@@ -214,7 +214,7 @@ export async function handleV8PreAggregationTask(
         task.currentTimestamp,
         task.userId,
         task.paymentDetails,
-        task.aggregationData,
+        task.entityData,
         task.timeWindow,
         task.totalSliceCount
       )
@@ -237,7 +237,7 @@ export async function handleV8PreAggregationTask(
       task.currentTimestamp,
       task.userId,
       task.paymentDetails,
-      task.aggregationData,
+      task.entityData,
       task.timeWindow,
       task.totalSliceCount
     )

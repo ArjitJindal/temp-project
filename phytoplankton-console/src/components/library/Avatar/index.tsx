@@ -1,8 +1,8 @@
 import cn from 'clsx';
-import Spinner from '../Spinner';
 import s from './index.module.less';
 import { Account } from '@/apis';
 import { getDisplayedUserInfo } from '@/utils/user-utils';
+import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 interface Props {
   user: Account | null;
@@ -14,14 +14,15 @@ const Avatar = (props: Props) => {
   const { user, size = 'small', isLoading = false } = props;
   const userInfo = getDisplayedUserInfo(user);
   const avatar = userInfo.avatar;
-  return isLoading ? (
-    <div className={cn(s.avatar, s[`size-${size}`])}>
-      <Spinner size="SMALL" />
-    </div>
-  ) : (
+  return (
     <div
-      className={cn(s.avatar, s[`size-${size}`])}
-      style={{ backgroundImage: `url(${avatar})` }}
+      className={cn(
+        s.avatar,
+        s[`size-${size}`],
+        isLoading && s.isLoading,
+        isLoading && CY_LOADING_FLAG_CLASS,
+      )}
+      style={{ backgroundImage: isLoading ? undefined : `url(${avatar})` }}
       title={`${userInfo.name} avatar`}
     />
   );

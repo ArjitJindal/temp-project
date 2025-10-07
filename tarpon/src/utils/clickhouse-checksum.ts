@@ -1,6 +1,7 @@
 import { generateChecksum } from './object'
 import { ClickHouseTables } from './clickhouse/definition'
-import { getClickhouseClient, getClickhouseDbName } from './clickhouse/utils'
+import { getClickhouseDbName } from './clickhouse/database-utils'
+import { getClickhouseClient } from './clickhouse/client'
 
 export interface ClickHouseTableChecksum {
   tableName: string

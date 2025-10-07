@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { logger } from '@/core/logger'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
   createMongoDBCollections,

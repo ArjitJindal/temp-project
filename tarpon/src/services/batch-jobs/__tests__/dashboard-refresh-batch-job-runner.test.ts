@@ -10,7 +10,7 @@ import dayjs from '@/utils/dayjs'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { getDynamoDbClient } from '@/utils/dynamodb'

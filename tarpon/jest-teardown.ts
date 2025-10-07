@@ -4,7 +4,7 @@ import 'tsconfig-paths/register'
 import { execSync } from 'child_process'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MONGO_TEST_DB_PREFIX } from '@/test-utils/mongo-test-utils'
-import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/utils'
+import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/execute'
 
 module.exports = async function () {
   if (process.env.EXEC_SOURCE !== 'CI') {

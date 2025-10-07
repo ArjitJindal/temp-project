@@ -1,8 +1,8 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { ClickhouseTableNames } from '@/utils/clickhouse/definition'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 import { envIsNot } from '@/utils/env'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 async function migrateTenant(tenant: Tenant) {
   if (envIsNot('prod')) {

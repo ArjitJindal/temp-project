@@ -6,8 +6,6 @@ import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   DAY_WINDOW_SCHEMA,
-  TimeWindow,
-  DayWindow,
   TRANSACTIONS_NUMBER_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
@@ -18,6 +16,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow, DayWindow } from '@/@types/rule/params'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { RuleHitResultItem } from '@/services/rules-engine/rule'

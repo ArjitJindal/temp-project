@@ -49,11 +49,11 @@ import {
 } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
+  UNIQUE_TAGS_COLLECTION,
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-  UNIQUE_TAGS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserType } from '@/@types/user/user-type'
@@ -66,13 +66,13 @@ import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { neverThrow } from '@/utils/lang'
+import { cursorPaginate } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import {
-  COUNT_QUERY_LIMIT,
-  cursorPaginate,
   OptionalPagination,
   OptionalPaginationParams,
   PaginationParams,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'

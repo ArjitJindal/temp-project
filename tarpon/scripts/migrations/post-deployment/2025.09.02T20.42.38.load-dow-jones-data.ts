@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendTenantSpecificSanctionsDataFetch } from '../utils/trigger-sanctions-data-fetch'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 async function migrateTenant(tenant: Tenant) {
   await sendTenantSpecificSanctionsDataFetch(tenant.id)

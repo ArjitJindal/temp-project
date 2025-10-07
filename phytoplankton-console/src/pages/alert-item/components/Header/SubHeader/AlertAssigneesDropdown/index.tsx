@@ -6,13 +6,14 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import { canAssignToUser, createAssignments, getAssignmentsToShow } from '@/utils/case-utils';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import {
   Alert,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
 } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { all } from '@/utils/asyncResource';
 
 interface Props {
   alertItem: Alert;
@@ -71,10 +72,10 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
   );
 
   const handleAlertsReviewAssignments = useCallback(
-    (updateRequest: AlertsReviewAssignmentsUpdateRequest) => {
+    async (updateRequest: AlertsReviewAssignmentsUpdateRequest) => {
       const { alertIds, reviewAssignments } = updateRequest;
 
-      reviewAssignmentsToMutationAlerts.mutate({
+      await reviewAssignmentsToMutationAlerts.mutateAsync({
         alertIds,
         reviewAssignments,
       });
@@ -83,10 +84,10 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
   );
 
   const handleAlertAssignments = useCallback(
-    (updateRequest: AlertsAssignmentsUpdateRequest) => {
+    async (updateRequest: AlertsAssignmentsUpdateRequest) => {
       const { alertIds, assignments } = updateRequest;
 
-      assignmentsToMutationAlerts.mutate({
+      await assignmentsToMutationAlerts.mutateAsync({
         alertIds,
         assignments,
       });
@@ -105,10 +106,14 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
     <AssigneesDropdown
       assignments={getAssignmentsToShow(alertItem) ?? []}
       editing={!(alertStatus === 'CLOSED') && hasEditingPermission}
+      mutationRes={all([
+        reviewAssignmentsToMutationAlerts.dataResource,
+        assignmentsToMutationAlerts.dataResource,
+      ])}
       customFilter={(account) =>
         canAssignToUser(alertStatus ?? 'OPEN', account, isMultiEscalationEnabled)
       }
-      onChange={(accounts) => {
+      onChange={async (accounts) => {
         const [assignments, isReview] = createAssignments(
           alertStatus ?? 'OPEN',
           accounts,
@@ -122,18 +127,17 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
         }
 
         if (isReview) {
-          handleAlertsReviewAssignments({
+          await handleAlertsReviewAssignments({
             alertIds: [alertId],
             reviewAssignments: assignments,
           });
         } else {
-          handleAlertAssignments({
+          await handleAlertAssignments({
             alertIds: [alertId],
             assignments,
           });
         }
       }}
-      fixSelectorHeight
     />
   );
 }
