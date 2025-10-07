@@ -349,7 +349,7 @@ export class ClickhouseAlertRepository {
     }
 
     if (params.filterCaseId != null) {
-      whereConditions.push(`caseId ILIKE '${params.filterCaseId}%'`)
+      whereConditions.push(`caseId = '${params.filterCaseId}'`)
     }
 
     if (params.excludeAlertIds != null) {

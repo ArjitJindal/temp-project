@@ -9,7 +9,7 @@ export const CLICKHOUSE_ID_COLUMN_MAP: Record<ClickhouseTableNames, string> = {
   transaction_events: 'eventId',
   user_events: 'eventId',
   cases: 'caseId',
-  cases_v2: 'id',
+  cases_v2: 'caseId',
   reports: '_id',
   krs_score: 'userId',
   drs_score: 'userId',
