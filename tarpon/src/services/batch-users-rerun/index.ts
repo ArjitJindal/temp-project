@@ -230,6 +230,7 @@ export class BatchRerunUsersService {
     const latestJob = await batchJobRepository.getLatestJob({
       type: 'BATCH_RERUN_USERS',
       'parameters.jobType': 'RERUN_RISK_SCORING',
+      'latestStatus.status': { $in: ['PENDING', 'IN_PROGRESS'] },
     })
     const jobId = latestJob?.jobId
 
