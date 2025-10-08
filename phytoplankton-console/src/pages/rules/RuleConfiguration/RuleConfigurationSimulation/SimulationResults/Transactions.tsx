@@ -214,8 +214,9 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
       filtering: true,
     }),
     helper.derived({
-      id: 'originAmountDetails',
+      id: 'originPayment.amount',
       title: 'Origin amount',
+      tooltip: 'Sorting is based on the original transaction value',
       value: (entity) => {
         return {
           amountValue: entity.originAmountDetails?.transactionAmount ?? 0,
@@ -271,8 +272,9 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
       filtering: true,
     }),
     helper.derived({
-      id: 'destinationAmountDetails',
+      id: 'destinationPayment.amount',
       title: 'Destination amount',
+      tooltip: 'Sorting is based on the original transaction value',
       value: (entity) => {
         return {
           amountValue: entity.destinationAmountDetails?.transactionAmount ?? 0,
