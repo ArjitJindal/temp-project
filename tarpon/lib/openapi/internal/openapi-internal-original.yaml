@@ -9889,9 +9889,12 @@ components:
           $ref: '#/components/schemas/RiskLevel'
         alias:
           type: string
+        isActive:
+          type: boolean
       required:
         - level
         - alias
+        - isActive
     Priority:
       type: string
       title: Priority

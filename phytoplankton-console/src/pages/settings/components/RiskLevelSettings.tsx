@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo, useState } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
@@ -12,26 +13,26 @@ import Button from '@/components/library/Button';
 
 interface TableItem {
   level: RiskLevel;
-  levelAlias: string | undefined;
+  levelAlias: string;
   isActive: boolean;
 }
 
 interface ExternalState {
   handleSaveAlias: (level: RiskLevel) => void;
   savingLevel: RiskLevel | null;
-  newLevelToAlias: Map<RiskLevel | undefined, string>;
-  savedLevelToAlias: Map<RiskLevel | undefined, string>;
-  newLevelToActive: Map<RiskLevel | undefined, boolean>;
-  savedLevelToActive: Map<RiskLevel | undefined, boolean>;
+  newLevelToAlias: Map<RiskLevel, string>;
+  newLevelToActive: Map<RiskLevel, boolean>;
+  committedLevelToAlias: Map<RiskLevel, string>;
+  committedLevelToActive: Map<RiskLevel, boolean>;
 }
-
-// Local payload type to include status alongside alias
-type RiskLevelAliasPayload = { level: RiskLevel; isActive: boolean; alias?: string };
-
 const helper = new ColumnHelper<TableItem>();
 
 const columns = helper.list([
-  helper.simple({ key: 'level', title: 'Level', defaultWidth: 100 }),
+  helper.simple({
+    key: 'level',
+    title: 'Level',
+    defaultWidth: 100,
+  }),
   helper.simple({
     key: 'levelAlias',
     title: 'Alias',
@@ -57,23 +58,24 @@ const columns = helper.list([
         handleSaveAlias,
         savingLevel,
         newLevelToAlias,
-        savedLevelToAlias,
         newLevelToActive,
-        savedLevelToActive,
+        committedLevelToAlias,
+        committedLevelToActive,
       } = context.external as ExternalState;
 
-      const savedAlias = savedLevelToAlias.get(item.level) ?? '';
-      const nextAlias = newLevelToAlias.get(item.level) ?? '';
-      const savedActive = savedLevelToActive.get(item.level) ?? true;
-      const nextActive = newLevelToActive.get(item.level) ?? true;
+      const aliasChanged =
+        (committedLevelToAlias.get(item.level) ?? '') !==
+        (newLevelToAlias.get(item.level) ?? '');
 
-      const noChanges = savedAlias === nextAlias && savedActive === nextActive;
+      const activeChanged =
+        (committedLevelToActive.get(item.level) ?? true) !==
+        (newLevelToActive.get(item.level) ?? true);
 
       return (
         <Button
           type="PRIMARY"
           onClick={() => handleSaveAlias(item.level)}
-          isDisabled={!!savingLevel || noChanges}
+          isDisabled={!!savingLevel || (!aliasChanged && !activeChanged)}
           isLoading={item.level === savingLevel}
           requiredResources={['write:::settings/risk-scoring/risk-levels-alias/*']}
         >
@@ -84,119 +86,94 @@ const columns = helper.list([
   }),
 ]);
 
-const RISK_LEVELS: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
-
 export const RiskLevelSettings: React.FC = () => {
   const settings = useSettings();
+  const mutateTenantSettings = useUpdateTenantSettings();
+
   const [savingLevel, setSavingLevel] = useState<RiskLevel | null>(null);
 
-  // === Alias maps ===
-  const levelToAlias = useMemo<Map<RiskLevel | undefined, string>>(
+  const initialAliasMap = useMemo(
     () =>
-      new Map(
-        (settings.riskLevelAlias || []).map((entry: RiskLevelAlias & any) => [
-          entry.level,
-          entry.alias ?? '',
-        ]),
+      new Map<RiskLevel, string>(
+        (settings.riskLevelAlias || []).map((entry) => [entry.level, entry.alias ?? '']),
       ),
     [settings.riskLevelAlias],
   );
-  const [commitedLevelToAlias, setCommitedLevelToAlias] =
-    useState<Map<RiskLevel | undefined, string>>(new Map([...levelToAlias]));
-  const savedLevelToAlias = useMemo(
-    () => new Map([...levelToAlias, ...commitedLevelToAlias]),
-    [levelToAlias, commitedLevelToAlias],
+
+  const initialActiveMap = useMemo(
+    () =>
+      new Map<RiskLevel, boolean>(
+        (settings.riskLevelAlias || []).map((entry) => [entry.level, entry.isActive ?? true]),
+      ),
+    [settings.riskLevelAlias],
   );
-  const [newLevelToAlias, setNewLevelToAlias] =
-    useState<Map<RiskLevel | undefined, string>>(new Map([...levelToAlias]));
+  const [committedLevelToAlias, setCommittedLevelToAlias] = useState(initialAliasMap);
+  const [committedLevelToActive, setCommittedLevelToActive] = useState(initialActiveMap);
 
-  // === Status maps ===
-  // Prefer status from riskLevelAlias entries; fallback to settings.riskLevelStatus; otherwise default true.
-  const levelToActive = useMemo<Map<RiskLevel | undefined, boolean>>(() => {
-    const fromAlias = new Map<RiskLevel | undefined, boolean>(
-      (settings.riskLevelAlias || []).map((e: any) => [e.level, e.isActive ?? true]),
-    );
-    if (fromAlias.size) return fromAlias;
+  const [newLevelToAlias, setNewLevelToAlias] = useState(new Map(initialAliasMap));
+  const [newLevelToActive, setNewLevelToActive] = useState(new Map(initialActiveMap));
 
-    const fromStatus = new Map<RiskLevel | undefined, boolean>(
-      ((settings as any).riskLevelStatus || []).map((e: any) => [e.level, !!e.isActive]),
-    );
-    if (fromStatus.size) return fromStatus;
-
-    return new Map<RiskLevel | undefined, boolean>(RISK_LEVELS.map((lvl) => [lvl, true]));
-  }, [settings.riskLevelAlias, (settings as any).riskLevelStatus]);
-
-  const [commitedLevelToActive, setCommitedLevelToActive] =
-    useState<Map<RiskLevel | undefined, boolean>>(new Map([...levelToActive]));
-  const savedLevelToActive = useMemo(
-    () => new Map([...levelToActive, ...commitedLevelToActive]),
-    [levelToActive, commitedLevelToActive],
-  );
-  const [newLevelToActive, setNewLevelToActive] =
-    useState<Map<RiskLevel | undefined, boolean>>(new Map([...levelToActive]));
-
-  // Edit handlers
-  const handleUpdateAlias = useCallback(
-    (level: RiskLevel, newAlias: string) => {
-      setNewLevelToAlias((prev) => new Map(prev).set(level, newAlias.trim()));
-    },
-    [],
-  );
-  const handleUpdateActive = useCallback((level: RiskLevel, isActive: boolean) => {
-    setNewLevelToActive((prev) => new Map(prev).set(level, !!isActive));
+  const handleUpdateAlias = useCallback((level: RiskLevel, newAlias: string) => {
+    setNewLevelToAlias((prev) => new Map(prev).set(level, newAlias.trim()));
   }, []);
 
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const handleUpdateActive = useCallback((level: RiskLevel, newActive: boolean) => {
+    setNewLevelToActive((prev) => new Map(prev).set(level, newActive));
+  }, []);
 
-  // Save ONLY the edited row (alias + isActive sent together)
   const handleSaveAlias = useCallback(
     async (level: RiskLevel) => {
       setSavingLevel(level);
       try {
-        const alias = (newLevelToAlias.get(level) || '').trim();
-        const isActive = newLevelToActive.get(level) ?? true;
+        const updatedAliasMap = new Map(committedLevelToAlias).set(
+          level,
+          newLevelToAlias.get(level) ?? '',
+        );
+        const updatedActiveMap = new Map(committedLevelToActive).set(
+          level,
+          newLevelToActive.get(level) ?? true,
+        );
+        const riskLevelAlias: RiskLevelAlias[] = Array.from(updatedAliasMap.entries()).map(
+          ([lvl, alias]) => ({
+            level: lvl,
+            alias,
+            isActive: updatedActiveMap.get(lvl) ?? true,
+          }),
+        );
 
-        const item: RiskLevelAliasPayload = { level, isActive };
-        if (alias) item.alias = alias; // alias optional; status always present
-        console.log('item', item);
-        // send only the updated row; include isActive in the item
-        await mutateTenantSettings.mutateAsync({
-          riskLevelAlias: [item] as any, // cast if RiskLevelAlias doesn't include isActive in typings
-        });
+        await mutateTenantSettings.mutateAsync({ riskLevelAlias });
 
-        // update committed maps locally for this level
-        setCommitedLevelToAlias((prev) => new Map(prev).set(level, alias));
-        setCommitedLevelToActive((prev) => new Map(prev).set(level, isActive));
+        setCommittedLevelToAlias(updatedAliasMap);
+        setCommittedLevelToActive(updatedActiveMap);
       } finally {
         setSavingLevel(null);
       }
     },
-    [newLevelToAlias, newLevelToActive, mutateTenantSettings],
+    [mutateTenantSettings, newLevelToAlias, newLevelToActive, committedLevelToAlias, committedLevelToActive],
   );
 
-  const tableData = useMemo<TableItem[]>(
-    () =>
-      RISK_LEVELS.map((level) => ({
-        level,
-        levelAlias: newLevelToAlias.get(level) ?? '',
-        isActive: newLevelToActive.get(level) ?? true,
-      })),
-    [newLevelToAlias, newLevelToActive],
-  );
+  const tableData = useMemo<TableItem[]>(() => {
+    const levels: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
+    return levels.map((level) => ({
+      level,
+      levelAlias: newLevelToAlias.get(level) ?? '',
+      isActive: newLevelToActive.get(level) ?? true,
+    }));
+  }, [newLevelToAlias, newLevelToActive]);
 
   const externalState: ExternalState = {
+    handleSaveAlias,
     savingLevel,
     newLevelToAlias,
-    savedLevelToAlias,
     newLevelToActive,
-    savedLevelToActive,
-    handleSaveAlias,
+    committedLevelToAlias,
+    committedLevelToActive,
   };
 
   return (
     <SettingsCard
       title="Risk levels alias"
-      description="Configure risk levels display name and status in console."
+      description="Configure risk levels display name and active status in console."
       minRequiredResources={['read:::settings/risk-scoring/risk-levels-alias/*']}
     >
       <Table<TableItem>
@@ -204,13 +181,10 @@ export const RiskLevelSettings: React.FC = () => {
         rowKey="level"
         columns={columns}
         onEdit={(rowKey, newValue) => {
-          const level = rowKey as RiskLevel;
-          if ('levelAlias' in newValue) {
-            handleUpdateAlias(level, newValue.levelAlias ?? '');
-          }
-          if ('isActive' in newValue) {
-            handleUpdateActive(level, !!newValue.isActive);
-          }
+          if (newValue.levelAlias !== undefined)
+            handleUpdateAlias(rowKey as RiskLevel, newValue.levelAlias ?? '');
+          if (newValue.isActive !== undefined)
+            handleUpdateActive(rowKey as RiskLevel, newValue.isActive ?? true);
         }}
         data={{ items: tableData }}
         pagination={false}

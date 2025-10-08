@@ -15,7 +15,7 @@ import Tabs, { TabItem } from '@/components/library/Tabs';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
-import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isEqual } from '@/utils/lang';
 
@@ -102,6 +102,7 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
   }, []);
 
   const api = useApi();
+  const settings = useSettings();
   const [state, setState] = useState<State | null>(null);
   const [newState, setNewState] = useState<State | null>(null);
   const riskValuesQueryResults = useQuery(RISK_CLASSIFICATION_VALUES(), () =>
@@ -117,7 +118,7 @@ function RiskLevelsConfigurePage({ isSimulationMode }: { isSimulationMode: boole
       return;
     }
     const newValue = riskValuesQueryResults.data.value;
-    const parsedState = parseApiState(newValue.classificationValues);
+    const parsedState = parseApiState(newValue.classificationValues, settings?.riskLevelAlias);
     if (!isEqual(parsedState, state)) {
       setState(parsedState);
       setNewState(parsedState);

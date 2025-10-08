@@ -225,20 +225,24 @@ export function useRuleActionLabel(ruleAction: RuleAction | undefined): string |
   return getRuleActionLabel(ruleAction, settings);
 }
 
-export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): {
-  riskLevelLabel: string,
-  isActive: boolean,
-} {
-  console.log('settings', settings)
+export function getRiskLevelLabel(
+  riskLevel: RiskLevel,
+  settings: TenantSettings,
+): { riskLevelLabel: string; isActive: boolean } {
+  // Find alias and activation status once (not 3 separate .find calls)
+  const riskLevelData = settings.riskLevelAlias?.find(
+    (item) => item.level === riskLevel,
+  );
 
-  const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
-  const isActive = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.isActive;
-  const riskLevelObj = settings.riskLevelAlias?.find((item) => item.level === riskLevel);
-  if (riskLevelObj && riskLevelObj.isActive === false) {
-    return { riskLevelLabel: alias || humanizeConstant(riskLevel), isActive: false };
-  }
-  return { riskLevelLabel: alias || humanizeConstant(riskLevel), isActive: true };
+  const alias = riskLevelData?.alias?.trim();
+  const isActive = riskLevelData?.isActive ?? true;
+
+  // Default label: alias if valid string, otherwise humanized constant
+  const riskLevelLabel = alias && alias.length > 0 ? alias : humanizeConstant(riskLevel);
+
+  return { riskLevelLabel, isActive };
 }
+
 
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
   const riskLevel =
