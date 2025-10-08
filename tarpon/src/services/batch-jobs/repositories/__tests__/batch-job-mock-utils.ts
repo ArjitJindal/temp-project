@@ -217,7 +217,7 @@ export function createMockBatchJob<T extends BatchJob>(
         },
       } as T & { jobId: string }
 
-    case 'PNB_BACKFILL_ENTITIES':
+    case 'BACKFILL_ENTITIES_JSONL':
       return {
         ...baseJob,
         parameters: {
