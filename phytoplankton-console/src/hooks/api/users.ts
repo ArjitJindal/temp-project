@@ -137,14 +137,20 @@ export function useRolesList(): QueryResult<{ items: AccountRole[]; total: numbe
 
 export function useAccountsList(): QueryResult<Account[]> {
   const api = useApi();
-  return useQuery(ACCOUNT_LIST(), async () => {
-    try {
-      return await api.getAccounts();
-    } catch (e) {
-      console.error(e);
-      return [];
-    }
-  });
+  return useQuery(
+    ACCOUNT_LIST(),
+    async () => {
+      try {
+        return await api.getAccounts();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
 }
 
 export function useUsersList(
