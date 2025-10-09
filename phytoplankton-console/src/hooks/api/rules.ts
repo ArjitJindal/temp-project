@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useApi } from '@/api';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import type { FileInfo, Rule, RuleInstance, RuleQueue } from '@/apis';
+import type { FileInfo, Rule, RuleQueue } from '@/apis';
 import {
   NEW_RULE_ID,
   RULE_FILTERS,
@@ -88,9 +88,9 @@ export function useRuleQueues(): RuleQueue[] {
 export function useBusinessIndustries(): string[] {
   const api = useApi();
   const result = useQuery(['users', 'uniques', 'BUSINESS_INDUSTRY'], async () => {
-    return await api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' as any });
+    return await api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' });
   });
-  return isSuccess(result.data) ? (result.data.value as unknown as string[]) : [];
+  return isSuccess(result.data) ? (result.data.value as string[]) : [];
 }
 
 export function useImportRules() {
@@ -125,10 +125,7 @@ export function useRuleThresholdRecommendations(ruleInstanceId: string) {
     },
     {
       onError: (e) => {
-        message.fatal(
-          `Failed to calculate recommendations for the rule. ${getErrorMessage(e as any)}`,
-          e as any,
-        );
+        message.fatal(`Failed to calculate recommendations for the rule. ${getErrorMessage(e)}`, e);
       },
     },
   );
@@ -136,7 +133,7 @@ export function useRuleThresholdRecommendations(ruleInstanceId: string) {
 
 export function useRule(ruleId?: string) {
   const api = useApi();
-  return useQuery<Rule | null>(GET_RULE(ruleId as any), async () => {
+  return useQuery(GET_RULE(ruleId ?? ''), async () => {
     if (ruleId == null) {
       return null;
     }
@@ -147,7 +144,7 @@ export function useRule(ruleId?: string) {
 
 export function useRuleInstance(ruleInstanceId?: string) {
   const api = useApi();
-  return useQuery<RuleInstance>(GET_RULE_INSTANCE(ruleInstanceId as any), async () => {
+  return useQuery(GET_RULE_INSTANCE(ruleInstanceId ?? ''), async () => {
     if (ruleInstanceId == null) {
       throw new Error('ruleInstanceId can not be null');
     }
@@ -173,7 +170,7 @@ export function useRulesUniversalSearch(
       queryStr: search || '',
       filterTypology: filters.typologies,
       filterChecksFor: filters.checksFor,
-      filterNature: filters.defaultNature as any,
+      filterNature: filters.defaultNature as ('AML' | 'FRAUD' | 'CTF' | 'SCREENING')[] | undefined,
       filterTypes: Array.isArray(filters.types) ? filters.types : [filters.types],
       filterTags: filters.tags,
       isAISearch: options?.isAISearch,

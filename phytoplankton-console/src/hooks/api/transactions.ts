@@ -20,31 +20,36 @@ import type {
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import type { PaginatedData } from '@/utils/queries/hooks';
 import { transactionParamsToRequest } from '@/pages/transactions/components/TransactionsTable';
+import type { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
+import type { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 
 export function useTransactionsUniques(
-  field: any,
+  field: TransactionsUniquesField,
   params?: { filter?: string },
   options?: { enabled?: boolean },
 ): QueryResult<string[]> {
   const api = useApi();
-  return useQuery<string[]>(
+  return useQuery(
     TRANSACTIONS_UNIQUES(field, params ?? {}),
     async () => {
       const res = await api.getTransactionsUniques({ field, ...(params ?? {}) });
-      return res as any[] as string[];
+      return res as string[];
     },
     options,
   );
 }
 
-export function useTransactionsList(filterId: string | undefined): QueryResult<any> {
+export function useTransactionsList(filterId: string | undefined) {
   const api = useApi();
   return useQuery(TRANSACTIONS_LIST(filterId ?? ''), async () => {
     return api.getTransactionsList({ filterId });
   });
 }
 
-export function useTransactionsListPaginated(params: any, mapper?: (items: any[]) => any[]) {
+export function useTransactionsListPaginated(
+  params: Record<string, any>,
+  mapper?: (items: any[]) => any[],
+) {
   const api = useApi();
   return usePaginatedQuery(
     TRANSACTIONS_LIST({ ...params, ...(mapper ? { mapper: mapper.toString() } : {}) }),
@@ -61,7 +66,7 @@ export function useTransactionsListPaginated(params: any, mapper?: (items: any[]
   );
 }
 
-export function useTransactionsCount(params: any) {
+export function useTransactionsCount(params: Record<string, any>) {
   const api = useApi();
   return useQuery(TRANSACTIONS_COUNT(params), async () => {
     const countData = await api.getTransactionsList({ ...params, page: 0, pageSize: 0 });
@@ -70,7 +75,7 @@ export function useTransactionsCount(params: any) {
 }
 
 export function useTransactionsQuery<T extends object = any>(
-  params: any,
+  params: Record<string, any>,
   mapper?: (data: any[]) => T[],
 ): {
   queryResult: QueryResult<PaginatedData<T>>;
@@ -78,17 +83,31 @@ export function useTransactionsQuery<T extends object = any>(
   cacheKey: any;
 } {
   const dataParams = transactionParamsToRequest(
-    { ...params, responseType: 'data' },
+    {
+      ...params,
+      responseType: 'data',
+      sort: (params as { sort?: any[] }).sort ?? [],
+      pageSize: (params as { pageSize?: number }).pageSize ?? 25,
+    },
     { ignoreDefaultTimestamps: true },
   );
-  const queryResult = useTransactionsListPaginated(dataParams, mapper) as QueryResult<
-    PaginatedData<T>
-  >;
+  const queryResult = useTransactionsListPaginated(
+    dataParams as Record<string, any>,
+    mapper,
+  ) as QueryResult<PaginatedData<T>>;
   const countParams = transactionParamsToRequest(
-    { ...params, page: 0, pageSize: 0, responseType: 'count' },
+    {
+      ...params,
+      page: 0,
+      pageSize: 0,
+      responseType: 'count',
+      sort: params.sort ?? [],
+    },
     { ignoreDefaultTimestamps: true },
   );
-  const countQueryResult = useTransactionsCount(countParams) as QueryResult<{ total: number }>;
+  const countQueryResult = useTransactionsCount(countParams as Record<string, any>) as QueryResult<{
+    total: number;
+  }>;
   return {
     queryResult,
     countQueryResult,
@@ -96,22 +115,22 @@ export function useTransactionsQuery<T extends object = any>(
   };
 }
 
-export function useTransactionItem(transactionId: string): QueryResult<any> {
+export function useTransactionItem(transactionId: string) {
   const api = useApi();
   return useQuery(TRANSACTIONS_ITEM(transactionId), () => api.getTransaction({ transactionId }));
 }
 
 export function useTransactionAlerts(
   transactionId: string,
-  extra?: Record<string, unknown>,
-): QueryResult<any> {
+  extra?: Partial<DefaultApiGetAlertListRequest>,
+) {
   const api = useApi();
   return useQuery(TRANSACTIONS_ALERTS_LIST(transactionId), () =>
-    api.getAlertList({ ...(extra ?? {}), filterTransactionIds: [transactionId] } as any),
+    api.getAlertList({ ...(extra ?? {}), filterTransactionIds: [transactionId] }),
   );
 }
 
-export function useTransactionArs(transactionId: string): QueryResult<any> {
+export function useTransactionArs(transactionId: string) {
   const api = useApi();
   return useQuery(TRANSACTIONS_ITEM_RISKS_ARS(transactionId), () =>
     api.getArsValue({ transactionId }),
@@ -123,7 +142,7 @@ export function useTransactionEvents(
   params: { page?: number; pageSize?: number },
 ): QueryResult<PaginatedData<InternalTransactionEvent>> {
   const api = useApi();
-  return usePaginatedQuery<InternalTransactionEvent>(
+  return usePaginatedQuery(
     TRANSACTIONS_EVENTS_FIND(transactionId, params),
     async (paginationParams) => {
       const result = await api.getTransactionEvents({

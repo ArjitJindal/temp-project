@@ -56,7 +56,7 @@ export type WorkflowType =
   | UserUpdateApprovalWorkflowWorkflowTypeEnum
   | RiskFactorsApprovalWorkflowWorkflowTypeEnum;
 
-export function parseWorkflowType(type: unknown): WorkflowType {
+export function parseWorkflowType(type: string): WorkflowType {
   if (type === 'alert') {
     return 'alert';
   } else if (type === 'case') {
@@ -345,11 +345,11 @@ export function useWorkflowsList() {
   });
 }
 
-export function useWorkflowItem(workflowType: string, id: string) {
+export function useWorkflowItem(workflowType: WorkflowType, id: string) {
   const api = useApi();
-  return useQuery(WORKFLOWS_ITEM(workflowType as any, id), async (): Promise<WorkflowItem> => {
+  return useQuery(WORKFLOWS_ITEM(workflowType, id), async (): Promise<WorkflowItem> => {
     return await api.getWorkflowById({
-      workflowType: workflowType as any,
+      workflowType: workflowType,
       workflowId: id,
     });
   });
@@ -357,11 +357,11 @@ export function useWorkflowItem(workflowType: string, id: string) {
 
 export function useCreateWorkflow(workflowType: WorkflowType) {
   const api = useApi();
-  return useMutation((serialized: any) =>
+  return useMutation((serialized: Record<string, any>) =>
     api.createWorkflow({
       workflowType,
-      CreateWorkflowType:
-        workflowType === 'alert'
+      CreateWorkflowType: {
+        ...(workflowType === 'alert'
           ? {
               alertWorkflow: {
                 ...serialized,
@@ -378,21 +378,23 @@ export function useCreateWorkflow(workflowType: WorkflowType) {
                 enabled: true,
                 autoClose: false,
               },
-            },
+            }),
+      } as any,
     }),
   );
 }
 
 export function useCreateWorkflowVersion(workflowType: WorkflowType, workflowId: string) {
   const api = useApi();
-  return useMutation((payload: { item: any; serialized: any }) =>
+  return useMutation((payload: { item: Record<string, any>; serialized: Record<string, any> }) =>
     api.postWorkflowVersion({
       workflowType,
       workflowId,
-      CreateWorkflowType:
-        payload.item.workflowType === 'alert'
+      CreateWorkflowType: {
+        ...(payload.item.workflowType === 'alert'
           ? { alertWorkflow: { ...payload.item, ...payload.serialized } }
-          : { caseWorkflow: { ...payload.item, ...payload.serialized } },
+          : { caseWorkflow: { ...payload.item, ...payload.serialized } }),
+      } as any,
     }),
   );
 }
@@ -413,9 +415,9 @@ export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
     (tenantSettings): WorkflowSettingsUserApprovalWorkflows => {
       const userApprovalWorkflows = tenantSettings.workflowSettings?.userApprovalWorkflows;
       if (userApprovalWorkflows == null) {
-        return {} as any;
+        return {} as WorkflowSettingsUserApprovalWorkflows;
       }
-      return userApprovalWorkflows as any;
+      return userApprovalWorkflows as WorkflowSettingsUserApprovalWorkflows;
     },
   );
 
@@ -454,14 +456,14 @@ export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
     return map(
       all([fieldsToWorkflowIdRes, workflowsRes]),
       ([fieldsToWorkflowId, workflows]): UserWorkflowSettings => {
-        const allWorkflows: UserWorkflowSettings = {} as any;
+        const allWorkflows: UserWorkflowSettings = {} as UserWorkflowSettings;
         for (const [field, workflowId] of Object.entries(fieldsToWorkflowId)) {
           if (workflowId != null) {
             const workflow = workflows.find((workflow) => workflow.id === workflowId);
             if (workflow == null) {
               throw new Error(`Workflow ${workflowId} not found`);
             }
-            (allWorkflows as any)[field] = workflow;
+            (allWorkflows as Record<string, UserUpdateApprovalWorkflow>)[field] = workflow;
           }
         }
         return allWorkflows;

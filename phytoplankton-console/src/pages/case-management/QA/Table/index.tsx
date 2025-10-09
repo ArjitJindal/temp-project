@@ -20,11 +20,10 @@ import {
   PRIORITY,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
-import { useAlertQuery } from '@/pages/case-management/common';
+import { useAlertQuery, usePatchAlertQaAssignments } from '@/hooks/api/alerts';
 import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
-import { usePatchAlertQaAssignments } from '@/hooks/api/alerts';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';

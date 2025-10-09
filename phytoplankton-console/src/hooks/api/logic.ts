@@ -9,7 +9,7 @@ export function useRuleLogicConfig(
   options?: QueryOptions<LogicConfig, LogicConfig>,
 ) {
   const api = useApi();
-  return useQuery<LogicConfig>(
+  return useQuery(
     RULE_LOGIC_CONFIG(params),
     async (): Promise<LogicConfig> => {
       const response = await api.getLogicConfig({
@@ -23,6 +23,6 @@ export function useRuleLogicConfig(
       }
       return response.logicConfig;
     },
-    options as any,
+    options,
   );
 }

@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { usePaginatedQuery, useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
@@ -17,7 +18,9 @@ import {
 } from '@/utils/queries/keys';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import type { QueryOptions, QueryResult } from '@/utils/queries/types';
-import type { PaginatedData, CursorPaginatedData } from '@/utils/queries/hooks';
+import type { AllParams, TableData } from '@/components/library/Table/types';
+import type { TableAlertItem } from '@/pages/case-management/AlertTable/types';
+import type { PaginatedData, CursorPaginatedData, PaginationParams } from '@/utils/queries/hooks';
 import { NotFoundError } from '@/utils/errors';
 import {
   Alert,
@@ -28,23 +31,32 @@ import {
   AlertsQaSampling,
   AlertsQaSamplingRequest,
   AlertsQaSamplingUpdateRequest,
+  AlertListResponseItem,
+  ChecklistStatus,
 } from '@/apis';
-// duplicate import removed
-import type { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
-import { dayjs } from '@/utils/dayjs';
+import type {
+  DefaultApiGetAlertListRequest,
+  DefaultApiPatchAlertsQaAssignmentsRequest,
+} from '@/apis/types/ObjectParamAPI';
+import { getStatuses } from '@/utils/case-utils';
+import { getUserName } from '@/utils/api/users';
+import type { TableUser } from '@/pages/case-management/CaseTable/types';
+import { useAuth0User } from '@/utils/user-utils';
+import type { TableSearchParams } from '@/pages/case-management/types';
 
 export function useAlert(
   alertId: string,
   options?: QueryOptions<Alert, Alert>,
 ): QueryResult<Alert> {
   const api = useApi();
-  return useQuery<Alert>(
+  return useQuery(
     ALERT_ITEM(alertId),
     async () => {
       try {
         return await api.getAlert({ alertId });
-      } catch (error: any) {
-        if (error?.code === 404) {
+      } catch (error) {
+        const err = error as { code?: number };
+        if (err?.code === 404) {
           throw new NotFoundError(`Alert with ID "${alertId}" not found`);
         }
         throw error;
@@ -56,7 +68,7 @@ export function useAlert(
 
 // For cases where we already have alert data but want it cached under ALERT_ITEM key
 export function useAlertPrimed<T>(alertId: string | undefined, alertData: T) {
-  return useQuery<T>(ALERT_ITEM(alertId ?? ''), async () => {
+  return useQuery(ALERT_ITEM(alertId ?? ''), async () => {
     return alertData;
   });
 }
@@ -72,21 +84,21 @@ export function useCopilotQuestions(
 
 export function useCopilotSuggestions(question: string, alertId: string): QueryResult<string[]> {
   const api = useApi();
-  return useQuery<string[]>(COPILOT_SUGGESTIONS(question, alertId), async () => {
+  return useQuery(COPILOT_SUGGESTIONS(question, alertId), async () => {
     const response = await api.getQuestionAutocomplete({ question, alertId });
     return response.suggestions ?? [];
   });
 }
 
 export function useAlertList(
-  params: { action?: RuleAction; transactionId?: string } & Record<string, unknown>,
+  params: { action?: RuleAction; transactionId?: string } & Record<string, any>,
   transaction?: InternalTransaction,
 ): QueryResult<PaginatedData<Alert>> {
   const api = useApi();
-  return usePaginatedQuery<Alert>(ALERT_LIST({ ...params }), async ({ page }) => {
+  return usePaginatedQuery(ALERT_LIST({ ...params }), async ({ page }) => {
     const response = await api.getAlertList({
-      ...(params as any),
-      page: page ?? (params as any).page,
+      ...params,
+      page: page ?? (params as { page?: number }).page,
       filterRuleInstanceId: params.action
         ? (transaction?.hitRules || [])
             .filter((rule) => rule.ruleInstanceId && rule.ruleAction === params.action)
@@ -107,7 +119,7 @@ export function useAlertTransactionList(
   options?: { fixedParams?: Record<string, any>; enabled?: boolean },
 ): QueryResult<CursorPaginatedData<TransactionTableItem>> {
   const api = useApi();
-  return useCursorQuery<TransactionTableItem>(
+  return useCursorQuery(
     ALERT_ITEM_TRANSACTION_LIST(alertId ?? '', params),
     async ({ from, view }) => {
       if (alertId == null) {
@@ -181,7 +193,7 @@ export function useQuestionVariableAutocomplete(
   options?: { enabled?: boolean },
 ): QueryResult<{ value: string; label: string }[]> {
   const api = useApi();
-  return useQuery<{ value: string; label: string }[]>(
+  return useQuery(
     AIF_SEARCH_KEY(questionId, variableKey, search),
     async () => {
       const results = await api.getQuestionVariableAutocomplete({
@@ -243,11 +255,186 @@ export function useQaSamples(params: any) {
   });
 }
 
+// Params builder for alert list API
+export const getAlertsQueryParams = (
+  params: AllParams<TableSearchParams>,
+  user: { userId: string },
+  paginationParams?: Partial<PaginationParams>,
+  defaultApiParams?: DefaultApiGetAlertListRequest,
+): DefaultApiGetAlertListRequest => {
+  const {
+    sort,
+    page,
+    pageSize,
+    alertId,
+    alertStatus,
+    userId,
+    parentUserId,
+    businessIndustryFilter,
+    tagKey,
+    tagValue,
+    caseId,
+    assignedTo,
+    roleAssignedTo,
+    showCases,
+    destinationMethodFilter,
+    originMethodFilter,
+    createdTimestamp,
+    caseCreatedTimestamp,
+    rulesHitFilter,
+    filterQaStatus,
+    qaAssignment,
+    updatedAt,
+    filterClosingReason,
+    ruleQueueIds,
+    ruleNature,
+    filterAlertIds,
+    sampleId,
+    caseTypesFilter,
+    riskLevels,
+    alertPriority,
+    filterAlertSlaPolicyId,
+    filterAlertSlaPolicyStatus,
+  } = params;
+  const [sortField, sortOrder] = (sort?.[0] as [string | undefined, string | undefined]) ?? [];
+  const preparedParams: DefaultApiGetAlertListRequest = {
+    page,
+    pageSize,
+    ...paginationParams,
+    filterQaStatus: filterQaStatus as ChecklistStatus | undefined,
+    filterAlertId: alertId,
+    sampleId: sampleId,
+    filterAlertIds,
+    filterCaseId: caseId,
+    filterAlertStatus: getStatuses(alertStatus),
+    filterAssignmentsIds:
+      showCases === 'MY_ALERTS' ? [user.userId] : assignedTo?.length ? assignedTo : undefined,
+    filterAssignmentsRoles: roleAssignedTo?.length ? roleAssignedTo : undefined,
+    filterQaAssignmentsIds: qaAssignment?.length ? qaAssignment : undefined,
+    filterBusinessIndustries:
+      businessIndustryFilter && businessIndustryFilter.length > 0
+        ? businessIndustryFilter
+        : undefined,
+    filterTransactionTagKey: tagKey,
+    filterTransactionTagValue: tagValue,
+    filterUserId: userId,
+    filterParentUserId: parentUserId,
+    filterOriginPaymentMethods: originMethodFilter,
+    filterDestinationPaymentMethods: destinationMethodFilter,
+    filterRulesHit: rulesHitFilter,
+    filterRuleQueueIds: ruleQueueIds,
+    sortField: sortField,
+    sortOrder: (sortOrder as 'ascend' | 'descend' | undefined) ?? undefined,
+    filterAlertsByLastUpdatedStartTimestamp:
+      updatedAt && updatedAt[0] ? dayjs(updatedAt[0]).valueOf() : undefined,
+    filterAlertsByLastUpdatedEndTimestamp:
+      updatedAt && updatedAt[1] ? dayjs(updatedAt[1]).valueOf() : undefined,
+    ...(createdTimestamp
+      ? {
+          filterAlertBeforeCreatedTimestamp: createdTimestamp
+            ? dayjs(createdTimestamp[1]).valueOf()
+            : Number.MAX_SAFE_INTEGER,
+          filterAlertAfterCreatedTimestamp: createdTimestamp
+            ? dayjs(createdTimestamp[0]).valueOf()
+            : 0,
+        }
+      : {}),
+    ...(caseCreatedTimestamp
+      ? {
+          filterCaseBeforeCreatedTimestamp: caseCreatedTimestamp
+            ? dayjs(caseCreatedTimestamp[1]).valueOf()
+            : Number.MAX_SAFE_INTEGER,
+          filterCaseAfterCreatedTimestamp: caseCreatedTimestamp
+            ? dayjs(caseCreatedTimestamp[0]).valueOf()
+            : 0,
+        }
+      : {}),
+    filterClosingReason: filterClosingReason?.length ? filterClosingReason : undefined,
+    filterAlertPriority: alertPriority,
+    filterRuleNature: ruleNature,
+    filterCaseTypes: caseTypesFilter,
+    filterRiskLevel: riskLevels,
+    filterAlertSlaPolicyId: filterAlertSlaPolicyId,
+    filterAlertSlaPolicyStatus: filterAlertSlaPolicyStatus,
+    ...defaultApiParams,
+  };
+  return preparedParams;
+};
+
+interface AlertRestData {
+  age?: number;
+  caseCreatedTimestamp?: number;
+  caseType?: string;
+}
+
+function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
+  return data.map(({ alert, caseUsers, ...rest }) => {
+    const caseUser = caseUsers ?? {};
+    const user = caseUser?.origin?.userId
+      ? caseUser?.origin
+      : caseUser?.destination?.userId
+      ? caseUser?.destination
+      : undefined;
+    const restData = rest as AlertRestData;
+    const alertData = {
+      ...alert,
+      age: restData.age,
+      caseCreatedTimestamp: restData.caseCreatedTimestamp,
+      caseUserName: getUserName(user as TableUser | undefined),
+      caseUserId: caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '',
+      caseType: restData.caseType,
+      user: user as TableUser | undefined,
+      lastStatusChangeReasons: {
+        reasons: alert.lastStatusChange?.reason ?? [],
+        otherReason: alert.lastStatusChange?.otherReason ?? null,
+      } as { reasons: string[]; otherReason: string | null },
+      proposedAction: alert.lastStatusChange?.caseStatus,
+    } as TableAlertItem;
+    if ((alertData.lastStatusChangeReasons?.reasons?.length ?? 0) === 0) {
+      const inReviewChange = alert.statusChanges?.find((change) =>
+        (change.caseStatus as string | undefined)?.startsWith('IN_REVIEW'),
+      );
+      alertData.lastStatusChangeReasons = {
+        reasons: inReviewChange?.reason ?? [],
+        otherReason: inReviewChange?.otherReason ?? null,
+      };
+    }
+    return alertData;
+  });
+}
+
+export function useAlertQuery(
+  params: AllParams<TableSearchParams>,
+  defaultApiParams?: DefaultApiGetAlertListRequest,
+): QueryResult<TableData<TableAlertItem>> {
+  const api = useApi();
+  const user = useAuth0User();
+  return usePaginatedQuery(
+    ALERT_LIST({ ...params, ...defaultApiParams }),
+    async (paginationParams) => {
+      const preparedParams = getAlertsQueryParams(params, user, paginationParams, defaultApiParams);
+
+      const result = await api.getAlertList(
+        Object.entries(preparedParams).reduce(
+          (acc, [key, value]) => ({ ...acc, [key]: value }),
+          {},
+        ),
+      );
+      return {
+        items: presentAlertData(result.data),
+        total: result.total,
+        totalPages: result.totalPages,
+      };
+    },
+    { meta: { atf: true } },
+  );
+}
+
 export function usePatchAlertQaAssignments(options?: Parameters<typeof useMutation>[1]) {
   const api = useApi();
   return useMutation(
     (vars: DefaultApiPatchAlertsQaAssignmentsRequest) => api.patchAlertsQaAssignments(vars),
-    options as any,
+    options,
   );
 }
 
@@ -255,7 +442,7 @@ export function useCreateQaSample(options?: Parameters<typeof useMutation>[1]) {
   const api = useApi();
   return useMutation<AlertsQaSampling, unknown, AlertsQaSamplingRequest>(
     async (data) => await api.createAlertsQaSampling({ AlertsQaSamplingRequest: data }),
-    options as any,
+    options,
   );
 }
 
@@ -268,7 +455,7 @@ export function useUpdateQaSample(options?: Parameters<typeof useMutation>[1]) {
   >(
     async ({ sampleId, body }) =>
       await api.patchAlertsQaSample({ sampleId, AlertsQaSamplingUpdateRequest: body }),
-    options as any,
+    options,
   );
 }
 

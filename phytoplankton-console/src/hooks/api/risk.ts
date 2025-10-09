@@ -18,10 +18,8 @@ import type {
   RiskClassificationConfig,
   RiskClassificationScore,
   RiskLevelAlias,
-  VersionHistory,
   VersionHistoryRestorePayload,
   VersionHistoryType,
-  ExtendedDrsScore,
   RiskLevel,
 } from '@/apis';
 import { message } from '@/components/library/Message';
@@ -91,20 +89,17 @@ export function useAllRiskFactorsMap() {
 
 export function useUserDrsValuesPaginated(userId: string, params: Record<string, any>) {
   const api = useApi();
-  return usePaginatedQuery<ExtendedDrsScore & { rowId?: string }>(
-    USER_DRS_VALUES(userId, params),
-    async (paginationParams) => {
-      const result = await api.getDrsValues({
-        userId,
-        ...(params as any),
-        ...paginationParams,
-      });
-      return {
-        ...result,
-        items: result.items.map((item) => ({ ...item, rowId: item.transactionId || '' })),
-      };
-    },
-  );
+  return usePaginatedQuery(USER_DRS_VALUES(userId, params), async (paginationParams) => {
+    const result = await api.getDrsValues({
+      userId,
+      ...(params as Record<string, any>),
+      ...paginationParams,
+    });
+    return {
+      ...result,
+      items: result.items.map((item) => ({ ...item, rowId: item.transactionId || '' })),
+    };
+  });
 }
 
 export function useRiskFactorLogic(riskFactorId: string, versionId: string, riskLevel: RiskLevel) {
@@ -125,7 +120,7 @@ export function useNewVersionId(type: VersionHistoryType) {
 export function useVersionHistoryItem(type: VersionHistoryType, versionId: string) {
   const api = useApi();
   const navigate = useNavigate();
-  const queryResult = useQuery<VersionHistory>(
+  const queryResult = useQuery(
     VERSION_HISTORY_ITEM(type, versionId ?? ''),
     () =>
       api.getVersionHistoryByVersionId({

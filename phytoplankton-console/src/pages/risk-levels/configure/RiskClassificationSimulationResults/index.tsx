@@ -355,7 +355,7 @@ export default function RiskClassificationSimulationResults(props: Props) {
       ) : (
         <>
           {iteration.taskId && (
-            <IterationComponent iteration={iteration as unknown as SimulationRiskLevelsIteration} />
+            <IterationComponent iteration={iteration as SimulationRiskLevelsIteration} />
           )}
         </>
       ),

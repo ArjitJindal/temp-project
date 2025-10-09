@@ -62,7 +62,7 @@ export default function UserManualRiskPanel(props: Props) {
   const canUpdateManualRiskLevel = useHasResources(['write:::users/user-manual-risk-levels/*']);
   const drsScore = useMemo(() => {
     if (isSuccess(queryResult.data)) {
-      const list = queryResult.data.value as unknown as DrsScore[];
+      const list = queryResult.data.value as DrsScore[];
       return list;
     }
     return undefined;

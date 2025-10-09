@@ -98,13 +98,14 @@ export default function ReportsTable() {
     });
   });
 
-  const reportTypesQueryResult = useReportTypes() as unknown as {
-    data: { kind: 'SUCCESS'; value: ReportTypesResponse } | any;
-  };
-  const reportTypes = getOr(reportTypesQueryResult.data, {
-    data: [],
-    total: 0,
-  }) as ReportTypesResponse;
+  const reportTypesQueryResult = useReportTypes();
+  const reportTypes = getOr<{ data: ReportTypesResponse; total: number }>(
+    reportTypesQueryResult.data as any,
+    {
+      data: { data: [], total: 0 },
+      total: 0,
+    },
+  ).data;
 
   const deleteMutation = useMutation<unknown, unknown, { reportIds: string[] }>(
     async (variables) => {

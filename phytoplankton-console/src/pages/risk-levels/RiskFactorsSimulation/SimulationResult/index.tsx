@@ -168,7 +168,7 @@ export const SimulationResult = (props: Props) => {
             children: (
               <SimulationResultWidgets
                 jobId={jobId}
-                iteration={iteration as unknown as SimulationV8RiskFactorsIteration}
+                iteration={iteration as SimulationV8RiskFactorsIteration}
                 activeIterationIndex={index + 1}
                 showDemoProgress={showDemoProgress}
               />

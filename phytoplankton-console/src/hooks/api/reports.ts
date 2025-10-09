@@ -2,7 +2,6 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL, REPORTS_ITEM } from '@/utils/queries/keys';
-import type { Report } from '@/apis';
 import { ReportType, CountryCode } from '@/apis';
 import { isSuccess } from '@/utils/asyncResource';
 import type { QueryOptions, QueryResult } from '@/utils/queries/types';
@@ -24,10 +23,14 @@ export function useReportTypes(
   options?: QueryOptions,
 ): QueryResult<{ data: ReportType[]; total: number }> {
   const api = useApi();
-  return useQuery(REPORT_SCHEMAS(), () => api.getReportTypes(), options) as unknown as QueryResult<{
-    data: ReportType[];
-    total: number;
-  }>;
+  return useQuery(
+    REPORT_SCHEMAS(),
+    async () => {
+      const result = await api.getReportTypes();
+      return { data: result.data, total: result.total };
+    },
+    options,
+  ) as QueryResult<{ data: ReportType[]; total: number }>;
 }
 
 export function useReportType(reportTypeId: string): ReportType | undefined {
@@ -72,7 +75,7 @@ export function useReportsDraftMutation() {
         | { caseId: string; alertIds?: string[]; transactionIds?: string[] };
     }) =>
       api.getReportsDraft({
-        ...(vars.params as any),
+        ...(vars.params as Record<string, any>),
         reportTypeId: vars.reportTypeId,
       }),
   );
@@ -82,7 +85,7 @@ export function useReportsDraftMutation() {
 
 export function useReportItem(reportId: string) {
   const api = useApi();
-  return useQuery<Report | null>(REPORTS_ITEM(reportId), async () => {
+  return useQuery(REPORTS_ITEM(reportId), async () => {
     if (!reportId) {
       return null;
     }

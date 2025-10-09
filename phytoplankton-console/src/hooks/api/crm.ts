@@ -2,11 +2,11 @@ import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useQuery } from '@/utils/queries/hooks';
 import { CRM_ACCOUNT, CRM_RECORDS } from '@/utils/queries/keys';
-import type { CRMModelType, CrmAccountResponse, CrmGetResponse } from '@/apis';
+import type { CRMModelType } from '@/apis';
 
 export function useCrmAccount(userId: string) {
   const api = useApi();
-  return useQuery<CrmAccountResponse>(CRM_ACCOUNT(userId), async () => {
+  return useQuery(CRM_ACCOUNT(userId), async () => {
     return api.getCrmAccount({ userId });
   });
 }
@@ -30,7 +30,7 @@ export function useCrmRecords(params: {
     sortField = 'timestamp',
     sortOrder = 'descend',
   } = params;
-  return useQuery<CrmGetResponse>(
+  return useQuery(
     CRM_RECORDS(page, pageSize, sortOrder, modelType, crmName, userId),
     async () =>
       await api.getCrmRecords({

@@ -122,7 +122,7 @@ export function useQaAlertStatsByChecklistReason(params: {
     ),
     async () => {
       if (!(checklistTemplateId && checklistCategory)) {
-        return { total: 0, items: [] } as any;
+        return { total: 0, items: [] };
       }
       const [start, end] = dateRange ?? [];
       const startTimestamp = start?.startOf?.('day')?.valueOf?.();
@@ -133,7 +133,7 @@ export function useQaAlertStatsByChecklistReason(params: {
         checklistTemplateId,
         checklistCategory,
       });
-      return { total: result.data.length, items: result.data } as any;
+      return { total: result.data.length, items: result.data };
     },
   );
 }
@@ -199,7 +199,7 @@ export function useTeamPerformanceStats(params: {
   pageSize?: number;
 }) {
   const api = useApi();
-  return usePaginatedQuery(DASHBOARD_TEAM_STATS(params) as unknown as any, async (p) => {
+  return usePaginatedQuery(DASHBOARD_TEAM_STATS(params), async (p) => {
     const [start, end] = params.dateRange ?? [];
     let startTimestamp, endTimestamp;
     if (start != null && end != null) {
@@ -232,7 +232,7 @@ export function useTeamPerformanceStats(params: {
 
 export function useLatestTeamStats(params: { scope: any; page?: number; pageSize?: number }) {
   const api = useApi();
-  return usePaginatedQuery(DASHBOARD_TEAM_STATS_LATEST(params) as unknown as any, async (p) => {
+  return usePaginatedQuery(DASHBOARD_TEAM_STATS_LATEST(params), async (p) => {
     const response = await api.getDashboardLatestTeamStats({
       scope: params.scope,
       page: p?.page ?? params.page,

@@ -17,7 +17,7 @@ export default function KycRiskDisplay({ userId }: Props) {
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>
       {(result) => {
-        const krs = result as unknown as KrsScore | null;
+        const krs = result as KrsScore | null;
         return (
           krs && (
             <RiskScoreDisplay

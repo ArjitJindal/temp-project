@@ -1,7 +1,7 @@
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_CHECKLIST, CHECKLIST_TEMPLATES } from '@/utils/queries/keys';
-import { ChecklistDoneStatus, ChecklistStatus, ChecklistTemplate } from '@/apis';
+import { ChecklistDoneStatus, ChecklistStatus } from '@/apis';
 
 export type ChecklistItem = {
   id?: string;
@@ -21,7 +21,7 @@ export type HydratedChecklist = ChecklistCategory[];
 
 export const useAlertChecklist = (alertId: string | undefined) => {
   const api = useApi();
-  return useQuery<HydratedChecklist>(ALERT_CHECKLIST(alertId), async () => {
+  return useQuery(ALERT_CHECKLIST(alertId), async () => {
     if (alertId == null) {
       throw new Error(`Unable to get checklist because alertId is null`);
     }
@@ -67,8 +67,8 @@ export const useAlertChecklist = (alertId: string | undefined) => {
 
 export function useChecklistTemplates(params?: { filterName?: string }) {
   const api = useApi();
-  return useQuery<ChecklistTemplate[]>(CHECKLIST_TEMPLATES(params), async () => {
-    const res = await api.getChecklistTemplates(params as any);
+  return useQuery(CHECKLIST_TEMPLATES(params), async () => {
+    const res = await api.getChecklistTemplates(params as Record<string, any>);
     return res.data;
   });
 }

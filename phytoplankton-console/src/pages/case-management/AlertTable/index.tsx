@@ -5,7 +5,6 @@ import { useLocation } from 'react-router';
 import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
-import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import SlaStatus from '../components/SlaStatus';
@@ -28,7 +27,11 @@ import {
   Account,
   Alert,
 } from '@/apis';
-import { useAlertsAssignmentUpdate, useAlertsReviewAssignmentUpdate } from '@/hooks/api/alerts';
+import {
+  useAlertsAssignmentUpdate,
+  useAlertsReviewAssignmentUpdate,
+  useAlertQuery,
+} from '@/hooks/api/alerts';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,

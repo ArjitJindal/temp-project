@@ -63,11 +63,11 @@ export function useUsersUniques(
   );
 }
 
-export function useUsersFind(search: string): QueryResult<any> {
+export function useUsersFind(search: string) {
   const api = useApi();
   return useQuery(USERS_FIND(search), async () => {
     if (search === '') {
-      return { items: [] } as any;
+      return { items: [] };
     }
     return await api.getAllUsersList({
       filterName: search,
@@ -90,7 +90,7 @@ export function useUsersByTimeRange(
     } else {
       return await api.getBusinessUsersList({ afterTimestamp: start, beforeTimestamp: end });
     }
-  }) as unknown as QueryResult<AllUsersOffsetPaginateListResponse>;
+  });
 }
 
 export type UsersPreviewSearchResponse = {
@@ -274,7 +274,7 @@ export function usePulseManualRiskAssignment() {
     (vars: { userId: string; payload: { riskLevel?: any; isUpdatable?: boolean } }) =>
       api.pulseManualRiskAssignment({
         userId: vars.userId,
-        ManualRiskAssignmentPayload: vars.payload as any,
+        ManualRiskAssignmentPayload: vars.payload,
       }),
   );
 }
@@ -298,7 +298,7 @@ export function useProcessUserApprovalMutation() {
   );
 }
 
-export function useUserScreeningStatus(userId: string): QueryResult<any> {
+export function useUserScreeningStatus(userId: string) {
   const api = useApi();
   return useQuery(['user-status', userId], async () => {
     return await api.getUserScreeningStatus({ userId });
@@ -312,21 +312,24 @@ export function useUpdateConsumerUserMutation() {
   );
 }
 
-export function useUserEntityLinkedParents(userId: string | undefined): QueryResult<any> {
+export function useUserEntityLinkedParents(userId: string | undefined) {
   const api = useApi();
   return useQuery(USERS_ENTITY_LINKED_ENTITIES_PARENT(userId), async () => {
     const result = await api.getUserEntityParentUser({ userId: userId ?? '' });
-    return result;
+    return { items: result, total: result.length };
   });
 }
 
 export function useUserEntityLinkedChildren(
   userId: string | undefined,
-  params?: unknown,
-): QueryResult<any> {
+  params?: Record<string, any>,
+) {
   const api = useApi();
   return useQuery(USERS_ENTITY_LINKED_ENTITIES_CHILD(userId, params), async () => {
-    const result = await api.getUserEntityChildUsers({ userId: userId ?? '', ...(params as any) });
+    const result = await api.getUserEntityChildUsers({
+      userId: userId ?? '',
+      ...(params as Record<string, any>),
+    });
     return result;
   });
 }
@@ -336,7 +339,7 @@ export function useRole(roleId: string, options?: QueryOptions<AccountRole, Acco
   return useQuery<AccountRole>(ROLE(roleId), async () => api.getRole({ roleId }), options);
 }
 
-export function usePermissions(search: string): QueryResult<any> {
+export function usePermissions(search: string) {
   const api = useApi();
   return useQuery(PERMISSIONS(search), async () => api.getAllPermissions({ search }));
 }
@@ -436,7 +439,7 @@ export function useResetAccountMfa(options?: Parameters<typeof useMutation>[1]) 
   const api = useApi();
   return useMutation<unknown, unknown, { userId: string }>(
     async (payload) => api.resetAccountMfa({ accountId: payload.userId }),
-    options as any,
+    options,
   );
 }
 

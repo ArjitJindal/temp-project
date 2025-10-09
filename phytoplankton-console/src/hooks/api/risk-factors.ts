@@ -8,7 +8,7 @@ import {
   CUSTOM_RISK_FACTORS_ITEM,
   RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM,
 } from '@/utils/queries/keys';
-import type { ExtendedDrsScore, RiskLevel, RiskFactor } from '@/apis';
+import type { RiskLevel } from '@/apis';
 
 export function useAllRiskFactorsMap() {
   const api = useApi();
@@ -20,20 +20,17 @@ export function useAllRiskFactorsMap() {
 
 export function useUserDrsValuesPaginated(userId: string, params: Record<string, any>) {
   const api = useApi();
-  return usePaginatedQuery<ExtendedDrsScore & { rowId?: string }>(
-    USER_DRS_VALUES(userId, params),
-    async (paginationParams) => {
-      const result = await api.getDrsValues({
-        userId,
-        ...(params as any),
-        ...paginationParams,
-      });
-      return {
-        ...result,
-        items: result.items.map((item) => ({ ...item, rowId: item.transactionId || '' })),
-      };
-    },
-  );
+  return usePaginatedQuery(USER_DRS_VALUES(userId, params), async (paginationParams) => {
+    const result = await api.getDrsValues({
+      userId,
+      ...(params as Record<string, any>),
+      ...paginationParams,
+    });
+    return {
+      ...result,
+      items: result.items.map((item) => ({ ...item, rowId: item.transactionId || '' })),
+    };
+  });
 }
 
 export function useRiskFactorLogic(riskFactorId: string, versionId: string, riskLevel: RiskLevel) {
@@ -46,7 +43,7 @@ export function useRiskFactorLogic(riskFactorId: string, versionId: string, risk
 
 export function useRiskFactors(type?: 'consumer' | 'business' | 'transaction') {
   const api = useApi();
-  return useQuery<RiskFactor[]>(RISK_FACTORS_V8(type), async () => {
+  return useQuery(RISK_FACTORS_V8(type), async () => {
     const entityType =
       type === 'consumer'
         ? 'CONSUMER_USER'
@@ -57,7 +54,7 @@ export function useRiskFactors(type?: 'consumer' | 'business' | 'transaction') {
         : undefined;
 
     const result = await api.getAllRiskFactors({
-      entityType: entityType as any,
+      entityType: entityType as 'CONSUMER_USER' | 'BUSINESS' | 'TRANSACTION' | undefined,
       includeV2: true,
     });
     return result;
@@ -69,7 +66,7 @@ export function useRiskFactor(
   riskFactorId?: string,
 ) {
   const api = useApi();
-  return useQuery<RiskFactor | null>(CUSTOM_RISK_FACTORS_ITEM(scope, riskFactorId), async () => {
+  return useQuery(CUSTOM_RISK_FACTORS_ITEM(scope, riskFactorId), async () => {
     if (riskFactorId) {
       return await api.getRiskFactor({ riskFactorId });
     }

@@ -1,6 +1,6 @@
 import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import type { SLAPolicy, SLAPoliciesResponse, SLAPolicyIdResponse } from '@/apis';
+import type { SLAPolicy, SLAPolicyIdResponse } from '@/apis';
 
 export function useCreateSlaPolicy() {
   const api = useApi();
@@ -36,7 +36,7 @@ export function useSlaPolicies(params?: any): QueryResult<any> {
 
 export function useSlas(): AsyncResource<SLAPolicy[]> {
   const api = useApi();
-  const result = useQuery<SLAPoliciesResponse>(SLA_POLICY_LIST(), async () => api.getSlaPolicies());
+  const result = useQuery(SLA_POLICY_LIST(), async () => api.getSlaPolicies());
   return map(result.data, ({ items }) => items);
 }
 
