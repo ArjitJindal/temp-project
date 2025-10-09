@@ -127,8 +127,7 @@ export class RiskService {
   @auditLog('RISK_SCORING', 'RISK_CLASSIFICATION', 'UPDATE')
   async createOrUpdateRiskClassificationConfig(
     riskClassificationValues: RiskClassificationScore[],
-    comment: string,
-    // active: boolean
+    comment: string
   ): Promise<RiskClassificationAuditLogReturnData> {
     validateClassificationRequest(riskClassificationValues)
 

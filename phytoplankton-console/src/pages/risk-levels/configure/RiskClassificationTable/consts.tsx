@@ -34,15 +34,18 @@ export const columns: TableColumn<TableItem>[] = helper.list([
       const external = context.external as ExternalState;
       const { state, LEVEL_ENTRIES } = external;
 
-      if (!item.isActive || !state) return '-';
+      if (!item.isActive || !state) {
+        return '-';
+      }
 
       const activeGlobals = getActiveGlobalIndices(LEVEL_ENTRIES);
       const idxInActive = activeGlobals.indexOf(item.index);
-      if (idxInActive === -1) return '-';
+      if (idxInActive === -1) {
+        return '-';
+      }
 
       const start = idxInActive === 0 ? 0 : state[activeGlobals[idxInActive - 1]] ?? 0;
       const end = state[activeGlobals[idxInActive]] ?? 100;
-
 
       const sStart = Number.isFinite(start) ? start : 0;
       const sEnd = Number.isFinite(end) ? end : 100;
@@ -58,11 +61,15 @@ export const columns: TableColumn<TableItem>[] = helper.list([
       const external = context.external as ExternalState;
       const { state, setState, isDisabled, LEVEL_ENTRIES } = external;
 
-      if (!item.isActive || !state || !setState) return <>-</>;
+      if (!item.isActive || !state || !setState) {
+        return <>-</>;
+      }
 
       const activeGlobals = getActiveGlobalIndices(LEVEL_ENTRIES);
       const idxInActive = activeGlobals.indexOf(item.index);
-      if (idxInActive === -1) return <>-</>;
+      if (idxInActive === -1) {
+        return <>-</>;
+      }
       const startGlobalIndex = idxInActive === 0 ? null : activeGlobals[idxInActive - 1];
       const endGlobalIndex = activeGlobals[idxInActive];
 
@@ -84,11 +91,15 @@ export const columns: TableColumn<TableItem>[] = helper.list([
           value={[valueStart, valueEnd]}
           endExclusive={!isLastActive}
           onChange={(newValue) => {
-            if (!setState || !newValue) return;
+            if (!setState || !newValue) {
+              return;
+            }
             const [rawStart, rawEnd] = newValue;
 
             setState((prev) => {
-              if (!prev) return prev;
+              if (!prev) {
+                return prev;
+              }
               const updated = [...prev];
 
               const m = activeGlobals.length;
@@ -98,13 +109,18 @@ export const columns: TableColumn<TableItem>[] = helper.list([
               const gNext = idxInActive + 1 < m ? activeGlobals[idxInActive + 1] : null;
 
               // Determine lower/upper clamps from neighboring active boundaries
-              const lowerLimitForStart = gPrevPrev !== null ? (updated[gPrevPrev] ?? 0) : 0;
-              const upperLimitForStart = (rawEnd === undefined ? (gCurr !== null ? updated[gCurr] : 100) : rawEnd) - 1;
+              const lowerLimitForStart = gPrevPrev !== null ? updated[gPrevPrev] ?? 0 : 0;
+              const upperLimitForStart =
+                (rawEnd === undefined ? (gCurr !== null ? updated[gCurr] : 100) : rawEnd) - 1;
 
-              const clampedStart = clamp(Math.round(rawStart), lowerLimitForStart, upperLimitForStart);
+              const clampedStart = clamp(
+                Math.round(rawStart),
+                lowerLimitForStart,
+                upperLimitForStart,
+              );
 
               const lowerLimitForEnd = clampedStart + 1;
-              const upperLimitForEnd = gNext !== null ? (updated[gNext] ?? 100) : 100;
+              const upperLimitForEnd = gNext !== null ? updated[gNext] ?? 100 : 100;
 
               const clampedEnd = clamp(Math.round(rawEnd), lowerLimitForEnd, upperLimitForEnd);
 

@@ -1,4 +1,4 @@
-import { RiskClassificationScore, RiskLevel, RiskLevelAlias } from '@/apis';
+import { RiskClassificationScore, RiskLevel } from '@/apis';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import Table from '@/components/library/Table';
 import {
@@ -32,7 +32,7 @@ export function prepareApiState(state: State | undefined | null): ApiState {
   }));
 }
 
-export function parseApiState(values: ApiState, riskLevelAliases: RiskLevelAlias[] | undefined): State {
+export function parseApiState(values: ApiState): State {
   const N = RISK_LEVELS.length;
   const entryMap = new Map<RiskLevel, RiskClassificationScore>();
   (values || []).forEach((v) => {
@@ -51,7 +51,9 @@ export function parseApiState(values: ApiState, riskLevelAliases: RiskLevelAlias
   }
 
   for (let i = 1; i < N; i++) {
-    if (result[i] < result[i - 1]) result[i] = result[i - 1];
+    if (result[i] < result[i - 1]) {
+      result[i] = result[i - 1];
+    }
   }
 
   result[0] = Math.max(0, result[0]);

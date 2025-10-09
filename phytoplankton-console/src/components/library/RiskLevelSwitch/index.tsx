@@ -19,8 +19,7 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
     <div className={cn(s.root, componentIsDisabled && s.isDisabled)} data-sentry-allow={true}>
       {RISK_LEVELS.map((level) => {
         const isCurrent = level === value;
-        const riskLevelAlias= getRiskLevelLabel(level, settings);
-        console.log('riskLevelAlias', riskLevelAlias)
+        const riskLevelAlias = getRiskLevelLabel(level, settings);
         const isDisabled =
           componentIsDisabled || disabledLevels?.includes(level) || !riskLevelAlias.isActive;
 

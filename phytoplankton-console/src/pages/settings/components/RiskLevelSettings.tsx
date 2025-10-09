@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo, useState } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
@@ -64,8 +63,7 @@ const columns = helper.list([
       } = context.external as ExternalState;
 
       const aliasChanged =
-        (committedLevelToAlias.get(item.level) ?? '') !==
-        (newLevelToAlias.get(item.level) ?? '');
+        (committedLevelToAlias.get(item.level) ?? '') !== (newLevelToAlias.get(item.level) ?? '');
 
       const activeChanged =
         (committedLevelToActive.get(item.level) ?? true) !==
@@ -149,7 +147,13 @@ export const RiskLevelSettings: React.FC = () => {
         setSavingLevel(null);
       }
     },
-    [mutateTenantSettings, newLevelToAlias, newLevelToActive, committedLevelToAlias, committedLevelToActive],
+    [
+      mutateTenantSettings,
+      newLevelToAlias,
+      newLevelToActive,
+      committedLevelToAlias,
+      committedLevelToActive,
+    ],
   );
 
   const tableData = useMemo<TableItem[]>(() => {
@@ -181,10 +185,12 @@ export const RiskLevelSettings: React.FC = () => {
         rowKey="level"
         columns={columns}
         onEdit={(rowKey, newValue) => {
-          if (newValue.levelAlias !== undefined)
+          if (newValue.levelAlias !== undefined) {
             handleUpdateAlias(rowKey as RiskLevel, newValue.levelAlias ?? '');
-          if (newValue.isActive !== undefined)
+          }
+          if (newValue.isActive !== undefined) {
             handleUpdateActive(rowKey as RiskLevel, newValue.isActive ?? true);
+          }
         }}
         data={{ items: tableData }}
         pagination={false}
