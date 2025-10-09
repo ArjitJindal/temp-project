@@ -48,7 +48,6 @@ export const riskClassificationHandler = lambdaApi({
       const response = await riskService.createOrUpdateRiskClassificationConfig(
         request.RiskClassificationRequest.scores,
         request.RiskClassificationRequest.comment
-        // request.RiskClassificationRequest.active
       )
       return response.result
     })

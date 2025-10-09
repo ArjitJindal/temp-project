@@ -56,6 +56,7 @@ export default function UserActivityCard(props: Props) {
 
   const settings = useSettings();
   const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
+
   const riskLevelAlias: AliasMapping = {};
   configRiskLevelAliasArray.forEach((entry) => {
     if (entry.level && entry.alias) {
