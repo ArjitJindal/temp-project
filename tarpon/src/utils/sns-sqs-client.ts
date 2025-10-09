@@ -3,11 +3,12 @@ import reduce from 'lodash/reduce'
 import last from 'lodash/last'
 import sumBy from 'lodash/sumBy'
 import initial from 'lodash/initial'
-import { SNSClient } from '@aws-sdk/client-sns'
+import { SNSClient, SNSClientConfig } from '@aws-sdk/client-sns'
 import {
   SendMessageBatchCommand,
   SendMessageBatchRequestEntry,
   SQSClient,
+  SQSClientConfig,
 } from '@aws-sdk/client-sqs'
 import { generateChecksum } from './object'
 import { logger } from '@/core/logger'
@@ -50,8 +51,31 @@ function getRefreshingClient<T extends SenderClient>(client: T): T {
   return client
 }
 
+const createSqsClientConfig = (): SQSClientConfig => {
+  const region = process.env.AWS_REGION
+  const sqsEndpoint = process.env.SQS_VPC_ENDPOINT_URL
+
+  return {
+    ...(region ? { region } : {}),
+    ...(sqsEndpoint
+      ? {
+          endpoint: sqsEndpoint,
+          tls: sqsEndpoint.startsWith('https'),
+        }
+      : {}),
+  }
+}
+
+const createSnsClientConfig = (): SNSClientConfig => {
+  const region = process.env.AWS_REGION
+
+  return {
+    ...(region ? { region } : {}),
+  }
+}
+
 export function getSNSClient(): SNSClient {
-  const client = new SNSClient({})
+  const client = new SNSClient(createSnsClientConfig())
   if (!process.env.ASSUME_ROLE_ARN) {
     return client
   }
@@ -59,7 +83,7 @@ export function getSNSClient(): SNSClient {
 }
 
 export function getSQSClient(): SQSClient {
-  const client = new SQSClient({})
+  const client = new SQSClient(createSqsClientConfig())
   if (!process.env.ASSUME_ROLE_ARN) {
     return client
   }
