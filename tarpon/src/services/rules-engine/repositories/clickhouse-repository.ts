@@ -592,7 +592,7 @@ export class ClickhouseTransactionsRepository {
       'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
       ars_score: 'arsScore',
     }
-
+    const originalSortField = sortField
     if (sortField in sortFieldMapper) {
       sortField = sortFieldMapper[sortField]
     }
@@ -672,7 +672,7 @@ export class ClickhouseTransactionsRepository {
 
     const sortedTransactions = getSortedData<TransactionTableItem>({
       data: items,
-      sortField,
+      sortField: originalSortField,
       sortOrder,
       groupByField: 'transactionId',
       groupBySortField: 'updatedAt',

@@ -292,25 +292,11 @@ export async function getClickhouseDataOnly<T>(
     .join(', ')
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  // Problem: IN clause don't preserve the ordering of result from the inner query, thus the sorting was not working as intended
-  // Solution: Keep OFFSET/FETCH for performance, then apply ranking to preserve sort order
-  const findSql = `
-    WITH sorted_ids AS (
-      SELECT DISTINCT id, ${sortField}
-      FROM ${queryTableName} FINAL
-      ${where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'}
-      ORDER BY ${sortField} ${direction}
-      OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY
-    ),
-    ranked_ids AS (
-      SELECT sorted_ids.id, ROW_NUMBER() OVER (ORDER BY sorted_ids.${sortField} ${direction}) as rn
-      FROM sorted_ids
-    )
-    SELECT ${columnsProjectionString.length > 0 ? columnsProjectionString : '*'}
-    FROM ${dataTableName} FINAL
-    JOIN ranked_ids ON ${dataTableName}.id = ranked_ids.id
-    ORDER BY ranked_ids.rn
-  `
+  const findSql = `SELECT ${
+    columnsProjectionString.length > 0 ? columnsProjectionString : '*'
+  } FROM ${dataTableName} FINAL WHERE id IN (SELECT DISTINCT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
   const items = await executeClickhouseQuery<Record<string, string | number>[]>(
     client,
