@@ -1249,7 +1249,9 @@ export class DynamoDbTransactionRepository
     )
     // Priority queue ordered by SortKeyID
     const pq = new MaxPriorityQueue<{
-      txn: AuxiliaryIndexTransaction & { SortKeyID: string }
+      txn: AuxiliaryIndexTransaction & {
+        SortKeyID: string
+      }
       gen: AsyncGenerator<any>
     }>((data) => data.txn.SortKeyID)
 
@@ -1263,7 +1265,7 @@ export class DynamoDbTransactionRepository
         })
       }
     }
-
+    let lastSortKeyId: string | undefined = undefined
     const batch: AuxiliaryIndexTransaction[] = []
     while (!pq.isEmpty()) {
       const dequeued = pq.dequeue()
@@ -1271,35 +1273,40 @@ export class DynamoDbTransactionRepository
         break
       }
       const { txn, gen } = dequeued
-      const transactionTimeRange = filterOptions.transactionTimeRange24hr
-      if (
-        !transactionTimeRange ||
-        (txn.timestamp &&
-          transactionTimeRangeRuleFilterPredicate(
-            txn.timestamp,
-            transactionTimeRange
-          ))
-      ) {
-        batch.push(
-          omit(txn, [
-            'PartitionKeyID',
-            'SortKeyID',
-          ]) as AuxiliaryIndexTransaction
-        )
+      if (!lastSortKeyId || txn.SortKeyID !== lastSortKeyId) {
+        const transactionTimeRange = filterOptions.transactionTimeRange24hr
+        if (
+          !transactionTimeRange ||
+          (txn.timestamp &&
+            transactionTimeRangeRuleFilterPredicate(
+              txn.timestamp,
+              transactionTimeRange
+            ))
+        ) {
+          batch.push(
+            omit(txn, [
+              'PartitionKeyID',
+              'SortKeyID',
+            ]) as AuxiliaryIndexTransaction
+          )
+        }
+        lastSortKeyId = txn.SortKeyID
       }
-
       // Refill from the generator if it has more
       const { value, done } = await gen.next()
       if (!done && value) {
         pq.enqueue({
-          txn: value as AuxiliaryIndexTransaction & { SortKeyID: string },
+          txn: value as AuxiliaryIndexTransaction & {
+            SortKeyID: string
+          },
           gen,
         })
       }
 
       // Yield in pages
       if (batch.length >= 25) {
-        yield batch.splice(0, batch.length)
+        const toYield = batch.splice(0, batch.length)
+        yield toYield
       }
     }
 
