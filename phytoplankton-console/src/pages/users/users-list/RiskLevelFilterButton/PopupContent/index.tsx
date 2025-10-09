@@ -39,7 +39,7 @@ export default function PopupContent(props: Props) {
                   style={{ backgroundColor: RISK_LEVEL_COLORS[item].primary }}
                 />
                 <div className={s.riskLabel}>
-                  <div>{getRiskLevelLabel(item, settings)} Risk</div>
+                  <div>{getRiskLevelLabel(item, settings).riskLevelLabel} Risk</div>
                 </div>
               </div>
               <div className={s.checkContainer}>

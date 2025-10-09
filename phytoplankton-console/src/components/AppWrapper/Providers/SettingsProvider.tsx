@@ -230,9 +230,7 @@ export function getRiskLevelLabel(
   settings: TenantSettings,
 ): { riskLevelLabel: string; isActive: boolean } {
   // Find alias and activation status once (not 3 separate .find calls)
-  const riskLevelData = settings.riskLevelAlias?.find(
-    (item) => item.level === riskLevel,
-  );
+  const riskLevelData = settings.riskLevelAlias?.find((item) => item.level === riskLevel);
 
   const alias = riskLevelData?.alias?.trim();
   const isActive = riskLevelData?.isActive ?? true;
@@ -243,6 +241,16 @@ export function getRiskLevelLabel(
   return { riskLevelLabel, isActive };
 }
 
+export function getFirstActiveRiskLevel(settings: TenantSettings): RiskLevel {
+  const firstActive = settings.riskLevelAlias?.find((item) => item.isActive);
+  return firstActive ? firstActive.level : 'VERY_LOW';
+}
+export function getLastActiveRiskLevel(settings: TenantSettings): RiskLevel {
+  const lastActive = settings.riskLevelAlias
+    ? [...settings.riskLevelAlias].reverse().find((item) => item.isActive)
+    : undefined;
+  return lastActive?.level || 'VERY_HIGH';
+}
 
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
   const riskLevel =

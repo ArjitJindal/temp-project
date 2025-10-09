@@ -63,8 +63,12 @@ const getUserWidgetsProps = (
     ? getRiskLevelFromScore(riskClassificationValues, krsRiskScore)
     : user.krsScore?.manualRiskLevel;
 
-  const krsLabel = krsRiskLevel ? getRiskLevelLabel(krsRiskLevel, tenantSettings) : '-';
-  const drsLabel = craRiskLevel ? `${getRiskLevelLabel(craRiskLevel, tenantSettings)} ` : '-';
+  const krsLabel = krsRiskLevel
+    ? getRiskLevelLabel(krsRiskLevel, tenantSettings).riskLevelLabel
+    : '-';
+  const drsLabel = craRiskLevel
+    ? `${getRiskLevelLabel(craRiskLevel, tenantSettings).riskLevelLabel} `
+    : '-';
   const userAlias = humanizeAuto(tenantSettings.userAlias ?? 'User');
   const userDetails: ReportItem[] = [
     {
@@ -278,7 +282,7 @@ const getUserSupportTables = (
             parameterName,
             parameterValue,
             component.score,
-            getRiskLevelLabel(component.riskLevel, tenantSettings),
+            getRiskLevelLabel(component.riskLevel, tenantSettings).riskLevelLabel,
           ];
         }) ?? [],
     };

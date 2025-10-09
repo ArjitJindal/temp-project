@@ -34,9 +34,11 @@ export default function ApplyRiskLevels(props: Props) {
       <Label label={'Apply to other risk levels'}>
         <Select<RiskLevel>
           mode="MULTIPLE"
-          options={RISK_LEVELS.filter((x) => x !== currentRiskLevel).map((riskLevel) => ({
+          options={RISK_LEVELS.filter(
+            (x) => x !== currentRiskLevel && getRiskLevelLabel(x, settings).isActive,
+          ).map((riskLevel) => ({
             value: riskLevel,
-            label: getRiskLevelLabel(riskLevel, settings),
+            label: getRiskLevelLabel(riskLevel, settings).riskLevelLabel,
           }))}
           value={chosenLevels}
           onChange={(newValue) => {
@@ -59,7 +61,9 @@ export default function ApplyRiskLevels(props: Props) {
             setChosenLevels([]);
             message.success(
               `Settings applied to ${humanizeStrings(
-                chosenLevels.map((riskLevel) => getRiskLevelLabel(riskLevel, settings)),
+                chosenLevels.map(
+                  (riskLevel) => getRiskLevelLabel(riskLevel, settings).riskLevelLabel,
+                ),
               )} risk levels`,
             );
           }}
