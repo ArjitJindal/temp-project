@@ -1,19 +1,16 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { intersection, isEmpty } from 'lodash'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { InternalServerError } from 'http-errors'
-import { AlertParams } from './repository'
+import { AlertParams } from '@/@types/alert/alert-params'
 import { Alert } from '@/@types/openapi-internal/Alert'
-import {
-  DEFAULT_PAGE_SIZE,
-  offsetPaginateClickhouseWithoutDataTable,
-} from '@/utils/pagination'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { offsetPaginateClickhouseWithoutDataTable } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
-import {
-  executeClickhouseQuery,
-  isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/checks'
 import { AccountsService } from '@/services/accounts'
 import { Case } from '@/@types/openapi-internal/Case'
 import { hasFeature } from '@/core/utils/context'
@@ -352,7 +349,7 @@ export class ClickhouseAlertRepository {
     }
 
     if (params.filterCaseId != null) {
-      whereConditions.push(`caseId ILIKE '${params.filterCaseId}%'`)
+      whereConditions.push(`caseId = '${params.filterCaseId}'`)
     }
 
     if (params.excludeAlertIds != null) {
@@ -412,9 +409,9 @@ export class ClickhouseAlertRepository {
 
     if (params.filterClosingReason != null) {
       whereConditions.push(
-        `(alertStatus = 'CLOSED' AND hasAny(lastStatusChangeReasons, ['${params.filterClosingReason.join(
+        `hasAny(lastStatusChangeReasons, ['${params.filterClosingReason.join(
           "','"
-        )}']))`
+        )}'])`
       )
     }
 

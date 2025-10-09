@@ -1,5 +1,5 @@
 import { getEditDistancePercentage } from '@flagright/lib/utils'
-import { isArray } from 'lodash'
+import isArray from 'lodash/isArray'
 import { TextLogicOperator } from './types'
 import { getNegatedOperator } from './utils'
 import { FUZZINESS_PARAMETER } from './similar-to-words'

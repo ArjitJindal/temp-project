@@ -1,21 +1,21 @@
 import { ClickHouseClient } from '@clickhouse/client'
 import { traceable } from '@/core/xray'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import {
-  batchInsertToClickhouse,
-  executeClickhouseQuery,
-  getClickhouseClient,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
+import { offsetPaginateClickhouse } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 
 const AUDIT_LOGS_TABLE_NAME_CH = CLICKHOUSE_DEFINITIONS.AUDIT_LOGS.tableName
 @traceable
 export class ClickhouseAuditLogRepository {
   private readonly tenantId: string
   private readonly clickhouseClient: ClickHouseClient
-  private readonly tableName: string
+  private readonly tableName: ClickhouseTableNames
 
   constructor(
     tenantId: string,

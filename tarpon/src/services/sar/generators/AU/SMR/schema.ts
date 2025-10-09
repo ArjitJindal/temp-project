@@ -1,4 +1,7 @@
-import { cloneDeep, merge, omit, pick } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import merge from 'lodash/merge'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
 import { AustracJsonSchema } from './resources/SMRSchema'
 
 function pickResolvedEntityFields(

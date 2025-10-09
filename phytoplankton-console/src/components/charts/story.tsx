@@ -16,6 +16,7 @@ import Slider from '@/components/library/Slider';
 
 export default function (): JSX.Element {
   const [skeletonMode, setSkeletonMode] = useState(false);
+  const [useCustomFormatters, setUseCustomFormatters] = useState(false);
 
   const [seed, setSeed] = useState(0.1);
 
@@ -80,7 +81,7 @@ export default function (): JSX.Element {
   return (
     <>
       <div
-        style={{ display: 'grid', gap: 8, gridTemplateColumns: 'minmax(100px, min-content) auto' }}
+        style={{ display: 'grid', gap: 8, gridTemplateColumns: 'minmax(200px, min-content) auto' }}
       >
         <Button
           onClick={() => {
@@ -96,7 +97,14 @@ export default function (): JSX.Element {
             onChange={(newValue) => setSkeletonMode(newValue ?? false)}
           />
         </Label>
-        <div style={{ gridColumn: 'span 2' }}>
+        <Label label={'Use custom formatters'} position={'RIGHT'}>
+          <Toggle
+            size={'S'}
+            value={useCustomFormatters}
+            onChange={(newValue) => setUseCustomFormatters(newValue ?? false)}
+          />
+        </Label>
+        <div style={{ gridColumn: 'span 3' }}>
           <Label label={'Chart height'}>
             <Slider
               min={50}
@@ -118,12 +126,20 @@ export default function (): JSX.Element {
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
             {},
           )}
-          formatName={(value) => {
-            return `${value} (name)`;
-          }}
-          formatValue={(value) => {
-            return `${value.toFixed(2)} (Value)`;
-          }}
+          formatName={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value} (name)`;
+                }
+              : undefined
+          }
+          formatValue={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value.toFixed(2)} (Value)`;
+                }
+              : undefined
+          }
         />
       </UseCase>
       <UseCase title={'TreemapChart'}>
@@ -134,12 +150,20 @@ export default function (): JSX.Element {
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
             {},
           )}
-          formatName={(value) => {
-            return `${value} (name)`;
-          }}
-          formatValue={(value) => {
-            return `${value.toFixed(2)} (Value)`;
-          }}
+          formatName={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value} (name)`;
+                }
+              : undefined
+          }
+          formatValue={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value.toFixed(2)} (Value)`;
+                }
+              : undefined
+          }
         />
       </UseCase>
       <UseCase title={'Line'}>
@@ -150,15 +174,27 @@ export default function (): JSX.Element {
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
             {},
           )}
-          formatX={(value) => {
-            return `${value} (X)`;
-          }}
-          formatY={(value) => {
-            return `${value.toFixed(2)} (Y)`;
-          }}
-          formatSeries={(value) => {
-            return `${value} (Series)`;
-          }}
+          formatX={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value} (X)`;
+                }
+              : undefined
+          }
+          formatY={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value.toFixed(2)} (Y)`;
+                }
+              : undefined
+          }
+          formatSeries={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value} (Series)`;
+                }
+              : undefined
+          }
         />
       </UseCase>
       <UseCase title={'Line with vertical reference lines'}>
@@ -169,15 +205,27 @@ export default function (): JSX.Element {
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
             {},
           )}
-          formatX={(value) => {
-            return `${value} (X)`;
-          }}
-          formatY={(value) => {
-            return `${value.toFixed(2)} (Y)`;
-          }}
-          formatSeries={(value) => {
-            return `${value} (Series)`;
-          }}
+          formatX={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value} (X)`;
+                }
+              : undefined
+          }
+          formatY={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value.toFixed(2)} (Y)`;
+                }
+              : undefined
+          }
+          formatSeries={
+            useCustomFormatters
+              ? (value) => {
+                  return `${value} (Series)`;
+                }
+              : undefined
+          }
           verticalLines={[
             {
               xValue: dayjs().utc().add(30, 'day').format('YYYY/MM/DD'),
@@ -210,15 +258,27 @@ export default function (): JSX.Element {
                 (acc, label, i) => ({ ...acc, [label]: ALL_CHART_COLORS[i] }),
                 {},
               )}
-              formatSeries={(value) => {
-                return `${value} (series)`;
-              }}
-              formatCategory={(value) => {
-                return `${value} (category)`;
-              }}
-              formatValue={(value) => {
-                return `${value.toFixed(2)} (value)`;
-              }}
+              formatSeries={
+                useCustomFormatters
+                  ? (value) => {
+                      return `${value} (series)`;
+                    }
+                  : undefined
+              }
+              formatCategory={
+                useCustomFormatters
+                  ? (value) => {
+                      return `${value} (category)`;
+                    }
+                  : undefined
+              }
+              formatValue={
+                useCustomFormatters
+                  ? (value) => {
+                      return `${value.toFixed(2)} (value)`;
+                    }
+                  : undefined
+              }
               customBarColors={
                 state.customBarColors
                   ? (category, series) => {
@@ -256,15 +316,27 @@ export default function (): JSX.Element {
                 (acc, label, i) => ({ ...acc, [label]: ALL_CHART_COLORS[i] }),
                 {},
               )}
-              formatSeries={(value) => {
-                return `${value} (series)`;
-              }}
-              formatCategory={(value) => {
-                return `${value} (category)`;
-              }}
-              formatValue={(value) => {
-                return `${value.toFixed(2)} (value)`;
-              }}
+              formatSeries={
+                useCustomFormatters
+                  ? (value) => {
+                      return `${value} (series)`;
+                    }
+                  : undefined
+              }
+              formatCategory={
+                useCustomFormatters
+                  ? (value) => {
+                      return `${value} (category)`;
+                    }
+                  : undefined
+              }
+              formatValue={
+                useCustomFormatters
+                  ? (value) => {
+                      return `${value.toFixed(2)} (value)`;
+                    }
+                  : undefined
+              }
               customBarColors={
                 state.customBarColors
                   ? (category, series) => {

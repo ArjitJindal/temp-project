@@ -1,7 +1,7 @@
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import { CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR } from '../../user/country-of-residence'
 import { getRiskFactorLogicByKeyAndType } from '../..'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'

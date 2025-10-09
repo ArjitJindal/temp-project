@@ -1,24 +1,27 @@
-import { isEmpty, isEqual, uniq } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import uniq from 'lodash/uniq'
 import { logger } from '../logger'
 import { TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { seedDynamo } from './dynamodb'
-import { fetchAndSetAccounts } from './account-setup'
+import { fetchAndSetAccounts, syncAccountAndRoles } from './account-setup'
 import { removeDemoRoles } from './roles-setup'
 import { getReports } from './data/reports'
 import { deleteXMLFileFromS3 } from './samplers/report'
 import { seedMongo } from './mongo'
-import { seedClickhouse } from './clickhouse'
 import { getCounterCollectionData } from './data/counter'
+import { seedClickhouse } from './clickhouse'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { createTenantDatabase } from '@/utils/clickhouse/utils'
+import { createTenantDatabase } from '@/utils/clickhouse/database'
 import { envIsNot } from '@/utils/env'
 import { getUsers } from '@/core/seed/data/users'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 export async function seedDemoData(tenantId: string) {
+  const startTime = Date.now()
   const dynamo = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   let now = Date.now()
@@ -27,7 +30,12 @@ export async function seedDemoData(tenantId: string) {
   process.env.TENANT_ID = tenantId
 
   const account = await fetchAndSetAccounts(tenantId, dynamo)
-  await removeDemoRoles(tenantId, account, dynamo)
+  await syncAccountAndRoles(tenantId, dynamo)
+
+  // should only remove roles for demo mode
+  if (isDemoTenant(tenantId)) {
+    await removeDemoRoles(tenantId, account, dynamo)
+  }
   now = Date.now()
   await createTenantDatabase(tenantId)
   logger.info(`TIME: Tenant database creation took ~ ${Date.now() - now}`)
@@ -85,12 +93,13 @@ export async function seedDemoData(tenantId: string) {
   logger.info(`TIME: Reports creation took ~ ${Date.now() - now}`)
 
   now = Date.now()
+  await seedClickhouse(tenantId)
+  logger.info(`TIME: Clickhouse seeding took ~ ${Date.now() - now}`)
+  now = Date.now()
   await seedDynamo(dynamo, tenantId)
   logger.info(`TIME: DynamoDB seeding took ~ ${Date.now() - now}`)
   now = Date.now()
   await seedMongo(tenantId, mongoDb, dynamo)
   logger.info(`TIME: MongoDB seeding took ~ ${Date.now() - now}`)
-  now = Date.now()
-  await seedClickhouse(tenantId)
-  logger.info(`TIME: Clickhouse seeding took ~ ${Date.now() - now}`)
+  logger.info(`Demo data seeding took ~ ${Date.now() - startTime}`)
 }

@@ -52,8 +52,9 @@ export async function getPeriodicScreeningUserRuleInstances(
         'day'
       )
       return (
+        // if the rule is created after starting the cron job but on the same day,
         diffTime % schedule.value === 0 ||
-        (diffTimeInDays === 1 && !ruleInstance.runCount) // if the rule is created after starting the cron job but on the same day,
+        (diffTimeInDays === 1 && !ruleInstance.runCount)
       )
     }
     return false

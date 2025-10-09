@@ -2773,6 +2773,9 @@ components:
           minLength: 1
           type: string
           description: Value for a given key when you are creating a custom variable
+        isTimestamp:
+          type: boolean
+          description: Flag to indicate if the tag value is a timestamp
       description:
         Generic key-value pair model to append a custom variable being sent
         to Flagright API
@@ -2895,8 +2898,6 @@ components:
             - key: customKey
               value: customValue
       properties:
-        transactionState:
-          $ref: '#/components/schemas/TransactionState'
         originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
         destinationAmountDetails:
@@ -2963,6 +2964,9 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        paymentApprovalTimestamp:
+          x-fern-ignore: true
+          type: number
     TransactionBase:
       title: TransactionBase
       type: object
@@ -2973,12 +2977,14 @@ components:
         originUserId: 8650a2611d0771cba03310f74bf6
         destinationUserId: 9350a2611e0771cba03310f74bf6
         timestamp: 1262300400111
+        transactionState: CREATED
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
           type: DEPOSIT
           originUserId: 8650a2611d0771cba03310f74bf6
           destinationUserId: 9350a2611e0771cba03310f74bf6
+          transactionState: CREATED
       properties:
         type:
           type: string
@@ -3001,6 +3007,8 @@ components:
           description:
             UserId for transaction's destination. In other words, where the
             value is being transferred to.
+        transactionState:
+          $ref: '#/components/schemas/TransactionState'
       required:
         - type
         - transactionId
@@ -3529,6 +3537,14 @@ components:
           type: object
       required:
         - value
+    RuleExecutionSanctionsDetails:
+      title: RuleExecutionSanctionsDetails
+      allOf:
+        - $ref: '#/components/schemas/SanctionsDetails'
+        - type: object
+          properties:
+            isRuleHit:
+              type: boolean
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -3579,6 +3595,11 @@ components:
           $ref: '#/components/schemas/RuleNature'
         isShadow:
           type: boolean
+        sanctionsDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleExecutionSanctionsDetails'
+          x-fern-ignore: true
       required:
         - ruleInstanceId
         - ruleName
@@ -4712,6 +4733,8 @@ components:
         networkProviderRiskScore:
           type: number
           description: Risk score of the card from your network provider
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -4908,12 +4931,23 @@ components:
           $ref: '#/components/schemas/WalletNetwork'
         address:
           $ref: '#/components/schemas/Address'
-        nationality:
+        countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
+        authorizedRepresentative:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDetails'
         dateOfBirth:
           type: string
           pattern: ^(\d{4}-\d{2}-\d{2})*$
           description: Date of birth of the account holder (YYYY-MM-DD)
+        transactionHash:
+          type: string
+          description:
+            A hash is a cryptographic fingerprint that uniquely identifies a
+            blockchain transaction on the network, whereas a transactionId is
+            just an internal reference used by a wallet or platform to track the
+            transaction in its own system.
       required:
         - method
     WalletNetwork:
@@ -5004,6 +5038,21 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - method
+    CorrespondenceBankDetails:
+      description: Model for Correspondence bank details
+      type: object
+      x-examples: {}
+      title: CorrespondenceBankDetails
+      properties:
+        bankName:
+          type: string
+          minLength: 1
+          description: Name of the bank
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     SWIFTDetails:
       description: Model for SWIFT payment method
       type: object
@@ -5044,6 +5093,10 @@ components:
           description: Special instructions if any
         address:
           $ref: '#/components/schemas/Address'
+        correspondenceBankDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/CorrespondenceBankDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5070,6 +5123,11 @@ components:
           description: Contact Number of the account holder
         emailId:
           $ref: '#/components/schemas/EmailId'
+        name:
+          type: string
+          description: Name of the account holder
+        address:
+          $ref: '#/components/schemas/Address'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -5170,6 +5228,8 @@ components:
         name:
           type: string
           description: Name of the account holder
+        address:
+          $ref: '#/components/schemas/Address'
         emailId:
           $ref: '#/components/schemas/EmailId'
         tags:
@@ -5954,8 +6014,8 @@ components:
               type: string
           required:
             - userId
-    CaseClosedDetails:
-      title: CaseClosedDetails
+    CaseStatusDetails:
+      title: CaseStatusDetails
       type: object
       properties:
         caseId:
@@ -5990,8 +6050,8 @@ components:
           type: array
           items:
             type: string
-    AlertClosedDetails:
-      title: AlertClosedDetails
+    AlertStatusDetails:
+      title: AlertStatusDetails
       type: object
       properties:
         alertId:
@@ -6172,9 +6232,9 @@ components:
             data:
               oneOf:
                 - $ref: '#/components/schemas/UserStateDetails'
-                - $ref: '#/components/schemas/CaseClosedDetails'
+                - $ref: '#/components/schemas/CaseStatusDetails'
                 - $ref: '#/components/schemas/CaseOpenedDetails'
-                - $ref: '#/components/schemas/AlertClosedDetails'
+                - $ref: '#/components/schemas/AlertStatusDetails'
                 - $ref: '#/components/schemas/AlertOpenedDetails'
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
@@ -6201,6 +6261,8 @@ components:
         - LIST_UPDATED
         - SANCTIONS_STATUS_UPDATED
         - ADVERSE_MEDIA_STATUS_UPDATED
+        - CASE_ESCALATED
+        - ALERT_ESCALATED
     ListType:
       type: string
       enum:
@@ -6432,6 +6494,10 @@ components:
         identifier:
           type: string
           description: Identifier for the cash transaction
+        address:
+          $ref: '#/components/schemas/Address'
+        name:
+          type: string
       required:
         - method
     CountryCode:
@@ -6838,6 +6904,7 @@ components:
         - DOP
         - DOT
         - DREP
+        - DYDX
         - DYP
         - DZD
         - EEK
@@ -6917,6 +6984,7 @@ components:
         - INJ
         - INR
         - INV
+        - IOTA
         - IOTX
         - ISLM
         - IQD
@@ -6934,6 +7002,7 @@ components:
         - KES
         - KGS
         - KHR
+        - KLAY
         - KMF
         - KNC
         - KPW
@@ -6960,6 +7029,7 @@ components:
         - LSL
         - LTC
         - LTL
+        - LUNA2
         - LVL
         - LYD
         - MAD
@@ -7002,6 +7072,7 @@ components:
         - NAD
         - NCT
         - NEAR
+        - NEO
         - NEST
         - NGN
         - NIO
@@ -7157,6 +7228,7 @@ components:
         - VTHO
         - VUV
         - WAMPL
+        - WAVES
         - WAXL
         - WBTC
         - WCFG
@@ -7184,6 +7256,7 @@ components:
         - ZEC
         - ZEN
         - ZETA
+        - ZIL
         - ZMK
         - ZMW
         - ZRX

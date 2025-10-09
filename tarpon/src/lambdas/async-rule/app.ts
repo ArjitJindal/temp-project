@@ -1,5 +1,7 @@
 import { SQSEvent } from 'aws-lambda'
-import { compact, groupBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
+import { StackConstants } from '@lib/constants'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   hasFeature,
@@ -13,17 +15,21 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { logger } from '@/core/logger'
-import {
-  AsyncBatchRecord,
-  AsyncRuleRecord,
-} from '@/services/rules-engine/utils'
+import { sendAsyncRuleTasks } from '@/services/rules-engine/utils'
+import { AsyncBatchRecord, AsyncRuleRecord } from '@/@types/batch-import'
 import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import { BatchImportService } from '@/services/batch-import'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 function getLockKeys(record: AsyncRuleRecord): string[] {
   switch (record.type) {
     case 'TRANSACTION':
+      if (record.tenantId === '4c9cdf0251') {
+        return [record.senderUser?.userId, record.receiverUser?.userId].filter(
+          (id): id is string => !!id
+        )
+      }
       return [
         record.transaction.originUserId,
         record.transaction.destinationUserId,
@@ -54,18 +60,23 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
   const { tenantId } = record
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
+  const opensearchClient = hasFeature('OPEN_SEARCH')
+    ? await getSharedOpensearchClient()
+    : undefined
   const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
   const rulesEngineService = new RulesEngineService(
     tenantId,
     dynamoDb,
     logicEvaluator,
-    mongoDb
+    mongoDb,
+    opensearchClient
   )
   const userRulesEngineService = new UserManagementService(
     tenantId,
     dynamoDb,
     mongoDb,
-    logicEvaluator
+    logicEvaluator,
+    opensearchClient
   )
   const { type } = record
 
@@ -161,7 +172,6 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
     }
   }
 }
-
 export const asyncRuleRunnerHandler = lambdaConsumer()(
   async (event: SQSEvent & { saveBatchEntities?: boolean }) => {
     const { Records, saveBatchEntities = true } = event
@@ -179,6 +189,18 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
           const isConcurrentAsyncRulesEnabled = hasFeature(
             'CONCURRENT_ASYNC_RULES'
           )
+          if (
+            tenantId === '4c9cdf0251' &&
+            process.env.AWS_LAMBDA_FUNCTION_NAME ===
+              StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME
+          ) {
+            await sendAsyncRuleTasks(
+              records.map((record) => record.body),
+              true
+            )
+            logger.info(`Sent messages to secondary queue`)
+            return
+          }
           let batchSavingPromise: Promise<void> | undefined
           if (saveBatchEntities) {
             const batchImportService = new BatchImportService(tenantId, {

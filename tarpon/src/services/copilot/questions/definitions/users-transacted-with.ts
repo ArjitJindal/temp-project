@@ -13,10 +13,8 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getContext } from '@/core/utils/context-storage'
-import {
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 
 type Row = {
   userId: string
@@ -83,17 +81,13 @@ export const UsersTransactedWith: TableQuestion<
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
       GROUP BY ${otherUserIdKey}
-      ORDER BY
-          count DESC
-      LIMIT ${derivedPageSize}
-      OFFSET ${(derivedPage - 1) * derivedPageSize}
   ),
   users_data AS (
       SELECT
           username,
           type,
           id
-      FROM users
+      FROM users_by_id
       WHERE id IN (SELECT userId FROM transactions_data)
   )
   SELECT
@@ -105,7 +99,9 @@ export const UsersTransactedWith: TableQuestion<
       FROM transactions_data
       LEFT JOIN users_data
           ON transactions_data.userId = users_data.id
-      ${orderByClause}
+      ${orderByClause || 'ORDER BY count DESC'}
+      LIMIT ${derivedPageSize}
+      OFFSET ${(derivedPage - 1) * derivedPageSize}
       `
 
     const tenantId = getContext()?.tenantId ?? ''
@@ -118,13 +114,11 @@ export const UsersTransactedWith: TableQuestion<
       ),
     ])
 
-    const items = rows.map((r) => [
-      r.userId,
-      r.name,
-      r.userType,
-      r.count,
-      convert(r.sum, currency),
-    ])
+    const items = rows.map((r) => {
+      const convertedSum = convert(r.sum, 'USD', currency) // amount are stored in USD in CH
+      return [r.userId, r.name, r.userType, r.count, convertedSum]
+    })
+
     return {
       data: {
         items,

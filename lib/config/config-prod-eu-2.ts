@@ -31,6 +31,7 @@ export const config: Config = {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 2048,
       MEMORY_LIMIT: 4096,
+      ARCHITECTURE: 'arm64',
     },
     CLOUD_WATCH: {
       logRetention: RetentionDays.ONE_YEAR,
@@ -50,8 +51,8 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 3,
     },
     TRANSACTION_LAMBDA: {
-      MAX_PROVISIONED_CONCURRENCY: 48,
-      MIN_PROVISIONED_CONCURRENCY: 5,
+      MAX_PROVISIONED_CONCURRENCY: 400,
+      MIN_PROVISIONED_CONCURRENCY: 32,
       MEMORY_SIZE: 2048,
     },
     ASYNC_RULES_LAMBDA: {
@@ -132,7 +133,7 @@ export const config: Config = {
   clickhouse: {
     awsPrivateLinkEndpointName:
       'com.amazonaws.vpce.eu-west-2.vpce-svc-02cb64932ba5d3ea1',
-    maxTotalMemoryGb: 48,
+    maxTotalMemoryGb: 96,
     numReplicas: 3,
   },
   opensearch: {

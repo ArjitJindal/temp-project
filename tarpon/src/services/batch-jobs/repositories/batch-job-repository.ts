@@ -1,5 +1,5 @@
 import { Collection, Filter, MongoClient, WithId } from 'mongodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoBatchJobRepository } from './dynamo-repository'
 import { BatchJobFilterUtils } from './filter-utils'
@@ -12,13 +12,13 @@ import {
   RulePreAggregationMetadata,
 } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
-import { JOBS_COLLECTION } from '@/utils/mongodb-definitions'
+import { JOBS_COLLECTION } from '@/utils/mongo-table-names'
 import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import {
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+} from '@/utils/clickhouse/checks'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 @traceable

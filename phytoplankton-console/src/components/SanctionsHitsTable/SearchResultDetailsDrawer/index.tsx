@@ -87,7 +87,11 @@ export default function SearchResultDetailsDrawer(props: Props) {
     async function job() {
       if (isDownloading && pdfRef) {
         try {
-          await DownloadAsPDF({ pdfRef, fileName: `${pdfName} Screening Details.pdf` });
+          await DownloadAsPDF({
+            pdfRef,
+            fileName: `${pdfName} Screening Details.pdf`,
+            addRecurringPages: true,
+          });
         } catch (err) {
           message.fatal(`Unable to complete the download!`, err);
         } finally {
@@ -573,7 +577,7 @@ function makeStubAiText(hit: SanctionsHit): string {
     ].includes(x),
   );
   const hasDateMatches = hit.entity.matchTypes?.some((x) => ['year_of_birth'].includes(x));
-  const shouldShowDateMatch = hasDateMatches || isHitEntityPerson(hit.entity.entityType);
+  const shouldShowDateMatch = hasDateMatches && isHitEntityPerson(hit.entity.entityType);
   if (hasNameMatches && shouldShowDateMatch) {
     return 'Date of birth and name match and hit requires human review';
   } else if (hasNameMatches) {
@@ -680,6 +684,7 @@ function useTabs(
                     evidenceId={source.evidenceId}
                     entityType={entity.entityType}
                     sanctionsSourceFields={source.fields}
+                    provider={entity.provider}
                   >
                     {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>
@@ -751,6 +756,7 @@ function useTabs(
     delta?.sanctionsSources,
     entity.resourceId,
     entity.entityType,
+    entity.provider,
   ]);
 }
 

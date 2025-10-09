@@ -28,15 +28,20 @@ import { QueryResult } from '@/utils/queries/types';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID } from '@/components/library/Table/standardDataTypes';
-import { SanctionsEntity } from '@/apis';
+import { SanctionsEntity, SanctionsSearchRequestEntityType } from '@/apis';
 import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { useQuery } from '@/utils/queries/hooks';
-import { SEARCH_PROFILES, SCREENING_PROFILES } from '@/utils/queries/keys';
+import {
+  DEFAULT_MANUAL_SCREENING_FILTERS,
+  SEARCH_PROFILES,
+  SCREENING_PROFILES,
+} from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { getOr, match } from '@/utils/asyncResource';
+import { useHasResources } from '@/utils/user-utils';
 import { getErrorMessage } from '@/utils/lang';
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -44,6 +49,10 @@ export interface TableSearchParams {
   fuzziness?: number;
   countryCodes?: Array<string>;
   yearOfBirth?: number;
+  entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -61,6 +70,11 @@ interface Props {
   selectionActions?: SelectionAction<SanctionsEntity, TableSearchParams>[];
   readOnly?: boolean;
 }
+
+export const ENTITY_TYPE_OPTIONS = [
+  { label: 'Person', value: 'PERSON' },
+  { label: 'Business', value: 'BUSINESS' },
+];
 
 export default function SanctionsSearchTable(props: Props) {
   const {
@@ -82,6 +96,9 @@ export default function SanctionsSearchTable(props: Props) {
   const settings = useSettings();
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
+  const canEditManualScreeningFilters = useHasResources([
+    'write:::screening/manual-screening-filters/*',
+  ]);
 
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
@@ -305,11 +322,28 @@ export default function SanctionsSearchTable(props: Props) {
       },
     },
     {
-      title: 'Year of birth',
+      title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
       key: 'yearOfBirth',
       renderer: {
         kind: 'year',
       },
+      showFilterByDefault: params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',
+    },
+    {
+      title: 'Gender',
+      key: 'gender',
+      description: 'Select gender (only for Person)',
+      renderer: {
+        kind: 'select',
+        options: [
+          { value: 'MALE', label: 'Male' },
+          { value: 'FEMALE', label: 'Female' },
+          { value: 'UNKNOWN', label: 'Unknown' },
+        ],
+        mode: 'SINGLE',
+        displayMode: 'select',
+      },
+      showFilterByDefault: true,
     },
     {
       title: 'Fuzziness',
@@ -322,6 +356,16 @@ export default function SanctionsSearchTable(props: Props) {
         max: 1,
         step: 0.1,
         defaultValue: 0.5,
+      },
+    },
+    {
+      title: 'User type',
+      key: 'entityType',
+      renderer: {
+        kind: 'select',
+        options: ENTITY_TYPE_OPTIONS,
+        mode: 'SINGLE',
+        displayMode: 'select',
       },
     },
   ];
@@ -376,7 +420,8 @@ export default function SanctionsSearchTable(props: Props) {
 
   if (isSanctionsEnabledWithDataProvider) {
     extraFilters.push({
-      title: 'Nationality',
+      title:
+        params?.entityType === 'BUSINESS' ? 'Country of registration' : 'Country of nationality',
       key: 'nationality',
       renderer: {
         kind: 'select',
@@ -385,6 +430,32 @@ export default function SanctionsSearchTable(props: Props) {
         displayMode: 'select',
       },
     });
+
+    // Add Country of residence filter only for Acuris provider
+    if (hasFeatureAcuris) {
+      extraFilters.push({
+        title: 'Country of residence',
+        key: 'countryOfResidence',
+        renderer: {
+          kind: 'select',
+          options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
+          mode: 'MULTIPLE',
+          displayMode: 'select',
+        },
+      });
+    }
+
+    // Add Registration ID filter for business entities
+    if (params?.entityType === 'BUSINESS') {
+      extraFilters.push({
+        title: 'Registration ID',
+        key: 'registrationId',
+        renderer: {
+          kind: 'string',
+        },
+      });
+    }
+
     extraFilters.push({
       title: 'Document ID',
       key: 'documentId',
@@ -404,9 +475,72 @@ export default function SanctionsSearchTable(props: Props) {
     },
   });
 
+  const restrictedByPermission = new Set([
+    'fuzziness',
+    'nationality',
+    'types',
+    'entityType',
+    'countryOfResidence',
+    'registrationId',
+  ]);
+
+  const defaultManualScreeningFilters = useQuery(
+    DEFAULT_MANUAL_SCREENING_FILTERS(),
+    async () => api.getDefaultManualScreeningFilters(),
+    { enabled: isScreeningProfileEnabled, refetchOnMount: true, refetchOnWindowFocus: true },
+  );
+
+  const isFilterLockedByPermission = (key: string): boolean => {
+    // Never lock gender filter
+    if (key === 'gender') {
+      return false;
+    }
+
+    if (canEditManualScreeningFilters) {
+      return false;
+    }
+
+    if (isScreeningProfileEnabled) {
+      if (restrictedByPermission.has(key)) {
+        const defaults = getOr(defaultManualScreeningFilters.data, null) as any;
+        const value = defaults?.[key];
+        const isSet = value != null && (!Array.isArray(value) || value.length > 0);
+        if (isSet) {
+          return true;
+        }
+      }
+      if (key === 'screeningProfileId') {
+        const screeningProfiles = getOr(screeningProfilesResult.data, { items: [], total: 0 });
+        const profiles = (screeningProfiles.items ?? []) as any[];
+        const hasDefault = Array.isArray(profiles) && profiles.some((p) => p?.isDefault);
+        if (hasDefault) {
+          return true;
+        }
+      }
+    } else {
+      if (key === 'searchProfileId') {
+        const searchProfilesRes = getOr(searchProfileResult.data, { items: [], total: 0 });
+        const profiles = (searchProfilesRes.items ?? []) as any[];
+        const hasDefault = Array.isArray(profiles) && profiles.some((p) => p?.isDefault);
+        if (hasDefault) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
   extraFilters.forEach((filter) => {
     const renderer = filter.renderer as any;
-    renderer.readOnly = readOnly || readOnlyFilterKeys.includes(filter.key);
+
+    let isReadOnly = readOnly || readOnlyFilterKeys.includes(filter.key);
+
+    if (isFilterLockedByPermission(filter.key)) {
+      isReadOnly = true;
+    }
+
+    renderer.readOnly = isReadOnly;
     renderer.filterKey = filter.key;
   });
 

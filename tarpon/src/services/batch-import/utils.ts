@@ -1,12 +1,6 @@
-import { AsyncBatchRecord } from '../rules-engine/utils'
+import { BatchEntity, AsyncBatchRecord } from '@/@types/batch-import'
 import { UserType } from '@/@types/openapi-internal/UserType'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-
-export type BatchEntity =
-  | 'TRANSACTION_BATCH'
-  | 'TRANSACTION_EVENT_BATCH'
-  | 'USER_BATCH'
-  | 'USER_EVENT_BATCH'
 
 export function getEntityId(entity: AsyncBatchRecord): string | undefined {
   switch (entity.type) {

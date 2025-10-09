@@ -1,5 +1,9 @@
 import { MongoClient } from 'mongodb'
-import { chunk, cloneDeep, flatMap, memoize, uniq } from 'lodash'
+import chunk from 'lodash/chunk'
+import cloneDeep from 'lodash/cloneDeep'
+import flatMap from 'lodash/flatMap'
+import memoize from 'lodash/memoize'
+import uniq from 'lodash/uniq'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
@@ -37,7 +41,7 @@ import { getUserName } from '@/utils/helpers'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SimulationRiskFactorsSampling } from '@/@types/openapi-internal/SimulationRiskFactorsSampling'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 
 const MAX_USERS = 100000
 const CONCURRENCY = 200
@@ -371,6 +375,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     riskClassificationValues: RiskClassificationScore[],
     updateProgress: (progress: number) => Promise<void>
   ) {
+    await this.riskFactors
     await pMap(
       users ?? [],
       async (user) => {
@@ -598,9 +603,10 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
 
   private async calculateUserKrs(user: User | Business): Promise<UserKrsData> {
     const isConsumer = isConsumerUser(user)
+    const allRiskFactors = this.riskFactors
     const riskFactors = isConsumer
-      ? this.riskFactors?.consumer
-      : this.riskFactors?.business
+      ? allRiskFactors?.consumer
+      : allRiskFactors?.business
     if (!riskFactors) {
       return { score: 0, isOverriddenScore: false }
     }

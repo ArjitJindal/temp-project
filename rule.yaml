@@ -80,3 +80,13 @@ rules:
     languages:
       - typescript
     severity: ERROR
+  - id: localchangehandler
+    paths:
+      include:
+        - 'tarpon'
+    patterns:
+      - pattern-regex: "import\\s+.*\\s+from\\s+['\"]@/core/local-handlers/"
+    message: Direct importing of local change handlers is not allowed, instead try doing a lazy import
+    languages:
+      - typescript
+    severity: ERROR

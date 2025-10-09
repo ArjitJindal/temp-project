@@ -3,13 +3,11 @@ import { migrateAllTenants } from '../utils/tenant'
 import { syncClickhouseTableWithMongo } from '../utils/clickhouse'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import { logger } from '@/core/logger'
-import {
-  createOrUpdateClickHouseTable,
-  getClickhouseClient,
-} from '@/utils/clickhouse/utils'
+import { createOrUpdateClickHouseTable } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoClient = await getMongoDbClient()

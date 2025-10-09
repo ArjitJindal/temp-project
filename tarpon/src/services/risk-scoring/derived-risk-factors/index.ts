@@ -1,4 +1,5 @@
-import { keyBy, memoize } from 'lodash'
+import keyBy from 'lodash/keyBy'
+import memoize from 'lodash/memoize'
 import {
   ARS_USER_AGE_RISK_HANDLERS,
   KRS_USER_AGE_RISK_HANDLERS,

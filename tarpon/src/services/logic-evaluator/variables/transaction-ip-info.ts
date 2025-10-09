@@ -1,5 +1,5 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
-import { capitalize } from 'lodash'
+import capitalize from 'lodash/capitalize'
 import { TransactionLogicVariable } from './types'
 import { getCountriesOptions } from './utils'
 import { GeoIPService } from '@/services/geo-ip'

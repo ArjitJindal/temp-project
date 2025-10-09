@@ -1,4 +1,5 @@
-import { isNil, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { Upload } from '@aws-sdk/lib-storage'
 import {
   S3Client,

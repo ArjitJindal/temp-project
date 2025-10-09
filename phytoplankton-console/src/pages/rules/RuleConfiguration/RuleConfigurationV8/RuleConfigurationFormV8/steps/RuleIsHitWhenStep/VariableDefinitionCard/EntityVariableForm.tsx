@@ -176,13 +176,19 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   );
   const settings = useSettings();
 
-  const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
+  const TX_ENTITY_TYPE_OPTIONS: Array<{
+    value: 'TRANSACTION' | 'USER';
+    label: string;
+    isDisabled?: boolean;
+  }> = [
     { value: 'TRANSACTION', label: 'Transaction' },
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
+
   const ALL_TX_ENTITY_TYPE_OPTIONS: Array<{
     value: 'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER';
     label: string;
+    isDisabled?: boolean;
   }> = [
     { value: 'TRANSACTION', label: 'Transaction' },
     { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias?.toLowerCase()}` },
@@ -191,11 +197,12 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   const ALL_USER_ENTITY_TYPE_OPTIONS: Array<{
     value: 'CONSUMER_USER' | 'BUSINESS_USER';
     label: string;
+    isDisabled?: boolean;
   }> = [
     { value: 'CONSUMER_USER', label: `Consumer ${settings.userAlias?.toLowerCase()}` },
     { value: 'BUSINESS_USER', label: `Business ${settings.userAlias?.toLowerCase()}` },
   ];
-  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string }> = [
+  const USER_ENTITY_TYPE_OPTIONS: Array<{ value: 'USER'; label: string; isDisabled?: boolean }> = [
     { value: 'USER', label: firstLetterUpper(settings.userAlias) },
   ];
 
@@ -209,6 +216,10 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     types:
       ruleType === 'TRANSACTION'
         ? TX_ENTITY_TYPE_OPTIONS[0].value
+        : entity === 'CONSUMER_USER'
+        ? 'CONSUMER_USER'
+        : entity === 'BUSINESS_USER'
+        ? 'BUSINESS_USER'
         : ALL_USER_ENTITY_TYPE_OPTIONS[0].value,
   });
 
@@ -229,8 +240,18 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           return false;
         }
 
-        if (filterType && !v.entity?.includes(filterType)) {
-          return false;
+        if (filterType === 'TRANSACTION' && v.entity?.startsWith('TRANSACTION')) {
+          return true;
+        }
+        if (filterType === 'CONSUMER_USER') {
+          if (!(v.entity?.startsWith('USER') || v.entity?.includes(filterType))) {
+            return false;
+          }
+        }
+        if (filterType === 'BUSINESS_USER') {
+          if (!(v.entity?.startsWith('USER') || v.entity?.includes(filterType))) {
+            return false;
+          }
         }
 
         if (searchKey) {
@@ -326,10 +347,45 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           options: (ruleType === 'TRANSACTION'
             ? ALL_TX_ENTITY_TYPE_OPTIONS
             : ALL_USER_ENTITY_TYPE_OPTIONS
-          ).map((option) => ({
-            value: option.value,
-            label: option.label,
-          })),
+          )
+            .map((option) => {
+              if (ruleType === 'TRANSACTION') {
+                return {
+                  value: option.value,
+                  label: option.label,
+                  isDisabled: false,
+                };
+              }
+
+              // For user risk factors, implement conditional logic based on entity
+              if (entity === 'CONSUMER_USER') {
+                if (option.value === 'CONSUMER_USER') {
+                  return {
+                    value: option.value,
+                    label: option.label,
+                    isDisabled: true,
+                  };
+                }
+                return null;
+              } else if (entity === 'BUSINESS_USER') {
+                if (option.value === 'BUSINESS_USER') {
+                  return {
+                    value: option.value,
+                    label: option.label,
+                    isDisabled: true,
+                  };
+                }
+                return null;
+              }
+
+              // Default: show all options enabled
+              return {
+                value: option.value,
+                label: option.label,
+                isDisabled: false,
+              };
+            })
+            .filter(Boolean),
           mode: 'SINGLE',
           displayMode: 'list',
           allowClear: false,
@@ -501,7 +557,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                   });
                   setFilterParams({
                     ...filterParams,
-                    types: type === 'TRANSACTION' ? 'TRANSACTION' : 'USER',
+                    types: type === 'TRANSACTION' ? 'TRANSACTION' : 'CONSUMER_USER',
                   });
                 }}
                 mode={'SINGLE'}

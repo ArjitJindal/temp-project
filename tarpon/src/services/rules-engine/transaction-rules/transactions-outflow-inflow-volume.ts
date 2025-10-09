@@ -1,13 +1,11 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import {
   COMPARATOR_SCHEMA,
-  Comparator,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_TYPES_SCHEMA,
-  TimeWindow,
   VALUE_COMPARATOR_OPTIONAL_SCHEMA,
-  ValueComparator,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
@@ -20,6 +18,7 @@ import {
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { compareNumber } from '../utils/rule-schema-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow, Comparator, ValueComparator } from '@/@types/rule/params'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -149,10 +148,16 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
   }
 
   public async computeRule() {
-    return Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

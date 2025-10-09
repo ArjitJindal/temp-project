@@ -1,6 +1,7 @@
 import { screen, userEvent, within } from 'testing-library-wrapper';
 import { expect } from '@jest/globals';
 import s from '../style.module.less';
+import tagsS from '../Tags/index.module.less';
 import { notEmpty } from '@/utils/array';
 
 /**
@@ -9,6 +10,14 @@ import { notEmpty } from '@/utils/array';
  */
 export function findSelectRoot(): HTMLElement {
   return screen.getByClassName(s.root);
+}
+
+export function findInputElement(): HTMLElement {
+  return screen.getByClassName(s.input);
+}
+
+export function findArrowButton(): HTMLElement {
+  return screen.getByClassName(s.arrowDownIcon);
 }
 
 /**
@@ -48,7 +57,7 @@ export async function clickClear(): Promise<void> {
  * @param text Text of the value to remove
  */
 export async function clickValueRemove(text: string): Promise<void> {
-  const tagEls = screen.getAllByClassName(s.tagWrapper);
+  const tagEls = screen.getAllByClassName(tagsS.tagWrapper);
   const tagEl = tagEls.find((item) => item.textContent === text);
   if (tagEl == null) {
     throw new Error(`Tag with text "${text}" not found`);
@@ -71,10 +80,17 @@ export async function clickOutside(): Promise<void> {
 export function expectDropdownOpen(shouldBeOpen: boolean = true): void {
   const dropdownEl = screen.getByClassName(s.menuWrapper);
   expect(dropdownEl).toBeInTheDocument();
+  expect(dropdownEl).toBeTruthy();
+  const classList = Array.from(dropdownEl.classList);
+
   if (shouldBeOpen) {
-    expect(dropdownEl).toHaveClass(s.isOpen);
+    expect(classList.includes(s.isOpen)).toBeTruthyOrMessage(
+      "Select menu wrapper's class list expected to have 'isOpen' class, but it's not",
+    );
   } else {
-    expect(dropdownEl).not.toHaveClass(s.isOpen);
+    expect(!classList.includes(s.isOpen)).toBeTruthyOrMessage(
+      "Select menu wrapper's class list expected NOT to have 'isOpen' class, but it is there",
+    );
   }
 }
 
@@ -94,7 +110,7 @@ export function expectValues(values: string[]): void {
  * @param values Expected tag values as displayed text
  */
 export function expectTags(values: string[]): void {
-  const items = screen.queryAllByClassName(s.tagWrapper);
+  const items = screen.queryAllByClassName(tagsS.tagWrapper);
   const itemsText = items.map((item) => item.textContent).filter(notEmpty);
   expect(itemsText).toEqual(values);
 }

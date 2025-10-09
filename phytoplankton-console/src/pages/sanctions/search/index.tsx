@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import ScreeningHitTable from '@/components/ScreeningHitTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { OccupationCode, GenericSanctionsSearchType } from '@/apis';
+import {
+  OccupationCode,
+  GenericSanctionsSearchType,
+  SanctionsSearchRequestEntityType,
+} from '@/apis';
 import { getOr, isLoading, isSuccess, map } from '@/utils/asyncResource';
 import { map as mapQuery } from '@/utils/queries/types';
 import { AllParams } from '@/components/library/Table/types';
@@ -15,7 +19,7 @@ import {
   SEARCH_PROFILES,
 } from '@/utils/queries/keys';
 import Button from '@/components/library/Button';
-import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useHasResources } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
@@ -34,6 +38,10 @@ interface TableSearchParams {
   documentId?: string;
   searchProfileId?: string;
   screeningProfileId?: string;
+  entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -46,12 +54,20 @@ export function SearchResultTable(props: Props) {
   const api = useApi();
   const currentUser = useAuth0User();
   const hasSetDefaultProfile = useRef(false);
+  const hasSetDefaultManualFilters = useRef(false);
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
   const navigate = useNavigate();
 
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    entityType: 'PERSON',
+  });
+
+  const hasManualScreeningWritePermission = useHasResources([
+    'write:::screening/manual-screening/*',
+  ]);
 
   const searchProfilesResult = useQuery(
     SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
@@ -111,10 +127,10 @@ export function SearchResultTable(props: Props) {
   );
 
   useEffect(() => {
-    if (hasSetDefaultProfile.current) {
+    if (hasSetDefaultManualFilters.current) {
       return;
     }
-    if (isScreeningProfileEnabled) {
+    if (isScreeningProfileEnabled && isSuccess(defaultManualScreeningFilters.data)) {
       const response = getOr(defaultManualScreeningFilters.data, {});
       setParams((prevState) => ({
         ...prevState,
@@ -124,8 +140,10 @@ export function SearchResultTable(props: Props) {
         yearOfBirth: response?.yearOfBirth ?? prevState?.yearOfBirth,
         documentId: response?.documentId?.[0] ?? prevState?.documentId,
         searchTerm: undefined,
+        entityType: response?.entityType ?? prevState?.entityType,
       }));
-    } else {
+      hasSetDefaultManualFilters.current = true;
+    } else if (isSuccess(searchProfilesResult.data)) {
       const response = getOr(searchProfilesResult.data, { items: [], total: 0 });
       const profiles = response.items || [];
       const defaultProfile = Array.isArray(profiles)
@@ -146,7 +164,7 @@ export function SearchResultTable(props: Props) {
           searchTerm: undefined,
         }));
       }
-      hasSetDefaultProfile.current = true;
+      hasSetDefaultManualFilters.current = true;
     }
   }, [searchProfilesResult.data, defaultManualScreeningFilters.data, isScreeningProfileEnabled]);
 
@@ -205,6 +223,7 @@ export function SearchResultTable(props: Props) {
         nationality: historyItem.request?.nationality,
         occupationCode: historyItem.request?.occupationCode,
         documentId: historyItem.request?.documentId?.[0],
+        entityType: historyItem.request?.entityType,
       }));
     }
   }, [historyItem]);
@@ -255,6 +274,10 @@ export function SearchResultTable(props: Props) {
           screeningProfileId: isScreeningProfileEnabled
             ? searchParams.screeningProfileId
             : undefined,
+          entityType: searchParams.entityType,
+          gender: searchParams.gender,
+          countryOfResidence: searchParams.countryOfResidence,
+          registrationId: searchParams.registrationId,
         },
       });
     },
@@ -298,7 +321,7 @@ export function SearchResultTable(props: Props) {
 
   return (
     <ScreeningHitTable
-      readOnly={searchId != null}
+      readOnly={searchId != null || !hasManualScreeningWritePermission}
       params={allParams}
       onChangeParams={setParams}
       extraTools={[

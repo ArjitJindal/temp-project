@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/aws-serverless'
+import { setTags, setExtras } from '@sentry/aws-serverless'
 import { Extras } from '@sentry/types/types/extra'
 import { utils } from 'aws-xray-sdk-core'
 import {
@@ -13,7 +13,10 @@ import {
 } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { isEmpty, isNil, mergeWith, omitBy } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import mergeWith from 'lodash/mergeWith'
+import omitBy from 'lodash/omitBy'
 import { logger, winstonLogger } from '../logger'
 import { getContext, getContextStorage } from './context-storage'
 import { Feature } from '@/@types/openapi-internal/Feature'
@@ -25,7 +28,7 @@ import {
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { Metric } from '@/core/cloudwatch/metrics'
+import { Metric } from '@/@types/cloudwatch'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { envIs } from '@/utils/env'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
@@ -200,7 +203,7 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
       },
       isNil
     )
-    Sentry.setTags(context.logMetadata)
+    setTags(context.logMetadata)
   }
 }
 
@@ -214,7 +217,7 @@ export function addSentryExtras(addedExtras: Extras) {
   }
 
   if (context?.sentryExtras) {
-    Sentry.setExtras(context.sentryExtras)
+    setExtras(context.sentryExtras)
   }
 }
 

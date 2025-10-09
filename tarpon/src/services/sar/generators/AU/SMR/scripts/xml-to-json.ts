@@ -3,7 +3,9 @@
 
 import fs from 'fs'
 import path from 'path'
-import { isObject, keys, omit } from 'lodash'
+import isObject from 'lodash/isObject'
+import keys from 'lodash/keys'
+import omit from 'lodash/omit'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
 import $RefParser from '@apidevtools/json-schema-ref-parser'

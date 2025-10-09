@@ -1,4 +1,4 @@
-import { uniq } from 'lodash'
+import uniq from 'lodash/uniq'
 import { v4 as uuidv4 } from 'uuid'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'

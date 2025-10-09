@@ -1,7 +1,12 @@
-import { random, memoize, shuffle } from 'lodash'
+import random from 'lodash/random'
+import memoize from 'lodash/memoize'
+import shuffle from 'lodash/shuffle'
 import { TRANSACTION_TYPES } from '@flagright/lib/utils'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
-import { ConsumerSanctionsSearchSampler } from '../raw-data/sanctions-search'
+import {
+  BusinessSanctionsSearchSampler,
+  ConsumerSanctionsSearchSampler,
+} from '../raw-data/sanctions-search'
 import { BaseSampler } from '../samplers/base'
 import { getUserUniqueTags, users } from './users'
 import {
@@ -17,7 +22,6 @@ import {
   TRANSACTIONS_SEED,
 } from './seeds'
 import {
-  CardDetailsSampler,
   CryptoTransactionSampler,
   PaymentDetailsSampler,
   TransactionSampler,
@@ -28,7 +32,8 @@ import { COUNTRIES } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { SAMPLE_CURRENCIES } from '@/core/seed/samplers/currencies'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
-import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
+import { envIs } from '@/utils/env'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
@@ -43,10 +48,9 @@ import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResu
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { getPaymentDetailsName } from '@/utils/helpers'
+import { getPaymentDetailsNameString } from '@/utils/helpers'
 import { hasFeature } from '@/core/utils/context'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
-import { envIs } from '@/utils/env'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
@@ -213,13 +217,19 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       ruleInstanceId: string,
       transactionId: string
     ): SanctionsDetails[] => {
-      const namesToSearch = getPaymentDetailsName(paymentDetails)
+      const namesToSearch = getPaymentDetailsNameString(paymentDetails)
       const sanctionsDetails: SanctionsDetails[] = []
-
-      const sanctionsSearchSampler = new ConsumerSanctionsSearchSampler()
 
       for (const n of namesToSearch) {
         const { name, entityType } = n
+
+        let sanctionsSearchSampler
+        if (entityType === 'BANK_ACCOUNT_HOLDER_NAME') {
+          sanctionsSearchSampler = new BusinessSanctionsSearchSampler()
+        } else {
+          sanctionsSearchSampler = new ConsumerSanctionsSearchSampler()
+        }
+
         const data = sanctionsSearchSampler.getSample(
           undefined, // seed already assigned
           name,
@@ -265,20 +275,38 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       }
 
       if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
-        const sanctionsDetails: SanctionsDetails[] = [
-          ...getSanctionsSearch(
-            transaction.originPaymentDetails as PaymentDetails,
-            originUserId,
-            hitRule.ruleInstanceId,
-            transactionId
-          ),
-          ...getSanctionsSearch(
-            transaction.destinationPaymentDetails as PaymentDetails,
-            destinationUserId,
-            hitRule.ruleInstanceId,
-            transactionId
-          ),
-        ]
+        const sanctionsDetails: SanctionsDetails[] = []
+
+        if (
+          counterPartyDirection === 'origin' ||
+          counterPartyDirection === null
+        ) {
+          sanctionsDetails.push(
+            ...getSanctionsSearch(
+              transaction.originPaymentDetails as PaymentDetails,
+              counterPartyDirection === 'origin'
+                ? 'counterparty'
+                : originUserId,
+              hitRule.ruleInstanceId,
+              transactionId
+            )
+          )
+        }
+        if (
+          counterPartyDirection === 'destination' ||
+          counterPartyDirection === null
+        ) {
+          sanctionsDetails.push(
+            ...getSanctionsSearch(
+              transaction.destinationPaymentDetails as PaymentDetails,
+              counterPartyDirection === 'destination'
+                ? 'counterparty'
+                : destinationUserId,
+              hitRule.ruleInstanceId,
+              transactionId
+            )
+          )
+        }
 
         return {
           ...hitRule,
@@ -337,7 +365,10 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
-      transactionState: this.rng.pickRandom(TRANSACTION_STATES),
+      transactionState:
+        getAggregatedRuleStatus(hitRules) === 'SUSPEND'
+          ? 'SUSPENDED'
+          : this.rng.pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
         createdAt: timestamp,
@@ -369,13 +400,22 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
         },
         tags: [this.tagSampler.getSample()],
       }),
-      // for counter party making sure it has card payment type
       ...(counterPartyDirection === 'origin' && {
-        originPaymentDetails: new CardDetailsSampler().getSample(),
+        originPaymentDetails: new PaymentDetailsSampler(
+          this.rng.randomInt()
+        ).getSample(),
       }),
       ...(counterPartyDirection === 'destination' && {
-        destinationPaymentDetails: new CardDetailsSampler().getSample(),
+        destinationPaymentDetails: new PaymentDetailsSampler(
+          this.rng.randomInt()
+        ).getSample(),
       }),
+    }
+
+    if (counterPartyDirection === 'origin') {
+      fullTransaction.destinationPaymentMethodId = undefined
+    } else if (counterPartyDirection === 'destination') {
+      fullTransaction.originPaymentMethodId = undefined
     }
     return fullTransaction
   }
@@ -420,6 +460,7 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
     transactions.forEach((t, idx) => {
       if (idx % 10 === 0) {
         t.status = 'SUSPEND'
+        t.transactionState = 'SUSPENDED'
       }
     })
   }
@@ -433,6 +474,7 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
     })
     transactions = [...transactions, ...cryptoTransactions]
   }
+
   const counterParty = [...Array(COUNTER_PARTY_TXN_COUNT)].map((_, index) => {
     return fullTransactionSampler.getSample(
       undefined,
@@ -442,6 +484,29 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
     )
   })
   transactions = [...transactions, ...counterParty]
+  if (hasFeature('EDD')) {
+    const businessUsers = users.filter((u) => u.type === 'BUSINESS')
+    const eddTransactions = [...Array(50)].map((_, index) => {
+      const transaction = fullTransactionSampler.getSample(
+        undefined,
+        index + TXN_COUNT + CRYPTO_TXN_COUNT + COUNTER_PARTY_TXN_COUNT,
+        false,
+        false,
+        true
+      )
+
+      const originUser = businessUsers[index]
+      const destinationUser = businessUsers[(index + 10) % businessUsers.length]
+      transaction.originUserId = originUser.userId
+      transaction.originUser = originUser
+      transaction.destinationUserId = destinationUser.userId
+      transaction.destinationUser = destinationUser
+      transaction.hitRules =
+        index % 2 === 0 ? [transaction.hitRules[0]] : [transaction.hitRules[1]]
+      return transaction
+    })
+    transactions = [...transactions, ...eddTransactions]
+  }
 
   return transactions
 })

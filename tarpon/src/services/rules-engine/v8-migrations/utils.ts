@@ -1,10 +1,7 @@
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
-import {
-  TimeWindow,
-  TransactionTimeRange,
-} from '../utils/rule-parameter-schemas'
 import { PaymentRuleFiltersChildParameters } from '../transaction-filters/payment-filters-base'
+import { TransactionTimeRange, TimeWindow } from '@/@types/rule/params'
 import { LogicAggregationFunc } from '@/@types/openapi-internal/LogicAggregationFunc'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'

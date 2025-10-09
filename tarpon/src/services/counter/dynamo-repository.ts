@@ -50,7 +50,10 @@ export class DynamoCounterRepository {
       }
     }
   }
-  public async getNextCounterAndUpdate(entity: CounterEntity): Promise<number> {
+  public async getNextCounterAndUpdate(
+    entity: CounterEntity,
+    count: number
+  ): Promise<number> {
     const key = DynamoDbKeys.COUNTER(this.tenantId, entity)
     const commandInput: UpdateCommandInput = {
       TableName: this.tableName,
@@ -60,7 +63,7 @@ export class DynamoCounterRepository {
         '#count': 'count',
       },
       ExpressionAttributeValues: {
-        ':increment': 1,
+        ':increment': count,
       },
       ReturnValues: 'UPDATED_NEW',
     }
@@ -84,7 +87,7 @@ export class DynamoCounterRepository {
     entity: CounterEntity,
     count: number
   ): Promise<number[]> {
-    const value = (await this.getNextCounterAndUpdate(entity)) ?? 1
+    const value = (await this.getNextCounterAndUpdate(entity, count)) ?? 1
     return [...new Array(count)].map((_, i) => value - i)
   }
 

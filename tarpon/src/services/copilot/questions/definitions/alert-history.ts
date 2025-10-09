@@ -2,7 +2,7 @@ import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import {
   calculatePercentageBreakdown,
   humanReadablePeriod,
@@ -67,15 +67,15 @@ export const AlertHistory: TableQuestion<Period> = {
         a.alertId,
         a.caseId,
         r.createdTimestamp,
-        a.numberOfTransactionsHit,
-        a.ruleId,
-        a.ruleName,
-        a.ruleDescription,
-        a.ruleAction,
-        a.ruleNature,
+        a.numberOfTransactionsHit || 0,
+        a.ruleId || '',
+        a.ruleName || '',
+        a.ruleDescription || '',
+        a.ruleAction || '',
+        a.ruleNature || '',
         a.alertStatus,
         r.caseStatus,
-        r.lastStatusChange?.reason?.join(', '),
+        r.lastStatusChange?.reason?.join(', ') || '',
         a.updatedAt,
       ]
     })

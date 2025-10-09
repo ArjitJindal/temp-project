@@ -1,7 +1,8 @@
 import pMap from 'p-map'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Db } from 'mongodb'
-import { last, mean } from 'lodash'
+import last from 'lodash/last'
+import mean from 'lodash/mean'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
@@ -17,7 +18,7 @@ import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 

@@ -46,7 +46,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
 import { logger } from '@/core/logger'
 import { Case } from '@/@types/openapi-internal/Case'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 
 loadConfigEnv()
 initializeEnvVars()

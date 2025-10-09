@@ -23,6 +23,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { allUsersViewHandler } from '@/lambdas/console-api-user/app'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
+import * as webhookUtils from '@/services/webhook/utils'
 
 dynamoDbSetupHook()
 
@@ -88,6 +89,8 @@ const getSpyes = (users: Account[], roles: AccountRole[]) => {
     .mockImplementation(async (userId: string) => {
       return users.find((user) => user.id === userId) as Account
     })
+
+  jest.spyOn(webhookUtils, 'sendWebhookTasks').mockResolvedValue(undefined)
 }
 
 withFeaturesToggled(

@@ -1,4 +1,6 @@
-import { compact, intersection, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import uniq from 'lodash/uniq'
 import {
   adverseMediaCategoryMap,
   isLatinScript,
@@ -28,7 +30,7 @@ import { generateHashFromString } from '@/utils/object'
 import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
 import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { SanctionsSourceRelevance } from '@/@types/openapi-internal/SanctionsSourceRelevance'
 import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance'

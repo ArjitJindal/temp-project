@@ -1,10 +1,10 @@
 import { JSONSchemaType } from 'ajv'
 
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -16,6 +16,7 @@ import {
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import dayjs from '@/utils/dayjs'
 import { getReceiverKeyId, getSenderKeyId } from '@/services/rules-engine/utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -88,7 +89,9 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async *getRawTransactionsData(): AsyncGenerator<
@@ -100,6 +103,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     yield* await this.transactionRepository.getGenericUserSendingTransactionsGenerator(
       originUserId,
       this.transaction.originPaymentDetails,
+      undefined,
       {
         beforeTimestamp: timestamp,
         afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),

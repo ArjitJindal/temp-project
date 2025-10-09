@@ -1,12 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 
-import { sumBy, mergeWith } from 'lodash'
+import sumBy from 'lodash/sumBy'
+import mergeWith from 'lodash/mergeWith'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
@@ -19,6 +19,7 @@ import {
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 
@@ -77,10 +78,16 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

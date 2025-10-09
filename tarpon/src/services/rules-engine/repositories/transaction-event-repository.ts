@@ -10,14 +10,14 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTION_EVENTS_COLLECTION } from '@/utils/mongo-table-names'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
 import { traceable } from '@/core/xray'
 import { pickKnownEntityFields } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { TransactionEventsResponse } from '@/@types/openapi-internal/TransactionEventsResponse'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
@@ -112,17 +112,12 @@ export class TransactionEventRepository {
 
     // Handle local changes if needed
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await Promise.all(
-        primaryKeys
-          .filter((primaryKey) => primaryKey !== undefined)
-          .map((primaryKey) =>
-            localTarponChangeCaptureHandler(this.tenantId, primaryKey)
-          )
-      )
+      await handleLocalTarponChangeCapture(this.tenantId, primaryKeys)
     }
+
     return operations.map((request) => request.eventId)
   }
 
@@ -157,10 +152,11 @@ export class TransactionEventRepository {
     }
     await this.dynamoDb.send(new UpdateCommand(updateParams))
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, key)
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
 

@@ -1,4 +1,9 @@
-import { get, groupBy, lowerCase, mapValues, memoize, startCase } from 'lodash'
+import get from 'lodash/get'
+import groupBy from 'lodash/groupBy'
+import lowerCase from 'lodash/lowerCase'
+import mapValues from 'lodash/mapValues'
+import memoize from 'lodash/memoize'
+import startCase from 'lodash/startCase'
 import {
   FieldOrGroup,
   SelectFieldSettings,
@@ -154,6 +159,9 @@ export function getDirectionalVariableKeys(directionLessVariableKey: string) {
 function txEntityVariableWithoutDirection(variables: LogicVariable[]) {
   return variables.flatMap((variable) => {
     if (!variable.key.startsWith('origin')) {
+      return [variable]
+    }
+    if (variable.key.startsWith('originFundsInfo')) {
       return [variable]
     }
 

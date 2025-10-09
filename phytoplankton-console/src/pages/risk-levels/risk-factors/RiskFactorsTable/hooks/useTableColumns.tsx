@@ -186,10 +186,14 @@ export function useTableColumns({
             }
 
             if (isSimulation) {
+              const riskFactorFromMap =
+                simulationRiskFactorsMap[scopeToRiskEntityType(selectedSection)].find(
+                  (rf) => rf.id === entity.id,
+                ) || entity;
               return (
                 <div className={s.centeredRuleStatusSwitch}>
                   <RuleStatusSwitch
-                    entity={entity}
+                    entity={riskFactorFromMap}
                     isDisabled={!canWriteRiskFactors}
                     type="RISK_FACTOR"
                     onToggle={(checked) => {
@@ -249,7 +253,9 @@ export function useTableColumns({
                           handleEditRiskFactor(entity);
                         }}
                         testName="risk-factor-edit-button"
-                        isDisabled={!isEditEnabled || riskScoringRerun.data.isAnyJobRunning}
+                        isDisabled={
+                          (!isEditEnabled && !isSimulation) || riskScoringRerun.data.isAnyJobRunning
+                        }
                       >
                         Edit
                       </Button>
@@ -258,7 +264,7 @@ export function useTableColumns({
                       <ActionMenu
                         entity={entity}
                         onDuplicate={(entity) => onActionsMenuClick('duplicate', entity)}
-                        canWriteRiskFactors={canWriteRiskFactors && isEditEnabled}
+                        canWriteRiskFactors={canWriteRiskFactors && (isSimulation || isEditEnabled)}
                       />
                     )}
                   </div>

@@ -2,18 +2,18 @@ import { BadRequest, Forbidden, NotFound } from 'http-errors'
 import { GetOrganizations200ResponseOneOfInner, ManagementClient } from 'auth0'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
+import { DynamoAccountsRepository } from './repository/dynamo'
+import { Auth0AccountsRepository } from './repository/auth0'
 import {
   Auth0TenantMetadata,
   InternalUserCreate,
   MicroTenantInfo,
   Tenant,
-} from './repository'
-import { DynamoAccountsRepository } from './repository/dynamo'
-import { Auth0AccountsRepository } from './repository/auth0'
+} from '@/@types/tenant'
 import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -39,14 +39,8 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
-
-export type TenantBasic = {
-  id: string
-  name: string
-  auth0Domain?: string
-}
 
 @traceable
 export class AccountsService {
@@ -963,5 +957,25 @@ export class AccountsService {
       }
       fn.cache.clear()
     }
+  }
+
+  public async syncTenantAccounts(tenant: Tenant) {
+    const auth0Accounts = await this.auth0.getTenantAccounts(tenant)
+    const currentCacheAccounts = await this.cache.getTenantAccounts(tenant)
+
+    // find accounts which are in currentCacheAccounts but not in auth0Accounts
+    const accountsToDelete = currentCacheAccounts.filter(
+      (account) => !auth0Accounts.some((a) => a.id === account.id)
+    )
+
+    for (const account of accountsToDelete) {
+      await this.cache.deleteAccountFromOrganization({ id: tenant.id }, account)
+    }
+
+    await this.cache.putMultipleAccounts(tenant.id, auth0Accounts)
+    await this.cache.createOrganization(tenant.id, {
+      type: 'DATABASE',
+      params: tenant,
+    })
   }
 }

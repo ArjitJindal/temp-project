@@ -6,6 +6,7 @@ import {
 } from '@flagright/lib/utils/humanize';
 import { map, mapKeys, pickBy, range } from 'lodash';
 import { MAX_SLA_POLICIES_PER_ENTITY } from '@flagright/lib/constants';
+import { PAYMENT_APPROVAL_START_TIMESTAMP } from '@flagright/lib/utils';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
 import { getPolicyTime } from './components/SlaStatus/SlaPolicyDetails';
@@ -24,7 +25,6 @@ import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react
 import { denseArray } from '@/utils/lang';
 import {
   Account,
-  CaseReasons,
   ChecklistStatus,
   DerivedStatus,
   PaymentMethod,
@@ -38,13 +38,15 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
-import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
+import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
+import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
+import { useReasons } from '@/utils/reasons';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -149,7 +151,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
       filterQaStatus: raw?.['filterQaStatus'] as ChecklistStatus | undefined | "NOT_QA'd",
-      filterClosingReason: raw?.['filterClosingReason']?.split(',') as CaseReasons[],
+      filterClosingReason: raw?.['filterClosingReason']?.split(',') as string[],
       alertPriority: raw?.alertPriority?.split(
         ',',
       ) as unknown as TableSearchParams['alertPriority'],
@@ -175,6 +177,9 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
     return {
       current: params.current,
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
+      paymentApprovalTimestamp: params.paymentApprovalTimestamp
+        ?.map((x) => Math.max(dayjs(x).valueOf()), PAYMENT_APPROVAL_START_TIMESTAMP)
+        .join(','),
       transactionId: params.transactionId,
       transactionTypes: params.transactionTypes?.join(','),
       transactionState: params.transactionState?.join(','),
@@ -240,6 +245,12 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
       direction: raw.direction as 'incoming' | 'outgoing' | 'all' | undefined,
       showDetailedView: raw.showDetailedView ? raw.showDetailedView === 'true' : undefined,
       view: isValidTableListViewEnum(raw.view) ? raw.view : undefined,
+      paymentApprovalTimestamp:
+        raw.paymentApprovalTimestamp &&
+        isRuleAction(raw.status) &&
+        (raw.status === 'ALLOW' || raw.status === 'BLOCK')
+          ? raw.paymentApprovalTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+          : undefined,
     };
   },
 };
@@ -254,10 +265,14 @@ export const useCaseAlertFilters = (
   const ruleOptions = useRuleOptions({ onlyWithAlerts: true });
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
+  const allowedCaseStatuses = useDerivedStatusesFromPermissions();
+  const allowedAlertStatuses = useDerivedAlertStatusesFromPermissions();
 
   const [roles] = useRoles();
   const roleAssignedToOptions = map(roles, 'name');
   roleAssignedToOptions.unshift('Unassigned');
+
+  const closureReasons = useReasons('CLOSURE');
 
   return denseArray([
     {
@@ -275,6 +290,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'select',
         options: PRIORITYS.map((x) => ({ value: x, label: x })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -286,6 +302,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: CASE_TYPES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -297,6 +314,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'select',
         options: ruleOptions,
+        closeOnSingleSelect: true,
       },
       icon: <GavelIcon />,
       showFilterByDefault: true,
@@ -370,6 +388,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: businessIndustries.map((x) => ({ value: x, label: x })),
+        closeOnSingleSelect: true,
       },
     },
     {
@@ -463,6 +482,7 @@ export const useCaseAlertFilters = (
         options: [{ value: 'default', label: 'default' }].concat(
           ruleQueues.map((v) => ({ value: v.id ?? v.name, label: v.name })),
         ),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -474,6 +494,7 @@ export const useCaseAlertFilters = (
         mode: 'MULTIPLE',
         displayMode: 'list',
         options: RULE_NATURES.map((x) => ({ value: x, label: humanizeConstant(x) })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
     },
@@ -484,11 +505,12 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: DERIVED_STATUSS.map((status) => ({
+        options: allowedCaseStatuses.map((status) => ({
           value: status,
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
         })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
@@ -500,14 +522,26 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: DERIVED_STATUSS.map((status) => ({
+        options: allowedAlertStatuses.map((status) => ({
           value: status,
           label: <CaseStatusTag caseStatus={status} />,
           labelText: humanizeSnakeCase(status),
         })),
+        closeOnSingleSelect: true,
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
+    },
+    {
+      title: 'Reason',
+      key: 'filterClosingReason',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: closureReasons.map((reason) => ({ value: reason, label: reason })),
+      },
+      showFilterByDefault: true,
     },
     isAlertSlaEnabled && {
       title: 'SLA status',

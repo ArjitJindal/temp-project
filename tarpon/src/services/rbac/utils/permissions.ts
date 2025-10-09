@@ -1,12 +1,40 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { PermissionsAction } from '@/@types/openapi-internal/PermissionsAction'
 import { PermissionsResponse } from '@/@types/openapi-internal/PermissionsResponse'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
+import { FilterCondition } from '@/@types/openapi-internal/FilterCondition'
 import { Permissions, PermissionsNode } from '@/@types/rbac/permissions'
 import { generateChecksum } from '@/utils/object'
 import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/DynamicPermissionsNodeSubType'
+import {
+  StaticPermissionsNode as OpenAPIStaticNode,
+  StaticPermissionsNode,
+} from '@/@types/openapi-internal/StaticPermissionsNode'
+import { DynamicPermissionsNode as OpenAPIDynamicNode } from '@/@types/openapi-internal/DynamicPermissionsNode'
+
+/**
+ * PERMISSIONS_LIBRARY overview
+ *
+ * The library is a tree of permissions organized by node `id`. This hierarchy mirrors the
+ * FRN resource paths (part after ':::'). For example, an FRN like:
+ *   frn:console:tenant:::case-management/alert-status/open/*
+ * maps to library nodes with ids:
+ *   "case-management" -> "alert-status" -> "open"
+ *
+ * Filterable nodes:
+ * - A node can define a `filter` with `param` (query param name) and optional `operators`.
+ * - Example: node id "case-status" has filter { param: 'filterCaseStatus' }.
+ * - When a route requires resources under such a node, the middleware can derive the relevant
+ *   filter param for that route (see rbac.ts) and inject default values when appropriate.
+ *
+ * allowedValues on children (optional, UI-friendly):
+ * - Child nodes may declare `allowedValues` to indicate what enum values should be infused
+ *   into a filter condition when this child is granted (e.g. child id 'in-review' expands to
+ *   ['IN_REVIEW_OPEN','IN_REVIEW_ESCALATED',...]).
+ * - If `allowedValues` is absent, we fallback to a normalized child id (e.g. 'open' -> 'OPEN').
+ */
 
 export const PERMISSIONS_LIBRARY: Permissions = [
   {
@@ -51,6 +79,161 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         actions: ['read', 'write'],
         type: 'STATIC',
       },
+      {
+        id: 'case-status',
+        name: 'Case status',
+        actions: ['read'],
+        type: 'STATIC',
+        filter: {
+          type: 'enum',
+          param: 'filterCaseStatus',
+          operators: 'Equals',
+        },
+        children: [
+          {
+            id: 'open',
+            name: 'Case status: Open',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN'],
+          },
+          {
+            id: 'closed',
+            name: 'Case status: Closed',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['CLOSED'],
+          },
+          {
+            id: 'reopened',
+            name: 'Case status: Reopened',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['REOPENED'],
+          },
+          {
+            id: 'escalated',
+            name: 'Case status: Escalated',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['ESCALATED'],
+          },
+          {
+            id: 'in-review',
+            name: 'Case status: In review',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: [
+              'IN_REVIEW_OPEN',
+              'IN_REVIEW_ESCALATED',
+              'IN_REVIEW_CLOSED',
+              'IN_REVIEW_REOPENED',
+            ],
+          },
+          {
+            id: 'in-progress',
+            name: 'Case status: In progress',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'],
+          },
+          {
+            id: 'on-hold',
+            name: 'Case status: On hold',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD'],
+          },
+          {
+            id: 'escalated-l2',
+            name: 'Case status: Escalated L2',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['ESCALATED_L2'],
+          },
+        ],
+      } as StaticPermissionsNode,
+      {
+        id: 'alert-status',
+        name: 'Alert status',
+        actions: ['read'],
+        type: 'STATIC',
+        filter: {
+          type: 'enum',
+          param: 'filterAlertStatus',
+          operator: 'Equals',
+        },
+        children: [
+          {
+            id: 'open',
+            name: 'Alert status: Open',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN'],
+          },
+          {
+            id: 'closed',
+            name: 'Alert status: Closed',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['CLOSED'],
+          },
+          {
+            id: 'reopened',
+            name: 'Alert status: Reopened',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['REOPENED'],
+          },
+          {
+            id: 'escalated',
+            name: 'Alert status: Escalated',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['ESCALATED'],
+          },
+          {
+            id: 'in-review',
+            name: 'Alert status: In review',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: [
+              'IN_REVIEW_OPEN',
+              'IN_REVIEW_ESCALATED',
+              'IN_REVIEW_CLOSED',
+              'IN_REVIEW_REOPENED',
+            ],
+          },
+          {
+            id: 'in-review-escalated',
+            name: 'Alert status: In review escalated',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'],
+          },
+          {
+            id: 'in-progress',
+            name: 'Alert status: In progress',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'],
+          },
+          {
+            id: 'on-hold',
+            name: 'Alert status: On hold',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['OPEN_ON_HOLD', 'ESCALATED_ON_HOLD'],
+          },
+          {
+            id: 'escalated-l2',
+            name: 'Alert status: Escalated L2',
+            actions: ['read'],
+            type: 'STATIC',
+            allowedValues: ['ESCALATED_L2'],
+          },
+        ],
+      } as PermissionsNode,
     ],
   },
   {
@@ -725,6 +908,30 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         actions: ['read', 'write'],
         type: 'STATIC',
       },
+      {
+        id: 'manual-screening-filters',
+        name: 'Manual screening filters',
+        actions: ['write'],
+        type: 'STATIC',
+      },
+      {
+        id: 'manual-screening',
+        name: 'Manual screening',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
+      {
+        id: 'activity',
+        name: 'Screening activity',
+        actions: ['read'],
+        type: 'STATIC',
+      },
+      {
+        id: 'whitelist',
+        name: 'Screening whitelist',
+        actions: ['read', 'write'],
+        type: 'STATIC',
+      },
     ],
   },
   {
@@ -741,7 +948,7 @@ export const PERMISSIONS_LIBRARY: Permissions = [
       },
     ],
   },
-]
+] as any
 
 export const hydratePermissions = (
   permissions: Permissions
@@ -749,12 +956,29 @@ export const hydratePermissions = (
   return permissions.map(traverseNode)
 }
 
-const traverseNode = (node: PermissionsNode) => {
-  if (node.children) {
-    node.children.forEach(traverseNode)
+const traverseNode = (
+  node: PermissionsNode
+): OpenAPIStaticNode | OpenAPIDynamicNode => {
+  const baseNode = {
+    id: node.id,
+    actions: node.actions,
+    children: node.children?.map(traverseNode),
   }
 
-  return node
+  if (node.type === 'STATIC') {
+    return {
+      ...baseNode,
+      type: 'STATIC',
+      name: node.name || node.id, // Use id as name if name is not provided
+      filter: node.filter,
+    } as OpenAPIStaticNode
+  } else {
+    return {
+      ...baseNode,
+      type: 'DYNAMIC',
+      subType: node.subType,
+    } as OpenAPIDynamicNode
+  }
 }
 
 export const isValidResource = (
@@ -1040,18 +1264,105 @@ export const convertToFrns = (
   return frns
 }
 
+/**
+ * getOptimizedPermissions
+ *
+ * Purpose:
+ * - Groups and optimizes role statements by action hash.
+ * - Builds filter conditions from filterable nodes present in the FRN paths, using
+ *   child.allowedValues or the normalized child id if allowedValues are not present.
+ * - Preserves and merges any pre-existing statement.filter entries.
+ *
+ * How it works in brief:
+ * 1) Group statements by identical actions (generateChecksum(actions)).
+ * 2) For each group's resources:
+ *    - For each FRN, resolve the library node path and if an ancestor defines a filter,
+ *      derive the values from the child node and merge into FilterConditions.
+ *    - Keep the original resources, then build a grantedTree and optimize it to minimal FRNs.
+ * 3) Return optimized PermissionStatements with resources + aggregate filters.
+ *
+ * Example:
+ *  resources:
+ *   - frn:console:tenant:::case-management/case-status/open/*
+ *   - frn:console:tenant:::case-management/alert-status/escalated/*
+ *  library:
+ *   - case-status.filter.param = filterCaseStatus
+ *   - alert-status.filter.param = filterAlertStatus
+ *  => filters:
+ *   - filterCaseStatus: ['OPEN']
+ *   - filterAlertStatus: ['ESCALATED']
+ */
 export const getOptimizedPermissions = (
   tenantId: string,
-  resources: PermissionStatements[]
+  statements: PermissionStatements[]
 ): PermissionStatements[] => {
+  // Helper: resolve values for a specific child under a filterable static node
+  const resolveChildValues = (
+    staticNode: StaticPermissionsNode,
+    childId: string
+  ): string[] => {
+    const child = staticNode.children?.find((c) => c.id === childId)
+    const allowed =
+      child && child.type === 'STATIC'
+        ? (child as StaticPermissionsNode).allowedValues
+        : undefined
+    return allowed && allowed.length > 0
+      ? allowed
+      : [childId.toUpperCase().replace(/-/g, '_')]
+  }
+
+  // Helper: resolve all children values for a filterable static node (for wildcard grants)
+  const resolveAllChildValues = (
+    staticNode: StaticPermissionsNode
+  ): string[] => {
+    const set = new Set<string>()
+    staticNode.children?.forEach((c) => {
+      if (c.type === 'STATIC') {
+        const s = c as StaticPermissionsNode
+        if (s.allowedValues && s.allowedValues.length > 0) {
+          s.allowedValues.forEach((v) => set.add(v))
+        } else {
+          set.add(c.id.toUpperCase().replace(/-/g, '_'))
+        }
+      }
+    })
+    return Array.from(set)
+  }
+
+  // Helper: merge values into filters for a given permissionId
+  const mergeFilterValues = (
+    filters: FilterCondition[],
+    staticNode: StaticPermissionsNode,
+    values: string[]
+  ) => {
+    const existing = filters.find((f) => f.permissionId === staticNode.id)
+    if (existing) {
+      const s = new Set(existing.values)
+      values.forEach((v) => s.add(v))
+      existing.values = Array.from(s)
+      return
+    }
+    filters.push({
+      permissionId: staticNode.id,
+      operator: staticNode.filter?.operator || 'Equals',
+      param: staticNode.filter?.param || '',
+      values,
+    })
+  }
+
+  // Group all statements by action hash
   const actionMap = new Map<
     string,
-    { actions: PermissionsAction[]; resources: Set<string> }
+    {
+      actions: PermissionsAction[]
+      resources: Set<string>
+      filters: FilterCondition[]
+    }
   >()
   const optimizedPermissions: PermissionStatements[] = []
 
   // Group resources by action hash and handle wildcards
-  resources.forEach((statement) => {
+  statements.forEach((statement) => {
     const actionHash = generateChecksum(statement.actions)
     const hasWildcard = statement.resources.some((resource) =>
       resource.endsWith(':::*')
@@ -1063,54 +1374,84 @@ export const getOptimizedPermissions = (
         resources: new Set(
           hasWildcard ? [`frn:console:${tenantId}:::*`] : statement.resources
         ),
+        filters: statement.filter || [],
       })
     } else if (!hasWildcard) {
-      statement.resources.forEach((resource) =>
-        actionMap.get(actionHash)?.resources.add(resource)
-      )
+      const entry = actionMap.get(actionHash)
+      if (entry) {
+        statement.resources.forEach((resource) => entry.resources.add(resource))
+        if (statement.filter) {
+          entry.filters.push(...statement.filter)
+        }
+      }
     }
   })
 
   // Process each action group
-  for (const { actions, resources } of actionMap.values()) {
-    if (resources.has(`frn:console:${tenantId}:::*`)) {
+  for (const { actions, resources, filters } of actionMap.values()) {
+    const resourceArray = Array.from(resources)
+
+    if (resourceArray.includes(`frn:console:${tenantId}:::*`)) {
       optimizedPermissions.push({
         actions,
         resources: [`frn:console:${tenantId}:::*`],
+        filter: filters.length > 0 ? filters : undefined,
       })
       continue
     }
 
-    const grantedTree = buildGrantedTree(Array.from(resources))
-    if (!grantedTree.length) {
-      continue
-    }
+    // Build filters from allowedValues where applicable
+    const newFilters: FilterCondition[] = [...filters]
+    const updatedResources = new Set<string>()
+    for (const r of resourceArray) {
+      const path = r.replace(`frn:console:${tenantId}:::`, '')
+      const parts = path.split('/')
+      const isWildcard = parts[parts.length - 1] === '*'
+      const childId =
+        (isWildcard ? parts[parts.length - 2] : parts[parts.length - 1]) || ''
+      const parentPath = (
+        isWildcard ? parts.slice(0, -2) : parts.slice(0, -1)
+      ).join('/')
 
-    const { optimized } = optimizePermissions(grantedTree, PERMISSIONS_LIBRARY)
-    const noChildrenInAll = optimized.every((node) => !node.children?.length)
-
-    if (noChildrenInAll) {
-      const allFirstLevelResources = new Set(
-        PERMISSIONS_LIBRARY.map((node) => node.id)
-      )
-      const optimizedFirstLevel = new Set(optimized.map((node) => node.id))
-
-      if (
-        Array.from(allFirstLevelResources).every((node) =>
-          optimizedFirstLevel.has(node)
-        )
-      ) {
-        optimizedPermissions.push({
-          actions,
-          resources: [`frn:console:${tenantId}:::*`],
-        })
-        continue
+      const nodeAtPath = getPermissionsNodeByPath(parentPath)
+      // Uniform behavior: if resource grants the entire filterable node (e.g., case-management/alert-status/*),
+      // infer all child values as allowed and emit a filter entry accordingly.
+      if (isWildcard) {
+        const wildcardNodePath = parts.slice(0, -1).join('/')
+        const wildcardNode = getPermissionsNodeByPath(wildcardNodePath)
+        if (
+          wildcardNode &&
+          wildcardNode.type === 'STATIC' &&
+          (wildcardNode as StaticPermissionsNode).filter
+        ) {
+          const staticNode = wildcardNode as StaticPermissionsNode
+          const values = resolveAllChildValues(staticNode)
+          mergeFilterValues(newFilters, staticNode, values)
+          // keep original resource and continue to next
+          updatedResources.add(r)
+          continue
+        }
+      }
+      const isStatic = nodeAtPath?.type === 'STATIC'
+      if (isStatic && (nodeAtPath as StaticPermissionsNode).filter && childId) {
+        const staticNode = nodeAtPath as StaticPermissionsNode
+        const values = resolveChildValues(staticNode, childId)
+        mergeFilterValues(newFilters, staticNode, values)
+        // keep original resource
+        updatedResources.add(r)
+      } else {
+        updatedResources.add(r)
       }
     }
 
+    const grantedTree = buildGrantedTree(Array.from(updatedResources))
+    const { optimized } = optimizePermissions(grantedTree, PERMISSIONS_LIBRARY)
+    const finalResources = convertToFrns(tenantId, optimized)
+
     optimizedPermissions.push({
       actions,
-      resources: convertToFrns(tenantId, optimized),
+      resources: finalResources,
+      filter: newFilters.length > 0 ? newFilters : undefined,
     })
   }
 
@@ -1211,4 +1552,24 @@ export const getDynamicPermissionsType = (
   }
 
   return data
+}
+
+// Resolve a permissions node from PERMISSIONS_LIBRARY by a slash-delimited path (e.g., "case-management/case-status")
+const getPermissionsNodeByPath = (
+  path: string
+): PermissionsNode | undefined => {
+  const segments = path.split('/').filter(Boolean)
+  let current: PermissionsNode[] | undefined = PERMISSIONS_LIBRARY
+  let node: PermissionsNode | undefined
+  for (const seg of segments) {
+    if (!current) {
+      return undefined
+    }
+    node = current.find((n) => n.id === seg)
+    if (!node) {
+      return undefined
+    }
+    current = node.children
+  }
+  return node
 }

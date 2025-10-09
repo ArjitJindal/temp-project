@@ -437,6 +437,7 @@ export const SETTINGS = (): QueryKey => ['settings'];
 export const SECONDARY_QUEUE_TENANTS = (): QueryKey => ['secondary-queue-tenants'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];
+export const TENANT = (tenantId: string): QueryKey => ['tenant', tenantId];
 
 export const CHECKLIST_TEMPLATES = (params?: AnyParameters): QueryKey =>
   ['checklist-templates', params].filter(Boolean);
@@ -602,3 +603,9 @@ export const RISK_FACTOR_LOGIC = (
   versionId: string,
   riskLevel: RiskLevel,
 ): QueryKey => ['risk-factor-logic', riskFactorId, versionId, riskLevel];
+
+export const AIF_SEARCH_KEY = (
+  questionId: string,
+  variableKey: string,
+  debouncedSearch: string,
+): QueryKey => ['aif-search', questionId, variableKey, debouncedSearch];

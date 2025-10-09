@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Empty } from 'antd';
 import { Props } from '../CRMRecords/index';
 import ScopeSelector from '../ScopeSelector';
@@ -8,7 +8,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { CRM_ACCOUNT } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { CrmAccountResponse } from '@/apis';
+import { CrmAccountResponse, CrmAccountResponseEngagements } from '@/apis';
 import { makeAsyncComponent } from '@/utils/imports';
 
 const Summary = makeAsyncComponent(() => import('../Summary'));
@@ -16,7 +16,13 @@ const Emails = makeAsyncComponent(() => import('../Emails'));
 const Tasks = makeAsyncComponent(() => import('../Tasks'));
 const Notes = makeAsyncComponent(() => import('../Notes'));
 
-const ComponentLoader = ({ section, data }) => {
+interface ComponentLoaderProps {
+  section: string;
+  data: CrmAccountResponse;
+  setEmails: (engagements: Array<CrmAccountResponseEngagements>) => void;
+}
+
+const ComponentLoader = ({ section, data, setEmails }: ComponentLoaderProps) => {
   let Component;
 
   switch (section) {
@@ -36,7 +42,7 @@ const ComponentLoader = ({ section, data }) => {
       return null; // Handle unknown sections gracefully
   }
 
-  return <Component {...data} />;
+  return <Component {...data} setEmails={setEmails} />;
 };
 
 const CRMData = (props: Props) => {
@@ -46,14 +52,6 @@ const CRMData = (props: Props) => {
 
   const api = useApi();
 
-  const renderEmptyComponent = () => {
-    return (
-      <Card.Root className={s.root}>
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      </Card.Root>
-    );
-  };
-
   const { data: crmResponse } = useQuery<CrmAccountResponse>(
     CRM_ACCOUNT(userId),
 
@@ -61,6 +59,44 @@ const CRMData = (props: Props) => {
       return api.getCrmAccount({ userId });
     },
   );
+
+  const [emailsInitialized, setEmailsInitialized] = useState(false);
+  const [emails, setEmails] = useState<CrmAccountResponseEngagements[]>([]);
+
+  const currentEmails = useMemo(() => {
+    if (emailsInitialized) {
+      return emails;
+    }
+
+    if (crmResponse.kind === 'SUCCESS') {
+      return crmResponse?.value?.engagements || [];
+    }
+
+    return [];
+  }, [emails, emailsInitialized, crmResponse]);
+
+  const handleSetEmails = useCallback((newEmails: CrmAccountResponseEngagements[]) => {
+    setEmails(newEmails);
+    setEmailsInitialized(true);
+  }, []);
+
+  const renderEmptyComponent = useCallback(() => {
+    return (
+      <Card.Root className={s.root}>
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </Card.Root>
+    );
+  }, []);
+
+  const sectionCounts = useMemo(
+    () => ({
+      emails: currentEmails.length,
+      notes: 0,
+      tasks: 0,
+    }),
+    [currentEmails.length],
+  );
+
   return (
     <AsyncResourceRenderer resource={crmResponse} renderFailed={renderEmptyComponent}>
       {(data) => (
@@ -71,12 +107,18 @@ const CRMData = (props: Props) => {
                 selectedSection={selectedSection}
                 setSelectedSection={setSelectedSection}
                 count={{
-                  emails: data.engagements.length ?? 0,
+                  ...sectionCounts,
                   notes: data.notes.length ?? 0,
                   tasks: data.tasks.length ?? 0,
                 }}
               />
-              <ComponentLoader section={selectedSection} data={data} />
+              <ComponentLoader
+                section={selectedSection}
+                data={{ ...data, engagements: currentEmails }}
+                setEmails={(emails) => {
+                  handleSetEmails(emails);
+                }}
+              />
             </Card.Section>
           )}
           {!data && renderEmptyComponent()}

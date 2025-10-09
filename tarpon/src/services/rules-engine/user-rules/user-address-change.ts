@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { isEqual, xorWith, isEmpty } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import xorWith from 'lodash/xorWith'
+import isEmpty from 'lodash/isEmpty'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
@@ -57,6 +59,8 @@ export default class UserAddressChange extends UserRule<UserAddressChangeRulePar
       })
     }
 
-    return ruleHit
+    return {
+      ruleHitResult: ruleHit,
+    }
   }
 }

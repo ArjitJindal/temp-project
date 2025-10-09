@@ -1,5 +1,5 @@
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { MIGRATION_TMP_COLLECTION } from '@/utils/mongodb-definitions'
+import { MIGRATION_TMP_COLLECTION } from '@/utils/mongo-table-names'
 import { saveMigrationTmpProgressToDynamo } from '@/utils/migration-progress'
 
 export const up = async () => {

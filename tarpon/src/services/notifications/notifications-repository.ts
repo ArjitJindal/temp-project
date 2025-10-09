@@ -5,17 +5,17 @@ import { ClickhouseNotificationRepository } from './clickhouse-repository'
 import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNotificationStatus'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
-import { NOTIFICATIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { NOTIFICATIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { cursorPaginate } from '@/utils/pagination'
 import { NotificationListResponse } from '@/@types/openapi-internal/NotificationListResponse'
 import { DefaultApiGetNotificationsRequest } from '@/@types/openapi-internal/RequestParameters'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import {
-  batchInsertToClickhouse,
-  getClickhouseClient,
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+} from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 @traceable

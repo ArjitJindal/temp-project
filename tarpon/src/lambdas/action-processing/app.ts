@@ -1,5 +1,7 @@
 import { SQSEvent } from 'aws-lambda'
-import { compact, groupBy, keyBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
+import keyBy from 'lodash/keyBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'

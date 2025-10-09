@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { AnyBulkWriteOperation } from 'mongodb'
 import pMap from 'p-map'
 import { migrateAllTenants } from '../utils/tenant'
@@ -7,8 +7,8 @@ import {
   SANCTIONS_COLLECTION,
   SANCTIONS_HITS_COLLECTION,
   SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
-} from '@/utils/mongodb-definitions'
-import { Tenant } from '@/services/accounts/repository'
+} from '@/utils/mongo-table-names'
+import { Tenant } from '@/@types/tenant'
 import { hasFeature } from '@/core/utils/context'
 
 async function migrateTenant(tenant: Tenant) {

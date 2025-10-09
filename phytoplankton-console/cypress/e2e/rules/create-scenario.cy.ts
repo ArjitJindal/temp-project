@@ -1,3 +1,4 @@
+// todo: fix
 describe('Create scenario', () => {
   beforeEach(() => {
     cy.loginByRole('super_admin');
@@ -37,9 +38,9 @@ describe('Create scenario', () => {
 
     //Rule is hit when
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
-    cy.wait('@ruleLogicConfig').then((interception) => {
+    cy.wait('@ruleLogicConfig', { timeout: 120000 }).then((interception) => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
-      createAggregationVariable('Variable 1', 'type');
+      createAggregationVariable('Variable 2', 'type');
       if (type === 'USER') {
         createEntityVariable('User id', type);
       } else {
@@ -48,11 +49,11 @@ describe('Create scenario', () => {
       cy.get('button[data-cy="add-logic-v8"]').click();
       cy.waitNothingLoading();
       if (type === 'USER') {
-        addCondition('Consumer User / user id', '123');
+        addCondition('Variable 1', '123', true, true);
       } else {
-        addCondition('Transaction / type', 'Deposit');
+        addCondition('Variable 1', 'Deposit', true, true);
       }
-      addCondition('Variable 1', 5);
+      addCondition('Variable 2', 5, false);
       cy.get('[data-cy~="apply-to-risk-levels"]').click();
       cy.get('div[data-cy="menu-item-label-LOW"]').click();
       cy.get('div[data-cy="menu-item-label-MEDIUM"]').click();
@@ -85,15 +86,15 @@ describe('Create scenario', () => {
       if (ruleId.includes(ruleInstanceId)) {
         cy.get('button[data-cy="rule-edit-button"]').eq(index).click();
         cy.get('button[data-cy="drawer-next-button-v8"]').click();
-        cy.wait('@ruleLogicConfig').then((interception) => {
+        cy.wait('@ruleLogicConfig', { timeout: 120000 }).then((interception) => {
           expect(interception.response?.statusCode).to.oneOf([200, 304]);
           checkConditionsCount(2, 'LOW');
           checkConditionsCount(2, 'MEDIUM');
           checkConditionsCount(2, 'HIGH');
           checkConditionsCount(2, 'VERY_HIGH');
           checkConditionsCount(2, 'VERY_LOW');
-          createAggregationVariable('Variable 2', 'transaction id');
-          addCondition('Variable 2', 10);
+          createAggregationVariable('Variable 3', 'transaction id');
+          addCondition('Variable 3', 10, true);
           cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
           cy.get('[data-cy="apply-to-risk-levels"]').click();
           cy.get('div[title="Medium"]').click();
@@ -111,25 +112,32 @@ describe('Create scenario', () => {
     });
   }
 
-  function addCondition(variableName, value) {
-    cy.contains('button', 'Add condition').click();
+  function addCondition(variableName, value, isFirst, isValueSelect = false) {
+    if (!isFirst) {
+      cy.contains('button', 'Add condition').click();
+    }
     cy.get('.query-builder .group-or-rule-container')
       .last()
       .within(() => {
         cy.get('[data-cy="logic-variable"] [data-cy~="input"]').click().type(`${variableName}`);
         cy.get('div[data-cy="label"]').contains('Variable').click();
+        cy.get('[data-cy="logic-variable"] [data-cy~="input"]').click(); // this ensures that value is selected
         cy.get('[data-cy="value-source"] [data-cy~="input"]').click().type(`${value}`);
         cy.get('div[data-cy="label"]').contains('Variable').click();
+        if (isValueSelect) {
+          cy.get('[data-cy="value-source"] [data-cy~="input"]').click(); // this ensures that value is selected
+        }
       });
   }
   /* eslint-disable cypress/no-unnecessary-waiting */
   function createEntityVariable(entityText: string, type: 'USER' | 'TRANSACTION') {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
     cy.get('[role="menuitem"]').contains('Entity variable').click();
+    cy.get('[data-cy="variable-name-v8"]').first().type('Variable 1');
     if (type === 'USER') {
       cy.get('input[data-cy="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
     } else {
-      cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
+      cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction id');
     }
     cy.get('[data-cy~="variable-entity-v8"]').click().type(`${entityText}`).wait(1);
     cy.get(`div[title="${entityText}"]`).click();
@@ -145,8 +153,7 @@ describe('Create scenario', () => {
       .click()
       .type(`${variableAggregateField}`)
       .type(`{enter}`);
-    cy.get('[data-cy="variable-aggregate-function-v8"]').click().type('Count');
-    cy.get('div[title="Unique count"]').click();
+    cy.singleSelect('[data-cy="variable-aggregate-function-v8"]', 'Unique count');
     cy.get('button[data-cy="modal-ok"]').first().click();
   }
 

@@ -54,7 +54,7 @@ export const GenericSanctionScreeningTypes = (props: Props) => {
     }),
   );
   return options.length > 4 ? (
-    <Select options={options} {...props} mode="MULTIPLE" allowNewOptions={true} />
+    <Select options={options} {...props} mode="MULTIPLE_DYNAMIC" />
   ) : (
     <SelectionGroup mode="MULTIPLE" options={options ?? []} {...props} />
   );

@@ -12,6 +12,7 @@ import { useHasResources } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
 import { useBulkRerunUsersStatus, useTriggerBulkRerunRiskScoring } from '@/utils/batch-rerun-users';
 import { TenantSettingsBatchRerunRiskScoringFrequencyEnum } from '@/apis';
+import Tooltip from '@/components/library/Tooltip';
 
 export default function BatchRerunRiskScoringSettings() {
   const settings = useSettings();
@@ -26,6 +27,20 @@ export default function BatchRerunRiskScoringSettings() {
   const updateTenantSettings = useUpdateTenantSettings();
   const bulkRerunUsersStatus = useBulkRerunUsersStatus();
   const triggerBulkRerunRiskScoring = useTriggerBulkRerunRiskScoring();
+  const hasNoPermissions = !permissions;
+  const isLoading = bulkRerunUsersStatus.isLoading;
+  const hasRunningJobs = bulkRerunUsersStatus.data.isAnyJobRunning;
+  const hasReachedLimit =
+    bulkRerunUsersStatus.data.count >= (settings.limits?.rerunRiskScoringLimit || 0);
+  const isLegacyAlgorithm = settings.riskScoringAlgorithm?.type === 'FORMULA_LEGACY_MOVING_AVG';
+  const isDisabled =
+    hasNoPermissions ||
+    isLoading ||
+    hasRunningJobs ||
+    hasReachedLimit ||
+    isLegacyAlgorithm ||
+    isRerun;
+
   return (
     <SettingsCard
       title="Re-calculate risk scores"
@@ -40,25 +55,25 @@ export default function BatchRerunRiskScoringSettings() {
               {
                 label: 'Disabled',
                 value: 'DISABLED',
-                description: 'Disable re-calculation of risk scores',
+                description: 'Do not recalculate risk scores',
               },
               {
                 label: 'Daily',
                 value: 'DAILY',
                 description:
-                  'Re-calculate risk scores in the background if risk factors have changed on start of day in UTC',
+                  'Recalculate risk scores in the background at the start of each day (UTC) if risk factors have changed',
               },
               {
                 label: 'Weekly',
                 value: 'WEEKLY',
                 description:
-                  'Re-calculate risk scores in the background if risk factors have changed on start of the first day of the week in UTC',
+                  'Recalculate risk scores in the background at the start of each week (UTC) if risk factors have changed',
               },
               {
                 label: 'Monthly',
                 value: 'MONTHLY',
                 description:
-                  'Re-calculate risk scores in the background if risk factors have changed on start of the first day of the month in UTC',
+                  'Recalculate risk scores in the background at the start of each month (UTC) if risk factors have changed',
               },
             ]}
             value={rerunFrequency}
@@ -84,28 +99,25 @@ export default function BatchRerunRiskScoringSettings() {
           </Button>
           <Confirm
             title="Rerun risk scoring"
-            text="Are you sure you want to re-run risk scoring? Only KRS and CRA will be re-calculated transactions will be re-calculated."
+            text="Are you sure you want to rerun risk scoring? Only KRS and CRA will be recalculated. Transactions will not be recalculated.."
             onConfirm={() => {
               setIsRerun(true);
               triggerBulkRerunRiskScoring.mutate();
             }}
           >
             {({ onClick }) => (
-              <Button
-                type="SECONDARY"
-                isDisabled={
-                  !permissions ||
-                  bulkRerunUsersStatus.isLoading ||
-                  bulkRerunUsersStatus.data.isAnyJobRunning ||
-                  bulkRerunUsersStatus.data.count >=
-                    (settings.limits?.rerunRiskScoringLimit || 0) ||
-                  settings.riskScoringAlgorithm?.type === 'FORMULA_LEGACY_MOVING_AVG' ||
-                  isRerun
+              <Tooltip
+                title={
+                  isDisabled
+                    ? `Your rerun quota has been exhausted. Please contact support@flagright.com to increase your quota.`
+                    : undefined
                 }
-                onClick={onClick}
+                placement="topRight"
               >
-                Rerun now
-              </Button>
+                <Button type="SECONDARY" isDisabled={isDisabled} onClick={onClick}>
+                  Rerun now
+                </Button>
+              </Tooltip>
             )}
           </Confirm>
         </div>

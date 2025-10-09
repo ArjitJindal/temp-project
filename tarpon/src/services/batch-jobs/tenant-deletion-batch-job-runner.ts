@@ -3,7 +3,8 @@ import {
   ListObjectsCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
-import { memoize, orderBy } from 'lodash'
+import memoize from 'lodash/memoize'
+import orderBy from 'lodash/orderBy'
 import { QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { AccountsService } from '../accounts'
@@ -15,12 +16,9 @@ import {
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../rules-engine/utils'
-import {
-  executeClickhouseDefaultClientQuery,
-  getClickhouseClient,
-  getClickhouseDbName,
-} from '../../utils/clickhouse/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/execute'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { allCollections, getMongoDbClient } from '@/utils/mongodb-utils'
@@ -40,7 +38,7 @@ import { getContext } from '@/core/utils/context-storage'
 import {
   TENANT_DELETION_COLLECTION,
   DYNAMODB_PARTITIONKEYS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { envIsNot } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
@@ -49,6 +47,7 @@ import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { CRM_MODEL_TYPES } from '@/@types/openapi-internal-custom/CRMModelType'
 import { toggleApiKeys } from '@/utils/api-usage'
+import { getClickhouseDbName } from '@/utils/clickhouse/database-utils'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -92,6 +91,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ACTIVE_SESSIONS'
   | 'ALERT_COMMENT'
   | 'ALERT_COMMENT_FILE'
+  | 'ALERT_SANCTIONS_DETAILS'
   // TODO to implement
   | 'ORGANIZATION'
   | 'ORGANIZATION_ACCOUNTS'
@@ -124,6 +124,11 @@ type ExcludedDynamoDbKey = Exclude<
   | 'MIGRATION_POST_DEPLOYMENT'
   | 'SECONDARY_QUEUE_TENANTS'
   | 'CLICKHOUSE_SYNC_CHECKSUM'
+
+  // TEMPORARY
+  | 'ADDRESS_TRANSACTION'
+  | 'EMAIL_TRANSACTION'
+  | 'NAME_TRANSACTION'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
@@ -509,6 +514,16 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         DynamoDbKeys.ALERT(tenantId, alertId),
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT_TRANSACTION_IDS(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT_SANCTIONS_DETAILS(tenantId, alertId, ''),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
     ])
   }
 
@@ -739,7 +754,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         ),
       // Always delete the primary transaction item at last to avoid having zombie indexes that
       // can not be deleted.
-      DynamoDbKeys.TRANSACTION(tenantId, transactionId),
+      DynamoDbKeys.TRANSACTION(tenantId, transactionId, transaction.timestamp),
     ].filter(Boolean) as Array<DynamoDbKey>
 
     for (const key of keysToDelete) {

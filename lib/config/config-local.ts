@@ -24,6 +24,7 @@ export const config: Config = {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 1024,
       MEMORY_LIMIT: 2048,
+      ARCHITECTURE: 'arm64',
     },
     CLOUD_WATCH: {
       logRetention: RetentionDays.TWO_WEEKS,

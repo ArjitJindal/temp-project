@@ -1,10 +1,10 @@
 import { RiskScoringV8Service } from '../../../risk-scoring-v8-service'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../../repositories/risk-repository'
 import {
   BUSINESS_TYPE_RISK_FACTOR,
   CONSUMER_TYPE_RISK_FACTOR,
 } from '../../user/customer-type'
 import { getRiskFactorLogicByKeyAndType } from '../..'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import {
   TEST_BUSINESS_USER_RISK_PARAMETER,
   TEST_CONSUMER_USER_RISK_PARAMETER,

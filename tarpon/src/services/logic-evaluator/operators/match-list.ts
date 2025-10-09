@@ -1,4 +1,4 @@
-import { isArray } from 'lodash'
+import isArray from 'lodash/isArray'
 import { TextLogicOperator } from './types'
 import { getNegatedOperator } from './utils'
 import { logger } from '@/core/logger'

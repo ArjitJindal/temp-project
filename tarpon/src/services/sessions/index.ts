@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { sortBy } from 'lodash'
-import * as createError from 'http-errors'
+import sortBy from 'lodash/sortBy'
+import { Unauthorized } from 'http-errors'
 import { ActiveSession, SessionsRepository } from './repository'
 import { getContext } from '@/core/utils/context-storage'
 
@@ -51,7 +51,7 @@ export class SessionsService {
       const activeSessions = await this.getActiveSessions(userId)
 
       if (activeSessions.length + 1 > maxActiveSessions) {
-        throw new createError.Unauthorized('Invalid session')
+        throw new Unauthorized('Invalid session')
       }
     }
   }

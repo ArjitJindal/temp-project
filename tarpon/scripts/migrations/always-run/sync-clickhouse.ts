@@ -1,9 +1,7 @@
 import { backOff } from 'exponential-backoff'
 import { migrateAllTenants } from '../utils/tenant'
-import {
-  createTenantDatabase,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
+import { createTenantDatabase } from '@/utils/clickhouse/database'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 
 export async function syncClickhouseTables() {
   if (isClickhouseEnabledInRegion()) {

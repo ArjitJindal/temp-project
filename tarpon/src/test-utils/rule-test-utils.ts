@@ -1,4 +1,6 @@
-import { last, omit, zipObject } from 'lodash'
+import last from 'lodash/last'
+import omit from 'lodash/omit'
+import zipObject from 'lodash/zipObject'
 import { v4 as uuidv4 } from 'uuid'
 import {
   createUserIfNotExists,
@@ -8,10 +10,7 @@ import { withFeatureHook } from './feature-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
-import {
-  DuplicateTransactionReturnType,
-  RulesEngineService,
-} from '@/services/rules-engine'
+import { RulesEngineService } from '@/services/rules-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { User } from '@/@types/openapi-public/User'
@@ -39,6 +38,7 @@ import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
 import { GeoIPService } from '@/services/geo-ip'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { DuplicateTransactionReturnType } from '@/@types/tranasction/aggregation'
 
 const DEFAULT_DESCRIPTION = ''
 

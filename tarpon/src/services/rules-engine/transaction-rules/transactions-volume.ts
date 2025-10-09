@@ -1,13 +1,11 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  compact,
-  flatMap,
-  isEmpty,
-  mergeWith,
-  random,
-  sumBy,
-  uniq,
-} from 'lodash'
+import compact from 'lodash/compact'
+import flatMap from 'lodash/flatMap'
+import isEmpty from 'lodash/isEmpty'
+import mergeWith from 'lodash/mergeWith'
+import random from 'lodash/random'
+import sumBy from 'lodash/sumBy'
+import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionsTotalAmount,
@@ -20,11 +18,9 @@ import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA,
-  TransactionsCounterPartiesThreshold,
   TRANSACTION_COUNTERPARTIES_THRESHOLD_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -33,6 +29,10 @@ import { RuleHitResultItem } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import {
+  TimeWindow,
+  TransactionsCounterPartiesThreshold,
+} from '@/@types/rule/params'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -116,10 +116,16 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

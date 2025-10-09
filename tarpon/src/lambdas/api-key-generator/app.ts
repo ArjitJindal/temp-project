@@ -9,11 +9,11 @@ import {
   createMongoDBCollections,
 } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { createNewApiKeyForTenant } from '@/services/api-key'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import { envIs } from '@/utils/env'
 
 export type ApiKeyGeneratorQueryStringParameters = {
@@ -33,10 +33,9 @@ export const apiKeyGeneratorHandler = lambdaApi()(
     const mongoClient = await getMongoDbClient()
     const isDemo = demoTenant === 'true' && envIs('sandbox')
     const fullTenantId = getFullTenantId(tenantId, isDemo)
-    const dynamoDb = getDynamoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     await createMongoDBCollections(mongoClient, dynamoDb, fullTenantId)
     if (isDemo) {
-      const dynamoDb = await getDynamoDbClient()
       const tenantRepository = new TenantRepository(fullTenantId, { dynamoDb })
       await tenantRepository.createOrUpdateTenantSettings({
         features: ['DEMO_MODE'],

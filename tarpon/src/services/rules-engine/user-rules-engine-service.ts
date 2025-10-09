@@ -1,7 +1,9 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
-import { isEmpty, omit } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
 import { MongoClient } from 'mongodb'
+import { Client } from '@opensearch-project/opensearch/.'
 import { UserRepository } from '../users/repositories/user-repository'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
@@ -56,16 +58,18 @@ export class UserManagementService {
   riskScoringV8Service: RiskScoringV8Service
   caseRepository: CaseRepository
   listService: ListService
+  opensearchClient?: Client
 
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     mongoDb: MongoClient,
-    logicEvaluator: LogicEvaluator
+    logicEvaluator: LogicEvaluator,
+    opensearchClient?: Client
   ) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
-
+    this.opensearchClient = opensearchClient
     this.userRepository = new UserRepository(tenantId, {
       dynamoDb,
       mongoDb,
@@ -75,7 +79,8 @@ export class UserManagementService {
       tenantId,
       dynamoDb,
       logicEvaluator,
-      mongoDb
+      mongoDb,
+      opensearchClient
     )
     this.riskScoringV8Service = new RiskScoringV8Service(
       tenantId,

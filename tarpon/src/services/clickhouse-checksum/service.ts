@@ -28,7 +28,9 @@ export class ClickHouseChecksumService {
     const storedChecksums = await this.repository.getStoredClickHouseChecksums(
       tenantId
     )
-    return this.checksumUtil.isClickHouseSyncNeeded(tenantId, storedChecksums)
+    const isClickhouseSyncNeeded =
+      await this.checksumUtil.isClickHouseSyncNeeded(tenantId, storedChecksums)
+    return isClickhouseSyncNeeded
   }
 
   async getTableSyncAnalysis(
@@ -38,11 +40,12 @@ export class ClickHouseChecksumService {
     const storedChecksums = await this.repository.getStoredClickHouseChecksums(
       tenantId
     )
-    return this.checksumUtil.getTableSyncAnalysis(
+    const tableSyncAnalysis = await this.checksumUtil.getTableSyncAnalysis(
       tenantId,
       tableName,
       storedChecksums
     )
+    return tableSyncAnalysis
   }
 
   async storeClickHouseChecksums(

@@ -1,13 +1,13 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { Tenant } from '@/@types/tenant'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseService } from '@/services/cases'
 import { CaseRepository } from '@/services/cases/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
-import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 
 async function migrateTenant(tenant: Tenant) {
   const tenantId = tenant.id

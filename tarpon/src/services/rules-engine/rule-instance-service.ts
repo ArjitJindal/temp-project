@@ -1,7 +1,12 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError, { NotFound } from 'http-errors'
-import { keyBy, mapValues, mean, merge, sum, sumBy } from 'lodash'
+import keyBy from 'lodash/keyBy'
+import mapValues from 'lodash/mapValues'
+import mean from 'lodash/mean'
+import merge from 'lodash/merge'
+import sum from 'lodash/sum'
+import sumBy from 'lodash/sumBy'
 import { AlertsRepository } from '../alerts/repository'
 import { OverviewStatsDashboardMetric } from '../analytics/dashboard-metrics/overview-stats'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -39,10 +44,8 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 import { hasFeature } from '@/core/utils/context'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 

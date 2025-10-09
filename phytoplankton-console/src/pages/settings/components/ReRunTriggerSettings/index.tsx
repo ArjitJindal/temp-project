@@ -15,7 +15,7 @@ function ReRunTriggerSettings() {
 
   const options: { label: string; value: ReRunTrigger }[] = [
     {
-      label: 'SAR filling',
+      label: 'SAR filing',
       value: 'SAR',
     },
     {

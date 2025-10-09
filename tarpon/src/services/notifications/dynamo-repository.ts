@@ -5,7 +5,7 @@ import {
   QueryCommandOutput,
   DynamoDBDocumentClient,
 } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { traceable } from '@/core/xray'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import {
@@ -17,18 +17,6 @@ import {
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsoleNotificationStatus } from '@/@types/openapi-internal/ConsoleNotificationStatus'
 import { envIs } from '@/utils/env'
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
-  }
-}
 
 @traceable
 export class DynamoNotificationRepository {
@@ -79,7 +67,11 @@ export class DynamoNotificationRepository {
 
     await batch.execute()
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, keys)
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, keys)
     }
   }
 
@@ -101,7 +93,11 @@ export class DynamoNotificationRepository {
     await this.dynamoDb.send(command)
 
     if (envIs('local') || envIs('test')) {
-      await handleLocalChangeCapture(this.tenantId, [key])
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
   public async getNotifications(
@@ -222,7 +218,11 @@ export class DynamoNotificationRepository {
       })
       await this.dynamoDb.send(command)
       if (envIs('local') || envIs('test')) {
-        await handleLocalChangeCapture(this.tenantId, [key])
+        const { handleLocalTarponChangeCapture } = await import(
+          '@/core/local-handlers/tarpon'
+        )
+
+        await handleLocalTarponChangeCapture(this.tenantId, [key])
       }
     }
   }

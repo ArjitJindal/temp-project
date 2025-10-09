@@ -2,6 +2,55 @@ import { ManagedRoleName } from '@/@types/openapi-internal/ManagedRoleName'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { FilterCondition } from '@/@types/openapi-internal/FilterCondition'
+
+// Shared status filter values and filters to avoid repetition
+const ALL_CASE_STATUS_VALUES = [
+  'OPEN',
+  'CLOSED',
+  'REOPENED',
+  'ESCALATED',
+  'IN_REVIEW_OPEN',
+  'IN_REVIEW_ESCALATED',
+  'IN_REVIEW_CLOSED',
+  'IN_REVIEW_REOPENED',
+  'OPEN_IN_PROGRESS',
+  'ESCALATED_IN_PROGRESS',
+  'OPEN_ON_HOLD',
+  'ESCALATED_ON_HOLD',
+  'ESCALATED_L2',
+]
+
+const ALL_ALERT_STATUS_VALUES = [
+  'OPEN',
+  'CLOSED',
+  'REOPENED',
+  'ESCALATED',
+  'IN_REVIEW_OPEN',
+  'IN_REVIEW_ESCALATED',
+  'IN_REVIEW_CLOSED',
+  'IN_REVIEW_REOPENED',
+  'OPEN_IN_PROGRESS',
+  'ESCALATED_IN_PROGRESS',
+  'OPEN_ON_HOLD',
+  'ESCALATED_ON_HOLD',
+  'ESCALATED_L2',
+]
+
+const STATUS_FILTERS_FULL: FilterCondition[] = [
+  {
+    permissionId: 'case-status',
+    operator: 'Equals',
+    param: 'filterCaseStatus',
+    values: ALL_CASE_STATUS_VALUES,
+  },
+  {
+    permissionId: 'alert-status',
+    operator: 'Equals',
+    param: 'filterAlertStatus',
+    values: ALL_ALERT_STATUS_VALUES,
+  },
+]
 
 export const DEFAULT_ROLES: {
   role: ManagedRoleName
@@ -192,6 +241,14 @@ export const DEFAULT_ROLES_V2: {
     role: 'admin',
     permissions: [
       { actions: ['read', 'write'], resources: ['frn:console:<default>:::*'] },
+      {
+        actions: ['read'],
+        resources: [
+          'frn:console:<default>:::case-management/case-status/*',
+          'frn:console:<default>:::case-management/alert-status/*',
+        ],
+        filter: STATUS_FILTERS_FULL,
+      },
     ],
     description:
       'Admin has unrestricted access to all features. They can invite new accounts to the console, and there can be multiple admins.',
@@ -228,7 +285,10 @@ export const DEFAULT_ROLES_V2: {
           'frn:console:<default>:::lists/blacklist/*',
           'frn:console:<default>:::simulator/*',
           'frn:console:<default>:::screening/*',
+          'frn:console:<default>:::case-management/case-status/*',
+          'frn:console:<default>:::case-management/alert-status/*',
         ],
+        filter: STATUS_FILTERS_FULL,
       },
     ],
     description:
@@ -266,7 +326,10 @@ export const DEFAULT_ROLES_V2: {
           'frn:console:<default>:::transactions/overview/*',
           'frn:console:<default>:::users/user-overview/*',
           'frn:console:<default>:::screening/*',
+          'frn:console:<default>:::case-management/case-status/*',
+          'frn:console:<default>:::case-management/alert-status/*',
         ],
+        filter: STATUS_FILTERS_FULL,
       },
     ],
     description:
@@ -309,7 +372,10 @@ export const DEFAULT_ROLES_V2: {
           'frn:console:<default>:::simulator/*',
           'frn:console:<default>:::users/user-overview/*',
           'frn:console:<default>:::screening/*',
+          'frn:console:<default>:::case-management/case-status/*',
+          'frn:console:<default>:::case-management/alert-status/*',
         ],
+        filter: STATUS_FILTERS_FULL,
       },
     ],
     description:
@@ -360,7 +426,10 @@ export const DEFAULT_ROLES_V2: {
           'frn:console:<default>:::lists/blacklist/*',
           'frn:console:<default>:::simulator/*',
           'frn:console:<default>:::screening/*',
+          'frn:console:<default>:::case-management/case-status/*',
+          'frn:console:<default>:::case-management/alert-status/*',
         ],
+        filter: STATUS_FILTERS_FULL,
       },
     ],
     description:

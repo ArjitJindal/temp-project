@@ -1,15 +1,16 @@
 import { AggregationCursor, Filter, MongoClient, Document } from 'mongodb'
 import pMap from 'p-map'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
-import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongodb-definitions'
+import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongo-table-names'
 import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
 import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
-import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
+import { OptionalPagination } from '@/@types/pagination'
 import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/SimulationBeaconTransactionResult'
 import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 type SimulationResult =
   | SimulationRiskLevelsResult

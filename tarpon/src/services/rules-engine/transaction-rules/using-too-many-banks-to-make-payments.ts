@@ -1,11 +1,12 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, mergeWith, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import mergeWith from 'lodash/mergeWith'
+import uniq from 'lodash/uniq'
 import { TransactionHistoricalFilters } from '../filters'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   BANKS_THRESHOLD_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -17,6 +18,7 @@ import {
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { mergeObjects } from '@/utils/object'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
@@ -84,10 +86,16 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

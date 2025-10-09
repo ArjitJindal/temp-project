@@ -1,17 +1,15 @@
 import { SQSEvent } from 'aws-lambda'
-import { groupBy } from 'lodash'
-import * as Sentry from '@sentry/aws-serverless'
+import groupBy from 'lodash/groupBy'
+import { captureException as captureExceptionSentry } from '@sentry/aws-serverless'
+import { handleRequestLoggerTaskClickhouse } from './utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
-import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
+import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongo-table-names'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getAllTenantIds, getNonDemoTenantId } from '@/utils/tenant'
+import { getAllTenantIds } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { ApiRequestLog } from '@/@types/request-logger'
-import {
-  batchInsertToClickhouse,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { envIs } from '@/utils/env'
 
 const captureException = (log: ApiRequestLog) => {
@@ -23,19 +21,16 @@ const captureException = (log: ApiRequestLog) => {
     method: log.method,
     timestamp: log.timestamp,
   })
-  Sentry.captureException(
-    new Error(`Unknown tenantId found: ${log.tenantId}`),
-    {
-      extra: {
-        tenantId: log.tenantId,
-        requestId: log.requestId || 'no-request-id',
-        traceId: log.traceId,
-        path: log.path,
-        method: log.method,
-        timestamp: log.timestamp,
-      },
-    }
-  )
+  captureExceptionSentry(new Error(`Unknown tenantId found: ${log.tenantId}`), {
+    extra: {
+      tenantId: log.tenantId,
+      requestId: log.requestId || 'no-request-id',
+      traceId: log.traceId,
+      path: log.path,
+      method: log.method,
+      timestamp: log.timestamp,
+    },
+  })
 }
 
 export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
@@ -77,17 +72,6 @@ export const handleRequestLoggerTask = async (logs: ApiRequestLog[]) => {
       .collection(requestLoggerCollectionName)
       .insertMany(tenantLogs, { ordered: false })
   }
-}
-
-export const handleRequestLoggerTaskClickhouse = async (
-  tenantId: string,
-  logs: ApiRequestLog[]
-) => {
-  await batchInsertToClickhouse(
-    tenantId,
-    CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
-    logs
-  )
 }
 
 export const requestLoggerHandler = lambdaConsumer()(

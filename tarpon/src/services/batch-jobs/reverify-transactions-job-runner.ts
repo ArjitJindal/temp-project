@@ -1,11 +1,13 @@
-import { isEqual, pick, sortBy } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import pick from 'lodash/pick'
+import sortBy from 'lodash/sortBy'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import {
   RulesEngineService,
   getExecutedAndHitRulesResult,

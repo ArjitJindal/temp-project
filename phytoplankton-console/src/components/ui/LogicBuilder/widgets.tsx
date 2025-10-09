@@ -87,7 +87,14 @@ const isTransactionKeyField = (
 ): boolean => {
   if (typeof entityKey === 'string') {
     const field = entityKey.split('.')[0];
-    return !!props.fields[field]?.label?.toLowerCase().includes('transaction /');
+    const fieldData = props.fields[field] as any;
+    if (fieldData?.fieldSettings) {
+      const { uniqueType } = fieldData.fieldSettings;
+      if (uniqueType) {
+        return uniqueType.startsWith('TRANSACTION_');
+      }
+      return true;
+    }
   }
   return false;
 };
@@ -327,8 +334,12 @@ const customTextWidget: CoreWidgets['text'] = {
         if (entityId) {
           return (
             <DynamicValueFieldWrapper entityId={entityId}>
-              {(dynamicKeyFilter, forceUpdateTrigger) => {
-                const currentValue = forceUpdateTrigger > 0 ? undefined : props.value;
+              {(dynamicKeyFilter) => {
+                const keyValue = getTagKeyValue(entityId);
+                const currentValue = !keyValue ? undefined : props.value;
+                if (!keyValue) {
+                  props.setValue(undefined);
+                }
 
                 if (isArrayType) {
                   return (
@@ -349,7 +360,7 @@ const customTextWidget: CoreWidgets['text'] = {
                   <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
                     <SingleListSelectDynamic
                       uniqueTypeProps={uniqueTypeProps}
-                      value={currentValue as string}
+                      value={currentValue}
                       onChange={(val) => props.setValue(val)}
                       filter={dynamicKeyFilter}
                     />
@@ -456,9 +467,8 @@ const customTextWidget: CoreWidgets['text'] = {
     if (isArrayType) {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
-          <Select<string>
-            mode={'MULTIPLE'}
-            allowNewOptions={true}
+          <Select
+            mode={'MULTIPLE_DYNAMIC'}
             allowClear={true}
             options={[]}
             value={(props.value as any) ?? undefined}
@@ -676,9 +686,8 @@ function MultiSelectWidget(props: any) {
 
   return (
     <WidgetWrapper widgetFactoryProps={props}>
-      <Select<string | number>
-        mode={'MULTIPLE'}
-        allowNewOptions={props.allowCustomValues}
+      <Select
+        mode={props.allowCustomValues ? 'MULTIPLE_DYNAMIC' : 'MULTIPLE'}
         allowClear={true}
         options={options}
         value={value}
@@ -793,9 +802,12 @@ const customFieldWidget: FieldWidget<Config> = {
     const queryBuilderConfig = props.config as QueryBuilderConfig;
     if (isViewMode(queryBuilderConfig)) {
       const { variableColors, onClickVariable } = queryBuilderConfig.settings;
+      const selectedOption = finalOptions.find((x) => x.value === finalValue);
       return (
         <VariableInfoPopover onClick={props.value && (() => onClickVariable?.(props.value))}>
-          <ViewModeTags color={variableColors?.[props.value]}>{finalValue}</ViewModeTags>
+          <ViewModeTags color={variableColors?.[props.value]}>
+            {selectedOption?.label ?? finalValue}
+          </ViewModeTags>
         </VariableInfoPopover>
       );
     }

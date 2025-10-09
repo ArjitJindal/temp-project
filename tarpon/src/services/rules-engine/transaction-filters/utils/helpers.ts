@@ -1,8 +1,8 @@
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import {
   TimeRangeHourAndMinute,
   TransactionTimeRange,
-} from '../../utils/rule-parameter-schemas'
+} from '@/@types/rule/params'
 
 export function getHoursAndMinutesFromTimestamp(
   timestamp: number

@@ -39,7 +39,7 @@ export default function NewValueInput(props: Props) {
   }
 
   if (listSubtype === 'STRING' || listSubtype === 'CUSTOM') {
-    return <Select<string> mode="MULTIPLE" allowNewOptions options={[]} {...rest} />;
+    return <Select<string> mode="MULTIPLE_DYNAMIC" options={[]} {...rest} />;
   }
 
   if (is314aEnabled && (listSubtype === '314A_INDIVIDUAL' || listSubtype === '314A_BUSINESS')) {
@@ -83,6 +83,7 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
       }}
       params={params}
       handleChangeParams={handleChangeParams}
+      filterType="name"
     >
       <Button style={{ width: '100%' }}>
         {newUserData.userFullName || `Choose ${settings.userAlias}`}
@@ -158,8 +159,7 @@ function SearchInput(
         label: option.label,
       }))}
       isLoading={isLoading(queryResult.data)}
-      mode="MULTIPLE"
-      allowNewOptions
+      mode="MULTIPLE_DYNAMIC"
       value={value}
       onChange={(newValue) => {
         onChange?.(newValue ?? []);

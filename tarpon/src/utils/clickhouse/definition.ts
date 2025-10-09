@@ -1,5 +1,4 @@
-import { invert, memoize, uniq } from 'lodash'
-import { MONGO_TABLE_SUFFIX_MAP } from '../mongodb-definitions'
+import uniq from 'lodash/uniq'
 import {
   userStatsColumns,
   userStatsMVQuery,
@@ -20,76 +19,10 @@ import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
-
-export type IndexOptions = {
-  type: string
-  config: Record<string, any>
-}
-
-export type IndexType =
-  | 'inverted'
-  | 'normal'
-  | 'bloom_filter'
-  | 'minmax'
-  | 'set'
-  | 'tokenbf_v1'
-
-type BaseTableDefinition = {
-  table: string
-  idColumn: string
-  timestampColumn: string
-  materializedColumns?: string[]
-  indexes?: {
-    column: string
-    name: string
-    type: IndexType
-    options: {
-      granularity: number
-      ngramSize?: number
-      bloomFilterSize?: number
-      numHashFunctions?: number
-      randomSeed?: number
-    }
-  }[]
-  engine: 'ReplacingMergeTree' | 'AggregatingMergeTree' | 'SummingMergeTree'
-  versionColumn?: string
-  primaryKey: string
-  orderBy: string
-  partitionBy?: string
-  mongoIdColumn?: boolean
-  optimize?: boolean
-}
-
-type QueryCallback = (tenantId: string) => Promise<string>
-
-export type MaterializedViewDefinition = Omit<
-  BaseTableDefinition,
-  'idColumn' | 'timestampColumn' | 'projections' | 'materializedColumns'
-> & {
-  viewName: string
-  columns: string[]
-  query?: string | QueryCallback
-  refresh?: {
-    interval: number
-    granularity: 'MINUTE' | 'HOUR' | 'DAY' | 'SECOND'
-  }
-}
-
-export type ProjectionsDefinition = {
-  name: string
-  version: number
-  definition: {
-    columns: string[]
-    aggregator: 'GROUP'
-    aggregatorBy: string
-  }
-}
-
-export type ClickhouseTableDefinition = BaseTableDefinition & {
-  materializedViews?: MaterializedViewDefinition[]
-  projections?: ProjectionsDefinition[]
-  model?: string // Optional: Generate columns from this model instead of materializedColumns
-}
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { CLICKHOUSE_ID_COLUMN_MAP } from '@/constants/clickhouse/id-column-map'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 
 const enumFields = (
   enumValues: string[],
@@ -142,34 +75,6 @@ export const userNameMaterilizedColumn = `username String MATERIALIZED
         JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.legalName')
     )`
 
-export enum ClickhouseTableNames {
-  TransactionsFromModel = 'transactions_v2',
-  Transactions = 'transactions',
-  TransactionsDesc = 'transactions_desc',
-  Users = 'users',
-  TransactionEvents = 'transaction_events',
-  UserEvents = 'user_events',
-  Cases = 'cases',
-  CasesV2 = 'cases_v2',
-  Reports = 'reports',
-  KrsScore = 'krs_score',
-  DrsScore = 'drs_score',
-  ArsScore = 'ars_score',
-  SanctionsScreeningDetails = 'sanctions_screening_details',
-  SanctionsScreeningDetailsV2 = 'sanctions_screening_details_v2',
-  Alerts = 'alerts',
-  CrmRecords = 'crm_records',
-  CrmUserRecordLink = 'crm_user_record_link',
-  DynamicPermissionsItems = 'dynamic_permissions_items',
-  AuditLogs = 'audit_logs',
-  AlertsQaSampling = 'alerts_qa_sampling',
-  ApiRequestLogs = 'api_request_logs',
-  Notifications = 'notifications',
-  GptRequests = 'gpt_request_logs',
-  Metrics = 'metrics',
-  Webhook = 'webhook',
-  WebhookDelivery = 'webhook_deliveries',
-}
 export const userNameCasesV2MaterializedColumn = `
   userName String MATERIALIZED coalesce(
     nullIf(trim(BOTH ' ' FROM 
@@ -369,170 +274,8 @@ const sharedTransactionMaterializedColumns = [
   `updateCount UInt64 MATERIALIZED JSONExtractUInt(data, 'updateCount')`,
   `createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')`,
   `updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')`,
+  `paymentApprovalTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'paymentApprovalTimestamp')`,
 ]
-
-export const CLICKHOUSE_DEFINITIONS = {
-  TRANSACTIONS_FROM_MODEL: {
-    tableName: ClickhouseTableNames.TransactionsFromModel,
-    definition: {
-      idColumn: 'transactionId',
-      timestampColumn: 'timestamp',
-    },
-  },
-  TRANSACTIONS: {
-    tableName: ClickhouseTableNames.Transactions,
-    definition: {
-      idColumn: 'transactionId',
-      timestampColumn: 'timestamp',
-    },
-    materializedViews: {
-      BY_ID: {
-        viewName: 'transactions_by_id_mv',
-        table: 'transactions_by_id',
-      },
-      TRANSACTION_MONTHLY_STATS: {
-        viewName: 'transactions_monthly_stats_mv',
-        table: 'transactions_monthly_stats',
-      },
-      TRANSACTION_HOURLY_STATS: {
-        viewName: 'transactions_hourly_stats_mv',
-        table: 'transactions_hourly_stats',
-      },
-      TRANSACTION_DAILY_STATS: {
-        viewName: 'transactions_daily_stats_mv',
-        table: 'transactions_daily_stats',
-      },
-      RULE_STATS_HOURLY: {
-        viewName: 'rule_stats_hourly_transactions_mv',
-        table: 'rule_stats_hourly_transactions',
-      },
-      BY_TYPE: {
-        viewName: 'transactions_by_type_mv',
-        table: 'transactions_by_type',
-      },
-      BY_TYPE_DAILY: {
-        viewName: 'transactions_by_type_daily_mv',
-        table: 'transactions_by_type_daily',
-      },
-    },
-  },
-  TRANSACTIONS_DESC: {
-    tableName: ClickhouseTableNames.TransactionsDesc,
-    definition: {
-      idColumn: 'transactionId',
-      timestampColumn: 'timestamp',
-    },
-  },
-  USERS: {
-    tableName: ClickhouseTableNames.Users,
-    definition: {
-      idColumn: 'userId',
-      timestampColumn: 'createdTimestamp',
-    },
-    materializedViews: {
-      BY_ID: {
-        viewName: 'users_by_id_mv',
-        table: 'users_by_id',
-      },
-      USER_MONTHLY_STATS: {
-        viewName: 'user_monthly_stats_mv',
-        table: 'user_monthly_stats',
-      },
-      USER_HOURLY_STATS: {
-        viewName: 'user_hourly_stats_mv',
-        table: 'user_hourly_stats',
-      },
-      USER_DAILY_STATS: {
-        viewName: 'user_daily_stats_mv',
-        table: 'user_daily_stats',
-      },
-    },
-  },
-  TRANSACTION_EVENTS: {
-    tableName: ClickhouseTableNames.TransactionEvents,
-  },
-  USER_EVENTS: {
-    tableName: ClickhouseTableNames.UserEvents,
-  },
-  CASES: {
-    tableName: ClickhouseTableNames.Cases,
-    materializedViews: {
-      INVESTIGATION_TIMES_HOURLY_STATS: {
-        viewName: 'cases_investigation_times_hourly_mv',
-        table: 'cases_investigation_times_hourly',
-      },
-    },
-  },
-  REPORTS: {
-    tableName: ClickhouseTableNames.Reports,
-  },
-  KRS_SCORE: {
-    tableName: ClickhouseTableNames.KrsScore,
-  },
-  DRS_SCORE: {
-    tableName: ClickhouseTableNames.DrsScore,
-  },
-  ARS_SCORE: {
-    tableName: ClickhouseTableNames.ArsScore,
-  },
-  SANCTIONS_SCREENING_DETAILS: {
-    tableName: ClickhouseTableNames.SanctionsScreeningDetails,
-    materializedViews: {
-      BY_ID: {
-        viewName: 'sanctions_screening_details_by_id_mv',
-        table: 'sanctions_screening_details_by_id',
-      },
-    },
-  },
-  SANCTIONS_SCREENING_DETAILS_V2: {
-    tableName: ClickhouseTableNames.SanctionsScreeningDetailsV2,
-    materializedViews: {
-      BY_ID: {
-        viewName: 'sanctions_screening_details_v2_by_id_mv',
-        table: 'sanctions_screening_details_v2_by_id',
-      },
-    },
-  },
-  ALERTS: {
-    tableName: ClickhouseTableNames.Alerts,
-  },
-  CRM_RECORDS: {
-    tableName: ClickhouseTableNames.CrmRecords,
-  },
-  CRM_USER_RECORD_LINK: {
-    tableName: ClickhouseTableNames.CrmUserRecordLink,
-  },
-  CASES_V2: {
-    tableName: ClickhouseTableNames.CasesV2,
-  },
-  DYNAMIC_PERMISSIONS_ITEMS: {
-    tableName: ClickhouseTableNames.DynamicPermissionsItems,
-  },
-  AUDIT_LOGS: {
-    tableName: ClickhouseTableNames.AuditLogs,
-  },
-  ALERTS_QA_SAMPLING: {
-    tableName: ClickhouseTableNames.AlertsQaSampling,
-  },
-  API_REQUEST_LOGS: {
-    tableName: ClickhouseTableNames.ApiRequestLogs,
-  },
-  NOTIFICATIONS: {
-    tableName: ClickhouseTableNames.Notifications,
-  },
-  GPT_REQUESTS: {
-    tableName: ClickhouseTableNames.GptRequests,
-  },
-  METRICS: {
-    tableName: ClickhouseTableNames.Metrics,
-  },
-  WEBHOOK: {
-    tableName: ClickhouseTableNames.Webhook,
-  },
-  WEBHOOK_DELIVERIES: {
-    tableName: ClickhouseTableNames.WebhookDelivery,
-  },
-} as const
 
 const businessIndustryMaterializedColumn = (
   type: 'origin' | 'destination'
@@ -583,7 +326,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS_FROM_MODEL.tableName,
     idColumn:
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS_FROM_MODEL.definition.idColumn,
+      CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.TransactionsFromModel],
     timestampColumn:
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS_FROM_MODEL.definition.timestampColumn,
     materializedColumns: [`negative_timestamp Int64 MATERIALIZED -1*timestamp`],
@@ -597,11 +340,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
-    idColumn: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.idColumn,
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Transactions],
     timestampColumn:
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.timestampColumn,
     materializedColumns: [...sharedTransactionMaterializedColumns],
-
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
     orderBy: '(timestamp, originUserId, destinationUserId, id)',
@@ -733,7 +475,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.tableName,
-    idColumn: CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.definition.idColumn,
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.TransactionsDesc],
     timestampColumn:
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS_DESC.definition.timestampColumn,
     materializedColumns: [
@@ -750,7 +492,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.USERS.tableName,
-    idColumn: CLICKHOUSE_DEFINITIONS.USERS.definition.idColumn,
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Users],
     timestampColumn: CLICKHOUSE_DEFINITIONS.USERS.definition.timestampColumn,
     materializedColumns: [
       enumFields(USER_TYPES, 'type', 'type'),
@@ -903,7 +645,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
-    idColumn: 'eventId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.TransactionEvents],
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(transactionId, timestamp, id)',
@@ -941,7 +683,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
-    idColumn: 'eventId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.UserEvents],
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(userId, timestamp, id)',
@@ -973,7 +715,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.CASES.tableName,
-    idColumn: 'caseId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Cases],
     timestampColumn: 'createdTimestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -1047,7 +789,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.CASES_V2.tableName,
-    idColumn: 'caseId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.CasesV2],
     timestampColumn: 'createdTimestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(negativeTimestamp, id)',
@@ -1063,7 +805,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.KRS_SCORE.tableName,
-    idColumn: 'userId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.KrsScore],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(id, timestamp)',
@@ -1072,7 +814,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.DRS_SCORE.tableName,
-    idColumn: 'userId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.DrsScore],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(id, timestamp)',
@@ -1081,7 +823,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
-    idColumn: 'transactionId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.ArsScore],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(id, originUserId, destinationUserId, timestamp)',
@@ -1094,7 +836,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
-    idColumn: 'searchId',
+    idColumn:
+      CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.SanctionsScreeningDetails],
     timestampColumn: 'lastScreenedAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, name, entity)',
@@ -1127,7 +870,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
-    idColumn: 'screeningId',
+    idColumn:
+      CLICKHOUSE_ID_COLUMN_MAP[
+        ClickhouseTableNames.SanctionsScreeningDetailsV2
+      ],
     timestampColumn: 'lastScreenedAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, userId, transactionId, screeningId)',
@@ -1165,7 +911,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
 
   {
     table: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
-    idColumn: '_id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Reports],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -1177,7 +923,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
-    idColumn: 'alertId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Alerts],
     timestampColumn: 'createdTimestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(priority, negativeTimestamp, ruleInstanceId, caseId, id)',
@@ -1224,7 +970,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.CRM_RECORDS.tableName,
-    idColumn: 'id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.CrmRecords],
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(recordType, crmName, id)',
@@ -1237,7 +983,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.CRM_USER_RECORD_LINK.tableName,
-    idColumn: 'id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.CrmUserRecordLink],
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(userId, crmName, recordType, id)',
@@ -1250,7 +996,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.DYNAMIC_PERMISSIONS_ITEMS.tableName,
-    idColumn: 'id',
+    idColumn:
+      CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.DynamicPermissionsItems],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(subType, id)',
@@ -1262,7 +1009,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.AUDIT_LOGS.tableName,
-    idColumn: 'auditlogId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.AuditLogs],
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -1282,7 +1029,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
-    idColumn: 'samplingId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.AlertsQaSampling],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, samplingId)',
@@ -1302,7 +1049,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
-    idColumn: 'requestId',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.ApiRequestLogs],
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -1316,7 +1063,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
-    idColumn: 'id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Notifications],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: 'id',
@@ -1334,7 +1081,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.GPT_REQUESTS.tableName,
-    idColumn: '_id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.GptRequests],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: 'id',
@@ -1344,7 +1091,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.METRICS.tableName,
-    idColumn: '_id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Metrics],
     timestampColumn: 'collectedTimestamp',
     engine: 'ReplacingMergeTree',
     primaryKey: '(date, name)',
@@ -1359,7 +1106,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.WEBHOOK.tableName,
-    idColumn: '_id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Webhook],
     timestampColumn: 'createdAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(id)',
@@ -1376,7 +1123,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
-    idColumn: '_id',
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.WebhookDelivery],
     timestampColumn: 'eventCreatedAt',
     engine: 'ReplacingMergeTree',
     primaryKey: '(id)',
@@ -1399,42 +1146,3 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
-
-export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE: Record<
-  string,
-  ClickhouseTableNames
-> = {
-  [MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS]:
-    CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.USERS]: CLICKHOUSE_DEFINITIONS.USERS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.TRANSACTION_EVENTS]:
-    CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.USER_EVENTS]:
-    CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.CASES]: CLICKHOUSE_DEFINITIONS.CASES.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.KRS_SCORE]:
-    CLICKHOUSE_DEFINITIONS.KRS_SCORE.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.DRS_SCORE]:
-    CLICKHOUSE_DEFINITIONS.DRS_SCORE.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.ARS_SCORE]:
-    CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
-    CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2]:
-    CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS_V2.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING]:
-    CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.API_REQUEST_LOGS]:
-    CLICKHOUSE_DEFINITIONS.API_REQUEST_LOGS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.NOTIFICATIONS]:
-    CLICKHOUSE_DEFINITIONS.NOTIFICATIONS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.METRICS]: CLICKHOUSE_DEFINITIONS.METRICS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.WEBHOOK]: CLICKHOUSE_DEFINITIONS.WEBHOOK.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.WEBHOOK_DELIVERIES]:
-    CLICKHOUSE_DEFINITIONS.WEBHOOK_DELIVERIES.tableName,
-}
-
-export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>
-  invert(MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE)
-)

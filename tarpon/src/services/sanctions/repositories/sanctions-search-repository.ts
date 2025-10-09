@@ -1,5 +1,7 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
-import { isNil, omit, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omit from 'lodash/omit'
+import omitBy from 'lodash/omitBy'
 import { Search_Response } from '@opensearch-project/opensearch/api'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDefaultProviders } from '../utils'
@@ -17,14 +19,13 @@ import {
   prefixRegexMatchFilter,
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
-import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { cursorPaginate } from '@/utils/pagination'
-import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
@@ -461,19 +462,5 @@ export class SanctionsSearchRepository {
     //   )
     // }
     return searches[0]
-  }
-
-  public async updateSearchMonitoring(
-    searchId: string,
-    monitoring: SanctionsSearchMonitoring
-  ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-    await collection.updateOne(
-      { _id: searchId },
-      { $set: { 'request.monitoring': monitoring } }
-    )
   }
 }

@@ -1,15 +1,16 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { isEmpty, intersection, isNil, omitBy } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import intersection from 'lodash/intersection'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '@/core/xray'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { Case } from '@/@types/openapi-internal/Case'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
-import {
-  DEFAULT_PAGE_SIZE,
-  offsetPaginateClickhouseWithoutDataTable,
-} from '@/utils/pagination'
+import { offsetPaginateClickhouseWithoutDataTable } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { AccountsService } from '@/services/accounts'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
@@ -18,10 +19,9 @@ import { getPaymentDetailsIdentifiers } from '@/core/dynamodb/dynamodb-keys'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
-import {
-  CaseSubject,
-  getAssignmentsStatus,
-} from '@/services/case-alerts-common/utils'
+import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
+import { CaseSubject } from '@/@types/cases/CasesInternal'
+import { Address } from '@/@types/openapi-public/Address'
 
 type CaseStatusCount = {
   caseStatus: string
@@ -669,13 +669,31 @@ export class CaseClickhouseRepository {
         params.directions
       )
       conditions.push(...userConditions)
-    } else {
+    } else if (subject.type === 'PAYMENT') {
       const paymentDetailsConditions =
         this.buildPaymentDetailsDirectionConditions(
           subject.paymentDetails,
           params.directions
         )
       conditions.push(...paymentDetailsConditions)
+    } else if (subject.type === 'ADDRESS') {
+      const addressConditions = this.buildAddressDirectionConditions(
+        subject.address,
+        params.directions
+      )
+      conditions.push(...addressConditions)
+    } else if (subject.type === 'EMAIL') {
+      const emailConditions = this.buildEmailDirectionConditions(
+        subject.email,
+        params.directions
+      )
+      conditions.push(...emailConditions)
+    } else if (subject.type === 'NAME') {
+      const nameConditions = this.buildNameDirectionConditions(
+        subject.name,
+        params.directions
+      )
+      conditions.push(...nameConditions)
     }
 
     // Filter by availableAfterTimestamp
@@ -739,6 +757,7 @@ export class CaseClickhouseRepository {
     directions?: ('ORIGIN' | 'DESTINATION')[]
   ): string[] {
     const directionConditions: string[] = []
+    // TODO: @kr-amitsinha and @sohan2410 to implement this
 
     if (directions == null || directions.includes('ORIGIN')) {
       directionConditions.push(`originUserId = '${userId}'`)
@@ -746,6 +765,58 @@ export class CaseClickhouseRepository {
 
     if (directions == null || directions.includes('DESTINATION')) {
       directionConditions.push(`destinationUserId = '${userId}'`)
+    }
+
+    return directionConditions.length > 0
+      ? [`(${directionConditions.join(' OR ')})`]
+      : []
+  }
+
+  private buildAddressDirectionConditions(
+    _address: Address,
+    _directions?: ('ORIGIN' | 'DESTINATION')[]
+  ): string[] {
+    const directionConditions: string[] = []
+    // TODO: @kr-amitsinha and @sohan2410 to implement this
+    return directionConditions.length > 0
+      ? [`(${directionConditions.join(' OR ')})`]
+      : []
+  }
+
+  private buildEmailDirectionConditions(
+    email: string,
+    directions?: ('ORIGIN' | 'DESTINATION')[]
+  ): string[] {
+    // TODO: @kr-amitsinha and @sohan2410 to implement this
+
+    const directionConditions: string[] = []
+    if (directions == null || directions.includes('ORIGIN')) {
+      directionConditions.push(`emailId.origin = '${email}'`)
+    }
+
+    if (directions == null || directions.includes('DESTINATION')) {
+      directionConditions.push(`emailId.destination = '${email}'`)
+    }
+
+    return directionConditions.length > 0
+      ? [`(${directionConditions.join(' OR ')})`]
+      : []
+  }
+
+  private buildNameDirectionConditions(
+    name: string,
+    directions?: ('ORIGIN' | 'DESTINATION')[]
+  ): string[] {
+    // TODO: @kr-amitsinha and @sohan2410 to implement this
+
+    const directionConditions: string[] = []
+
+    if (directions == null || directions.includes('ORIGIN')) {
+      directionConditions.push(`name.origin = '${name}'`)
+    }
+
+    if (directions == null || directions.includes('DESTINATION')) {
+      directionConditions.push(`name.destination = '${name}'`)
     }
 
     return directionConditions.length > 0

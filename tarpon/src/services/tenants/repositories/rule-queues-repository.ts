@@ -1,13 +1,14 @@
 import { MongoClient, AggregationCursor } from 'mongodb'
 
-import { isNil, omitBy } from 'lodash'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { shortId } from '@flagright/lib/utils'
 import {
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
 } from '@/utils/mongodb-utils'
-import { RULE_QUEUES_COLLECTION } from '@/utils/mongodb-definitions'
+import { RULE_QUEUES_COLLECTION } from '@/utils/mongo-table-names'
 import { traceable } from '@/core/xray'
 import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
 import { DefaultApiGetRuleQueuesRequest } from '@/@types/openapi-internal/RequestParameters'

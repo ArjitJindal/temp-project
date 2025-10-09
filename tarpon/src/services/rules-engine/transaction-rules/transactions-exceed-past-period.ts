@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
@@ -8,7 +9,6 @@ import {
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -17,6 +17,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResultItem } from '../rule'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { zipGenerators } from '@/utils/generator'
 import { traceable } from '@/core/xray'
 
@@ -89,10 +90,16 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

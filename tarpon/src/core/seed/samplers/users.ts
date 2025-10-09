@@ -2,7 +2,10 @@ import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { cloneDeep, compact, uniq, memoize } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import compact from 'lodash/compact'
+import uniq from 'lodash/uniq'
+import memoize from 'lodash/memoize'
 import { getDemoDataS3Prefix } from '@lib/constants'
 import { ONLY_COUNTRIES } from '@flagright/lib/constants/countries'
 import {
@@ -59,7 +62,7 @@ import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { SAMPLE_CURRENCIES } from '@/core/seed/samplers/currencies'
 import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import {
   isBusinessUser,
   isConsumerUser,

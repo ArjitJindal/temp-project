@@ -3,7 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { CaseConfig } from '../console-api-case/app'
+import { CaseConfig } from '@/@types/cases/case-config'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ExternalCaseManagementService } from '@/services/cases/external-case-management-service'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'

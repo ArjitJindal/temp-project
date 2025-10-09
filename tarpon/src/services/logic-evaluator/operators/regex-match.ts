@@ -1,6 +1,6 @@
-import XRegExp from 'xregexp'
 import { TextLogicOperator } from './types'
 import { getNegatedOperator } from './utils'
+import { logger } from '@/core/logger'
 
 export const REGEX_MATCH_OPERATOR: TextLogicOperator = {
   key: 'op:regexmatch',
@@ -14,10 +14,21 @@ export const REGEX_MATCH_OPERATOR: TextLogicOperator = {
       return false
     }
     if (Array.isArray(rhs)) {
-      return rhs.some((r) => XRegExp(r).test(value))
+      return rhs.some((r) => {
+        try {
+          return new RegExp(r).test(value)
+        } catch (error) {
+          logger.error('Error matching regex', error)
+          return false
+        }
+      })
     }
     if (typeof rhs === 'string') {
-      return XRegExp(rhs).test(value)
+      try {
+        return new RegExp(rhs).test(value)
+      } catch (error) {
+        return false
+      }
     }
     return false
   },

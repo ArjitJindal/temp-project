@@ -2,16 +2,16 @@ import {
   GetOrganizations200ResponseOneOfInner,
   UserEnrollmentStatusEnum,
 } from 'auth0'
-import * as createHttpError from 'http-errors'
+import { BadRequest, Conflict, NotFound } from 'http-errors'
+import { BaseAccountsRepository } from '.'
 import {
   Auth0TenantMetadata,
-  BaseAccountsRepository,
   InternalAccountCreate,
   InternalOrganizationCreate,
   MicroTenantInfo,
   PatchAccountData,
   Tenant,
-} from '.'
+} from '@/@types/tenant'
 import {
   AppMetadata,
   auth0AsyncWrapper,
@@ -68,7 +68,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     userId?: string
   ): Promise<Tenant | null> {
     if (!userId) {
-      throw new createHttpError.BadRequest('User id is required')
+      throw new BadRequest('User id is required')
     }
 
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
@@ -86,9 +86,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     )
 
     if (organization == null) {
-      throw new createHttpError.Conflict(
-        'User suppose to be a member of tenant organization'
-      )
+      throw new Conflict('User suppose to be a member of tenant organization')
     }
 
     return organizationToTenant(organization)
@@ -125,9 +123,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     )
 
     if (organization == null) {
-      throw new createHttpError.Conflict(
-        'User suppose to be a member of tenant organization'
-      )
+      throw new Conflict('User suppose to be a member of tenant organization')
     }
 
     return organizationToTenant(organization)
@@ -208,6 +204,15 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
             }),
             ...(patchData.role && {
               role: patchData.role,
+            }),
+            ...(patchedAppMetadata.escalationLevel === undefined && {
+              escalationLevel: null,
+            }),
+            ...(patchedAppMetadata.escalationReviewerId === undefined && {
+              escalationReviewerId: null,
+            }),
+            ...(patchedAppMetadata.reviewerId === undefined && {
+              reviewerId: null,
             }),
             tenantId: tenantInfo.tenantId,
             orgName: tenantInfo.orgName,
@@ -307,9 +312,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     const tenant = await this.getTenantByIdInternal(tenantId)
 
     if (!tenant) {
-      throw new createHttpError.NotFound(
-        `Organization not found with for tenant ${tenantId}`
-      )
+      throw new NotFound(`Organization not found with for tenant ${tenantId}`)
     }
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const organizationManager = managementClient.organizations

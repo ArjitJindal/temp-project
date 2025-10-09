@@ -1,17 +1,14 @@
 import { JSONSchemaType } from 'ajv'
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import {
   checkTransactionAmountBetweenThreshold,
   getTransactionStatsTimeGroupLabelV2,
 } from '../utils/transaction-rule-utils'
-import {
-  TimeWindow,
-  TRANSACTION_AMOUNT_RANGE_SCHEMA,
-  TransactionAmountRange,
-} from '../utils/rule-parameter-schemas'
+import { TRANSACTION_AMOUNT_RANGE_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow, TransactionAmountRange } from '@/@types/rule/params'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -182,10 +179,16 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
   }
 
   public async computeRule() {
-    return Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   public async rebuildUserAggregation(

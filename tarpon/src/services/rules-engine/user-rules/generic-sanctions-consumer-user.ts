@@ -32,6 +32,7 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
 export type GenericScreeningValues =
   | 'NATIONALITY'
@@ -201,20 +202,30 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       hitContext,
       undefined
     )
+    const sanctionsDetails: SanctionsDetails = {
+      name,
+      entityType: 'CONSUMER_NAME',
+      searchId: result.searchId,
+      hitContext,
+    }
     if (result.hitsCount > 0) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),
-        sanctionsDetails: [
-          {
-            name,
-            entityType: 'CONSUMER_NAME',
-            searchId: result.searchId,
-            hitContext,
-          },
-        ],
+        sanctionsDetails: [sanctionsDetails],
       })
     }
-    return hitResult
+
+    return {
+      ruleHitResult: hitResult,
+      ruleExecutionResult: {
+        sanctionsDetails: [
+          {
+            ...sanctionsDetails,
+            isRuleHit: result.hitsCount > 0,
+          },
+        ],
+      },
+    }
   }
 }

@@ -7,14 +7,16 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, omit, sortBy } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
+import sortBy from 'lodash/sortBy'
 import { Filter, MongoClient, WithId } from 'mongodb'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { traceable } from '@/core/xray'
-import { RULES_COLLECTION } from '@/utils/mongodb-definitions'
+import { RULES_COLLECTION } from '@/utils/mongo-table-names'
 import { removePunctuation } from '@/utils/regex'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { RuleNature } from '@/@types/openapi-internal/RuleNature'

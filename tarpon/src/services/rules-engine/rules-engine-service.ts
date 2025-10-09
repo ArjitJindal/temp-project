@@ -1,18 +1,16 @@
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { BadRequest, NotFound } from 'http-errors'
-import {
-  compact,
-  Dictionary,
-  isEmpty,
-  isNil,
-  isObject,
-  keyBy,
-  last,
-  map,
-  omit,
-  pick,
-} from 'lodash'
+import type { Dictionary } from 'lodash'
+import compact from 'lodash/compact'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import isObject from 'lodash/isObject'
+import keyBy from 'lodash/keyBy'
+import last from 'lodash/last'
+import map from 'lodash/map'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
 import { MongoClient } from 'mongodb'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -21,6 +19,7 @@ import {
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
+import { Client } from '@opensearch-project/opensearch/.'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -42,9 +41,8 @@ import { TRANSACTION_RULES, TransactionRuleBase } from './transaction-rules'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
-import { RuleHitResult, RuleHitResultItem } from './rule'
+import { RuleExecutionResult, RuleHitResult, RuleHitResultItem } from './rule'
 import {
-  LegacyFilters,
   TRANSACTION_FILTERS,
   TRANSACTION_HISTORICAL_FILTERS,
   TransactionFilters,
@@ -87,7 +85,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import {
   RULE_ERROR_COUNT_METRIC,
   RULE_EXECUTION_TIME_MS_METRIC,
-} from '@/core/cloudwatch/metrics'
+} from '@/constants/cloudwatch/metrics'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -113,76 +111,28 @@ import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUs
 import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
-import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { FifoSqsMessage } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
-import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { AccountsService } from '@/services/accounts'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import {
+  RuleStage,
+  ValidationOptions,
+  RiskScoreDetails,
+  DuplicateTransactionReturnType,
+} from '@/@types/tranasction/aggregation'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
 ) => ((rule1?.ruleId ?? '') > (rule2?.ruleId ?? '') ? 1 : -1)
-
-type RiskScoreDetails = TransactionRiskScoringResult & {
-  components?: RiskScoreComponent[]
-}
-export type TimestampRange = { startTimestamp: number; endTimestamp: number }
-
-export type TransactionAggregationTask = {
-  transactionId: string
-  ruleInstanceId: string
-  direction: 'origin' | 'destination'
-  tenantId: string
-  isTransactionHistoricalFiltered: boolean
-}
-export type V8TransactionAggregationTask = {
-  type: 'TRANSACTION_AGGREGATION'
-  tenantId: string
-  aggregationVariable?: LogicAggregationVariable
-  transaction: Transaction
-  direction?: 'origin' | 'destination'
-  filters?: LegacyFilters
-  transactionRiskScore?: number
-}
-export type V8LogicAggregationRebuildTask = {
-  type: 'PRE_AGGREGATION'
-  tenantId: string
-  entity?:
-    | { type: 'RULE'; ruleInstanceId: string }
-    | { type: 'RISK_FACTOR'; riskFactorId: string }
-  jobId: string
-  aggregationVariable: LogicAggregationVariable
-  currentTimestamp: number
-  timeWindow?: TimestampRange
-  totalSliceCount?: number
-  userId?: string
-  paymentDetails?: PaymentDetails
-}
-
-export type TransactionAggregationTaskEntry = {
-  userKeyId: string
-  payload:
-    | TransactionAggregationTask
-    | V8TransactionAggregationTask
-    | V8LogicAggregationRebuildTask
-}
-
-type ValidationOptions = {
-  validateTransactionId?: boolean
-  validateOriginUserId?: boolean
-  validateDestinationUserId?: boolean
-}
-
-type RuleStage = TransactionRuleStage | UserRuleStage
 
 export function getExecutedAndHitRulesResult(
   ruleResults: ExecutedRulesResult[]
@@ -217,10 +167,6 @@ export function getExecutedAndHitRulesResult(
   }
 }
 
-export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
-  message: string
-}
-
 @traceable
 export class RulesEngineService {
   tenantId: string
@@ -238,16 +184,19 @@ export class RulesEngineService {
   sanctionsService: SanctionsService
   geoIpService: GeoIPService
   accountsService: AccountsService
+  opensearchClient?: Client
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     logicEvaluator: LogicEvaluator,
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    opensearchClient?: Client
   ) {
     // this need to be changed
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.tenantId = tenantId
+    this.opensearchClient = opensearchClient
     this.ruleLogicEvaluator = logicEvaluator
     this.transactionRepository = new DynamoDbTransactionRepository(
       tenantId,
@@ -290,6 +239,7 @@ export class RulesEngineService {
     this.sanctionsService = new SanctionsService(this.tenantId, {
       mongoDb,
       dynamoDb,
+      opensearchClient,
     })
     this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
@@ -301,9 +251,18 @@ export class RulesEngineService {
   ): Promise<RulesEngineService> {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const mongoDb = await getMongoDbClient()
-    return new RulesEngineService(tenantId, dynamoDb, logicEvaluator, mongoDb)
+    return new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator,
+      mongoDb,
+      opensearchClient
+    )
   }
 
   public async verifyAllUsersRules(): Promise<
@@ -474,7 +433,9 @@ export class RulesEngineService {
     if (transaction.transactionId && (options?.validateTransactionId ?? true)) {
       const existingTransaction =
         await this.transactionRepository.getTransactionById(
-          transaction.transactionId
+          transaction.transactionId,
+          undefined,
+          transaction.timestamp
         )
       if (existingTransaction) {
         const [originUserDrs, destinationUserDrs] = await Promise.all([
@@ -897,7 +858,9 @@ export class RulesEngineService {
     oldStatusTransactionEvent?: RuleAction
   ): Promise<void> {
     const transactionInDb = await this.transactionRepository.getTransactionById(
-      transaction.transactionId
+      transaction.transactionId,
+      undefined,
+      transaction.timestamp
     )
     if (!transactionInDb) {
       throw new NotFound(
@@ -947,7 +910,8 @@ export class RulesEngineService {
           status: finalStatus,
           executedRules: mergedExecutedRules,
           hitRules: mergedHitRules,
-        }
+        },
+        transaction.timestamp
       ),
       this.transactionEventRepository.saveTransactionEvent(
         newTransactionEvent,
@@ -1046,7 +1010,12 @@ export class RulesEngineService {
     await Promise.all([
       this.transactionRepository.updateTransactionRulesResult(
         transaction.transactionId,
-        { status, executedRules: mergedExecutedRules, hitRules: mergedHitRules }
+        {
+          status,
+          executedRules: mergedExecutedRules,
+          hitRules: mergedHitRules,
+        },
+        transaction.timestamp
       ),
       this.transactionEventRepository.updateTransactionEventRulesResult(
         transaction.transactionId,
@@ -1370,7 +1339,7 @@ export class RulesEngineService {
     let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedLogicVars[] | undefined
-
+    let ruleExecutionResult: RuleExecutionResult | undefined
     if (
       runOnV8Engine(ruleInstance) &&
       logic &&
@@ -1486,10 +1455,16 @@ export class RulesEngineService {
       if (shouldRunRule && tracing) {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
-
-      ruleResult = shouldRunRule
-        ? await ruleClassInstance.computeRule()
-        : undefined
+      const ruleComputeResult = await ruleClassInstance.computeRule()
+      const result =
+        shouldRunRule && ruleComputeResult
+          ? ruleComputeResult
+          : {
+              ruleHitResult: undefined,
+              ruleExecutionResult: undefined,
+            }
+      ruleResult = result.ruleHitResult
+      ruleExecutionResult = result.ruleExecutionResult
       runSegment?.close()
     }
 
@@ -1563,6 +1538,7 @@ export class RulesEngineService {
           : undefined,
         vars,
         isShadow: isShadowRule(ruleInstance),
+        sanctionsDetails: ruleExecutionResult?.sanctionsDetails,
       },
     }
   }
@@ -1636,7 +1612,8 @@ export class RulesEngineService {
           })
           // silencing this due to noise on sentry
           logger.info(
-            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`
+            `Rule run error: ${options.transaction.transactionId} ${ruleInstance.ruleId} ${ruleInstance.id},  ${e}`,
+            { skipSentry: true }
           )
         }
       },
@@ -2018,7 +1995,8 @@ export class RulesEngineService {
 
   public async applyTransactionAction(
     data: TransactionAction,
-    userId: string
+    userId: string,
+    paymentApprovalAction: boolean = false
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
     const txns = await this.transactionRepository.getTransactionsByIds(
@@ -2042,6 +2020,7 @@ export class RulesEngineService {
     }
 
     const promises = [
+      // updating the transaction event
       this.transactionEventRepository.saveTransactionEvents(
         txns
           .filter(
@@ -2067,6 +2046,7 @@ export class RulesEngineService {
             },
           }))
       ),
+      // saving the transaction
       this.transactionRepository.saveTransactions(
         txns
           .filter(
@@ -2080,6 +2060,9 @@ export class RulesEngineService {
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
             },
+            paymentApprovalTimestamp: paymentApprovalAction
+              ? Date.now()
+              : transaction.paymentApprovalTimestamp,
           }))
       ),
     ]

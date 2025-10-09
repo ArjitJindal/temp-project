@@ -14,7 +14,7 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedClickhouseQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 
 type PaymentIdentifier = {
   paymentIdentifier: string
@@ -93,17 +93,19 @@ export const UniquePaymentIdentifier: TableQuestion<
       }
     })
 
+    const items = rows.map((r) => {
+      return [
+        r.paymentIdentifier,
+        r.paymentMethod,
+        r.count,
+        convert(r.sum, 'USD', currency), // all currency in CH are in USD
+        r.names.join(', '),
+      ]
+    })
+
     return {
       data: {
-        items: rows.map((r) => {
-          return [
-            r.paymentIdentifier,
-            r.paymentMethod,
-            r.count,
-            convert(r.sum, currency),
-            r.names.join(', '),
-          ]
-        }),
+        items,
         total: resultTotal,
       },
       summary: !topPaymentIdentifier

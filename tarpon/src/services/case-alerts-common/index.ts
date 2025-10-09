@@ -1,4 +1,5 @@
-import { sample, uniqBy } from 'lodash'
+import sample from 'lodash/sample'
+import uniqBy from 'lodash/uniqBy'
 import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Credentials } from 'aws-lambda'

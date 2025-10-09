@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import uniqBy from 'lodash/uniqBy'
 import {
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
   ENABLE_PHONETIC_MATCHING_SCHEMA,
@@ -16,7 +17,7 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
   TRANSACTION_RULE_STAGE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { RuleHitResult } from '../rule'
+import { RuleResult } from '../rule'
 import {
   getEnablePhoneticMatchingParameters,
   getEnableShortNameMatchingParameters,
@@ -29,24 +30,26 @@ import {
   getStopwordSettings,
 } from '../utils/rule-utils'
 import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
+import { SanctionsRuleResult } from '../user-rules/sanctions-bank-name'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import {
   extractBankInfoFromPaymentDetails,
-  getPaymentDetailsName,
+  getPaymentDetailsNameString,
 } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { notNullish } from '@/utils/array'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/utils/payment-details'
 import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSettingOptions'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import { TransactionRuleStage } from '@/@types/openapi-internal/TransactionRuleStage'
+import { RuleExecutionSanctionsDetails } from '@/@types/openapi-public/RuleExecutionSanctionsDetails'
 
 export type ScreeningField = 'NAME' | 'BANK_NAME'
 export const SCREENING_FIELDS: ScreeningField[] = ['NAME', 'BANK_NAME']
@@ -115,12 +118,15 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
     }
   }
 
-  abstract computeRule(): Promise<RuleHitResult>
+  abstract computeRule(): Promise<RuleResult>
 
   public async checkCounterPartyTransaction(
     paymentDetails: PaymentDetails,
     user?: User | Business
-  ): Promise<SanctionsDetails[]> {
+  ): Promise<{
+    ruleHitSanctionsDetails: SanctionsDetails[]
+    ruleExecutionSanctionsDetails?: RuleExecutionSanctionsDetails[]
+  }> {
     const {
       fuzziness,
       fuzzinessSetting,
@@ -136,17 +142,18 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       enablePhoneticMatching,
     } = this.parameters
     const namesToSearch = screeningFields.includes('NAME')
-      ? getPaymentDetailsName(paymentDetails)
+      ? getPaymentDetailsNameString(paymentDetails)
       : []
 
     const bankInfos = screeningFields.includes('BANK_NAME')
-      ? compact([extractBankInfoFromPaymentDetails(paymentDetails)])
+      ? compact(extractBankInfoFromPaymentDetails(paymentDetails))
       : []
+
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
     const providers = getDefaultProviders()
-    const data = await Promise.all([
+    const data: (SanctionsRuleResult | undefined)[] = await Promise.all([
       ...namesToSearchFiltered.map(
-        async (paymentDetail): Promise<SanctionsDetails | undefined> => {
+        async (paymentDetail): Promise<SanctionsRuleResult | undefined> => {
           const paymentMethodId = getPaymentMethodId(paymentDetails)
           const hitContext = {
             entity: 'EXTERNAL_USER' as const,
@@ -187,19 +194,19 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
             undefined,
             'TRANSACTION'
           )
-
-          if (result.hitsCount > 0) {
-            return {
+          return {
+            sanctionsDetails: {
               name: paymentDetail.name,
               searchId: result.searchId,
               entityType: paymentDetail.entityType,
               hitContext,
-            }
+            },
+            hitsCount: result.hitsCount,
           }
         }
       ),
       ...bankInfos.map(
-        async (bankInfo): Promise<SanctionsDetails | undefined> => {
+        async (bankInfo): Promise<SanctionsRuleResult | undefined> => {
           const paymentMethodId = getPaymentMethodId(paymentDetails)
           const hitContext: SanctionsHitContext = {
             entity: 'BANK' as const,
@@ -235,20 +242,28 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
             undefined,
             'TRANSACTION'
           )
-
-          if (result.hitsCount > 0) {
-            return {
+          return {
+            sanctionsDetails: {
               name: bankInfo.bankName,
               searchId: result.searchId,
               entityType: 'BANK_NAME',
               hitContext,
-            }
+            },
+            hitsCount: result.hitsCount,
           }
         }
       ),
     ])
 
-    const filteredData: SanctionsDetails[] = (data ?? []).filter(notNullish)
-    return filteredData
+    const filteredData = (data ?? []).filter(notNullish)
+    return {
+      ruleHitSanctionsDetails: filteredData
+        .filter((detail) => detail.hitsCount > 0)
+        .map((detail) => detail.sanctionsDetails),
+      ruleExecutionSanctionsDetails: filteredData.map((detail) => ({
+        ...detail.sanctionsDetails,
+        isRuleHit: detail.hitsCount > 0,
+      })),
+    }
   }
 }

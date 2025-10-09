@@ -1,4 +1,4 @@
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import pMap from 'p-map'
 import { FlatFileBaseRunner } from '../baseRunner'
 import { EntityModel } from '@/@types/model'

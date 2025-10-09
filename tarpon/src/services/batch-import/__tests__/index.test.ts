@@ -12,7 +12,7 @@ import {
   setUpUsersHooks,
 } from '@/test-utils/user-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { enableLocalChangeHandler } from '@/utils/local-change-handler'
 import {
   getTestBusinessEvent,
   getTestUserEvent,

@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { SLAAuditLogService } from '../sla/sla-audit-log-service'
 import { SLAPolicyRepository } from './repositories/sla-policy-repository'
 import { traceable } from '@/core/xray'

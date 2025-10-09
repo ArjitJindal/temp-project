@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getConfig } from '../../../scripts/migrations/utils/config'
 
 export const getApiBasePath = memoize(() => {

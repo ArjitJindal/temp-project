@@ -51,6 +51,8 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

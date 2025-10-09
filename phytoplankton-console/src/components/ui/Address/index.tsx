@@ -11,6 +11,7 @@ export default function Address({ address }: Props) {
   const city = address?.city;
   const country = address?.country;
   const postcode = address?.postcode;
+  const state = address?.state;
   const type = address?.addressType;
   return (
     <>
@@ -19,6 +20,7 @@ export default function Address({ address }: Props) {
         <div className={s.items}>{addressLines?.join(', ')}</div>
         <div>
           {city} {postcode}
+          {''} {state}
           {''} {country}
         </div>
       </div>

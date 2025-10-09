@@ -1,9 +1,9 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { hasFeature } from '@/core/utils/context'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 async function migrateTenant(tenant: Tenant) {
   if (hasFeature('DOW_JONES') && !isDemoTenant(tenant.id)) {

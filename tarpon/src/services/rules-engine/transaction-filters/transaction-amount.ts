@@ -1,14 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import {
-  TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
-  TransactionAmountRange,
-} from '../utils/rule-parameter-schemas'
+import { TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TransactionRuleFilter } from './filter'
+import { TransactionAmountRange } from '@/@types/rule/params'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export async function transactionAmountRuleFilterPredicate(

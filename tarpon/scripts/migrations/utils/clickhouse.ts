@@ -1,12 +1,10 @@
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
-import {
-  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
-  ClickhouseTableDefinition,
-} from '@/utils/clickhouse/definition'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO } from '@/constants/clickhouse/clickhouse-mongo-map'
+import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { logger } from '@/core/logger'
 
 export async function syncClickhouseTableWithMongo(
@@ -63,17 +61,4 @@ export async function syncClickhouseTableWithMongo(
     dynamoDb
   ).updateInsertMessages(mongoTable, batch)
   await batchInsertToClickhouse(tenantId, clickhouseTable, trasformedData)
-}
-
-export async function syncClickhouseTablesWithMongo(
-  tenantId: string,
-  tables: ClickhouseTableDefinition[],
-  mongoClient: MongoClient,
-  dynamoDb: DynamoDBDocumentClient
-) {
-  await Promise.all(
-    tables.map((table) =>
-      syncClickhouseTableWithMongo(mongoClient, dynamoDb, tenantId, table)
-    )
-  )
 }

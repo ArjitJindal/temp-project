@@ -1,4 +1,7 @@
-import * as Sentry from '@sentry/aws-serverless'
+import {
+  withScope as withScopeSentry,
+  captureMessage as captureMessageSentry,
+} from '@sentry/aws-serverless'
 import { MongoClient } from 'mongodb'
 import { getSanctionsCollectionName } from './utils'
 import { SanctionsDataProviders } from './types'
@@ -92,13 +95,13 @@ async function logMissingSanctionsData(
       message = `Missing sanctions data for provider ${provider}: ${missingData.join(
         ', '
       )}`
-      Sentry.withScope((scope) => {
+      withScopeSentry((scope) => {
         scope.setFingerprint([provider, 'sanctions-data-count'])
         scope.setTag('provider', provider)
         scope.setExtra('personCount', personCount)
         scope.setExtra('businessCount', businessCount)
         scope.setExtra('missingData', missingData)
-        Sentry.captureMessage(message, {
+        captureMessageSentry(message, {
           level: 'warning',
         })
       })

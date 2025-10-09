@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { hasFeature } from '@/core/utils/context'
 

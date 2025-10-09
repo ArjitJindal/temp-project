@@ -1,12 +1,12 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import {
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   INITIAL_TRANSACTIONS_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
@@ -16,6 +16,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResultItem } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
@@ -63,10 +64,16 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   override async getUpdatedTargetAggregation(

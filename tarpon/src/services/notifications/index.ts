@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
-import { compact, memoize } from 'lodash'
+import compact from 'lodash/compact'
+import memoize from 'lodash/memoize'
 import { v4 as uuid } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { hasResources, Resource } from '@flagright/lib/utils'

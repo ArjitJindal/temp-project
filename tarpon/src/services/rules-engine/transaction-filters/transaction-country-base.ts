@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { capitalize, isEmpty } from 'lodash'
+import capitalize from 'lodash/capitalize'
+import isEmpty from 'lodash/isEmpty'
 import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { expandCountryGroup } from '@/utils/countries'

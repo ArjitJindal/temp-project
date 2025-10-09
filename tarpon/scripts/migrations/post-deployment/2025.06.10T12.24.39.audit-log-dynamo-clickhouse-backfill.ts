@@ -1,8 +1,8 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { Tenant } from '@/services/accounts/repository'
-import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
-import { isDemoTenant } from '@/utils/tenant'
+import { Tenant } from '@/@types/tenant'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { isDemoTenant } from '@/utils/tenant-id'
 
 async function migrateTenant(tenant: Tenant) {
   if (isDemoTenant(tenant.id)) {

@@ -1,5 +1,7 @@
 import createHttpError from 'http-errors'
-import { compact, groupBy, uniqBy } from 'lodash'
+import compact from 'lodash/compact'
+import groupBy from 'lodash/groupBy'
+import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
@@ -14,7 +16,6 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import {
@@ -25,15 +26,21 @@ import {
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { UserTag } from '@/@types/openapi-internal/all'
-import { User } from '@/@types/openapi-public/User'
-import { Business } from '@/@types/openapi-public/Business'
-import { UserType } from '@/@types/user/user-type'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { generateChecksum } from '@/utils/object'
-import { isDemoTenant } from '@/utils/tenant'
+import {
+  AsyncRuleRecordTransaction,
+  AsyncRuleRecordTransactionEvent,
+  AsyncRuleRecord,
+} from '@/@types/batch-import'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  getPaymentDetailsName,
+  getPaymentEmailId,
+  getPaymentMethodAddress,
+} from '@/utils/payment-details'
+import { isDemoTenant } from '@/utils/tenant-id'
+import { sanitiseBucketedKey } from '@/core/dynamodb/key-utils'
+import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 
 export function getSenderKeys(
   tenantId: string,
@@ -57,6 +64,72 @@ export function getSenderKeys(
   )
 }
 
+export function getSendingEntityKeys(
+  tenantId: string,
+  transaction: Transaction,
+  paymentDetails?: PaymentDetails
+): { PartitionKeyID: string; SortKeyID: string }[] {
+  if (!paymentDetails) {
+    return []
+  }
+  const address = getPaymentMethodAddress(paymentDetails)
+  const email = getPaymentEmailId(paymentDetails)
+  const name = getPaymentDetailsName(paymentDetails)
+  return compact([
+    address
+      ? DynamoDbKeys.ADDRESS_TRANSACTION(tenantId, address, 'sending', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    email
+      ? DynamoDbKeys.EMAIL_TRANSACTION(tenantId, email, 'sending', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    name
+      ? DynamoDbKeys.NAME_TRANSACTION(tenantId, name, 'sending', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+  ])
+}
+
+export function getReceivingEntityKeys(
+  tenantId: string,
+  transaction: Transaction,
+  paymentDetails?: PaymentDetails
+): { PartitionKeyID: string; SortKeyID: string }[] {
+  if (!paymentDetails) {
+    return []
+  }
+  const address = getPaymentMethodAddress(paymentDetails)
+  const email = getPaymentEmailId(paymentDetails)
+  const name = getPaymentDetailsName(paymentDetails)
+  return compact([
+    address
+      ? DynamoDbKeys.ADDRESS_TRANSACTION(tenantId, address, 'receiving', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    email
+      ? DynamoDbKeys.EMAIL_TRANSACTION(tenantId, email, 'receiving', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+    name
+      ? DynamoDbKeys.NAME_TRANSACTION(tenantId, name, 'receiving', {
+          timestamp: transaction.timestamp,
+          transactionId: transaction.transactionId,
+        })
+      : undefined,
+  ])
+}
+
 export function getSenderKeyId(
   tenantId: string,
   transaction: Transaction,
@@ -65,8 +138,19 @@ export function getSenderKeyId(
     matchPaymentDetails?: boolean
   }
 ): string | undefined {
-  return getSenderKeys(tenantId, transaction, undefined, options)
-    ?.PartitionKeyID
+  return sanitiseBucketedKey(
+    getSenderKeys(tenantId, transaction, undefined, options)?.PartitionKeyID
+  )
+}
+
+export function getUserSenderKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string
+): string | undefined {
+  return sanitiseBucketedKey(
+    getUserSenderKeys(tenantId, transaction, transactionType)?.PartitionKeyID
+  )
 }
 
 export function getUserSenderKeys(
@@ -89,6 +173,22 @@ export function getUserSenderKeys(
         }
       )
     : null
+}
+
+export function getNonUserSenderKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string,
+  disableDirection?: boolean
+): string | undefined {
+  return sanitiseBucketedKey(
+    getNonUserSenderKeys(
+      tenantId,
+      transaction,
+      transactionType,
+      disableDirection
+    )?.PartitionKeyID
+  )
 }
 
 export function getNonUserSenderKeys(
@@ -150,8 +250,19 @@ export function getReceiverKeyId(
     matchPaymentDetails?: boolean
   }
 ): string | undefined {
-  return getReceiverKeys(tenantId, transaction, undefined, options)
-    ?.PartitionKeyID
+  return sanitiseBucketedKey(
+    getReceiverKeys(tenantId, transaction, undefined, options)?.PartitionKeyID
+  )
+}
+
+export function getUserReceiverKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string
+): string | undefined {
+  return sanitiseBucketedKey(
+    getUserReceiverKeys(tenantId, transaction, transactionType)?.PartitionKeyID
+  )
 }
 
 export function getUserReceiverKeys(
@@ -174,6 +285,22 @@ export function getUserReceiverKeys(
         }
       )
     : null
+}
+
+export function getNonUserReceiverKeyId(
+  tenantId: string,
+  transaction: Transaction,
+  transactionType?: string,
+  disableDirection?: boolean
+): string | undefined {
+  return sanitiseBucketedKey(
+    getNonUserReceiverKeys(
+      tenantId,
+      transaction,
+      transactionType,
+      disableDirection
+    )?.PartitionKeyID
+  )
 }
 
 export function getNonUserReceiverKeys(
@@ -318,6 +445,15 @@ type Executions = {
   executedRules: ExecutedRulesResult[]
 }
 
+function filterOutSanctionsDetails(
+  executedRules: ExecutedRulesResult[]
+): ExecutedRulesResult[] {
+  return executedRules.map((rule) => ({
+    ...rule,
+    sanctionsDetails: undefined,
+  }))
+}
+
 export function filterLiveRules(
   executions: Partial<Executions>,
   includeInternal = false
@@ -328,11 +464,13 @@ export function filterLiveRules(
     executions.executedRules?.filter(
       (executedRule) => !executedRule.isShadow
     ) ?? []
+
+  const filteredExecutedRules = includeInternal
+    ? executedRules
+    : filterOutInternalRules(executedRules)
   return {
     hitRules: includeInternal ? hitRules : filterOutInternalRules(hitRules),
-    executedRules: includeInternal
-      ? executedRules
-      : filterOutInternalRules(executedRules),
+    executedRules: filterOutSanctionsDetails(filteredExecutedRules),
   }
 }
 
@@ -362,18 +500,11 @@ export async function sendTransactionAggregationTasks(
   mongoDb: MongoClient
 ) {
   if (envIs('local', 'test')) {
-    const {
-      handleTransactionAggregationTask,
-      handleV8TransactionAggregationTask,
-    } = await import('@/lambdas/transaction-aggregation/app')
-    for (const message of messages) {
-      const payload = JSON.parse(message.MessageBody)
-      if (payload.type === 'TRANSACTION_AGGREGATION') {
-        await handleV8TransactionAggregationTask(payload, dynamoDb)
-      } else {
-        await handleTransactionAggregationTask(payload, dynamoDb, mongoDb)
-      }
-    }
+    const { handleTransactionAggregationTasks } = await import(
+      '@/core/local-handlers/transaction-aggregation'
+    )
+
+    await handleTransactionAggregationTasks(messages, dynamoDb, mongoDb)
   } else {
     const finalMessages = [...messages]
     await bulkSendMessages(
@@ -383,85 +514,6 @@ export async function sendTransactionAggregationTasks(
     )
     logger.debug(`Sent transaction aggregation tasks to SQS`)
   }
-}
-
-type AsyncRuleRecordTransaction = {
-  type: 'TRANSACTION'
-  transaction: Transaction
-  senderUser?: User | Business
-  receiverUser?: User | Business
-  riskDetails?: TransactionRiskScoringResult
-  backfillNamespace?: string
-}
-type AsyncRuleRecordTransactionBatch = {
-  type: 'TRANSACTION_BATCH'
-  transaction: Transaction
-}
-
-type AsyncRuleRecordTransactionEvent = {
-  type: 'TRANSACTION_EVENT'
-  updatedTransaction: Transaction
-  senderUser?: User | Business
-  receiverUser?: User | Business
-  transactionEventId: string
-}
-
-type AsyncRuleRecordTransactionEventBatch = {
-  type: 'TRANSACTION_EVENT_BATCH'
-  transactionEvent: TransactionEvent
-  originUserId?: string
-  destinationUserId?: string
-}
-
-type UserParameters = {
-  lockCraRiskLevel?: boolean
-  lockKycRiskLevel?: boolean
-}
-
-type AsyncRuleRecordUser = {
-  type: 'USER'
-  userType: UserType
-  user: User | Business
-}
-
-export type AsyncRuleRecordUserBatch = {
-  type: 'USER_BATCH'
-  userType: UserType
-  user: User | Business
-  parameters?: UserParameters
-}
-
-type AsyncRuleRecordUserEvent = {
-  type: 'USER_EVENT'
-  updatedUser: User | Business
-  userEventTimestamp: number
-  userType: UserType
-}
-
-export type AsyncRuleRecordUserEventBatch = {
-  type: 'USER_EVENT_BATCH'
-  userType: UserType
-  userEvent: ConsumerUserEvent | BusinessUserEvent
-  parameters?: UserParameters
-}
-
-export type AsyncBatchRecord = (
-  | AsyncRuleRecordTransactionBatch
-  | AsyncRuleRecordTransactionEventBatch
-  | AsyncRuleRecordUserBatch
-  | AsyncRuleRecordUserEventBatch
-) & {
-  batchId: string
-}
-
-export type AsyncRuleRecord = (
-  | AsyncRuleRecordTransaction
-  | AsyncRuleRecordTransactionEvent
-  | AsyncRuleRecordUser
-  | AsyncRuleRecordUserEvent
-  | AsyncBatchRecord
-) & {
-  tenantId: string
 }
 
 function getGroupIdForGcTxAndTxEvent(
@@ -528,18 +580,15 @@ function getAsyncRuleMessageGroupId(
 
 export async function sendAsyncRuleTasks(
   tasks: AsyncRuleRecord[],
+  secondaryQueue: boolean = false,
   saveBatchEntities: boolean = true
 ): Promise<void> {
   if (envIs('test', 'local')) {
-    const { asyncRuleRunnerHandler } = await import('@/lambdas/async-rule/app')
-    if (envIs('local') || process.env.__ASYNC_RULES_IN_SYNC_TEST__ === 'true') {
-      await asyncRuleRunnerHandler({
-        Records: tasks.map((task) => ({
-          body: JSON.stringify(task),
-        })),
-        saveBatchEntities,
-      })
-    }
+    const { handleLocalAsyncRuleTasks } = await import(
+      '@/core/local-handlers/async-rules'
+    )
+
+    await handleLocalAsyncRuleTasks(tasks, saveBatchEntities)
     return
   }
 
@@ -568,7 +617,9 @@ export async function sendAsyncRuleTasks(
       }
       return {
         MessageBody: JSON.stringify(task),
-        QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+        QueueUrl: secondaryQueue
+          ? process.env.SECONDARY_ASYNC_RULE_QUEUE_URL
+          : process.env.ASYNC_RULE_QUEUE_URL,
         MessageGroupId: generateChecksum(
           isConcurrentAsyncRulesEnabled
             ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
@@ -616,7 +667,13 @@ export async function sendAsyncRuleTasks(
     })
 
   await Promise.all([
-    bulkSendMessages(sqs, process.env.ASYNC_RULE_QUEUE_URL as string, messages),
+    bulkSendMessages(
+      sqs,
+      secondaryQueue
+        ? (process.env.SECONDARY_ASYNC_RULE_QUEUE_URL as string)
+        : (process.env.ASYNC_RULE_QUEUE_URL as string),
+      messages
+    ),
     bulkSendMessages(
       sqs,
       process.env.BATCH_ASYNC_RULE_QUEUE_URL as string,

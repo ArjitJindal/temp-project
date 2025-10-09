@@ -8,25 +8,43 @@ import { DEFAULT_NAMESPACE } from '../roles/repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SyncAuth0DataBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { Tenant } from '@/@types/tenant'
 import { traceable } from '@/core/xray'
 import { DEFAULT_ROLES_V2 } from '@/core/default-roles'
-import { logger } from '@/core/logger'
 
 @traceable
 export class SyncAuth0DataRunner extends BatchJobRunner {
   private dynamoDb?: DynamoDBDocumentClient
+
+  private getTenantAccountAndRoleServices = (
+    tenant: Tenant,
+    auth0Domain: string
+  ) => {
+    const accountService = new AccountsService(
+      { auth0Domain: auth0Domain ?? tenant.auth0Domain },
+      { dynamoDb: this.dynamoDb as DynamoDBClient }
+    )
+    const rolesService = RoleService.getInstance(
+      this.dynamoDb as DynamoDBClient,
+      auth0Domain ?? tenant.auth0Domain
+    )
+
+    return { accountService, rolesService }
+  }
+
   protected async run(job: SyncAuth0DataBatchJob) {
     this.dynamoDb = getDynamoDbClient()
     const allAuth0Domains: Set<string> = new Set()
+
     if (job.parameters.type === 'ALL') {
       const tenants = await TenantService.getAllTenants()
 
       for (const tenant of tenants) {
         const auth0Domain = tenant.auth0Domain ?? process.env.AUTH0_DOMAIN
-        await this.syncTenantAccounts(tenant.tenant, auth0Domain)
-        await this.syncTenantRoles(tenant.tenant, auth0Domain)
+        const { accountService, rolesService } =
+          this.getTenantAccountAndRoleServices(tenant.tenant, auth0Domain)
+        await accountService.syncTenantAccounts(tenant.tenant)
+        await rolesService.syncTenantRoles(tenant.tenant)
         allAuth0Domains.add(auth0Domain)
       }
     } else if (job.parameters.type === 'TENANT_IDS') {
@@ -40,8 +58,10 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
         const tenant = await accountsService.getTenantById(tenantId)
         if (tenant) {
           const auth0Domain = tenant.auth0Domain ?? process.env.AUTH0_DOMAIN
-          await this.syncTenantAccounts(tenant, auth0Domain)
-          await this.syncTenantRoles(tenant, auth0Domain)
+          const { accountService, rolesService } =
+            this.getTenantAccountAndRoleServices(tenant, auth0Domain)
+          await accountService.syncTenantAccounts(tenant)
+          await rolesService.syncTenantRoles(tenant)
           allAuth0Domains.add(auth0Domain)
         }
       }
@@ -100,81 +120,6 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
           },
         })
       }
-    }
-  }
-
-  private async syncTenantAccounts(tenant: Tenant, auth0Domain: string) {
-    const accountService = new AccountsService(
-      { auth0Domain: auth0Domain ?? tenant.auth0Domain },
-      { dynamoDb: this.dynamoDb as DynamoDBClient }
-    )
-
-    const auth0 = accountService.auth0
-    const cache = accountService.cache
-    const auth0Accounts = await auth0.getTenantAccounts(tenant)
-    const currentCacheAccounts = await cache.getTenantAccounts(tenant)
-
-    // find accounts which are in currentCacheAccounts but not in auth0Accounts
-    const accountsToDelete = currentCacheAccounts.filter(
-      (account) => !auth0Accounts.some((a) => a.id === account.id)
-    )
-
-    for (const account of accountsToDelete) {
-      await cache.deleteAccountFromOrganization({ id: tenant.id }, account)
-    }
-
-    await cache.putMultipleAccounts(tenant.id, auth0Accounts)
-    await cache.createOrganization(tenant.id, {
-      type: 'DATABASE',
-      params: tenant,
-    })
-  }
-
-  private async syncTenantRoles(tenant: Tenant, auth0Domain?: string) {
-    const rolesService = RoleService.getInstance(
-      this.dynamoDb as DynamoDBClient,
-      auth0Domain ?? tenant.auth0Domain
-    )
-    const auth0 = rolesService.auth0
-    const cache = rolesService.cache
-
-    const auth0Roles = await auth0.rolesByNamespace(
-      getNonDemoTenantId(tenant.id)
-    )
-
-    const cacheRoles = await cache.getTenantRoles(
-      getNonDemoTenantId(tenant.id),
-      false,
-      false
-    )
-
-    // delete roles which are in cache but not in auth0
-    const rolesToDelete = cacheRoles.filter(
-      (role) => !auth0Roles.some((r) => r.id === role.id)
-    )
-
-    for (const role of rolesToDelete) {
-      await cache.deleteRole(role.id)
-    }
-
-    for (const role of auth0Roles) {
-      const updatedStatements =
-        cacheRoles.find((r) => r.id === role.id)?.statements ?? []
-
-      if (updatedStatements.length === 0) {
-        logger.warn(
-          `No statements found for role ${role.name} for tenant ${tenant.id}`
-        )
-      }
-
-      await cache.createRole(tenant.id, {
-        type: 'DATABASE',
-        params: {
-          ...role,
-          name: getNamespacedRoleName(tenant.id, role.name),
-          statements: updatedStatements,
-        },
-      })
     }
   }
 }

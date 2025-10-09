@@ -1,5 +1,6 @@
 import { MongoClient, Collection } from 'mongodb'
-import { intersection, sample } from 'lodash'
+import intersection from 'lodash/intersection'
+import sample from 'lodash/sample'
 import { sanitizeString } from '@flagright/lib/utils/string'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SanctionsDataFetcher } from '../sanctions-data-fetcher'
@@ -12,7 +13,7 @@ import { getContext } from '@/core/utils/context-storage'
 import {
   SANCTIONS_COLLECTION,
   SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'

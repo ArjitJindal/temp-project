@@ -25,7 +25,7 @@ import { SearchProfileService } from '@/services/search-profile'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { CounterRepository } from '@/services/counter/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { DefaultFiltersService } from '@/services/default-filters'
 import { getS3ClientByEvent } from '@/utils/s3'
 
@@ -238,7 +238,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerGetScreeningProfiles(
       async (_ctx, request: DefaultApiGetScreeningProfilesRequest) => {
-        const dynamoDb = getDynamoDbClient()
+        const dynamoDb = getDynamoDbClientByEvent(event)
         const mongoDb = await getMongoDbClient()
         const screeningProfileService = new ScreeningProfileService(tenantId, {
           mongoDb,
@@ -254,7 +254,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerUpdateScreeningProfile(
       async (_ctx, request: DefaultApiUpdateScreeningProfileRequest) => {
-        const dynamoDb = getDynamoDbClient()
+        const dynamoDb = getDynamoDbClientByEvent(event)
         const mongoDb = await getMongoDbClient()
         const screeningProfileService = new ScreeningProfileService(tenantId, {
           mongoDb,
@@ -269,7 +269,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerDeleteScreeningProfile(
       async (_ctx, request: DefaultApiDeleteScreeningProfileRequest) => {
-        const dynamoDb = getDynamoDbClient()
+        const dynamoDb = getDynamoDbClientByEvent(event)
         const mongoDb = await getMongoDbClient()
         const screeningProfileService = new ScreeningProfileService(tenantId, {
           mongoDb,
@@ -283,7 +283,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
 
     handlers.registerGetDefaultManualScreeningFilters(async (_ctx) => {
       const defaultFiltersService = new DefaultFiltersService(tenantId)
-      const dynamoDb = getDynamoDbClient()
+      const dynamoDb = getDynamoDbClientByEvent(event)
       return await defaultFiltersService.getDefaultFilters(dynamoDb)
     })
 
@@ -293,7 +293,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         request: DefaultApiPostDefaultManualScreeningFiltersRequest
       ) => {
         const defaultFiltersService = new DefaultFiltersService(tenantId)
-        const dynamoDb = getDynamoDbClient()
+        const dynamoDb = getDynamoDbClientByEvent(event)
         return await defaultFiltersService.createDefaultFilters(
           request.DefaultManualScreeningFiltersRequest,
           dynamoDb

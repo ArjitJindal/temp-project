@@ -7,8 +7,8 @@ import {
   sqlPeriod,
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedClickhouseQuery } from '@/services/copilot/questions/definitions/common/pagination'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 type ReferenceWordCountRow = {
   word: string

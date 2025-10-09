@@ -1,6 +1,6 @@
 import { AnyBulkWriteOperation } from 'mongodb'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongo-table-names'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { generateHashFromString } from '@/utils/object'
 

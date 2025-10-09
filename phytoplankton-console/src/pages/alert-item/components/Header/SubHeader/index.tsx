@@ -16,6 +16,7 @@ import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDispl
 import Spinner from '@/components/library/Spinner';
 import Skeleton from '@/components/library/Skeleton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Address from '@/components/ui/Address';
 
 interface Props {
   caseItemRes: AsyncResource<Case>;
@@ -30,8 +31,15 @@ export default function SubHeader(props: Props) {
     if (caseItem == null) {
       return <Spinner />;
     }
+
     return caseItem.subjectType === 'PAYMENT'
       ? paymentSubjectLabels(caseItem)
+      : caseItem.subjectType === 'ADDRESS'
+      ? addressSubjectLabels(caseItem)
+      : caseItem.subjectType === 'EMAIL'
+      ? emailSubjectLabels(caseItem)
+      : caseItem.subjectType === 'NAME'
+      ? nameSubjectLabels(caseItem)
       : userSubjectLabels(caseItem, firstLetterUpper(settings.userAlias));
   };
   return (
@@ -40,7 +48,7 @@ export default function SubHeader(props: Props) {
         <AsyncResourceRenderer resource={caseItemRes} renderLoading={renderLabels}>
           {renderLabels}
         </AsyncResourceRenderer>
-        <Form.Layout.Label title={'Assigned to'}>
+        <Form.Layout.Label title={'Assigned to'} className={s.assignees}>
           <Skeleton res={alertItemRes}>
             {(alertItem) => <AlertAssigneesDropdown alertItem={alertItem} />}
           </Skeleton>
@@ -161,6 +169,36 @@ function paymentSubjectLabels(caseItem: Case) {
           {value || '-'}
         </Form.Layout.Label>
       ))}
+    </>
+  );
+}
+
+function addressSubjectLabels(caseItem: Case) {
+  const address = caseItem?.address?.origin ?? caseItem?.address?.destination;
+  return (
+    <>
+      <Form.Layout.Label title={'Address'}>
+        {address ? <Address address={address} /> : '-'}
+      </Form.Layout.Label>
+    </>
+  );
+}
+
+function emailSubjectLabels(caseItem: Case) {
+  return (
+    <>
+      <Form.Layout.Label title={'Email'}>
+        {caseItem.email?.origin ?? caseItem.email?.destination ?? '-'}
+      </Form.Layout.Label>
+    </>
+  );
+}
+
+function nameSubjectLabels(caseItem: Case) {
+  const name = caseItem?.name?.origin ?? caseItem?.name?.destination;
+  return (
+    <>
+      <Form.Layout.Label title={'Name'}>{name ?? '-'}</Form.Layout.Label>
     </>
   );
 }

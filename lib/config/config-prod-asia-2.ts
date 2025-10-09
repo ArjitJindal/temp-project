@@ -4,7 +4,8 @@
  */
 
 import { ADMIN_EMAILS } from '../constants'
-import { Config, BillingMode, RetentionDays } from './config'
+import { Config } from './config'
+import { config as configProdEu2 } from './config-prod-eu-2'
 
 const account = '870721492449'
 const region = 'ap-south-1'
@@ -28,72 +29,7 @@ export const config: Config = {
     GLUE: 30,
   },
   resource: {
-    FARGATE_BATCH_JOB_CONTAINER: {
-      CPU: 2048,
-      MEMORY_LIMIT: 4096,
-    },
-    CLOUD_WATCH: {
-      logRetention: RetentionDays.ONE_YEAR,
-    },
-    DYNAMODB: {
-      BILLING_MODE: BillingMode.PAY_PER_REQUEST,
-    },
-    PUBLIC_API_GATEWAY: {},
-    CONSOLE_API_GATEWAY: {},
-    LAMBDA_DEFAULT: {
-      MEMORY_SIZE: 1024,
-    },
-    API_KEY_AUTHORIZER_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 3,
-    },
-    JWT_AUTHORIZER_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 3,
-    },
-    TRANSACTION_LAMBDA: {
-      MAX_PROVISIONED_CONCURRENCY: 10,
-      MIN_PROVISIONED_CONCURRENCY: 3,
-      MEMORY_SIZE: 1024,
-    },
-    ASYNC_RULES_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    TRANSACTION_AGGREGATION_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    TRANSACTION_AGGREGATION_MAX_CONCURRENCY: 2,
-    REQUEST_LOGGER_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    TRANSACTIONS_VIEW_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 3,
-    },
-    USERS_VIEW_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
-    },
-    USER_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
-      MEMORY_SIZE: 1024,
-    },
-    TARPON_CHANGE_CAPTURE_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    TENANT_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 1,
-    },
-    DASHBOARD_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
-    },
-    CASE_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 2,
-    },
-    BATCH_JOB_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    CRON_JOB_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    LAMBDA_VPC_ENABLED: true,
-    INSPECTOR_ENABLED: true,
+    ...configProdEu2.resource,
   },
   viper: {
     ADMIN_EMAILS: ADMIN_EMAILS,
@@ -122,11 +58,13 @@ export const config: Config = {
   clickhouse: {
     awsPrivateLinkEndpointName:
       'com.amazonaws.vpce.ap-south-1.vpce-svc-0c230d09f9a784f0f',
+    maxTotalMemoryGb: 96,
+    numReplicas: 3,
   },
   opensearch: {
-    deploy: false,
-    dataNodes: 5,
-    dataNodeInstanceType: 'm7g.large.search',
-    volumeSize: 20,
+    deploy: true,
+    dataNodes: 7,
+    dataNodeInstanceType: 'm7g.2xlarge.search',
+    volumeSize: 25,
   },
 }

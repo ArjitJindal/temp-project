@@ -64,80 +64,12 @@ import { DowJonesConsumerUserRuleParameters } from '@/services/rules-engine/user
 import { ListScreeningConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/list-screening-consumer-user'
 import { SubjectIdentificationConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/subject-identification-consumer'
 import { SubjectIdentificationBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/subject-identification-business'
-
-export enum RuleChecksForField {
-  FirstTransaction = '1st transaction',
-  TransactionAmount = 'Transaction amount',
-  NumberOfTransactions = 'No. of transactions',
-  UserAccountStatus = 'User account status',
-  Time = 'Time',
-  TransactionCurrency = 'Transaction currency',
-  NumberOfUsers = 'No. of users',
-  TransactionCountry = 'Transaction country',
-  TransactionPaymentMethodCount = 'Transaction payment method count',
-  TransactionPaymentMethodIssuedCountry = 'Transaction payment method issued country',
-  UsersIPAddress = "User's IP address",
-  TransactionPaymentIdentifier = 'Transaction payment identifier',
-  UserCardFingerprintID = 'User card fingerprint ID',
-  UserPaymentIdentifier = 'User payment identifier',
-  Username = 'Username',
-  BothPartiesUsername = 'Both parties username',
-  TransactionState = 'Transaction state',
-  CounterpartyCountryCount = 'Counterparty country count',
-  TransactionPaymentDetails = 'Transaction payment details',
-  UserDetails = 'User details',
-  TransactionType = 'Transaction type',
-  EntityName = 'Entity name',
-  UsersBankName = 'User’s bank name',
-  CounterpartyUsername = 'Counterparty username',
-  CounterpartyBankName = 'Counterparty bank name',
-  UsersYearOfBirth = 'User’s Y.O.B',
-  UsersIndustry = 'User’s industry',
-  UsersAddress = 'User’s address',
-  TransactionDetails = 'Transaction details',
-  Keywords = 'Keywords',
-  accountHolderName = 'Account holder name',
-  ScreeningPaymentDetails = 'Screening payment details',
-}
-
-export enum RuleTypeField {
-  NewActivity = 'New activity',
-  AnomalyDetection = 'Anomaly detection',
-  RiskExposure = 'Risk exposure',
-  Diversity = 'Diversity',
-  PatternRecognition = 'Pattern recognition',
-  Velocity = 'Velocity',
-  TransactionDenstiy = 'Transaction density',
-  VelocityComparison = 'Velocity comparison',
-  Volume = 'Volume',
-  VolumeComparison = 'Volume comparison',
-  Blacklist = 'Blacklist',
-  MerchantMonitoring = 'Merchant monitoring',
-  Screening = 'Screening',
-}
-
-export enum RuleNature {
-  AML = 'AML',
-  FRAUD = 'FRAUD',
-  SCREENING = 'SCREENING',
-}
-
-export enum RuleTypology {
-  UnusualBehaviour = 'Unusual behaviour',
-  MoneyMules = 'Money mules',
-  AccountTakeoverFraud = 'Account takeover fraud',
-  AcquiringFraud = 'Acquiring fraud',
-  IssuingFraud = 'Issuing fraud',
-  CardFraud = 'Card fraud',
-  Structuring = 'Structuring',
-  HiddenUnusualRelationships = 'Hidden/unusual relationships',
-  Scams = 'Scams (romance, Nigerian Prince, inheritance and etc.)',
-  TerroristFinancing = 'Terrorist financing',
-  Layering = 'Layering',
-  InternalBlacklists = 'Internal blacklists',
-  ScreeningHits = 'Screening hits',
-  HighRiskTransactions = 'High risk transactions',
-}
+import {
+  RuleChecksForField,
+  RuleTypeField,
+  RuleNature,
+  RuleTypology,
+} from '@/constants/rules'
 
 const _RULES_LIBRARY: Array<
   () => Omit<
@@ -595,7 +527,8 @@ const _RULES_LIBRARY: Array<
       id: 'R-26',
       type: 'TRANSACTION',
       name: 'Round-amount anomaly',
-      description: 'Detect abnormal frequency of round-amount transactions',
+      description:
+        'Same user ID performs an abnormally high percentage of round-value transactions ending in 00.00 (without cents) compared to their usual historical behavior, indicating anomalous transaction patterns.',
       descriptionTemplate:
         'Percentage of round-number transactions in last 30 days is anomalously high vs 90-day baseline (stddev)',
       defaultParameters: {},
@@ -1497,7 +1430,7 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Too many round transactions to the same user',
       description:
-        'User receives or sends >= x round transactions within time t',
+        'Same user ID receives or sends ≥ X round-value transactions ending in 00.00 (without cents) within time t. The rule activates when the total count of such round transactions crosses a predefined threshold.',
       descriptionTemplate:
         "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} {{ parameters.transactionsLimit }} or more transactions as round values ending in 00.00 (hundreds without cents) within time {{ format-time-window parameters.timeWindow }}",
       defaultParameters,

@@ -6,9 +6,8 @@ import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 import { ConsoleActionReasonCreationRequest } from '@/@types/openapi-internal/ConsoleActionReasonCreationRequest'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 
-export const DEFAULT_CLOSURE_REASONS: CaseReasons[] = [
+export const DEFAULT_CLOSURE_REASONS: string[] = [
   'False positive',
   'Investigation completed',
   'Documents collected',

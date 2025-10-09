@@ -15,6 +15,7 @@ import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import {
   BatchJobNames,
+  ChatbotNames,
   CrmIntegrationNames,
   Feature,
   Tenant,
@@ -39,6 +40,7 @@ import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames
 import { useSARReportCountries } from '@/components/Sar/utils';
 import { SECONDARY_QUEUE_TENANTS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { CHATBOT_NAMESS } from '@/apis/models-custom/ChatbotNames';
 
 export enum FeatureTag {
   ENG = 'Eng',
@@ -174,7 +176,11 @@ export const featureDescriptions: Record<
     title: 'Chainalysis',
     description: 'Enables Chainalysis',
   },
-
+  EDD: {
+    title: 'EDD Rules',
+    description: 'Generates EDD alerts in demo mode',
+    tag: FeatureTag.ENG,
+  },
   WORKFLOWS_BUILDER: {
     title: 'Workflows builder',
     description: 'Enables workflows builder',
@@ -217,6 +223,16 @@ export const featureDescriptions: Record<
     description: 'Enables EDD Report',
     tag: FeatureTag.WIP,
   },
+  CHATBOT: {
+    title: 'Chatbot',
+    description: 'Enables chatbot',
+    tag: FeatureTag.ENG,
+  },
+  CUSTOM_AGGREGATION_FIELDS: {
+    title: 'Custom aggregation fields',
+    description: 'Enables custom aggregation fields like (name, email, address)',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
@@ -250,6 +266,7 @@ export default function SuperAdminPanel() {
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
   const isCrmToBeEnabled = features?.includes('CRM');
   const isSARToBeEnabled = features?.includes('SAR');
+  const isChatbotToBeEnabled = features?.includes('CHATBOT');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
   const SARCountries = useSARReportCountries(true);
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
@@ -258,6 +275,9 @@ export default function SuperAdminPanel() {
   );
   const [sarJurisdictions, setSarJurisdictions] = useState<Array<string>>(
     settings.sarJurisdictions ?? [],
+  );
+  const [chatbot, setChatbot] = useState<ChatbotNames | undefined>(
+    settings.chatbotName ?? undefined,
   );
 
   const user = useAuth0User();
@@ -404,6 +424,7 @@ export default function SuperAdminPanel() {
       sanctions: sanctionsSettings,
       crmIntegrationName,
       sarJurisdictions,
+      chatbotName: chatbot,
     });
   };
   const showModal = () => {
@@ -458,16 +479,18 @@ export default function SuperAdminPanel() {
         {role === 'root' && (
           <div className={s.rootSettingsContainer}>
             <br />
-            <Button
-              type="PRIMARY"
-              size="MEDIUM"
-              onClick={() => {
-                setShowCreateTenantModal(true);
-                handleCancel();
-              }}
-            >
-              Create new tenant
-            </Button>
+            <div className={s.buttonWrapper}>
+              <Button
+                type="PRIMARY"
+                size="MEDIUM"
+                onClick={() => {
+                  setShowCreateTenantModal(true);
+                  handleCancel();
+                }}
+              >
+                Create new tenant
+              </Button>
+            </div>
 
             {tenantsDeletedRecently?.length ? (
               <ListTenants
@@ -574,6 +597,19 @@ export default function SuperAdminPanel() {
               </Label>
             )}
 
+            {isChatbotToBeEnabled && (
+              <Label label="Select chatbot">
+                <Select
+                  options={CHATBOT_NAMESS.map((chatbot) => ({
+                    label: humanizeConstant(chatbot),
+                    value: chatbot,
+                  }))}
+                  value={chatbot}
+                  onChange={(v) => v && setChatbot(v)}
+                />
+              </Label>
+            )}
+
             {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
               <></>
             ) : isDowJonesToBeEnabled ? (
@@ -645,9 +681,11 @@ export default function SuperAdminPanel() {
               }}
             >
               {(props) => (
-                <Button isDisabled={!batchJobName} type={'PRIMARY'} onClick={props.onClick}>
-                  Run
-                </Button>
+                <div className={s.buttonWrapper}>
+                  <Button isDisabled={!batchJobName} type={'PRIMARY'} onClick={props.onClick}>
+                    Run
+                  </Button>
+                </div>
               )}
             </Confirm>
 
@@ -673,16 +711,18 @@ export default function SuperAdminPanel() {
                 isDisabled={false}
               />
             </Label>
-            <Button
-              type="PRIMARY"
-              onClick={() =>
-                mutateTenantSettings.mutate({
-                  apiKeyViewData: [],
-                })
-              }
-            >
-              Reset current API key view count
-            </Button>
+            <div className={s.buttonWrapper}>
+              <Button
+                type="PRIMARY"
+                onClick={() =>
+                  mutateTenantSettings.mutate({
+                    apiKeyViewData: [],
+                  })
+                }
+              >
+                Reset current API key view count
+              </Button>
+            </div>
             <Label label="Rerun risk scoring limit">
               <NumberInput
                 value={limits?.rerunRiskScoringLimit ?? 0}
@@ -823,23 +863,25 @@ export default function SuperAdminPanel() {
                 <br />
               </>
             )}
-            <Button
-              type={'PRIMARY'}
-              onClick={async () => {
-                try {
-                  setDownloadFeatureState(true);
-                  message.info('Pulling features config');
-                  await handlePullAllTenantsFeatures();
-                } catch (e) {
-                  message.error(`Failed to download features config ${e}`);
-                } finally {
-                  setDownloadFeatureState(false);
-                }
-              }}
-              isLoading={downloadFeatureLoading}
-            >
-              Download features config
-            </Button>
+            <div className={s.buttonWrapper}>
+              <Button
+                type={'PRIMARY'}
+                onClick={async () => {
+                  try {
+                    setDownloadFeatureState(true);
+                    message.info('Pulling features config');
+                    await handlePullAllTenantsFeatures();
+                  } catch (e) {
+                    message.error(`Failed to download features config ${e}`);
+                  } finally {
+                    setDownloadFeatureState(false);
+                  }
+                }}
+                isLoading={downloadFeatureLoading}
+              >
+                Download features config
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

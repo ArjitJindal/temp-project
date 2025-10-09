@@ -6,7 +6,7 @@ import {
   UserRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { getTestUser } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()

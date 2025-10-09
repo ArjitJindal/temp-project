@@ -5,13 +5,11 @@ import {
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
-import {
-  createTenantDatabase,
-  isClickhouseEnabledInRegion,
-  syncThunderSchemaTables,
-} from '@/utils/clickhouse/utils'
+import { syncThunderSchemaTables } from '@/utils/clickhouse/utils'
+import { createTenantDatabase } from '@/utils/clickhouse/database'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId } from '@/utils/tenant-id'
 import { envIsNot } from '@/utils/env'
 
 export class SyncDatabases extends BatchJobRunner {

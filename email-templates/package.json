@@ -9,8 +9,8 @@
   },
   "author": "",
   "dependencies": {
-    "@react-email/components": "0.5.0",
-    "react-email": "3.0.7"
+    "@react-email/components": "0.5.5",
+    "react-email": "^4.2.12"
   },
   "engines": {
     "node": "20.x",

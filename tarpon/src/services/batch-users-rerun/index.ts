@@ -90,20 +90,30 @@ export class BatchRerunUsersService {
           logger.info(`User has manual risk level set`)
         }
 
-        await riskScoringService.calculateAndUpdateKrsScore(
+        const newKrsScore = await riskScoringService.calculateAndUpdateKrsScore(
           user,
           riskClassificationValues,
           krsScore?.manualRiskLevel,
           krsScore,
           false
         )
-
+        if (newKrsScore.isOverriddenScore) {
+          await riskScoringService.updateDrsScore({
+            userId: user.userId,
+            drsScore: newKrsScore.score,
+            transactionId: 'RISK_SCORING_RERUN',
+            factorScoreDetails: newKrsScore.scoreDetails,
+            components: newKrsScore.components,
+            isUpdatable: false,
+          })
+          return
+        }
         const newDrsScore = riskScoringService.calculateNewDrsScore({
           algorithm: tenantSettings.riskScoringAlgorithm || {
             type: 'FORMULA_SIMPLE_AVG',
           },
           oldDrsScore: drsScore?.drsScore,
-          krsScore: krsScore?.krsScore,
+          krsScore: newKrsScore.score,
           avgArsScore: avgArsScore?.value,
         })
 
@@ -111,8 +121,8 @@ export class BatchRerunUsersService {
           userId: user.userId,
           drsScore: newDrsScore,
           transactionId: 'RISK_SCORING_RERUN',
-          factorScoreDetails: krsScore?.factorScoreDetails,
-          components: krsScore?.components,
+          factorScoreDetails: newKrsScore.scoreDetails,
+          components: newKrsScore.components,
         })
       },
       { concurrency: 10 }
@@ -220,6 +230,7 @@ export class BatchRerunUsersService {
     const latestJob = await batchJobRepository.getLatestJob({
       type: 'BATCH_RERUN_USERS',
       'parameters.jobType': 'RERUN_RISK_SCORING',
+      'latestStatus.status': { $in: ['PENDING', 'IN_PROGRESS'] },
     })
     const jobId = latestJob?.jobId
 

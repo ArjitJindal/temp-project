@@ -1,4 +1,5 @@
-import { difference, uniq } from 'lodash'
+import difference from 'lodash/difference'
+import uniq from 'lodash/uniq'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { WithId } from 'mongodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'

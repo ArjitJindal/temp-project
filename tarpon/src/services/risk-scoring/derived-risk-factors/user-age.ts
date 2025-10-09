@@ -1,4 +1,5 @@
-import { compact, get } from 'lodash'
+import compact from 'lodash/compact'
+import get from 'lodash/get'
 import { getAgeFromTimestamp, getAgeInDaysFromTimestamp } from '../utils'
 import {
   TransactionRiskFactorValueHandler,
@@ -18,7 +19,7 @@ function getDerivedAge(
   parameter: RiskFactorParameter | 'createdTimestamp',
   granularity = 'YEAR'
 ): number | undefined {
-  const endValue = get(user, parameter)
+  const endValue = get(user, parameter) as number | string
   if (!endValue) {
     return
   }

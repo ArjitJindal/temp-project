@@ -1,4 +1,4 @@
-import { sortBy } from 'lodash'
+import sortBy from 'lodash/sortBy'
 import { getCaseRepo, getStatsRepo } from './helpers'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
@@ -8,7 +8,7 @@ import {
   withFeatureHook,
   withFeaturesToggled,
 } from '@/test-utils/feature-test-utils'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const TEST_ACCOUNT_ID_1 = 'TEST_ACCOUNT_ID_1'

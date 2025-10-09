@@ -1,16 +1,18 @@
 import { JSONSchemaType } from 'ajv'
-
-import { chain, compact, mergeWith, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import mergeWith from 'lodash/mergeWith'
+import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
-import { getNonUserSenderKeys, getUserSenderKeys } from '../utils'
+import { getNonUserSenderKeyId, getUserSenderKeyId } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { traceable } from '@/core/xray'
 
@@ -63,7 +65,9 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     const transactionUser = await this.getTransactionSenderUserKey()
 
     if (!transactionUser) {
-      return hitResult
+      return {
+        ruleHitResult: hitResult,
+      }
     }
 
     const updatedUsers = new Set([transactionUser, ...data])
@@ -78,7 +82,9 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         vars: super.getTransactionVars('destination'),
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private getTransactionSenderUserKey(): string | undefined {
@@ -90,11 +96,9 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
         this.transaction.destinationPaymentDetails)
     ) {
       if (senderTypes.includes('USER') && this.senderUser) {
-        return getUserSenderKeys(this.tenantId, this.transaction)
-          ?.PartitionKeyID
+        return getUserSenderKeyId(this.tenantId, this.transaction)
       } else if (senderTypes.includes('NON_USER') && !this.senderUser) {
-        return getNonUserSenderKeys(this.tenantId, this.transaction)
-          ?.PartitionKeyID
+        return getNonUserSenderKeyId(this.tenantId, this.transaction)
       }
     }
   }
@@ -212,11 +216,13 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
     )
 
     if (userAggregationData) {
-      return chain(userAggregationData)
-        .flatMap((aggregationData) => aggregationData.senderKeys ?? [])
-        .compact()
-        .uniq()
-        .value()
+      return uniq(
+        compact(
+          userAggregationData.flatMap(
+            (aggregationData) => aggregationData.senderKeys ?? []
+          )
+        )
+      )
     }
 
     if (this.shouldUseRawData()) {

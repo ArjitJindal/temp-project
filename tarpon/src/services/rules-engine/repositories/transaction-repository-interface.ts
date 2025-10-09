@@ -1,13 +1,14 @@
 import {
-  TransactionAmountRange,
   TransactionTimeRange,
-} from '../utils/rule-parameter-schemas'
+  TransactionAmountRange,
+} from '@/@types/rule/params'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import {
   PaymentDetails,
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
+import { EntityData } from '@/@types/tranasction/aggregation'
 
 export type TransactionWithRiskDetails = Omit<
   TransactionWithRulesResult,
@@ -53,6 +54,7 @@ export interface RulesEngineTransactionRepositoryInterface {
   getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
@@ -62,6 +64,7 @@ export interface RulesEngineTransactionRepositoryInterface {
   getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,

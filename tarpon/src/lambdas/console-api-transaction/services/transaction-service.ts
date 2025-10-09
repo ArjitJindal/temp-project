@@ -2,13 +2,13 @@ import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { TransactionViewConfig } from '../app'
+import { TransactionViewConfig } from '@/@types/tranasction/transaction-config'
 import {
   DefaultApiGetAlertTransactionListRequest,
   DefaultApiGetCaseTransactionsRequest,
@@ -26,14 +26,12 @@ import { traceable } from '@/core/xray'
 import {
   CursorPaginationResponse,
   OptionalPagination,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { Currency, CurrencyService } from '@/services/currency'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
@@ -300,6 +298,7 @@ export class TransactionService {
     return {
       transactionId: transaction.transactionId,
       timestamp: transaction.timestamp,
+      paymentApprovalTimestamp: transaction.paymentApprovalTimestamp,
       arsScore: {
         arsScore: transaction.arsScore?.arsScore,
       },
@@ -406,6 +405,7 @@ export class TransactionService {
       )
       params.filterUserIds = userIds
     }
+
     let response =
       type === 'offset'
         ? await this.getTransactionsOffsetPaginated(params, alert)
@@ -482,6 +482,7 @@ export class TransactionService {
         type: 1,
         transactionId: 1,
         timestamp: 1,
+        paymentApprovalTimestamp: 1,
         originUserId: 1,
         destinationUserId: 1,
         transactionState: 1,
@@ -560,10 +561,13 @@ export class TransactionService {
 
       const data = await clickhouseTransactionsRepository.getStatsByType(params)
       const currencyService = new CurrencyService(this.dynamoDb)
-      const exchangeRateWithUsd = await currencyService.getCurrencyExchangeRate(
-        referenceCurrency,
-        'USD'
-      )
+      const exchangeRateWithUsd =
+        referenceCurrency !== 'USD'
+          ? await currencyService.getCurrencyExchangeRate(
+              'USD',
+              referenceCurrency
+            )
+          : 1
 
       return data.map((item) => ({
         ...item,
@@ -631,7 +635,7 @@ export class TransactionService {
   public async importFlatFile(request: TransactionFlatFileUploadRequest) {
     const { file } = request
 
-    const files = await this.s3Service.copyFilesToPermanentBucket([file])
+    const files = await this.s3Service.copyFlatFilesToPermanentBucket([file])
     await sendBatchJobCommand({
       tenantId: this.tenantId,
       type: 'FLAT_FILES_VALIDATION',

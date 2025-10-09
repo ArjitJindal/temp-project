@@ -12,11 +12,9 @@ import {
   periodVars,
   paymentIdentifierQueryClickhouse,
 } from '@/services/copilot/questions/definitions/util'
-import {
-  executeClickhouseQuery,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 type Transaction = {
   transactionId: string
@@ -56,13 +54,12 @@ const clickhouseTransactionQuery = async (
   ),
   users as (
     SELECT
-        DISTINCT u.id as userId,
-        u.username
+        DISTINCT id as userId,
+        username
     FROM
-        users_by_id u
-        JOIN transactions t ON u.id = t.originUserId
-        OR u.id = t.destinationUserId
-  ) 
+        users_by_id FINAL
+        WHERE id in (SELECT DISTINCT coalesce(originUserId, destinationUserId) AS id from txn )
+  )
   SELECT
     txn.transactionId as transactionId,
     txn.type as type,
@@ -116,12 +113,14 @@ const clickhouseTransactionQuery = async (
       t.type,
       t.timestamp,
       t.transactionState,
-      t.originUserId,
+      t.originUserId === 'null' || !t.originUserId ? '-' : t.originUserId,
       t.originConsumerName,
       t.originAmount,
       t.originCurrency,
       t.originCountry,
-      t.destinationUserId,
+      t.destinationUserId === 'null' || !t.destinationUserId
+        ? '-'
+        : t.destinationUserId,
       t.destinationConsumerName,
       t.destinationAmount,
       t.destinationCurrency,

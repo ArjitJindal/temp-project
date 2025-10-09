@@ -1,9 +1,7 @@
 import { backOff } from 'exponential-backoff'
 import { migrateAllTenants } from '../utils/tenant'
-import {
-  isClickhouseEnabledInRegion,
-  createOrUpdateClickHouseTable,
-} from '@/utils/clickhouse/utils'
+import { createOrUpdateClickHouseTable } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { ClickHouseChecksumService } from '@/services/clickhouse-checksum/service'
 import { ClickHouseTableChecksum } from '@/utils/clickhouse-checksum'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'

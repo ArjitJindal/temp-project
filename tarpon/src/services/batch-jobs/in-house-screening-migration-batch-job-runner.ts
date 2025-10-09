@@ -1,7 +1,10 @@
 import { Collection, MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact, omit, startCase, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import omit from 'lodash/omit'
+import startCase from 'lodash/startCase'
+import uniq from 'lodash/uniq'
 import { sanitizeString } from '@flagright/lib/utils'
 import { GenericSanctionsConsumerUserRuleParameters } from '../rules-engine/user-rules/generic-sanctions-consumer-user'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
@@ -19,7 +22,7 @@ import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   SANCTIONS_SEARCHES_COLLECTION,
   SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'

@@ -1,4 +1,4 @@
-import { RuleHitResult } from '../rule'
+import { RuleResult } from '../rule'
 import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
 import FirstPaymentRule from './first-payment'
 import HighRiskCurrencyRule from './high-risk-currency'
@@ -54,7 +54,7 @@ import BankNameChangeRule from '@/services/rules-engine/transaction-rules/bank-n
 import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 export class TransactionRuleBase extends TransactionRule<unknown> {
-  public async computeRule(): Promise<RuleHitResult | undefined> {
+  public async computeRule(): Promise<RuleResult | undefined> {
     // skip
     return
   }

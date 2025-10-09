@@ -1,5 +1,4 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
-import { startCase } from 'lodash'
 import {
   InvestigationContext,
   TimeseriesQuestion,
@@ -19,12 +18,10 @@ import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { notEmpty } from '@/utils/array'
 import { getContext } from '@/core/utils/context-storage'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 export const getClickhouseQuery = (
   period: Period,
@@ -51,29 +48,21 @@ export const getClickhouseQuery = (
       sqlGranularity = 'YEAR'
       break
   }
-  const startOf = `toStartOf${startCase(sqlGranularity.toLowerCase())}`
-
   const query = `
     SELECT
-      toDate(${startOf}(toDateTime(timestamp / 1000))) as date,
+      toDate(timestamp / 1000) as date,
       round(${aggregationExpression(granularity)}, 2) as agg
     FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-    WHERE
+    PREWHERE
     (
-      (toDateTime(timestamp / 1000) >= fromUnixTimestamp64Milli(${
-        period.from
-      }) AND toDateTime(timestamp / 1000) <= fromUnixTimestamp64Milli(${
-    period.to
-  }))
-      AND ${clickhouseCondition}
+      (timestamp >= ${period.from} AND timestamp <= ${period.to})
+      AND (${clickhouseCondition})
     )
     GROUP BY date
     ORDER BY date ASC
-    WITH FILL FROM toDate(${startOf}(toDateTime(${
-    period.from
-  } / 1000))) TO toDate(${startOf}(toDateTime(${
-    period.to
-  } / 1000))) + INTERVAL 1 ${sqlGranularity} STEP INTERVAL 1 ${sqlGranularity}
+    WITH FILL FROM toDate(${period.from} / 1000)
+    TO toDate(${period.to} / 1000) + INTERVAL 1 ${sqlGranularity} 
+    STEP INTERVAL 1 ${sqlGranularity}
     SETTINGS output_format_json_quote_64bit_integers = 0
   `
 
@@ -175,10 +164,12 @@ async function getClickhouseData(
     format: 'JSONEachRow',
   })
 
-  return result.map((row) => ({
+  const item = result.map((row) => ({
     time: dayjs(row.date).valueOf(),
-    value: currency ? ctx.convert(row.agg, currency) : row.agg,
+    value: currency ? ctx.convert(row.agg, 'USD', currency) : row.agg, // all currency in CH are in USD
   }))
+
+  return item
 }
 
 function getUserLimitValues(ctx, granularity, showUserLimit, values, currency) {

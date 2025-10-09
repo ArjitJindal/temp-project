@@ -9,7 +9,7 @@ import {
   CRM_NOTES_COLLECTION,
   CRM_SUMMARY_COLLECTION,
   CRM_TASKS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { CrmSummary } from '@/@types/openapi-internal/CrmSummary'
 import { CrmAccountResponseEngagements } from '@/@types/openapi-internal/CrmAccountResponseEngagements'
 import { CrmAccountResponseNotes } from '@/@types/openapi-internal/CrmAccountResponseNotes'

@@ -1,16 +1,14 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
-import { Tenant } from '@/services/accounts/repository'
-import {
-  CLICKHOUSE_DEFINITIONS,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
+import { Tenant } from '@/@types/tenant'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import {
   createMaterializedTableQuery,
   createMaterializedViewQuery,
-  getClickhouseClient,
-  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { RULE_ACTIONS } from '@/@types/openapi-internal-custom/RuleAction'
 import { buildQueryPart } from '@/utils/clickhouse/queries/transaction-stats-clickhouse'

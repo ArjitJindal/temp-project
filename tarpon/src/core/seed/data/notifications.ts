@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { sampleNotifications } from '../samplers/notifications'
 import { Notification } from '@/@types/openapi-internal/Notification'
 

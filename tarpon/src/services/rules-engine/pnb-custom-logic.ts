@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash'
+import uniqBy from 'lodash/uniqBy'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { Collection, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'

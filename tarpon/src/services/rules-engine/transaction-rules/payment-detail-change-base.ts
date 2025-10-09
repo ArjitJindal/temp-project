@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
 import { getEditDistancePercentage } from '@flagright/lib/utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { RuleHitResultItem } from '../rule'
@@ -12,10 +12,10 @@ import {
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
   LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA,
   TIME_WINDOW_SCHEMA,
-  TimeWindow,
 } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { mergeObjects } from '@/utils/object'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { traceable } from '@/core/xray'
@@ -85,10 +85,16 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    return {
+      ruleHitResult: (
+        await Promise.all([
+          this.computeRuleUser('origin'),
+          this.computeRuleUser('destination'),
+        ])
+      )
+        .filter(Boolean)
+        .flat(),
+    }
   }
 
   protected async computeRuleUser(

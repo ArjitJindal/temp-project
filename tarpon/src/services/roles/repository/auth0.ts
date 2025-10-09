@@ -1,5 +1,5 @@
 import { BadRequest } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import {
   getNamespacedRoleName,
   getRoleDisplayName,
@@ -15,7 +15,7 @@ import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/Managed
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { traceable } from '@/core/xray'
 import { Auth0AccountsRepository } from '@/services/accounts/repository/auth0'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 @traceable
 export class Auth0RolesRepository extends BaseRolesRepository {
@@ -164,6 +164,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
         "Can't overwrite default role, please choose a different name."
       )
     }
+
     await rolesManager.update(
       { id },
       {

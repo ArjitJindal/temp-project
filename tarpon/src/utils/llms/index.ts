@@ -6,11 +6,11 @@ import {
   DynamoTransactionBatch,
 } from '../dynamodb'
 import { envIs } from '../env'
-import { CLICKHOUSE_DEFINITIONS } from '../clickhouse/definition'
-import { batchInsertToClickhouse } from '../clickhouse/utils'
+import { batchInsertToClickhouse } from '../clickhouse/insert'
 import { OpenAIService } from './openai'
 import { AnthropicService } from './anthropic'
 import { LLMOptions, Message } from './base-service'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { LLMProvider } from '@/@types/openapi-internal/LLMProvider'
 import { tenantSettings } from '@/core/utils/context'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -87,19 +87,10 @@ export async function linkLLMRequestDynamoDB(
 
   await batch.execute()
   if (envIs('local') || envIs('test')) {
-    await handleLocalChangeCapture(tenantId, keys)
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
+    const { handleLocalTarponChangeCapture } = await import(
+      '@/core/local-handlers/tarpon'
+    )
+    await handleLocalTarponChangeCapture(tenantId, keys)
   }
 }
 

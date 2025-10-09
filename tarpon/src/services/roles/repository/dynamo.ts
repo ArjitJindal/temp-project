@@ -6,7 +6,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import {
   getNamespace,
   getNamespacedRoleName,
@@ -17,9 +17,9 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
-import { getNonDemoTenantId } from '@/utils/tenant'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { traceable } from '@/core/xray'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
 import { Account } from '@/@types/openapi-internal/Account'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
@@ -139,6 +139,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role = await this.getRole(id)
 
     if (!role) {
+      // add the role from auth0
       throw new Error('Role not found with id: ' + id)
     }
 

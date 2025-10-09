@@ -1,5 +1,6 @@
-import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import React, { useLayoutEffect, useRef, useState, useEffect, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { setUserAlias } from '@flagright/lib/utils/userAlias';
 import { parseQuestionResponse, QuestionResponse, QuestionResponseRuleHit } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
@@ -20,6 +21,7 @@ import { CommonParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import HistoryItemRuleHit from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemRuleHit';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   isUnread: boolean;
@@ -133,6 +135,8 @@ export default function HistoryItem(props: Props) {
     setPageParams((pageParams) => ({ ...pageParams, ...newParams }));
   };
 
+  const preparedItemState = usePreparedItem(itemState);
+
   return (
     <HistoryItemBase
       ref={rootRef}
@@ -140,13 +144,13 @@ export default function HistoryItem(props: Props) {
       commentSubmitMutation={commentSubmitMutation}
       isUnread={isUnread}
       isLoading={isLoading(getMutationAsyncResource(updateVarsMutation))}
-      item={itemState}
+      item={preparedItemState}
       onRefresh={(vars) => {
         updateVarsMutation.mutate({ ...vars });
         setPageParams(DEFAULT_PARAMS_STATE);
       }}
     >
-      {renderItem(itemState, pageParams, onPageParams)}
+      {renderItem(preparedItemState, pageParams, onPageParams)}
     </HistoryItemBase>
   );
 }
@@ -193,4 +197,50 @@ function renderItem(
     return <HistoryItemRuleHit item={itemResult as QuestionResponseRuleHit} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
+}
+
+/*
+  Helpers
+ */
+
+/**
+ * Makes replacement in labels for user aliases
+ */
+export function usePreparedItem(itemState: QuestionResponse): QuestionResponse {
+  const { userAlias } = useSettings();
+
+  return useMemo(() => {
+    if (itemState.questionType === 'TIME_SERIES') {
+      return {
+        ...itemState,
+        timeseries: itemState.timeseries?.map((timeseriesItem) => ({
+          ...timeseriesItem,
+          label: setUserAlias(timeseriesItem.label, userAlias),
+        })),
+      };
+    }
+    if (itemState.questionType === 'BARCHART') {
+      return {
+        ...itemState,
+        values: itemState.values?.map((valueItem) => ({
+          ...valueItem,
+          x: setUserAlias(valueItem.x, userAlias),
+        })),
+      };
+    }
+    if (itemState.questionType === 'STACKED_BARCHART') {
+      return {
+        ...itemState,
+        values: itemState.series?.map((seriesItem) => ({
+          ...seriesItem,
+          label: setUserAlias(seriesItem.label, userAlias),
+          values: seriesItem.values?.map((valueItem) => ({
+            ...valueItem,
+            x: setUserAlias(valueItem.x, userAlias),
+          })),
+        })),
+      };
+    }
+    return itemState;
+  }, [itemState, userAlias]);
 }

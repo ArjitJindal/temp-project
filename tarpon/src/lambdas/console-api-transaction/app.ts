@@ -3,7 +3,8 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest, InternalServerError, NotFound } from 'http-errors'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
+import { PAYMENT_APPROVAL_START_TIMESTAMP } from '@flagright/lib/utils'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -11,20 +12,15 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { CaseService } from '@/services/cases'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
-
-export type TransactionViewConfig = {
-  TMP_BUCKET: string
-  DOCUMENT_BUCKET: string
-  MAXIMUM_ALLOWED_EXPORT_SIZE: string
-}
+import { TransactionViewConfig } from '@/@types/tranasction/transaction-config'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 
 const DEVICE_DATA_FIELDS: CsvHeaderSettings<
   InternalTransaction['originDeviceData']
@@ -43,7 +39,7 @@ const DEVICE_DATA_FIELDS: CsvHeaderSettings<
   appVersion: 'INCLUDE',
 }
 
-export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTransaction> =
+const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTransaction> =
   {
     type: 'INCLUDE',
     transactionId: 'INCLUDE',
@@ -85,6 +81,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTran
     riskScoreDetails: 'JSON',
     alertIds: 'SKIP',
     updateCount: 'SKIP',
+    paymentApprovalTimestamp: 'INCLUDE',
   }
 
 export const transactionsViewHandler = lambdaApi()(
@@ -98,7 +95,7 @@ export const transactionsViewHandler = lambdaApi()(
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = await getDynamoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const [rulesEngineService, caseService, transactionService] =
       await Promise.all([
         RulesEngineService.fromEvent(event),
@@ -109,6 +106,20 @@ export const transactionsViewHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetTransactionsList(async (context, request) => {
+      // santize payment approval filters
+      if (request.afterPaymentApprovalTimestamp) {
+        request.afterPaymentApprovalTimestamp = Math.max(
+          request.afterPaymentApprovalTimestamp,
+          PAYMENT_APPROVAL_START_TIMESTAMP
+        )
+      }
+
+      if (request.beforePaymentApprovalTimestamp) {
+        request.beforePaymentApprovalTimestamp = Math.max(
+          request.beforePaymentApprovalTimestamp,
+          PAYMENT_APPROVAL_START_TIMESTAMP
+        )
+      }
       if (isClickhouseEnabled()) {
         if (request.view === 'DOWNLOAD') {
           const result = await transactionService.getTransactionsListV2(request)
@@ -239,9 +250,11 @@ export const transactionsViewHandler = lambdaApi()(
     })
 
     handlers.registerApplyTransactionsAction(async (ctx, req) => {
+      // payment approval transaction
       const response = await rulesEngineService.applyTransactionAction(
         req.TransactionAction,
-        ctx.userId
+        ctx.userId,
+        true
       )
       await caseService.applyTransactionAction(req.TransactionAction)
       return response

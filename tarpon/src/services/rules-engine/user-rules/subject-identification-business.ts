@@ -114,6 +114,8 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
         sanctionsDetails,
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

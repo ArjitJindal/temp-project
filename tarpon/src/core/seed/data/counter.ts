@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { getCases } from './cases'
 import { reports } from './reports'
 import { ruleInstances } from './rules'
@@ -6,10 +6,7 @@ import { riskFactors } from './risk-factors'
 import { ID_PREFIXES } from './seeds'
 import { getSLAPolicies } from './sla'
 import { CounterEntity } from '@/services/counter/repository'
-import {
-  CASES_COLLECTION,
-  REPORT_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION, REPORT_COLLECTION } from '@/utils/mongo-table-names'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { RISK_FACTORS } from '@/services/risk-scoring/risk-factors'
 import {

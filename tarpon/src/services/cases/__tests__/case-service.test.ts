@@ -1,5 +1,5 @@
 import { NotFound, BadRequest } from 'http-errors'
-import { cloneDeep } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
 import { ObjectId } from 'mongodb'
 import { nanoid } from 'nanoid'
 import { CaseService } from '..'
@@ -28,10 +28,10 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserService } from '@/services/users'
-import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { enableLocalChangeHandler } from '@/utils/local-change-handler'
 import { Account } from '@/@types/openapi-internal/Account'
-import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',

@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { last } from 'lodash'
+import last from 'lodash/last'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -9,7 +9,7 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'

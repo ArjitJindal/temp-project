@@ -69,7 +69,6 @@ import {
   statusInProgressOrOnHold,
   statusInReview,
 } from '@/utils/case-utils';
-import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { useApi } from '@/api';
 import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusWithDropDown';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
@@ -457,16 +456,28 @@ export const QA_SAMPLE_ID: ColumnDataType<
   },
 };
 
-export const MONEY_AMOUNT: ColumnDataType<number> = {
+export const MONEY_AMOUNT = (currency?: string): ColumnDataType<number> => ({
   render: (value) => {
-    if (value !== undefined) {
+    if (value !== undefined && value !== null) {
+      if (currency) {
+        return <Money value={Number(value)} currency={currency} />;
+      }
       return <>{new Intl.NumberFormat().format(value)}</>;
     } else {
       return <>{value}</>;
     }
   },
+  stringify: (value) => {
+    if (value !== undefined && value !== null) {
+      if (currency) {
+        return `${currency} ${new Intl.NumberFormat().format(Number(value))}`;
+      }
+      return new Intl.NumberFormat().format(value);
+    }
+    return String(value || '');
+  },
   autoFilterDataType: { kind: 'dateTimeRange' },
-};
+});
 
 export const MONEY_CURRENCY: ColumnDataType<CurrencyCode> = {
   render: (value) => {
@@ -640,57 +651,60 @@ const StatusChangeDropDown = <T extends TableItem | TableAlertItem>(props: {
 
 export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
   statusesToShow?: CaseStatus[];
+  allowedStatuses?: CaseStatus[];
   reload: () => void;
-}): ColumnDataType<CaseStatus, T> => ({
-  render: (caseStatus, { item: entity }) => {
-    return caseStatus && entity ? (
-      statusInProgressOrOnHold(caseStatus) ? (
-        <Tooltip
-          title={humanizeConstant(
-            caseStatus.replace('_IN_PROGRESS', ', In Progress').replace('_ON_HOLD', ', On Hold'),
-          )}
-        >
+}): ColumnDataType<CaseStatus, T> => {
+  return {
+    render: (caseStatus, { item: entity }) => {
+      return caseStatus && entity ? (
+        statusInProgressOrOnHold(caseStatus) ? (
+          <Tooltip
+            title={humanizeConstant(
+              caseStatus.replace('_IN_PROGRESS', ', In Progress').replace('_ON_HOLD', ', On Hold'),
+            )}
+          >
+            <StatusChangeDropDown<T>
+              entity={entity}
+              caseStatus={caseStatus}
+              reload={options?.reload ?? (() => {})}
+            />
+          </Tooltip>
+        ) : (
           <StatusChangeDropDown<T>
             entity={entity}
             caseStatus={caseStatus}
             reload={options?.reload ?? (() => {})}
           />
-        </Tooltip>
+        )
       ) : (
-        <StatusChangeDropDown<T>
-          entity={entity}
-          caseStatus={caseStatus}
-          reload={options?.reload ?? (() => {})}
-        />
-      )
-    ) : (
-      <></>
-    );
-  },
-  stringify: (value) => {
-    return value ? statusToOperationName(value, true) : '-';
-  },
-  autoFilterDataType: {
-    kind: 'select',
-    options: uniqBy<Option<string>>(
-      (options?.statusesToShow ?? CASE_STATUSS).map((status) => ({
-        value: status,
-        label: humanizeConstant(
-          statusInReview(status)
-            ? 'IN_REVIEW'
-            : status.endsWith('IN_PROGRESS')
-            ? 'IN_PROGRESS'
-            : status.endsWith('ON_HOLD')
-            ? 'ON_HOLD'
-            : status,
-        ),
-      })),
-      'label',
-    ),
-    displayMode: 'list',
-    mode: 'SINGLE',
-  },
-});
+        <></>
+      );
+    },
+    stringify: (value) => {
+      return value ? statusToOperationName(value, true) : '-';
+    },
+    autoFilterDataType: {
+      kind: 'select',
+      options: uniqBy<Option<string>>(
+        (options?.statusesToShow ?? options?.allowedStatuses ?? []).map((status) => ({
+          value: status,
+          label: humanizeConstant(
+            statusInReview(status)
+              ? 'IN_REVIEW'
+              : status.endsWith('IN_PROGRESS')
+              ? 'IN_PROGRESS'
+              : status.endsWith('ON_HOLD')
+              ? 'ON_HOLD'
+              : status,
+          ),
+        })),
+        'label',
+      ),
+      displayMode: 'list',
+      mode: 'SINGLE',
+    },
+  };
+};
 export const STATUS_CHANGE_PATH = (entityType: 'CASE' | 'ALERT') => {
   return {
     stringify: (value, entity) => {
@@ -902,6 +916,12 @@ export const getForneticsEntityId = (tenantSettings?: TenantSettings) => {
                 </Id>
               )}
             </FeatureEnabled>
+          );
+        case 'caseId':
+          return (
+            <Id to={addBackUrlToRoute(getCaseUrl(value ?? '#'))} testName="case-id" toNewTab={true}>
+              {value}
+            </Id>
           );
         case 'Case ID':
         case 'Related case':

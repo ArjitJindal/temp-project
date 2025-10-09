@@ -1,6 +1,7 @@
-import { get, set } from 'lodash'
+import get from 'lodash/get'
+import set from 'lodash/set'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 

@@ -13,6 +13,8 @@ import { AlertsService } from '@/services/alerts'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
 import { RetrievalService } from '@/services/copilot/retrieval-service'
+import { userStatements } from '@/core/utils/context'
+import { assertCaseStatusAccessById } from '@/services/cases/case-permissions'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -76,6 +78,12 @@ export const copilotHandler = lambdaApi({})(
       if (!alert?.caseId) {
         throw new Error(`Alert ${alert?.alertId} has no case ID`)
       }
+      const statements = await userStatements(_ctx.tenantId)
+      await assertCaseStatusAccessById(
+        statements as any,
+        caseService,
+        alert.caseId
+      )
 
       const cresponse = await caseService.getCase(alert.caseId)
       const c = cresponse.result

@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillKrs } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
@@ -8,7 +8,7 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { pickKnownEntityFields } from '@/utils/object'
 import { User } from '@/@types/openapi-public/User'

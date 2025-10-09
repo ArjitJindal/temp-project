@@ -1,9 +1,7 @@
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
-
 export const reasonNarrativesCasesAlerts = (
   type: 'CASE' | 'ALERT',
   commentsAvailable: boolean
-): Record<CaseReasons, string> => {
+): Record<string, string> => {
   const entityGenerationDate =
     type === 'CASE' ? 'caseGenerationDate' : 'alertGenerationDate'
   const entityActionDate =
@@ -41,7 +39,7 @@ export const reasonNarrativesCasesAlerts = (
 export const reasonNarrativeScreening = (
   type: 'CASE' | 'ALERT',
   commentsAvailable: boolean
-): Record<CaseReasons, string> => {
+): Record<string, string> => {
   const entityGenerationDate =
     type === 'CASE' ? 'caseGenerationDate' : 'alertGenerationDate'
   const entityActionDate =

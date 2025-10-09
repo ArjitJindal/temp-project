@@ -10,7 +10,7 @@ import {
 import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { enableLocalChangeHandler } from '@/utils/local-change-handler'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 

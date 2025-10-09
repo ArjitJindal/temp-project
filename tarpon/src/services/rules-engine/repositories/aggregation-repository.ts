@@ -10,7 +10,8 @@ import {
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 
-import { mapValues, omit } from 'lodash'
+import mapValues from 'lodash/mapValues'
+import omit from 'lodash/omit'
 import { getTransactionStatsTimeGroupLabel } from '../utils/transaction-rule-utils'
 import { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

@@ -1,5 +1,7 @@
 import { JSONSchemaType } from 'ajv'
-import { mergeWith, sumBy, uniq } from 'lodash'
+import mergeWith from 'lodash/mergeWith'
+import sumBy from 'lodash/sumBy'
+import uniq from 'lodash/uniq'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
@@ -8,8 +10,9 @@ import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { traceable } from '@/core/xray'
 
 type AggregationData = {
@@ -77,7 +80,9 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
         },
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async *getRawTransactionsData(): AsyncGenerator<

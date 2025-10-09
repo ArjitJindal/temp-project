@@ -15,7 +15,7 @@ import { LAMBDAS } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
 
 import { CANARIES } from '@lib/canaries'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import {
   createAPIGatewayAlarm,
   createDynamoDBAlarm,
@@ -196,7 +196,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
                 period: Duration.minutes(1),
               }
             : {
-                threshold: 30,
+                threshold: 50,
                 statistic: 'Average',
                 period: Duration.minutes(5),
               }

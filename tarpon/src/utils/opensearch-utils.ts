@@ -1,3 +1,4 @@
+import https from 'https'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { Client } from '@opensearch-project/opensearch'
@@ -8,7 +9,8 @@ import {
   Indices_Create_RequestBody,
 } from '@opensearch-project/opensearch/api'
 import { v4 as uuidv4 } from 'uuid'
-import { chunk, isEqual } from 'lodash'
+import chunk from 'lodash/chunk'
+import isEqual from 'lodash/isEqual'
 import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { backOff } from 'exponential-backoff'
 import {
@@ -461,4 +463,53 @@ export function isOpensearchAvailableInRegion() {
   const [stage, region] = stageAndRegion()
   const config = getTarponConfig(stage, region)
   return config.opensearch.deploy
+}
+
+export async function getSharedOpensearchClient(): Promise<Client> {
+  const [stage, region] = stageAndRegion()
+  const config = getTarponConfig(stage, region)
+
+  if (config.stage === 'local') {
+    return getLocalClient()
+  }
+
+  logger.info(
+    'Creating shared OpenSearch client with optimized connection pooling'
+  )
+
+  const domainEndpoint = await getDomainEndpoint(
+    stage,
+    config.region as string,
+    config.env.region as string
+  )
+
+  const client = new Client({
+    node: domainEndpoint,
+    ...AwsSigv4Signer({
+      region: config.env.region as string,
+      service: 'es',
+      getCredentials: defaultProvider(),
+    }),
+
+    agent: () => {
+      return new https.Agent({
+        keepAlive: true,
+        keepAliveMsecs: 30000,
+        maxSockets: 150,
+        maxFreeSockets: 30,
+        timeout: 30000,
+        scheduling: 'fifo',
+      })
+    },
+
+    pingTimeout: 3000,
+    requestTimeout: 30000,
+    maxRetries: 3,
+    sniffOnStart: false,
+    sniffInterval: false,
+    sniffOnConnectionFault: false,
+
+    compression: 'gzip',
+  })
+  return client
 }

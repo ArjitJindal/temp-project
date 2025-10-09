@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillTransactions } from '@/@types/batch-job'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -11,7 +11,7 @@ import {
 import { acquireInMemoryLocks } from '@/utils/lock'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { pickKnownEntityFields } from '@/utils/object'
 
 export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {

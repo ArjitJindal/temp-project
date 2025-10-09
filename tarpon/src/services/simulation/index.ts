@@ -4,7 +4,7 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { tenantSettings } from '@/core/utils/context'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationBeaconParametersRequest } from '@/@types/openapi-internal/SimulationBeaconParametersRequest'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { traceable } from '@/core/xray'
 import {
   DefaultApiGetSimulationsRequest,

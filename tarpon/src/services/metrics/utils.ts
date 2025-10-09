@@ -1,14 +1,12 @@
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT, MONTH_DATE_FORMAT_JS } from '@/core/constants'
-import { Metric } from '@/core/cloudwatch/metrics'
-import { METRICS_COLLECTION } from '@/utils/mongodb-definitions'
+import { Metric } from '@/@types/cloudwatch'
+import { METRICS_COLLECTION } from '@/utils/mongo-table-names'
 import dayjs from '@/utils/dayjs'
-import {
-  executeClickhouseQuery,
-  getClickhouseClient,
-  isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 export type DailyStats = { [dayLabel: string]: number }
 export type DailyMetricStats = {

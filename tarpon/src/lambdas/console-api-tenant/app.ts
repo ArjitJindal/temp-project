@@ -4,7 +4,9 @@ import {
 } from 'aws-lambda'
 import { hasResources, Resource, shortId } from '@flagright/lib/utils'
 import createHttpError, { BadRequest } from 'http-errors'
-import { isEmpty, isEqual, random } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import random from 'lodash/random'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -13,7 +15,7 @@ import {
   assertCurrentUserRoleAboveAdmin,
   assertHasDangerousTenantDelete,
 } from '@/@types/jwt'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -31,7 +33,7 @@ import {
   RuleQueueWithId,
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
-import { getFullTenantId, isDemoTenant } from '@/utils/tenant'
+import { getFullTenantId, isDemoTenant } from '@/utils/tenant-id'
 import {
   addSentryExtras,
   tenantSettings,
@@ -48,9 +50,9 @@ import {
   isSanctionsDataFetchTenantSpecific,
 } from '@/services/sanctions/utils'
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 import { createApiUsageJobs, toggleApiKeys } from '@/utils/api-usage'
-import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
+import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhouse/clickhouse-mongo-map'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { logger } from '@/core/logger'
@@ -61,7 +63,7 @@ const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'isAccountSuspended',
 ]
 
-const assertSettings = (
+export const assertSettings = (
   settings: TenantSettings,
   statements: PermissionStatements[]
 ) => {
@@ -98,9 +100,10 @@ const assertSettings = (
       batchRerunRiskScoringFrequency: [
         'write:::settings/risk-scoring/batch-rerun-risk-scoring-settings/*',
       ],
+      aiSourcesDisabled: ['write:::settings/add-ons/ai-features/*'],
     }
 
-  for (const settingsKey in settingsKeys) {
+  for (const settingsKey of settingsKeys) {
     const requiredResources = settingPermissions[settingsKey] as
       | Resource[]
       | undefined
@@ -139,6 +142,16 @@ export const tenantsHandler = lambdaApi()(
       return await tenantService.getAllTenants(auth0Domain)
     })
 
+    handlers.registerGetTenant(async (ctx) => {
+      const { tenantId } = ctx
+      const tenantService = new TenantService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClientByEvent(event),
+      })
+      const tenant = await tenantService.getTenantById(tenantId)
+      return tenant
+    })
+
     handlers.registerPostCreateTenant(async (ctx, request) => {
       assertCurrentUserRole('root')
       // check for tenant id before taking any action
@@ -146,7 +159,7 @@ export const tenantsHandler = lambdaApi()(
       if (newTenantId && isDemoTenant(newTenantId)) {
         throw new BadRequest('Tenant id should not end with -test')
       }
-      const dynamoDb = getDynamoDbClient()
+      const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantService = new TenantService(newTenantId, {
         mongoDb,
         dynamoDb,

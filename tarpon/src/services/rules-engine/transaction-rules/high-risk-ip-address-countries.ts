@@ -83,6 +83,8 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
       })
     }
 
-    return ruleHitResult
+    return {
+      ruleHitResult,
+    }
   }
 }

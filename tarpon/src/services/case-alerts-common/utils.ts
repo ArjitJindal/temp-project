@@ -1,7 +1,12 @@
-import { difference, uniqBy } from 'lodash'
+import difference from 'lodash/difference'
+import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getPaymentDetailsIdentifiersSubject } from '../logic-evaluator/variables/payment-details'
-import { DynamoConsumerMessage } from '@/lambdas/dynamo-db-trigger-consumer'
+import {
+  DynamoConsumerMessage,
+  dynamoKeyList,
+  dynamoKeyListOptions,
+} from '@/@types/dynamo'
 import {
   TransactWriteOperation,
   transactWrite,
@@ -9,30 +14,11 @@ import {
 } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { Case } from '@/@types/openapi-internal/Case'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 import { ALERT_STATUSS } from '@/@types/openapi-internal-custom/AlertStatus'
-export type dynamoKey = {
-  PartitionKeyID: string
-  SortKeyID?: string
-}
-
-export type dynamoKeyList = {
-  key: dynamoKey
-}[]
-
-export type dynamoKeyListOptions = {
-  keyLists: dynamoKeyList
-  tableName: string
-}
-
-export type CaseSubject =
-  | { type: 'USER'; user: InternalUser }
-  | { type: 'PAYMENT'; paymentDetails: PaymentDetails }
 
 async function truncateDynamoConsumerMessageItems(
   dynamoDbConsumerMessage: DynamoConsumerMessage[] = []

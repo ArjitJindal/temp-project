@@ -1,10 +1,8 @@
 import { SQSEvent } from 'aws-lambda'
-import {
-  DynamoDbConsumer,
-  DynamoConsumerMessage,
-} from '@/lambdas/dynamo-db-trigger-consumer'
+import { DynamoDbConsumer } from '@/lambdas/dynamo-db-trigger-consumer'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { DynamoConsumerMessage } from '@/@types/dynamo'
 
 export const dynamoDbTriggerQueueConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {

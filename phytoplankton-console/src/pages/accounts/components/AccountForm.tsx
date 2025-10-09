@@ -497,7 +497,7 @@ export default function AccountForm(props: Props) {
                     assignmentsLabel={'Select a Checker account'}
                     assignmentsPlaceholder={'Select a Checker account'}
                     assignmentsCustomFilter={(account) => {
-                      return account.isReviewer ?? false;
+                      return (account.isReviewer && account.id !== editAccount?.id) ?? false;
                     }}
                     roleLabel={`Select checker role`}
                     rolePlaceholder={'Select checker role'}
@@ -510,7 +510,7 @@ export default function AccountForm(props: Props) {
                       'Select ‘Escalation L2’ type to escalate ‘Escalation L1’ cases/alerts'
                     }
                     assignmentsCustomFilter={(account) => {
-                      return account.escalationLevel === 'L2';
+                      return account.escalationLevel === 'L2' && account.id !== editAccount?.id;
                     }}
                     assignmentsLabel={'Select an Escalation L2 account'}
                     assignmentsPlaceholder={'Select an Escalation L2 account'}

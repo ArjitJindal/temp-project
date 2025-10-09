@@ -2,24 +2,25 @@ import { StackConstants } from '@lib/constants'
 import { ObjectId } from 'mongodb'
 import { OpenAI } from 'openai'
 import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
-import { CLICKHOUSE_DEFINITIONS } from './clickhouse/definition'
+import { batchInsertToClickhouse } from './clickhouse/insert'
 import {
-  batchInsertToClickhouse,
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from './clickhouse/utils'
+} from './clickhouse/checks'
 import {
   getDynamoDbClient,
   sanitizeMongoObject,
   DynamoTransactionBatch,
 } from './dynamodb'
 import { envIs } from './env'
-import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
+import { GPT_REQUESTS_COLLECTION } from './mongo-table-names'
 import { getSecret } from './secrets-manager'
 import { LLMLogObject } from './llms'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context-storage'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+
 let openai: OpenAI | null = null
 
 export enum ModelVersion {
@@ -142,8 +143,13 @@ export async function linkGPTRequestDynamoDB(
   }
 
   await batch.execute()
+
   if (envIs('local') || envIs('test')) {
-    await handleLocalChangeCapture(tenantId, keys)
+    const { handleLocalTarponChangeCapture } = await import(
+      '@/core/local-handlers/tarpon'
+    )
+
+    await handleLocalTarponChangeCapture(tenantId, keys)
   }
 }
 
@@ -169,17 +175,5 @@ export async function getGPTRequestLogById(
     )
     const item = await collection.findOne({ _id: new ObjectId(id) })
     return item
-  }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }[]
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-  for (const key of primaryKey) {
-    await localTarponChangeCaptureHandler(tenantId, key, 'TARPON')
   }
 }

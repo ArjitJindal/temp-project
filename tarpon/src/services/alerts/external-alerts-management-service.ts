@@ -1,16 +1,14 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
-import {
-  compact,
-  difference,
-  isNil,
-  memoize,
-  omit,
-  omitBy,
-  pick,
-  uniq,
-} from 'lodash'
+import compact from 'lodash/compact'
+import difference from 'lodash/difference'
+import isNil from 'lodash/isNil'
+import memoize from 'lodash/memoize'
+import omit from 'lodash/omit'
+import omitBy from 'lodash/omitBy'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials } from 'aws-lambda'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'

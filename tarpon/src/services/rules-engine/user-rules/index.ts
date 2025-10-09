@@ -1,5 +1,5 @@
 import { Document } from 'mongodb'
-import { RuleHitResult, UserOngoingHitResult } from '../rule'
+import { RuleResult, UserOngoingHitResult } from '../rule'
 import UserInactivity from '../user-ongoing-rules/user-inactivity'
 import { UserOngoingRule, UserRule } from './rule'
 import SanctionsBankUserRule from './sanctions-bank-name'
@@ -16,7 +16,7 @@ import ListScreeningConsumerUser from '@/services/rules-engine/user-rules/list-s
 
 @traceable
 export class UserRuleBase extends UserRule<unknown> {
-  public async computeRule(): Promise<RuleHitResult | undefined> {
+  public async computeRule(): Promise<RuleResult | undefined> {
     // skip
     return
   }

@@ -1,14 +1,12 @@
-import {
-  chunk,
-  compact,
-  get,
-  isEmpty,
-  omit,
-  pickBy,
-  set,
-  sum,
-  uniq,
-} from 'lodash'
+import chunk from 'lodash/chunk'
+import compact from 'lodash/compact'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import omit from 'lodash/omit'
+import pickBy from 'lodash/pickBy'
+import set from 'lodash/set'
+import sum from 'lodash/sum'
+import uniq from 'lodash/uniq'
 import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
@@ -19,11 +17,14 @@ import {
   QueryCommandInput,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
+import { MaxPriorityQueue } from '@datastructures-js/priority-queue'
 import {
   getNonUserReceiverKeys,
   getNonUserSenderKeys,
   getReceiverKeys,
+  getReceivingEntityKeys,
   getSenderKeys,
+  getSendingEntityKeys,
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../utils'
@@ -42,17 +43,25 @@ import {
   batchGet,
   batchWrite,
   dynamoDbQueryHelper,
+  itemLevelQueryGenerator,
   paginateQuery,
-  paginateQueryGenerator,
   upsertSaveDynamo,
 } from '@/utils/dynamodb'
 import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
+import { EntityData } from '@/@types/tranasction/aggregation'
+import {
+  AUXILLARY_TXN_PARTITION_COUNT,
+  FUTURE_TIMESTAMP_TO_COMPARE,
+  getAllBucketedPartitionKeys,
+  getPrimaryTransactionSwitchTimestamp,
+  sanitiseBucketedKey,
+} from '@/core/dynamodb/key-utils'
 
 @traceable
 export class DynamoDbTransactionRepository
@@ -101,7 +110,8 @@ export class DynamoDbTransactionRepository
 
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
-      transaction.transactionId
+      transaction.transactionId,
+      transaction.timestamp
     )
     return {
       putItemInput: {
@@ -137,7 +147,8 @@ export class DynamoDbTransactionRepository
 
         const primaryKey = DynamoDbKeys.TRANSACTION(
           this.tenantId,
-          transaction.transactionId
+          transaction.transactionId,
+          transaction.timestamp
         )
         primaryKeys.push(primaryKey)
 
@@ -171,16 +182,11 @@ export class DynamoDbTransactionRepository
     )
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await Promise.all(
-        primaryKeys
-          .filter((primaryKey) => primaryKey !== undefined)
-          .map((primaryKey) =>
-            localTarponChangeCaptureHandler(this.tenantId, primaryKey)
-          )
-      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, primaryKeys)
     }
 
     return transactions.map(({ transaction }) => transaction)
@@ -188,9 +194,14 @@ export class DynamoDbTransactionRepository
 
   public async updateTransactionRulesResult(
     transactionId: string,
-    rulesResult: Undefined<TransactionMonitoringResult> = {}
+    rulesResult: Undefined<TransactionMonitoringResult> = {},
+    timestamp: number
   ): Promise<void> {
-    const primaryKey = DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
+    const primaryKey = DynamoDbKeys.TRANSACTION(
+      this.tenantId,
+      transactionId,
+      timestamp
+    )
     const executedRules = rulesResult.executedRules || []
     const hitRules = rulesResult.hitRules || []
 
@@ -213,17 +224,19 @@ export class DynamoDbTransactionRepository
       })
     )
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
   }
 
   public async deleteTransaction(transaction: Transaction): Promise<void> {
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
-      transaction.transactionId
+      transaction.transactionId,
+      transaction.timestamp
     )
     const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
     await batchWrite(
@@ -279,48 +292,76 @@ export class DynamoDbTransactionRepository
       getNonUserReceiverKeys(this.tenantId, transaction, transaction.type)
     const originIpAddress = transaction?.originDeviceData?.ipAddress
     const destinationIpAddress = transaction?.destinationDeviceData?.ipAddress
+    const sendingEntityKeys = getSendingEntityKeys(
+      this.tenantId,
+      transaction,
+      transaction.originPaymentDetails
+    )
+    const sanitisedSendingEntityKeys = sendingEntityKeys.map((key) => ({
+      ...key,
+      PartitionKeyID: sanitiseBucketedKey(key.PartitionKeyID),
+    }))
+    const receivingEntityKeys = getReceivingEntityKeys(
+      this.tenantId,
+      transaction,
+      transaction.destinationPaymentDetails
+    )
+    const sanitisedReceivingEntityKeys = receivingEntityKeys.map((key) => ({
+      ...key,
+      PartitionKeyID: sanitiseBucketedKey(key.PartitionKeyID),
+    }))
 
+    const sanitisedSenderKeyId = sanitiseBucketedKey(senderKeys?.PartitionKeyID)
+    const sanitisedReceiverKeyId = sanitiseBucketedKey(
+      receiverKeys?.PartitionKeyID
+    )
+    const sanitisedSenderKeyIdOfTransactionType = sanitiseBucketedKey(
+      senderKeysOfTransactionType?.PartitionKeyID
+    )
+    const sanitisedReceiverKeyIdOfTransactionType = sanitiseBucketedKey(
+      receiverKeysOfTransactionType?.PartitionKeyID
+    )
     // IMPORTANT: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     return [
       userSenderKeys && {
         ...userSenderKeys,
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyId,
+        receiverKeyId: sanitisedReceiverKeyId,
       },
       nonUserSenderKeys && {
         ...nonUserSenderKeys,
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyId,
+        receiverKeyId: sanitisedReceiverKeyId,
       },
       userReceiverKeys && {
         ...userReceiverKeys,
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyId,
+        receiverKeyId: sanitisedReceiverKeyId,
       },
       nonUserReceiverKeys && {
         ...nonUserReceiverKeys,
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyId,
+        receiverKeyId: sanitisedReceiverKeyId,
       },
       userSenderKeysOfTransactionType && {
         ...userSenderKeysOfTransactionType,
-        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
-        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyIdOfTransactionType,
+        receiverKeyId: sanitisedReceiverKeyIdOfTransactionType,
       },
       nonUserSenderKeysOfTransactionType && {
         ...nonUserSenderKeysOfTransactionType,
-        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
-        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyIdOfTransactionType,
+        receiverKeyId: sanitisedReceiverKeyIdOfTransactionType,
       },
       userReceiverKeysOfTransactionType && {
         ...userReceiverKeysOfTransactionType,
-        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
-        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyIdOfTransactionType,
+        receiverKeyId: sanitisedReceiverKeyIdOfTransactionType,
       },
       nonUserReceiverKeysOfTransactionType && {
         ...nonUserReceiverKeysOfTransactionType,
-        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
-        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyIdOfTransactionType,
+        receiverKeyId: sanitisedReceiverKeyIdOfTransactionType,
       },
       originIpAddress && {
         ...DynamoDbKeys.ORIGIN_IP_ADDRESS_TRANSACTION(
@@ -331,8 +372,8 @@ export class DynamoDbTransactionRepository
             transactionId: transaction.transactionId,
           }
         ),
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyId,
+        receiverKeyId: sanitisedReceiverKeyId,
       },
       destinationIpAddress && {
         ...DynamoDbKeys.DESTINATION_IP_ADDRESS_TRANSACTION(
@@ -343,9 +384,11 @@ export class DynamoDbTransactionRepository
             transactionId: transaction.transactionId,
           }
         ),
-        senderKeyId: senderKeys?.PartitionKeyID,
-        receiverKeyId: receiverKeys?.PartitionKeyID,
+        senderKeyId: sanitisedSenderKeyId,
+        receiverKeyId: sanitisedReceiverKeyId,
       },
+      ...sanitisedSendingEntityKeys,
+      ...sanitisedReceivingEntityKeys,
     ]
       .filter(Boolean)
       .map((key) => ({
@@ -359,31 +402,63 @@ export class DynamoDbTransactionRepository
 
   public async getTransactionById(
     transactionId: string,
-    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>
+    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>,
+    timestamp?: number
   ): Promise<TransactionWithRulesResult | null> {
-    const getItemInput: GetCommandInput = {
+    const getItemInput = (newPartitionKey: boolean): GetCommandInput => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+      Key: newPartitionKey
+        ? DynamoDbKeys.TRANSACTION(
+            this.tenantId,
+            transactionId,
+            FUTURE_TIMESTAMP_TO_COMPARE
+          ) // Future timestamp to always use new partition key)
+        : DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ConsistentRead: true,
       ...(attributesToFetch
         ? { ProjectionExpression: attributesToFetch.join(', ') }
         : {}),
-    }
-    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    })
+    let finalResult
 
-    if (!result.Item) {
+    if (timestamp) {
+      const useNewPartition =
+        timestamp >= getPrimaryTransactionSwitchTimestamp()
+      const result = await this.dynamoDb.send(
+        new GetCommand(getItemInput(useNewPartition))
+      )
+      finalResult = result.Item
+    } else {
+      // No timestamp: check new partition first, then old partition if needed
+      const newResult = await this.dynamoDb.send(
+        new GetCommand(getItemInput(true))
+      )
+      finalResult = newResult.Item
+
+      if (!finalResult) {
+        const oldResult = await this.dynamoDb.send(
+          new GetCommand(getItemInput(false))
+        )
+        finalResult = oldResult.Item
+      }
+    }
+    if (!finalResult) {
       return null
     }
-
     const transaction = {
-      ...result.Item,
+      ...finalResult,
     }
 
     delete transaction.createdAt
     delete transaction.PartitionKeyID
     delete transaction.SortKeyID
-
-    return transaction as TransactionWithRulesResult
+    return {
+      ...transaction,
+      executedRules: transaction.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined, // delete sanctionsDetails from each executedRule in transaction
+      })),
+    } as TransactionWithRulesResult
   }
 
   public async getTransactionsByIds(
@@ -393,12 +468,18 @@ export class DynamoDbTransactionRepository
       TransactionWithRulesResult.getAttributeTypeMap().map(
         (attribute) => attribute.name
       )
-    return await batchGet<TransactionWithRulesResult>(
+    // Checking both partition as we don't have timestamp to check which partition to use
+    const transactions = await batchGet<TransactionWithRulesResult>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      transactionIds.map((transactionId) =>
-        DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
-      ),
+      transactionIds.flatMap((transactionId) => [
+        DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+        DynamoDbKeys.TRANSACTION(
+          this.tenantId,
+          transactionId,
+          FUTURE_TIMESTAMP_TO_COMPARE
+        ), // Future timestamp to always use new partition key)
+      ]),
       {
         ProjectionExpression: transactionAttributeNames
           .map((name) => `#${name}`)
@@ -409,6 +490,13 @@ export class DynamoDbTransactionRepository
         ConsistentRead: true,
       }
     )
+    return transactions.map((transaction) => ({
+      ...transaction,
+      executedRules: transaction.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    }))
   }
 
   public async checkTransactionStatus(
@@ -450,9 +538,14 @@ export class DynamoDbTransactionRepository
     const batchGetItemInput: BatchGetCommandInput = {
       RequestItems: {
         [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: {
-          Keys: Array.from(new Set(transactionIds)).map((transactionId) =>
-            DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
-          ),
+          Keys: Array.from(new Set(transactionIds)).flatMap((transactionId) => [
+            DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+            DynamoDbKeys.TRANSACTION(
+              this.tenantId,
+              transactionId,
+              FUTURE_TIMESTAMP_TO_COMPARE
+            ), // Future timestamp to always use new partition key)
+          ]),
           ProjectionExpression: transactionAttributeNames
             .map((name) => `#${name}`)
             .join(', '),
@@ -498,24 +591,30 @@ export class DynamoDbTransactionRepository
       filterOptions,
       []
     )
-    const queryInput: QueryCommandInput = {
+    const queryInputs: QueryCommandInput[] = getAllBucketedPartitionKeys(
+      DynamoDbKeys.USER_TRANSACTION(
+        // As no sortKeyData so we will get the baseKey
+        this.tenantId,
+        userId,
+        'sending',
+        transactionType
+      ).PartitionKeyID,
+      AUXILLARY_TXN_PARTITION_COUNT
+    ).map((key) => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.USER_TRANSACTION(
-          this.tenantId,
-          userId,
-          'sending',
-          transactionType
-        ).PartitionKeyID,
+        ':pk': key,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
       ExpressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
       Limit: 1,
-    }
-    const result = await paginateQuery(this.dynamoDb, queryInput)
-    return (result.Items?.length ?? 0) > 0
+    }))
+    const result = await Promise.all(
+      queryInputs.map((queryInput) => paginateQuery(this.dynamoDb, queryInput))
+    )
+    return result.some((res) => res.Items?.length ?? 0 > 0)
   }
 
   public async getLastNUserSendingTransactions(
@@ -578,33 +677,60 @@ export class DynamoDbTransactionRepository
       filterOptions,
       attributesToFetch
     )
-    const queryInput: QueryCommandInput = {
+    // Generate all bucketed partition keys
+    const partitionKeys = getAllBucketedPartitionKeys(
+      partitionKeyId, // base partition key
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+
+    // Create QueryCommandInput for each bucket
+    const queryInputs: QueryCommandInput[] = partitionKeys.map((key) => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
       ExpressionAttributeValues: {
-        ':pk': partitionKeyId,
+        ':pk': key,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
       ExpressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
       ProjectionExpression: transactionFilterQuery.ProjectionExpression,
       Limit: n,
       ScanIndexForward: false,
-    }
-    const result = await paginateQuery(this.dynamoDb, queryInput)
-    return (result.Items?.map((item) =>
-      omit(item, ['PartitionKeyID', 'SortKeyID'])
-    ) || []) as Array<AuxiliaryIndexTransaction>
+    }))
+
+    const results = await Promise.all(
+      queryInputs.map((queryInput) => paginateQuery(this.dynamoDb, queryInput))
+    )
+
+    // Flatten all items and sort globally (newest first)
+    const allItems = results.flatMap((res) => res.Items ?? [])
+    allItems.sort((a, b) => (b.SortKeyID > a.SortKeyID ? 1 : -1))
+
+    return allItems
+      .slice(0, n)
+      .map((item) =>
+        omit(item, ['PartitionKeyID', 'SortKeyID'])
+      ) as AuxiliaryIndexTransaction[]
   }
 
   public async *getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (entityData) {
+      yield* this.getEntitySendingTransactionsGenerator(
+        entityData,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+
     if (userId && !matchPaymentMethodDetails) {
       yield* this.getUserSendingTransactionsGenerator(
         userId,
@@ -627,11 +753,21 @@ export class DynamoDbTransactionRepository
   public async *getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (entityData) {
+      yield* this.getEntityReceivingTransactionsGenerator(
+        entityData,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+
     if (userId && !matchPaymentMethodDetails) {
       yield* this.getUserReceivingTransactionsGenerator(
         userId,
@@ -935,6 +1071,74 @@ export class DynamoDbTransactionRepository
     }
   }
 
+  private getEntityPartitionKeyId(
+    entityData: EntityData,
+    direction: 'sending' | 'receiving'
+  ): string | undefined | null {
+    switch (entityData.type) {
+      case 'ADDRESS':
+        return DynamoDbKeys.ADDRESS_TRANSACTION(
+          this.tenantId,
+          entityData.address,
+          direction
+        )?.PartitionKeyID
+      case 'NAME':
+        return DynamoDbKeys.NAME_TRANSACTION(
+          this.tenantId,
+          entityData.name,
+          direction
+        )?.PartitionKeyID
+      case 'EMAIL':
+        return DynamoDbKeys.EMAIL_TRANSACTION(
+          this.tenantId,
+          entityData.email,
+          direction
+        )?.PartitionKeyID
+      default:
+        return undefined
+    }
+  }
+
+  public async *getEntitySendingTransactionsGenerator(
+    entityData: EntityData,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const partitionKeyId = this.getEntityPartitionKeyId(entityData, 'sending')
+
+    if (partitionKeyId) {
+      yield* this.getDynamoDBTransactionsGenerator(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
+  }
+
+  public async *getEntityReceivingTransactionsGenerator(
+    entityData: EntityData,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const partitionKeyId = this.getEntityPartitionKeyId(entityData, 'receiving')
+
+    if (partitionKeyId) {
+      yield* this.getDynamoDBTransactionsGenerator(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
+  }
+
   public async getIpAddressTransactions(
     ipAddress: string,
     timeRange: TimeRange,
@@ -1027,30 +1231,87 @@ export class DynamoDbTransactionRepository
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    const generator = paginateQueryGenerator(
-      this.dynamoDb,
-      this.getTransactionsQuery(
-        partitionKeyId,
-        timeRange,
-        filterOptions,
-        uniq([...attributesToFetch, 'timestamp'])
+    const partitionKeys = getAllBucketedPartitionKeys(
+      partitionKeyId,
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+
+    const generators = partitionKeys.map((key) =>
+      itemLevelQueryGenerator(
+        this.dynamoDb,
+        this.getTransactionsQuery(
+          key,
+          timeRange,
+          filterOptions,
+          uniq([...attributesToFetch, 'timestamp'])
+        )
       )
     )
-    for await (const data of generator) {
-      const transactions = (data.Items?.map((item) =>
-        omit(item, ['PartitionKeyID', 'SortKeyID'])
-      ) || []) as Array<AuxiliaryIndexTransaction>
-      const transactionTimeRange = filterOptions.transactionTimeRange24hr
-      yield transactionTimeRange
-        ? transactions.filter(
-            (transaction) =>
-              transaction.timestamp &&
-              transactionTimeRangeRuleFilterPredicate(
-                transaction.timestamp,
-                transactionTimeRange
-              )
+    // Priority queue ordered by SortKeyID
+    const pq = new MaxPriorityQueue<{
+      txn: AuxiliaryIndexTransaction & {
+        SortKeyID: string
+      }
+      gen: AsyncGenerator<any>
+    }>((data) => data.txn.SortKeyID)
+
+    // Prime the queue with the first item from each generator
+    for (const gen of generators) {
+      const { value, done } = await gen.next()
+      if (!done && value) {
+        pq.enqueue({
+          txn: value,
+          gen,
+        })
+      }
+    }
+    let lastSortKeyId: string | undefined = undefined
+    const batch: AuxiliaryIndexTransaction[] = []
+    while (!pq.isEmpty()) {
+      const dequeued = pq.dequeue()
+      if (!dequeued) {
+        break
+      }
+      const { txn, gen } = dequeued
+      if (!lastSortKeyId || txn.SortKeyID !== lastSortKeyId) {
+        const transactionTimeRange = filterOptions.transactionTimeRange24hr
+        if (
+          !transactionTimeRange ||
+          (txn.timestamp &&
+            transactionTimeRangeRuleFilterPredicate(
+              txn.timestamp,
+              transactionTimeRange
+            ))
+        ) {
+          batch.push(
+            omit(txn, [
+              'PartitionKeyID',
+              'SortKeyID',
+            ]) as AuxiliaryIndexTransaction
           )
-        : transactions
+        }
+        lastSortKeyId = txn.SortKeyID
+      }
+      // Refill from the generator if it has more
+      const { value, done } = await gen.next()
+      if (!done && value) {
+        pq.enqueue({
+          txn: value as AuxiliaryIndexTransaction & {
+            SortKeyID: string
+          },
+          gen,
+        })
+      }
+
+      // Yield in pages
+      if (batch.length >= 25) {
+        const toYield = batch.splice(0, batch.length)
+        yield toYield
+      }
+    }
+
+    if (batch.length > 0) {
+      yield batch
     }
   }
 
@@ -1059,16 +1320,22 @@ export class DynamoDbTransactionRepository
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions
   ): Promise<number> {
-    const result = await paginateQuery(this.dynamoDb, {
-      ...this.getTransactionsQuery(
-        partitionKeyId,
-        timeRange,
-        filterOptions,
-        []
-      ),
-      Select: 'COUNT',
-    })
-    return result.Count as number
+    const partitionKeys = getAllBucketedPartitionKeys(
+      partitionKeyId,
+      AUXILLARY_TXN_PARTITION_COUNT
+    )
+    const result = await Promise.all(
+      partitionKeys.map((key) =>
+        paginateQuery(this.dynamoDb, {
+          ...this.getTransactionsQuery(key, timeRange, filterOptions, []),
+          Select: 'COUNT',
+        })
+      )
+    )
+    return result.reduce(
+      (total, curr) => total + (curr?.Count ?? 0),
+      0
+    ) as number
   }
 
   private getTransactionFilterQueryInput(
@@ -1136,6 +1403,7 @@ export class DynamoDbTransactionRepository
         return statement
       })
       .join(' OR ')
+
     const filters = [
       originPaymentMethodsKeys &&
         !isEmpty(originPaymentMethodsKeys) &&
@@ -1205,7 +1473,10 @@ export class DynamoDbTransactionRepository
           },
       ProjectionExpression: isEmpty(attributesToFetch)
         ? undefined
-        : attributesToFetch.map((name) => `#${name}`).join(', '),
+        : attributesToFetch
+            .map((name) => `#${name}`)
+            .join(', ')
+            .concat(', SortKeyID'), // As we require to sort page results for multiple partitionKeyID
     }
   }
 }

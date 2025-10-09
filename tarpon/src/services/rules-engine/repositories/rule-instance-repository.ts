@@ -11,7 +11,10 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { uniq, isEmpty, uniqBy, groupBy } from 'lodash'
+import uniq from 'lodash/uniq'
+import isEmpty from 'lodash/isEmpty'
+import uniqBy from 'lodash/uniqBy'
+import groupBy from 'lodash/groupBy'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import pMap from 'p-map'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
@@ -29,7 +32,7 @@ import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
-import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
+import { AUDITLOG_COLLECTION } from '@/utils/mongo-table-names'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 import { RuleStats } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
@@ -406,8 +409,8 @@ export class RuleInstanceRepository {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
     }
-    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
     await this.deleteRuleInstanceFromUsedAggVars(ruleInstanceId)
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 
   public async deleteRuleInstanceFromUsedAggVars(

@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { AttributeSet } from './attributes/attribute-set'
 import { BaseNarrativeService } from './narratives'
 import { CaseNarrativeService } from './narratives/case'

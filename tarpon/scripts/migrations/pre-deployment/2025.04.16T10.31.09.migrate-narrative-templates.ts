@@ -1,9 +1,9 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { NarrativeService } from '@/services/tenants/narrative-template-service'
 import { PermissionsService } from '@/services/rbac'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoClient = await getMongoDbClient()

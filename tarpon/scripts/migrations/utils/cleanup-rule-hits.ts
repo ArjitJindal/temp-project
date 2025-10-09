@@ -1,6 +1,9 @@
 import { StackConstants } from '@lib/constants'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
-import { compact, flatten, last, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import flatten from 'lodash/flatten'
+import last from 'lodash/last'
+import uniq from 'lodash/uniq'
 import { Collection } from 'mongodb'
 import {
   getMigrationLastCompletedTimestamp,
@@ -13,7 +16,7 @@ import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -104,7 +107,8 @@ async function cleanupRuleHitsInternal(values: Props) {
           )
           const primaryKey = DynamoDbKeys.TRANSACTION(
             tenantId,
-            transaction.transactionId
+            transaction.transactionId,
+            transaction.timestamp
           )
           const updateItemInput: UpdateCommandInput = {
             TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),

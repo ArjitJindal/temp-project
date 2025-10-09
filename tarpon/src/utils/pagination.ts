@@ -1,4 +1,6 @@
-import { get, isEmpty, isNumber } from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import isNumber from 'lodash/isNumber'
 import { validate as uuidValidate } from 'uuid'
 import {
   Collection,
@@ -10,44 +12,14 @@ import {
   WithId,
 } from 'mongodb'
 import { ClickHouseClient } from '@clickhouse/client'
-import { executeClickhouseQuery } from './clickhouse/utils'
-
-export type PageSize = number
-export const DEFAULT_PAGE_SIZE = 20
-export const MAX_PAGE_SIZE = 1000
-export const COUNT_QUERY_LIMIT = 100000
-
-export interface PaginationParams {
-  pageSize?: PageSize
-  page?: number
-}
-
-export interface ClickhousePaginationParams {
-  pageSize?: number
-  sortField?: string
-  page?: number
-  sortOrder?: 'ascend' | 'descend'
-}
-
-export interface OptionalPaginationParams {
-  pageSize?: PageSize | 'DISABLED'
-  page?: number
-}
-
-export interface CursorPaginationResponse<T> {
-  items: T[]
-  next: string
-  prev: string
-  hasNext: boolean
-  hasPrev: boolean
-  count: number
-  limit: number
-  last: string
-  pageSize?: number
-}
-
-export type OptionalPagination<Params> = Omit<Params, 'pageSize' | 'page'> &
-  OptionalPaginationParams
+import { executeClickhouseQuery } from './clickhouse/execute'
+import {
+  ClickhousePaginationParams,
+  CursorPaginationParams,
+  CursorPaginationResponse,
+  PageSize,
+} from '@/@types/pagination'
+import { DEFAULT_PAGE_SIZE, COUNT_QUERY_LIMIT } from '@/constants/pagination'
 
 export function getPageSizeNumber(pageSize: PageSize | 'DISABLED'): number {
   if (pageSize === 'DISABLED') {
@@ -98,13 +70,6 @@ export async function* iteratePages<T>(
     nextCursor = page.next
     yield page.items
   } while (nextCursor != undefined && nextCursor !== '')
-}
-
-export interface CursorPaginationParams {
-  pageSize?: number
-  sortField?: string
-  fromCursorKey?: string
-  sortOrder?: 'ascend' | 'descend'
 }
 
 const PAGINATION_CURSOR_KEY_SEPERATOR = '___'
@@ -356,7 +321,7 @@ export async function getClickhouseCountOnly(
   countWhereClause?: string
 ): Promise<number> {
   const countWhere = countWhereClause === undefined ? where : countWhereClause
-  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
+  const countQuery = `SELECT count(*) as count FROM ${queryTableName} FINAL ${
     countWhere
       ? `WHERE ${countWhere} AND timestamp != 0`
       : 'WHERE timestamp != 0'

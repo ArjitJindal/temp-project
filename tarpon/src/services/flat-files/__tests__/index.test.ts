@@ -4,7 +4,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { mockClient } from 'aws-sdk-client-mock'
 import { StackConstants } from '@lib/constants'
 import { GetCommand } from '@aws-sdk/lib-dynamodb'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { FlatFilesService } from '..'
 import {
   getCSVFormattedRow,
@@ -15,7 +15,7 @@ import {
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { BatchJob, FlatFilesValidationBatchJob } from '@/@types/batch-job'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -35,7 +35,7 @@ import { UserService } from '@/services/users'
 import {
   disableLocalChangeHandler,
   enableLocalChangeHandler,
-} from '@/utils/local-dynamodb-change-handler'
+} from '@/utils/local-change-handler'
 
 dynamoDbSetupHook()
 
@@ -186,12 +186,19 @@ describe('FlatFilesService', () => {
       ])
     }
 
-    const getTransactionFromDynamo = async (transactionId: string) => {
+    const getTransactionFromDynamo = async (
+      transactionId: string,
+      timestamp: number
+    ) => {
       const dynamoDb = getDynamoDbClient()
       const result = await dynamoDb.send(
         new GetCommand({
           TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(TEST_TENANT_ID),
-          Key: DynamoDbKeys.TRANSACTION(TEST_TENANT_ID, transactionId),
+          Key: DynamoDbKeys.TRANSACTION(
+            TEST_TENANT_ID,
+            transactionId,
+            timestamp
+          ),
         })
       )
       return omit(result.Item, [
@@ -238,7 +245,7 @@ describe('FlatFilesService', () => {
         'validate CSV file import for $type',
         ({ schema, type, seeder }) => {
           it(`should save ${type} users to database`, async () => {
-            const s3Key = `test-${uuidv4()}.csv`
+            const s3Key = `${TEST_TENANT_ID}/test-${uuidv4()}.csv`
             const user1 = seeder()
             const user2 = seeder()
             const mockStream = await createMockCSVStream([user1, user2], schema)
@@ -279,7 +286,7 @@ describe('FlatFilesService', () => {
       it('should not save duplicate users', async () => {
         enableAsyncRulesInTest()
         enableLocalChangeHandler()
-        const s3Key = `test-${uuidv4()}.csv`
+        const s3Key = `${TEST_TENANT_ID}/test-${uuidv4()}.csv`
         const user1 = mockConsumerUser()
         const user2 = { ...mockConsumerUser(), userId: user1 }
         const user3 = mockConsumerUser()
@@ -313,13 +320,13 @@ describe('FlatFilesService', () => {
           page: 1,
         })
         expect(user).toBeDefined()
-        expect(user.result.items).toHaveLength(2)
+        expect(user.result).toHaveLength(2)
       })
     })
 
     describe('Transaction flat file import', () => {
       it('should save TRANSACTION to database', async () => {
-        const s3Key = `test-${uuidv4()}.csv`
+        const s3Key = `${TEST_TENANT_ID}/test-${uuidv4()}.csv`
         const dynamoDb = getDynamoDbClient()
         const mongoDb = await getMongoDbClient()
         const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
@@ -362,10 +369,12 @@ describe('FlatFilesService', () => {
         await sendBatchJobCommand(testJob)
 
         const dynamoTransaction1 = await getTransactionFromDynamo(
-          transaction1.transactionId
+          transaction1.transactionId,
+          transaction1.timestamp
         )
         const dynamoTransaction2 = await getTransactionFromDynamo(
-          transaction2.transactionId
+          transaction2.transactionId,
+          transaction2.timestamp
         )
 
         expect(dynamoTransaction1).toMatchObject(transaction1)

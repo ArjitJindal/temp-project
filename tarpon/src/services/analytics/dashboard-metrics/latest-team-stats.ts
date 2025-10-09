@@ -1,4 +1,4 @@
-import { difference } from 'lodash'
+import difference from 'lodash/difference'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { updateRoles, withUpdatedAt } from './utils'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
@@ -6,7 +6,7 @@ import {
   CASES_COLLECTION,
   DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY,
   DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { DashboardLatestTeamStatsItem } from '@/@types/openapi-internal/DashboardLatestTeamStatsItem'
@@ -14,11 +14,9 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardLatestTeamStatsItemResponse'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getLatestTeamStatsClickhouseQuery } from '@/utils/clickhouse/queries/latest-team-stats-clickhouse'
 
 @traceable

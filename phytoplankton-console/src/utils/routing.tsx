@@ -148,7 +148,16 @@ export function useNavigationParams<Params>(options: {
   const isParamsChanged = useIsChanged(params);
   useEffect(() => {
     if (isParamsChanged) {
-      const serializedParams = queryAdapter.serializer(params);
+      let serializedParams = {};
+      try {
+        serializedParams = queryAdapter.serializer(params);
+      } catch (e) {
+        console.error(
+          `Unable to serialize params from object ${JSON.stringify(
+            params,
+          )}! Using empty params instead. Details: ${e}. `,
+        );
+      }
       const url = makeUrl(serializedParams);
       navigate(url, { replace });
       if (persistId != null) {

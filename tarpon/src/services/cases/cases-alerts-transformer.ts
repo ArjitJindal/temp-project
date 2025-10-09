@@ -1,5 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { keyBy, memoize } from 'lodash'
+import keyBy from 'lodash/keyBy'
+import memoize from 'lodash/memoize'
 import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { AccountsService } from '../accounts'

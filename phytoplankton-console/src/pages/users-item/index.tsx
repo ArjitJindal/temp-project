@@ -9,7 +9,6 @@ import s from './index.module.less';
 import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import { CRM_ICON_MAP, useConsoleUser } from './UserDetails/utils';
-import { useLinkingState, useUserEntityFollow } from './UserDetails/Linking/UserGraph';
 import CRMRecords from './UserDetails/CRMMonitoring/CRMRecords';
 import CRMData from './UserDetails/CRMMonitoring/CRMResponse';
 import UserLists from './UserLists';
@@ -156,8 +155,6 @@ export default function UserItem() {
   const entityHeaderHeight = rect?.height ?? 0;
 
   const queryResult = useConsoleUser(userId);
-  const linkingState = useLinkingState(userId ?? '');
-  const handleFollow = useUserEntityFollow(linkingState);
 
   if (userId == null) {
     return <Alert type={'ERROR'}>{`${firstLetterUpper(settings.userAlias)} id not defined`}</Alert>;
@@ -258,23 +255,7 @@ export default function UserItem() {
                 {
                   title: <div className={s.icon}>Ontology</div>,
                   key: 'ontology',
-                  children: (
-                    <Linking
-                      userId={userId}
-                      scope={linkingState.scope}
-                      onScopeChange={linkingState.setScope}
-                      entityNodes={linkingState.entityNodes}
-                      entityEdges={linkingState.entityEdges}
-                      txnNodes={linkingState.txnNodes}
-                      txnEdges={linkingState.txnEdges}
-                      followed={linkingState.followed}
-                      onFollow={handleFollow}
-                      entityFilters={linkingState.entityFilters}
-                      setEntityFilters={linkingState.setEntityFilters}
-                      txnFilters={linkingState.txnFilters}
-                      setTxnFilters={linkingState.setTxnFilters}
-                    />
-                  ),
+                  children: <Linking userId={userId} />,
                   isClosable: false,
                   isDisabled: false,
                   captureEvents: true,

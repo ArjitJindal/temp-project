@@ -27,7 +27,11 @@ const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
     }
     if (prop === 'getAccounts') {
       return (): Promise<Account[]> => {
-        return Promise.resolve(MOCKED_ACCOUNTS);
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(MOCKED_ACCOUNTS);
+          }, 500 + 2000 * Math.random());
+        });
       };
     }
     if (prop === 'getQuestions') {

@@ -3,7 +3,10 @@
 
 import fs from 'fs'
 import path from 'path'
-import { isObject, keys, omit, pick } from 'lodash'
+import isObject from 'lodash/isObject'
+import keys from 'lodash/keys'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
 import { compile } from 'json-schema-to-typescript'
 import { XMLParser } from 'fast-xml-parser'
 import { AttributeInfos } from './attribute-infos'

@@ -1,5 +1,5 @@
 import Handlebars from 'handlebars'
-import { Comparator } from './rule-parameter-schemas'
+import { Comparator } from '@/@types/rule/params'
 import { formatCountry } from '@/utils/countries'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { logger } from '@/core/logger'

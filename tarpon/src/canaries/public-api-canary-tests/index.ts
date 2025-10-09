@@ -6,6 +6,7 @@ import isEqual from 'lodash/isEqual'
 import memoize from 'lodash/memoize'
 import omit from 'lodash/omit'
 import pMap from 'p-map'
+import { FetchHttpHandler } from '@smithy/fetch-http-handler'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
@@ -22,6 +23,7 @@ import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 const awsApiGateway = new APIGatewayClient({
   region: process.env.AWS_REGION,
+  requestHandler: new FetchHttpHandler({}),
 })
 
 interface ValidationError {
@@ -263,7 +265,7 @@ const getTestTransactionSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.Message !==
-              'User is not authorized to access this resource with an explicit deny'
+              'User is not authorized to access this resource with an explicit deny in an identity-based policy'
             ) {
               reject('Error message does not match')
             }
@@ -366,6 +368,7 @@ const getTestTransactionSuccess = async () => {
           statusCode: 400,
           statusMessage: 'Bad Request',
           dataCallback: (_, data, reject) => {
+            logger.info('data 1', data)
             if (
               !data.validationErrors.startsWith(
                 '[instance value ("AB") not found in enum (possible values:'
@@ -634,7 +637,7 @@ const getTestTransactionSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -745,7 +748,7 @@ const getTestTransactionSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1057,7 +1060,7 @@ const getTestBusinessUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1155,6 +1158,7 @@ const getTestBusinessUserSuccess = async () => {
           statusCode: 400,
           statusMessage: 'Bad Request',
           dataCallback: (_, data, reject) => {
+            logger.info('data 2', data)
             if (
               !data.validationErrors.startsWith(
                 '[instance value ("AB") not found in enum (possible values:'
@@ -1278,7 +1282,7 @@ const getTestBusinessUserSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.Message !==
-              'User is not authorized to access this resource with an explicit deny'
+              'User is not authorized to access this resource with an explicit deny in an identity-based policy'
             ) {
               reject('Error message does not match')
             }
@@ -1343,7 +1347,7 @@ const getTestBusinessUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1405,7 +1409,7 @@ const getTestBusinessUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1650,7 +1654,7 @@ const getTestCustomerUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1744,6 +1748,7 @@ const getTestCustomerUserSuccess = async () => {
           statusCode: 400,
           statusMessage: 'Bad Request',
           dataCallback: (_, data, reject) => {
+            logger.info('data 3', data)
             if (
               !data.validationErrors.startsWith(
                 '[instance value ("AA") not found in enum (possible values:'
@@ -1878,7 +1883,7 @@ const getTestCustomerUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },
@@ -1913,7 +1918,7 @@ const getTestCustomerUserSuccess = async () => {
       try {
         return await step
       } catch (error) {
-        console.error('Error :', error)
+        logger.error('Error :', error)
         throw error
       }
     },

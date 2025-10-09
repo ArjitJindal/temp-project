@@ -1,5 +1,5 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
-import { sortBy } from 'lodash'
+import sortBy from 'lodash/sortBy'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import dayjs from '@/utils/dayjs'

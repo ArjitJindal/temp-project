@@ -1,6 +1,12 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { difference, isEmpty, isEqual, omit, pick, uniq, compact } from 'lodash'
+import difference from 'lodash/difference'
+import isEmpty from 'lodash/isEmpty'
+import isEqual from 'lodash/isEqual'
+import omit from 'lodash/omit'
+import pick from 'lodash/pick'
+import uniq from 'lodash/uniq'
+import compact from 'lodash/compact'
 import { StackConstants } from '@lib/constants'
 import {
   arsScoreEventHandler,
@@ -12,7 +18,7 @@ import { NangoRepository } from '../../services/nango/repository'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -22,7 +28,7 @@ import {
   StreamConsumerBuilder,
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
-import { isDemoTenant } from '@/utils/tenant'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -62,6 +68,7 @@ import {
 } from '@/utils/downstream-version'
 import { WebhookConfiguration } from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
+import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -225,7 +232,7 @@ export class TarponChangeMongoDbConsumer {
 
     const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-    const existingUser = usersRepo.getUserById(newUser.userId)
+    const existingUser = await usersRepo.getUserById(newUser.userId)
     /*  version check before processing user*/
     if (!applyNewVersion(newUser, existingUser)) {
       return
@@ -330,6 +337,15 @@ export class TarponChangeMongoDbConsumer {
     }
     await casesRepo.syncCaseUsers(internalUser)
 
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
+    await sanctionsScreeningDetailsRepository.addScreeningDetails(
+      newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
+        []
+    )
     subSegment?.close()
   }
 
@@ -499,10 +515,16 @@ export class TarponChangeMongoDbConsumer {
     )
     casesSubSegment?.close()
     const { ORIGIN, DESTINATION } = transactionUsers ?? {}
-    if (
-      ruleWithAdvancedOptions?.length &&
-      (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
-    ) {
+    const originUser = ORIGIN?.find(
+      (subject): subject is { type: 'USER'; user: InternalUser } =>
+        subject.type === 'USER'
+    )?.user
+    const destinationUser = DESTINATION?.find(
+      (subject): subject is { type: 'USER'; user: InternalUser } =>
+        subject.type === 'USER'
+    )?.user
+
+    if (ruleWithAdvancedOptions?.length && (originUser || destinationUser)) {
       const userServiceSubSegment = await addNewSubsegment(
         'StreamConsumer',
         'handleTransaction handleUserStatusUpdateTrigger'
@@ -510,8 +532,8 @@ export class TarponChangeMongoDbConsumer {
       await userService.handleUserStatusUpdateTrigger(
         transaction?.hitRules ?? [],
         ruleInstances as RuleInstance[],
-        ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
-        DESTINATION?.type === 'USER' ? DESTINATION?.user : null
+        originUser ?? null,
+        destinationUser ?? null
       )
       userServiceSubSegment?.close()
     }
@@ -525,6 +547,17 @@ export class TarponChangeMongoDbConsumer {
       tenantId,
       timestampBeforeCasesCreation,
       cases
+    )
+
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
+    await sanctionsScreeningDetailsRepository.addScreeningDetails(
+      transaction.executedRules?.flatMap(
+        (rule) => rule.sanctionsDetails ?? []
+      ) ?? []
     )
     handleNewCasesSubSegment?.close()
     subSegment?.close()

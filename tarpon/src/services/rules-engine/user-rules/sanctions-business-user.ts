@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import {
   FUZZINESS_SCHEMA,
   FUZZINESS_SETTINGS_SCHEMA,
@@ -27,6 +27,7 @@ import {
   getStopwordSettings,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
+import { SanctionsRuleResult } from './sanctions-bank-name'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { Business } from '@/@types/openapi-public/Business'
@@ -37,6 +38,7 @@ import { FuzzinessSettingOptions } from '@/@types/openapi-internal/FuzzinessSett
 import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { Address } from '@/@types/openapi-public/Address'
+import { notNullish } from '@/utils/array'
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
@@ -162,7 +164,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
     const providers = getDefaultProviders()
 
     const hitResult: RuleHitResult = []
-    const sanctionsDetails = (
+    const sanctionsDetails: (SanctionsRuleResult | undefined)[] =
       await Promise.all(
         entities.map(async (entity) => {
           const yearOfBirth = entity.dateOfBirth
@@ -205,25 +207,39 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
             },
             hitContext
           )
-          if (result.hitsCount > 0) {
-            const resultDetails: SanctionsDetails = {
-              name: entity.name ?? '',
-              entityType: entity.entityType,
-              searchId: result.searchId,
-              hitContext,
-            }
-            return resultDetails
+          const resultDetails: SanctionsDetails = {
+            name: entity.name ?? '',
+            entityType: entity.entityType,
+            searchId: result.searchId,
+            hitContext,
+          }
+          return {
+            sanctionsDetails: resultDetails,
+            hitsCount: result.hitsCount,
           }
         })
       )
-    ).filter(Boolean) as SanctionsDetails[]
-    if (sanctionsDetails.length > 0) {
+    const filteredSanctionsDetails = sanctionsDetails.filter(notNullish)
+    if (
+      sanctionsDetails.length > 0 &&
+      filteredSanctionsDetails.some((detail) => detail.hitsCount > 0)
+    ) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: this.getUserVars(),
-        sanctionsDetails,
+        sanctionsDetails: filteredSanctionsDetails
+          .filter((detail) => detail.hitsCount > 0)
+          .map((detail) => detail.sanctionsDetails),
       })
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+      ruleExecutionResult: {
+        sanctionsDetails: filteredSanctionsDetails.map((detail) => ({
+          ...detail.sanctionsDetails,
+          isRuleHit: detail.hitsCount > 0,
+        })),
+      },
+    }
   }
 }

@@ -2,13 +2,16 @@ import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { flatten, isEmpty } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
-import { humanizeAuto, firstLetterUpper } from '@flagright/lib/utils/humanize';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
 import { EDDDetails } from './EDDDetails';
+import NameDetailsCard from './NameDetailsCard';
+import AddressDetailsCard from './AddressDetailsCard';
+import EmailDetailsCard from './EmailDetailsCard';
 import {
   Alert,
   AlertStatus,
@@ -16,9 +19,9 @@ import {
   CaseStatus,
   Comment as ApiComment,
   Comment,
+  CommentsResponseItem,
   InternalBusinessUser,
   InternalConsumerUser,
-  CommentsResponseItem,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -64,10 +67,6 @@ import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import Tooltip from '@/components/library/Tooltip';
 import { CRM_ICON_MAP } from '@/pages/users-item/UserDetails/utils';
-import {
-  useLinkingState,
-  useUserEntityFollow,
-} from '@/pages/users-item/UserDetails/Linking/UserGraph';
 import CRMData from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
 
 export interface ActivityLogFilterParams {
@@ -211,9 +210,10 @@ function useTabs(
   const entityIds = caseItem ? getEntityIds(caseItem) : [];
   const paymentDetails =
     caseItem?.paymentDetails?.origin ?? caseItem?.paymentDetails?.destination ?? undefined;
+  const address = caseItem?.address?.origin ?? caseItem?.address?.destination ?? undefined;
+  const email = caseItem?.email?.origin ?? caseItem?.email?.destination ?? undefined;
+  const name = caseItem?.name?.origin ?? caseItem?.name?.destination ?? undefined;
   const user = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
-  const linkingState = useLinkingState(user?.userId ?? '');
-  const handleFollow = useUserEntityFollow(linkingState);
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -273,6 +273,9 @@ function useTabs(
   const subjectType = caseItem?.subjectType ?? (isEmpty(user) ? 'PAYMENT' : 'USER');
   const isUserSubject = subjectType === 'USER';
   const isPaymentSubject = subjectType === 'PAYMENT';
+  const isAddressSubject = subjectType === 'ADDRESS';
+  const isEmailSubject = subjectType === 'EMAIL';
+  const isNameSubject = subjectType === 'NAME';
 
   if (!caseItem) {
     return [];
@@ -295,6 +298,30 @@ function useTabs(
         title: 'Payment identifier details',
         key: 'payment-details',
         children: <PaymentIdentifierDetailsCard paymentDetails={paymentDetails} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isAddressSubject &&
+      address && {
+        title: 'Address details',
+        key: 'address-details',
+        children: <AddressDetailsCard address={address} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isEmailSubject &&
+      email && {
+        title: 'Email details',
+        key: 'email-details',
+        children: <EmailDetailsCard email={email} />,
+        isClosable: false,
+        isDisabled: false,
+      },
+    isNameSubject &&
+      name && {
+        title: 'Name details',
+        key: 'name-details',
+        children: <NameDetailsCard name={name} />,
         isClosable: false,
         isDisabled: false,
       },
@@ -370,23 +397,7 @@ function useTabs(
       !isEnhancedDueDiligenceEnabled && {
         title: <div className={style.icon}>Ontology</div>,
         key: 'ontology',
-        children: user.userId ? (
-          <Linking
-            userId={user.userId ?? ''}
-            scope={linkingState.scope}
-            onScopeChange={linkingState.setScope}
-            entityNodes={linkingState.entityNodes}
-            entityEdges={linkingState.entityEdges}
-            txnNodes={linkingState.txnNodes}
-            txnEdges={linkingState.txnEdges}
-            followed={linkingState.followed}
-            onFollow={handleFollow}
-            entityFilters={linkingState.entityFilters}
-            setEntityFilters={linkingState.setEntityFilters}
-            txnFilters={linkingState.txnFilters}
-            setTxnFilters={linkingState.setTxnFilters}
-          />
-        ) : undefined,
+        children: user.userId ? <Linking userId={user.userId} /> : undefined,
         isClosable: false,
         isDisabled: false,
         captureEvents: true,

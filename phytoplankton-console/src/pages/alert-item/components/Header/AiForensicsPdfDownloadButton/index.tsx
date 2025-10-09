@@ -104,7 +104,7 @@ const AiForensicsPdfDownloadButton: React.FC<Props> = ({ alertId }) => {
         isLoading={isDownloading}
         isDisabled={isDownloading}
       >
-        AI Forensics Report
+        AIF Report
       </Button>
 
       <div ref={pdfRef} className={s.pdfContainer}>

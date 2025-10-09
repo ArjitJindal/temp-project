@@ -6,7 +6,12 @@ import { Small } from '@/components/ui/Typography';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import { CountryFlag } from '@/components/ui/CountryDisplay';
-import { CountryCode, SanctionsEntityType, SanctionsSourceFields } from '@/apis';
+import {
+  CountryCode,
+  SanctionsDataProviderName,
+  SanctionsEntityType,
+  SanctionsSourceFields,
+} from '@/apis';
 import UpdatedTag from '@/components/library/Tag/UpdatedTag';
 import DownloadIcon from '@/components/ui/icons/Remix/system/download-2-line.react.svg';
 import { downloadLink } from '@/utils/download-link';
@@ -24,6 +29,7 @@ interface Props {
   pdfMode?: boolean;
   description?: string;
   sanctionsSourceFields?: SanctionsSourceFields[];
+  provider?: SanctionsDataProviderName;
 }
 
 interface DownloadSourceProps {
@@ -47,6 +53,7 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
     evidenceId,
     entityType,
     sanctionsSourceFields,
+    provider,
   } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = compact(listedTime);
@@ -71,7 +78,7 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
           )}
           <div className={s.titleText}>
             {title}
-            {!pdfMode && typeof title !== 'string' ? (
+            {!pdfMode && typeof title !== 'string' && provider === 'acuris' ? (
               <DownloadButton
                 resourceId={resourceId}
                 evidenceId={evidenceId}

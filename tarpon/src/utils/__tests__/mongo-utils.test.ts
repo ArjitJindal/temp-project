@@ -1,4 +1,5 @@
-import { join, split } from 'lodash'
+import join from 'lodash/join'
+import split from 'lodash/split'
 import { allCollections, getMongoDbClient } from '../mongodb-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 

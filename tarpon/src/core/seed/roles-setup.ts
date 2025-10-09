@@ -4,8 +4,8 @@ import { ManagementApiError } from 'auth0'
 import { getContext } from '../utils/context-storage'
 import { Account } from '@/@types/openapi-internal/Account'
 import { RoleService } from '@/services/roles'
-import { getNonDemoTenantId } from '@/utils/tenant'
-import { MicroTenantInfo } from '@/services/accounts/repository'
+import { getNonDemoTenantId } from '@/utils/tenant-id'
+import { MicroTenantInfo } from '@/@types/tenant'
 
 export async function removeDemoRoles(
   tenantId: string,

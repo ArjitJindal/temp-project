@@ -1,8 +1,9 @@
 import { isValidEmail } from '@flagright/lib/utils'
-import { compact, uniq } from 'lodash'
-import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants'
+import compact from 'lodash/compact'
+import uniq from 'lodash/uniq'
+import { mentionIdRegex, mentionRegex } from '@flagright/lib/constants/mentions'
 import { envIs } from './env'
-import { isDemoTenant } from './tenant'
+import { isDemoTenant } from './tenant-id'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
@@ -150,29 +151,41 @@ export type PaymentDetailsName = {
   address?: Address
 }
 
+type BankInfo = { bankName?: string; address?: Address }
+
 export const extractBankInfoFromPaymentDetails = (
   paymentDetails: PaymentDetails
-):
-  | {
-      bankName?: string
-      address?: Address
-    }
-  | undefined => {
+): BankInfo[] | undefined => {
   switch (paymentDetails.method) {
     case 'GENERIC_BANK_ACCOUNT':
     case 'IBAN':
     case 'ACH':
-    case 'SWIFT':
-      return {
+      return [
+        {
+          bankName: paymentDetails.bankName,
+          address: paymentDetails.bankAddress,
+        },
+      ]
+    case 'SWIFT': {
+      const correspondenceBankDetails = paymentDetails.correspondenceBankDetails
+      const bankNames: BankInfo[] =
+        correspondenceBankDetails?.map((correspondenceBankDetail) => ({
+          bankName: correspondenceBankDetail.bankName,
+        })) ?? []
+
+      bankNames.push({
         bankName: paymentDetails.bankName,
         address: paymentDetails.bankAddress,
-      }
+      })
+
+      return bankNames
+    }
     default:
       return undefined
   }
 }
 
-export const getPaymentDetailsName = (
+export const getPaymentDetailsNameString = (
   paymentDetails: PaymentDetails
 ): PaymentDetailsName[] => {
   const namesToSearch: PaymentDetailsName[] = []
@@ -213,7 +226,6 @@ export const getPaymentDetailsName = (
       break
     case 'SWIFT':
     case 'UPI':
-    case 'WALLET':
     case 'CHECK':
       if (paymentDetails.name != null) {
         namesToSearch.push({
@@ -252,6 +264,17 @@ export const getPaymentDetailsName = (
       }
       break
     }
+    case 'WALLET': {
+      if (paymentDetails.name) {
+        namesToSearch.push({
+          name: paymentDetails.name,
+          countryOfNationality: paymentDetails.countryOfNationality,
+          dateOfBirth: paymentDetails.dateOfBirth,
+          entityType: 'PAYMENT_NAME',
+        })
+      }
+      break
+    }
   }
 
   return namesToSearch
@@ -267,4 +290,62 @@ export const getPersonName = (person?: Person) => {
     person?.generalDetails?.name?.middleName,
     person?.generalDetails?.name?.lastName,
   ]).join(' ')
+}
+
+export const getAddressString = (address?: Address): string | undefined => {
+  if (!address) {
+    return undefined
+  }
+  return [
+    ...address.addressLines,
+    address.city,
+    address.state,
+    address.postcode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+export const parseAddressStringForAggregation = (
+  addressString: string
+): Address | undefined => {
+  if (!addressString) {
+    return undefined
+  }
+
+  const decode = (val: string) =>
+    val.replace(/__PIPE__/g, '|').replace(/__EQ__/g, '=')
+
+  const parts = addressString.split('|')
+  const map: Record<string, string> = {}
+
+  for (const part of parts) {
+    const [key, ...rest] = part.split('=')
+    map[key] = decode(rest.join('=')) // in case value itself had '='
+  }
+
+  return {
+    addressLines: map.LINES ? map.LINES.split('__LINE__').map(decode) : [],
+    city: map.CITY ?? '',
+    state: map.STATE ?? '',
+    postcode: map.POSTCODE ?? '',
+    country: map.COUNTRY ?? '',
+  }
+}
+
+export const getNameStringForAggregation = (
+  name?: ConsumerName | string
+): string => {
+  if (!name) {
+    return ''
+  }
+  if (typeof name === 'string') {
+    return name
+  }
+  return compact([
+    `FIRST_NAME=${name.firstName}`,
+    `MIDDLE_NAME=${name.middleName}`,
+    `LAST_NAME=${name.lastName}`,
+  ]).join('|')
 }

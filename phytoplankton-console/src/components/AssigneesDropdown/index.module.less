@@ -1,0 +1,98 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.option {
+  height: 32px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.tagWrapper {
+  background: white;
+  padding: 2px;
+  margin: -2px;
+  border-radius: 16px;
+  padding-right: 12px;
+  display: flex;
+  gap: 4px;
+
+  .removeIcon {
+    visibility: hidden;
+  }
+
+  &.isShadowed > * {
+    opacity: 0.25;
+  }
+
+  &.isHovered {
+    background: @fr-colors-v2-gray-2;
+
+    .removeIcon {
+      visibility: visible;
+    }
+  }
+
+  > * {
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+    transition-property: opacity;
+  }
+}
+
+.values {
+  display: flex;
+  gap: 4px;
+  position: relative;
+  height: 24px;
+
+  .tagWrapper {
+    position: absolute;
+    top: 0;
+    background: white;
+    left: calc(18px * var(--position));
+    padding: 4px;
+    margin: -4px;
+    border-radius: 16px;
+    z-index: calc(var(--position));
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+    transition-property: background;
+
+    > * {
+      transition-duration: @default-animation-speed;
+      transition-timing-function: @default-animation-function;
+      transition-property: opacity;
+    }
+
+    &:hover {
+      z-index: 999;
+      background: @fr-colors-v2-gray-2;
+    }
+
+    &:hover ~ .tagWrapper,
+    &:has(~ .tagWrapper:hover) {
+      > * {
+        opacity: 0.25;
+      }
+    }
+  }
+}
+
+.removeIcon {
+  width: 12px;
+  cursor: pointer;
+}
+
+.assigneesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

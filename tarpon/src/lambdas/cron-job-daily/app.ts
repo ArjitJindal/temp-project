@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { isQaEnv } from '@flagright/lib/qa'
 import { WebClient } from '@slack/web-api'
@@ -27,7 +27,7 @@ import {
 import {
   TRANSACTIONS_COLLECTION,
   TRIAGE_QUEUE_TICKETS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TriageQueueTicket } from '@/@types/triage'
 import { getSecret } from '@/utils/secrets-manager'
@@ -39,11 +39,9 @@ import {
 } from '@/utils/slack'
 import { BatchJob } from '@/@types/batch-job'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import {
-  executeClickhouseQuery,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { isDemoTenant } from '@/utils/tenant'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { isDemoTenant } from '@/utils/tenant-id'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { createApiUsageJobs } from '@/utils/api-usage'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -118,7 +116,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
         })
       } else if (providers.length) {
         commonDataTenantIds.push(tenant.tenant.id)
-        return []
       } else {
         batchJobs.push({
           type: 'ONGOING_SCREENING_USER_RULE',

@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { isConsumerUser } from '../utils/user-rule-utils'
@@ -119,6 +119,8 @@ export default class UserOnboardedFromHighRiskCountry extends UserRule<UserOnboa
       }
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

@@ -1,7 +1,7 @@
 import pMap from 'p-map'
 import { Collection, FindCursor, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
 import { getMohaUsersForPNB } from '../rules-engine/pnb-custom-logic'
 import {
@@ -24,10 +24,8 @@ import {
   tenantHasFeature,
 } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import {
-  getSearchIndexName,
-  USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { getSearchIndexName } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 export async function getOngoingScreeningUserRuleInstances(

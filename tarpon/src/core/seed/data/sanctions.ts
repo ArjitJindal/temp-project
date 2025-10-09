@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'

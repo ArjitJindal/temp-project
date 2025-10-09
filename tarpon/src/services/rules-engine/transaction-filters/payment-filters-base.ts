@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import { capitalize, isEmpty } from 'lodash'
+import capitalize from 'lodash/capitalize'
+import isEmpty from 'lodash/isEmpty'
 import {
   CARD_PAYMENT_CHANNELS_OPTIONAL_SCHEMA,
   COUNTRIES_OPTIONAL_SCHEMA,

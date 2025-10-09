@@ -6,12 +6,7 @@ import Button from '@/components/library/Button';
 import BrainLineIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import MagicLineIcon from '@/components/ui/icons/Remix/design/magic-line.react.svg';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
-import {
-  AdditionalCopilotInfo,
-  CaseReasons,
-  NarrativeResponseAttributes,
-  NarrativeMode,
-} from '@/apis';
+import { AdditionalCopilotInfo, NarrativeResponseAttributes, NarrativeMode } from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -296,7 +291,7 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
         NarrativeRequest: {
           entityId,
           entityType: entityType || 'CASE',
-          reasons: reasons as CaseReasons[],
+          reasons: reasons,
           otherReason,
           narrative: '',
           additionalCopilotInfo,
@@ -321,7 +316,7 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
           entityId,
           entityType: entityType || 'CASE',
           narrative,
-          reasons: reasons as CaseReasons[],
+          reasons: reasons,
           narrativeMode,
         },
       });

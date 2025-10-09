@@ -4,14 +4,12 @@ import {
   UNIQUE_TAGS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { Tenant } from '@/services/accounts/repository'
-import {
-  executeClickhouseQuery,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { Tenant } from '@/@types/tenant'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 async function migrateTenant(tenant: Tenant) {
   const mongodb = await getMongoDbClient()

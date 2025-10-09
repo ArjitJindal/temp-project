@@ -1,4 +1,4 @@
-import { snakeCase } from 'lodash'
+import snakeCase from 'lodash/snakeCase'
 import { JSONSchema } from 'json-schema-to-typescript'
 import * as Models from '@/@types/openapi-internal/all'
 import * as CustomModelData from '@/@types/openapi-internal-custom/all'

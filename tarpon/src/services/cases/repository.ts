@@ -10,7 +10,11 @@ import {
   ObjectId,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { compact, intersection, isEmpty, isNil, omitBy } from 'lodash'
+import compact from 'lodash/compact'
+import intersection from 'lodash/intersection'
+import isEmpty from 'lodash/isEmpty'
+import isNil from 'lodash/isNil'
+import omitBy from 'lodash/omitBy'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { SLAService, SlaUpdates } from '../sla/sla-service'
 import { AlertsRepository } from '../alerts/repository'
@@ -26,7 +30,7 @@ import {
   withTransaction,
   internalMongoBulkUpdate,
 } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -38,7 +42,8 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
-import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
+import { OptionalPagination } from '@/@types/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { traceable } from '@/core/xray'
@@ -52,16 +57,15 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { AccountsService } from '@/services/accounts'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import {
-  getClickhouseClient,
-  isConsoleMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import {
   isTenantMigratedToDynamo,
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
+import { Address } from '@/@types/openapi-public/Address'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 50_000
@@ -120,6 +124,27 @@ export class CaseRepository {
       this.dynamoDb,
       'CASES_ALERTS'
     )
+  }
+
+  // Lean fetch: return only minimal case fields used for permission checks
+  public async getCaseStatusById(
+    caseId: string
+  ): Promise<{ caseId: string; caseStatus?: string } | null> {
+    if (await this.isTenantMigratedToDynamo) {
+      const c = await this.dynamoCaseRepository.getCaseById(caseId)
+      return c
+        ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+        : null
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const c = await collection.findOne(
+      { caseId },
+      { projection: { caseId: 1, caseStatus: 1 } }
+    )
+    return c
+      ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+      : null
   }
 
   /**
@@ -1496,34 +1521,7 @@ export class CaseRepository {
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    const filters: Filter<Case>[] = []
-
-    if (params.filterAvailableAfterTimestamp != null) {
-      filters.push({
-        availableAfterTimestamp: { $in: params.filterAvailableAfterTimestamp },
-      })
-    }
-
-    if (params.filterOutCaseStatus != null) {
-      filters.push({
-        caseStatus: { $ne: params.filterOutCaseStatus },
-      })
-    }
-
-    if (params.filterMaxTransactions != null) {
-      filters.push({
-        [`caseTransactionsIds.${params.filterMaxTransactions - 1}`]: {
-          $exists: false,
-        },
-      })
-    }
-
-    if (params.filterCaseType != null) {
-      filters.push({
-        caseType: params.filterCaseType,
-      })
-    }
+    const filters = this.getMongoParamsQuery(params)
 
     const { directions } = params
     const paymentDetailsFilters = omitBy(
@@ -1549,11 +1547,6 @@ export class CaseRepository {
         $or: directionsFilters,
       })
     }
-    if (params.filterTransactionId) {
-      filters.push({
-        caseTransactionsIds: params.filterTransactionId,
-      })
-    }
 
     const filter = {
       ...(filters.length > 0 ? { $and: filters } : {}),
@@ -1561,15 +1554,108 @@ export class CaseRepository {
     return await casesCollection.find(filter).toArray()
   }
 
-  public async getCasesByUserId(
-    userId: string,
+  public async getCasesByAddress(
+    address: Address,
     params: SubjectCasesQueryParams
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
 
+    const directionFilters: Filter<Case>[] = []
+    for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+      if (address.addressLines) {
+        directionFilters.push({
+          [`address.${directionKey}.addressLines`]: {
+            $in: address.addressLines,
+          },
+        })
+      } else {
+        directionFilters.push({
+          [`address.${directionKey}.addressLines`]: null,
+        })
+      }
+      if (address.postcode) {
+        directionFilters.push({
+          [`address.${directionKey}.postcode`]: address.postcode,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.postcode`]: null })
+      }
+      if (address.city) {
+        directionFilters.push({
+          [`address.${directionKey}.city`]: address.city,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.city`]: null })
+      }
+      if (address.state) {
+        directionFilters.push({
+          [`address.${directionKey}.state`]: address.state,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.state`]: null })
+      }
+      if (address.country) {
+        directionFilters.push({
+          [`address.${directionKey}.country`]: address.country,
+        })
+      } else {
+        directionFilters.push({ [`address.${directionKey}.country`]: null })
+      }
+
+      filters.push({ $or: directionFilters })
+    }
+    return await casesCollection
+      .find({
+        ...(filters.length > 0 ? { $and: filters } : {}),
+      })
+      .toArray()
+  }
+
+  public async getCasesByEmail(
+    email: string,
+    params: SubjectCasesQueryParams
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
+    const directionFilters: Filter<Case>[] = []
+    for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+      directionFilters.push({ [`email.${directionKey}`]: email })
+    }
+    filters.push({ $or: directionFilters })
+    return await casesCollection
+      .find({
+        ...(filters.length > 0 ? { $and: filters } : {}),
+      })
+      .toArray()
+  }
+
+  public async getCasesByName(
+    name: string,
+    params: SubjectCasesQueryParams
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
+    const directionFilters: Filter<Case>[] = []
+    for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
+      directionFilters.push({ [`name.${directionKey}`]: name })
+    }
+    filters.push({ $or: directionFilters })
+    return await casesCollection
+      .find({
+        ...(filters.length > 0 ? { $and: filters } : {}),
+      })
+      .toArray()
+  }
+
+  private getMongoParamsQuery(params: SubjectCasesQueryParams): Filter<Case>[] {
     const filters: Filter<Case>[] = []
-
     if (params.filterAvailableAfterTimestamp != null) {
       filters.push({
         availableAfterTimestamp: { $in: params.filterAvailableAfterTimestamp },
@@ -1596,6 +1682,22 @@ export class CaseRepository {
       })
     }
 
+    if (params.filterTransactionId) {
+      filters.push({
+        caseTransactionsIds: params.filterTransactionId,
+      })
+    }
+
+    return filters
+  }
+
+  public async getCasesByUserId(
+    userId: string,
+    params: SubjectCasesQueryParams
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const filters = this.getMongoParamsQuery(params)
     const directionFilters: Filter<Case>[] = []
     const { directions } = params
     if (directions == null || directions.includes('ORIGIN')) {
@@ -1611,12 +1713,6 @@ export class CaseRepository {
     if (directionFilters.length > 0) {
       filters.push({
         $or: directionFilters,
-      })
-    }
-
-    if (params.filterTransactionId) {
-      filters.push({
-        caseTransactionsIds: params.filterTransactionId,
       })
     }
 

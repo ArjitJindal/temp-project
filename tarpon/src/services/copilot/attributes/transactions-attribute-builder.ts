@@ -1,5 +1,5 @@
 import getSymbolFromCurrency from 'currency-symbol-map'
-import { round as lodashRound } from 'lodash'
+import round from 'lodash/round'
 import { AttributeSet } from './attribute-set'
 import {
   AttributeBuilder,
@@ -116,8 +116,8 @@ export class TransactionsBuilder implements AttributeBuilder {
     const averageDestinationAmount =
       totalDestinationAmount / transactions.length
 
-    const round = (amount: number | undefined) => {
-      return lodashRound(amount ?? 0, 2)
+    const roundFn = (amount: number | undefined) => {
+      return round(amount ?? 0, 2)
     }
 
     const currencySymbol = getSymbolFromCurrency(mainCurrency || '')
@@ -125,39 +125,39 @@ export class TransactionsBuilder implements AttributeBuilder {
     attributes.setAttribute('transactionsCount', transactions.length)
     attributes.setAttribute(
       'minOriginAmount',
-      `${currencySymbol}${round(minOriginAmount)}`
+      `${currencySymbol}${roundFn(minOriginAmount)}`
     )
     attributes.setAttribute(
       'maxOriginAmount',
-      `${currencySymbol}${round(maxOriginAmount)}`
+      `${currencySymbol}${roundFn(maxOriginAmount)}`
     )
     attributes.setAttribute(
       'totalOriginAmount',
-      `${currencySymbol}${round(totalOriginAmount)}`
+      `${currencySymbol}${roundFn(totalOriginAmount)}`
     )
     attributes.setAttribute(
       'averageOriginAmount',
-      `${currencySymbol}${round(averageOriginAmount)}`
+      `${currencySymbol}${roundFn(averageOriginAmount)}`
     )
     attributes.setAttribute(
       'minDestinationAmount',
-      `${currencySymbol}${round(minDestinationAmount)}`
+      `${currencySymbol}${roundFn(minDestinationAmount)}`
     )
     attributes.setAttribute(
       'maxDestinationAmount',
-      `${currencySymbol}${round(maxDestinationAmount)}`
+      `${currencySymbol}${roundFn(maxDestinationAmount)}`
     )
     attributes.setAttribute(
       'totalDestinationAmount',
-      `${currencySymbol}${round(totalDestinationAmount)}`
+      `${currencySymbol}${roundFn(totalDestinationAmount)}`
     )
     attributes.setAttribute(
       'averageDestinationAmount',
-      `${currencySymbol}${round(averageDestinationAmount)}`
+      `${currencySymbol}${roundFn(averageDestinationAmount)}`
     )
     attributes.setAttribute(
       'firstPaymentAmount',
-      `${currencySymbol}${round(firstPaymentAmount)}`
+      `${currencySymbol}${roundFn(firstPaymentAmount)}`
     )
 
     if (transactions.length < 20) {

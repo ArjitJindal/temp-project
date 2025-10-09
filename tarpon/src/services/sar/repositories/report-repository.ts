@@ -1,5 +1,7 @@
 import { Document, Filter, MongoClient, WithId } from 'mongodb'
-import { chunk, compact, omit } from 'lodash'
+import chunk from 'lodash/chunk'
+import compact from 'lodash/compact'
+import omit from 'lodash/omit'
 import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
@@ -16,10 +18,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { Report } from '@/@types/openapi-internal/Report'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
-import {
-  REPORT_COLLECTION,
-  USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { REPORT_COLLECTION, USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { Account } from '@/@types/openapi-internal/Account'
 import { getContext } from '@/core/utils/context-storage'

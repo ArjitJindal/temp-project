@@ -1,13 +1,14 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient, Collection } from 'mongodb'
-import { isEqual, pick } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import pick from 'lodash/pick'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongodb-definitions'
+import { API_REQUEST_LOGS_COLLECTION } from '@/utils/mongo-table-names'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -292,7 +293,11 @@ async function handleTransaction(
     return
   }
   console.log(`Syncing data for transaction with Id: ${transactionId}`)
-  const transactionKeys = DynamoDbKeys.TRANSACTION(tenantId, transactionId)
+  const transactionKeys = DynamoDbKeys.TRANSACTION(
+    tenantId,
+    transactionId,
+    dynamoTransaction.timestamp
+  )
   // Send transaction to SQS
   await sendEntityToSQS({
     tenantId,

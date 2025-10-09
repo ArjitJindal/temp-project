@@ -12,42 +12,39 @@ import {
   MongoClient,
   ObjectId,
   OptionalUnlessRequiredId,
-  UpdateFilter,
   UpdateOneModel,
   UpdateResult,
   WithId,
   UpdateManyModel,
   AnyBulkWriteOperation,
 } from 'mongodb'
-
-import { isEqual, memoize } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import memoize from 'lodash/memoize'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
-  DELTA_SANCTIONS_COLLECTION,
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
   getSearchIndexName,
-  SANCTIONS_COLLECTION,
 } from './mongodb-definitions'
+import {
+  DELTA_SANCTIONS_COLLECTION,
+  SANCTIONS_COLLECTION,
+} from './mongo-table-names'
 import {
   sendBulkMessagesToMongoConsumer,
   sendMessageToMongoConsumer,
 } from './clickhouse/utils'
 import { envIs, envIsNot } from './env'
-import { isDemoTenant } from './tenant'
+import { isDemoTenant } from './tenant-id'
 import { getSQSClient } from './sns-sqs-client'
 import { generateChecksum } from './object'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
-import {
-  DEFAULT_PAGE_SIZE,
-  getPageSizeNumber,
-  MAX_PAGE_SIZE,
-  OptionalPaginationParams,
-  PageSize,
-} from '@/utils/pagination'
+import { getPageSizeNumber } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants/pagination'
+import { OptionalPaginationParams, PageSize } from '@/@types/pagination'
 import {
   HOUR_DATE_FORMAT,
   DAY_DATE_FORMAT,
@@ -58,8 +55,8 @@ import {
 } from '@/core/constants'
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
-import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
 import { hasFeature } from '@/core/utils/context'
+import { MongoUpdateMessage } from '@/@types/mongo'
 
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
@@ -68,7 +65,6 @@ const getMongoDbClientInternal = memoize(async (useCache = true) => {
         `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}?directConnection=true`
     )
   }
-  console.log('process.env.ENV', process.env.ENV)
   if (process.env.ENV?.includes('local')) {
     return await MongoClient.connect(
       `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}?directConnection=true`
@@ -722,16 +718,6 @@ export async function internalMongoBulkUpdate<T extends Document>(
   )
 }
 
-export interface MongoUpdateMessage<T extends Document = Document> {
-  filter: Filter<T>
-  operationType: 'updateOne'
-  updateMessage: UpdateFilter<T>
-  sendToClickhouse: boolean
-  collectionName: string
-  upsert?: boolean
-  arrayFilters?: Document[]
-}
-
 export async function sendMessageToMongoUpdateConsumer<
   T extends Document = Document
 >(message: MongoUpdateMessage<T>) {
@@ -740,7 +726,13 @@ export async function sendMessageToMongoUpdateConsumer<
   }
 
   if (envIs('local') || envIs('test')) {
-    await executeMongoUpdate([message as MongoUpdateMessage<Document>])
+    const { handleLocalExecuteMongoUpdate } = await import(
+      '@/core/local-handlers/execute-mongo-update'
+    )
+
+    await handleLocalExecuteMongoUpdate([
+      message as MongoUpdateMessage<Document>,
+    ])
     return
   }
 

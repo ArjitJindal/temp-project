@@ -1,13 +1,11 @@
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { sanitizeString } from '@flagright/lib/utils'
-import {
-  batchInsertToClickhouse,
-  executeClickhouseQuery,
-} from '../../utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { batchGet, batchWrite } from '@/utils/dynamodb'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { traceable } from '@/core/xray'
 import { CrmGetResponse } from '@/@types/openapi-internal/CrmGetResponse'
 import { CRMModelType } from '@/@types/openapi-internal/CRMModelType'
@@ -15,7 +13,7 @@ import {
   DefaultApiGetCrmRecordsRequest,
   DefaultApiGetCrmRecordsSearchRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { CRMRecordSearch } from '@/@types/openapi-internal/CRMRecordSearch'
@@ -56,8 +54,12 @@ export class NangoRepository {
     }
 
     if (process.env.NODE_ENV === 'development') {
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
       await Promise.all(
-        keys.map((key) => handleLocalChangeCapture(this.tenantId, key))
+        keys.map((key) => handleLocalTarponChangeCapture(this.tenantId, [key]))
       )
     }
   }
@@ -206,7 +208,11 @@ export class NangoRepository {
     await this.dynamoDb.send(crmRecord)
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, key)
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalTarponChangeCapture(this.tenantId, [key])
     }
   }
 
@@ -217,15 +223,4 @@ export class NangoRepository {
       [link]
     )
   }
-}
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-
-  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'TARPON')
 }

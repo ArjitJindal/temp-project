@@ -6,9 +6,9 @@ import {
 } from '../utils/transaction-rule-utils'
 import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
-import { TimeWindow } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { CurrencyService } from '@/services/currency'
 import dayjs from '@/utils/dayjs'
@@ -226,7 +226,9 @@ export abstract class TransactionsStandardDeviationAnomalyBaseRule extends Trans
       this.computeDirection('origin'),
       this.computeDirection('destination'),
     ])
-    return [origin, destination]
+    return {
+      ruleHitResult: [origin, destination].filter(Boolean),
+    }
   }
 
   /**

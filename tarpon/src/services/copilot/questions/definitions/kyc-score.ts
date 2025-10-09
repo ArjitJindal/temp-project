@@ -1,7 +1,7 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { KRS_SCORES_COLLECTION } from '@/utils/mongodb-definitions'
+import { KRS_SCORES_COLLECTION } from '@/utils/mongo-table-names'
 import { searchUser } from '@/services/copilot/questions/definitions/common/search'
 import { queryUsername } from '@/services/copilot/questions/definitions/util'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'

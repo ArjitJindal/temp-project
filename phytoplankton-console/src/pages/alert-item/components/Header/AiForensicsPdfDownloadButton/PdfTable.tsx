@@ -17,7 +17,6 @@ const PdfTable: React.FC<Props> = ({ item }) => {
   const tableData = {
     headers: item.headers.map((header) => setUserAlias(header.name, userAlias)),
     rows: item.rows.slice(0, 20),
-    title: item.title || '',
   };
 
   return (

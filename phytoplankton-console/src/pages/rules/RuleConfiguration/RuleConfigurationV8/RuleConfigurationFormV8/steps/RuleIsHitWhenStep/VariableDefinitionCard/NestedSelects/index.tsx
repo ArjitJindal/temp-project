@@ -67,13 +67,12 @@ function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
   };
   return (
     <>
-      <Label label={label} required={{ value: true, showHint: true }}>
+      <Label label={label} required={{ value: true, showHint: true }} testId={testId}>
         <Select<string>
           value={localValue}
           onChange={handleSelect}
           mode="SINGLE"
           options={options}
-          testId={testId}
           placeholder={'Select an option'}
           isDisabled={isDisabled}
         />

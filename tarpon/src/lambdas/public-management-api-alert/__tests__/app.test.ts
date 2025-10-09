@@ -16,7 +16,7 @@ import {
   getTestTransaction,
   setUpTransactionsHooks,
 } from '@/test-utils/transaction-test-utils'
-import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { withLocalChangeHandler } from '@/utils/local-change-handler'
 import { AccountsService } from '@/services/accounts'
 
 jest

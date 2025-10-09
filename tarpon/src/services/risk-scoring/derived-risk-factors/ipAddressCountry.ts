@@ -1,4 +1,4 @@
-import { compact } from 'lodash'
+import compact from 'lodash/compact'
 import { TransactionRiskFactorValueHandler } from '.'
 import { addNewSubsegment } from '@/core/xray'
 import { getAllIpAddresses } from '@/utils/ipAddress'

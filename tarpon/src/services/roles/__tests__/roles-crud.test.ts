@@ -6,7 +6,7 @@ import {
   RoleCreate,
   RoleUpdate,
 } from 'auth0'
-import { remove } from 'lodash'
+import remove from 'lodash/remove'
 import { RoleService } from '..'
 import { Auth0RolesRepository } from '../repository/auth0'
 import {
@@ -15,7 +15,7 @@ import {
 } from '@/utils/auth0-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { AccountsService } from '@/services/accounts'
 jest.mock('@/utils/auth0-utils')
 const mockedGetAuth0ManagementClient =

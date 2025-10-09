@@ -1,11 +1,11 @@
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   CASES_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 export const metricsConfig = (tenantId: string) => [
   {

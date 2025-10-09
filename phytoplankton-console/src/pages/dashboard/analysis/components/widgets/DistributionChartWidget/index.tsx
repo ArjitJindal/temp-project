@@ -111,7 +111,6 @@ export default function DistributionChartWidget<
 
   return (
     <Widget
-      ref={pdfRef}
       resizing="FIXED"
       {...restProps}
       extraControls={
@@ -158,7 +157,9 @@ export default function DistributionChartWidget<
               groupBy === 'TIME' ? seriesLabel : '',
             ),
             pdfRef,
-            tableTitle: `${attributeName} distribution`,
+            tableTitle: `${
+              restProps.title ? `${restProps.title} - ` : ''
+            } ${attributeName} distribution`,
           };
           resolve(fileData);
         });
@@ -175,7 +176,7 @@ export default function DistributionChartWidget<
             items={groups.map((group) => ({ label: group.name, value: group.name }))}
           />
         ) : null}
-        <div className={s.chartContainer}>
+        <div className={s.chartContainer} ref={pdfRef}>
           <ContainerRectMeasure className={s.chartContainer2}>
             {(size) => (
               <BarChart<string, string>

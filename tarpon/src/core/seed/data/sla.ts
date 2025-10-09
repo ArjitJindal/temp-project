@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import memoize from 'lodash/memoize'
 import { ID_PREFIXES } from './seeds'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'

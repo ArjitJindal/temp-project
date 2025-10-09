@@ -22,9 +22,12 @@ import {
   getAllUsagePlans,
   USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
-import { compact, flatten, isEmpty, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import flatten from 'lodash/flatten'
+import isEmpty from 'lodash/isEmpty'
+import uniq from 'lodash/uniq'
 import { stageAndRegion } from '@flagright/lib/utils'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
@@ -50,15 +53,15 @@ import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 import { assertCurrentUserRole, isFlagrightInternalUser } from '@/@types/jwt'
 import { tenantSettings, updateTenantSettings } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
-import { isDemoTenant } from '@/utils/tenant'
-import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
+import { isDemoTenant } from '@/utils/tenant-id'
+import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { logger } from '@/core/logger'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
 import {
@@ -624,13 +627,18 @@ export class TenantService {
       )?.count ?? 0
 
     const apiKeysProcessed = apiKeys.map((x) => {
-      let value = x.value
+      const isTargetKey = x.id === unmaskingOptions.apiKeyId
+      let value: string | undefined
 
-      if (
-        !isFlagrightInternalUser() &&
-        unmaskingOptions.unmask &&
-        apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
-      ) {
+      if (isTargetKey && unmaskingOptions.unmask) {
+        const exceededViewLimit =
+          !isFlagrightInternalUser() &&
+          apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
+
+        value = exceededViewLimit
+          ? x.value?.replace(/.(?=.{4})/g, '*')
+          : x.value
+      } else {
         value = x.value?.replace(/.(?=.{4})/g, '*')
       }
 
@@ -879,6 +887,15 @@ export class TenantService {
       dynamoDb: this.dynamoDb,
     })
     return tenantRepository.getTenantSettings()
+  }
+
+  public async getTenantById(tenantId: string) {
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const tenant = await accountsService.getTenantById(tenantId)
+    if (!tenant) {
+      throw new createHttpError.NotFound('Tenant id not found')
+    }
+    return tenant
   }
 
   public async deleteTenant(

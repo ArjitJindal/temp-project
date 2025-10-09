@@ -1,5 +1,5 @@
 import { TransactionAmountRuleFilter } from '../transaction-amount'
-import { TransactionAmountRange } from '../../utils/rule-parameter-schemas'
+import { TransactionAmountRange } from '@/@types/rule/params'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'

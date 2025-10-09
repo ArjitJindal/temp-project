@@ -7,7 +7,7 @@ import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/Dynamic
 import { DynamicResourcesData } from '@/@types/openapi-internal/DynamicResourcesData'
 import { PermissionsNode } from '@/@types/rbac/permissions'
 import { PermissionsCountResponse } from '@/@types/openapi-internal/PermissionsCountResponse'
-import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 
 @traceable
 export class PermissionsService {

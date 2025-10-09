@@ -15,8 +15,9 @@ import {
   UpdateCommandInput,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-
-import { isEmpty, memoize, omit } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
+import memoize from 'lodash/memoize'
+import omit from 'lodash/omit'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -45,7 +46,7 @@ import {
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
   VERSION_HISTORY_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
@@ -59,11 +60,9 @@ import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScor
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { getMongoDbClient, paginateCursor } from '@/utils/mongodb-utils'
-import {
-  getClickhouseCredentials,
-  isClickhouseEnabledInRegion,
-  sendMessageToMongoConsumer,
-} from '@/utils/clickhouse/utils'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { getTriggerSource } from '@/utils/lambda'
 import {
   createNonConsoleApiInMemoryCache,
@@ -82,8 +81,9 @@ import { VersionHistoryTable } from '@/models/version-history'
 import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 
-export type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
+type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -91,34 +91,6 @@ const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   max: 100,
   ttlMinutes: 10,
 })
-
-export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
-  {
-    riskLevel: 'VERY_LOW',
-    lowerBoundRiskScore: 0,
-    upperBoundRiskScore: 20,
-  },
-  {
-    riskLevel: 'LOW',
-    lowerBoundRiskScore: 20,
-    upperBoundRiskScore: 40,
-  },
-  {
-    riskLevel: 'MEDIUM',
-    lowerBoundRiskScore: 40,
-    upperBoundRiskScore: 60,
-  },
-  {
-    riskLevel: 'HIGH',
-    lowerBoundRiskScore: 60,
-    upperBoundRiskScore: 80,
-  },
-  {
-    riskLevel: 'VERY_HIGH',
-    lowerBoundRiskScore: 80,
-    upperBoundRiskScore: 100,
-  },
-]
 
 const defaultRiskClassificationItem: RiskClassificationConfig = {
   classificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
@@ -218,7 +190,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(`Updated KRS score for user ${userId} to ${score}`)
@@ -263,7 +239,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
     logger.debug(
       `Updated ARS score for transaction ${transactionId} to ${score}`
@@ -356,7 +336,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(
@@ -403,7 +387,11 @@ export class RiskRepository {
     const updatedDrsScore = result.Attributes as DrsScore
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(
@@ -546,7 +534,11 @@ export class RiskRepository {
       { versioned: true }
     )
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
     logger.info(`Manual risk level updated for user ${userId} to ${riskLevel}`)
     return newKrsScoreItem
@@ -589,7 +581,11 @@ export class RiskRepository {
     )
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.debug(`Manual risk level updated for user ${userId} to ${riskLevel}`)
@@ -681,7 +677,11 @@ export class RiskRepository {
       { versioned: true }
     )
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(this.tenantId, primaryKey)
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
+      await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
     return averageArsScore
@@ -1122,9 +1122,13 @@ export class RiskRepository {
 
     // Handle local change capture for development
     if (process.env.NODE_ENV === 'development') {
+      const { handleLocalHammerheadChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
+      )
+
       await Promise.all(
         updatedRiskFactors.map((riskFactor) =>
-          handleLocalChangeCapture(
+          handleLocalHammerheadChangeCapture(
             this.tenantId,
             DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id)
           )
@@ -1544,17 +1548,6 @@ export class RiskRepository {
 }
 
 /** Kinesis Util */
-
-const handleLocalChangeCapture = async (
-  tenantId: string,
-  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
-) => {
-  const { localTarponChangeCaptureHandler } = await import(
-    '@/utils/local-dynamodb-change-handler'
-  )
-
-  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'HAMMERHEAD')
-}
 
 /**
  * Version history

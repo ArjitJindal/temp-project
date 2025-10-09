@@ -33,6 +33,7 @@ interface CursorProps {
 interface PageBasedProps {
   isDisabled?: boolean;
   isLoading?: boolean;
+  isPageChangeLoading?: boolean;
   showResultsInfo?: boolean;
   pageSize?: number;
   onChange: (page: number, pageSize: number) => void;
@@ -57,6 +58,7 @@ function PageBasedPagination(props: PageBasedProps) {
   const {
     isDisabled,
     isLoading,
+    isPageChangeLoading,
     total,
     totalPages,
     currentItems,
@@ -64,6 +66,8 @@ function PageBasedPagination(props: PageBasedProps) {
     showResultsInfo = true,
     onChange,
   } = props;
+
+  const controlsDisabled = Boolean(isDisabled || (isLoading && isPageChangeLoading));
 
   const normalisedTotalPages = useMemo(() => {
     if (totalPages != null) {
@@ -73,6 +77,14 @@ function PageBasedPagination(props: PageBasedProps) {
   }, [totalPages, total, pageSize]);
 
   const current = Math.min(Math.max(1, props.current ?? 1), normalisedTotalPages);
+
+  if (isLoading && !isPageChangeLoading) {
+    return (
+      <div className={s.root}>
+        <Skeleton />
+      </div>
+    );
+  }
 
   let buttonsToShow: number;
   let buttonsOnLeft: number;
@@ -107,14 +119,6 @@ function PageBasedPagination(props: PageBasedProps) {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className={s.root}>
-        <Skeleton />
-      </div>
-    );
-  }
-
   return (
     <nav className={s.root} data-cy="pagination" role="pagination">
       <div className={s.side}>
@@ -129,7 +133,7 @@ function PageBasedPagination(props: PageBasedProps) {
         )}
         <div className={s.buttonsGroup}>
           <IconButton
-            isDisabled={isDisabled || current <= 1}
+            isDisabled={controlsDisabled || current <= 1}
             onClick={() => {
               onChange(current - 1, pageSize);
             }}
@@ -142,7 +146,12 @@ function PageBasedPagination(props: PageBasedProps) {
           if (allPagesVisibleOnLeft || i === 0) {
             const page = i + 1;
             return (
-              <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+              <PageNumberButton
+                key={page}
+                page={page}
+                isDisabled={controlsDisabled}
+                onClick={() => onChange(page, pageSize)}
+              />
             );
           }
           if (i === 1) {
@@ -154,10 +163,15 @@ function PageBasedPagination(props: PageBasedProps) {
           }
           const page = current - (buttonsOnLeft - i);
           return (
-            <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+            <PageNumberButton
+              key={page}
+              page={page}
+              isDisabled={controlsDisabled}
+              onClick={() => onChange(page, pageSize)}
+            />
           );
         })}
-        <PageNumberButton page={current} isActive={true} />
+        <PageNumberButton page={current} isActive={true} isDisabled={controlsDisabled} />
         {[...new Array(buttonsOnRight)].map((_, i) => {
           if (!allPagesVisibleOnRight) {
             if (i === buttonsOnRight - 2) {
@@ -170,18 +184,28 @@ function PageBasedPagination(props: PageBasedProps) {
             if (i === buttonsOnRight - 1) {
               const page = normalisedTotalPages;
               return (
-                <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+                <PageNumberButton
+                  key={page}
+                  page={page}
+                  isDisabled={controlsDisabled}
+                  onClick={() => onChange(page, pageSize)}
+                />
               );
             }
           }
           const page = current + i + 1;
           return (
-            <PageNumberButton key={page} page={page} onClick={() => onChange(page, pageSize)} />
+            <PageNumberButton
+              key={page}
+              page={page}
+              isDisabled={controlsDisabled}
+              onClick={() => onChange(page, pageSize)}
+            />
           );
         })}
         <div className={s.buttonsGroup}>
           <IconButton
-            isDisabled={isDisabled || current >= normalisedTotalPages}
+            isDisabled={controlsDisabled || current >= normalisedTotalPages}
             onClick={() => {
               onChange(current + 1, pageSize);
             }}
@@ -196,7 +220,7 @@ function PageBasedPagination(props: PageBasedProps) {
           <Label label={'Go to page'} level={2} position={'LEFT'}>
             <div className={s.goToPageInput}>
               <NumberInput
-                isDisabled={isDisabled}
+                isDisabled={controlsDisabled}
                 min={1}
                 max={normalisedTotalPages}
                 onChange={(value) => {
@@ -214,7 +238,7 @@ function PageBasedPagination(props: PageBasedProps) {
           <div>
             <Label label={'Items per page'} level={2} position={'LEFT'}>
               <Select<number>
-                isDisabled={isDisabled}
+                isDisabled={controlsDisabled}
                 mode="SINGLE"
                 onChange={(value) => {
                   onChange(1, value ?? DEFAULT_PAGE_SIZE);

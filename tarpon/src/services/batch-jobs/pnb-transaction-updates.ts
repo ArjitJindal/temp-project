@@ -1,7 +1,7 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import csvtojson from 'csvtojson'
 import { Flagright, FlagrightClient } from 'flagright'
-import { chunk } from 'lodash'
+import chunk from 'lodash/chunk'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getS3Client } from '@/utils/s3'

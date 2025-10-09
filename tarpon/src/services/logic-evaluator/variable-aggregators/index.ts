@@ -1,4 +1,5 @@
-import { cloneDeep, mergeWith } from 'lodash'
+import cloneDeep from 'lodash/cloneDeep'
+import mergeWith from 'lodash/mergeWith'
 import { AVG } from './average'
 import { COUNT } from './count'
 import { SUM } from './sum'

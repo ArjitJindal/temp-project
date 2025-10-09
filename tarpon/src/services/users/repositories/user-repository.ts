@@ -23,16 +23,14 @@ import {
   UpdateCommandInput,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-import {
-  get,
-  isEmpty,
-  keyBy,
-  mapValues,
-  mergeWith,
-  omit,
-  set,
-  uniq,
-} from 'lodash'
+import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty'
+import keyBy from 'lodash/keyBy'
+import mapValues from 'lodash/mapValues'
+import mergeWith from 'lodash/mergeWith'
+import omit from 'lodash/omit'
+import set from 'lodash/set'
+import uniq from 'lodash/uniq'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import {
   getUsersFilterByRiskLevel,
@@ -51,11 +49,11 @@ import {
 } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
+  UNIQUE_TAGS_COLLECTION,
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-  UNIQUE_TAGS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserType } from '@/@types/user/user-type'
@@ -68,13 +66,13 @@ import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { neverThrow } from '@/utils/lang'
+import { cursorPaginate } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import {
-  COUNT_QUERY_LIMIT,
-  cursorPaginate,
   OptionalPagination,
   OptionalPaginationParams,
   PaginationParams,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
@@ -82,7 +80,6 @@ import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRul
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { SortOrder } from '@/@types/openapi-internal/SortOrder'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
-import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import {
@@ -104,6 +101,7 @@ import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { UserApproval } from '@/@types/openapi-internal/UserApproval'
+import { runLocalChangeHandler } from '@/utils/local-change-handler'
 
 type Params = OptionalPaginationParams &
   DefaultApiGetAllUsersListRequest &
@@ -175,7 +173,7 @@ export class UserRepository {
     mapper: (user: InternalUser) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
-  ): Promise<AllUsersOffsetPaginateListResponse> {
+  ): Promise<AllUsersTableItem[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
@@ -194,18 +192,15 @@ export class UserRepository {
       userType
     )
 
-    const [users, count] = await Promise.all([
-      collection
-        .find(
-          { $and: query as Filter<InternalUser>[] },
-          {
-            projection: options?.projection,
-            ...paginateFindOptions(params),
-          }
-        )
-        .toArray(),
-      collection.countDocuments({ $and: query }),
-    ])
+    const users = await collection
+      .find(
+        { $and: query as Filter<InternalUser>[] },
+        {
+          projection: options?.projection,
+          ...paginateFindOptions(params),
+        }
+      )
+      .toArray()
 
     const userIds = users.map((user) => user.userId)
     const casesCountPipeline = [
@@ -264,10 +259,34 @@ export class UserRepository {
         })
       : users
 
-    return {
-      items: updatedItems.map(mapper),
-      count,
+    return updatedItems.map(mapper)
+  }
+
+  public async getMongoUsersCount(
+    params: OptionalPagination<Params>,
+    userType?: UserType
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const isPulseEnabled = this.isPulseEnabled()
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    if (params.filterParentId) {
+      const linker = new LinkerService(this.tenantId)
+      const userIds = await linker.getLinkedChildUsers(params.filterParentId)
+      params.filterIds = userIds
     }
+    const query = await this.getMongoUsersQuery(
+      params,
+      isPulseEnabled,
+      riskClassificationValues,
+      userType
+    )
+
+    const count = await collection.countDocuments({ $and: query })
+
+    return count
   }
 
   public async getMongoAllUsers(
@@ -336,56 +355,72 @@ export class UserRepository {
       const filterNameConditions: Filter<
         InternalBusinessUser | InternalConsumerUser
       >[] = []
-      // Check if each word in the query has a match in the user's name
-      for (const part of params.filterName.split(/\s+/)) {
-        const regexFilter = useQuickSearch
-          ? prefixRegexMatchFilter(part)
-          : regexMatchFilter(part, true)
-        // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
-        filterNameConditions.push({
-          $or: [
-            {
-              'userDetails.name.firstName': regexFilter,
-            },
-            {
-              'userDetails.name.middleName': regexFilter,
-            },
-            {
-              'userDetails.name.lastName': regexFilter,
-            },
-            {
-              'legalEntity.companyGeneralDetails.legalName': regexFilter,
-            },
-            {
-              userId: regexFilter,
-            },
-          ],
-        })
-      }
-      filterConditions.push({ $and: filterNameConditions })
 
-      if (useQuickSearch) {
-        // As quick search searchs by prefix, if a user's name part contains space, we need to match it
-        filterConditions.push({
-          $or: [
-            {
-              'userDetails.name.firstName': prefixRegexMatchFilter(
-                params.filterName
-              ),
-            },
-            {
-              'userDetails.name.middleName': prefixRegexMatchFilter(
-                params.filterName
-              ),
-            },
-            {
-              'userDetails.name.lastName': prefixRegexMatchFilter(
-                params.filterName
-              ),
-            },
-          ],
-        })
+      // First, try exact prefix match for the full search term
+      const fullSearchFilter = useQuickSearch
+        ? prefixRegexMatchFilter(params.filterName)
+        : regexMatchFilter(params.filterName, true)
+
+      filterNameConditions.push({
+        $or: [
+          {
+            'userDetails.name.firstName': fullSearchFilter,
+          },
+          {
+            'userDetails.name.middleName': fullSearchFilter,
+          },
+          {
+            'userDetails.name.lastName': fullSearchFilter,
+          },
+          {
+            'legalEntity.companyGeneralDetails.legalName': fullSearchFilter,
+          },
+          {
+            userId: fullSearchFilter,
+          },
+        ],
+      })
+
+      // Then, check if each word in the query has a match in the user's name
+      // This handles cases like searching "LANZ EMPAT" where we want to find users
+      // where any name field contains "LANZ" AND any name field contains "EMPAT"
+      const searchWords = params.filterName.split(/\s+/)
+      if (searchWords.length > 1) {
+        const wordMatchConditions: Filter<
+          InternalBusinessUser | InternalConsumerUser
+        >[] = []
+
+        for (const part of searchWords) {
+          const regexFilter = useQuickSearch
+            ? prefixRegexMatchFilter(part)
+            : regexMatchFilter(part, true)
+
+          wordMatchConditions.push({
+            $or: [
+              {
+                'userDetails.name.firstName': regexFilter,
+              },
+              {
+                'userDetails.name.middleName': regexFilter,
+              },
+              {
+                'userDetails.name.lastName': regexFilter,
+              },
+              {
+                'legalEntity.companyGeneralDetails.legalName': regexFilter,
+              },
+              {
+                userId: regexFilter,
+              },
+            ],
+          })
+        }
+
+        // Add the word-by-word matching as an alternative to the full search
+        filterNameConditions.push({ $and: wordMatchConditions })
       }
+
+      filterConditions.push({ $or: filterNameConditions })
     }
 
     if (params.filterUserId != null || params.filterUserIds != null) {
@@ -897,25 +932,43 @@ export class UserRepository {
     delete user.PartitionKeyID
     delete user.SortKeyID
     delete user.createdAt
-
+    // delete sanctionsDetails from each executedRule in user
+    ;(
+      user as UserWithRulesResult | BusinessWithRulesResult
+    ).executedRules?.forEach((rule) => {
+      delete rule.sanctionsDetails
+    })
     if (this.tenantId.toLowerCase() === '0789ad73b8') {
       if (user.linkedEntities) {
         ;(user.linkedEntities as any).childUserIds = undefined
       }
     }
 
-    return user as T
+    return {
+      ...user,
+      executedRules: user.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    } as T
   }
 
   public async getUsersByIds<
     T extends UserWithRulesResult | BusinessWithRulesResult
   >(userIds: string[]): Promise<T[]> {
-    return await batchGet<T>(
+    const users = await batchGet<T>(
       this.dynamoDb,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       userIds.map((userId) => DynamoDbKeys.USER(this.tenantId, userId)),
       { ConsistentRead: true }
     )
+    return users.map((user) => ({
+      ...user,
+      executedRules: user.executedRules?.map((rule) => ({
+        ...rule,
+        sanctionsDetails: undefined,
+      })),
+    }))
   }
 
   public async getChildUsers(userId: string): Promise<InternalUser[]> {
@@ -965,14 +1018,17 @@ export class UserRepository {
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
-      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules, #updateCount = if_not_exists(#updateCount, :zero) + :one`,
       ExpressionAttributeNames: {
         '#executedRules': 'executedRules',
         '#hitRules': 'hitRules',
+        '#updateCount': 'updateCount',
       },
       ExpressionAttributeValues: {
         ':executedRules': executedRules,
         ':hitRules': hitRulesResults,
+        ':zero': 0,
+        ':one': 1,
       },
       ReturnValues: 'ALL_NEW',
     }
@@ -992,10 +1048,10 @@ export class UserRepository {
     delete user.createdAt
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
 
     return user as UserWithRulesResult | BusinessWithRulesResult
@@ -1035,10 +1091,10 @@ export class UserRepository {
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
   }
 
@@ -1117,11 +1173,12 @@ export class UserRepository {
     )
 
     if (runLocalChangeHandler()) {
-      const { localTarponChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
+      const { handleLocalTarponChangeCapture } = await import(
+        '@/core/local-handlers/tarpon'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await handleLocalTarponChangeCapture(this.tenantId, [primaryKey])
     }
+
     return newUser
   }
 
@@ -1715,10 +1772,17 @@ export class UserRepository {
 
     const data = await result.next()
 
-    return this.getMongoUsersPaginate(
-      { ...params, filterUserIds: uniq(data?.userIds.flat()) },
-      mapper
-    )
+    const count = await this.getMongoUsersCount({
+      ...params,
+      filterUserIds: uniq(data?.userIds.flat()),
+    })
+    return {
+      items: await this.getMongoUsersPaginate(
+        { ...params, filterUserIds: uniq(data?.userIds.flat()) },
+        mapper
+      ),
+      count,
+    }
   }
 
   public async getRuleInstanceStats(

@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { maxBy } from 'lodash'
+import maxBy from 'lodash/maxBy'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
@@ -89,6 +89,8 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
         })
       }
     }
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 }

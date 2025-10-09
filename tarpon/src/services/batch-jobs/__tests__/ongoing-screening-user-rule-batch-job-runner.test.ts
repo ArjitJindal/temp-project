@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -18,7 +18,7 @@ import dayjs from '@/utils/dayjs'
 import {
   DELTA_SANCTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { preprocessUsers } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { GenericSanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/generic-sanctions-consumer-user'
 import { SanctionsDataProviders } from '@/services/sanctions/types'

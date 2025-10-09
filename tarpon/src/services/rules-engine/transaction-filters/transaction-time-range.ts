@@ -1,11 +1,9 @@
 import { JSONSchemaType } from 'ajv'
-import { isEmpty } from 'lodash'
-import {
-  TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA,
-  TransactionTimeRange,
-} from '../utils/rule-parameter-schemas'
+import isEmpty from 'lodash/isEmpty'
+import { TRANSACTION_TIME_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { transactionTimeRangeRuleFilterPredicate } from './utils/helpers'
+import { TransactionTimeRange } from '@/@types/rule/params'
 
 export type TransactionTimeRangeRuleFilterParameter = {
   transactionTimeRange24hr?: TransactionTimeRange

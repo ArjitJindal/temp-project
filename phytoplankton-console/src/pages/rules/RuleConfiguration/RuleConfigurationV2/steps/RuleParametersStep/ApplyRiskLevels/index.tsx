@@ -34,7 +34,6 @@ export default function ApplyRiskLevels(props: Props) {
       <Label label={'Apply to other risk levels'}>
         <Select<RiskLevel>
           mode="MULTIPLE"
-          allowNewOptions
           options={RISK_LEVELS.filter((x) => x !== currentRiskLevel).map((riskLevel) => ({
             value: riskLevel,
             label: getRiskLevelLabel(riskLevel, settings),

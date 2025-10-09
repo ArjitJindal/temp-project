@@ -135,6 +135,7 @@ export default function TransactionsTab(props: Props) {
         filterSanctionsHitId: filterSanctionsHitId,
         filterPaymentDetailName: params.filterPaymentDetailName,
         filterPaymentMethodId: filterPaymentMethodId,
+        filterReference: params.reference,
       });
     },
   );

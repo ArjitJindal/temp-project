@@ -1,5 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { compact, mergeWith, startCase, uniq } from 'lodash'
+import compact from 'lodash/compact'
+import mergeWith from 'lodash/mergeWith'
+import startCase from 'lodash/startCase'
+import uniq from 'lodash/uniq'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import {
@@ -7,9 +10,10 @@ import {
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { traceable } from '@/core/xray'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
@@ -85,7 +89,9 @@ export default class SameUserUsingTooManyPaymentIdentifiersRule extends Transact
       })
     }
 
-    return hitResult
+    return {
+      ruleHitResult: hitResult,
+    }
   }
 
   private async getData(): Promise<Set<string>> {

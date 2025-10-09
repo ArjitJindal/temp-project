@@ -5,7 +5,7 @@ import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { QueryCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { getAuth0Domain, isWhitelabelAuth0Domain } from './auth0-utils'
-import { TENANT_DELETION_COLLECTION } from './mongodb-definitions'
+import { TENANT_DELETION_COLLECTION } from './mongo-table-names'
 import { getDynamoDbClient } from './dynamodb'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
@@ -21,21 +21,6 @@ export type Tenant = {
   tenantCreatedAt: string
   consoleApiUrl: string
   auth0Domain: string
-}
-
-export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
-  if (tenantId.endsWith('-test')) {
-    return tenantId
-  }
-  return tenantId + (demoMode ? `-test` : '')
-}
-
-export const isDemoTenant = (tenantId: string) => {
-  return tenantId.endsWith('-test')
-}
-
-export const getNonDemoTenantId = (tenantId: string) => {
-  return tenantId.replace(/-test$/, '')
 }
 
 export const isWhitelabeledTenantFromSettings = (

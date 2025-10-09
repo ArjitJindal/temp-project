@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { jobRunnerHandler } from '@/lambdas/batch-job-runner/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { BatchJobWithId } from '@/@types/batch-job'
@@ -10,7 +10,7 @@ import dayjs from '@/utils/dayjs'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { getDynamoDbClient } from '@/utils/dynamodb'

@@ -1,4 +1,5 @@
-import { get, memoize } from 'lodash'
+import get from 'lodash/get'
+import memoize from 'lodash/memoize'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -564,7 +565,7 @@ export async function extractParamValues(
       type === 'BUSINESS' &&
       riskData.type === 'USER'
     ) {
-      return riskData.user[param].map((p) => get(p, targetIterableParameter))
+      return riskData.user[param]?.map((p) => get(p, targetIterableParameter))
     }
     return get(
       riskData.type === 'TRANSACTION' ? riskData.transaction : riskData.user,

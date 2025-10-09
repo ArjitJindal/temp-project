@@ -6,9 +6,23 @@ const { chunk } = require('lodash')
 const builtinModules = require('builtin-modules')
 const { execSync } = require('child_process')
 
-// These are transitive dependencies of our dependencies, which for some reasons
-// are not specified in dependencies or specified in devDependencies and are
-// not installed, but still used in code, so need to be declared as external
+// --- Added: CLI trace flags ---
+// Usage examples:
+//   node scripts/esbuild.js --trace lodash.clonedeep
+//   node scripts/esbuild.js --trace lodash.clonedeep --lambda webhook-deliverer
+//   node scripts/esbuild.js --trace some-package --lambda console-api
+
+const TRACE_PACKAGE = process.argv.includes('--trace')
+  ? process.argv[process.argv.indexOf('--trace') + 1]
+  : null
+
+const TRACE_LAMBDA = process.argv.includes('--lambda')
+  ? process.argv[process.argv.indexOf('--lambda') + 1]
+  : null
+
+const TRACE_MAX_DEPTH = 20 // Maximum depth for recursive import tracing
+
+// These are transitive dependencies of our dependencies...
 const IGNORED = [
   'coffee-script',
   '@google-cloud/common',
@@ -25,6 +39,9 @@ const IGNORED = [
   'SyntheticsLogger',
   'superagent-proxy',
   'highlight.js',
+  '@/core/local-handlers/*',
+  '@/utils/local-dynamodb-change-handler',
+  '@/core/middlewares/local-dev',
 ]
 
 const ROOT_DIR = path.resolve(`${__dirname}/..`)
@@ -53,6 +70,49 @@ async function copyDirsToDist(entries) {
   )
 }
 
+// --- Added: trace helper ---
+function traceImport(metafile, target, maxDepth = 5) {
+  const results = []
+
+  function traceRecursiveFromFile(
+    inputPath,
+    depth = 0,
+    chain = [],
+    visited = new Set()
+  ) {
+    if (depth > maxDepth || visited.has(inputPath)) {
+      return
+    }
+
+    visited.add(inputPath)
+    const info = metafile.inputs[inputPath]
+    if (!info) return
+
+    for (const imp of info.imports || []) {
+      const currentChain = [...chain, { importer: inputPath, import: imp.path }]
+
+      if (imp.path.includes(target)) {
+        results.push({
+          chain: currentChain,
+          depth: depth + 1,
+          finalImport: imp.path,
+        })
+      }
+
+      // Recursively trace the imported file
+      traceRecursiveFromFile(imp.path, depth + 1, currentChain, visited)
+    }
+  }
+
+  // Start tracing from all files in the metafile to catch transitive dependencies
+  for (const inputPath of Object.keys(metafile.inputs)) {
+    // Use a fresh visited set for each starting point to allow multiple paths
+    traceRecursiveFromFile(inputPath, 0, [], new Set())
+  }
+
+  return results
+}
+
 async function main() {
   console.log('Bundling...')
   console.time('Total build time')
@@ -63,9 +123,7 @@ async function main() {
 
   const canaryEntries = fs
     .readdirSync(`${ROOT_DIR}/src/canaries`)
-    .map((canaryDirName) => {
-      return `src/canaries/${canaryDirName}/index.ts`
-    })
+    .map((canaryDirName) => `src/canaries/${canaryDirName}/index.ts`)
 
   const fargateEntries = fs.readdirSync(`${ROOT_DIR}/src/fargate`).map(() => {
     return `src/fargate/index.ts`
@@ -130,7 +188,6 @@ async function main() {
         treeShaking: true,
         external: [
           'aws-sdk',
-          // Only mark AWS SDK as external for lambdas, not for fargate
           ...(outDir.includes('fargate') ? [] : ['@aws-sdk/*']),
           ...builtinModules.filter((mod) => mod !== 'punycode'),
           ...IGNORED,
@@ -143,6 +200,7 @@ async function main() {
         loader: { '.node': 'file' },
         keepNames: true,
       })
+
       for (const [file, info] of Object.entries(
         bundleResults.metafile.outputs
       )) {
@@ -151,10 +209,47 @@ async function main() {
         const inputs = Object.entries(info.inputs)
           .map(([input, { bytesInOutput }]) => ({ input, size: bytesInOutput }))
           .sort((a, b) => b.size - a.size)
-          .slice(0, 10) // top 10 biggest inputs
+          .slice(0, 20)
 
         for (const { input, size } of inputs) {
           console.log(`   - ${input}: ${size.toLocaleString()} bytes`)
+        }
+
+        // --- Added: run trace if requested for each file ---
+        if (TRACE_PACKAGE) {
+          // Check if we should trace this specific file - only when lambda name is specified and file contains it
+          const shouldTrace = TRACE_LAMBDA && file.includes(TRACE_LAMBDA)
+
+          if (shouldTrace) {
+            console.log(
+              `\n🔎 Tracing imports for "${TRACE_PACKAGE}" in ${file}...`
+            )
+            const traces = traceImport(
+              bundleResults.metafile,
+              TRACE_PACKAGE,
+              TRACE_MAX_DEPTH
+            )
+            if (traces.length === 0) {
+              console.log(`   (No imports found for "${TRACE_PACKAGE}")`)
+            } else {
+              traces.forEach((trace) => {
+                // Build import chain string
+                let chainString = ''
+                trace.chain.forEach((link, index) => {
+                  const indent = '   ' + '  '.repeat(index)
+                  chainString += `${indent}${link.importer} → ${link.import}\n`
+                })
+
+                // Only show chain if it contains the lambda name
+                if (chainString.includes(TRACE_LAMBDA)) {
+                  console.log(`\n   📍 Found at depth ${trace.depth}:`)
+                  console.log(`\n   📍 ${trace.finalImport}`)
+                  console.log(`   📋 Import chain:`)
+                  console.log(chainString)
+                }
+              })
+            }
+          }
         }
       }
     }
@@ -164,12 +259,10 @@ async function main() {
   console.timeEnd('Bundle time')
 
   await copyDirsToDist([
-    // Copy slack templates
     {
       src: 'src/lambdas/slack-app/templates',
       dest: 'lambdas/slack-app/templates',
     },
-    // Copy fincen binaries
     {
       src: 'src/services/sar/generators/US/SAR/bin',
       dest: 'lambdas/console-api-sar/bin',
@@ -233,22 +326,16 @@ async function main() {
   }
 
   await buildLambdaLayer()
-
   console.timeEnd('Total build time')
 }
 
-// Add at the top of your script
 const LAYER_PACKAGES = ['pdf2json', 'xlsx-js-style', 'html-to-docx', 'pdfmake']
 const LAYER_DIR = path.join(ROOT_DIR, 'dist/layers/heavy-libs/nodejs')
 
 async function buildLambdaLayer() {
   console.log('📚 Building Lambda Layer...')
-
-  // Read root package.json
   const rootPkg = await fs.readJson(path.join(ROOT_DIR, 'package.json'))
   const deps = rootPkg.dependencies || {}
-
-  // Ensure all layer packages exist in root package.json
   const layerDeps = {}
   for (const pkg of LAYER_PACKAGES) {
     if (!deps[pkg]) {
@@ -256,29 +343,21 @@ async function buildLambdaLayer() {
         `❌ Package "${pkg}" is not listed in root package.json dependencies`
       )
     }
-    layerDeps[pkg] = deps[pkg] // pin exact version
+    layerDeps[pkg] = deps[pkg]
   }
-
-  // Prepare layer package.json
   const layerPkg = {
     name: 'heavy-libs-layer',
     version: '1.0.0',
     private: true,
     dependencies: layerDeps,
   }
-
   await fs.remove(LAYER_DIR)
   await fs.ensureDir(LAYER_DIR)
   await fs.writeJson(path.join(LAYER_DIR, 'package.json'), layerPkg, {
     spaces: 2,
   })
-
   console.log(`📥 Installing ${Object.keys(layerDeps).join(', ')}`)
-  execSync(`npm install --production`, {
-    cwd: LAYER_DIR,
-    stdio: 'inherit',
-  })
-
+  execSync(`npm install --production`, { cwd: LAYER_DIR, stdio: 'inherit' })
   console.log('✅ Layer built at:', LAYER_DIR)
 }
 

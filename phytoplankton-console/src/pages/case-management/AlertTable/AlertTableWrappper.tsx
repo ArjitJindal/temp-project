@@ -3,6 +3,9 @@ import AlertsStatusChangeModal, {
 } from '../components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import TableModalProvider, { ModalHandlers } from '../components/TableModalProvider';
 import AlertTable, { AlertTableParams } from '.';
+import { withRenderPerf } from '@/perf/withRenderPerf';
+
+const AlertTableWithPerf = withRenderPerf(AlertTable, 'AlertTable') as any;
 
 interface Props {
   params: AlertTableParams;
@@ -24,7 +27,7 @@ export default function AlertTableWrapper(props: Props) {
       childrenProps={props}
     >
       {(childrenProps) => (
-        <AlertTable<AlertsStatusChangeModalProps>
+        <AlertTableWithPerf
           params={childrenProps.params}
           caseId={childrenProps.caseId}
           onChangeParams={childrenProps.onChangeParams}
