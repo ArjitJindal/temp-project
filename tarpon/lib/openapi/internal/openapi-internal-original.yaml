@@ -3964,6 +3964,9 @@ paths:
     post:
       summary: Account - Edit
       operationId: accounts-edit
+      x-flagright:
+        resources:
+          - write:::accounts/overview
       requestBody:
         content:
           application/json:
