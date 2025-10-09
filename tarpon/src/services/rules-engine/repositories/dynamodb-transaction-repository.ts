@@ -59,6 +59,7 @@ import {
   AUXILLARY_TXN_PARTITION_COUNT,
   FUTURE_TIMESTAMP_TO_COMPARE,
   getAllBucketedPartitionKeys,
+  getPrimaryTransactionSwitchTimestamp,
   sanitiseBucketedKey,
 } from '@/core/dynamodb/key-utils'
 
@@ -401,7 +402,8 @@ export class DynamoDbTransactionRepository
 
   public async getTransactionById(
     transactionId: string,
-    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>
+    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>,
+    timestamp?: number
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput = (newPartitionKey: boolean): GetCommandInput => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -417,17 +419,34 @@ export class DynamoDbTransactionRepository
         ? { ProjectionExpression: attributesToFetch.join(', ') }
         : {}),
     })
-    // Checking both partition as we don't have timestamp to check which partition to use
-    const results = await Promise.all([
-      this.dynamoDb.send(new GetCommand(getItemInput(false))),
-      this.dynamoDb.send(new GetCommand(getItemInput(true))),
-    ])
-    const finalResult = compact(results.map((rest) => rest.Item))
-    if (!finalResult[0]) {
+    let finalResult
+
+    if (timestamp) {
+      const useNewPartition =
+        timestamp >= getPrimaryTransactionSwitchTimestamp()
+      const result = await this.dynamoDb.send(
+        new GetCommand(getItemInput(useNewPartition))
+      )
+      finalResult = result.Item
+    } else {
+      // No timestamp: check new partition first, then old partition if needed
+      const newResult = await this.dynamoDb.send(
+        new GetCommand(getItemInput(true))
+      )
+      finalResult = newResult.Item
+
+      if (!finalResult) {
+        const oldResult = await this.dynamoDb.send(
+          new GetCommand(getItemInput(false))
+        )
+        finalResult = oldResult.Item
+      }
+    }
+    if (!finalResult) {
       return null
     }
     const transaction = {
-      ...finalResult[0],
+      ...finalResult,
     }
 
     delete transaction.createdAt

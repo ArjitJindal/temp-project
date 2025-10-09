@@ -433,7 +433,9 @@ export class RulesEngineService {
     if (transaction.transactionId && (options?.validateTransactionId ?? true)) {
       const existingTransaction =
         await this.transactionRepository.getTransactionById(
-          transaction.transactionId
+          transaction.transactionId,
+          undefined,
+          transaction.timestamp
         )
       if (existingTransaction) {
         const [originUserDrs, destinationUserDrs] = await Promise.all([
@@ -856,7 +858,9 @@ export class RulesEngineService {
     oldStatusTransactionEvent?: RuleAction
   ): Promise<void> {
     const transactionInDb = await this.transactionRepository.getTransactionById(
-      transaction.transactionId
+      transaction.transactionId,
+      undefined,
+      transaction.timestamp
     )
     if (!transactionInDb) {
       throw new NotFound(
