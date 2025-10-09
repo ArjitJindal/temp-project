@@ -1,8 +1,9 @@
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { useQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { REPORT_SCHEMAS, REPORT_SCHEMAS_ALL, REPORTS_ITEM } from '@/utils/queries/keys';
-import { ReportType, CountryCode } from '@/apis';
+import { ReportType, CountryCode, Report } from '@/apis';
+import { dayjs } from '@/utils/dayjs';
 import { isSuccess } from '@/utils/asyncResource';
 import type { QueryOptions, QueryResult } from '@/utils/queries/types';
 
@@ -90,5 +91,24 @@ export function useReportItem(reportId: string) {
       return null;
     }
     return await api.getReportsReportId({ reportId });
+  });
+}
+
+export function useReportsTable(params: any, reportListQueryKeys: any) {
+  const api = useApi();
+  return usePaginatedQuery<Report>(reportListQueryKeys, async (paginationParams) => {
+    return await api.getReports({
+      page: params.page,
+      pageSize: params.pageSize,
+      ...paginationParams,
+      filterReportId: params.id,
+      filterCaseUserId: params.filterCaseUserId,
+      filterJurisdiction: params.reportTypeId as CountryCode,
+      filterCreatedBy: params.filterCreatedBy,
+      filterStatus: params.filterStatus,
+      createdAtAfterTimestamp: params.createdAt?.map((t: any) => dayjs(t).valueOf())[0],
+      createdAtBeforeTimestamp: params.createdAt?.map((t: any) => dayjs(t).valueOf())[1],
+      caseId: params.caseId,
+    });
   });
 }

@@ -320,6 +320,77 @@ export function useUserEntityLinkedParents(userId: string | undefined) {
   });
 }
 
+export function useRuleInstanceAnalyticsUsers(params: any, queryKey: any) {
+  const api = useApi();
+  return usePaginatedQuery(queryKey, async (paginationParams) => {
+    const {
+      pageSize,
+      createdTimestamp,
+      userId,
+      tagKey,
+      tagValue,
+      riskLevels,
+      sort,
+      riskLevelLocked,
+    } = params;
+
+    return await api.getAllUsersList({
+      ...paginationParams,
+      pageSize,
+      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
+      filterId: userId,
+      filterTagKey: tagKey,
+      filterTagValue: tagValue,
+      filterRiskLevel: riskLevels,
+      sortField: sort[0]?.[0] ?? 'createdTimestamp',
+      sortOrder: sort[0]?.[1] ?? 'ascend',
+      filterRiskLevelLocked: riskLevelLocked,
+      filterRuleInstancesHit: [params.ruleInstanceId as string],
+      filterShadowHit: true,
+    });
+  });
+}
+
+export function useRuleInstanceTransactionUsers(
+  params: any,
+  queryKey: any,
+  timeRange: any,
+  ruleInstance: any,
+) {
+  const api = useApi();
+  return usePaginatedQuery(queryKey, async (paginationParams) => {
+    const {
+      pageSize,
+      userId,
+      tagKey,
+      tagValue,
+      riskLevels,
+      sort,
+      riskLevelLocked,
+      createdTimestamp,
+    } = params;
+
+    return await api.getRuleInstancesTransactionUsersHit({
+      ...paginationParams,
+      pageSize,
+      txAfterTimestamp: timeRange.afterTimestamp,
+      txBeforeTimestamp: timeRange.beforeTimestamp,
+      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
+      filterId: userId,
+      filterTagKey: tagKey,
+      filterTagValue: tagValue,
+      filterRiskLevel: riskLevels,
+      sortField: sort[0]?.[0] ?? 'createdTimestamp',
+      sortOrder: sort[0]?.[1] ?? 'ascend',
+      filterRiskLevelLocked: riskLevelLocked,
+      ruleInstanceId: ruleInstance.id as string,
+      filterShadowHit: ruleInstance.ruleRunMode === 'SHADOW',
+    });
+  });
+}
+
 export function useUserEntityLinkedChildren(
   userId: string | undefined,
   params?: Record<string, any>,

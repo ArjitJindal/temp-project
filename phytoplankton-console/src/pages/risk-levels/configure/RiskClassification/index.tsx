@@ -15,7 +15,7 @@ import { getOr } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
-import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
+import { usePendingProposal } from '@/hooks/api/risk-factors';
 import { usePostRiskClassification } from '@/hooks/api/risk-classification';
 import { useRiskLevelsChangesStrategy } from '@/hooks/api/workflows';
 

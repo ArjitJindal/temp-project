@@ -9,7 +9,7 @@ import { sarQueryAdapter } from './helper';
 import ReportStatusChangeModal from './ReportStatusChangeModal';
 import ReportStatusTag from './ReportStatusTag';
 import { Option } from '@/components/library/Select';
-import { CountryCode, Report, ReportStatus, ReportTypesResponse } from '@/apis';
+import { Report, ReportStatus, ReportTypesResponse } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, ID, LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -18,17 +18,14 @@ import { getDisplayedUserInfo, useAuth0User, useHasResources, useUsers } from '@
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
-import { useApi } from '@/api';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 
-import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { REPORTS_LIST } from '@/utils/queries/keys';
-import { useReportTypes } from '@/hooks/api/reports';
+import { useReportTypes, useReportsTable } from '@/hooks/api/reports';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { getOr } from '@/utils/asyncResource';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
-import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import { useMutation } from '@/utils/queries/mutations/hooks';
@@ -36,6 +33,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useApi } from '@/api';
 
 interface TableSearchParams extends CommonParams {
   id?: string;
@@ -82,21 +80,7 @@ export default function ReportsTable() {
   const canWrite = useHasResources(['write:::reports/generated/*']);
 
   const reportListQueryKeys = REPORTS_LIST(params);
-  const queryResult = usePaginatedQuery<Report>(reportListQueryKeys, async (paginationParams) => {
-    return await api.getReports({
-      page: params.page,
-      pageSize: params.pageSize,
-      ...paginationParams,
-      filterReportId: params.id,
-      filterCaseUserId: params.filterCaseUserId,
-      filterJurisdiction: params.reportTypeId as CountryCode,
-      filterCreatedBy: params.filterCreatedBy,
-      filterStatus: params.filterStatus,
-      createdAtAfterTimestamp: params.createdAt?.map((t) => dayjs(t).valueOf())[0],
-      createdAtBeforeTimestamp: params.createdAt?.map((t) => dayjs(t).valueOf())[1],
-      caseId: params.caseId,
-    });
-  });
+  const queryResult = useReportsTable(params, reportListQueryKeys);
 
   const reportTypesQueryResult = useReportTypes();
   const reportTypes = getOr<{ data: ReportTypesResponse; total: number }>(

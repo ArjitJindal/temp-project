@@ -33,10 +33,9 @@ import * as Card from '@/components/ui/Card';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import GroupedColumn from '@/pages/risk-levels/configure/components/Charts';
 import { ParameterSettings } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
-import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useApi } from '@/api';
+import { useRiskFactorsSimulationResults } from '@/hooks/api/risk-factors';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -248,40 +247,8 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   const isDemoMode = getOr(demoMode, false);
 
   const showResults = iteration.progress > 0.1 && (!isDemoMode || !showDemoProgress);
-  const api = useApi();
 
-  const iterationQueryResults = usePaginatedQuery(
-    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', {
-      ...params,
-      progress: iteration.progress,
-    }),
-    async (paginationParams) => {
-      if (iteration?.taskId) {
-        const response = await api.getSimulationTaskIdResult({
-          taskId: iteration.taskId,
-          page: paginationParams.page ?? params.page,
-          pageSize: paginationParams.pageSize ?? params.pageSize,
-          sortField: params.sort?.[0]?.[0] ?? 'userId',
-          sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
-          filterCurrentKrsLevel: params['current.krs.riskLevel'],
-          filterSimulationKrsLevel: params['simulated.krs.riskLevel'],
-          filterCurrentDrsLevel: params['current.drs.riskLevel'],
-          filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
-          filterUserId: params.userId,
-        });
-
-        return {
-          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
-          total: response.total,
-        };
-      } else {
-        return {
-          items: [] as SimulationRiskLevelsAndRiskFactorsResult[],
-          total: 0,
-        };
-      }
-    },
-  );
+  const iterationQueryResults = useRiskFactorsSimulationResults(iteration, params);
   const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
   const userAlias = firstLetterUpper(settings.userAlias);
   const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([

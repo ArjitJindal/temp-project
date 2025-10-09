@@ -7,8 +7,15 @@ import {
   RISK_FACTOR_LOGIC,
   CUSTOM_RISK_FACTORS_ITEM,
   RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM,
+  RISK_CLASSIFICATION_WORKFLOW_PROPOSAL,
+  SIMULATION_JOB_ITERATION_RESULT,
 } from '@/utils/queries/keys';
-import type { RiskLevel } from '@/apis';
+import type {
+  RiskLevel,
+  RiskClassificationConfigApproval,
+  SimulationRiskLevelsAndRiskFactorsResult,
+} from '@/apis';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export function useAllRiskFactorsMap() {
   const api = useApi();
@@ -89,5 +96,77 @@ export function useRiskFactorPendingProposal(
       return proposals.find((x) => x.riskFactor.id === riskFactorId) ?? null;
     },
     { enabled: options?.enabled ?? true },
+  );
+}
+
+export function usePendingProposal() {
+  const api = useApi();
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
+
+  return useQuery<RiskClassificationConfigApproval | null>(
+    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
+    async () => {
+      return await api.getPulseRiskClassificationWorkflowProposal();
+    },
+    { enabled: isApprovalWorkflowsEnabled },
+  );
+}
+
+export function useSimulationIterationResults(iteration: any, params: any) {
+  const api = useApi();
+  return usePaginatedQuery(
+    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
+    async (paginationParams) => {
+      if (iteration?.taskId) {
+        const response = await api.getSimulationTaskIdResult({
+          taskId: iteration.taskId,
+          page: paginationParams.page,
+          pageSize: paginationParams.pageSize,
+          sortField: params.sort?.[0]?.[0] ?? 'userId',
+          sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
+        });
+        return {
+          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
+          total: response.total,
+        };
+      }
+      return { items: [], total: 0 };
+    },
+  );
+}
+
+export function useRiskFactorsSimulationResults(iteration: any, params: any) {
+  const api = useApi();
+  return usePaginatedQuery(
+    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', {
+      ...params,
+      progress: iteration.progress,
+    }),
+    async (paginationParams) => {
+      if (iteration?.taskId) {
+        const response = await api.getSimulationTaskIdResult({
+          taskId: iteration.taskId,
+          page: paginationParams.page ?? params.page,
+          pageSize: paginationParams.pageSize ?? params.pageSize,
+          sortField: params.sort?.[0]?.[0] ?? 'userId',
+          sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
+          filterCurrentKrsLevel: params['current.krs.riskLevel'],
+          filterSimulationKrsLevel: params['simulated.krs.riskLevel'],
+          filterCurrentDrsLevel: params['current.drs.riskLevel'],
+          filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
+          filterUserId: params.userId,
+        });
+
+        return {
+          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
+          total: response.total,
+        };
+      } else {
+        return {
+          items: [] as SimulationRiskLevelsAndRiskFactorsResult[],
+          total: 0,
+        };
+      }
+    },
   );
 }

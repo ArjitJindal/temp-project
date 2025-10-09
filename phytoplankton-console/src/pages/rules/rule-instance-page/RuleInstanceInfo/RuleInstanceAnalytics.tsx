@@ -5,12 +5,11 @@ import { FROZEN_STATUSES, isShadowRule as checkShadowRule } from '../../utils';
 import s from './styles.module.less';
 import Widget from '@/components/library/Widget';
 import { RuleInstance } from '@/apis';
-import { useApi } from '@/api';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { USERS } from '@/utils/queries/keys';
+import { useRuleInstanceAnalyticsUsers, useRuleInstanceTransactionUsers } from '@/hooks/api/users';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { H4 } from '@/components/ui/Typography';
 import { UserSearchParams } from '@/pages/users/users-list';
@@ -325,36 +324,11 @@ const HitUsersTable = (props: { ruleInstance: RuleInstance; timeRange: TimeRange
       });
     }
   }, [params, createdTimestamp]);
-  const api = useApi();
   const queryKey = USERS('ALL', { ...params, ruleInstanceId: ruleInstance.id, isShadowHit: true });
-  const queryResult = usePaginatedQuery(queryKey, async (paginationParams) => {
-    const {
-      pageSize,
-      createdTimestamp,
-      userId,
-      tagKey,
-      tagValue,
-      riskLevels,
-      sort,
-      riskLevelLocked,
-    } = params;
-
-    return await api.getAllUsersList({
-      ...paginationParams,
-      pageSize,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
-      filterId: userId,
-      filterTagKey: tagKey,
-      filterTagValue: tagValue,
-      filterRiskLevel: riskLevels,
-      sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'ascend',
-      filterRiskLevelLocked: riskLevelLocked,
-      filterRuleInstancesHit: [ruleInstance.id as string],
-      filterShadowHit: true,
-    });
-  });
+  const queryResult = useRuleInstanceAnalyticsUsers(
+    { ...params, ruleInstanceId: ruleInstance.id },
+    queryKey,
+  );
 
   return (
     <UsersTable
@@ -374,7 +348,6 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
     pageSize: 10,
     sort: [['timestamp', 'ascend']],
   });
-  const api = useApi();
 
   const queryKey = USERS('ALL', {
     ...params,
@@ -384,36 +357,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
     isShadowHit: true,
   });
 
-  const queryResult = usePaginatedQuery(queryKey, async (paginationParams) => {
-    const {
-      pageSize,
-      userId,
-      tagKey,
-      tagValue,
-      riskLevels,
-      sort,
-      riskLevelLocked,
-      createdTimestamp,
-    } = params;
-
-    return await api.getRuleInstancesTransactionUsersHit({
-      ...paginationParams,
-      pageSize,
-      txAfterTimestamp: timeRange.afterTimestamp,
-      txBeforeTimestamp: timeRange.beforeTimestamp,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
-      filterId: userId,
-      filterTagKey: tagKey,
-      filterTagValue: tagValue,
-      filterRiskLevel: riskLevels,
-      sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'ascend',
-      filterRiskLevelLocked: riskLevelLocked,
-      ruleInstanceId: ruleInstance.id as string,
-      filterShadowHit: checkShadowRule(ruleInstance),
-    });
-  });
+  const queryResult = useRuleInstanceTransactionUsers(params, queryKey, timeRange, ruleInstance);
 
   return (
     <UsersTable

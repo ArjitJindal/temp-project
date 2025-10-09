@@ -6,8 +6,14 @@ import {
   COPILOT_AI_RESOURCES,
   NANGO_CONNECTIONS,
   TENANT_USAGE_DATA,
+  SETTINGS,
 } from '@/utils/queries/keys';
-import type { AiSourcesResponse, ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
+import type {
+  AiSourcesResponse,
+  ConsoleActionReasonCreationRequest,
+  ReasonType,
+  TenantSettings,
+} from '@/apis';
 import { getOr } from '@/utils/asyncResource';
 
 export function useToggleActionReason(options?: any) {
@@ -84,4 +90,11 @@ export function useReasons(type?: ReasonType, filterInactive: boolean = true): s
   const reasonsRes = useActionReasons(type);
   const actionReasons = getOr(reasonsRes.data, [] as { isActive: boolean; reason: string }[]);
   return actionReasons.filter((val) => (filterInactive ? val.isActive : true)).map((d) => d.reason);
+}
+
+export function useTenantSettings() {
+  const api = useApi();
+  return useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
+    return await api.getTenantsSettings();
+  });
 }

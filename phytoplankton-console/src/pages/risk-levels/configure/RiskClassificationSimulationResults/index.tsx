@@ -18,8 +18,8 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import { useSimulationJob } from '@/hooks/api/simulation';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { RISK_CLASSIFICATION_VALUES, SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
+import { useSimulationIterationResults } from '@/hooks/api/risk-factors';
+import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -170,26 +170,7 @@ const IterationComponent = (props: IterationProps) => {
     [iteration],
   );
 
-  const api = useApi();
-  const iterationQueryResults = usePaginatedQuery(
-    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', params),
-    async (paginationParams) => {
-      if (iteration?.taskId) {
-        const response = await api.getSimulationTaskIdResult({
-          taskId: iteration.taskId,
-          page: paginationParams.page,
-          pageSize: paginationParams.pageSize,
-          sortField: params.sort?.[0]?.[0] ?? 'userId',
-          sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
-        });
-        return {
-          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
-          total: response.total,
-        };
-      }
-      return { items: [], total: 0 };
-    },
-  );
+  const iterationQueryResults = useSimulationIterationResults(iteration, params);
 
   const getGraphData = useCallback(
     (graphType: 'DRS' | 'ARS') => {

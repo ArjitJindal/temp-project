@@ -403,6 +403,30 @@ export type UserWorkflowSettings = {
   [key in keyof WorkflowSettingsUserApprovalWorkflows]: UserUpdateApprovalWorkflow | null;
 };
 
+export function useUserApprovalWorkflows(
+  workflowIds: string[],
+  isApprovalWorkflowsEnabled: boolean,
+) {
+  const api = useApi();
+  return useQuery(
+    WORKFLOWS_ITEMS('user-update-approval', workflowIds),
+    async (): Promise<UserUpdateApprovalWorkflow[]> => {
+      return await Promise.all(
+        workflowIds.map(async (workflowId) => {
+          const workflow = await api.getWorkflowById({
+            workflowType: 'user-update-approval',
+            workflowId: workflowId,
+          });
+          return workflow as unknown as UserUpdateApprovalWorkflow;
+        }),
+      );
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+}
+
 export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
   const api = useApi();
 

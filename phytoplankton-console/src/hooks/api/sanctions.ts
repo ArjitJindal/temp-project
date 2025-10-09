@@ -15,9 +15,14 @@ import {
   SANCTIONS_SCREENING_STATS,
   SANCTIONS_WHITELIST_SEARCH,
   SANCTIONS_SOURCES,
+  SANCTIONS_SEARCH,
 } from '@/utils/queries/keys';
 import type { SanctionsSourceType } from '@/apis/models/SanctionsSourceType';
-import type { SanctionsHitListResponse, SanctionsScreeningDetails } from '@/apis';
+import type {
+  SanctionsHitListResponse,
+  SanctionsScreeningDetails,
+  SanctionsSearchHistory,
+} from '@/apis';
 import type { Mutation, QueryOptions, QueryResult } from '@/utils/queries/types';
 import type { CursorPaginatedData, PaginatedData } from '@/utils/queries/hooks';
 import { message } from '@/components/library/Message';
@@ -295,4 +300,24 @@ export function useSanctionsSources(
       }),
     options,
   );
+}
+
+export function useSanctionsSearch(params: any) {
+  const api = useApi();
+  return useCursorQuery<SanctionsSearchHistory>(SANCTIONS_SEARCH(params), async ({ from }) => {
+    const { createdAt, searchTerm, types, searchedBy, ...rest } = params;
+    const [start, end] = createdAt ?? [];
+    const response = await api.getSanctionsSearch({
+      afterTimestamp: start ? start.startOf('day').valueOf() : 0,
+      beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
+      searchTerm,
+      types,
+      start: from,
+      filterSearchedBy: searchedBy,
+      filterManualSearch: true,
+      ...rest,
+    });
+
+    return response;
+  });
 }

@@ -4,7 +4,7 @@ import { Resource } from '@flagright/lib/utils';
 import { MlModelsPage } from '../ml-models';
 import MyRule from './my-rules';
 import { RulesTable } from './RulesTable';
-import { useRulesResults } from './utils';
+import { useRulesResults, useImportRules } from '@/hooks/api/rules';
 import { Authorized } from '@/components/utils/Authorized';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
@@ -20,7 +20,6 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { getOr } from '@/utils/asyncResource';
 import { exportJsonlFile } from '@/utils/json';
 import { dayjs } from '@/utils/dayjs';
-import { useImportRules } from '@/hooks/api/rules';
 import { hasMinimumPermission } from '@/utils/user-utils';
 
 const TableList = () => {

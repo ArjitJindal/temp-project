@@ -16,6 +16,8 @@ import {
   RULE_STATS,
   RULES,
   RULES_WITH_ALERTS,
+  GET_RULES,
+  GET_RULE_INSTANCES,
 } from '@/utils/queries/keys';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
@@ -202,5 +204,85 @@ export function useMachineLearningModelsPaginated(params?: {
     const start = (page - 1) * pageSize;
     const items = all.slice(start, start + pageSize);
     return { items, total: all.length };
+  });
+}
+
+export function useRulesTable(params: any) {
+  const api = useApi();
+  return usePaginatedQuery(GET_RULES(params), async (_paginationParams) => {
+    const rules = await api.getRules();
+    const result = [...rules];
+    if (params.sort.length > 0) {
+      const [key, order] = params.sort[0];
+      result.sort((a, b) => {
+        let result = 0;
+        if (key === 'id') {
+          result = parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]);
+        } else if (key === 'defaultAction') {
+          const RULE_ACTION_VALUES = ['ALLOW', 'BLOCK', 'REVIEW'];
+          result =
+            RULE_ACTION_VALUES.indexOf(a.defaultAction) -
+            RULE_ACTION_VALUES.indexOf(b.defaultAction);
+        } else {
+          result = a[key] > b[key] ? 1 : -1;
+        }
+        result *= order === 'descend' ? -1 : 1;
+        return result;
+      });
+    }
+
+    return {
+      items: result,
+      total: rules.length,
+    };
+  });
+}
+
+export function useRulesResults({ params, ruleMode, focusId, onViewRule }: any) {
+  const api = useApi();
+  return usePaginatedQuery(GET_RULE_INSTANCES({ ruleMode, params }), async (paginationParams) => {
+    const ruleInstances = await api.getRuleInstances({ ...paginationParams, mode: ruleMode });
+    if (focusId) {
+      const ruleInstance = ruleInstances.find((r) => r.id === focusId);
+      if (ruleInstance) {
+        onViewRule?.(ruleInstance);
+      }
+    }
+
+    // TODO: To be refactored by FR-2677
+    const result = [...ruleInstances];
+    if (params.sort.length > 0) {
+      const [key, order] = params.sort[0];
+      result.sort((a, b) => {
+        let result = 0;
+        if (key === 'ruleId') {
+          result =
+            (a.ruleId ? parseInt(a.ruleId.split('-')[1]) : 0) -
+            (b.ruleId ? parseInt(b.ruleId.split('-')[1]) : 0);
+        } else if (key === 'hitCount') {
+          result =
+            (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
+            (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0);
+        } else if (key === 'createdAt') {
+          result =
+            a.createdAt !== undefined && b.createdAt !== undefined ? a.createdAt - b.createdAt : -1;
+        } else if (key === 'updatedAt') {
+          result =
+            a.updatedAt !== undefined && b.updatedAt !== undefined ? a.updatedAt - b.updatedAt : -1;
+        } else if (key === 'queueId') {
+          result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
+        } else {
+          result = a[key] > b[key] ? 1 : -1;
+        }
+
+        result *= order === 'descend' ? -1 : 1;
+        return result;
+      });
+    }
+
+    return {
+      items: result,
+      total: result.length,
+    };
   });
 }
