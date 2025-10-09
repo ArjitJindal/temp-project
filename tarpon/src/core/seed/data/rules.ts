@@ -776,7 +776,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     },
   ]
 
-  if (hasFeature('EDD')) {
+  if (hasFeature('EDD_REPORT')) {
     customRuleInstances.push(
       {
         id: 'RC-101',
@@ -3058,6 +3058,157 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
   ]
 
+  // Dynamic rule instance for demo data
+  const dynamicRuleInstance: RuleInstance[] = [
+    {
+      id: 'R-11.1',
+      type: 'TRANSACTION',
+      ruleId: 'R-11',
+      ruleNameAlias: 'Transaction anomaly',
+      ruleDescriptionAlias: 'Check for anomalous transaction volumes',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      filters: {},
+      parameters: {},
+      riskLevelParameters: {
+        VERY_LOW: {},
+        VERY_HIGH: {},
+        HIGH: {},
+        MEDIUM: {},
+        LOW: {},
+      },
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'entity:transactionAmount',
+              },
+              100000,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:transactionAmount',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+      ],
+      logicAggregationVariables: [],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1741948155800,
+      updatedAt: 1741948155800,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: ['UNEXPECTED_BEHAVIOR'],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      checksFor: ['Dynamic Detection'],
+      createdBy: rng.r(1).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+  ]
+
   const data = [
     ...r1RuleInstance,
     ...r2RuleInstance,
@@ -3074,6 +3225,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r8RuleInstanceShadow,
     ...r30RuleInstanceShadow,
     ...customRuleInstances,
+    ...dynamicRuleInstance,
   ]
 
   return data
@@ -3082,6 +3234,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
 export const CHAINALYSIS_RULE_IDS = ['RC-4', 'RC-5']
 export const COUNTERPARTY_RULE_IDS = ['R-169', 'R-169.1']
 export const EDD_RULE_IDS = ['RC-101', 'RC-102']
+export const DYNAMIC_RULE_IDS = ['R-11']
 
 export const mapRuleInstanceToExecuteRules = (
   ruleInstance: RuleInstance,
@@ -3168,6 +3321,22 @@ export const eddRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
       .filter((rule) => {
         if (rule.ruleId) {
           return EDD_RULE_IDS.includes(rule.ruleId ?? '')
+        }
+        return false
+      })
+      .map(
+        (ri, i): ExecutedRulesResult =>
+          mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+      )
+  })
+
+export const dynamicRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 2000)
+    return ruleInstances()
+      .filter((ri) => {
+        if (ri.ruleId) {
+          return DYNAMIC_RULE_IDS.includes(ri.ruleId)
         }
         return false
       })
