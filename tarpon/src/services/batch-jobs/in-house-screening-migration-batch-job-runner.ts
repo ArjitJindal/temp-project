@@ -22,7 +22,7 @@ import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   SANCTIONS_SEARCHES_COLLECTION,
   SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'

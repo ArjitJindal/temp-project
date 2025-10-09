@@ -2,8 +2,8 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { traceable } from '@/core/xray'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 
 @traceable

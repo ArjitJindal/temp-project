@@ -1,4 +1,4 @@
-import { COUNTRIES } from '@flagright/lib/constants'
+import { COUNTRIES } from '@flagright/lib/constants/countries'
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize'
 import { CommonUserLogicVariable, LogicVariableContext } from './types'
 import { User } from '@/@types/openapi-public/User'

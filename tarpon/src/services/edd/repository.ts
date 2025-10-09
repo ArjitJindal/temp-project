@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 
-import { EDD_REVIEWS_COLLECTION } from '@/utils/mongodb-definitions'
+import { EDD_REVIEWS_COLLECTION } from '@/utils/mongo-table-names'
 import { EDDReview } from '@/@types/openapi-internal/EDDReview'
 import { traceable } from '@/core/xray'
 import { EDDReviewResponse } from '@/@types/openapi-internal/EDDReviewResponse'

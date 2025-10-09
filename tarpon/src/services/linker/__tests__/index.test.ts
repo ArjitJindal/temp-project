@@ -4,7 +4,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { TransactionSampler } from '@/core/seed/samplers/transaction'

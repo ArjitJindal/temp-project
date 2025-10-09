@@ -7,16 +7,18 @@ import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityTy
 import { hasFeature } from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
+  SANCTIONS_INDEX_DEFINITION,
+  SANCTIONS_SEARCH_INDEX_DEFINITION,
+} from '@/utils/mongodb-definitions'
+import {
   AGGREGATED_SANCTIONS_COLLECTION,
   DELTA_SANCTIONS_COLLECTION,
   DELTA_SANCTIONS_GLOBAL_COLLECTION,
   SANCTIONS_COLLECTION,
   SANCTIONS_GLOBAL_COLLECTION,
-  SANCTIONS_INDEX_DEFINITION,
-  SANCTIONS_SEARCH_INDEX_DEFINITION,
   SANCTIONS_SOURCE_DOCUMENTS_COLLECTION,
   SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'

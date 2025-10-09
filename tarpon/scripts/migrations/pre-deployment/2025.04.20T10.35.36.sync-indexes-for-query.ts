@@ -1,11 +1,11 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { hasFeature } from '@/core/utils/context'
 import {
   DELTA_SANCTIONS_COLLECTION,
   SANCTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 async function migrateTenant(tenant: Tenant) {
   if (hasFeature('DOW_JONES')) {

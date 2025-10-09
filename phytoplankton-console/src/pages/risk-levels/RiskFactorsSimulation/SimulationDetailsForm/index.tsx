@@ -314,8 +314,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                     >
                       {(inputProps) => (
                         <UserIdsSelect
-                          allowNewOptions
-                          mode="MULTIPLE"
+                          mode="MULTIPLE_DYNAMIC"
                           {...inputProps}
                           placeholder={`Search for ${settings.userAlias} ID`}
                         />
@@ -350,8 +349,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                     >
                       {(inputProps) => (
                         <TransactionIdsSelect
-                          mode="MULTIPLE"
-                          allowNewOptions
+                          mode="MULTIPLE_DYNAMIC"
                           placeholder="Search for transaction ID"
                           {...inputProps}
                         />

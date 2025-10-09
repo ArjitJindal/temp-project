@@ -15,7 +15,6 @@ import {
   UpdateCommandInput,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-
 import isEmpty from 'lodash/isEmpty'
 import memoize from 'lodash/memoize'
 import omit from 'lodash/omit'
@@ -47,7 +46,7 @@ import {
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
   VERSION_HISTORY_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
@@ -61,11 +60,9 @@ import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScor
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { getMongoDbClient, paginateCursor } from '@/utils/mongodb-utils'
-import {
-  getClickhouseCredentials,
-  isClickhouseEnabledInRegion,
-  sendMessageToMongoConsumer,
-} from '@/utils/clickhouse/utils'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { getTriggerSource } from '@/utils/lambda'
 import {
   createNonConsoleApiInMemoryCache,
@@ -84,7 +81,9 @@ import { VersionHistoryTable } from '@/models/version-history'
 import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
-export type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
+
+type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -92,34 +91,6 @@ const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   max: 100,
   ttlMinutes: 10,
 })
-
-export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
-  {
-    riskLevel: 'VERY_LOW',
-    lowerBoundRiskScore: 0,
-    upperBoundRiskScore: 20,
-  },
-  {
-    riskLevel: 'LOW',
-    lowerBoundRiskScore: 20,
-    upperBoundRiskScore: 40,
-  },
-  {
-    riskLevel: 'MEDIUM',
-    lowerBoundRiskScore: 40,
-    upperBoundRiskScore: 60,
-  },
-  {
-    riskLevel: 'HIGH',
-    lowerBoundRiskScore: 60,
-    upperBoundRiskScore: 80,
-  },
-  {
-    riskLevel: 'VERY_HIGH',
-    lowerBoundRiskScore: 80,
-    upperBoundRiskScore: 100,
-  },
-]
 
 const defaultRiskClassificationItem: RiskClassificationConfig = {
   classificationValues: DEFAULT_CLASSIFICATION_SETTINGS,

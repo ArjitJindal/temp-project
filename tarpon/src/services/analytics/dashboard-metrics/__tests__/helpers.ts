@@ -8,8 +8,8 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AlertsRepository } from '@/services/alerts/repository'
-import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {

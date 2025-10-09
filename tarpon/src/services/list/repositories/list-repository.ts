@@ -25,8 +25,8 @@ import { traceable } from '@/core/xray'
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
-  DEFAULT_PAGE_SIZE,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { ListMetadataTtl } from '@/@types/openapi-public/ListMetadataTtl'
 import { ListSubtypeInternal } from '@/@types/openapi-internal/ListSubtypeInternal'
 import { ListHeaderInternal } from '@/@types/openapi-internal/ListHeaderInternal'

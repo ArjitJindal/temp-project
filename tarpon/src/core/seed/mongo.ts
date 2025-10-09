@@ -20,6 +20,7 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import {
+  UNIQUE_TAGS_COLLECTION,
   CASES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
@@ -43,13 +44,12 @@ import {
   SLA_POLICIES_COLLECTION,
   ML_MODELS_COLLECTION,
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
-  UNIQUE_TAGS_COLLECTION,
   RULE_QUEUES_COLLECTION,
   REASONS_COLLECTION,
   USER_EVENTS_COLLECTION,
   NARRATIVE_TEMPLATE_COLLECTION,
   JOBS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { users } from '@/core/seed/data/users'
 import { auditlogs } from '@/core/seed/data/auditlogs'

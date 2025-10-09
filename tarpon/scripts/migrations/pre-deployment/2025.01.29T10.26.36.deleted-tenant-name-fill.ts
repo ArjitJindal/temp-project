@@ -4,7 +4,7 @@ import {
   productionTenants,
 } from '../utils/previous-deleted-tenant-names'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
+import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
 import { envIs } from '@/utils/env'
 
 export const up = async () => {

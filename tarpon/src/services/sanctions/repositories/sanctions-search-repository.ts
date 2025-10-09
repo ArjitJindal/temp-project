@@ -19,7 +19,7 @@ import {
   prefixRegexMatchFilter,
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
-import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'

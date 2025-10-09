@@ -1,4 +1,4 @@
-import { CRYPTO_CURRENCIES_KEYS } from '@flagright/lib/constants'
+import { CRYPTO_CURRENCIES_KEYS } from '@flagright/lib/constants/currencies'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 
 const _SAMPLE_CURRENCIES = ['USD', 'PHP', 'EUR', 'GBP']

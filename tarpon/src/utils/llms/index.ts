@@ -6,11 +6,11 @@ import {
   DynamoTransactionBatch,
 } from '../dynamodb'
 import { envIs } from '../env'
-import { CLICKHOUSE_DEFINITIONS } from '../clickhouse/definition'
-import { batchInsertToClickhouse } from '../clickhouse/utils'
+import { batchInsertToClickhouse } from '../clickhouse/insert'
 import { OpenAIService } from './openai'
 import { AnthropicService } from './anthropic'
 import { LLMOptions, Message } from './base-service'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { LLMProvider } from '@/@types/openapi-internal/LLMProvider'
 import { tenantSettings } from '@/core/utils/context'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

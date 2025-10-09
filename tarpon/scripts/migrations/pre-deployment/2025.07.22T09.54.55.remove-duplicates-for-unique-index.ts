@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
-import { ARS_SCORES_COLLECTION } from '@/utils/mongodb-definitions'
+import { Tenant } from '@/@types/tenant'
+import { ARS_SCORES_COLLECTION } from '@/utils/mongo-table-names'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 
 async function migrateTenant(tenant: Tenant) {

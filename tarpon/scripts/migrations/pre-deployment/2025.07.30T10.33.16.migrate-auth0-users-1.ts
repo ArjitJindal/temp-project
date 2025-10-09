@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { AccountsService } from '@/services/accounts'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant-id'
 

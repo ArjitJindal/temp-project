@@ -26,14 +26,12 @@ import { traceable } from '@/core/xray'
 import {
   CursorPaginationResponse,
   OptionalPagination,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { Currency, CurrencyService } from '@/services/currency'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
@@ -300,6 +298,7 @@ export class TransactionService {
     return {
       transactionId: transaction.transactionId,
       timestamp: transaction.timestamp,
+      paymentApprovalTimestamp: transaction.paymentApprovalTimestamp,
       arsScore: {
         arsScore: transaction.arsScore?.arsScore,
       },
@@ -483,6 +482,7 @@ export class TransactionService {
         type: 1,
         transactionId: 1,
         timestamp: 1,
+        paymentApprovalTimestamp: 1,
         originUserId: 1,
         destinationUserId: 1,
         transactionState: 1,

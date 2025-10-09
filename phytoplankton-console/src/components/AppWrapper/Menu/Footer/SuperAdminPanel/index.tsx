@@ -179,7 +179,11 @@ export const featureDescriptions: Record<
     title: 'Chainalysis',
     description: 'Enables Chainalysis',
   },
-
+  EDD: {
+    title: 'EDD Rules',
+    description: 'Generates EDD alerts in demo mode',
+    tag: FeatureTag.ENG,
+  },
   WORKFLOWS_BUILDER: {
     title: 'Workflows builder',
     description: 'Enables workflows builder',

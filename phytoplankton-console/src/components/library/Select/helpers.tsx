@@ -1,7 +1,10 @@
 import { getEditDistancePercentage } from '@flagright/lib/utils';
+import s from './style.module.less';
 import { Option } from '.';
-import { Comparable } from '@/utils/comparable';
+import { Comparable, key } from '@/utils/comparable';
 import { notEmpty } from '@/utils/array';
+import Tag from '@/components/library/Tag';
+import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 
 export const SEPARATOR = ';';
 
@@ -77,4 +80,32 @@ export function filterOption(
       );
     });
   return result;
+}
+
+/*
+  Returns a node which will be used to render the option label.
+ */
+export function getOptionLabelNode(option: Option<Comparable>): string | React.ReactNode {
+  return option.label || option.labelText || option.value;
+}
+
+export function DEFAULT_TAG_RENDERER<Value extends Comparable>(props: {
+  option: Option<Value>;
+  onRemove: () => void;
+}) {
+  const { option, onRemove } = props;
+  return (
+    <Tag
+      key={key(option.value)}
+      actions={[
+        {
+          icon: <CloseLineIcon className={s.tagRemoveIcon} />,
+          key: 'remove',
+          action: onRemove,
+        },
+      ]}
+    >
+      {option.label}
+    </Tag>
+  );
 }

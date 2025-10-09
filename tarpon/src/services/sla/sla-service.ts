@@ -22,21 +22,20 @@ import { SLAAuditLogService } from './sla-audit-log-service'
 import { traceable } from '@/core/xray'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { logger } from '@/core/logger'
-
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { SLAPolicyStatus } from '@/@types/openapi-internal/SLAPolicyStatus'
 import { hasFeature } from '@/core/utils/context'
 import { processCursorInBatch } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Account } from '@/@types/openapi-internal/Account'
+import { processClickhouseInBatch } from '@/utils/clickhouse/clickhouse-batch'
 import {
-  getClickhouseClient,
   isClickhouseEnabled,
   isClickhouseMigrationEnabled,
-  processClickhouseInBatch,
-} from '@/utils/clickhouse/utils'
+} from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 const CONCURRENCY = 50
 const BATCH_SIZE = 10000

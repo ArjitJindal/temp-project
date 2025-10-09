@@ -39,7 +39,7 @@ import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { logger } from '@/core/logger'
 
 type DynamoDbKey = { PartitionKeyID: string; SortKeyID: string }

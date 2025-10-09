@@ -22,14 +22,15 @@ import {
   getNonUserReceiverKeys,
   getNonUserSenderKeys,
   getReceiverKeys,
+  getReceivingEntityKeys,
   getSenderKeys,
+  getSendingEntityKeys,
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../utils'
 import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
 import {
   AuxiliaryIndexTransaction,
-  NonUserEntityData,
   RulesEngineTransactionRepositoryInterface,
   TimeRange,
   TransactionsFilterOptions,
@@ -44,7 +45,6 @@ import {
   dynamoDbQueryHelper,
   itemLevelQueryGenerator,
   paginateQuery,
-  paginateQueryGenerator,
   upsertSaveDynamo,
 } from '@/utils/dynamodb'
 import { mergeObjects } from '@/utils/object'
@@ -53,26 +53,15 @@ import { Undefined } from '@/utils/lang'
 import { traceable } from '@/core/xray'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
-import { Address } from '@/@types/openapi-public/Address'
-import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { runLocalChangeHandler } from '@/utils/local-change-handler'
+import { EntityData } from '@/@types/tranasction/aggregation'
 import {
   AUXILLARY_TXN_PARTITION_COUNT,
   FUTURE_TIMESTAMP_TO_COMPARE,
   getAllBucketedPartitionKeys,
+  getPrimaryTransactionSwitchTimestamp,
   sanitiseBucketedKey,
 } from '@/core/dynamodb/key-utils'
-
-type NonUserTransactionsFilterOptions = {
-  originAddress?: Address
-  destinationAddress?: Address
-  originEmail?: string
-  destinationEmail?: string
-  originName?: string | ConsumerName
-  destinationName?: string | ConsumerName
-  beforeTimestamp: number
-  afterTimestamp: number
-}
 
 @traceable
 export class DynamoDbTransactionRepository
@@ -303,6 +292,25 @@ export class DynamoDbTransactionRepository
       getNonUserReceiverKeys(this.tenantId, transaction, transaction.type)
     const originIpAddress = transaction?.originDeviceData?.ipAddress
     const destinationIpAddress = transaction?.destinationDeviceData?.ipAddress
+    const sendingEntityKeys = getSendingEntityKeys(
+      this.tenantId,
+      transaction,
+      transaction.originPaymentDetails
+    )
+    const sanitisedSendingEntityKeys = sendingEntityKeys.map((key) => ({
+      ...key,
+      PartitionKeyID: sanitiseBucketedKey(key.PartitionKeyID),
+    }))
+    const receivingEntityKeys = getReceivingEntityKeys(
+      this.tenantId,
+      transaction,
+      transaction.destinationPaymentDetails
+    )
+    const sanitisedReceivingEntityKeys = receivingEntityKeys.map((key) => ({
+      ...key,
+      PartitionKeyID: sanitiseBucketedKey(key.PartitionKeyID),
+    }))
+
     const sanitisedSenderKeyId = sanitiseBucketedKey(senderKeys?.PartitionKeyID)
     const sanitisedReceiverKeyId = sanitiseBucketedKey(
       receiverKeys?.PartitionKeyID
@@ -379,6 +387,8 @@ export class DynamoDbTransactionRepository
         senderKeyId: sanitisedSenderKeyId,
         receiverKeyId: sanitisedReceiverKeyId,
       },
+      ...sanitisedSendingEntityKeys,
+      ...sanitisedReceivingEntityKeys,
     ]
       .filter(Boolean)
       .map((key) => ({
@@ -392,7 +402,8 @@ export class DynamoDbTransactionRepository
 
   public async getTransactionById(
     transactionId: string,
-    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>
+    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>,
+    timestamp?: number
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput = (newPartitionKey: boolean): GetCommandInput => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -408,17 +419,34 @@ export class DynamoDbTransactionRepository
         ? { ProjectionExpression: attributesToFetch.join(', ') }
         : {}),
     })
-    // Checking both partition as we don't have timestamp to check which partition to use
-    const results = await Promise.all([
-      this.dynamoDb.send(new GetCommand(getItemInput(false))),
-      this.dynamoDb.send(new GetCommand(getItemInput(true))),
-    ])
-    const finalResult = compact(results.map((rest) => rest.Item))
-    if (!finalResult[0]) {
+    let finalResult
+
+    if (timestamp) {
+      const useNewPartition =
+        timestamp >= getPrimaryTransactionSwitchTimestamp()
+      const result = await this.dynamoDb.send(
+        new GetCommand(getItemInput(useNewPartition))
+      )
+      finalResult = result.Item
+    } else {
+      // No timestamp: check new partition first, then old partition if needed
+      const newResult = await this.dynamoDb.send(
+        new GetCommand(getItemInput(true))
+      )
+      finalResult = newResult.Item
+
+      if (!finalResult) {
+        const oldResult = await this.dynamoDb.send(
+          new GetCommand(getItemInput(false))
+        )
+        finalResult = oldResult.Item
+      }
+    }
+    if (!finalResult) {
       return null
     }
     const transaction = {
-      ...finalResult[0],
+      ...finalResult,
     }
 
     delete transaction.createdAt
@@ -688,11 +716,21 @@ export class DynamoDbTransactionRepository
   public async *getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (entityData) {
+      yield* this.getEntitySendingTransactionsGenerator(
+        entityData,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+
     if (userId && !matchPaymentMethodDetails) {
       yield* this.getUserSendingTransactionsGenerator(
         userId,
@@ -715,11 +753,21 @@ export class DynamoDbTransactionRepository
   public async *getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (entityData) {
+      yield* this.getEntityReceivingTransactionsGenerator(
+        entityData,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+
     if (userId && !matchPaymentMethodDetails) {
       yield* this.getUserReceivingTransactionsGenerator(
         userId,
@@ -1023,6 +1071,74 @@ export class DynamoDbTransactionRepository
     }
   }
 
+  private getEntityPartitionKeyId(
+    entityData: EntityData,
+    direction: 'sending' | 'receiving'
+  ): string | undefined | null {
+    switch (entityData.type) {
+      case 'ADDRESS':
+        return DynamoDbKeys.ADDRESS_TRANSACTION(
+          this.tenantId,
+          entityData.address,
+          direction
+        )?.PartitionKeyID
+      case 'NAME':
+        return DynamoDbKeys.NAME_TRANSACTION(
+          this.tenantId,
+          entityData.name,
+          direction
+        )?.PartitionKeyID
+      case 'EMAIL':
+        return DynamoDbKeys.EMAIL_TRANSACTION(
+          this.tenantId,
+          entityData.email,
+          direction
+        )?.PartitionKeyID
+      default:
+        return undefined
+    }
+  }
+
+  public async *getEntitySendingTransactionsGenerator(
+    entityData: EntityData,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const partitionKeyId = this.getEntityPartitionKeyId(entityData, 'sending')
+
+    if (partitionKeyId) {
+      yield* this.getDynamoDBTransactionsGenerator(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
+  }
+
+  public async *getEntityReceivingTransactionsGenerator(
+    entityData: EntityData,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    const partitionKeyId = this.getEntityPartitionKeyId(entityData, 'receiving')
+
+    if (partitionKeyId) {
+      yield* this.getDynamoDBTransactionsGenerator(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else {
+      yield []
+    }
+  }
+
   public async getIpAddressTransactions(
     ipAddress: string,
     timeRange: TimeRange,
@@ -1133,7 +1249,9 @@ export class DynamoDbTransactionRepository
     )
     // Priority queue ordered by SortKeyID
     const pq = new MaxPriorityQueue<{
-      txn: AuxiliaryIndexTransaction & { SortKeyID: string }
+      txn: AuxiliaryIndexTransaction & {
+        SortKeyID: string
+      }
       gen: AsyncGenerator<any>
     }>((data) => data.txn.SortKeyID)
 
@@ -1147,7 +1265,7 @@ export class DynamoDbTransactionRepository
         })
       }
     }
-
+    let lastSortKeyId: string | undefined = undefined
     const batch: AuxiliaryIndexTransaction[] = []
     while (!pq.isEmpty()) {
       const dequeued = pq.dequeue()
@@ -1155,65 +1273,45 @@ export class DynamoDbTransactionRepository
         break
       }
       const { txn, gen } = dequeued
-      const transactionTimeRange = filterOptions.transactionTimeRange24hr
-      if (
-        !transactionTimeRange ||
-        (txn.timestamp &&
-          transactionTimeRangeRuleFilterPredicate(
-            txn.timestamp,
-            transactionTimeRange
-          ))
-      ) {
-        batch.push(
-          omit(txn, [
-            'PartitionKeyID',
-            'SortKeyID',
-          ]) as AuxiliaryIndexTransaction
-        )
+      if (!lastSortKeyId || txn.SortKeyID !== lastSortKeyId) {
+        const transactionTimeRange = filterOptions.transactionTimeRange24hr
+        if (
+          !transactionTimeRange ||
+          (txn.timestamp &&
+            transactionTimeRangeRuleFilterPredicate(
+              txn.timestamp,
+              transactionTimeRange
+            ))
+        ) {
+          batch.push(
+            omit(txn, [
+              'PartitionKeyID',
+              'SortKeyID',
+            ]) as AuxiliaryIndexTransaction
+          )
+        }
+        lastSortKeyId = txn.SortKeyID
       }
-
       // Refill from the generator if it has more
       const { value, done } = await gen.next()
       if (!done && value) {
         pq.enqueue({
-          txn: value as AuxiliaryIndexTransaction & { SortKeyID: string },
+          txn: value as AuxiliaryIndexTransaction & {
+            SortKeyID: string
+          },
           gen,
         })
       }
 
       // Yield in pages
       if (batch.length >= 25) {
-        yield batch.splice(0, batch.length)
+        const toYield = batch.splice(0, batch.length)
+        yield toYield
       }
     }
 
     if (batch.length > 0) {
       yield batch
-    }
-  }
-
-  private async *getDynamoDBTransactionsGeneratorByAddress(
-    partitionKeyId: string,
-    filterOptions: NonUserTransactionsFilterOptions,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    const queryInput = this.getNonUserTransactionFilterQueryInput(
-      partitionKeyId,
-      {
-        afterTimestamp: filterOptions.afterTimestamp,
-        beforeTimestamp: Date.now(),
-        originAddress: filterOptions.originAddress,
-        destinationAddress: filterOptions.destinationAddress,
-      },
-      attributesToFetch
-    )
-    const generator = paginateQueryGenerator(this.dynamoDb, queryInput)
-
-    for await (const data of generator) {
-      const transactions = (data.Items?.map((item) =>
-        omit(item, ['PartitionKeyID', 'SortKeyID'])
-      ) || []) as Array<AuxiliaryIndexTransaction>
-      yield transactions
     }
   }
 
@@ -1238,189 +1336,6 @@ export class DynamoDbTransactionRepository
       (total, curr) => total + (curr?.Count ?? 0),
       0
     ) as number
-  }
-
-  private getNonUserTransactionFilterQueryInput(
-    partitionKeyId: string,
-    filterOptions: NonUserTransactionsFilterOptions,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): QueryCommandInput {
-    // Only address filtering for non-user transactions
-    const entityFilterExpressions: string[] = []
-    const entityParams: [string, any][] = []
-
-    // Handle origin address filtering
-    if (filterOptions.originAddress) {
-      const originAddressFilters = this.createAddressSpecificFilterExpressions(
-        filterOptions.originAddress,
-        'origin'
-      )
-
-      if (originAddressFilters.expressions.length > 0) {
-        entityFilterExpressions.push(
-          originAddressFilters.expressions.join(' AND ')
-        )
-        entityParams.push(...originAddressFilters.params)
-      }
-    }
-
-    // Handle destination address filtering
-    if (filterOptions.destinationAddress) {
-      const destinationAddressFilters =
-        this.createAddressSpecificFilterExpressions(
-          filterOptions.destinationAddress,
-          'destination'
-        )
-
-      if (destinationAddressFilters.expressions.length > 0) {
-        entityFilterExpressions.push(
-          destinationAddressFilters.expressions.join(' AND ')
-        )
-        entityParams.push(...destinationAddressFilters.params)
-      }
-    }
-
-    if (filterOptions.originName) {
-      const originNameFilters = this.createNameSpecificFilterExpressions(
-        filterOptions.originName,
-        'origin'
-      )
-
-      if (originNameFilters.expressions.length > 0) {
-        entityFilterExpressions.push(
-          originNameFilters.expressions.join(' AND ')
-        )
-        entityParams.push(...originNameFilters.params)
-      }
-    }
-
-    if (filterOptions.destinationName) {
-      const destinationNameFilters = this.createNameSpecificFilterExpressions(
-        filterOptions.destinationName,
-        'destination'
-      )
-
-      if (destinationNameFilters.expressions.length > 0) {
-        entityFilterExpressions.push(
-          destinationNameFilters.expressions.join(' AND ')
-        )
-        entityParams.push(...destinationNameFilters.params)
-      }
-    }
-
-    if (filterOptions.originEmail) {
-      const originEmailFilters = this.createEmailSpecificFilterExpressions(
-        filterOptions.originEmail,
-        'origin'
-      )
-
-      if (originEmailFilters.expressions.length > 0) {
-        entityFilterExpressions.push(
-          originEmailFilters.expressions.join(' AND ')
-        )
-        entityParams.push(...originEmailFilters.params)
-      }
-    }
-
-    if (filterOptions.destinationEmail) {
-      const destinationEmailFilters = this.createEmailSpecificFilterExpressions(
-        filterOptions.destinationEmail,
-        'destination'
-      )
-
-      if (destinationEmailFilters.expressions.length > 0) {
-        entityFilterExpressions.push(
-          destinationEmailFilters.expressions.join(' AND ')
-        )
-        entityParams.push(...destinationEmailFilters.params)
-      }
-    }
-
-    const beforeTimestampFilterExpression = `#timestamp BETWEEN :afterTimestamp AND :beforeTimestamp`
-    const beforeTimestampParams: [string, any][] = [
-      [`:afterTimestamp`, filterOptions.afterTimestamp],
-      [`:beforeTimestamp`, filterOptions.beforeTimestamp],
-    ]
-
-    // Partition key id filter
-    const partitionKeyFilterExpression = `#partitionKeyID = :partitionKeyID`
-    const partitionKeyParams: [string, any][] = [
-      [':partitionKeyID', partitionKeyId],
-    ]
-
-    // Combine all filter expressions
-    const allFilterExpressions = [
-      ...entityFilterExpressions,
-      beforeTimestampFilterExpression,
-    ]
-
-    const filterExpression = allFilterExpressions.join(' AND ')
-
-    // Build expression attribute names based on what's actually used
-    const expressionAttributeNames: Record<string, string> = {
-      '#partitionKeyID': 'PartitionKeyID',
-      '#timestamp': 'timestamp',
-    }
-
-    // Add address-related attribute names if address filters are present
-    if (entityFilterExpressions.length > 0) {
-      const baseAddressAttributeNames = {
-        '#address': 'address',
-        '#shippingAddress': 'shippingAddress',
-        '#bankAddress': 'bankAddress',
-        '#addressLines': 'addressLines',
-        '#postcode': 'postcode',
-        '#city': 'city',
-        '#state': 'state',
-        '#country': 'country',
-      }
-
-      // Only add the payment details attribute names that are actually used
-      if (filterOptions.originAddress) {
-        Object.assign(expressionAttributeNames, {
-          '#originPaymentDetails': 'originPaymentDetails',
-          ...baseAddressAttributeNames,
-        })
-      }
-      if (filterOptions.destinationAddress) {
-        Object.assign(expressionAttributeNames, {
-          '#destinationPaymentDetails': 'destinationPaymentDetails',
-          ...baseAddressAttributeNames,
-        })
-      }
-    }
-
-    // Implement attributes to fetch
-    let projectionExpression: string | undefined = undefined
-    if (attributesToFetch && attributesToFetch.length > 0) {
-      // Always include timestamp for filtering
-      const attributes = new Set(attributesToFetch)
-      attributes.add('timestamp')
-      // Build ProjectionExpression and update ExpressionAttributeNames
-      projectionExpression = Array.from(attributes)
-        .map((name) => `#${name}`)
-        .join(', ')
-      for (const name of attributes) {
-        if (!expressionAttributeNames[`#${name}`]) {
-          expressionAttributeNames[`#${name}`] = name as string
-        }
-      }
-    }
-
-    return {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      KeyConditionExpression: partitionKeyFilterExpression,
-      FilterExpression: filterExpression,
-      ExpressionAttributeNames: expressionAttributeNames,
-      ExpressionAttributeValues: Object.fromEntries([
-        ...partitionKeyParams,
-        ...entityParams,
-        ...beforeTimestampParams,
-      ]),
-      ...(projectionExpression
-        ? { ProjectionExpression: projectionExpression }
-        : {}),
-    }
   }
 
   private getTransactionFilterQueryInput(
@@ -1563,224 +1478,6 @@ export class DynamoDbTransactionRepository
             .join(', ')
             .concat(', SortKeyID'), // As we require to sort page results for multiple partitionKeyID
     }
-  }
-
-  /**
-   * Creates address filter expressions specific to origin or destination payment details
-   * Uses DynamoDB transaction partition key structure for efficient filtering
-   */
-  private createAddressSpecificFilterExpressions(
-    addressFilter: Address | undefined,
-    direction: 'origin' | 'destination'
-  ): { expressions: string[]; params: [string, any][] } {
-    const expressions: string[] = []
-    const params: [string, any][] = []
-
-    if (!addressFilter) {
-      return { expressions, params }
-    }
-
-    // Unified address fields without payment method filtering
-    const addressFields = ['address', 'shippingAddress', 'bankAddress']
-
-    // Build expressions for each address field, combining all address components with AND
-    const fieldExpressions = addressFields
-      .map((field) => {
-        const fieldConditions: string[] = []
-
-        if (
-          addressFilter.addressLines &&
-          addressFilter.addressLines.length > 0
-        ) {
-          addressFilter.addressLines.forEach((line: string, index: number) => {
-            if (line) {
-              params.push([`:${direction}AddressLine${index}`, line])
-              fieldConditions.push(
-                `#${direction}PaymentDetails.#${field}.#addressLines[${index}] = :${direction}AddressLine${index}`
-              )
-            }
-          })
-        }
-
-        if (addressFilter.postcode) {
-          params.push([`:${direction}Postcode`, addressFilter.postcode])
-          fieldConditions.push(
-            `#${direction}PaymentDetails.#${field}.#postcode = :${direction}Postcode`
-          )
-        }
-
-        if (addressFilter.city) {
-          params.push([`:${direction}City`, addressFilter.city])
-          fieldConditions.push(
-            `#${direction}PaymentDetails.#${field}.#city = :${direction}City`
-          )
-        }
-
-        if (addressFilter.state) {
-          params.push([`:${direction}State`, addressFilter.state])
-          fieldConditions.push(
-            `#${direction}PaymentDetails.#${field}.#state = :${direction}State`
-          )
-        }
-
-        if (addressFilter.country) {
-          params.push([`:${direction}Country`, addressFilter.country])
-          fieldConditions.push(
-            `#${direction}PaymentDetails.#${field}.#country = :${direction}Country`
-          )
-        }
-
-        return fieldConditions.length > 0
-          ? `(${fieldConditions.join(' AND ')})`
-          : null
-      })
-      .filter(Boolean)
-
-    if (fieldExpressions.length > 0) {
-      expressions.push(`(${fieldExpressions.join(' OR ')})`)
-    }
-
-    return { expressions, params }
-  }
-
-  private createNameSpecificFilterExpressions(
-    nameFilter: string | ConsumerName | undefined,
-    direction: 'origin' | 'destination'
-  ): { expressions: string[]; params: [string, any][] } {
-    const expressions: string[] = []
-    const params: [string, any][] = []
-
-    if (!nameFilter) {
-      return { expressions, params }
-    }
-
-    if (typeof nameFilter === 'string') {
-      params.push([`:${direction}Name`, nameFilter])
-      expressions.push(`#${direction}PaymentDetails.#name = :${direction}Name`)
-    } else {
-      const fields = ['nameOnCard', 'name']
-      const fieldExpressions = fields.map((field) => {
-        return [
-          `#${direction}PaymentDetails.#${field}.#firstName = :${direction}Name`,
-          `#${direction}PaymentDetails.#${field}.#middleName = :${direction}Name`,
-          `#${direction}PaymentDetails.#${field}.#lastName = :${direction}Name`,
-        ].join(' AND ')
-      })
-      expressions.push(`(${fieldExpressions.join(' OR ')})`)
-    }
-
-    return { expressions, params }
-  }
-
-  private createEmailSpecificFilterExpressions(
-    emailFilter: string | undefined,
-    direction: 'origin' | 'destination'
-  ): { expressions: string[]; params: [string, any][] } {
-    const expressions: string[] = []
-    const params: [string, any][] = []
-
-    if (!emailFilter) {
-      return { expressions, params }
-    }
-
-    params.push([`:${direction}Email`, emailFilter])
-    expressions.push(
-      `#${direction}PaymentDetails.#emailId = :${direction}Email`
-    )
-
-    return { expressions, params }
-  }
-
-  private getTransactionsGeneratorByEntity(
-    entity: NonUserEntityData | undefined,
-    timeRange: TimeRange,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
-    direction: 'origin' | 'destination'
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    if (!entity) {
-      return (async function* () {
-        yield []
-      })()
-    }
-
-    // For DynamoDB, we use the existing non-user transaction methods
-    // and the address filtering is handled in the getTransactionFilterQueryInput method
-    // which will apply the address filter from filterOptions.originAddress or filterOptions.destinationAddress
-    // The address filter will automatically check all relevant address fields based on payment method
-    const filterOptions: NonUserTransactionsFilterOptions = {
-      originAddress:
-        direction === 'origin' && entity?.type === 'ADDRESS'
-          ? entity.address
-          : undefined,
-      destinationAddress:
-        direction === 'destination' && entity?.type === 'ADDRESS'
-          ? entity.address
-          : undefined,
-      originEmail:
-        direction === 'origin' && entity?.type === 'EMAIL'
-          ? entity.email
-          : undefined,
-      destinationEmail:
-        direction === 'destination' && entity?.type === 'EMAIL'
-          ? entity.email
-          : undefined,
-      originName:
-        direction === 'origin' && entity?.type === 'NAME'
-          ? entity.name
-          : undefined,
-      destinationName:
-        direction === 'destination' && entity?.type === 'NAME'
-          ? entity.name
-          : undefined,
-      beforeTimestamp: timeRange.beforeTimestamp,
-      afterTimestamp: timeRange.afterTimestamp,
-    }
-
-    const finalAttributesToFetch: Array<keyof AuxiliaryIndexTransaction> = [
-      ...attributesToFetch,
-      'originPaymentDetails',
-      'destinationPaymentDetails',
-    ]
-
-    if (direction === 'origin') {
-      return this.getDynamoDBTransactionsGeneratorByAddress(
-        DynamoDbKeys.TRANSACTION(this.tenantId).PartitionKeyID,
-        filterOptions,
-        finalAttributesToFetch
-      )
-    } else {
-      return this.getDynamoDBTransactionsGeneratorByAddress(
-        DynamoDbKeys.TRANSACTION(this.tenantId).PartitionKeyID,
-        filterOptions,
-        finalAttributesToFetch
-      )
-    }
-  }
-
-  public getNonUserSendingTransactionsGeneratorByEntity(
-    entity: NonUserEntityData | undefined,
-    timeRange: TimeRange,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    return this.getTransactionsGeneratorByEntity(
-      entity,
-      timeRange,
-      attributesToFetch,
-      'origin'
-    )
-  }
-
-  public getNonUserReceivingTransactionsGeneratorByEntity(
-    entity: NonUserEntityData | undefined,
-    timeRange: TimeRange,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    return this.getTransactionsGeneratorByEntity(
-      entity,
-      timeRange,
-      attributesToFetch,
-      'destination'
-    )
   }
 }
 

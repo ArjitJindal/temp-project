@@ -15,7 +15,7 @@ import {
 } from '@/utils/auth0-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { AccountsService } from '@/services/accounts'
 jest.mock('@/utils/auth0-utils')
 const mockedGetAuth0ManagementClient =

@@ -1,7 +1,7 @@
 import { ApiUsageMetricsService } from '../api-usage-metrics-service'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const getApiUsageMetricsService = async (tenantId: string) => {

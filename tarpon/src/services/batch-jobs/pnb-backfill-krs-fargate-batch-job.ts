@@ -8,7 +8,7 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { pickKnownEntityFields } from '@/utils/object'
 import { User } from '@/@types/openapi-public/User'

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Account, Assignment } from '@/apis';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { InputProps } from '@/components/library/Form';
 
 interface Props extends InputProps<string[]> {
@@ -25,7 +25,7 @@ export function AssignmentSelect(props: Props) {
       placeholder={placeholder}
       customFilter={customFilter}
       assignments={assignments}
-      onChange={(value) => {
+      onChange={async (value) => {
         inputProps?.onChange?.(value);
       }}
       requiredResources={['write:::accounts/overview/*']}

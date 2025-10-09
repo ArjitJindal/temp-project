@@ -4,8 +4,8 @@ import { JsonMigrationService } from 'thunder-schema'
 import {
   getClickhouseClient,
   getClickhouseCredentials,
-  getClickhouseDbName,
-} from '../utils/clickhouse/utils'
+} from '@/utils/clickhouse/client'
+import { getClickhouseDbName } from '@/utils/clickhouse/database-utils'
 
 export const thunderSchemaSetupHook = (
   tenantId: string,

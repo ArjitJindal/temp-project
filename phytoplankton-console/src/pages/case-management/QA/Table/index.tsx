@@ -21,7 +21,7 @@ import {
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
 import { useAlertQuery } from '@/pages/case-management/common';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
 import { usePatchAlertQaAssignments } from '@/hooks/api/alerts';
@@ -215,9 +215,9 @@ export default function QaTable(props: Props) {
             <AssigneesDropdown
               assignments={assignments}
               editing={!entity.ruleQaStatus}
-              onChange={(assignees) => {
+              onChange={async (assignees) => {
                 if (entity.alertId) {
-                  qaAssigneesUpdateMutation.mutate({
+                  await qaAssigneesUpdateMutation.mutateAsync({
                     alertId: entity.alertId,
                     AlertQaAssignmentsUpdateRequest: {
                       assignments: assignees.map((assigneeUserId) => ({

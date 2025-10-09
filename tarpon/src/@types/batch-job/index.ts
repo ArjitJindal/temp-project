@@ -1,26 +1,26 @@
 import { Credentials } from 'aws-lambda'
 import { Filter } from 'mongodb'
-import { SimulationRiskLevelsParameters } from '../openapi-internal/SimulationRiskLevelsParameters'
-import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
-import { RuleInstance } from '../openapi-internal/RuleInstance'
-import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
-import { LogicAggregationVariable } from '../openapi-internal/LogicAggregationVariable'
-import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
-import { InternalTransaction } from '../openapi-internal/InternalTransaction'
-import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
-import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
-import { SanctionsSettingsProviderScreeningTypes } from '../openapi-internal/SanctionsSettingsProviderScreeningTypes'
-import { SanctionsEntityType } from '../openapi-internal/SanctionsEntityType'
-import { FlatFileSchema } from '../openapi-internal/FlatFileSchema'
-import { FlatFileTemplateFormat } from '../openapi-internal/FlatFileTemplateFormat'
-import { DynamoDbClickhouseBackfillBatchJobEntity } from '../openapi-internal/DynamoDbClickhouseBackfillBatchJobEntity'
-import { TaskStatusChangeStatusEnum } from '../openapi-internal/TaskStatusChangeStatusEnum'
-import { RuleAction } from '../openapi-internal/RuleAction'
+import { TenantBasic } from '../tenant'
+import { ClickhouseTableNames } from '../clickhouse/table-names'
+import { SimulationRiskLevelsParameters } from '@/@types/openapi-internal/SimulationRiskLevelsParameters'
+import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { SimulationRiskFactorsSampling } from '@/@types/openapi-internal/SimulationRiskFactorsSampling'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { TaskStatusChange } from '@/@types/openapi-internal/TaskStatusChange'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { NangoWebhookEvent } from '@/@types/openapi-internal/NangoWebhookEvent'
+import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
+import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
+import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
+import { DynamoDbClickhouseBackfillBatchJobEntity } from '@/@types/openapi-internal/DynamoDbClickhouseBackfillBatchJobEntity'
+import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
+import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
-import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
 import { V8LogicAggregationRebuildTask } from '@/@types/tranasction/aggregation'
-import { ClickhouseTableNames } from '@/utils/clickhouse/definition'
 import { BatchRerunUsersJobType } from '@/@types/rerun-users'
 
 /* Simulation (Pulse) */
@@ -303,8 +303,8 @@ export type BackfillAsyncRuleRuns = {
 }
 
 /* PNB specific jobs */
-export type PnbBackfillEntities = {
-  type: 'PNB_BACKFILL_ENTITIES'
+export type BackfillEntitiesJsonl = {
+  type: 'BACKFILL_ENTITIES_JSONL'
   tenantId: string
   parameters: {
     importFileS3Key: string
@@ -316,6 +316,7 @@ export type PnbBackfillEntities = {
       | 'CONSUMER_EVENT'
       | 'BUSINESS_EVENT'
     dynamoDbOnly: boolean
+    bucket: string
   }
 }
 type PnbBackfillTransactionsBase = {
@@ -591,7 +592,7 @@ export type BatchJob =
   | BackFillAvgTrs
   | BackfillAsyncRuleRuns
   | RiskScoringTriggersBatchJob
-  | PnbBackfillEntities
+  | BackfillEntitiesJsonl
   | PnbBackfillTransactions
   | PnbBackfillKrs
   | PnbBackfillArs

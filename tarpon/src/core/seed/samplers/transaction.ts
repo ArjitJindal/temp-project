@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import { COUNTRY_CODES } from '@flagright/lib/constants'
+import { COUNTRY_CODES } from '@flagright/lib/constants/countries'
 import { Merchant } from '../raw-data/merchant'
 import { BaseSampler } from './base'
 import { names } from './dictionary'

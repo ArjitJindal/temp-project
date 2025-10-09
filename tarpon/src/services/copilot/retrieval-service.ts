@@ -234,7 +234,16 @@ export class RetrievalService {
     )
 
     const [transactions, ruleInstances] = await Promise.all([
-      this.txnRepository.getTransactionsByIds(_case.caseTransactionsIds || []),
+      this.txnRepository.getTransactionsByIds(
+        _case.caseTransactionsIds || [],
+        undefined,
+        {
+          transactionId: 1,
+          originAmountDetails: 1,
+          destinationAmountDetails: 1,
+          createdAt: 1,
+        }
+      ),
       this.ruleInstanceRepository.getRuleInstancesByIds(
         ruleInstanceIds.filter((id) => id)
       ),

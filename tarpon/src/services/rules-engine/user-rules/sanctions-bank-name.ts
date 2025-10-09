@@ -120,7 +120,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     }
     const user = this.user as User
     const bankInfos = (user.savedPaymentDetails || [])
-      ?.map((paymentDetails) => {
+      ?.flatMap((paymentDetails) => {
         if (paymentDetails.method === 'IBAN') {
           return {
             bankName: paymentDetails.bankName,
@@ -130,14 +130,31 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
         }
         if (
           paymentDetails.method === 'GENERIC_BANK_ACCOUNT' ||
-          paymentDetails.method === 'ACH' ||
-          paymentDetails.method === 'SWIFT'
+          paymentDetails.method === 'ACH'
         ) {
           return {
             bankName: paymentDetails.bankName,
             iban: paymentDetails.accountNumber,
             address: paymentDetails.bankAddress,
           }
+        }
+
+        if (paymentDetails.method === 'SWIFT') {
+          const correspondenceBankDetails =
+            paymentDetails.correspondenceBankDetails
+
+          const bankNames: BankInfo[] =
+            correspondenceBankDetails?.map((correspondenceBankDetail) => ({
+              bankName: correspondenceBankDetail.bankName,
+            })) ?? []
+
+          bankNames.push({
+            bankName: paymentDetails.bankName,
+            iban: paymentDetails.accountNumber,
+            address: paymentDetails.bankAddress,
+          })
+
+          return bankNames
         }
       })
       .filter(Boolean) as BankInfo[]

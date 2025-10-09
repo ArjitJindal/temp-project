@@ -2,12 +2,10 @@ import { FindCursor, WithId } from 'mongodb'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { ClickhouseDataBackfillBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import {
-  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
-  ClickhouseTableNames,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO } from '@/constants/clickhouse/clickhouse-mongo-map'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 

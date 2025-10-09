@@ -6,3 +6,5 @@ export const TRANSACTION_TYPES: readonly string[] = [
   'REFUND',
   'OTHER',
 ]
+
+export const PAYMENT_APPROVAL_START_TIMESTAMP = 1756684800000 // 1 september 2025 GMT

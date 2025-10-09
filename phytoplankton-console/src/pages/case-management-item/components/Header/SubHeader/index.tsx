@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from 'react';
 import { capitalizeNameFromEmail, firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { Assignment, Case } from '@/apis';
 import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
 import { useAuth0User, useHasResources } from '@/utils/user-utils';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import {
   Feature,
   useFeatureEnabled,
@@ -131,7 +132,7 @@ export default function SubHeader(props: Props) {
   );
 
   const handleUpdateAssignments = useCallback(
-    (assignees: string[]) => {
+    async (assignees: string[]) => {
       const caseStatus = caseItem?.caseStatus ?? 'OPEN';
       const [assignments, _] = createAssignments(
         caseStatus,
@@ -143,7 +144,7 @@ export default function SubHeader(props: Props) {
         message.fatal('Case ID is null');
         return;
       }
-      handleUpdateCaseMutation.mutate(assignments);
+      await handleUpdateCaseMutation.mutateAsync(assignments);
     },
     [handleUpdateCaseMutation, currentUserId, caseItem, isMultiLevelEscalationEnabled, caseId],
   );
@@ -188,7 +189,7 @@ export default function SubHeader(props: Props) {
           </Skeleton>
         </Form.Layout.Label>
 
-        <Form.Layout.Label title={'Assigned to'}>
+        <Form.Layout.Label title={'Assigned to'} className={s.assignees}>
           <Skeleton res={caseItemRes}>
             {(caseItem) => (
               <AssigneesDropdown
@@ -202,7 +203,7 @@ export default function SubHeader(props: Props) {
                   )
                 }
                 onChange={handleUpdateAssignments}
-                fixSelectorHeight
+                mutationRes={handleUpdateCaseMutation.dataResource}
               />
             )}
           </Skeleton>

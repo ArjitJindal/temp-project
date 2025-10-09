@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
-import { SIMULATION_TASK_COLLECTION } from '@/utils/mongodb-definitions'
+import { Tenant } from '@/@types/tenant'
+import { SIMULATION_TASK_COLLECTION } from '@/utils/mongo-table-names'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
 import { SimulationV8RiskFactorsIteration } from '@/@types/openapi-internal/SimulationV8RiskFactorsIteration'
 

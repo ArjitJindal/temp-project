@@ -18,7 +18,7 @@ import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
-import { PnbBackfillEntities } from '@/@types/batch-job'
+import { BackfillEntitiesJsonl } from '@/@types/batch-job'
 import { jsonlStreamReader } from '@/utils/jsonl'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { Business } from '@/@types/openapi-public/Business'
@@ -35,10 +35,10 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { logger } from '@/core/logger'
-import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { UserOptional } from '@/@types/openapi-internal/UserOptional'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
@@ -52,7 +52,7 @@ const RULES_RESULT = {
   status: 'ALLOW' as const,
 }
 
-export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
+export class BackfillEntitiesJsonlBatchJobRunner extends BatchJobRunner {
   private dynamoDbTransactionRepository!: DynamoDbTransactionRepository
   private mongoDbConsumer!: MongoDbConsumer
   private dynamoDbOnly: boolean = false
@@ -61,9 +61,9 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
   private tenantId!: string
   private userRepository!: UserRepository
 
-  protected async run(job: PnbBackfillEntities): Promise<void> {
+  protected async run(job: BackfillEntitiesJsonl): Promise<void> {
     const { tenantId } = job
-    const { type, importFileS3Key, dynamoDbOnly } = job.parameters
+    const { type, importFileS3Key, dynamoDbOnly, bucket } = job.parameters
 
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
@@ -87,13 +87,13 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       .db()
       .collection(USERS_COLLECTION(tenantId))
       .createIndex({ userId: 1 }, { unique: true })
-    const importBucket = process.env.IMPORT_BUCKET
+    const bucketName = bucket || process.env.IMPORT_BUCKET
 
-    if (!importBucket) {
-      throw new Error('IMPORT_BUCKET is not set')
+    if (!bucketName) {
+      throw new Error('IMPORT_BUCKET or BUCKET is not set')
     }
 
-    const rl = await jsonlStreamReader(importFileS3Key, importBucket)
+    const rl = await jsonlStreamReader(importFileS3Key, bucketName)
     const lastCompletedTimestamp = await getMigrationLastCompletedTimestamp(
       this.jobId
     )
@@ -229,7 +229,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         .collection('backfill-failure')
         .insertMany(
           transactions.map((transaction) => ({
-            job: 'PNB_BACKFILL_ENTITIES',
+            job: 'BACKFILL_ENTITIES_JSONL',
             tenantId: this.tenantId,
             transactionId: transaction.transactionId,
             reason: (e as Error).message,
@@ -321,7 +321,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         .collection('backfill-failure')
         .insertMany(
           users.map((user) => ({
-            job: 'PNB_BACKFILL_ENTITIES',
+            job: 'BACKFILL_ENTITIES_JSONL',
             tenantId: this.tenantId,
             userId: user.userId,
             reason: (e as Error).message,

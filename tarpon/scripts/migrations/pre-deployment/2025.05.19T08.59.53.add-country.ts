@@ -1,5 +1,5 @@
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION } from '@/utils/mongo-table-names'
 import { logger } from '@/core/logger'
 import { extractCountryFromSource } from '@/services/sanctions/utils'
 

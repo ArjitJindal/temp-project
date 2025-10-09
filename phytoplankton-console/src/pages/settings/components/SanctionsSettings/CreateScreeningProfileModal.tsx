@@ -641,9 +641,14 @@ const SanctionsSourceTypeTab = ({
     <div className={s.sourceTabContainer}>
       <label className={s.label}>Relevance</label>
       <div className={s.select}>
-        <Select
+        <Select<
+          | SanctionsSourceRelevance
+          | PEPSourceRelevance
+          | AdverseMediaSourceRelevance
+          | DowJonesAdverseMediaSourceRelevance
+          | RELSourceRelevance
+        >
           mode="MULTIPLE"
-          allowNewOptions
           value={config.relevance}
           onChange={handleRelevanceChange}
           options={options[type].map((option) => ({

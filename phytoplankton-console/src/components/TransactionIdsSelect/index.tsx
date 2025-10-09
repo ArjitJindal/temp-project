@@ -4,7 +4,10 @@ import Select, { Props } from '../library/Select';
 import { getOr } from '@/utils/asyncResource';
 import { useTransactionsList } from '@/hooks/api';
 
-type LocalProps = Omit<Extract<Props<string>, { mode: 'SINGLE' | 'MULTIPLE' }>, 'options'>;
+type LocalProps = Omit<
+  Extract<Props<string>, { mode: 'SINGLE' | 'MULTIPLE' | 'MULTIPLE_DYNAMIC' }>,
+  'options'
+>;
 
 function TransactionIdsSelect(props: LocalProps) {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();

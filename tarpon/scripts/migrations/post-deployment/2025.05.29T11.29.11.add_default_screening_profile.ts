@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { hasFeature } from '@/core/utils/context'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { CounterRepository } from '@/services/counter/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

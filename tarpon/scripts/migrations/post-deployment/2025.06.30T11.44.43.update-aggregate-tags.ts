@@ -1,8 +1,8 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { uniqObjects } from '@/utils/object'
 
 async function migrateTenant(tenant: Tenant) {

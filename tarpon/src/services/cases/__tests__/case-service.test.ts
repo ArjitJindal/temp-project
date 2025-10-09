@@ -30,8 +30,8 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { UserService } from '@/services/users'
 import { enableLocalChangeHandler } from '@/utils/local-change-handler'
 import { Account } from '@/@types/openapi-internal/Account'
-import { prepareClickhouseInsert } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',

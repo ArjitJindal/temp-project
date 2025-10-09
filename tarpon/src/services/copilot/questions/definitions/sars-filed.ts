@@ -1,10 +1,7 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { TableQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import {
-  REPORT_COLLECTION,
-  USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { REPORT_COLLECTION, USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { Report } from '@/@types/openapi-internal/Report'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import {

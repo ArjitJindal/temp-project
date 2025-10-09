@@ -1,6 +1,6 @@
 import { ApiRequestLog } from '@/@types/request-logger'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 
 export const handleRequestLoggerTaskClickhouse = async (
   tenantId: string,

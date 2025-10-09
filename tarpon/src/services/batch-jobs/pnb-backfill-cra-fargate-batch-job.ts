@@ -18,7 +18,7 @@ import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 

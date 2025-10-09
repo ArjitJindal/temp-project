@@ -2,7 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import chunk from 'lodash/chunk'
 import { StackConstants } from '@lib/constants'
 import { logger } from '@/core/logger'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import { batchGet } from '@/utils/dynamodb'
 import { DynamoConsumerMessage } from '@/@types/dynamo'
 

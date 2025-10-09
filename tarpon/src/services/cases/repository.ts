@@ -30,7 +30,7 @@ import {
   withTransaction,
   internalMongoBulkUpdate,
 } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -42,7 +42,8 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
-import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
+import { OptionalPagination } from '@/@types/pagination'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { traceable } from '@/core/xray'
@@ -56,10 +57,8 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { AccountsService } from '@/services/accounts'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import {
-  getClickhouseClient,
-  isConsoleMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import {

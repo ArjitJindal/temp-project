@@ -1,13 +1,11 @@
 import { MongoClient } from 'mongodb'
 import { DynamicPermissionsNodeSubType } from '@/@types/openapi-internal/DynamicPermissionsNodeSubType'
 import { DynamicResourcesData } from '@/@types/openapi-internal/DynamicResourcesData'
-import {
-  batchInsertToClickhouse,
-  executeClickhouseQuery,
-  runExecClickhouseQuery,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { DYNAMIC_PERMISSIONS_ITEMS_COLLECTION } from '@/utils/mongodb-definitions'
+import { runExecClickhouseQuery } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { DYNAMIC_PERMISSIONS_ITEMS_COLLECTION } from '@/utils/mongo-table-names'
 import {
   internalMongoDeleteOne,
   internalMongoUpdateOne,

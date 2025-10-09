@@ -1,6 +1,6 @@
 import { getMongoDbClient, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { CASES_COLLECTION, USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION, USERS_COLLECTION } from '@/utils/mongo-table-names'
 
 export async function searchUser(tenantId, search) {
   const mongo = await getMongoDbClient()

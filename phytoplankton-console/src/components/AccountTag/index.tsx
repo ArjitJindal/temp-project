@@ -1,30 +1,30 @@
 import React from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
+import cn from 'clsx';
 import Avatar from '../library/Avatar';
 import s from './index.module.less';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
-import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
+import Skeleton from '@/components/library/Skeleton';
+import { loading, success } from '@/utils/asyncResource';
 
 interface Props {
   accountId?: string;
+  hideUserName?: boolean;
 }
 
 export default function AccountTag(props: Props) {
-  const { accountId } = props;
+  const { accountId, hideUserName } = props;
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
   if (accountId == null) {
     return <></>;
   }
   return (
-    <div className={s.root}>
-      {loadingUsers ? (
-        <LoadingOutlined className={CY_LOADING_FLAG_CLASS} />
-      ) : (
-        <>
-          <Avatar size="xs" user={users[accountId]} />
-          {getDisplayedUserInfo(users[accountId]).name}
-        </>
-      )}
+    <div className={cn(s.root, hideUserName && s.hideUserName)}>
+      <Avatar size="xs" user={users[accountId]} isLoading={loadingUsers} />
+      <span className={s.userName}>
+        <Skeleton res={loadingUsers ? loading(users[accountId]) : success(users[accountId])}>
+          {(user) => getDisplayedUserInfo(user).name}
+        </Skeleton>
+      </span>
     </div>
   );
 }

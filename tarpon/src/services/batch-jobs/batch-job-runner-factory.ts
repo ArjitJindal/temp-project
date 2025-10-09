@@ -8,7 +8,7 @@ import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-
 import { BackfillAvgTrsRunner } from './backfill-avg-trs-runner'
 import { RiskScoringRecalculationBatchJobRunner } from './risk-scoring-recalculation-batch-job-runner'
 import { SimulationV8RiskFactorsBatchJobRunner } from './simulation-v8-risk-scoring-batch-job-runner'
-import { PnbBackfillEntitiesBatchJobRunner } from './pnb-backfill-entities-fargate-batch-job'
+import { BackfillEntitiesJsonlBatchJobRunner } from './backfill-entities-jsonl-fargate-batch-job'
 import { PnbBackfillTransactionsBatchJobRunner } from './pnb-backfill-transactions-fargate-batch-job'
 import { ManualRulePreAggregationBatchJobRunner } from './manual-rule-pre-aggregation-batch-job-runner'
 import { PnbBackfillKrsBatchJobRunner } from './pnb-backfill-krs-fargate-batch-job'
@@ -100,8 +100,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new BackfillAsyncRuleRunsBatchJobRunner(jobId),
     SCREENING_ALERTS_EXPORT: (jobId) =>
       new ScreeningAlertsExportBatchJobRunner(jobId),
-    PNB_BACKFILL_ENTITIES: (jobId) =>
-      new PnbBackfillEntitiesBatchJobRunner(jobId),
+    BACKFILL_ENTITIES_JSONL: (jobId) =>
+      new BackfillEntitiesJsonlBatchJobRunner(jobId),
     PNB_BACKFILL_TRANSACTIONS: (jobId) =>
       new PnbBackfillTransactionsBatchJobRunner(jobId),
     PNB_BACKFILL_KRS: (jobId) => new PnbBackfillKrsBatchJobRunner(jobId),

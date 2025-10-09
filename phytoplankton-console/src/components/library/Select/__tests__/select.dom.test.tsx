@@ -81,8 +81,7 @@ describe('MULTIPLE mode', () => {
   test('Simple use case', async () => {
     render(
       <RenderSelect
-        mode="MULTIPLE"
-        allowNewOptions
+        mode="MULTIPLE_DYNAMIC"
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -112,8 +111,7 @@ describe('MULTIPLE mode', () => {
   test('Remove values', async () => {
     render(
       <RenderSelect
-        mode="MULTIPLE"
-        allowNewOptions
+        mode="MULTIPLE_DYNAMIC"
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -140,8 +138,7 @@ describe('MULTIPLE mode', () => {
   test('Add non-existed value', async () => {
     render(
       <RenderSelect
-        mode="MULTIPLE"
-        allowNewOptions
+        mode="MULTIPLE_DYNAMIC"
         options={[
           { label: 'First option', value: 'option1' },
           { label: 'Second option', value: 'option2' },
@@ -165,8 +162,7 @@ describe('MULTIPLE mode', () => {
   test('Auto split by comma, new options enabled', async () => {
     render(
       <RenderSelect
-        mode="MULTIPLE"
-        allowNewOptions
+        mode="MULTIPLE_DYNAMIC"
         options={[
           { label: 'First option', value: 'option1', alternativeLabels: ['aaa', '111'] },
           { label: 'Second option', value: 'option2', alternativeLabels: ['bbb'] },

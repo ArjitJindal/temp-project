@@ -1,5 +1,5 @@
 import { getFiscalYearStart } from '@flagright/lib/utils/time'
-import { TimeWindow } from './rule-parameter-schemas'
+import { TimeWindow } from '@/@types/rule/params'
 import dayjs, { Dayjs } from '@/utils/dayjs'
 import { LogicAggregationTimeWindow } from '@/@types/openapi-internal/LogicAggregationTimeWindow'
 

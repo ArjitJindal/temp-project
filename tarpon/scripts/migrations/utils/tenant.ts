@@ -1,7 +1,7 @@
 import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
 import cloneDeep from 'lodash/cloneDeep'
 import { getConfig } from './config'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantInfo, TenantService } from '@/services/tenants'

@@ -17,6 +17,8 @@ import {
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { QueryContainer } from '@opensearch-project/opensearch/api/_types/_common.query_dsl'
 import { Client } from '@opensearch-project/opensearch/.'
+import { BadRequest } from 'http-errors'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import {
   SanctionsDataProviders,
   SanctionsSearchProps,
@@ -613,6 +615,51 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         })
       }
     }
+    if (request.countryOfResidence) {
+      if (this.provider() !== SanctionsDataProviders.ACURIS) {
+        throw new BadRequest(
+          'Country of residence is not supported for this provider'
+        )
+      }
+      andFilters.push({
+        compound: {
+          must: [
+            {
+              text: {
+                query: 'PERSON',
+                path: 'entityType',
+              },
+            },
+            {
+              compound: {
+                must: [
+                  {
+                    text: {
+                      query: 'Residential',
+                      path: 'addresses.addressType',
+                    },
+                  },
+                  {
+                    text: {
+                      query: request.countryOfResidence.join(' '),
+                      path: 'addresses.country',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      })
+    }
+    if (request.registrationId) {
+      andFilters.push({
+        text: {
+          query: request.registrationId,
+          path: 'documents.id',
+        },
+      })
+    }
     if (request.types && request.types.length > 0) {
       const matchTypes = request.types.flatMap((type) => [
         {
@@ -895,19 +942,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       const genderMatch = [
         {
           text: {
-            query: request.gender,
-            path: 'gender',
-          },
-        },
-        {
-          equals: {
-            value: 'Unknown',
-            path: 'gender',
-          },
-        },
-        {
-          equals: {
-            value: null,
+            query: humanizeAuto(request.gender),
             path: 'gender',
           },
         },

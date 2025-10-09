@@ -1,9 +1,9 @@
 import { AnyBulkWriteOperation } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { hasFeature } from '@/core/utils/context'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { envIs } from '@/utils/env'
 

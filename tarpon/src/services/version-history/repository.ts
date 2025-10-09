@@ -7,12 +7,10 @@ import {
   VersionHistoryTable,
   VersionHistoryTableSchema,
 } from '@/models/version-history'
-import {
-  getClickhouseCredentials,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import { VERSION_HISTORY_COLLECTION } from '@/utils/mongodb-definitions'
-import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { VERSION_HISTORY_COLLECTION } from '@/utils/mongo-table-names'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 
 @traceable
 export class VersionHistoryRepository {

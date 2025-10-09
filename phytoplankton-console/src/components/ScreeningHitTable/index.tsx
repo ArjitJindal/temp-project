@@ -48,6 +48,9 @@ export interface TableSearchParams {
   countryCodes?: Array<string>;
   yearOfBirth?: number;
   entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -277,17 +280,30 @@ export default function SanctionsSearchTable(props: Props) {
         kind: 'string',
       },
     },
-    ...(params?.entityType === 'PERSON' || !params?.entityType
-      ? [
-          {
-            title: 'Year of birth',
-            key: 'yearOfBirth',
-            renderer: {
-              kind: 'year',
-            },
-          } as ExtraFilterProps<TableSearchParams>,
-        ]
-      : []),
+    {
+      title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
+      key: 'yearOfBirth',
+      renderer: {
+        kind: 'year',
+      },
+      showFilterByDefault: params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',
+    },
+    {
+      title: 'Gender',
+      key: 'gender',
+      description: 'Select gender (only for Person)',
+      renderer: {
+        kind: 'select',
+        options: [
+          { value: 'MALE', label: 'Male' },
+          { value: 'FEMALE', label: 'Female' },
+          { value: 'UNKNOWN', label: 'Unknown' },
+        ],
+        mode: 'SINGLE',
+        displayMode: 'select',
+      },
+      showFilterByDefault: true,
+    },
     {
       title: 'Fuzziness',
       description: '(The default value is 0.5)',
@@ -373,6 +389,32 @@ export default function SanctionsSearchTable(props: Props) {
         displayMode: 'select',
       },
     });
+
+    // Add Country of residence filter only for Acuris provider
+    if (hasFeatureAcuris) {
+      extraFilters.push({
+        title: 'Country of residence',
+        key: 'countryOfResidence',
+        renderer: {
+          kind: 'select',
+          options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
+          mode: 'MULTIPLE',
+          displayMode: 'select',
+        },
+      });
+    }
+
+    // Add Registration ID filter for business entities
+    if (params?.entityType === 'BUSINESS') {
+      extraFilters.push({
+        title: 'Registration ID',
+        key: 'registrationId',
+        renderer: {
+          kind: 'string',
+        },
+      });
+    }
+
     extraFilters.push({
       title: 'Document ID',
       key: 'documentId',
@@ -392,13 +434,25 @@ export default function SanctionsSearchTable(props: Props) {
     },
   });
 
-  const restrictedByPermission = new Set(['fuzziness', 'nationality', 'types', 'entityType']);
+  const restrictedByPermission = new Set([
+    'fuzziness',
+    'nationality',
+    'types',
+    'entityType',
+    'countryOfResidence',
+    'registrationId',
+  ]);
 
   const defaultManualScreeningFilters = useDefaultManualScreeningFilters({
     enabled: isScreeningProfileEnabled,
   });
 
   const isFilterLockedByPermission = (key: string): boolean => {
+    // Never lock gender filter
+    if (key === 'gender') {
+      return false;
+    }
+
     if (canEditManualScreeningFilters) {
       return false;
     }

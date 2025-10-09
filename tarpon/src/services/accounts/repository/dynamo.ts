@@ -7,15 +7,15 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
+import { BaseAccountsRepository } from '.'
 import {
   Auth0TenantMetadata,
-  BaseAccountsRepository,
   InternalAccountCreate,
   InternalOrganizationCreate,
   MicroTenantInfo,
   PatchAccountData,
   Tenant,
-} from '.'
+} from '@/@types/tenant'
 import { Account } from '@/@types/openapi-internal/Account'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {

@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { sendAcurisSanctionsDataFetch } from '../utils/trigger-sanctions-data-fetch'
 import { hasFeature } from '@/core/utils/context'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 let hasFeatureAcuris = false
 async function migrateTenant(_tenant: Tenant) {

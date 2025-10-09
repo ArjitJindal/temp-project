@@ -4,9 +4,9 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoReasonsRepository } from './dynamo-repository'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 import { traceable } from '@/core/xray'
-import { REASONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { REASONS_COLLECTION } from '@/utils/mongo-table-names'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
-import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/utils'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/checks'
 
 @traceable
 export class ReasonsRepository {

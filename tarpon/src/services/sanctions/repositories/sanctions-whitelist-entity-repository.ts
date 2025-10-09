@@ -4,14 +4,14 @@ import omitBy from 'lodash/omitBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDefaultProviders } from '../utils'
 import { withTransaction } from '@/utils/mongodb-utils'
-import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { traceable } from '@/core/xray'
+import { cursorPaginate } from '@/utils/pagination'
 import {
-  cursorPaginate,
   CursorPaginationParams,
   CursorPaginationResponse,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'

@@ -4,8 +4,8 @@ import {
   SANCTIONS_COLLECTION,
   SANCTIONS_HITS_COLLECTION,
   SANCTIONS_WHITELIST_ENTITIES_COLLECTION,
-} from '@/utils/mongodb-definitions'
-import { Tenant } from '@/services/accounts/repository'
+} from '@/utils/mongo-table-names'
+import { Tenant } from '@/@types/tenant'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()

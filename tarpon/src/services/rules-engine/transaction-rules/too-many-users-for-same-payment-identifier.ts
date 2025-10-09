@@ -11,8 +11,9 @@ import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { traceable } from '@/core/xray'

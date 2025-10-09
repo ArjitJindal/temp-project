@@ -1,4 +1,4 @@
-import { CLICKHOUSE_DEFINITIONS } from '../definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 export const getLatestTeamStatsClickhouseQuery = (
   scope: 'CASES' | 'ALERTS',

@@ -2,10 +2,11 @@ import { JSONSchemaType } from 'ajv'
 import isEmpty from 'lodash/isEmpty'
 import { getSenderKeyId } from '../utils'
 import { RuleHitResult } from '../rule'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { traceable } from '@/core/xray'
 
 export type IpAddressMultipleUsersRuleParameters = {

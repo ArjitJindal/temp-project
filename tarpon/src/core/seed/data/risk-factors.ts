@@ -1,8 +1,8 @@
 import memoize from 'lodash/memoize'
-import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { ID_PREFIXES } from './seeds'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 
 export const riskFactors: () => RiskFactor[] = memoize(() => {
   const data: RiskFactor[] = [

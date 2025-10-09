@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { capitalizeWords, firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { startCase } from 'lodash';
 import s from './index.module.less';
-import { SimulationBeaconResultUser } from '@/apis';
+import { SimulationBeaconHit, SimulationBeaconResultUser } from '@/apis';
 import { CommonParams } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import * as Card from '@/components/ui/Card';
@@ -27,6 +27,7 @@ interface SimulationUsersHitProps {
 interface TableParams extends CommonParams {
   userId?: string;
   userName?: string;
+  hit?: string;
 }
 
 export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
@@ -64,14 +65,24 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
       key: 'hit',
       title: 'Simulation status',
       type: {
-        render: (value) => {
+        render: (value: SimulationBeaconHit | undefined) => {
           return (
             <Tag color={value === 'HIT' ? 'red' : 'green'}>
               {startCase(value?.split('_').join(' ').toLowerCase() ?? '')}
             </Tag>
           );
         },
+        autoFilterDataType: {
+          displayMode: 'list',
+          kind: 'select',
+          mode: 'SINGLE',
+          options: [
+            { value: 'HIT', label: 'Hit' },
+            { value: 'MISS', label: 'Miss' },
+          ],
+        },
       },
+      filtering: true,
     }),
     ...(isRiskLevelsEnabled
       ? [
@@ -128,6 +139,7 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
         pageSize: params.pageSize,
         filterType: 'BEACON_USER',
         filterUserId: params.userId,
+        filterHitStatus: params.hit,
       });
 
       return {

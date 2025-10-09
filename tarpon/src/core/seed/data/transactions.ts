@@ -48,7 +48,7 @@ import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResu
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
-import { getPaymentDetailsName } from '@/utils/helpers'
+import { getPaymentDetailsNameString } from '@/utils/helpers'
 import { hasFeature } from '@/core/utils/context'
 import { RuleHitDirection } from '@/@types/openapi-internal/RuleHitDirection'
 
@@ -217,7 +217,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       ruleInstanceId: string,
       transactionId: string
     ): SanctionsDetails[] => {
-      const namesToSearch = getPaymentDetailsName(paymentDetails)
+      const namesToSearch = getPaymentDetailsNameString(paymentDetails)
       const sanctionsDetails: SanctionsDetails[] = []
 
       for (const n of namesToSearch) {
@@ -474,6 +474,7 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
     })
     transactions = [...transactions, ...cryptoTransactions]
   }
+
   const counterParty = [...Array(COUNTER_PARTY_TXN_COUNT)].map((_, index) => {
     return fullTransactionSampler.getSample(
       undefined,
@@ -483,6 +484,29 @@ export const getTransactions: () => InternalTransaction[] = memoize(() => {
     )
   })
   transactions = [...transactions, ...counterParty]
+  if (hasFeature('EDD')) {
+    const businessUsers = users.filter((u) => u.type === 'BUSINESS')
+    const eddTransactions = [...Array(50)].map((_, index) => {
+      const transaction = fullTransactionSampler.getSample(
+        undefined,
+        index + TXN_COUNT + CRYPTO_TXN_COUNT + COUNTER_PARTY_TXN_COUNT,
+        false,
+        false,
+        true
+      )
+
+      const originUser = businessUsers[index]
+      const destinationUser = businessUsers[(index + 10) % businessUsers.length]
+      transaction.originUserId = originUser.userId
+      transaction.originUser = originUser
+      transaction.destinationUserId = destinationUser.userId
+      transaction.destinationUser = destinationUser
+      transaction.hitRules =
+        index % 2 === 0 ? [transaction.hitRules[0]] : [transaction.hitRules[1]]
+      return transaction
+    })
+    transactions = [...transactions, ...eddTransactions]
+  }
 
   return transactions
 })

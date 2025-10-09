@@ -32,6 +32,55 @@
       {
         "actions": ["read", "write"],
         "resources": ["frn:console:<default>:::*"]
+      },
+      {
+        "actions": ["read"],
+        "resources": [
+          "frn:console:<default>:::case-management/case-status/*",
+          "frn:console:<default>:::case-management/alert-status/*"
+        ],
+        "filter": [
+          {
+            "permissionId": "case-status",
+            "operator": "Equals",
+            "param": "filterCaseStatus",
+            "values": [
+              "OPEN",
+              "CLOSED",
+              "REOPENED",
+              "ESCALATED",
+              "IN_REVIEW_OPEN",
+              "IN_REVIEW_ESCALATED",
+              "IN_REVIEW_CLOSED",
+              "IN_REVIEW_REOPENED",
+              "OPEN_IN_PROGRESS",
+              "ESCALATED_IN_PROGRESS",
+              "OPEN_ON_HOLD",
+              "ESCALATED_ON_HOLD",
+              "ESCALATED_L2"
+            ]
+          },
+          {
+            "permissionId": "alert-status",
+            "operator": "Equals",
+            "param": "filterAlertStatus",
+            "values": [
+              "OPEN",
+              "CLOSED",
+              "REOPENED",
+              "ESCALATED",
+              "IN_REVIEW_OPEN",
+              "IN_REVIEW_ESCALATED",
+              "IN_REVIEW_CLOSED",
+              "IN_REVIEW_REOPENED",
+              "OPEN_IN_PROGRESS",
+              "ESCALATED_IN_PROGRESS",
+              "OPEN_ON_HOLD",
+              "ESCALATED_ON_HOLD",
+              "ESCALATED_L2"
+            ]
+          }
+        ]
       }
     ],
     "description": "Admin has unrestricted access to all features. They can invite new accounts to the console, and there can be multiple admins."

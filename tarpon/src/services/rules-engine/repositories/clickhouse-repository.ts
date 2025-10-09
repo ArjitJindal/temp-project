@@ -14,10 +14,12 @@ import {
   DefaultApiGetTransactionsStatsByTimeRequest,
   DefaultApiGetTransactionsStatsByTypeRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { OptionalPagination } from '@/@types/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { executeClickhouseQuery, getSortedData } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { getSortedData } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
@@ -117,45 +119,73 @@ export class ClickhouseTransactionsRepository {
         )
       }
     }
-    let timestampFilterCount = 0
 
-    // Add partition filtering when both timestamps are provided
-    if (params.afterTimestamp != null && params.beforeTimestamp != null) {
-      const afterDate = new Date(params.afterTimestamp)
-      const beforeDate = new Date(params.beforeTimestamp)
+    // Helper function to add timestamp filtering with partition optimization
+    const addTimestampFiltering = (
+      afterTimestamp: number | null | undefined,
+      beforeTimestamp: number | null | undefined,
+      timestampField: string
+    ) => {
+      let timestampFilterCount = 0
+      if (afterTimestamp != null && beforeTimestamp != null) {
+        const afterDate = new Date(afterTimestamp)
+        const beforeDate = new Date(beforeTimestamp)
 
-      const afterPartition =
-        afterDate.getFullYear() * 100 + (afterDate.getMonth() + 1)
-      const beforePartition =
-        beforeDate.getFullYear() * 100 + (beforeDate.getMonth() + 1)
+        const afterPartition =
+          afterDate.getFullYear() * 100 + (afterDate.getMonth() + 1)
+        const beforePartition =
+          beforeDate.getFullYear() * 100 + (beforeDate.getMonth() + 1)
 
-      if (afterPartition === beforePartition) {
-        whereConditions.push(
-          `toYYYYMM(toDateTime(timestamp / 1000)) = ${afterPartition}`
-        )
+        if (afterPartition === beforePartition) {
+          whereConditions.push(
+            `toYYYYMM(toDateTime(${timestampField} / 1000)) = ${afterPartition}`
+          )
+        } else {
+          whereConditions.push(
+            `toYYYYMM(toDateTime(${timestampField} / 1000)) >= ${afterPartition}`
+          )
+          whereConditions.push(
+            `toYYYYMM(toDateTime(${timestampField} / 1000)) <= ${beforePartition}`
+          )
+        }
+
+        whereConditions.push(`${timestampField} >= ${afterTimestamp}`)
+        whereConditions.push(`${timestampField} <= ${beforeTimestamp}`)
+
+        if (timestampField === 'timestamp') {
+          timestampFilterCount += 2
+        }
       } else {
-        whereConditions.push(
-          `toYYYYMM(toDateTime(timestamp / 1000)) >= ${afterPartition}`
-        )
-        whereConditions.push(
-          `toYYYYMM(toDateTime(timestamp / 1000)) <= ${beforePartition}`
-        )
-      }
+        if (afterTimestamp != null) {
+          whereConditions.push(`${timestampField} >= ${afterTimestamp}`)
+          if (timestampField === 'timestamp') {
+            timestampFilterCount++
+          }
+        }
 
-      whereConditions.push(`timestamp >= ${params.afterTimestamp}`)
-      whereConditions.push(`timestamp <= ${params.beforeTimestamp}`)
-      timestampFilterCount += 2
-    } else {
-      if (params.afterTimestamp != null) {
-        whereConditions.push(`timestamp >= ${params.afterTimestamp}`)
-        timestampFilterCount++
+        if (beforeTimestamp != null) {
+          whereConditions.push(`${timestampField} <= ${beforeTimestamp}`)
+          if (timestampField === 'timestamp') {
+            timestampFilterCount++
+          }
+        }
       }
-
-      if (params.beforeTimestamp != null) {
-        whereConditions.push(`timestamp <= ${params.beforeTimestamp}`)
-        timestampFilterCount++
-      }
+      return timestampFilterCount
     }
+
+    // Add timestamp filtering
+    const timestampFilterCount = addTimestampFiltering(
+      params.afterTimestamp,
+      params.beforeTimestamp,
+      'timestamp'
+    )
+
+    // Add payment approval timestamp filtering
+    addTimestampFiltering(
+      params.afterPaymentApprovalTimestamp,
+      params.beforePaymentApprovalTimestamp,
+      'paymentApprovalTimestamp'
+    )
 
     if (params.filterOriginCountries?.length) {
       whereConditions.push(
@@ -505,6 +535,8 @@ export class ClickhouseTransactionsRepository {
     const columnsProjection = {
       transactionId: 'id',
       timestamp: "JSONExtractFloat(data, 'timestamp')",
+      paymentApprovalTimestamp:
+        "JSONExtractFloat(data, 'paymentApprovalTimestamp')",
       updatedAt: "JSONExtractFloat(data, 'updatedAt')",
       arsScore: "JSONExtractFloat(data, 'arsScore', 'arsScore')",
       originPaymentMethod:
@@ -586,6 +618,7 @@ export class ClickhouseTransactionsRepository {
         return {
           transactionId: item.transactionId as string,
           timestamp: item.timestamp as number,
+          paymentApprovalTimestamp: item.paymentApprovalTimestamp as number,
           updatedAt: item.updatedAt as number,
           arsScore: { arsScore: item.arsScore as number },
           destinationPayment: {

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
-import { AssigneesDropdown } from '../components/AssigneesDropdown';
+import pluralize from 'pluralize';
+import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
@@ -103,7 +104,6 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
-import { formatDuration, getDuration } from '@/utils/time-utils';
 import { useSlaPoliciesPaginated } from '@/hooks/api/sla';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
@@ -380,10 +380,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     total: 0,
   });
   const handleAlertAssignments = useCallback(
-    (updateRequest: AlertsAssignmentsUpdateRequest) => {
+    async (updateRequest: AlertsAssignmentsUpdateRequest) => {
       const { alertIds, assignments } = updateRequest;
 
-      assignmentsToMutationAlerts.mutate({
+      await assignmentsToMutationAlerts.mutateAsync({
         alertIds,
         assignments,
       });
@@ -392,10 +392,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   );
 
   const handleAlertsReviewAssignments = useCallback(
-    (updateRequest: AlertsReviewAssignmentsUpdateRequest) => {
+    async (updateRequest: AlertsReviewAssignmentsUpdateRequest) => {
       const { alertIds, reviewAssignments } = updateRequest;
 
-      reviewAssignmentsToMutationAlerts.mutate({
+      await reviewAssignmentsToMutationAlerts.mutateAsync({
         alertIds,
         reviewAssignments,
       });
@@ -426,8 +426,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const columns = useMemo(() => {
     const mergedColumns = (
       showUserColumns: boolean,
-      handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => void,
-      handleAlertsReviewAssignments: (updateRequest: AlertsReviewAssignmentsUpdateRequest) => void,
+      handleAlertsAssignments: (updateRequest: AlertsAssignmentsUpdateRequest) => Promise<void>,
+      handleAlertsReviewAssignments: (
+        updateRequest: AlertsReviewAssignmentsUpdateRequest,
+      ) => Promise<void>,
       handleInvestigateAlert:
         | ((alertInfo: { alertId: string; caseId: string }) => void)
         | undefined,
@@ -530,14 +532,16 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                   return <>-</>;
                 }
                 const duration = dayjs.duration(value);
-                return <>{formatDuration(getDuration(duration.asMilliseconds()), 2)}</>;
+                const days = Math.floor(duration.asDays());
+                return <>{pluralize('day', days, true)}</>;
               },
               stringify: (value) => {
                 if (value == null) {
                   return '-';
                 }
                 const duration = dayjs.duration(value);
-                return formatDuration(getDuration(duration.asMilliseconds()), 2);
+                const days = Math.floor(duration.asDays());
+                return pluralize('day', days, true);
               },
             },
           }),
@@ -672,7 +676,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                         isMultiEscalationEnabled,
                       )
                     }
-                    onChange={(assignees) => {
+                    onChange={async (assignees) => {
                       const [assignments, isReview] = createAssignments(
                         entity.alertStatus ?? 'OPEN',
                         assignees,
@@ -686,12 +690,12 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       }
 
                       if (isReview) {
-                        handleAlertsReviewAssignments({
+                        await handleAlertsReviewAssignments({
                           alertIds: [entity.alertId],
                           reviewAssignments: assignments,
                         });
                       } else {
-                        handleAlertsAssignments({
+                        await handleAlertsAssignments({
                           alertIds: [entity.alertId],
                           assignments,
                         });
@@ -734,9 +738,9 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                         <AssigneesDropdown
                           assignments={assignments}
                           editing={!entity.ruleQaStatus}
-                          onChange={(assignees) => {
+                          onChange={async (assignees) => {
                             if (entity.alertId) {
-                              qaAssigneesUpdateMutation.mutate({
+                              await qaAssigneesUpdateMutation.mutateAsync({
                                 alertId: entity.alertId,
                                 AlertQaAssignmentsUpdateRequest: {
                                   assignments: assignees.map((assigneeUserId) => ({

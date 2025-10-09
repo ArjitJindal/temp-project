@@ -23,11 +23,11 @@ import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { traceable } from '@/core/xray'
+import { iteratePages } from '@/utils/pagination'
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
-  iteratePages,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { S3Config, S3Service } from '@/services/aws/s3-service'
 import {
   ThinWebhookDeliveryTask,

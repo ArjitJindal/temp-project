@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { ValueComparator } from './rule-parameter-schemas'
+import { ValueComparator } from '@/@types/rule/params'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 

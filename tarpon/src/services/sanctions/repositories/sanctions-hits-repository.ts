@@ -15,14 +15,14 @@ import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { traceable } from '@/core/xray'
-import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongo-table-names'
 import { CounterRepository } from '@/services/counter/repository'
+import { cursorPaginate } from '@/utils/pagination'
 import {
-  cursorPaginate,
-  CursorPaginationResponse,
   CursorPaginationParams,
+  CursorPaginationResponse,
   PaginationParams,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'

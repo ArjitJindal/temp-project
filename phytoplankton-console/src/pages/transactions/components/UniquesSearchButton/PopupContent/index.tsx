@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'ahooks';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Value } from '../types';
 import s from './style.module.less';
 import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
@@ -44,13 +45,16 @@ export default function PopupContent(props: Props) {
 
   const keyOptions = useMemo(() => {
     const data = getOr<string[]>(keysRes.data, []);
-    return data.map((v) => ({ label: v, value: v }));
+    return data.map((v) => ({ label: humanizeAuto(v), value: v }));
   }, [keysRes.data]);
 
   const valueOptions = useMemo(() => {
     const data = getOr<string[]>(valuesRes.data, []);
-    return data.map((v) => ({ label: v, value: v }));
-  }, [valuesRes.data]);
+    const merged = Array.from(
+      new Set([...(data ?? []), ...((defaults as string[] | undefined) ?? [])]),
+    );
+    return merged.map((v) => ({ label: humanizeAuto(v), value: v }));
+  }, [valuesRes.data, defaults]);
 
   return (
     <div className={s.root}>
@@ -69,7 +73,7 @@ export default function PopupContent(props: Props) {
       <div className={s.contentItem}>
         <div className={s.label}>Value</div>
         <Select<string>
-          mode="MULTIPLE"
+          mode="MULTIPLE_DYNAMIC"
           placeholder="Search value"
           options={valueOptions}
           value={selectedValues}

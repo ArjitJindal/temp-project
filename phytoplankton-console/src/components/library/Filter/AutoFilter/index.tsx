@@ -53,7 +53,21 @@ export function AutoFilter(props: Props): JSX.Element {
     );
   }
   if (filter.dataType.kind === 'dateTimeRange') {
-    const [start, end] = (value ?? []) as [string | undefined, string | undefined];
+    let [start, end] = (value ?? []) as [string | undefined, string | undefined];
+    const minStartDate = filter.dataType.min;
+
+    if (minStartDate && start) {
+      const startTimestamp = new Date(start).getTime();
+      if (startTimestamp < minStartDate) {
+        start = new Date(minStartDate).toISOString();
+      }
+    }
+    if (minStartDate && end) {
+      const endTimestamp = new Date(end).getTime();
+      if (endTimestamp < minStartDate) {
+        end = new Date(minStartDate).toISOString();
+      }
+    }
     return (
       <InputQuickFilter<[string | undefined, string | undefined]>
         {...sharedProps}

@@ -1,4 +1,4 @@
-import { GPT_REQUESTS_COLLECTION } from '../mongodb-definitions'
+import { GPT_REQUESTS_COLLECTION } from '../mongo-table-names'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { LLMProvider } from '@/@types/openapi-internal/LLMProvider'
 

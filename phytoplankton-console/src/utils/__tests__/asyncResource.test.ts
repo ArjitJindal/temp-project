@@ -17,7 +17,7 @@ describe('helpers', () => {
     expect(all([init(), init()])).toEqual(init());
     expect(all([failed('Error 1'), init()])).toEqual(failed('Error 1'));
     expect(all([failed('Error 1'), failed('Error 2')])).toEqual(failed('Error 1; Error 2'));
-    expect(all([init(), loading()])).toEqual(init());
+    expect(all([init(), loading()])).toEqual(loading());
     expect(all([init(), failed('Error 1')])).toEqual(failed('Error 1'));
     expect(all([loading(), success('last value')])).toEqual(loading());
     expect(all([loading('value 1'), loading('value 2')])).toEqual(loading(['value 1', 'value 2']));

@@ -1,5 +1,5 @@
 import { FLAGRIGHT_SYSTEM_USER } from '../user'
-import { CLICKHOUSE_DEFINITIONS } from './definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 export const getInvestigationTimes = (
   scope: 'CASES' | 'ALERTS',

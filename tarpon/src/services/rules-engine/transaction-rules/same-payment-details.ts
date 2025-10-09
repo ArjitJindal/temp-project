@@ -5,7 +5,6 @@ import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   TIME_WINDOW_SCHEMA,
-  TimeWindow,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
@@ -13,6 +12,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import { getNonUserReceiverKeyId, getNonUserSenderKeyId } from '../utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,

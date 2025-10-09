@@ -1,12 +1,10 @@
 import { getMongoDbClient, allCollections } from '@/utils/mongodb-utils'
-import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
+import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
-import {
-  executeClickhouseDefaultClientQuery,
-  getClickhouseDbName,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { logger } from '@/core/logger'
+import { getClickhouseDbName } from '@/utils/clickhouse/database-utils'
 
 export const up = async () => {
   const mongoDb = await getMongoDbClient()
