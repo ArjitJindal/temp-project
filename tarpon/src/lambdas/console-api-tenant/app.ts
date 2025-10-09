@@ -63,7 +63,7 @@ const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'isAccountSuspended',
 ]
 
-const assertSettings = (
+export const assertSettings = (
   settings: TenantSettings,
   statements: PermissionStatements[]
 ) => {
@@ -100,9 +100,10 @@ const assertSettings = (
       batchRerunRiskScoringFrequency: [
         'write:::settings/risk-scoring/batch-rerun-risk-scoring-settings/*',
       ],
+      aiSourcesDisabled: ['write:::settings/add-ons/ai-features/*'],
     }
 
-  for (const settingsKey in settingsKeys) {
+  for (const settingsKey of settingsKeys) {
     const requiredResources = settingPermissions[settingsKey] as
       | Resource[]
       | undefined
