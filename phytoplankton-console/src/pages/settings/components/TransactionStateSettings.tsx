@@ -37,7 +37,7 @@ export const TransactionStateSettings: React.FC = () => {
         columnHelper.simple({
           title: 'State',
           key: 'state',
-          defaultWidth: 100,
+          defaultWidth: 150,
         }),
         columnHelper.simple({
           title: 'Description',
