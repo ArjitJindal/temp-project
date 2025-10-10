@@ -54,6 +54,7 @@ const RiskFactorConfigurationStep = forwardRef((props: Props) => {
       />
       <LogicDefinitionCard
         ruleType={props.ruleType}
+        readOnly={props.readOnly}
         entityVariablesFieldState={entityVariablesFieldState}
         aggVariablesFieldState={aggVariablesFieldState}
         riskLevelLogic={riskLevelLogic}

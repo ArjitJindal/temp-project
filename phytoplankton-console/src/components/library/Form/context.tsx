@@ -14,6 +14,7 @@ interface MetaMap {
 }
 
 export interface FormContextValue<FormValues> {
+  isDisabled: boolean;
   values: FormValues;
   setValues: Dispatch<Updater<FormValues>>;
   meta: MetaMap;

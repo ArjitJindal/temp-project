@@ -145,6 +145,7 @@ function RiskFactorConfigurationForm(
       }
     >
       <Form<RiskFactorConfigurationFormValues>
+        isDisabled={readonly}
         key={formId}
         id={formId}
         ref={internalFormRef}
@@ -178,7 +179,7 @@ function RiskFactorConfigurationForm(
           </Card.Root>
           <div className={cn(s.stepperContent)}>
             <div
-              className={cn(readonly ? s.readOnlyFormContent : '')}
+              // className={cn(readonly ? s.readOnlyFormContent : '')}
               tabIndex={readonly ? 0 : undefined}
               onKeyDownCapture={
                 readonly

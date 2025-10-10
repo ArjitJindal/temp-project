@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { NestedValidationResult } from '../utils/validation/types';
-import { useFieldState } from '@/components/library/Form/utils/hooks';
+import { useFieldState, useFormContext } from '@/components/library/Form/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 import { FieldContext } from '@/components/library/Form/context';
 
@@ -25,6 +25,7 @@ export default function GenericFormField<
   Key extends keyof FormValues = keyof FormValues,
 >(props: Props<Key, FormValues[Key]>): JSX.Element {
   const { name, children } = props;
+  const { isDisabled } = useFormContext<FormValues>();
   const fieldState = useFieldState<FormValues, Key>(name);
   const {
     value,
@@ -49,6 +50,7 @@ export default function GenericFormField<
     <FieldContext.Provider value={{ state: fieldState }}>
       {children({
         value,
+        isDisabled: isDisabled,
         onChange: handleChange,
         onFocus: () => {
           onChangeMeta((prev) => ({ ...prev, isTouched: true }));

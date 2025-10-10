@@ -486,6 +486,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       >
         <Card.Section direction="vertical">
           <SearchBar
+            readOnly={readOnly}
             search={searchKey}
             onSearch={(value) => {
               setSearchKey(value);

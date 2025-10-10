@@ -452,23 +452,24 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
             description="Add all entity and aggregate variables that are required for the rule to check"
             required={true}
           />
-
-          <Dropdown<VariableType>
-            options={[
-              { value: 'entity', label: 'Entity variable' },
-              { value: 'aggregation', label: 'Aggregate variable' },
-              ...(hasMachineLearningFeature && settings?.isMlEnabled
-                ? [{ value: 'ml' as VariableType, label: 'ML variable' }]
-                : []),
-            ]}
-            onSelect={(option) => handleAddVariable(option.value)}
-            placement="bottomLeft"
-          >
-            {/* TODO: Update e2e test */}
-            <Button testName="add-variable-v8" isLoading={isLoading(variablesRes)}>
-              Add variable
-            </Button>
-          </Dropdown>
+          {!readOnly && (
+            <Dropdown<VariableType>
+              options={[
+                { value: 'entity', label: 'Entity variable' },
+                { value: 'aggregation', label: 'Aggregate variable' },
+                ...(hasMachineLearningFeature && settings?.isMlEnabled
+                  ? [{ value: 'ml' as VariableType, label: 'ML variable' }]
+                  : []),
+              ]}
+              onSelect={(option) => handleAddVariable(option.value)}
+              placement="bottomLeft"
+            >
+              {/* TODO: Update e2e test */}
+              <Button testName="add-variable-v8" isLoading={isLoading(variablesRes)}>
+                Add variable
+              </Button>
+            </Dropdown>
+          )}
         </div>
         <VariableTags
           usedVariables={usedVariables}
