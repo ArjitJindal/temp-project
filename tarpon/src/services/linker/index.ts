@@ -24,6 +24,16 @@ import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
+const ONTOLOGY_CONFIG = {
+  maxLinksPerType: 10,
+  graph: {
+    maxNodes: 50,
+    maxEdges: 65,
+    maxConsumerUsers: 20,
+    maxBusinessUsers: 25,
+  },
+} as const
+
 type UsersProjectedData = Pick<
   InternalUser,
   | 'userId'
@@ -78,8 +88,15 @@ export class LinkerService {
     for (const [userId, label] of linkedUsers) {
       nodeMap.set(`user:${userId}`, label)
     }
+
+    // Process links with configured limits
     links.forEach(([prefix, linked]) => {
+      let linkCount = 0
+
       for (const [link, users] of linked.entries()) {
+        if (linkCount >= ONTOLOGY_CONFIG.maxLinksPerType) {
+          break
+        }
         nodeMap.set(`${prefix}:${link}`, '')
         linkedEdges.push(
           ...users.map((userId) => ({
@@ -88,6 +105,7 @@ export class LinkerService {
             target: `${prefix}:${link}`,
           }))
         )
+        linkCount++
       }
     })
 
@@ -105,9 +123,46 @@ export class LinkerService {
       label,
     }))
 
+    const { graph: config } = ONTOLOGY_CONFIG
+    const mainUserNode = nodes.find((node) => node.id === `user:${userId}`)
+    const otherNodes = nodes.filter((node) => node.id !== `user:${userId}`)
+
+    // Separate and limit users by type
+    const isConsumer = (node: any) => node.label?.split(' ').length > 1
+    const consumerNodes = otherNodes
+      .filter(isConsumer)
+      .slice(0, config.maxConsumerUsers)
+    const businessNodes = otherNodes
+      .filter((node) => !isConsumer(node))
+      .slice(0, config.maxBusinessUsers)
+    const finalNodes = [
+      mainUserNode,
+      ...consumerNodes,
+      ...businessNodes,
+    ].filter(Boolean)
+
+    // Filter and select diverse edges
+    const validUserIds = new Set(
+      finalNodes
+        .filter((n): n is NonNullable<typeof n> & { id: string } =>
+          Boolean(n?.id)
+        )
+        .map((n) => n.id)
+    )
+    const limitedEdges = this.selectEdgesWithDiversity(
+      linkedEdges.filter((edge) => validUserIds.has(edge.source)),
+      config.maxEdges
+    )
+
+    // Add connection nodes
+    const connectionNodes = [
+      ...new Set(limitedEdges.map((edge) => edge.target)),
+    ].map((id) => ({ id, label: '' }))
+    const allFinalNodes = [...finalNodes, ...connectionNodes] as GraphNodes[]
+
     return {
-      nodes,
-      edges: linkedEdges,
+      nodes: allFinalNodes,
+      edges: limitedEdges,
     }
   }
 
@@ -245,6 +300,50 @@ export class LinkerService {
     } else {
       map.set(link, uniq([user.userId]))
     }
+  }
+
+  private selectEdgesWithDiversity(
+    edges: Array<{ id: string; source: string; target: string }>,
+    maxEdges: number
+  ): Array<{ id: string; source: string; target: string }> {
+    // Group edges by type
+    const edgesByType = edges.reduce((acc, edge) => {
+      const type = edge.target.split(':')[0]
+      acc.set(type, [...(acc.get(type) || []), edge])
+      return acc
+    }, new Map<string, Array<{ id: string; source: string; target: string }>>())
+
+    // Round-robin selection
+    const selectedEdges: Array<{ id: string; source: string; target: string }> =
+      []
+    const edgeTypes = Array.from(edgesByType.keys())
+    const typeCounters = new Map(edgeTypes.map((type) => [type, 0]))
+
+    let totalSelected = 0
+    while (totalSelected < maxEdges && edgeTypes.length > 0) {
+      for (let i = 0; i < edgeTypes.length; i++) {
+        const edgeType = edgeTypes[i]
+        const counter = typeCounters.get(edgeType)
+        const edgesForType = edgesByType.get(edgeType)
+
+        if (counter === undefined || !edgesForType) {
+          continue
+        }
+
+        if (counter < edgesForType.length) {
+          selectedEdges.push(edgesForType[counter])
+          typeCounters.set(edgeType, counter + 1)
+          totalSelected++
+        }
+
+        if (counter >= edgesForType.length - 1) {
+          edgeTypes.splice(i, 1)
+          i--
+        }
+      }
+    }
+
+    return selectedEdges
   }
 
   public async transactions(

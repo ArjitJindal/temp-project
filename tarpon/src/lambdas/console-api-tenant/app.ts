@@ -100,6 +100,9 @@ export const assertSettings = (
       batchRerunRiskScoringFrequency: [
         'write:::settings/risk-scoring/batch-rerun-risk-scoring-settings/*',
       ],
+      showAllDecimalPlaces: [
+        'write:::settings/transactions/show-all-decimal-places/*',
+      ],
       aiSourcesDisabled: ['write:::settings/add-ons/ai-features/*'],
     }
 
@@ -178,11 +181,11 @@ export const tenantsHandler = lambdaApi()(
     })
 
     handlers.registerGetTenantsSettings(
-      async (ctx) =>
+      async (ctx, request) =>
         await new TenantService(ctx.tenantId, {
           dynamoDb: getDynamoDbClientByEvent(event),
           mongoDb,
-        }).getTenantSettings()
+        }).getTenantSettings(request.unmaskDowJonesPassword)
     )
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {

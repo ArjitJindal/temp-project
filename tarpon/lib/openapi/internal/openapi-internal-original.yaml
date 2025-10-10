@@ -3565,7 +3565,13 @@ paths:
                 $ref: '#/components/schemas/TenantSettings'
         '401':
           description: Unauthorized
-    parameters: []
+    parameters:
+      - name: unmaskDowJonesPassword
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
     post:
       summary: Tenant - POST Settings
       operationId: post-tenants-settings
@@ -12034,6 +12040,8 @@ components:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:
           $ref: '#/components/schemas/WorkflowSettings'
+        showAllDecimalPlaces:
+          type: boolean
     LLMProvider:
       type: string
       enum:

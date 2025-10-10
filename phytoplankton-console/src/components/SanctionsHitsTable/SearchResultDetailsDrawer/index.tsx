@@ -442,7 +442,7 @@ export function CAEntityDetails(props: {
                 ) : (
                   <div className={s.tags}>
                     {associations.map((assoc, i) => (
-                      <Tag color="gray" key={i} wrapText={false} trimText={false}>
+                      <Tag color="gray" key={i} disableWrapText={false} trimText={false}>
                         <div className={s.associateInfo}>
                           <span>{assoc.name}</span>
                           {assoc.association ||
