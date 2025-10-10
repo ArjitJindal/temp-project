@@ -434,6 +434,12 @@ export const DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE = (dateRange: RangeValue<Dayj
   ['qa-alerts-by-assignee', dateRange].filter(Boolean);
 
 export const SETTINGS = (): QueryKey => ['settings'];
+export const TENANT_SETTINGS_UNMASK = (unmaskDowJonesPassword: boolean): QueryKey => [
+  'tenant-settings-unmask',
+  unmaskDowJonesPassword,
+];
+export const TENANTS_LIST = (): QueryKey => ['tenants'];
+export const TENANTS_DELETION_DATA = (): QueryKey => ['tenantsFailedToDelete'];
 export const SECONDARY_QUEUE_TENANTS = (): QueryKey => ['secondary-queue-tenants'];
 
 export const TENANT_USAGE_DATA = (): QueryKey => ['tenant-usage-data'];

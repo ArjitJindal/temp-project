@@ -178,11 +178,11 @@ export const tenantsHandler = lambdaApi()(
     })
 
     handlers.registerGetTenantsSettings(
-      async (ctx) =>
+      async (ctx, request) =>
         await new TenantService(ctx.tenantId, {
           dynamoDb: getDynamoDbClientByEvent(event),
           mongoDb,
-        }).getTenantSettings()
+        }).getTenantSettings(request.unmaskDowJonesPassword)
     )
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
