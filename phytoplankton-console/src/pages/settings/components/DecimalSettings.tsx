@@ -10,12 +10,10 @@ export const DecimalSettings = () => {
   const settings = useSettings();
   const mutateTenantSettings = useUpdateTenantSettings();
 
-  const handleDisable = () => {
-    mutateTenantSettings.mutate({ showAllDecimalPlaces: false });
-  };
-
-  const handleEnable = () => {
-    mutateTenantSettings.mutate({ showAllDecimalPlaces: true });
+  const handleToggle = (showAllDecimalPlaces: boolean | undefined) => {
+    if (showAllDecimalPlaces != null) {
+      mutateTenantSettings.mutate({ showAllDecimalPlaces: showAllDecimalPlaces ? false : true });
+    }
   };
 
   const permissions = useHasResources(['write:::settings/transactions/show-all-decimal-places/*']);
@@ -28,7 +26,7 @@ export const DecimalSettings = () => {
     >
       <div>
         <Toggle
-          onChange={!(settings.showAllDecimalPlaces ?? false) ? handleEnable : handleDisable}
+          onChange={handleToggle}
           value={settings.showAllDecimalPlaces ?? false}
           isLoading={mutateTenantSettings.isLoading}
           isDisabled={!permissions}

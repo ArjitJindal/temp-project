@@ -155,7 +155,7 @@ const FloatRender = (value: number | undefined): JSX.Element => {
   return <span>{formatNumber(value ?? 0, { keepDecimals: true, showAllDecimals })}</span>;
 };
 
-export const FLOAT: ColumnDataType<number | undefined> = {
+export const FLOAT: ColumnDataType<number> = {
   render: (value) => FloatRender(value),
   renderEdit: (context) => {
     const [state] = context.edit.state;
