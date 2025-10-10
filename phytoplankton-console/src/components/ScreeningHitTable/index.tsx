@@ -97,7 +97,7 @@ export default function SanctionsSearchTable(props: Props) {
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
   const canEditManualScreeningFilters = useHasResources([
-    'write:::screening/manual-screening-filters/*',
+    'write:::screening/manual-screening/manual-screening-filters/*',
   ]);
 
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');

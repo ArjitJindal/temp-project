@@ -67,6 +67,11 @@ export function useRoutes(): RouteItem[] {
   const { statements } = useResources();
 
   const hasAuditLogPermission = useHasResources(['read:::audit-log/export/*']);
+
+  // Check permissions for screening tabs
+  const hasManualScreeningPermission = useHasResources(['read:::screening/manual-screening/*']);
+  const hasActivityPermission = useHasResources(['read:::screening/activity/*']);
+  const hasWhitelistPermission = useHasResources(['read:::screening/whitelist/*']);
   const user = useAuth0User();
   const isAtLeastAdminUser = isAtLeastAdmin(user);
   const isRiskLevelSimulationMode =
@@ -555,15 +560,37 @@ export function useRoutes(): RouteItem[] {
         position: 'top',
         disabled: !isSanctionsEnabled,
         associatedFeatures: ['SANCTIONS'],
-        minRequiredResources: ['read:::sanctions/search/*'],
+        minRequiredResources: [
+          'read:::screening/manual-screening/*',
+          'read:::screening/activity/*',
+          'read:::screening/whitelist/*',
+        ],
         routes: isSanctionsEnabled
           ? [
               {
                 path: '/screening',
-                redirect:
-                  lastActiveSanctionsTab === 'search'
-                    ? '/screening/manual-screening'
-                    : '/screening/manual-screening-history',
+                redirect: (() => {
+                  // Determine redirect based on permissions and last active tab
+                  if (lastActiveSanctionsTab === 'search' && hasManualScreeningPermission) {
+                    return '/screening/manual-screening';
+                  } else if (lastActiveSanctionsTab === 'activity' && hasActivityPermission) {
+                    return '/screening/activity';
+                  } else if (lastActiveSanctionsTab === 'whitelist' && hasWhitelistPermission) {
+                    return '/screening/whitelist';
+                  }
+
+                  // Fallback: redirect to first available tab
+                  if (hasManualScreeningPermission) {
+                    return '/screening/manual-screening';
+                  } else if (hasActivityPermission) {
+                    return '/screening/activity';
+                  } else if (hasWhitelistPermission) {
+                    return '/screening/whitelist';
+                  }
+
+                  // If no permissions, redirect to manual-screening (will show forbidden)
+                  return '/screening/manual-screening';
+                })(),
               },
               {
                 path: '/screening/:type',
@@ -699,6 +726,9 @@ export function useRoutes(): RouteItem[] {
     isAtLeastAdminUser,
     hasAuditLogPermission,
     hasMachineLearningFeature,
+    hasManualScreeningPermission,
+    hasActivityPermission,
+    hasWhitelistPermission,
     statements,
   ]);
 }
