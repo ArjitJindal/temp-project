@@ -151,14 +151,14 @@ export const NUMBER: ColumnDataType<number> = {
   },
 };
 
-const FloatRender = (value: number | undefined): JSX.Element => {
+const FloatRender: React.FC<{ value: number | undefined }> = ({ value }) => {
   const settings = useSettings();
   const showAllDecimals = settings.showAllDecimalPlaces ?? false;
   return <span>{formatNumber(value ?? 0, { keepDecimals: true, showAllDecimals })}</span>;
 };
 
 export const FLOAT: ColumnDataType<number> = {
-  render: (value) => FloatRender(value),
+  render: (value) => <FloatRender value={value} />,
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (
