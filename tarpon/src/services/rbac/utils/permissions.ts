@@ -518,6 +518,12 @@ export const PERMISSIONS_LIBRARY: Permissions = [
             actions: ['read', 'write'],
             type: 'STATIC',
           },
+          {
+            id: 'show-all-decimal-places',
+            name: 'Show all decimal places',
+            actions: ['read', 'write'],
+            type: 'STATIC',
+          },
         ],
       },
       {

@@ -49,6 +49,7 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { getOr } from '@/utils/asyncResource';
 import { Authorized } from '@/components/utils/Authorized';
 import { UserUpdateApprovalSettings } from '@/pages/settings/components/UserUpdateApprovalSettings';
+import { DecimalSettings } from '@/pages/settings/components/DecimalSettings';
 
 export default function SettingsPage() {
   const { section = 'system' } = useParams<'section'>() as {
@@ -123,6 +124,7 @@ export default function SettingsPage() {
               <>
                 <PaymentApprovalSettings />
                 <TransactionStateSettings />
+                <DecimalSettings />
               </>
             ),
           },

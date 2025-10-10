@@ -3,6 +3,7 @@ import { CURRENCIES, Currency } from '@flagright/lib/constants';
 import { Amount, TransactionAmountDetails } from '@/apis';
 import { formatNumber } from '@/utils/number';
 import CurrencySymbol from '@/components/ui/Currency';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface CommonProps {
   compact?: boolean;
@@ -26,6 +27,7 @@ type Props = (AmountProps | ValueCurrencyProps) &
   React.HTMLAttributes<HTMLSpanElement>;
 
 export default function Money(props: Props) {
+  const settings = useSettings();
   let value: number | null | undefined;
   let currency: Currency | null | undefined;
   if ('value' in props && 'currency' in props) {
@@ -44,11 +46,14 @@ export default function Money(props: Props) {
     return <span {...rest}>-</span>;
   }
 
+  const showAllDecimals = settings.showAllDecimalPlaces ?? false;
+  const formattedValue = formatNumber(value, { compact, showAllDecimals });
+
   const currencyInfo = CURRENCIES.find((x) => x.value === currency) ?? null;
   if (currencyInfo == null) {
     return (
       <span {...rest}>
-        <span title={(value ?? 0.0)?.toFixed(2)}>{formatNumber(value, { compact })}</span>
+        <span title={(value ?? 0.0)?.toFixed(showAllDecimals ? 20 : 2)}>{formattedValue}</span>
         <span> </span>
         <span>{currency}</span>
       </span>
@@ -58,7 +63,7 @@ export default function Money(props: Props) {
     <span {...rest}>
       <CurrencySymbol currency={currency} />
       &#8203;
-      <span title={(value ?? 0.0)?.toFixed(2)}>{formatNumber(value, { compact })}</span>
+      <span title={(value ?? 0.0)?.toFixed(showAllDecimals ? 20 : 2)}>{formattedValue}</span>
     </span>
   );
 }
