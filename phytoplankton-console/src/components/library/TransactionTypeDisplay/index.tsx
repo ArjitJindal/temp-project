@@ -1,4 +1,3 @@
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import style from './index.module.less';
 import ArrowUpLineIcon from '@/components/ui/icons/Remix/system/arrow-up-line.react.svg';
 import ArrowRightLineIcon from '@/components/ui/icons/Remix/system/arrow-right-line.react.svg';
@@ -33,7 +32,7 @@ export default function TransactionTypeDisplay({ transactionType }: Props) {
   return (
     <div className={style.root}>
       {transactionTypeIcon}
-      <span>{humanizeConstant(transactionType)}</span>
+      <span>{transactionType}</span>
     </div>
   );
 }
