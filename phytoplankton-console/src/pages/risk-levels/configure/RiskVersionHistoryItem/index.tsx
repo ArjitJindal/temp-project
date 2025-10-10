@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import RiskClassificationTable, { parseApiState } from '../RiskClassificationTable';
-import { usePendingProposal } from '../utils';
 import s from './index.module.less';
+import { usePendingProposal } from '@/hooks/api/risk-factors';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';

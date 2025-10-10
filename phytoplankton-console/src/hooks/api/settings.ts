@@ -6,14 +6,9 @@ import {
   COPILOT_AI_RESOURCES,
   NANGO_CONNECTIONS,
   TENANT_USAGE_DATA,
-  SETTINGS,
+  TENANT_SETTINGS_UNMASK,
 } from '@/utils/queries/keys';
-import type {
-  AiSourcesResponse,
-  ConsoleActionReasonCreationRequest,
-  ReasonType,
-  TenantSettings,
-} from '@/apis';
+import type { AiSourcesResponse, ConsoleActionReasonCreationRequest, ReasonType } from '@/apis';
 import { getOr } from '@/utils/asyncResource';
 
 export function useToggleActionReason(options?: any) {
@@ -92,9 +87,14 @@ export function useReasons(type?: ReasonType, filterInactive: boolean = true): s
   return actionReasons.filter((val) => (filterInactive ? val.isActive : true)).map((d) => d.reason);
 }
 
-export function useTenantSettings() {
+export function useTenantSettingsUnmask(unmaskDowJonesPassword: boolean) {
   const api = useApi();
-  return useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
-    return await api.getTenantsSettings();
-  });
+  return useQuery(
+    TENANT_SETTINGS_UNMASK(unmaskDowJonesPassword),
+    async () => await api.getTenantsSettings({ unmaskDowJonesPassword }),
+    {
+      enabled: unmaskDowJonesPassword,
+      retry: false,
+    },
+  );
 }

@@ -7279,6 +7279,7 @@ components:
         - VIC
         - XAI
         - SLE
+        - UDI
     MCCDetails:
       title: MCCDetails
       type: object

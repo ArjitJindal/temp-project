@@ -80,8 +80,12 @@ export function useRiskFactorsSimulationHistory(params: any) {
       includeInternal: params?.includeInternal,
     });
 
+    const filteredItems = simulations.data
+      .filter((item: any) => item.type === 'RISK_FACTORS_V8')
+      .map((item: any) => ({ ...item, rowId: item.jobId }));
+
     return {
-      items: simulations.data,
+      items: filteredItems,
       total: simulations.total,
     };
   });

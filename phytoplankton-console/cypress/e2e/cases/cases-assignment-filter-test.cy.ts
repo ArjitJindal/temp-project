@@ -21,23 +21,22 @@ describe('Using Assignment filter and assigning cases', () => {
         cy.get('tr [data-cy="_assignmentName"]')
           .first()
           .then(($assignmentTd) => {
+            // we already have assigne filter in the query
+            // TODO: if there are multiple assignee to a case we succeed the test in second try
             const userName = $assignmentTd.find('*[data-cy="user-name"]');
             cy.log(`Length: ${userName.length}`);
-            if (userName.length > 0) {
-              cy.get('tr [data-cy="_assignmentName"]').first().scrollIntoView();
-              // eslint-disable-next-line cypress/no-unnecessary-waiting
-              cy.wait(100);
-              cy.multiSelect('tr [data-cy="_assignmentName"]', [], { clear: true });
-              cy.message('Assignees updated successfully').should('exist');
-              cy.message().should('not.exist');
-            } else {
-              cy.log('Unassigned item found, skip cleaning');
-            }
+            cy.get('tr [data-cy="_assignmentName"]').first().scrollIntoView();
+            // eslint-disable-next-line cypress/no-unnecessary-waiting
+            cy.wait(100);
+            cy.multiSelect('tr [data-cy="_assignmentName"]', [], { clear: true });
+            cy.message('Assignees updated successfully').should('exist');
+            cy.message().should('not.exist');
           })
           .then(() => {
             cy.visit(
               `/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=OPEN%2CREOPENED`,
             );
+            cy.waitNothingLoading();
             // Find all divs with class "unassigned" and select the first one
             cy.get('tr', { timeout: 20000 })
               .filter(':has(div[data-cy~="assignee-dropdown"][data-cy~="empty"])')
@@ -60,7 +59,7 @@ describe('Using Assignment filter and assigning cases', () => {
               .click({ force: true });
             cy.get('[data-cy^=assignee-dropdown]')
               .invoke('text')
-              .should('contain', 'Ccypress+admin@flagright.com');
+              .should('contain', 'cypress+admin@flagright.com');
             cy.go(-1);
 
             cy.get('[data-cy="rules-filter"]')

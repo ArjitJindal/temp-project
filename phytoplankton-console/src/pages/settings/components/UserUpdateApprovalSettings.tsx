@@ -8,7 +8,7 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
-import { useTenantSettings } from '@/hooks/api/settings';
+import { useTenantSettings } from '@/hooks/api/tenant-settings';
 import { useUserApprovalWorkflows } from '@/hooks/api/workflows';
 import { message } from '@/components/library/Message';
 import { getErrorMessage, neverReturn } from '@/utils/lang';

@@ -110,7 +110,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         type: {
           render: (id: string | undefined, { item: entity }) => {
             return (
-              <>
+              <div className={style.root}>
                 <a
                   onClick={() => {
                     if (simulationMode && !canSimulate(entity)) {
@@ -119,7 +119,7 @@ export const RulesTable: React.FC<Props> = (props) => {
                     onViewRule(entity);
                   }}
                 >
-                  <span className={style.root}>
+                  <span className={style.idContainer}>
                     {id}{' '}
                     {entity.tags?.some((tag) => tag === 'RECOMMENDED') && (
                       <>
@@ -133,10 +133,10 @@ export const RulesTable: React.FC<Props> = (props) => {
                       </>
                     )}
                     {entity.tags?.some((tag) => tag === 'DYNAMIC') && <DynamicRuleTag />}
-                  </span>{' '}
+                  </span>
                 </a>
-                <span style={{ fontSize: '12px', whiteSpace: 'normal' }}>{entity.name}</span>
-              </>
+                <span className={style.ruleName}>{entity.name}</span>
+              </div>
             );
           },
           stringify: (id) => {

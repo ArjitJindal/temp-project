@@ -1,6 +1,7 @@
 import * as TanTable from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 import { CommonParams, SelectionInfo, SortingParams, TableRow } from './types';
+import s from './index.module.less';
 import Checkbox from '@/components/library/Checkbox';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import type { PaginationParams } from '@/utils/queries/hooks';
@@ -93,6 +94,7 @@ const ExpandCheckbox = <Item extends object>({
         row.toggleSelected(newValue);
       }}
       testName="row-table"
+      className={s.selectCheckbox}
     />
   );
 };
@@ -116,6 +118,7 @@ export const EXPAND_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRo
         color="BLACK"
         size="SMALL"
         onClick={() => cell.row.toggleExpanded()}
+        className={s.expandIcon}
       />
     );
   },
