@@ -317,7 +317,8 @@ export class AggregationRepository {
     userKeyId: string,
     lastTransactionTimestamp: number,
     totalTimeSlices?: number,
-    isSyncRebuild?: boolean
+    isSyncRebuild?: boolean,
+    sliceNumber?: number
   ): Promise<void> {
     const ttl = this.backfillNamespace
       ? this.getBackfillTTL()
@@ -325,7 +326,7 @@ export class AggregationRepository {
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       UpdateExpression:
-        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, sliceCount = if_not_exists(sliceCount,:zero) +  :one, #ttl = :ttl, isSyncRebuild=:isSyncRebuild',
+        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, #ttl = :ttl, isSyncRebuild=:isSyncRebuild ADD timeSlices :sliceNumber ',
       ExpressionAttributeNames: {
         '#ttl': 'ttl',
       },
@@ -333,9 +334,8 @@ export class AggregationRepository {
         ':lastTransactionTimestamp': lastTransactionTimestamp,
         ':totalTimeSlices': totalTimeSlices ?? 1,
         ':ttl': ttl,
-        ':zero': 0,
-        ':one': 1,
         ':isSyncRebuild': isSyncRebuild ?? false,
+        ':sliceNumber': new Set<number>([sliceNumber ?? 1]),
       },
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
         this.tenantId,
@@ -360,14 +360,18 @@ export class AggregationRepository {
       ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
-    const noOfReadySlices = result.Item?.sliceCount ?? 1
+    const noOfReadySlices = result.Item?.sliceCount ?? 1 // Keeping to avoid breaking existing rebuilds
     const totalTimeSlices = result.Item?.totalTimeSlices ?? 1
     const lastTransactionTimestamp = result.Item?.lastTransactionTimestamp ?? 0
     const isSyncRebuild = result.Item?.isSyncRebuild ?? false
+    const timeSlices = (result.Item?.timeSlices ??
+      new Set<number>([1])) as Set<number>
     return {
       ready:
         Boolean(result.Item) &&
-        (noOfReadySlices == totalTimeSlices || isSyncRebuild),
+        (noOfReadySlices == totalTimeSlices ||
+          isSyncRebuild ||
+          Array.from(timeSlices).length === totalTimeSlices),
       lastTransactionTimestamp,
     }
   }

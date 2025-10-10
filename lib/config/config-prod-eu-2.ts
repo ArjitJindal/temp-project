@@ -29,8 +29,8 @@ export const config: Config = {
   },
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
-      CPU: 2048,
-      MEMORY_LIMIT: 4096,
+      CPU: 4096, // 4 vCPUs
+      MEMORY_LIMIT: 16384, // 16GB temporary increase to avoid GC rebuild OOMS
       ARCHITECTURE: 'arm64',
     },
     CLOUD_WATCH: {
