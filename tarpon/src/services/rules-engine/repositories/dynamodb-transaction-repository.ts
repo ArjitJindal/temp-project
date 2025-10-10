@@ -59,6 +59,7 @@ import {
   AUXILLARY_TXN_PARTITION_COUNT,
   FUTURE_TIMESTAMP_TO_COMPARE,
   getAllBucketedPartitionKeys,
+  getPrimaryTransactionSwitchTimestamp,
   sanitiseBucketedKey,
 } from '@/core/dynamodb/key-utils'
 
@@ -401,7 +402,8 @@ export class DynamoDbTransactionRepository
 
   public async getTransactionById(
     transactionId: string,
-    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>
+    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>,
+    timestamp?: number
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput = (newPartitionKey: boolean): GetCommandInput => ({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -417,17 +419,34 @@ export class DynamoDbTransactionRepository
         ? { ProjectionExpression: attributesToFetch.join(', ') }
         : {}),
     })
-    // Checking both partition as we don't have timestamp to check which partition to use
-    const results = await Promise.all([
-      this.dynamoDb.send(new GetCommand(getItemInput(false))),
-      this.dynamoDb.send(new GetCommand(getItemInput(true))),
-    ])
-    const finalResult = compact(results.map((rest) => rest.Item))
-    if (!finalResult[0]) {
+    let finalResult
+
+    if (timestamp) {
+      const useNewPartition =
+        timestamp >= getPrimaryTransactionSwitchTimestamp()
+      const result = await this.dynamoDb.send(
+        new GetCommand(getItemInput(useNewPartition))
+      )
+      finalResult = result.Item
+    } else {
+      // No timestamp: check new partition first, then old partition if needed
+      const newResult = await this.dynamoDb.send(
+        new GetCommand(getItemInput(true))
+      )
+      finalResult = newResult.Item
+
+      if (!finalResult) {
+        const oldResult = await this.dynamoDb.send(
+          new GetCommand(getItemInput(false))
+        )
+        finalResult = oldResult.Item
+      }
+    }
+    if (!finalResult) {
       return null
     }
     const transaction = {
-      ...finalResult[0],
+      ...finalResult,
     }
 
     delete transaction.createdAt
@@ -1230,7 +1249,9 @@ export class DynamoDbTransactionRepository
     )
     // Priority queue ordered by SortKeyID
     const pq = new MaxPriorityQueue<{
-      txn: AuxiliaryIndexTransaction & { SortKeyID: string }
+      txn: AuxiliaryIndexTransaction & {
+        SortKeyID: string
+      }
       gen: AsyncGenerator<any>
     }>((data) => data.txn.SortKeyID)
 
@@ -1244,7 +1265,7 @@ export class DynamoDbTransactionRepository
         })
       }
     }
-
+    let lastSortKeyId: string | undefined = undefined
     const batch: AuxiliaryIndexTransaction[] = []
     while (!pq.isEmpty()) {
       const dequeued = pq.dequeue()
@@ -1252,35 +1273,40 @@ export class DynamoDbTransactionRepository
         break
       }
       const { txn, gen } = dequeued
-      const transactionTimeRange = filterOptions.transactionTimeRange24hr
-      if (
-        !transactionTimeRange ||
-        (txn.timestamp &&
-          transactionTimeRangeRuleFilterPredicate(
-            txn.timestamp,
-            transactionTimeRange
-          ))
-      ) {
-        batch.push(
-          omit(txn, [
-            'PartitionKeyID',
-            'SortKeyID',
-          ]) as AuxiliaryIndexTransaction
-        )
+      if (!lastSortKeyId || txn.SortKeyID !== lastSortKeyId) {
+        const transactionTimeRange = filterOptions.transactionTimeRange24hr
+        if (
+          !transactionTimeRange ||
+          (txn.timestamp &&
+            transactionTimeRangeRuleFilterPredicate(
+              txn.timestamp,
+              transactionTimeRange
+            ))
+        ) {
+          batch.push(
+            omit(txn, [
+              'PartitionKeyID',
+              'SortKeyID',
+            ]) as AuxiliaryIndexTransaction
+          )
+        }
+        lastSortKeyId = txn.SortKeyID
       }
-
       // Refill from the generator if it has more
       const { value, done } = await gen.next()
       if (!done && value) {
         pq.enqueue({
-          txn: value as AuxiliaryIndexTransaction & { SortKeyID: string },
+          txn: value as AuxiliaryIndexTransaction & {
+            SortKeyID: string
+          },
           gen,
         })
       }
 
       // Yield in pages
       if (batch.length >= 25) {
-        yield batch.splice(0, batch.length)
+        const toYield = batch.splice(0, batch.length)
+        yield toYield
       }
     }
 

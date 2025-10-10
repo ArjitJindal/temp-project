@@ -200,6 +200,7 @@ export class LogicEvaluator {
   private tenantId: string
   private dynamoDb: DynamoDBDocumentClient
   private aggregationRepository: AggregationRepository
+  private userRepository: UserRepository
   private mode: Mode
   private transactionEventRepository?: TransactionEventRepository
   private backfillNamespace: string | undefined
@@ -215,6 +216,10 @@ export class LogicEvaluator {
       this.tenantId,
       this.dynamoDb
     )
+    // Warning: we are need dynamo db connection here because getUser function fetches user from dynamo
+    this.userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
     this.mode = mode
   }
 
@@ -484,15 +489,30 @@ export class LogicEvaluator {
             )
           }
 
-          const user =
+          let user =
             data.type === 'TRANSACTION'
               ? isSenderUserVariable(variable.key)
                 ? data.senderUser
                 : data.receiverUser
               : data.user
 
+          // if the user is null we can try fetching this user from db, because we don't send sender and receiver user
+          // while evalutating aggregation/entity filters
+          const userId =
+            data.type === 'TRANSACTION'
+              ? isSenderUserVariable(variable.key)
+                ? data.transaction.originUserId
+                : data.transaction.destinationUserId
+              : undefined
+
           if (!user) {
-            return null
+            if (!userId) {
+              return null
+            }
+            user = await this.userRepository.getUser<User | Business>(userId)
+            if (!user) {
+              return null
+            }
           }
           if (variable.entity === 'CONSUMER_USER') {
             return (variable as ConsumerUserLogicVariable<any>).load(

@@ -9,6 +9,7 @@ interface Props {
   isInvalid?: boolean;
   onClick?: () => void;
   cursor?: 'pointer' | 'default';
+  className?: string;
 }
 
 export default function ExpandIcon(props: Props) {
@@ -19,6 +20,7 @@ export default function ExpandIcon(props: Props) {
     onClick,
     isInvalid = false,
     cursor = 'default',
+    className,
   } = props;
 
   return (
@@ -29,6 +31,7 @@ export default function ExpandIcon(props: Props) {
         s[`size-${size}`],
         isExpanded && s.isExpanded,
         isInvalid && s.isInvalid,
+        className,
       )}
       onClick={onClick}
       data-cy="expand-icon"

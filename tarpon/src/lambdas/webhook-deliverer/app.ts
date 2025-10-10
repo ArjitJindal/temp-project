@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { humanizeConstant } from '@flagright/lib/utils/humanize'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
+import { getApiBasePath } from '../../../test-resources/integration-tests/test-utils/apiBasePath'
 import { handleWebhookDeliveryTask } from './utils'
 import { WebhookDeliveryTask } from '@/@types/webhook'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -69,6 +70,7 @@ async function buildWebhookRequest(
     headers: {
       [header]: hmacSignatures,
       'content-type': 'application/json',
+      'x-flagright-url': getApiBasePath(),
     },
     body: postPayloadString,
   }

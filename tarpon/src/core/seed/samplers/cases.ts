@@ -4,7 +4,12 @@ import uniqBy from 'lodash/uniqBy'
 import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { getRuleInstance, transactionRules, userRules } from '../data/rules'
+import {
+  getRuleInstance,
+  transactionRules,
+  userRules,
+  dynamicRules,
+} from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
 import { ID_PREFIXES, TIME_BACK_TO_12_MONTH_WINDOW } from '../data/seeds'
 import { BaseSampler } from './base'
@@ -256,6 +261,23 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
       }
     })
 
+    // alerts for dynamic rules
+    if (this.rng.randomFloat() < 0.3) {
+      // 30% chance to include dynamic rule
+      const dynamicRuleHits = dynamicRules()
+      dynamicRuleHits.forEach((dynamicRule) => {
+        if (dynamicRule.ruleHit) {
+          const alert = this.alertSampler.getSample(undefined, {
+            caseId,
+            ruleInstanceId: dynamicRule.ruleInstanceId,
+            ruleHit: dynamicRule,
+            transactions: transactions.slice(0, 1), // Use first transaction for dynamic rule
+          })
+          alerts.push(alert)
+        }
+      })
+    }
+
     const caseStatus = this.rng.pickRandom(
       CASE_STATUSS.filter((s) => !isStatusInReview(s))
     )
@@ -290,6 +312,12 @@ export class TransactionUserCasesSampler extends BaseSampler<Case> {
     )
 
     ruleHits = ruleHits.concat(user?.hitRules ?? [])
+
+    if (this.rng.randomFloat() < 0.3) {
+      // 30% chance to include dynamic rule
+      const dynamicRuleHits = dynamicRules()
+      ruleHits = ruleHits.concat(dynamicRuleHits.filter((rule) => rule.ruleHit))
+    }
 
     return {
       caseId,

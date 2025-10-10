@@ -11,13 +11,23 @@ interface Props extends InputProps<boolean> {
   size?: Sizes;
   testName?: string;
   extraLeftLabelMargin?: boolean;
+  className?: string;
 }
 
 export default function Checkbox(props: Props) {
-  const { size = 'M', isDisabled, value, onChange, isError: _isError, testName, ...rest } = props;
+  const {
+    size = 'M',
+    isDisabled,
+    value,
+    onChange,
+    isError: _isError,
+    testName,
+    className,
+    ...rest
+  } = props;
   const ref = useRef<HTMLInputElement>(null);
   return (
-    <div className={cn(s.root, s[`size-${size}`])}>
+    <div className={cn(s.root, s[`size-${size}`], className)}>
       <input
         ref={ref}
         className={s.input}

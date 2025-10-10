@@ -53,7 +53,7 @@ const getTransactionWidgetsProps = (
     },
     {
       title: 'Type',
-      value: humanizeAuto(transaction.type),
+      value: `${transaction.type ?? '-'}`,
     },
     {
       title: 'Product type',

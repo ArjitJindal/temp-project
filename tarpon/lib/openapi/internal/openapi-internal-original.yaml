@@ -3964,6 +3964,9 @@ paths:
     post:
       summary: Account - Edit
       operationId: accounts-edit
+      x-flagright:
+        resources:
+          - write:::accounts/overview
       requestBody:
         content:
           application/json:
@@ -13119,6 +13122,7 @@ components:
         - EDD_REPORT
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
+        - EDD
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

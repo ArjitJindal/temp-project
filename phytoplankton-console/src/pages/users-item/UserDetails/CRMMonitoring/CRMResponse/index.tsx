@@ -69,7 +69,7 @@ const CRMData = (props: Props) => {
     }
 
     if (crmResponse.kind === 'SUCCESS') {
-      return crmResponse.value.engagements || [];
+      return crmResponse?.value?.engagements || [];
     }
 
     return [];

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import cn from 'clsx';
+import { lowerCase } from 'lodash';
 import { formatRoleName } from '../utils';
 import s from './style.module.less';
 import TextInput from '@/components/library/TextInput';
@@ -67,7 +68,11 @@ const RoleHeader: React.FC<RoleHeaderProps> = ({
           </div>
           {!isValidManagedRoleName(name) && (
             <div className={s.roleHeaderActions}>
-              <EditLineIcon className={s.editIcon} onClick={onEditClick} />
+              <EditLineIcon
+                className={s.editIcon}
+                onClick={onEditClick}
+                data-cy={`edit-role-button-${lowerCase(name)}`}
+              />
               <Confirm
                 title="Delete Role"
                 text={`Are you sure you wish to remove the role "${formatRoleName(name)}"?`}

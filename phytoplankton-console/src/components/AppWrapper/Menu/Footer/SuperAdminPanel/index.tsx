@@ -27,6 +27,7 @@ import {
   useFeatures,
   useSettings,
   useUpdateTenantSettings,
+  useReloadTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
@@ -176,7 +177,11 @@ export const featureDescriptions: Record<
     title: 'Chainalysis',
     description: 'Enables Chainalysis',
   },
-
+  EDD: {
+    title: 'EDD Rules',
+    description: 'Generates EDD alerts in demo mode',
+    tag: FeatureTag.ENG,
+  },
   WORKFLOWS_BUILDER: {
     title: 'Workflows builder',
     description: 'Enables workflows builder',
@@ -234,6 +239,7 @@ export const featureDescriptions: Record<
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
+  const [saveClicked, setSaveClicked] = useState(false);
   const settings = useSettings();
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(settings.features?.sort());
@@ -413,7 +419,9 @@ export default function SuperAdminPanel() {
     return {};
   }, [tenantsDeletionQueryResult.data]);
   const mutateTenantSettings = useUpdateTenantSettings();
+  const reloadUpdatedSettings = useReloadTenantSettings();
   const handleSave = async () => {
+    setSaveClicked(true);
     mutateTenantSettings.mutate({
       ...(features && { features }),
       ...(limits && { limits }),
@@ -429,6 +437,16 @@ export default function SuperAdminPanel() {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    if (saveClicked) {
+      reloadUpdatedSettings.mutate({
+        ...(features && { features }),
+        ...(limits && { limits }),
+        sanctions: sanctionsSettings,
+        crmIntegrationName,
+        sarJurisdictions,
+      });
+    }
+    setSaveClicked(false);
     setFeatures(settings.features?.sort());
     setLimits(settings.limits || {});
     setTenantIdToDelete(undefined);
