@@ -1,15 +1,15 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { UseMutationResult } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Resource } from '@flagright/lib/utils';
+import { nanoid } from 'nanoid';
 import ImportCsvModal from '../ImportCsvModal';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
 import { TableParams } from './types';
 import { useApi } from '@/api';
-import { ColumnType, ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
+import { ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
 import {
   DefaultApiGetWhiteListItemsRequest,
   DefaultApiPostWhiteListItemRequest,
@@ -24,6 +24,7 @@ import {
   CommonParams,
   TableColumn,
   TableRefType,
+  PublicRowEditApi,
 } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -38,11 +39,7 @@ import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
-import { StatePair } from '@/utils/state';
-import TextInput from '@/components/library/TextInput';
-import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
-import NumberInput from '@/components/library/NumberInput';
-import DatePicker from '@/components/ui/DatePicker';
+import { NUMBER, DATE, STRING } from '@/components/library/Table/standardDataTypes';
 import { download } from '@/utils/browser';
 
 interface ExistedTableItemData {
@@ -82,17 +79,110 @@ interface Props {
   setIsFlatFileProgressLoading: (isLoading: boolean) => void;
 }
 
-type ExternalState = {
-  editUserData: StatePair<ExistedTableItemData | null>;
-  newUserData: StatePair<NewTableItemData>;
-  isEditUserLoading: StatePair<boolean>;
-  isUserDeleteLoading: StatePair<boolean>;
-  onAdd: () => void;
-  onSave: () => void;
-  onDelete: (userId: string) => void;
-};
-
 const helper = new ColumnHelper<TableItem>();
+
+function isNewItem(value: unknown): value is NewTableItem {
+  return typeof value === 'object' && value != null && (value as any).type === 'NEW';
+}
+function isExistedItem(value: unknown): value is ExistedTableItem {
+  return typeof value === 'object' && value != null && (value as any).type === 'EXISTED';
+}
+function isNewDraft(value: unknown): value is NewTableItemData {
+  if (typeof value !== 'object' || value == null) {
+    return false;
+  }
+  const v: any = value;
+  return Array.isArray(v.value) && typeof v.reason === 'string' && typeof v.meta === 'object';
+}
+
+const EMPTY_DRAFT: NewTableItemData = { value: [], reason: '', meta: {} };
+
+function getDraftForInput(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+): NewTableItemData {
+  const maybe = rowApi?.getDraft?.();
+  if (rowApi?.isCreateRow) {
+    return isNewDraft(maybe) ? maybe : isNewItem(entity) ? entity : EMPTY_DRAFT;
+  }
+  const base = isExistedItem(maybe) ? (maybe as ExistedTableItem) : (entity as ExistedTableItem);
+  const values = Array.isArray(base.value) ? base.value : base.value ? [base.value] : [];
+  return { value: values, reason: base.reason, meta: base.meta };
+}
+
+function applyDraftValueUpdate(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+  listSubtype: ListSubtypeInternal | null,
+  newValues: string[] | undefined,
+): void {
+  rowApi?.setDraft?.((prev) => {
+    if (rowApi?.isCreateRow) {
+      const current = isNewDraft(prev) ? prev : getDraftForInput(rowApi, entity);
+      return { ...current, value: newValues ?? [] };
+    }
+    const current = isExistedItem(prev) ? prev : entity;
+    return {
+      ...current,
+      value: listSubtype === 'COUNTRY' ? newValues ?? [] : newValues?.[0] ?? '',
+    } as ExistedTableItem;
+  });
+}
+
+function applyDraftMetaUpdate(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+  meta: Metadata,
+): void {
+  rowApi?.setDraft?.((prev) => {
+    if (rowApi?.isCreateRow) {
+      const current = isNewDraft(prev) ? prev : getDraftForInput(rowApi, entity);
+      return { ...current, meta: { ...(current.meta ?? {}), ...meta } };
+    }
+    const current = isExistedItem(prev) ? prev : entity;
+    return { ...current, meta: { ...(current.meta ?? {}), ...meta } } as ExistedTableItem;
+  });
+}
+
+function isMetaFieldsValid(
+  columns: NonNullable<ListHeaderInternal['metadata']>['columns'] | undefined,
+  meta: Metadata | undefined,
+): boolean {
+  return (columns ?? []).every((c) => {
+    const key = c.key || '';
+    const val = (meta ?? {})[key];
+    return val != null && String(val).trim() !== '';
+  });
+}
+
+function normalizeValues(value: string | string[] | undefined): string[] {
+  const arr = Array.isArray(value) ? value : [value ?? ''];
+  return arr
+    .map((v) => String(v))
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0)
+    .sort();
+}
+
+function isEditSaveDisabled(
+  rowApi: PublicRowEditApi | undefined,
+  entity: TableItem,
+  columns: NonNullable<ListHeaderInternal['metadata']>['columns'] | undefined,
+): boolean {
+  const maybe = rowApi?.getDraft?.();
+  const draft = isExistedItem(maybe) ? maybe : entity;
+  const original = entity as ExistedTableItem;
+
+  const didMetaChange = JSON.stringify(draft.meta ?? {}) !== JSON.stringify(original.meta ?? {});
+  const didReasonChange = (draft.reason ?? '') !== (original.reason ?? '');
+  const didKeyChange =
+    JSON.stringify(normalizeValues(draft.value)) !==
+    JSON.stringify(normalizeValues(original.value));
+
+  const fieldsValid = (columns?.length ?? 0) > 0 ? isMetaFieldsValid(columns, draft.meta) : true;
+
+  return !(fieldsValid && (didMetaChange || didReasonChange || didKeyChange));
+}
 
 const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
   items: [],
@@ -130,13 +220,6 @@ export default function ItemsTable(props: Props) {
 
     download(`${listId}-template.csv`, response.fileString ?? '');
   }, [listHeaderRes, api]);
-
-  const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
-  const [newUserData, setNewUserData] = useState<NewTableItemData>({
-    value: [],
-    reason: '',
-    meta: {},
-  });
 
   const requiredWriteResources: Resource[] = useMemo(() => {
     if (listType === 'WHITELIST') {
@@ -186,47 +269,42 @@ export default function ItemsTable(props: Props) {
     [getColumns],
   );
 
-  const isEditUserDataValid = useMemo(() => {
-    if (!editUserData) {
-      return false;
-    }
-
-    if (listSubtype === 'CUSTOM') {
-      return validateMetaFields(editUserData.meta);
-    }
-
-    return true;
-  }, [editUserData, listSubtype, validateMetaFields]);
-
-  const isNewUserValid = useMemo(() => {
-    if (!newUserData) {
-      return false;
-    }
-
-    if (listSubtype === 'CUSTOM') {
-      return validateMetaFields(newUserData.meta);
-    }
-
-    return newUserData.value.length > 0;
-  }, [newUserData, listSubtype, validateMetaFields]);
-
   const [isAddUserLoading, setAddUserLoading] = useState(false);
 
-  const handleAddItem = useCallback(() => {
-    const hideMessage = message.loading('Adding item to a list...');
-
-    if (isNewUserValid) {
+  const handleAddItemFromDraft = useCallback(
+    (newUserData: NewTableItemData) => {
+      const hideMessage = message.loading('Adding item to a list...');
+      const isValid =
+        listSubtype === 'CUSTOM'
+          ? validateMetaFields(newUserData.meta)
+          : (Array.isArray(newUserData.value)
+              ? newUserData.value.length
+              : (newUserData.value as string)?.trim()?.length ?? 0) > 0;
+      if (!isValid) {
+        hideMessage();
+        return;
+      }
       setAddUserLoading(true);
+      let values: string[] = Array.isArray(newUserData.value)
+        ? newUserData.value
+        : [String(newUserData.value ?? '')];
+      if (listSubtype === 'CUSTOM') {
+        const nonEmpty = values.filter((v) => (v ?? '').trim() !== '');
+        if (nonEmpty.length === 0) {
+          values = [nanoid()];
+        } else {
+          values = nonEmpty;
+        }
+      }
       Promise.all(
-        newUserData.value.map((itemValue) => {
+        values.map((itemValue) => {
           const payload: DefaultApiPostWhiteListItemRequest = {
             listId,
             ListItem: {
               key: itemValue,
-              metadata: { reason: newUserData.reason, ...newUserData.meta },
+              metadata: { ...newUserData.meta, reason: newUserData.reason },
             },
           };
-
           return listType === 'WHITELIST'
             ? api.postWhiteListItem(payload)
             : api.postBlacklistItem(payload);
@@ -234,7 +312,6 @@ export default function ItemsTable(props: Props) {
       )
         .then(() => {
           hideMessage();
-          setNewUserData({ value: [], reason: '', meta: {} });
           message.success(`Item added successfully`);
           tableRef.current?.reload();
         })
@@ -245,44 +322,45 @@ export default function ItemsTable(props: Props) {
         .finally(() => {
           setAddUserLoading(false);
         });
-    }
-  }, [isNewUserValid, newUserData, listId, api, listType]);
+    },
+    [listSubtype, validateMetaFields, listId, api, listType],
+  );
 
-  const [isEditUserLoading, setEditUserLoading] = useState(false);
+  const handleSaveEditedItem = useCallback(
+    async (newUserData: NewTableItemData) => {
+      const hideMessage = message.loading('Saving item...');
+      try {
+        const newKeys: string[] = Array.isArray(newUserData.value)
+          ? newUserData.value
+          : [String(newUserData.value ?? '')];
 
-  const handleSaveItem = () => {
-    if (isEditUserDataValid && editUserData) {
-      setEditUserLoading(true);
+        await Promise.all(
+          newKeys.map((itemValue) => {
+            const payload: DefaultApiPostWhiteListItemRequest = {
+              listId,
+              ListItem: {
+                key: itemValue,
+                metadata: { ...newUserData.meta, reason: newUserData.reason },
+              },
+            };
+            return listType === 'WHITELIST'
+              ? api.postWhiteListItem(payload)
+              : api.postBlacklistItem(payload);
+          }),
+        );
 
-      const payload: DefaultApiPostWhiteListItemRequest = {
-        listId,
-        ListItem: {
-          key: editUserData.value ?? '',
-          metadata: { ...editUserData.meta, reason: editUserData.reason },
-        },
-      };
+        tableRef.current?.reload();
+      } catch (e) {
+        message.fatal(`Unable to save item! ${getErrorMessage(e)}`, e);
+      } finally {
+        hideMessage();
+      }
+    },
+    [api, listId, listType],
+  );
 
-      const promise =
-        listType === 'WHITELIST' ? api.postWhiteListItem(payload) : api.postBlacklistItem(payload);
-
-      promise
-        .then(() => {
-          setEditUserData(null);
-          tableRef.current?.reload();
-        })
-        .catch((e) => {
-          message.fatal(`Unable to save user! ${getErrorMessage(e)}`, e);
-        })
-        .finally(() => {
-          setEditUserLoading(false);
-        });
-    }
-  };
-
-  const [isUserDeleteLoading, setEditDeleteLoading] = useState(false);
   const handleDeleteUser = useCallback(
     (userId: string) => {
-      setEditDeleteLoading(true);
       const promise =
         listType === 'WHITELIST'
           ? api.deleteWhiteListItem({ listId, key: userId })
@@ -294,9 +372,6 @@ export default function ItemsTable(props: Props) {
         })
         .catch((e) => {
           message.fatal(`Unable to delete user from list! ${getErrorMessage(e)}`, e);
-        })
-        .finally(() => {
-          setEditDeleteLoading(false);
         });
     },
     [api, listId, listType],
@@ -342,28 +417,15 @@ export default function ItemsTable(props: Props) {
           ? await api.getWhiteListItems(payload)
           : await api.getBlacklistItems(payload);
 
-      const data: TableItem[] = [
-        ...response.items.map(
-          ({ key, metadata }): TableItem => ({
-            rowKey: key,
-            type: 'EXISTED',
-            value: key,
-            reason: metadata?.reason ?? '',
-            meta: metadata ?? {},
-          }),
-        ),
-        ...(filterKeys == null
-          ? [
-              {
-                rowKey: 'NEW',
-                type: 'NEW' as const,
-                value: [],
-                reason: '',
-                meta: {},
-              },
-            ]
-          : []),
-      ];
+      const data: TableItem[] = response.items.map(
+        ({ key, metadata }): TableItem => ({
+          rowKey: key,
+          type: 'EXISTED',
+          value: key,
+          reason: metadata?.reason ?? '',
+          meta: metadata ?? {},
+        }),
+      );
       return {
         ...response,
         items: data,
@@ -372,27 +434,19 @@ export default function ItemsTable(props: Props) {
     },
   );
 
-  const externalState: ExternalState = {
-    editUserData: [editUserData, setEditUserData],
-    newUserData: [newUserData, setNewUserData],
-    isEditUserLoading: [isEditUserLoading, setEditUserLoading],
-    isUserDeleteLoading: [isUserDeleteLoading, setEditDeleteLoading],
-    onAdd: handleAddItem,
-    onSave: handleSaveItem,
-    onDelete: handleDeleteUser,
-  };
-
   const extraFilters = useExtraFilters(listSubtype);
 
   const columns = useColumns({
     listSubtype,
     listResult,
     isAddUserLoading,
-    isNewUserValid,
-    isEditUserValid: isEditUserDataValid,
     requiredWriteResources,
     listHeaderRes,
+    isCustomList,
+    onDelete: handleDeleteUser,
   });
+
+  // externalState no longer used; kept locally for in-file helpers only
 
   return (
     <AsyncResourceRenderer resource={listHeaderRes}>
@@ -411,7 +465,35 @@ export default function ItemsTable(props: Props) {
               onChangeParams={setParams}
               queryResults={listResult}
               fitHeight
-              externalState={externalState}
+              createRow={{
+                item: {
+                  rowKey: 'NEW',
+                  type: 'NEW',
+                  value: [],
+                  reason: '',
+                  meta: {},
+                },
+                visible: true,
+                position: 'BOTTOM',
+                onSubmit: (newItem: TableItem) => {
+                  if (isNewItem(newItem)) {
+                    handleAddItemFromDraft(newItem);
+                  }
+                },
+              }}
+              rowEditing={{
+                onSave: (_id, edited: TableItem) => {
+                  const draft: NewTableItemData = isExistedItem(edited)
+                    ? {
+                        value: Array.isArray(edited.value) ? edited.value : [edited.value ?? ''],
+                        reason: edited.reason,
+                        meta: edited.meta,
+                      }
+                    : edited;
+                  handleSaveEditedItem(draft);
+                },
+                onCancel: () => {},
+              }}
               extraFilters={extraFilters}
               extraTools={[
                 () => <Button onClick={() => setIsImportModalOpen(true)}>Import CSV</Button>,
@@ -461,19 +543,19 @@ function useColumns(options: {
   listSubtype: ListSubtypeInternal | null;
   listResult: QueryResult<CursorPaginatedData<TableItem>>;
   isAddUserLoading: boolean;
-  isNewUserValid: boolean;
-  isEditUserValid: boolean;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
   requiredWriteResources: Resource[];
+  isCustomList: boolean;
+  onDelete: (userId: string) => void;
 }): TableColumn<TableItem>[] {
   const {
     listSubtype,
     listResult,
     isAddUserLoading,
-    isNewUserValid,
-    isEditUserValid,
     requiredWriteResources,
     listHeaderRes,
+    isCustomList,
+    onDelete,
   } = options;
   const settings = useSettings();
   const listHeader = getOr(listHeaderRes, null);
@@ -495,60 +577,18 @@ function useColumns(options: {
   }, [currentItems, listSubtype]);
 
   return useMemo(() => {
-    if (listSubtype === 'CUSTOM') {
+    if (isCustomList) {
       const customColumns =
-        listHeader?.metadata?.columns?.map((column) =>
-          helper.derived({
+        (listHeader?.metadata?.columns ?? []).map((column) => {
+          const baseType = (
+            column.type === 'NUMBER' ? NUMBER : column.type === 'DATE' ? DATE : STRING
+          ) as any;
+          return helper.simple<`meta.${string}`>({
             title: column.key || '',
-            value: (item) => item.meta[column.key || ''] || '',
-            type: {
-              render: (value, context) => {
-                const { item: entity } = context;
-                const externalState: ExternalState = context.external as ExternalState;
-                const [newUserData, setNewUserData] = externalState.newUserData;
-                const [editUserData, setEditUserData] = externalState.editUserData;
-                const columnName = column.key || '';
-
-                if (entity.type === 'NEW') {
-                  return renderInputForColumnType(
-                    column.type,
-                    newUserData.meta[columnName] || '',
-                    (newValue) => {
-                      setNewUserData((prevState) => ({
-                        ...prevState,
-                        value: prevState.value.length === 0 ? [uuidv4()] : prevState.value,
-                        meta: {
-                          ...prevState.meta,
-                          [columnName]: newValue,
-                        },
-                      }));
-                    },
-                    isAddUserLoading,
-                    columnName,
-                  );
-                } else if (editUserData?.value === entity.value) {
-                  return renderInputForColumnType(
-                    column.type,
-                    editUserData.meta[columnName] || '',
-                    (newValue) => {
-                      setEditUserData({
-                        ...editUserData,
-                        meta: { ...editUserData.meta, [columnName]: newValue },
-                      });
-                    },
-                    false,
-                    columnName,
-                  );
-                }
-                return (
-                  <>
-                    {column.type === 'DATE' ? dayjs(value).format(YEAR_MONTH_DATE_FORMAT) : value}
-                  </>
-                );
-              },
-            },
-          }),
-        ) || [];
+            key: `meta.${column.key || ''}` as `meta.${string}`,
+            type: baseType,
+          });
+        }) || [];
 
       return helper.list([
         ...customColumns,
@@ -556,84 +596,74 @@ function useColumns(options: {
           title: 'Actions',
           defaultWidth: 170,
           render: (entity, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [editUserData, setEditUserData] = externalState.editUserData;
-            const [isEditUserLoading] = externalState.isEditUserLoading;
-            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-            const { onAdd, onSave, onDelete } = externalState;
-            if (entity.type === 'NEW') {
+            const rowApi = context.rowApi;
+            if (rowApi?.isCreateRow) {
+              const draft = (rowApi.getDraft?.() as NewTableItemData) ?? entity;
+              const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
+                const key = c.key || '';
+                const val = (draft.meta ?? {})[key];
+                return val != null && String(val).trim() !== '';
+              });
               return (
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
-                    isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid || !!editUserData}
-                    onClick={onAdd}
+                    isLoading={Boolean(rowApi?.isBusy) || isAddUserLoading}
+                    isDisabled={!isValid}
+                    onClick={() => rowApi?.save?.()}
+                    requiredResources={requiredWriteResources}
                   >
                     Add
                   </Button>
                 </div>
               );
-            } else if (entity.type === 'EXISTED') {
-              if (editUserData?.value === entity.value) {
-                return (
-                  <div className={s.actions}>
-                    <Button
-                      size="SMALL"
-                      type="PRIMARY"
-                      onClick={onSave}
-                      isDisabled={isEditUserLoading || !isEditUserValid}
-                      requiredResources={requiredWriteResources}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      size="SMALL"
-                      type="SECONDARY"
-                      isDisabled={isEditUserLoading}
-                      onClick={() => {
-                        setEditUserData(null);
-                      }}
-                      requiredResources={requiredWriteResources}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                );
-              }
+            } else if (rowApi?.isEditing) {
               return (
                 <div className={s.actions}>
                   <Button
                     size="SMALL"
-                    type="SECONDARY"
-                    isDisabled={isUserDeleteLoading}
-                    onClick={() => {
-                      const editTarget: ExistedTableItemData = {
-                        value: entity.value,
-                        reason: entity.reason,
-                        meta: entity.meta,
-                      };
-                      setEditUserData(editTarget);
-                    }}
+                    type="PRIMARY"
+                    onClick={() => rowApi?.save?.()}
+                    isDisabled={isEditSaveDisabled(rowApi, entity, listHeader?.metadata?.columns)}
+                    isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
-                    Edit
+                    Save
                   </Button>
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isLoading={isUserDeleteLoading}
-                    onClick={() => {
-                      onDelete(entity.value ?? '');
-                    }}
+                    onClick={() => rowApi?.cancelEdit?.()}
+                    isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
-                    Remove
+                    Cancel
                   </Button>
                 </div>
               );
             }
-            return null;
+            return (
+              <div className={s.actions}>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => rowApi?.startEdit?.()}
+                  isLoading={Boolean(rowApi?.isBusy)}
+                  requiredResources={requiredWriteResources}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => onDelete(String(entity.value ?? ''))}
+                  isLoading={Boolean(rowApi?.isBusy)}
+                  requiredResources={requiredWriteResources}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
           },
         }),
       ]);
@@ -648,26 +678,19 @@ function useColumns(options: {
             type: {
               render: (value, context) => {
                 const { item: entity } = context;
-                const externalState: ExternalState = context.external as ExternalState;
-                const [newUserData, setNewUserData] = externalState.newUserData;
 
-                if (entity.type === 'NEW') {
+                const rowApi = context.rowApi;
+                if (rowApi?.isCreateRow) {
+                  const draft = getDraftForInput(rowApi, entity);
                   return (
                     <NewValueInput
                       key={String(isAddUserLoading)}
-                      value={newUserData.value}
-                      onChange={(value) => {
-                        setNewUserData((prevState) => ({
-                          ...prevState,
-                          value: value ?? [],
-                        }));
-                      }}
-                      onChangeMeta={(meta) => {
-                        setNewUserData((prevState) => ({
-                          ...prevState,
-                          meta,
-                        }));
-                      }}
+                      value={draft.value}
+                      isDisabled={Boolean(rowApi?.isBusy)}
+                      onChange={(newValues) =>
+                        applyDraftValueUpdate(rowApi, entity, listSubtype, newValues)
+                      }
+                      onChangeMeta={(meta) => applyDraftMetaUpdate(rowApi, entity, meta)}
                       listSubtype={listSubtype}
                       excludeCountries={existingCountryCodes}
                     />
@@ -694,146 +717,100 @@ function useColumns(options: {
               }),
             ])
           : []),
-        helper.derived<string | string[]>({
+        helper.simple<'reason'>({
           title: 'Reason for adding to list',
-          value: (item) => item.reason,
-
-          type: {
-            render: (reason, context) => {
-              const { item: entity } = context;
-              const externalState: ExternalState = context.external as ExternalState;
-              const [newUserData, setNewUserData] = externalState.newUserData;
-              const [editUserData, setEditUserData] = externalState.editUserData;
-              const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-
-              if (entity.type === 'NEW') {
-                return (
-                  <FocusRetainingInput
-                    uniqueKey="new-reason-input"
-                    isDisabled={isAddUserLoading}
-                    value={newUserData.reason}
-                    autoFocus
-                    onChange={(value) => {
-                      setNewUserData((prevState) => ({
-                        ...prevState,
-                        reason: value,
-                      }));
-                    }}
-                  />
-                );
-              } else if (entity.value === editUserData?.value) {
-                return (
-                  <FocusRetainingInput
-                    uniqueKey={`edit-reason-${entity.value}`}
-                    isDisabled={isUserDeleteLoading}
-                    value={editUserData.reason}
-                    autoFocus
-                    onChange={(value) => {
-                      setEditUserData({ ...editUserData, reason: value });
-                    }}
-                  />
-                );
-              }
-              return <>{reason}</>;
-            },
-            defaultWrapMode: 'WRAP',
-          },
+          key: 'reason',
+          type: STRING,
         }),
         helper.display({
           title: 'Actions',
           defaultWidth: 170,
           render: (entity, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [editUserData, setEditUserData] = externalState.editUserData;
-            const [isEditUserLoading] = externalState.isEditUserLoading;
-            const [isUserDeleteLoading] = externalState.isUserDeleteLoading;
-            const { onAdd, onSave, onDelete } = externalState;
-            if (entity.type === 'NEW') {
+            const rowApi = context.rowApi;
+            if (rowApi?.isCreateRow) {
+              const maybe = rowApi.getDraft?.();
+              const draft: NewTableItemData = isNewDraft(maybe)
+                ? maybe
+                : isNewItem(entity)
+                ? entity
+                : { value: [], reason: '', meta: {} };
+              const isValid = (listHeader?.metadata?.columns ?? []).every((c) => {
+                const key = c.key || '';
+                const val = (draft.meta ?? {})[key];
+                return val != null && String(val).trim() !== '';
+              });
               return (
                 <div className={s.actions}>
                   <Button
                     type="PRIMARY"
-                    isLoading={isAddUserLoading}
-                    isDisabled={!isNewUserValid}
-                    onClick={onAdd}
+                    isLoading={Boolean(rowApi?.isBusy) || isAddUserLoading}
+                    isDisabled={!isValid}
+                    onClick={() => rowApi?.save?.()}
                     requiredResources={requiredWriteResources}
                   >
                     Add
                   </Button>
                 </div>
               );
-            } else if (entity.type === 'EXISTED') {
-              if (editUserData?.value === entity.value) {
-                return (
-                  <div className={s.actions}>
-                    <Button
-                      size="SMALL"
-                      type="PRIMARY"
-                      onClick={onSave}
-                      isDisabled={isEditUserLoading || !isEditUserValid}
-                      requiredResources={requiredWriteResources}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      size="SMALL"
-                      type="SECONDARY"
-                      isDisabled={isEditUserLoading}
-                      onClick={() => {
-                        setEditUserData(null);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                );
-              }
+            } else if (rowApi?.isEditing) {
               return (
                 <div className={s.actions}>
                   <Button
                     size="SMALL"
-                    type="SECONDARY"
-                    isDisabled={isUserDeleteLoading}
-                    onClick={() => {
-                      const editTarget: ExistedTableItemData = {
-                        value: entity.value,
-                        reason: entity.reason,
-                        meta: entity.meta,
-                      };
-                      setEditUserData(editTarget);
-                    }}
+                    type="PRIMARY"
+                    onClick={() => rowApi?.save?.()}
+                    isDisabled={isEditSaveDisabled(rowApi, entity, listHeader?.metadata?.columns)}
+                    isLoading={Boolean(rowApi?.isBusy)}
                     requiredResources={requiredWriteResources}
                   >
-                    Edit
+                    Save
                   </Button>
                   <Button
                     size="SMALL"
                     type="SECONDARY"
-                    isLoading={isUserDeleteLoading}
-                    onClick={() => {
-                      onDelete(entity.value ?? '');
-                    }}
-                    requiredResources={requiredWriteResources}
+                    onClick={() => rowApi?.cancelEdit?.()}
+                    isLoading={Boolean(rowApi?.isBusy)}
                   >
-                    Remove
+                    Cancel
                   </Button>
                 </div>
               );
             }
-            return null;
+            return (
+              <div className={s.actions}>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => rowApi?.startEdit?.()}
+                  isLoading={Boolean(rowApi?.isBusy)}
+                  requiredResources={requiredWriteResources}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="SMALL"
+                  type="SECONDARY"
+                  onClick={() => onDelete(String(entity.value ?? ''))}
+                  isLoading={Boolean(rowApi?.isBusy)}
+                  requiredResources={requiredWriteResources}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
           },
         }),
       ].filter(notEmpty),
     );
   }, [
     isAddUserLoading,
-    isEditUserValid,
-    isNewUserValid,
     listSubtype,
+    isCustomList,
     requiredWriteResources,
     settings,
     existingCountryCodes,
     listHeader?.metadata?.columns,
+    onDelete,
   ]);
 }
 
@@ -902,128 +879,4 @@ function useExtraFilters(listSubtype: ListSubtypeInternal | null): ExtraFilterPr
       },
     ];
   }, [listSubtype, settings]);
-}
-
-function FocusRetainingInput({
-  value,
-  onChange,
-  isDisabled,
-  autoFocus,
-  uniqueKey,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  isDisabled?: boolean;
-  autoFocus?: boolean;
-  uniqueKey?: string;
-}) {
-  const [inputValue, setInputValue] = useState(value || '');
-  const isTypingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isTypingRef.current && value !== inputValue) {
-      setInputValue(value || '');
-    }
-  }, [value, inputValue]);
-
-  return (
-    <TextInput
-      key={uniqueKey}
-      isDisabled={isDisabled}
-      value={inputValue}
-      autoFocus={autoFocus}
-      onChange={(e) => {
-        isTypingRef.current = true;
-        setInputValue(e || '');
-      }}
-      onBlur={() => {
-        setTimeout(() => {
-          isTypingRef.current = false;
-          onChange(inputValue);
-        }, 50);
-      }}
-    />
-  );
-}
-
-function FocusRetainingNumberInput({
-  value,
-  onChange,
-  isDisabled,
-  uniqueKey,
-}: {
-  value: number | undefined;
-  onChange: (value: number | undefined) => void;
-  isDisabled?: boolean;
-  uniqueKey?: string;
-}) {
-  const [inputValue, setInputValue] = useState<number | undefined>(value);
-  const isTypingRef = useRef(false);
-
-  useEffect(() => {
-    if (!isTypingRef.current && value !== inputValue) {
-      setInputValue(value);
-    }
-  }, [value, inputValue]);
-
-  return (
-    <div onClick={(e) => e.stopPropagation()}>
-      <NumberInput
-        key={uniqueKey}
-        isDisabled={isDisabled}
-        value={inputValue}
-        onChange={(newValue) => {
-          isTypingRef.current = true;
-          setInputValue(newValue);
-        }}
-        onBlur={() => {
-          setTimeout(() => {
-            isTypingRef.current = false;
-            onChange(inputValue);
-          }, 50);
-        }}
-      />
-    </div>
-  );
-}
-
-function renderInputForColumnType<T>(
-  columnType: ColumnType,
-  value: T,
-  onChange: (newValue: T) => void,
-  isDisabled: boolean = false,
-  columnName?: string,
-) {
-  switch (columnType) {
-    case 'NUMBER':
-      return (
-        <FocusRetainingNumberInput
-          uniqueKey={`column-number-${columnName || 'unknown'}`}
-          isDisabled={isDisabled}
-          value={value !== undefined ? Number(value) : undefined}
-          onChange={(val) => onChange(val as T)}
-        />
-      );
-    case 'DATE': {
-      const dateValue = value ? dayjs(value as string) : null;
-      return (
-        <DatePicker
-          disabled={isDisabled}
-          value={dateValue}
-          onChange={(date) => {
-            onChange((date ? date.toISOString() : undefined) as T);
-          }}
-        />
-      );
-    }
-    case 'STRING':
-      return (
-        <FocusRetainingInput
-          uniqueKey={`column-${columnName || 'unknown'}-fallback`}
-          isDisabled={isDisabled}
-          value={value as string}
-          onChange={(val) => onChange(val as T)}
-        />
-      );
-  }
 }

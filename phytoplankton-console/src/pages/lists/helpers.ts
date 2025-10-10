@@ -58,4 +58,5 @@ export function getListSubtypeTitle(subtype: ListSubtypeInternal, tenantSettings
 
 export interface Metadata {
   userFullName?: string;
+  [key: string]: string | number | undefined;
 }

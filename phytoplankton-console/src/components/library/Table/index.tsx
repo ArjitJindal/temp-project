@@ -23,7 +23,6 @@ import { PersistedSettingsProvider, usePersistedSettingsContext } from './intern
 import { useTanstackTable } from './internal/helpers';
 import ScrollContainer from './ScrollContainer';
 import { ToolsOptions } from './Header/Tools';
-import { ExternalStateContext } from './internal/externalState';
 import { AdditionalContext } from './internal/partialySelectedRows';
 import Footer from './Footer';
 import Pagination from '@/components/library/Pagination';
@@ -77,10 +76,21 @@ export interface Props<Item extends object, Params extends object = CommonParams
   onReload?: () => void;
   selectedIds?: string[];
   partiallySelectedIds?: string[];
-  externalState?: unknown;
   selectionInfo?: SelectionInfo;
   expandedRowId?: string;
   emptyText?: string;
+  createRow?: {
+    item: Item | (() => Item);
+    position?: 'TOP' | 'BOTTOM';
+    visible?: boolean;
+    onSubmit?: (item: Item) => void | Promise<void>;
+  };
+  rowEditing?: {
+    mode?: 'single' | 'multiple';
+    isEditable?: (item: Item) => boolean;
+    onSave: (rowKey: string, item: Item) => void | Promise<void>;
+    onCancel?: (rowKey: string, item: Item) => void;
+  };
 }
 
 export type SelectionInfo = {
@@ -128,6 +138,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
     expandedRowId,
     leftTools,
     emptyText,
+    createRow,
+    rowEditing,
   } = props;
   const persistedSettingsContextValue = usePersistedSettingsContext();
   const [persistedSorting] = persistedSettingsContextValue.sort;
@@ -145,7 +157,49 @@ function Table<Item extends object, Params extends object = CommonParams>(
     return 'items' in props.data ? success(props.data) : props.data;
   }, [props.data]);
 
-  const data = useMemo(() => getOr(dataRes, { items: [] }), [dataRes]);
+  const adaptedDataRes: AsyncResource<TableData<Item>> = useMemo(() => {
+    const isVisible = createRow != null && (createRow.visible ?? true);
+    if (!isVisible) {
+      return dataRes;
+    }
+    if (!isLoading(dataRes) && !isFailed(dataRes)) {
+      const base = getOr(dataRes, { items: [] });
+      const creationItem: Item =
+        typeof createRow?.item === 'function'
+          ? (createRow?.item as () => Item)()
+          : (createRow?.item as Item);
+      const newItems =
+        (createRow?.position ?? 'BOTTOM') === 'TOP'
+          ? ([creationItem, ...(base.items ?? [])] as TableData<Item>['items'])
+          : ([...(base.items ?? []), creationItem] as TableData<Item>['items']);
+      return success({ ...base, items: newItems });
+    }
+    return dataRes;
+  }, [dataRes, createRow]);
+
+  const data = useMemo(() => getOr(adaptedDataRes, { items: [] }), [adaptedDataRes]);
+
+  // Creation row draft state
+  const creationInitialItem = useMemo(() => {
+    const isVisible = createRow != null && (createRow.visible ?? true);
+    if (!isVisible || createRow == null) {
+      return null as unknown as Item | null;
+    }
+    return (
+      typeof createRow.item === 'function'
+        ? (createRow.item as () => Item)()
+        : (createRow.item as Item)
+    ) as Item;
+  }, [createRow]);
+  const [createDraft, setCreateDraft] = useState<Item | null>(creationInitialItem);
+  useEffect(() => {
+    setCreateDraft(creationInitialItem);
+  }, [creationInitialItem]);
+  const [createBusy, setCreateBusy] = useState(false);
+
+  // Inline editing drafts
+  const [editDrafts, setEditDrafts] = useState<Record<string, Item>>({});
+  const [editBusy, setEditBusy] = useState<Record<string, boolean>>({});
 
   const handleChangeParams = useCallback(
     (newParams: AllParams<Params>) => {
@@ -167,8 +221,72 @@ function Table<Item extends object, Params extends object = CommonParams>(
     [onChangeParams],
   );
 
+  // Exclude creation row from selection and expansion
+  const creationRowId = useMemo(() => {
+    const isVisible = createRow != null && (createRow.visible ?? true);
+    if (!isVisible || createRow == null) {
+      return undefined as unknown as string | undefined;
+    }
+    try {
+      const creationItem: Item =
+        typeof createRow.item === 'function'
+          ? (createRow.item as () => Item)()
+          : (createRow.item as Item);
+      return String(applyFieldAccessor(creationItem, rowKey as FieldAccessor<Item>));
+    } catch (_e) {
+      return undefined as unknown as string | undefined;
+    }
+  }, [createRow, rowKey]);
+
+  const adaptedSelection = useMemo(() => {
+    const original = selection;
+    if (!creationRowId) {
+      return original;
+    }
+    if (typeof original === 'function') {
+      return (row: TableRow<Item>) => {
+        const id = String(applyFieldAccessor(row.content, rowKey as FieldAccessor<Item>));
+        if (id === creationRowId) {
+          return false;
+        }
+        return original(row);
+      };
+    }
+    if (original === true) {
+      return (row: TableRow<Item>) => {
+        const id = String(applyFieldAccessor(row.content, rowKey as FieldAccessor<Item>));
+        return id !== creationRowId;
+      };
+    }
+    return original;
+  }, [selection, creationRowId, rowKey]);
+
+  const computedIsExpandable = useMemo(() => {
+    const base: boolean | ((row: TableRow<Item>) => boolean) =
+      renderExpanded == null ? false : isExpandable == null ? true : isExpandable;
+    if (!creationRowId) {
+      return base;
+    }
+    if (typeof base === 'function') {
+      return (row: TableRow<Item>) => {
+        const id = String(applyFieldAccessor(row.content, rowKey as FieldAccessor<Item>));
+        if (id === creationRowId) {
+          return false;
+        }
+        return base(row);
+      };
+    }
+    if (base === true) {
+      return (row: TableRow<Item>) => {
+        const id = String(applyFieldAccessor(row.content, rowKey as FieldAccessor<Item>));
+        return id !== creationRowId;
+      };
+    }
+    return base;
+  }, [isExpandable, renderExpanded, creationRowId, rowKey]);
+
   const table = useTanstackTable<Item, Params>({
-    dataRes: dataRes,
+    dataRes: adaptedDataRes,
     rowKey: rowKey,
     columns: columns,
     params: params,
@@ -177,11 +295,103 @@ function Table<Item extends object, Params extends object = CommonParams>(
     partiallySelectedIds,
     onSelect,
     onEdit,
-    isRowSelectionEnabled: selection || selectionActions.length > 0,
-    isExpandable: renderExpanded == null ? false : isExpandable == null ? true : isExpandable,
+    isRowSelectionEnabled: (adaptedSelection as any) || selectionActions.length > 0,
+    isExpandable: computedIsExpandable as any,
     isSortable: !disableSorting,
     defaultSorting: defaultSorting,
     onExpandedMetaChange: onExpandedMetaChange,
+    meta: {
+      onEdit,
+      getRowApi: (row: TanTable.Row<TableRow<Item>>) => {
+        const original = row.original.content as Item;
+        const id = String(applyFieldAccessor(original, rowKey as FieldAccessor<Item>));
+        const isCreateRow = creationRowId != null && id === creationRowId;
+        if (isCreateRow) {
+          return {
+            isEditing: true,
+            isCreateRow: true,
+            isBusy: createBusy,
+            getDraft: () => createDraft ?? original,
+            setDraft: (newValue: Item | ((prev: Item) => Item)) =>
+              setCreateDraft((prev) =>
+                typeof newValue === 'function' ? newValue(prev ?? original) : newValue,
+              ),
+            startEdit: () => {},
+            cancelEdit: () => setCreateDraft(original),
+            save: async () => {
+              if (createBusy) {
+                return;
+              }
+              const draft = createDraft ?? original;
+              const submit = createRow?.onSubmit;
+              if (!submit) {
+                return;
+              }
+              setCreateBusy(true);
+              try {
+                await submit(draft);
+                setCreateDraft(creationInitialItem);
+              } finally {
+                setCreateBusy(false);
+              }
+            },
+          } as any;
+        }
+        const isEditing = editDrafts[id] != null;
+        return {
+          isEditing,
+          isCreateRow: false,
+          isBusy: Boolean(editBusy[id]),
+          getDraft: () => (isEditing ? (editDrafts[id] as Item) : original),
+          setDraft: (newValue: Item | ((prev: Item) => Item)) =>
+            setEditDrafts((prev) => ({
+              ...prev,
+              [id]: typeof newValue === 'function' ? newValue(prev[id] ?? original) : newValue,
+            })),
+          startEdit: () => setEditDrafts((prev) => (prev[id] ? prev : { ...prev, [id]: original })),
+          cancelEdit: () => {
+            if (editBusy[id]) {
+              return;
+            }
+            const cancel = rowEditing?.onCancel;
+            try {
+              cancel?.(id, original);
+            } finally {
+              setEditDrafts((prev) => {
+                const { [id]: _, ...rest } = prev;
+                return rest as Record<string, Item>;
+              });
+              setEditBusy((prev) => {
+                const { [id]: __, ...rest } = prev;
+                return rest as Record<string, boolean>;
+              });
+            }
+          },
+          save: async () => {
+            if (editBusy[id]) {
+              return;
+            }
+            const draft = (editDrafts[id] ?? original) as Item;
+            if (!rowEditing?.onSave) {
+              return;
+            }
+            setEditBusy((prev) => ({ ...prev, [id]: true }));
+            try {
+              await rowEditing.onSave(id, draft);
+              setEditDrafts((prev) => {
+                const { [id]: _, ...rest } = prev;
+                return rest as Record<string, Item>;
+              });
+            } finally {
+              setEditBusy((prev) => {
+                const { [id]: __, ...rest } = prev;
+                return rest as Record<string, boolean>;
+              });
+            }
+          },
+        } as any;
+      },
+    },
   });
 
   const handleResetSelection = useCallback(() => {
@@ -295,7 +505,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
               containerWidth={containerWidth}
               columns={columns}
               table={table}
-              dataRes={dataRes}
+              dataRes={adaptedDataRes}
               cyId={cyId}
               sizingMode={sizingMode}
               fitHeight={fitHeight}
@@ -702,26 +912,17 @@ function getSizingProps<Item>(
 export default function <Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
-  const {
-    tableId,
-    extraFilters,
-    columns,
-    partiallySelectedIds,
-    externalState = null,
-    selectionInfo,
-  } = props;
+  const { tableId, extraFilters, columns, partiallySelectedIds, selectionInfo } = props;
 
   return (
-    <ExternalStateContext.Provider value={{ value: externalState }}>
-      <AdditionalContext.Provider value={{ partiallySelectedIds, selectionInfo }}>
-        <PersistedSettingsProvider
-          tableId={tableId ?? null}
-          columns={columns}
-          extraFilters={extraFilters}
-        >
-          <Table {...props} />
-        </PersistedSettingsProvider>
-      </AdditionalContext.Provider>
-    </ExternalStateContext.Provider>
+    <AdditionalContext.Provider value={{ partiallySelectedIds, selectionInfo }}>
+      <PersistedSettingsProvider
+        tableId={tableId ?? null}
+        columns={columns}
+        extraFilters={extraFilters}
+      >
+        <Table {...props} />
+      </PersistedSettingsProvider>
+    </AdditionalContext.Provider>
   );
 }

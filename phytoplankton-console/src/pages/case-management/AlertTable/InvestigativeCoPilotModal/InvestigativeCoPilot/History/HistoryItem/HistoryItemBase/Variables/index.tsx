@@ -196,16 +196,17 @@ function renderInput(
     }
     return <TextInput {...inputProps} />;
   }
-  if (variable.variableType === 'SCREENING_DETAIL_FILTER') {
-    if (variable.value !== undefined) {
+  if ((variable as any)?.variableType === 'SCREENING_DETAIL_FILTER') {
+    const valueList = ((variable as any)?.value ?? []) as Array<{ value: string; label: string }>;
+    if (valueList !== undefined) {
       return (
         <Select
           {...inputProps}
-          options={variable.value?.map((o) => ({
+          options={valueList?.map((o) => ({
             value: o.value,
             label: o.label,
           }))}
-          isDisabled={variable.value?.length < 2}
+          isDisabled={(valueList?.length ?? 0) < 2}
           allowClear={false}
         />
       );

@@ -44,6 +44,7 @@ import {
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
+import DatePicker from '@/components/ui/DatePicker';
 import TransactionStateDisplay from '@/components/ui/TransactionStateDisplay';
 import {
   useTransactionStateLabel,
@@ -139,6 +140,7 @@ export const NUMBER: ColumnDataType<number> = {
       <div className={s.maxWidth}>
         <NumberInput
           step={1}
+          isDisabled={context.edit.isBusy}
           value={state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -162,6 +164,7 @@ export const FLOAT: ColumnDataType<number> = {
     return (
       <div className={s.maxWidth}>
         <NumberInput
+          isDisabled={context.edit.isBusy}
           value={state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -181,6 +184,7 @@ export const STRING: ColumnDataType<string> = {
     return (
       <div className={s.maxWidth}>
         <TextInput
+          isDisabled={context.edit.isBusy}
           value={Array.isArray(state) ? state.join(',') : state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -200,6 +204,7 @@ export const STRING_MULTIPLE: ColumnDataType<string | string[]> = {
     return (
       <div className={s.maxWidth}>
         <TextInput
+          isDisabled={context.edit.isBusy}
           value={Array.isArray(state) ? state.join(', ') : state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -218,6 +223,7 @@ export const LONG_TEXT: ColumnDataType<string> = {
       <div className={s.maxWidth}>
         <TextArea
           className={s.textArea}
+          isDisabled={context.edit.isBusy}
           value={state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
@@ -235,6 +241,7 @@ export const BOOLEAN: ColumnDataType<boolean> = {
     const [state] = context.edit.state;
     return (
       <Toggle
+        isDisabled={context.edit.isBusy}
         value={state}
         onChange={(checked) => {
           context.edit.onConfirm(checked);
@@ -397,6 +404,21 @@ export const DATE: ColumnDataType<number> = {
   render: (timestamp) => (
     <TimestampDisplay timestamp={timestamp} timeFormat={TIME_FORMAT_WITHOUT_SECONDS} />
   ),
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <DatePicker
+          disabled={context.edit.isBusy}
+          showTime
+          value={state != null ? dayjs(state) : undefined}
+          onChange={(val) => {
+            context.edit.onConfirm(val != null ? val.valueOf() : undefined);
+          }}
+        />
+      </div>
+    );
+  },
   stringify: (timestamp) => dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT),
   autoFilterDataType: { kind: 'dateTimeRange' },
 };

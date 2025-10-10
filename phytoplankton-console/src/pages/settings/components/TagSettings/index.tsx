@@ -7,13 +7,13 @@ import Button from '@/components/library/Button';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import TextInput from '@/components/library/TextInput';
-import { StatePair } from '@/utils/state';
 import Alert from '@/components/library/Alert';
 import { useHasResources } from '@/utils/user-utils';
 import { ConsoleTag, ConsoleTagTypeEnum } from '@/apis';
 import Select from '@/components/library/Select';
 import RadioGroup from '@/components/ui/RadioGroup';
+import { ColumnDataType } from '@/components/library/Table/types';
+import { STRING } from '@/components/library/Table/standardDataTypes';
 
 interface CommonItem {
   rowKey: string;
@@ -32,125 +32,77 @@ interface NewItem extends CommonItem {
 
 type Item = ExistingItem | NewItem;
 
-interface ExternalState {
-  newStateDetails: StatePair<Item | undefined>;
-  onAdd: (tag: ConsoleTag) => void;
-  canEdit: boolean;
-}
+const TAG_TYPE: ColumnDataType<ConsoleTagTypeEnum, Item> = {
+  render: (value) => <>{value}</>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <RadioGroup
+        value={state}
+        isDisabled={context.edit.isBusy}
+        orientation="HORIZONTAL"
+        onChange={(value) => {
+          context.edit.onConfirm(value as ConsoleTagTypeEnum);
+        }}
+        options={[
+          { value: 'STRING', label: 'String' },
+          { value: 'ENUM', label: 'Enum' },
+        ]}
+      />
+    );
+  },
+};
+
+const TAG_OPTIONS: ColumnDataType<string[] | undefined, Item> = {
+  render: (value, { item }) =>
+    (item as Item).tagType === 'ENUM' ? <>{value?.join(', ')}</> : <>-</>,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    const draft = context.item as Item;
+    if ((draft as Item).tagType !== 'ENUM') {
+      return <>-</>;
+    }
+    const options = (state ?? []).map((option) => ({ label: option, value: option }));
+    return (
+      <Select
+        mode="MULTIPLE_DYNAMIC"
+        isDisabled={context.edit.isBusy}
+        options={options}
+        value={state}
+        onChange={(newValue) => context.edit.onConfirm(newValue ?? [])}
+      />
+    );
+  },
+};
 
 const helper = new ColumnHelper<Item>();
 const columns = helper.list([
-  helper.display({
-    title: 'Key',
-    defaultWidth: 300,
-    render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-      const canEdit = externalState.canEdit;
-      if (item.type === 'NEW') {
-        return (
-          <TextInput
-            value={newState?.key}
-            onChange={(e) =>
-              setNewState({
-                key: e ?? '',
-                type: 'NEW',
-                rowKey: 'new',
-                tagType: newState?.tagType ?? 'STRING',
-              })
-            }
-            isDisabled={!canEdit}
-          />
-        );
-      } else {
-        return <>{item.key}</>;
-      }
-    },
-  }),
-  helper.display({
+  helper.simple<'key'>({ title: 'Key', key: 'key', type: STRING as any, defaultWidth: 300 }),
+  helper.simple<'tagType'>({
     title: 'Type',
+    key: 'tagType',
+    type: TAG_TYPE as any,
     defaultWidth: 300,
-    render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-
-      return (
-        <RadioGroup
-          value={newState?.tagType ?? item.tagType}
-          isDisabled={item.type !== 'NEW'}
-          orientation="HORIZONTAL"
-          onChange={(value) => {
-            setNewState({
-              type: 'NEW',
-              rowKey: 'new',
-              key: newState?.key ?? '',
-              tagType: value as ConsoleTagTypeEnum,
-            });
-          }}
-          options={[
-            { value: 'STRING', label: 'String' },
-            { value: 'ENUM', label: 'Enum' },
-          ]}
-        />
-      );
-    },
   }),
-  helper.display({
+  helper.simple<'options'>({
     title: 'Options',
+    key: 'options',
+    type: TAG_OPTIONS as any,
     defaultWidth: 300,
-    render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-      const canEdit = externalState.canEdit;
-      if (item.type === 'NEW' && newState?.tagType === 'ENUM') {
-        return (
-          <Select
-            mode="MULTIPLE_DYNAMIC"
-            isDisabled={item.type !== 'NEW' || !canEdit}
-            options={
-              item.options?.map((option) => ({
-                label: option,
-                value: option,
-              })) ?? []
-            }
-            value={newState?.options}
-            onChange={(e) => {
-              setNewState({
-                type: 'NEW',
-                rowKey: 'new',
-                key: newState?.key ?? '',
-                tagType: newState?.tagType ?? 'ENUM',
-                options: e ?? [],
-              });
-            }}
-          />
-        );
-      }
-      return item.tagType === 'ENUM' ? <>{item.options?.join(', ')}</> : <>-</>;
-    },
   }),
   helper.display({
     title: 'Action',
     defaultWidth: 300,
     render: (item, context) => {
-      const externalState = context.external as ExternalState;
-      const [newState, setNewState] = externalState.newStateDetails;
-      const canEdit = externalState.canEdit;
-      if (item.type === 'NEW') {
+      const rowApi = context.rowApi;
+      const draft = (rowApi?.getDraft?.() as Item) ?? item;
+      const canEdit = true;
+      if (rowApi?.isCreateRow) {
         return (
           <Button
-            isDisabled={!newState?.key || !canEdit}
-            onClick={() => {
-              if (newState) {
-                externalState.onAdd({
-                  key: newState.key,
-                  createdAt: Date.now(),
-                  type: newState.tagType,
-                  options: newState.tagType === 'ENUM' ? newState.options : undefined,
-                });
-                setNewState(undefined);
-              }
-            }}
+            isDisabled={!draft?.key || !canEdit}
+            isLoading={Boolean(rowApi?.isBusy)}
+            onClick={() => rowApi?.save?.()}
           >
             Add
           </Button>
@@ -163,23 +115,9 @@ function TagSettings() {
   const settings = useSettings();
   const permissions = useHasResources(['write:::settings/users/tags/*']);
   const mutateTenantSettings = useUpdateTenantSettings();
-  const [newStateDetails, setNewStateDetails] = useState<Item | undefined>();
   const [isMaxTags, setIsMaxTags] = useState(false);
-  const externalState: ExternalState = {
-    canEdit: permissions,
-    newStateDetails: [newStateDetails, setNewStateDetails],
-    onAdd: (tag: ConsoleTag) => {
-      if (settings.consoleTags?.length === 10) {
-        setIsMaxTags(true);
-        return;
-      }
-      mutateTenantSettings.mutate({
-        consoleTags: [...(settings.consoleTags ?? []), tag],
-      });
-    },
-  };
-  const data: Item[] = [
-    ...(settings.consoleTags?.map(
+  const data: Item[] =
+    settings.consoleTags?.map(
       (tag) =>
         ({
           rowKey: tag.key,
@@ -188,14 +126,7 @@ function TagSettings() {
           tagType: tag.type,
           options: tag.type === 'ENUM' ? tag.options : undefined,
         } as ExistingItem),
-    ) ?? []),
-    {
-      rowKey: 'new',
-      key: '',
-      type: 'NEW',
-      tagType: 'STRING',
-    } as NewItem,
-  ];
+    ) ?? [];
 
   return (
     <SettingsCard
@@ -210,7 +141,31 @@ function TagSettings() {
         data={{
           items: data,
         }}
-        externalState={externalState}
+        createRow={{
+          item: { rowKey: 'new', key: '', type: 'NEW', tagType: 'STRING' } as any,
+          visible: permissions,
+          onSubmit: (newTag) => {
+            const tag = newTag as any as Item;
+            if (!tag.key) {
+              return;
+            }
+            if (settings.consoleTags?.length === 10) {
+              setIsMaxTags(true);
+              return;
+            }
+            mutateTenantSettings.mutate({
+              consoleTags: [
+                ...(settings.consoleTags ?? []),
+                {
+                  key: tag.key,
+                  type: tag.tagType,
+                  options: tag.tagType === 'ENUM' ? tag.options : undefined,
+                  createdAt: Date.now(),
+                } as ConsoleTag,
+              ],
+            });
+          },
+        }}
       ></Table>
       {isMaxTags && (
         <Alert type="ERROR">
