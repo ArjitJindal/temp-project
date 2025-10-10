@@ -36,7 +36,6 @@ import {
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
-// import { useAuditLogsList } from '@/hooks/api/audit-logs';
 import {
   useFeatureEnabled,
   useFreshdeskCrmEnabled,
