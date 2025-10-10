@@ -2073,7 +2073,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (
       !vpc ||
       !this.config.resource.LAMBDA_VPC_ENABLED ||
-      (envIsNot('sandbox') && envIsNot('dev')) // TODO: remove this once we have a way to test SQS Interface VPC endpoint
+      envIsNot('sandbox') // TODO: remove this once we have a way to test SQS Interface VPC endpoint
     ) {
       return null
     }
@@ -2132,11 +2132,7 @@ export class CdkTarponStack extends cdk.Stack {
 
   private createMongoAtlasVpc() {
     // Enable VPC forsandbox, and prod stages
-    if (
-      this.config.stage !== 'sandbox' &&
-      this.config.stage !== 'prod' &&
-      this.config.stage !== 'dev'
-    ) {
+    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
       return {
         vpc: null,
         vpcCidr: null,
