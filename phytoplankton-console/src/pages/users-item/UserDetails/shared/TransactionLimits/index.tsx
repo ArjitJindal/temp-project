@@ -369,7 +369,11 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
                   <div className={s.verticalContainer}>
                     {Object.entries(transactionLimit?.transactionCountLimit || {})
                       .filter((entry) => entry[1])
-                      .map((entry) => `${entry[1]} / ${entry[0]}`)}
+                      .map((entry, index) => (
+                        <div key={index} className={s.horizontalContainer}>
+                          {entry[1]} / {entry[0]}
+                        </div>
+                      ))}
                   </div>
                 );
               },

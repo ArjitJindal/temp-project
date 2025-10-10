@@ -114,13 +114,11 @@ export const UsersTransactedWith: TableQuestion<
       ),
     ])
 
-    const items = rows.map((r) => [
-      r.userId,
-      r.name,
-      r.userType,
-      r.count,
-      convert(r.sum, currency),
-    ])
+    const items = rows.map((r) => {
+      const convertedSum = convert(r.sum, 'USD', currency) // amount are stored in USD in CH
+      return [r.userId, r.name, r.userType, r.count, convertedSum]
+    })
+
     return {
       data: {
         items,

@@ -34,7 +34,7 @@ import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
 import { SanctionsScreeningDetailsV2 } from '@/@types/openapi-internal/SanctionsScreeningDetailsV2'
 import { CounterRepository } from '@/services/counter/repository'
-import { bulkSendMessages } from '@/utils/sns-sqs-client'
+import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleExecutionSanctionsDetails } from '@/@types/openapi-internal/RuleExecutionSanctionsDetails'
 
 @traceable
@@ -51,7 +51,7 @@ export class SanctionsScreeningDetailsRepository {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
-    this.sqsClient = new SQSClient({})
+    this.sqsClient = getSQSClient()
   }
 
   public async addSanctionsScreeningDetails(

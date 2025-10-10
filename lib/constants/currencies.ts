@@ -499,6 +499,7 @@ export const CURRENCY_OBJ: Readonly<Record<string, CurrencyInfo>> = {
   IOTA: { label: 'IOTA', symbol: null },
   WAVES: { label: 'Waves', symbol: null },
   LUNA2: { label: 'LUNA2', symbol: null },
+  UDI: { label: 'Unidad de Inversión', symbol: null },
 }
 
 export const CRYPTO_CURRENCIES_KEYS = [

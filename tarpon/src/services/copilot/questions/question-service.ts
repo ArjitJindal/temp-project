@@ -217,8 +217,8 @@ export class QuestionService {
     const cs = new CurrencyService(this.dynamoClient)
     const exchangeData = await cs.getExchangeData()
 
-    const convert = (amount: number, target: CurrencyCode) =>
-      amount * exchangeData.rates[target]
+    const convert = (amount: number, _from: CurrencyCode, to: CurrencyCode) =>
+      amount * exchangeData.rates[to]
 
     const ctx: InvestigationContext = {
       alert: a,
@@ -237,7 +237,10 @@ export class QuestionService {
     if (question.skipCache) {
       const response = await this.getQuestionResponse(
         ctx,
-        { ...varObject, currency: userCurrency },
+        {
+          ...varObject,
+          ...(!varObject.currency ? { currency: userCurrency } : {}),
+        },
         question
       )
       return response
@@ -273,7 +276,10 @@ export class QuestionService {
 
     const response = await this.getQuestionResponse(
       ctx,
-      { ...varObject, currency: userCurrency },
+      {
+        ...varObject,
+        ...(!varObject.currency ? { currency: userCurrency } : {}),
+      },
       question
     )
     void this.dynamoClient.send(

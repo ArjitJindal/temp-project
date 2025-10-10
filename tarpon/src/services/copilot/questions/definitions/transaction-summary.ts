@@ -1,4 +1,4 @@
-import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
+import { COPILOT_QUESTIONS, formatNumber } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import {
   currencyDefault,
@@ -75,19 +75,39 @@ export const TransactionSummary: PropertiesQuestion<
     )
 
     const result = response[0]
+    const settings = getContext()?.settings
+    const showAllDecimals = settings?.showAllDecimalPlaces || false
 
     return {
       data: [
         { key: 'Transaction count', value: result.count.toFixed(0) },
-        { key: 'Max amount', value: convert(result.max, currency).toFixed(2) },
-        { key: 'Min amount', value: convert(result.min, currency).toFixed(2) },
+        {
+          key: 'Max amount',
+          value: formatNumber(
+            convert(result.max, 'USD', currency),
+            showAllDecimals
+          ), // value of currency in CH are in USD
+        },
+        {
+          key: 'Min amount',
+          value: formatNumber(
+            convert(result.min, 'USD', currency),
+            showAllDecimals
+          ),
+        }, // value of currency in CH are in USD
         {
           key: 'Average amount',
-          value: convert(result.avg, currency).toFixed(2),
+          value: formatNumber(
+            convert(result.avg, 'USD', currency),
+            showAllDecimals
+          ),
         },
         {
           key: 'Total amount',
-          value: convert(result.total, currency).toFixed(2),
+          value: formatNumber(
+            convert(result.total, 'USD', currency),
+            showAllDecimals
+          ),
         },
       ],
       summary: ``,

@@ -9,10 +9,18 @@ import Checkbox from '../../../../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
 import { useQuery } from '@/utils/queries/hooks';
+import {
+  TENANT_SETTINGS_UNMASK,
+  TENANTS_LIST,
+  TENANTS_DELETION_DATA,
+  SECONDARY_QUEUE_TENANTS,
+} from '@/utils/queries/keys';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
+import EyeOutlined from '@/components/ui/icons/Remix/system/eye-line.react.svg';
+import Tooltip from '@/components/library/Tooltip';
 import {
   BatchJobNames,
   ChatbotNames,
@@ -27,6 +35,7 @@ import {
   useFeatures,
   useSettings,
   useUpdateTenantSettings,
+  useReloadTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
@@ -38,7 +47,6 @@ import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
 import { useSARReportCountries } from '@/components/Sar/utils';
-import { SECONDARY_QUEUE_TENANTS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CHATBOT_NAMESS } from '@/apis/models-custom/ChatbotNames';
 
@@ -176,7 +184,11 @@ export const featureDescriptions: Record<
     title: 'Chainalysis',
     description: 'Enables Chainalysis',
   },
-
+  EDD: {
+    title: 'EDD Rules',
+    description: 'Generates EDD alerts in demo mode',
+    tag: FeatureTag.ENG,
+  },
   WORKFLOWS_BUILDER: {
     title: 'Workflows builder',
     description: 'Enables workflows builder',
@@ -234,6 +246,8 @@ export const featureDescriptions: Record<
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
+  const [unmaskDowJonesPassword, setUnmaskDowJonesPassword] = useState<boolean>(false);
+  const [saveClicked, setSaveClicked] = useState(false);
   const settings = useSettings();
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(settings.features?.sort());
@@ -278,9 +292,19 @@ export default function SuperAdminPanel() {
 
   const user = useAuth0User();
   const api = useApi();
-  const queryResult = useQuery(['tenants'], () => api.getTenantsList(), {
+  const queryResult = useQuery(TENANTS_LIST(), () => api.getTenantsList(), {
     enabled: isModalVisible,
   });
+
+  // Query to fetch settings with unmasked Dow Jones password when needed
+  const settingsWithUnmaskQuery = useQuery(
+    TENANT_SETTINGS_UNMASK(unmaskDowJonesPassword),
+    async () => await api.getTenantsSettings({ unmaskDowJonesPassword }),
+    {
+      enabled: unmaskDowJonesPassword,
+      retry: false,
+    },
+  );
   const tenants: Array<Tenant & { whitelabel?: { host: string; name: string } }> = useMemo(() => {
     if (isSuccess(queryResult.data)) {
       return (
@@ -402,7 +426,7 @@ export default function SuperAdminPanel() {
     document.body.removeChild(link);
   };
 
-  const tenantsDeletionQueryResult = useQuery(['tenantsFailedToDelete'], async () => {
+  const tenantsDeletionQueryResult = useQuery(TENANTS_DELETION_DATA(), async () => {
     return await api.getTenantsDeletionData();
   });
 
@@ -413,7 +437,9 @@ export default function SuperAdminPanel() {
     return {};
   }, [tenantsDeletionQueryResult.data]);
   const mutateTenantSettings = useUpdateTenantSettings();
+  const reloadUpdatedSettings = useReloadTenantSettings();
   const handleSave = async () => {
+    setSaveClicked(true);
     mutateTenantSettings.mutate({
       ...(features && { features }),
       ...(limits && { limits }),
@@ -429,6 +455,16 @@ export default function SuperAdminPanel() {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    if (saveClicked) {
+      reloadUpdatedSettings.mutate({
+        ...(features && { features }),
+        ...(limits && { limits }),
+        sanctions: sanctionsSettings,
+        crmIntegrationName,
+        sarJurisdictions,
+      });
+    }
+    setSaveClicked(false);
     setFeatures(settings.features?.sort());
     setLimits(settings.limits || {});
     setTenantIdToDelete(undefined);
@@ -625,18 +661,56 @@ export default function SuperAdminPanel() {
                   />
                 </Label>
                 <Label level={2} label="Password" required={{ value: true, showHint: true }}>
-                  <TextInput
-                    value={sanctionsSettings?.dowjonesCreds?.password}
-                    onChange={(value) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        dowjonesCreds: {
-                          ...sanctionsSettings?.dowjonesCreds,
-                          password: value || '',
-                        },
-                      });
-                    }}
-                  />
+                  <div className={s.passwordFieldContainer}>
+                    <TextInput
+                      className={s.passwordInput}
+                      value={
+                        unmaskDowJonesPassword && isSuccess(settingsWithUnmaskQuery.data)
+                          ? settingsWithUnmaskQuery.data.value.sanctions?.dowjonesCreds?.password
+                          : sanctionsSettings?.dowjonesCreds?.password
+                      }
+                      onChange={(value) => {
+                        // Only allow editing when password is masked (not unmasked)
+                        if (!unmaskDowJonesPassword || !isSuccess(settingsWithUnmaskQuery.data)) {
+                          setSanctionsSettings({
+                            ...sanctionsSettings,
+                            dowjonesCreds: {
+                              ...sanctionsSettings?.dowjonesCreds,
+                              password: value || '',
+                            },
+                          });
+                        }
+                      }}
+                      htmlAttrs={{
+                        type:
+                          unmaskDowJonesPassword && isSuccess(settingsWithUnmaskQuery.data)
+                            ? 'text'
+                            : 'password',
+                        readOnly: unmaskDowJonesPassword && isSuccess(settingsWithUnmaskQuery.data),
+                      }}
+                    />
+                    {sanctionsSettings?.dowjonesCreds?.password?.includes('*') && (
+                      <div className={s.eyeIconWrapper}>
+                        <Tooltip
+                          title={
+                            unmaskDowJonesPassword
+                              ? 'Click to hide password'
+                              : 'Click to view password'
+                          }
+                          placement="top"
+                        >
+                          <EyeOutlined
+                            className={s.eyeIcon}
+                            height={16}
+                            width={16}
+                            onClick={() => {
+                              setUnmaskDowJonesPassword(!unmaskDowJonesPassword);
+                            }}
+                          />
+                        </Tooltip>
+                      </div>
+                    )}
+                  </div>
                 </Label>
               </Label>
             ) : (

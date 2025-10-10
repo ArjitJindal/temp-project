@@ -303,8 +303,8 @@ export type BackfillAsyncRuleRuns = {
 }
 
 /* PNB specific jobs */
-export type PnbBackfillEntities = {
-  type: 'PNB_BACKFILL_ENTITIES'
+export type BackfillEntitiesJsonl = {
+  type: 'BACKFILL_ENTITIES_JSONL'
   tenantId: string
   parameters: {
     importFileS3Key: string
@@ -316,6 +316,7 @@ export type PnbBackfillEntities = {
       | 'CONSUMER_EVENT'
       | 'BUSINESS_EVENT'
     dynamoDbOnly: boolean
+    bucket: string
   }
 }
 type PnbBackfillTransactionsBase = {
@@ -591,7 +592,7 @@ export type BatchJob =
   | BackFillAvgTrs
   | BackfillAsyncRuleRuns
   | RiskScoringTriggersBatchJob
-  | PnbBackfillEntities
+  | BackfillEntitiesJsonl
   | PnbBackfillTransactions
   | PnbBackfillKrs
   | PnbBackfillArs

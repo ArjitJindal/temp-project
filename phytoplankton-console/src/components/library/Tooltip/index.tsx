@@ -116,7 +116,7 @@ function TooltipRoot(props: Props) {
       ) : (
         <div
           ref={refs.setReference}
-          className={s.iconContainer}
+          className={s.childrenContainer}
           aria-describedby={tooltipId}
           {...getReferenceProps()}
           style={{ maxWidth: 'fit-content' }}

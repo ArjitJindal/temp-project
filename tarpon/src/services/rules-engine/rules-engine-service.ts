@@ -433,7 +433,9 @@ export class RulesEngineService {
     if (transaction.transactionId && (options?.validateTransactionId ?? true)) {
       const existingTransaction =
         await this.transactionRepository.getTransactionById(
-          transaction.transactionId
+          transaction.transactionId,
+          undefined,
+          transaction.timestamp
         )
       if (existingTransaction) {
         const [originUserDrs, destinationUserDrs] = await Promise.all([
@@ -856,7 +858,9 @@ export class RulesEngineService {
     oldStatusTransactionEvent?: RuleAction
   ): Promise<void> {
     const transactionInDb = await this.transactionRepository.getTransactionById(
-      transaction.transactionId
+      transaction.transactionId,
+      undefined,
+      transaction.timestamp
     )
     if (!transactionInDb) {
       throw new NotFound(
@@ -1991,7 +1995,8 @@ export class RulesEngineService {
 
   public async applyTransactionAction(
     data: TransactionAction,
-    userId: string
+    userId: string,
+    paymentApprovalAction: boolean = false
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
     const txns = await this.transactionRepository.getTransactionsByIds(
@@ -2015,6 +2020,7 @@ export class RulesEngineService {
     }
 
     const promises = [
+      // updating the transaction event
       this.transactionEventRepository.saveTransactionEvents(
         txns
           .filter(
@@ -2040,6 +2046,7 @@ export class RulesEngineService {
             },
           }))
       ),
+      // saving the transaction
       this.transactionRepository.saveTransactions(
         txns
           .filter(
@@ -2053,6 +2060,9 @@ export class RulesEngineService {
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
             },
+            paymentApprovalTimestamp: paymentApprovalAction
+              ? Date.now()
+              : transaction.paymentApprovalTimestamp,
           }))
       ),
     ]

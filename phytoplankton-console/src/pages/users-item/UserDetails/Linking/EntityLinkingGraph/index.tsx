@@ -112,7 +112,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
       </div>
       {selectedNode && (
         <>
-          {selectedNode.id.startsWith('user') && userId !== selectedUserId && (
+          {selectedNode.id.startsWith('user') && (
             <div className={parentS.contextMenu}>
               <UserPanel
                 followed={followed}

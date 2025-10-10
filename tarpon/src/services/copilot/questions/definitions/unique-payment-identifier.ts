@@ -93,17 +93,19 @@ export const UniquePaymentIdentifier: TableQuestion<
       }
     })
 
+    const items = rows.map((r) => {
+      return [
+        r.paymentIdentifier,
+        r.paymentMethod,
+        r.count,
+        convert(r.sum, 'USD', currency), // all currency in CH are in USD
+        r.names.join(', '),
+      ]
+    })
+
     return {
       data: {
-        items: rows.map((r) => {
-          return [
-            r.paymentIdentifier,
-            r.paymentMethod,
-            r.count,
-            convert(r.sum, currency),
-            r.names.join(', '),
-          ]
-        }),
+        items,
         total: resultTotal,
       },
       summary: !topPaymentIdentifier

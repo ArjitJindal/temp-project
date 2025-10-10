@@ -164,10 +164,12 @@ async function getClickhouseData(
     format: 'JSONEachRow',
   })
 
-  return result.map((row) => ({
+  const item = result.map((row) => ({
     time: dayjs(row.date).valueOf(),
-    value: currency ? ctx.convert(row.agg, currency) : row.agg,
+    value: currency ? ctx.convert(row.agg, 'USD', currency) : row.agg, // all currency in CH are in USD
   }))
+
+  return item
 }
 
 function getUserLimitValues(ctx, granularity, showUserLimit, values, currency) {

@@ -10,7 +10,13 @@ import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { CurrencyExchangeUSDType } from '@/services/currency'
 
 export type InputData = {
-  transactions?: InternalTransaction[]
+  transactions?: Pick<
+    InternalTransaction,
+    | 'transactionId'
+    | 'originAmountDetails'
+    | 'destinationAmountDetails'
+    | 'createdAt'
+  >[]
   user: InternalConsumerUser | InternalBusinessUser
   _case?: Case
   ruleInstances?: RuleInstance[]

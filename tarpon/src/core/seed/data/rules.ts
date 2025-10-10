@@ -776,6 +776,582 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     },
   ]
 
+  if (hasFeature('EDD_REPORT')) {
+    customRuleInstances.push(
+      {
+        id: 'RC-101',
+        type: 'TRANSACTION',
+        ruleId: 'RC-101',
+        ruleNameAlias: 'EDD Review rule',
+        ruleDescriptionAlias:
+          'Automatically generates EDD alert for analyst review',
+        baseCurrency: 'USD',
+        logic: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          LOW: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:81652f7f',
+            entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+          },
+        ],
+        logicAggregationVariables: [
+          {
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: {
+                granularity: 'week',
+                rollingBasis: true,
+                units: 1,
+              },
+              end: {
+                granularity: 'now',
+                rollingBasis: true,
+                units: 0,
+              },
+            },
+            filtersLogic: {
+              and: [
+                {
+                  '==': [
+                    {
+                      var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                    },
+                    5000,
+                  ],
+                },
+              ],
+            },
+            userDirection: 'SENDER_OR_RECEIVER',
+            type: 'USER_TRANSACTIONS',
+            transactionDirection: 'SENDING_RECEIVING',
+            includeCurrentEntity: true,
+            version: 1742082863218,
+            key: 'agg:413d04d2',
+            baseCurrency: 'USD',
+          },
+        ],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1742082863217,
+        updatedAt: 1742082863217,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+          slaPolicies: [
+            rng.r(1).pickRandom(getSLAPolicies()).id,
+            rng.r(2).pickRandom(getSLAPolicies()).id,
+          ],
+        },
+        checksFor: [],
+        createdBy: rng.r(4).pickRandom(getAccounts()).id,
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'EDD Review alerts'
+        )?.id,
+      },
+      {
+        id: 'RC-102',
+        type: 'TRANSACTION',
+        ruleId: 'RC-102',
+        ruleNameAlias: 'Periodic Review rule',
+        ruleDescriptionAlias:
+          'Automatically generates alerts for periodic reviews',
+        baseCurrency: 'USD',
+        checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+        logic: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          LOW: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:59ea8d82',
+            entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+          },
+          {
+            key: 'entity:20381d40',
+            entityKey: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+          },
+          {
+            key: 'entity:8f0e3a71',
+            entityKey: 'CONSUMER_USER:creationAgeDays__SENDER',
+          },
+          {
+            key: 'entity:d97048e1',
+            entityKey: 'CONSUMER_USER:creationAgeDays__RECEIVER',
+          },
+        ],
+        logicAggregationVariables: [],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1742084034299,
+        updatedAt: 1742084034299,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+          slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+        },
+        checksFor: [],
+        createdBy: rng.r(3).pickRandom(getAccounts()).id,
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'EDD Preodic alerts'
+        )?.id,
+      }
+    )
+  }
   if (hasFeature('CHAINALYSIS')) {
     customRuleInstances.push(
       {
@@ -2482,6 +3058,157 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
   ]
 
+  // Dynamic rule instance for demo data
+  const dynamicRuleInstance: RuleInstance[] = [
+    {
+      id: 'R-11.1',
+      type: 'TRANSACTION',
+      ruleId: 'R-11',
+      ruleNameAlias: 'Transaction anomaly',
+      ruleDescriptionAlias: 'Check for anomalous transaction volumes',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      filters: {},
+      parameters: {},
+      riskLevelParameters: {
+        VERY_LOW: {},
+        VERY_HIGH: {},
+        HIGH: {},
+        MEDIUM: {},
+        LOW: {},
+      },
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'entity:transactionAmount',
+              },
+              100000,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:transactionAmount',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+      ],
+      logicAggregationVariables: [],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1741948155800,
+      updatedAt: 1741948155800,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: ['UNEXPECTED_BEHAVIOR'],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      checksFor: ['Dynamic Detection'],
+      createdBy: rng.r(1).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+  ]
+
   const data = [
     ...r1RuleInstance,
     ...r2RuleInstance,
@@ -2498,6 +3225,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r8RuleInstanceShadow,
     ...r30RuleInstanceShadow,
     ...customRuleInstances,
+    ...dynamicRuleInstance,
   ]
 
   return data
@@ -2505,6 +3233,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
 
 export const CHAINALYSIS_RULE_IDS = ['RC-4', 'RC-5']
 export const COUNTERPARTY_RULE_IDS = ['R-169', 'R-169.1']
+export const EDD_RULE_IDS = ['RC-101', 'RC-102']
+export const DYNAMIC_RULE_IDS = ['R-11']
 
 export const mapRuleInstanceToExecuteRules = (
   ruleInstance: RuleInstance,
@@ -2549,7 +3279,8 @@ export const transactionRules: (
     .filter((ri) => {
       if (ri.ruleId) {
         const counterPartyExists = COUNTERPARTY_RULE_IDS.includes(ri.ruleId)
-        if (counterPartyExists) {
+        const eddRulesExists = EDD_RULE_IDS.includes(ri.ruleId)
+        if (counterPartyExists || eddRulesExists) {
           return false
         }
         const exists = CHAINALYSIS_RULE_IDS.includes(ri.ruleId)
@@ -2582,6 +3313,38 @@ export const counterPartyTransactionRules: (
         mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
     )
 })
+
+export const eddRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 10000)
+    return ruleInstances()
+      .filter((rule) => {
+        if (rule.ruleId) {
+          return EDD_RULE_IDS.includes(rule.ruleId ?? '')
+        }
+        return false
+      })
+      .map(
+        (ri, i): ExecutedRulesResult =>
+          mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+      )
+  })
+
+export const dynamicRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 2000)
+    return ruleInstances()
+      .filter((ri) => {
+        if (ri.ruleId) {
+          return DYNAMIC_RULE_IDS.includes(ri.ruleId)
+        }
+        return false
+      })
+      .map(
+        (ri, i): ExecutedRulesResult =>
+          mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+      )
+  })
 
 export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
   memoize((hitRuleIds) => {

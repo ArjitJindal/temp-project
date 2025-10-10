@@ -1436,6 +1436,14 @@ paths:
           in: query
           name: responseType
           description: Type of response - 'data' for table data only, 'count' for count only
+        - schema:
+            type: number
+          in: query
+          name: afterPaymentApprovalTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforePaymentApprovalTimestamp
     post:
       summary: Flat file upload transaction
       operationId: post-transaction-flat-file-upload
@@ -3557,7 +3565,13 @@ paths:
                 $ref: '#/components/schemas/TenantSettings'
         '401':
           description: Unauthorized
-    parameters: []
+    parameters:
+      - name: unmaskDowJonesPassword
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
     post:
       summary: Tenant - POST Settings
       operationId: post-tenants-settings
@@ -3956,6 +3970,9 @@ paths:
     post:
       summary: Account - Edit
       operationId: accounts-edit
+      x-flagright:
+        resources:
+          - write:::accounts/overview
       requestBody:
         content:
           application/json:
@@ -10463,6 +10480,8 @@ components:
               type: number
             updatedAt:
               type: number
+            paymentApprovalTimestamp:
+              type: number
             alertIds:
               type: array
               items:
@@ -10678,6 +10697,8 @@ components:
           type: array
           items:
             type: string
+        paymentApprovalTimestamp:
+          type: number
       required:
         - transactionId
         - timestamp
@@ -12019,6 +12040,8 @@ components:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:
           $ref: '#/components/schemas/WorkflowSettings'
+        showAllDecimalPlaces:
+          type: boolean
     LLMProvider:
       type: string
       enum:
@@ -13105,6 +13128,7 @@ components:
         - EDD_REPORT
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
+        - EDD
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

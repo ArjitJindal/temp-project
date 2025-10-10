@@ -356,6 +356,7 @@
   "TRANSACTION:destinationDeviceData-deviceModel",
   "TRANSACTION:destinationDeviceData-deviceYear",
   "TRANSACTION:destinationDeviceData-appVersion",
+  "TRANSACTION:paymentApprovalTimestamp",
   "TRANSACTION:originPaymentDetails-address-tags",
   "TRANSACTION:paymentDetails-address-tags__BOTH",
   "TRANSACTION:originPaymentDetails-tags",

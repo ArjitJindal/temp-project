@@ -498,6 +498,7 @@ export const mockedCurrencyExchangeRates: CoinbaseResponse = {
       WAVES: '1',
       LUNA2: '1',
       NEO: '1',
+      UDI: '1',
     },
   },
 }

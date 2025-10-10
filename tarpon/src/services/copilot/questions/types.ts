@@ -55,7 +55,7 @@ export type InvestigationContext = {
   username: string
   accountService: AccountsService
   paymentIdentifier?: PaymentDetails
-  convert: (amount: number, target: CurrencyCode) => number
+  convert: (amount: number, from: CurrencyCode, to: CurrencyCode) => number
   humanReadableId: string
 }
 

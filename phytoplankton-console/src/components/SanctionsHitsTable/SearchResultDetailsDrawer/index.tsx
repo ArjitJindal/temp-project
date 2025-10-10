@@ -442,7 +442,7 @@ export function CAEntityDetails(props: {
                 ) : (
                   <div className={s.tags}>
                     {associations.map((assoc, i) => (
-                      <Tag color="gray" key={i} wrapText={false} trimText={false}>
+                      <Tag color="gray" key={i} disableWrapText={false} trimText={false}>
                         <div className={s.associateInfo}>
                           <span>{assoc.name}</span>
                           {assoc.association ||
@@ -577,7 +577,7 @@ function makeStubAiText(hit: SanctionsHit): string {
     ].includes(x),
   );
   const hasDateMatches = hit.entity.matchTypes?.some((x) => ['year_of_birth'].includes(x));
-  const shouldShowDateMatch = hasDateMatches || isHitEntityPerson(hit.entity.entityType);
+  const shouldShowDateMatch = hasDateMatches && isHitEntityPerson(hit.entity.entityType);
   if (hasNameMatches && shouldShowDateMatch) {
     return 'Date of birth and name match and hit requires human review';
   } else if (hasNameMatches) {

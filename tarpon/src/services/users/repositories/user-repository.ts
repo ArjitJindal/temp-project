@@ -355,53 +355,72 @@ export class UserRepository {
       const filterNameConditions: Filter<
         InternalBusinessUser | InternalConsumerUser
       >[] = []
-      // Check if each word in the query has a match in the user's name
-      for (const part of params.filterName.split(/\s+/)) {
-        const regexFilter = useQuickSearch
-          ? prefixRegexMatchFilter(part)
-          : regexMatchFilter(part, true)
-        // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
-        filterNameConditions.push({
-          $or: [
-            {
-              'userDetails.name.firstName': regexFilter,
-            },
-            {
-              'userDetails.name.middleName': regexFilter,
-            },
-            {
-              'userDetails.name.lastName': regexFilter,
-            },
-            {
-              'legalEntity.companyGeneralDetails.legalName': regexFilter,
-            },
-            {
-              userId: regexFilter,
-            },
-          ],
-        })
-      }
-      filterConditions.push({ $and: filterNameConditions })
 
-      if (useQuickSearch) {
-        filterConditions.push({
-          $expr: {
-            $regexMatch: {
-              input: {
-                $concat: [
-                  '$userDetails.name.firstName',
-                  ' ',
-                  '$userDetails.name.middleName',
-                  ' ',
-                  '$userDetails.name.lastName',
-                ],
-              },
-              regex: `^${params.filterName}`,
-              options: 'i',
-            },
+      // First, try exact prefix match for the full search term
+      const fullSearchFilter = useQuickSearch
+        ? prefixRegexMatchFilter(params.filterName)
+        : regexMatchFilter(params.filterName, true)
+
+      filterNameConditions.push({
+        $or: [
+          {
+            'userDetails.name.firstName': fullSearchFilter,
           },
-        })
+          {
+            'userDetails.name.middleName': fullSearchFilter,
+          },
+          {
+            'userDetails.name.lastName': fullSearchFilter,
+          },
+          {
+            'legalEntity.companyGeneralDetails.legalName': fullSearchFilter,
+          },
+          {
+            userId: fullSearchFilter,
+          },
+        ],
+      })
+
+      // Then, check if each word in the query has a match in the user's name
+      // This handles cases like searching "LANZ EMPAT" where we want to find users
+      // where any name field contains "LANZ" AND any name field contains "EMPAT"
+      const searchWords = params.filterName.split(/\s+/)
+      if (searchWords.length > 1) {
+        const wordMatchConditions: Filter<
+          InternalBusinessUser | InternalConsumerUser
+        >[] = []
+
+        for (const part of searchWords) {
+          const regexFilter = useQuickSearch
+            ? prefixRegexMatchFilter(part)
+            : regexMatchFilter(part, true)
+
+          wordMatchConditions.push({
+            $or: [
+              {
+                'userDetails.name.firstName': regexFilter,
+              },
+              {
+                'userDetails.name.middleName': regexFilter,
+              },
+              {
+                'userDetails.name.lastName': regexFilter,
+              },
+              {
+                'legalEntity.companyGeneralDetails.legalName': regexFilter,
+              },
+              {
+                userId: regexFilter,
+              },
+            ],
+          })
+        }
+
+        // Add the word-by-word matching as an alternative to the full search
+        filterNameConditions.push({ $and: wordMatchConditions })
       }
+
+      filterConditions.push({ $or: filterNameConditions })
     }
 
     if (params.filterUserId != null || params.filterUserIds != null) {
