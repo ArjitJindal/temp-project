@@ -20,6 +20,7 @@ import { ClickHouseClient } from '@clickhouse/client'
 import { UserUpdateApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
 import { UserUpdateApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import has from 'lodash/has'
+import pickBy from 'lodash/pickBy'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
@@ -1606,8 +1607,8 @@ export class UserService {
         {
           entityId: user.userId,
           entityAction: 'UPDATE',
-          newImage: updateRequest,
-          oldImage: oldImage,
+          newImage: pickBy(updateRequest, (value) => !isEmpty(value)),
+          oldImage: pickBy(oldImage, (value) => !isEmpty(value)),
           entitySubtype: has(updateRequest, 'userStateDetails')
             ? 'USER_STATUS_CHANGE'
             : 'USER_KYC_STATUS_CHANGE',
@@ -1622,10 +1623,29 @@ export class UserService {
     user: User | Business,
     updateRequest: UserUpdateRequest
   ): UserUpdateRequest {
-    return Object.keys(updateRequest).reduce((acc, key) => {
-      acc[key] = key === 'pepStatus' ? (user as User).pepStatus : user[key]
-      return acc
-    }, {} as UserUpdateRequest)
+    const oldImage: UserUpdateRequest = {}
+    const isBusiness = isBusinessUser(user)
+
+    for (const key of Object.keys(updateRequest)) {
+      // Consumer-only fields
+      if (
+        !isBusiness &&
+        [
+          'pepStatus',
+          'sanctionsStatus',
+          'adverseMediaStatus',
+          'eoddDate',
+        ].includes(key)
+      ) {
+        oldImage[key] = user[key]
+      }
+      // All user fields
+      else if (['tags', 'userStateDetails', 'kycStatusDetails'].includes(key)) {
+        oldImage[key] = user[key]
+      }
+    }
+
+    return oldImage
   }
 
   private createUpdatedUser(
