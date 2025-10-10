@@ -1,0 +1,109 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/library/helpers';
+
+.root {
+  position: relative;
+  flex-shrink: 0;
+
+  &.size-S {
+    width: @figma-vars--tokens-sizeIconIconsizeXs;
+    height: @figma-vars--tokens-sizeIconIconsizeXs;
+
+    .content::before {
+      width: @figma-vars--tokens-sizeIconIconsize4xs;
+      height: @figma-vars--tokens-sizeIconIconsize4xs;
+    }
+  }
+
+  &.size-M {
+    width: @figma-vars--tokens-sizeIconIconsizeS;
+    height: @figma-vars--tokens-sizeIconIconsizeS;
+
+    .content::before {
+      width: @figma-vars--tokens-sizeIconIconsize3xs;
+      height: @figma-vars--tokens-sizeIconIconsize3xs;
+    }
+  }
+
+  &.size-L {
+    width: @figma-vars--tokens-sizeIconIconsizeM;
+    height: @figma-vars--tokens-sizeIconIconsizeM;
+
+    .content::before {
+      width: @figma-vars--tokens-sizeIconIconsizeXs;
+      height: @figma-vars--tokens-sizeIconIconsizeXs;
+    }
+  }
+}
+
+.input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0;
+  z-index: 1;
+  cursor: pointer;
+
+  &:checked {
+    + .content {
+      border-color: @figma-vars--tokens-colorStrokeAction;
+      &::before {
+        background: @figma-vars--tokens-colorButtonFillPrimaryDefault;
+        opacity: 1;
+      }
+    }
+  }
+
+  &:disabled {
+    + .content {
+      pointer-events: none;
+      border-color: @figma-vars--tokens-colorStrokeDisabled;
+
+      &::before {
+        background: @figma-vars--tokens-colorBackgroundDisabled;
+      }
+    }
+  }
+
+  &:focus {
+    + .content {
+      .default-focused-shadow();
+    }
+  }
+}
+
+.content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  border: 1px solid @figma-vars--tokens-colorStrokePrimary;
+  background: @figma-vars--tokens-colorButtonFillSecondaryDefault;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: box-shadow @default-animation-speed @default-animation-function;
+
+  &::before {
+    content: ' ';
+    display: block;
+    position: absolute;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity @default-animation-speed @default-animation-function;
+    opacity: 0;
+  }
+}
+
+.icon {
+  opacity: 0;
+  color: white;
+}

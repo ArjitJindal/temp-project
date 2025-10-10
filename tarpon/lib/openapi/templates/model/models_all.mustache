@@ -1,0 +1,15 @@
+{{#models}}
+{{#model}}
+export * from './{{classname}}'
+{{/model}}
+{{/models}}
+
+export const ALL_ATTRIBUTES = [
+{{#models}}
+{{#model}}
+{{#vars}}
+    "{{name}}",
+{{/vars}}
+{{/model}}
+{{/models}}
+]

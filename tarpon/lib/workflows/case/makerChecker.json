@@ -1,0 +1,115 @@
+{
+  "name": "Maker-Checker Case Workflow",
+  "statuses": [
+    "OPEN",
+    "CLOSED",
+    "IN_REVIEW",
+    "OPEN_IN_PROGRESS",
+    "OPEN_ON_HOLD"
+  ],
+  "statusAssignments": {
+    "OPEN": "maker",
+    "IN_REVIEW": "checker",
+    "OPEN_IN_PROGRESS": null,
+    "OPEN_ON_HOLD": null
+  },
+  "transitions": {
+    "OPEN": {
+      "maker": [
+        {
+          "action": "CLOSE",
+          "to": "IN_REVIEW"
+        }
+      ],
+      "checker": [
+        {
+          "action": "CLOSE",
+          "to": "CLOSED"
+        }
+      ],
+      "_DEFAULT": [
+        {
+          "action": "CLOSE",
+          "to": "IN_REVIEW"
+        },
+        {
+          "action": "SET_IN_PROGRESS",
+          "to": "OPEN_IN_PROGRESS"
+        },
+        {
+          "action": "SET_ON_HOLD",
+          "to": "OPEN_ON_HOLD"
+        }
+      ]
+    },
+    "OPEN_IN_PROGRESS": {
+      "maker": [
+        {
+          "action": "CLOSE",
+          "to": "IN_REVIEW"
+        }
+      ],
+      "checker": [
+        {
+          "action": "CLOSE",
+          "to": "CLOSED"
+        }
+      ],
+      "_DEFAULT": [
+        {
+          "action": "CLOSE",
+          "to": "IN_REVIEW"
+        },
+        {
+          "action": "SET_ON_HOLD",
+          "to": "OPEN_ON_HOLD"
+        },
+        {
+          "action": "SET_OPEN",
+          "to": "OPEN"
+        }
+      ]
+    },
+    "OPEN_ON_HOLD": {
+      "maker": [
+        {
+          "action": "CLOSE",
+          "to": "IN_REVIEW"
+        }
+      ],
+      "checker": [
+        {
+          "action": "CLOSE",
+          "to": "CLOSED"
+        }
+      ],
+      "_DEFAULT": [
+        {
+          "action": "CLOSE",
+          "to": "IN_REVIEW"
+        },
+        {
+          "action": "SET_IN_PROGRESS",
+          "to": "OPEN_IN_PROGRESS"
+        },
+        {
+          "action": "SET_OPEN",
+          "to": "OPEN"
+        }
+      ]
+    },
+    "IN_REVIEW": {
+      "checker": [
+        {
+          "action": "APPROVE",
+          "to": "CLOSED"
+        },
+        {
+          "action": "REJECT",
+          "to": "OPEN"
+        }
+      ]
+    }
+  },
+  "autoClose": true
+}

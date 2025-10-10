@@ -1,0 +1,43 @@
+.root {
+  :global {
+    .ant-popover-inner {
+      border-radius: 4px;
+    }
+  }
+
+  &.disablePointerEvents {
+    pointer-events: none;
+  }
+
+  &.hideBoxShadow {
+    :global {
+      .ant-popover-inner {
+        box-shadow: none;
+      }
+    }
+  }
+
+  &.hideBackground {
+    :global {
+      .ant-popover-inner {
+        background-color: transparent;
+      }
+    }
+  }
+
+  &.disableInnerPadding {
+    :global {
+      .ant-popover-inner-content {
+        padding: 0 !important;
+      }
+    }
+  }
+
+  &.hideArrow {
+    :global {
+      .ant-popover-arrow {
+        display: none;
+      }
+    }
+  }
+}

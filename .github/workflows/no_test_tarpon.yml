@@ -1,0 +1,13 @@
+name: No test tarpon
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "tarpon/**"
+      - "nango-integrations/**"
+jobs:
+  test:
+    name: test-tarpon
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

@@ -1,0 +1,139 @@
+import crypto from 'crypto'
+import pick from 'lodash/pick'
+import merge from 'lodash/merge'
+import mergeWith from 'lodash/mergeWith'
+import isNil from 'lodash/isNil'
+import isArray from 'lodash/isArray'
+import uniqBy from 'lodash/uniqBy'
+import isPlainObject from 'lodash/isPlainObject'
+import transform from 'lodash/transform'
+import isUndefined from 'lodash/isUndefined'
+import { stringify } from 'safe-stable-stringify'
+
+export function generateChecksum(obj: any, length = 64) {
+  const hash = crypto.createHash('sha256')
+  hash.update(stringify(obj) ?? '')
+  return hash.digest('hex').slice(0, length)
+}
+
+export function generateHashFromString(str: string, length = 64) {
+  const hash = crypto.createHash('sha256')
+  hash.update(str)
+  return hash.digest('hex').slice(0, length)
+}
+
+type NotPromiseType<T> = T extends Promise<any> ? never : T
+
+export function mergeObjects<T>(
+  object: NotPromiseType<T>,
+  ...objects: Array<NotPromiseType<T>>
+): NotPromiseType<T> {
+  return merge(object, ...objects)
+}
+
+export function mergeEntities<T>(object: T, src: object, deep = true): T {
+  return mergeWith(object, src, (a: any, b: any) => {
+    if (!isNil(b) && isArray(b)) {
+      return b
+    }
+    if (deep) {
+      return undefined
+    }
+    return b
+  })
+}
+
+class Model {
+  public static getAttributeTypeMap(): Array<{
+    name: string
+    baseName: string
+    type: string
+    format: string
+  }> {
+    return []
+  }
+}
+
+export function pickKnownEntityFields<T>(
+  entity: T,
+  modelClass: typeof Model
+): T {
+  return pick(
+    entity,
+    modelClass.getAttributeTypeMap().map((v) => v.name)
+  ) as T
+}
+
+export const uniqObjects = <T extends object>(array: T[]): T[] => {
+  return uniqBy(array, generateChecksum)
+}
+
+export function removeUndefinedFields<T>(obj: T): T {
+  if (isArray(obj)) {
+    // If the object is an array, iterate over the elements
+    return obj.map(removeUndefinedFields) as T
+  } else if (isPlainObject(obj)) {
+    // If the object is a plain object, iterate over its properties
+    return transform(obj as object, (result, value, key) => {
+      const cleanedValue = removeUndefinedFields(value)
+      if (!isUndefined(cleanedValue) && cleanedValue !== null) {
+        result[key] = cleanedValue
+      }
+    })
+  } else {
+    // If it's not an object or array, return the value directly
+    return obj
+  }
+}
+
+export function getSortedObject(obj: object) {
+  const keys = Object.keys(obj).sort()
+  const sortedObject = keys.reduce((acc, key) => {
+    acc[key] = obj[key]
+    return acc
+  }, {})
+  return removeUndefinedFields(sortedObject)
+}
+
+export function removeEmptyKeys<T>(obj: T): T {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj
+  }
+  for (const key in obj) {
+    if (key === '') {
+      delete obj[key]
+    } else if (typeof obj[key] === 'object') {
+      removeEmptyKeys(obj[key])
+    }
+  }
+  return obj
+}
+
+export function isJsonString(str: string) {
+  try {
+    JSON.parse(str)
+  } catch (e) {
+    return false
+  }
+  return true
+}
+
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number
+): Promise<T> {
+  const controller = new AbortController()
+
+  const timeout = setTimeout(() => {
+    controller.abort()
+  }, timeoutMs)
+
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      controller.signal.addEventListener('abort', () => {
+        reject(new Error('Operation timed out'))
+      })
+    ),
+  ]).finally(() => clearTimeout(timeout))
+}

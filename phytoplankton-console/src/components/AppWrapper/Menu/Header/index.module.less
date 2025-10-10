@@ -1,0 +1,85 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  &.isCollapsed {
+    .logoWrapper {
+      width: 0;
+      opacity: 0;
+    }
+    .collapseButton {
+      transform: rotate(180deg);
+    }
+    .top {
+      display: none;
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+    .bottom {
+      margin-top: 16px;
+      display: flex;
+      height: 40px;
+    }
+  }
+}
+
+.top {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition-duration: @default-animation-speed;
+  transition-property: transform, padding-left, padding-right;
+}
+
+.bottom {
+  display: flex;
+  justify-content: center;
+  height: 0;
+  overflow: hidden;
+  transition-duration: @default-animation-speed;
+  transition-property: height;
+}
+
+.logoWrapper {
+  width: 120px;
+  overflow-x: hidden;
+  transition-duration: @default-animation-speed;
+  transition-property: width, opacity;
+}
+
+.logo {
+  width: 120px;
+}
+
+.logoNoText {
+  color: white;
+}
+
+.collapseButton {
+  cursor: pointer;
+  transition-duration: @default-animation-speed;
+  transition-property: transform;
+  width: 24px;
+  height: 24.2px;
+  flex-shrink: 0;
+}
+
+.root:hover {
+  &.isCollapsed {
+    .top {
+      padding: 13px 18px;
+      .logo {
+        display: none;
+      }
+
+      display: block;
+    }
+
+    .bottom {
+      display: none;
+    }
+  }
+}

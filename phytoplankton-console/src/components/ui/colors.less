@@ -1,0 +1,201 @@
+@import 'src/components/ui/figma-vars';
+
+/*
+  todo: these colors are legacy and should not be used for new components
+ */
+// Reference: https://www.notion.so/flagright/Color-Palette-b9fd3936b526416785220e5c0c1016f7
+@fr-colors-navyBlue: #293f7a; // Base,Primary
+@fr-colors-brandBlue: #1169f9; // Base,Primary
+@fr-colors-turquoise: #87e8de; // Accent,Base,Primary
+@fr-colors-purpleGray: #7284a3; // Base,Primary
+@fr-colors-leafGreen: #52c41a; // Graphs,Primary
+@fr-colors-red: #ff4d4f; // Graphs,Primary
+@fr-colors-orange: #f6a429; // Graphs,Primary
+@fr-colors-purple: #8b75f2; // Graphs,Primary
+@fr-colors-yellow: #f5e25a; // Graphs,Primary
+@fr-colors-skyBlue: #78cbeb; // Graphs,Primary
+@fr-colors-limeGreen: #bff35a; // Graphs,Primary
+
+@fr-colors-navyBlueTint: #dee6fa; // Tint
+@fr-colors-brandBlueTint: #ebf2ff; // Tint
+@fr-colors-turquoiseTint: #ebfcfb; // Tint
+@fr-colors-purpleGrayTint: #dfe6f2; // Tint
+@fr-colors-leafGreenTint: #f1ffeb; // Tint
+@fr-colors-redTint: #ffe5e6; // Tint
+@fr-colors-orangeTint: #fff4e5; // Tint
+@fr-colors-purpleTint: #eeebfa; // Tint
+@fr-colors-yellowTint: #fcf9e3; // Tint
+@fr-colors-skyBlueTint: #e6f8ff; // Tint
+@fr-colors-limeGreenTint: #f4fce3; // Tint
+
+@fr-colors-navyBlueShade: #131f40; // Shade
+@fr-colors-brandBlueShade: #063075; // Shade
+@fr-colors-turquoiseShade: #1ab0a1; // Shade
+@fr-colors-purpleGrayShade: #2a374d; // Shade
+@fr-colors-leafGreenShade: #357317; // Shade
+@fr-colors-redShade: #992628; // Shade
+@fr-colors-orangeShade: #a66d17; // Shade
+@fr-colors-purpleShade: #986abb; // Shade
+@fr-colors-yellowShade: #b2a542; // Shade
+@fr-colors-skyBlueShade: #267999; // Shade
+@fr-colors-limeGreenShade: #86a745; // Shade
+
+@fr-colors-infoColor: @fr-colors-skyBlue; // info state color
+@fr-colors-successColor: @fr-colors-leafGreen; // success state color
+@fr-colors-warningColor: @fr-colors-orange; // warning state color
+@fr-colors-errorColor: @fr-colors-red;
+
+@fr-global-bg-color: #f4f4f5;
+
+@fr-colors-gray-0: #fafafa;
+@fr-colors-gray-1: rgba(0, 0, 0, 0.03);
+@fr-colors-gray-2: #09121f;
+@fr-colors-gray-3: #b8b8b8;
+@fr-colors-gray-4: #8c8c8c;
+@fr-colors-red-tmp-1: #f5222d;
+@fr-colors-blue-1: #8cc4ff;
+@fr-color-blue-tabledark: #f6f9ff;
+@fr-color-black-1: #000000;
+
+@fr-shadow-color: rgba(197, 197, 197, 0.25);
+
+/*
+  New colors
+ */
+@fr-colors-v2-gray-1: #f4f4f4;
+@fr-colors-v2-gray-2: #e7e7e7;
+@fr-colors-v2-gray-3: #e0e0e0;
+@fr-colors-v2-gray-4: #c6c6c6;
+@fr-colors-v2-gray-5: #a8a8a8;
+@fr-colors-v2-gray-6: #8d8d8d;
+@fr-colors-v2-gray-7: #6f6f6f;
+@fr-colors-v2-gray-8: #525252;
+@fr-colors-v2-gray-9: #393939;
+@fr-colors-v2-gray-10: #262626;
+@fr-colors-v2-gray-11: #161616;
+@fr-colors-v2-gray-12: #f9f9f9;
+
+@fr-colors-v2-primary-tints-blue-50: #020a19;
+@fr-colors-v2-primary-tints-blue-100: #131f40;
+@fr-colors-v2-primary-tints-blue-200: #031532;
+@fr-colors-v2-primary-tints-blue-300: #072a64;
+@fr-colors-v2-primary-tints-blue-400: #09357d;
+@fr-colors-v2-primary-tints-blue-500: #0a3f95;
+@fr-colors-v2-primary-tints-blue-600: #0c4aae;
+@fr-colors-v2-primary-tints-blue-700: #1555bb;
+@fr-colors-v2-primary-tints-blue-800: #0f5fe0;
+@fr-colors-v2-primary-tints-blue-900: #1169f9;
+
+@fr-colors-v2-primary-shades-blue-50: #e8f0ff;
+@fr-colors-v2-primary-shades-blue-100: #cfe1fe;
+@fr-colors-v2-primary-shades-blue-200: #b8d2fe;
+@fr-colors-v2-primary-shades-blue-300: #a0c3fd;
+@fr-colors-v2-primary-shades-blue-400: #87b3fb;
+@fr-colors-v2-primary-shades-blue-500: #70a5fb;
+@fr-colors-v2-primary-shades-blue-600: #5996fb;
+@fr-colors-v2-primary-shades-blue-700: #4187fa;
+@fr-colors-v2-primary-shades-blue-800: #2978fa;
+@fr-colors-v2-primary-shades-blue-900: #1169f9;
+
+@fr-colors-v2-primary-flagrightBlue: #1169f9;
+@fr-colors-v2-highlight-flagrightBlue: #f0f4fb;
+@fr-colors-v2-highlight-stroke: #dfe6f2;
+@fr-colors-v2-card-background: #f8f9fa;
+
+@fr-colors-v2-state-active: @fr-colors-v2-primary-flagrightBlue;
+@fr-colors-v2-state-hover: #1555bb;
+@fr-colors-v2-state-disabled: #a8a8a8;
+
+@fr-colors-v2-alert-critical: #d42a2a;
+@fr-colors-v2-alert-critical-background: #fbeaeb;
+@fr-colors-v2-alert-critical-dark: #b91616;
+@fr-colors-v2-alert-warning: #efbe12;
+@fr-colors-v2-alert-success: #1ba543;
+@fr-colors-v2-alert-success-background: #f1ffeb;
+
+@fr-colors-v2-risk-level-base-very-low: #d1e277;
+@fr-colors-v2-risk-level-bg-very-low: #f1f6d6;
+@fr-colors-v2-risk-level-base-low: #aad246;
+@fr-colors-v2-risk-level-bg-low: #e6f2c8;
+@fr-colors-v2-risk-level-base-medium: #eed23f;
+@fr-colors-v2-risk-level-bg-medium: #faf2c5;
+@fr-colors-v2-risk-level-base-high: #e47e30;
+@fr-colors-v2-risk-level-bg-high: #f7d8c1;
+@fr-colors-v2-risk-level-base-very-high: #e93134;
+@fr-colors-v2-risk-level-bg-very-high: #f8c1c2;
+
+@fr-colors-v2-priority-1-base: #e93134;
+@fr-colors-v2-priority-1-bg: #f8c1c2;
+@fr-colors-v2-priority-2-base: #b96a1c;
+@fr-colors-v2-priority-2-bg: #f7d8c1;
+@fr-colors-v2-priority-3-base: #f6a429;
+@fr-colors-v2-priority-3-bg: #fdeddf;
+@fr-colors-v2-priority-4-base: #2a374d;
+@fr-colors-v2-priority-4-bg: #dfe6f2;
+
+/*
+  Additional colors
+ */
+@fr-base-blue-shade-02: #212c4b;
+@fr-colors-tabsBadgeColor: #f2a25f;
+
+/*
+  Colors which are used in Figma but missing in palette
+ */
+@fr-colors-v2-unknown-1: #f8f9fa;
+@fr-colors-v2-unknown-2: #eeeeee;
+@fr-colors-v2-unknown-3: #f5f5f5;
+@fr-colors-v2-unknown-4: #8d8db8;
+@fr-colors-v2-unknown-5: #528bec;
+@fr-colors-v2-unknown-6: #d6e3fb;
+@fr-colors-v2-unknown-7: #4828de;
+@fr-colors-v2-unknown-8: #db17b0;
+@fr-colors-v2-unknown-9: #0000001f;
+@fr-colors-v2-unknown-10: #db17b00f;
+@fr-colors-v2-unknown-11: #4828de0f;
+@fr-colors-v2-unknown-12: #4828de14;
+@fr-colors-v2-unknown-13: #db17b014;
+@fr-colors-v2-unknown-14: #4828de28;
+@fr-colors-v2-unknown-15: #db17b028;
+@fr-colors-v2-unknown-16: #4828de38;
+@fr-colors-v2-unknown-17: #db17b038;
+@fr-colors-v2-unknown-18: #4828de66;
+@fr-colors-v2-unknown-19: #db17b066;
+
+@fr-colors-v2-status-open-base: #efc34f;
+@fr-colors-v2-status-open-bg: #fbf1d5;
+@fr-colors-v2-status-in-progress-base: #8b75f2;
+@fr-colors-v2-status-in-progress-bg: #eeebfa;
+@fr-colors-v2-status-on-hold-base: #267999;
+@fr-colors-v2-status-on-hold-bg: #e5f8ff;
+@fr-colors-v2-status-escalated-base: #2a374d;
+@fr-colors-v2-status-escalated-bg: #dfe6f2;
+@fr-colors-v2-status-in-review-base: #56be9f;
+@fr-colors-v2-status-in-review-bg: #dfe6f2;
+@fr-colors-v2-status-closed-base: #ad3c3c;
+@fr-colors-v2-status-closed-bg: #f2e0e0;
+@fr-colors-v2-status-reopened-base: #e47e30;
+@fr-colors-v2-status-reopened-bg: #f7d8c1;
+@fr-colors-v2-status-reopened-bg: #f7d8c1;
+@fr-colors-v2-case-alert-status-fills-in-review: #d7f0e8;
+
+@fr-colors-v2-analytics-charts-02: #9269b8;
+@fr-colors-v2-skeleton: @fr-colors-v2-gray-3;
+
+@fr-colors-v2-sla-warning: #ef9312;
+@fr-colors-v2-sla-breached: #d42a2a;
+@fr-colors-v2-sla-ok: #1ba543;
+
+@fr-colors-brandBlueAlpha: #1169f91a; // 10% opacity
+
+@fr-colors-connected: #1ba543;
+
+// colors for animated button
+@fr-colors-v2-animated-button-01: #ff0000;
+@fr-colors-v2-animated-button-02: #ff7300;
+@fr-colors-v2-animated-button-03: #fffb00;
+@fr-colors-v2-animated-button-04: #48ff00;
+@fr-colors-v2-animated-button-05: #00ffd5;
+@fr-colors-v2-animated-button-06: #002bff;
+@fr-colors-v2-animated-button-07: #7a00ff;
+@fr-colors-v2-animated-button-08: #ff00c8;

@@ -1,0 +1,38 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 460px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 12px;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 16px 20px;
+}
+
+.searchIcon {
+  width: 14px;
+  color: fade(@fr-colors-gray-2, 45%);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hiddenDropdown {
+  :global(.ant-select-dropdown) {
+    display: none !important;
+  }
+}

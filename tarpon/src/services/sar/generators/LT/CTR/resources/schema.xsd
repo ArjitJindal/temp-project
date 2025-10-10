@@ -1,0 +1,226 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="urn:lt:fntt:exchange:model:ctr"
+    elementFormDefault="qualified" targetNamespace="urn:lt:fntt:exchange:model:ctr">
+    <xs:element name="CashTransactionReport" type="CashTransactionReport" />
+    <xs:element name="CTRDataStatusRequest" type="CTRDataStatusRequest" />
+    <xs:element name="CTRDataStatusResponse" type="CTRDataStatusResponse" />
+
+    <xs:complexType name="CashTransactionReport">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="Provider" nillable="false"
+                type="ProviderType" />
+            <xs:element maxOccurs="unbounded" minOccurs="1" name="CtrData" type="CtrDataType" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ProviderType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="Code" nillable="false" type="Max20Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="ProviderCode" type="Max20Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="ProviderName" type="Max100Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="ProviderSurname" type="Max100Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="ProviderAddress" type="Max100Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="ProviderPhoneNumber" type="Max100Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="ProviderEmail" type="Max100Text" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CtrDataType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="TransactionDate" type="DateType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="TransactionType" type="Max11Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="RegistrationNumber" type="Max50Text" />
+            <xs:element maxOccurs="1" minOccurs="1" name="TransactionValue"
+                type="TransactionValueType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="OperationType" type="Max11Text" />
+            <xs:element maxOccurs="unbounded" minOccurs="1" name="OperationDataItem"
+                type="OperationDataItemType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Comments" type="Max1000Text" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="TransactionValueType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="Sum" type="Decimal20Type" />
+            <xs:element maxOccurs="1" minOccurs="1" name="Currency" type="CurrencyType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="OperationDataItemType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="ItemDirection" type="ItemDirectionType" />
+            <xs:element maxOccurs="1" minOccurs="1" name="PersonClass" type="PersonClassType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Title" type="Max120Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="FirstName" type="Max120Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="LastName" type="Max120LettersGapMinusDot" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Code" type="Max50Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Address" type="Max500Text" />
+            <xs:element maxOccurs="1" minOccurs="1" name="Country" type="Max100Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="DocumentNumber" type="Max50Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="DocumentIssueDate" type="DateType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Delegate" type="DelegateType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="OperationValue" type="OperationValueType" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Account" type="AccountType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="DelegateType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="FirstName" type="Max50LettersGapMinusDot" />
+            <xs:element maxOccurs="1" minOccurs="1" name="LastName" type="Max50LettersGapMinusDot" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Code" type="Max50Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Address" type="Max500Text" />
+            <xs:element maxOccurs="1" minOccurs="1" name="Country" type="Max100Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="Mandate" type="MandateType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="MandateType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="Number" type="Max50Text" />
+            <xs:element maxOccurs="1" minOccurs="1" name="IssueDate" type="DateType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="OperationValueType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="Sum" type="Decimal20Type" />
+            <xs:element maxOccurs="1" minOccurs="1" name="Currency" type="CurrencyType" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AccountType">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="Bank" type="Max255Text" />
+            <xs:element maxOccurs="1" minOccurs="1" name="IBAN" type="IBANType" />
+            <xs:element maxOccurs="1" minOccurs="1" name="AccountOwner" type="Max255Text" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CTRDataStatusRequest">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="packetId" type="xs:long" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CTRDataStatusResponse">
+        <xs:sequence>
+            <xs:element maxOccurs="1" minOccurs="1" name="statusCode" type="Max50Text" />
+            <xs:element maxOccurs="1" minOccurs="1" name="statusName" type="Max255Text" />
+            <xs:element maxOccurs="1" minOccurs="0" name="RejectionDescription" type="Max500Text" />
+        </xs:sequence>
+    </xs:complexType>
+    <!--  Simple Data types  -->
+    <xs:simpleType name="Max6Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="6" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max10Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="10" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max11Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="11" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max15Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="15" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max20Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="20" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max30Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="30" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max40Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="40" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max50Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="50" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max100Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="100" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max120Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="120" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max255Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="255" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max500Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="500" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max1000Text">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="1000" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max50LettersGapMinusDot">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="50" />
+            <xs:pattern value="[\p{L} -\.]{1,50}" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Max120LettersGapMinusDot">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="120" />
+            <xs:pattern value="[\p{L} -\.]{1,120}" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="DateType">
+        <xs:restriction base="xs:date" />
+    </xs:simpleType>
+    <xs:simpleType name="Decimal20Type">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="2" />
+            <xs:totalDigits value="20" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CurrencyType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{3,3}" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="ItemDirectionType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="GIVER" />
+            <xs:enumeration value="RECEIVER" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="PersonClassType">
+        <xs:restriction base="xs:byte">
+            <xs:enumeration value="1" />
+            <xs:enumeration value="2" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="IBANType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,50}" />
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

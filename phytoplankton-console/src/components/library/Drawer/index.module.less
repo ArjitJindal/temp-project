@@ -1,0 +1,144 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
+@padding: 1rem;
+
+.lockScroll {
+  overflow: hidden;
+}
+
+.root {
+  display: flex;
+  justify-content: flex-end;
+  transition: visibility @default-animation-speed, background @default-animation-speed;
+  visibility: hidden;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+
+  &.position-LEFT {
+    justify-content: flex-start;
+
+    .content {
+      transform: translateX(-100%);
+    }
+  }
+
+  &.isVisible {
+    visibility: visible;
+    background: fade(black, 40%);
+
+    .content {
+      transform: none;
+    }
+  }
+
+  &.noPadding {
+    .children {
+      padding: 0;
+    }
+  }
+}
+
+.fixedPosition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.header {
+  padding: @padding;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  border-bottom: 1px solid @fr-colors-v2-gray-2;
+}
+
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.icon {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+.description {
+  color: @fr-colors-gray-4;
+}
+
+.content {
+  display: grid;
+  background: white;
+  transform: translateX(100%);
+  transition: transform @default-animation-speed;
+  max-width: 1024px;
+  width: 100%;
+  grid-template-rows: max-content auto max-content;
+}
+
+.children {
+  display: flex;
+  flex-direction: column;
+  padding: @padding;
+  overflow-y: auto;
+  position: relative;
+}
+
+.footer {
+  display: flex;
+  gap: 16px;
+  padding: @padding;
+  border-top: 1px solid @fr-colors-v2-gray-2;
+  justify-content: space-between;
+}
+
+.footerSection {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+
+  &.right {
+    justify-content: flex-end;
+  }
+}
+
+.portaledMenuContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: @drawer-z-index;
+  height: 100%;
+  width: 100%;
+
+  &:not(.isVisible) {
+    pointer-events: none;
+  }
+}
+
+.wrapper {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+
+  &:not(.isVisible) {
+    pointer-events: none;
+  }
+}

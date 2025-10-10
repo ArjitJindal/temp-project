@@ -1,0 +1,19 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: @fr-colors-v2-gray-10;
+
+  .transactionState-DECLINED {
+    color: @fr-colors-red;
+  }
+}

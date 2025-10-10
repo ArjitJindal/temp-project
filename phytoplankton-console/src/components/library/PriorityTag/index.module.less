@@ -1,0 +1,31 @@
+@import 'src/components/ui/colors.less';
+
+.body {
+  border: 1px solid gray;
+  background: lightgray;
+  border-radius: 4px;
+  padding: 4px 4px;
+  font-size: 10px;
+  line-height: 12px;
+  width: fit-content;
+
+  &.priority-P1 {
+    border-color: @fr-colors-v2-priority-1-base;
+    background: @fr-colors-v2-priority-1-bg;
+  }
+
+  &.priority-P2 {
+    border-color: @fr-colors-v2-priority-2-base;
+    background: @fr-colors-v2-priority-2-bg;
+  }
+
+  &.priority-P3 {
+    border-color: @fr-colors-v2-priority-3-base;
+    background: @fr-colors-v2-priority-3-bg;
+  }
+
+  &.priority-P4 {
+    border-color: @fr-colors-v2-priority-4-base;
+    background: @fr-colors-v2-priority-4-bg;
+  }
+}

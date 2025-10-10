@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PFA>
+    <Description1List>
+        <Description1Name Description1Id="1" RecordType="Person">Politically Exposed Person (PEP)</Description1Name>
+        <Description1Name Description1Id="2" RecordType="Person">Relative or Close Associate (RCA)
+        </Description1Name><!-- RCA Comment – Inclusion of this person’s name on Watchlist does not imply that this person should be regarded as a Special Interest Person. This person is included owing to their relationship with an individual fitting the Watchlist coverage criteria -->
+        <Description1Name Description1Id="3" RecordType="Person">Special Interest Person (SIP)</Description1Name>
+        <Description1Name Description1Id="4" RecordType="Entity">Special Interest Entity (SIE)</Description1Name>
+    </Description1List>
+</PFA>

@@ -1,0 +1,32 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.item {
+  margin: 0.1rem 1rem;
+  opacity: 0.8;
+  max-width: 300px;
+  min-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &,
+  &:hover {
+    color: @fr-colors-v2-gray-8;
+  }
+
+  &.isActive {
+    font-weight: bold;
+    opacity: 1;
+    color: black;
+  }
+}

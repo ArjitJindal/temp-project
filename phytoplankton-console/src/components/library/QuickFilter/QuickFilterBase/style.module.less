@@ -1,0 +1,71 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  border: 1px solid @fr-colors-v2-gray-3;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 10px;
+  position: relative;
+  min-height: 28px;
+
+  &:disabled {
+    pointer-events: none;
+  }
+
+  &:hover {
+    background: @fr-colors-v2-gray-1;
+  }
+
+  &.isActive {
+    color: @fr-colors-v2-primary-flagrightBlue;
+    border-color: @fr-colors-v2-primary-flagrightBlue;
+  }
+}
+
+.title {
+  text-overflow: ellipsis;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 26px;
+}
+
+.icon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}
+
+.clearIcon {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.popoverAnchor {
+  position: absolute;
+  bottom: 14px;
+  left: 20px;
+}
+
+.contentTitle {
+  font-weight: 600;
+  line-height: 24px;
+  padding: 12px 12px 4px;
+}
+
+.contentDescription {
+  line-height: 16px;
+  padding: 0 12px 4px 12px;
+}
+
+.contentBody {
+  max-width: 600px;
+  min-width: 250px;
+}

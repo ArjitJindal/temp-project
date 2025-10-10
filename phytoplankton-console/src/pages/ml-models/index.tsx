@@ -1,0 +1,211 @@
+import React, { useMemo, useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
+import s from './style.module.less';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useApi } from '@/api';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
+import { CommonParams, TableColumn, TableRefType } from '@/components/library/Table/types';
+import { RuleMLModel } from '@/apis';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { ID, STRING } from '@/components/library/Table/standardDataTypes';
+import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
+import Tag from '@/components/library/Tag';
+import Tooltip from '@/components/library/Tooltip';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
+import { message } from '@/components/library/Message';
+import Toggle from '@/components/library/Toggle';
+import { useAuth0User, useHasMinimumPermission } from '@/utils/user-utils';
+
+interface TableSearchParams extends CommonParams {
+  modelId?: string;
+  modelType?: string;
+  modelName?: string;
+}
+
+export const MlModelsPage = () => {
+  const api = useApi();
+  const [params, setParams] = useState<TableSearchParams>({
+    ...DEFAULT_PARAMS_STATE,
+  });
+  const auth0User = useAuth0User();
+
+  const queryResult = usePaginatedQuery(
+    MACHINE_LEARNING_MODELS(params),
+    async (_paginationParams) => {
+      const result = await api.getRuleMlModels({
+        modelId: params.modelId,
+        modelType: params.modelType,
+        modelName: params.modelName,
+      });
+      return {
+        items: result,
+        total: result.length,
+      };
+    },
+  );
+
+  const updateModelMutation = useMutation(
+    async (mlModel: RuleMLModel) => {
+      await api.updateRuleMlModelModelId({
+        modelId: mlModel.id,
+        RuleMLModel: mlModel,
+      });
+      return mlModel;
+    },
+    {
+      onSuccess: (mlModel) => {
+        message.success(`Model ${mlModel.enabled ? 'enabled' : 'disabled'} successfully`, {
+          details: `${capitalizeNameFromEmail(auth0User?.name || '')} ${
+            mlModel.enabled ? 'enabled' : 'disabled'
+          } the model ${mlModel.id}`,
+        });
+        queryResult.refetch();
+      },
+      onError: (error: Error) => {
+        message.error(`Error: ${error.message}`);
+      },
+    },
+  );
+
+  const hasWriteAccess = useHasMinimumPermission(['write:::rules/ai-models/*']);
+
+  const columns: TableColumn<RuleMLModel>[] = useMemo((): TableColumn<RuleMLModel>[] => {
+    const helper = new ColumnHelper<RuleMLModel>();
+
+    return helper.list([
+      helper.simple<'id'>({
+        key: 'id',
+        title: 'Model ID',
+        type: ID,
+        defaultWidth: 100,
+      }),
+      helper.simple<'name'>({
+        key: 'name',
+        title: 'Model name',
+        type: STRING,
+        defaultWidth: 200,
+      }),
+      helper.simple<'description'>({
+        key: 'description',
+        title: 'Model description',
+        type: STRING,
+        defaultWidth: 350,
+      }),
+      helper.simple<'modelType'>({
+        key: 'modelType',
+        title: 'Model type',
+        type: {
+          render: (modelType) => {
+            if (modelType === 'EXPLAINABLE') {
+              return (
+                <Tag color="blue">
+                  <Tooltip title="Explainable model will show alert explainability reasons after hit.">
+                    <div className={s.tag}>
+                      <AiForensicsLogo size={'SMALL'} /> Explainable model
+                    </div>
+                  </Tooltip>
+                </Tag>
+              );
+            }
+            return <>Non-explainable</>;
+          },
+        },
+      }),
+      helper.simple<'checksFor'>({
+        key: 'checksFor',
+        title: 'Checks for',
+        type: {
+          render: (checksFor) => {
+            return (
+              <div className={s.checksFor}>
+                {checksFor?.map((check, index) => {
+                  return (
+                    <Tag color="action" key={index}>
+                      {check}
+                    </Tag>
+                  );
+                })}
+              </div>
+            );
+          },
+        },
+      }),
+      helper.simple<'enabled'>({
+        key: 'enabled',
+        title: 'Enabled',
+        type: {
+          render: (enabled, { item }) => {
+            return (
+              <Toggle
+                value={enabled}
+                isDisabled={!hasWriteAccess}
+                onChange={(checked) => {
+                  updateModelMutation.mutate({
+                    ...item,
+                    enabled: checked,
+                  });
+                }}
+              />
+            );
+          },
+        },
+      }),
+    ]);
+  }, [updateModelMutation, hasWriteAccess]);
+
+  const actionRef = useRef<TableRefType>(null);
+  return (
+    <QueryResultsTable<RuleMLModel, TableSearchParams>
+      tableId="ml-models-table"
+      innerRef={actionRef}
+      columns={columns}
+      queryResults={queryResult}
+      pagination={false}
+      rowKey="id"
+      params={params}
+      onChangeParams={(params) => {
+        setParams(params);
+      }}
+      extraFilters={[
+        {
+          title: 'Model ID',
+          key: 'modelId',
+          renderer: {
+            kind: 'string',
+          },
+          showFilterByDefault: true,
+        },
+        {
+          title: 'Model name',
+          key: 'modelName',
+          renderer: {
+            kind: 'string',
+          },
+          showFilterByDefault: true,
+        },
+        {
+          title: 'Model type',
+          key: 'modelType',
+          renderer: {
+            kind: 'select',
+            options: [
+              {
+                value: 'EXPLAINABLE',
+                label: 'Explainable',
+              },
+              {
+                value: 'NON_EXPLAINABLE',
+                label: 'Non-explainable',
+              },
+            ],
+            mode: 'SINGLE',
+            displayMode: 'select',
+          },
+          showFilterByDefault: true,
+        },
+      ]}
+    />
+  );
+};

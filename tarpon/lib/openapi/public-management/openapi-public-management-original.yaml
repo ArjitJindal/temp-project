@@ -1,0 +1,2331 @@
+openapi: 3.0.0
+info:
+  title: Flagright Management API
+  version: '1.0'
+  description: Flagright is a fully-managed, API-first compliance-as-a-service
+    solution. This API provides for programmatic access to the Flagright no-code
+    back office portal. The Flagright Management API is organized around REST.
+    Our API has predictable resource-oriented URLs, accepts JSON-encoded request
+    bodies, returns JSON-encoded responses, and uses standard HTTP response
+    codes, authentication, and verbs.  API keys are used to authenticate the
+    requests. Your API keys carry many privileges, so be sure to keep them
+    secure! Do not share your secret API keys in publicly accessible areas such
+    as GitHub, client-side code, and so forth.
+servers:
+  - url: https://sandbox.api.flagright.com/management
+    description: Sandbox API server (eu-1)
+    x-fern-server-name: Sandbox API server (eu-1)
+  - url: https://sandbox-asia-1.api.flagright.com/management
+    description: Sandbox API server (asia-1)
+    x-fern-server-name: Sandbox API server (asia-1)
+paths:
+  /rules:
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+              examples:
+                example-1:
+                  value:
+                    - id: R-1
+                      type: TRANSACTION
+                      name: First payment by customer
+                      description: First Payment by customer
+                      defaultParameters: {}
+                      defaultRiskLevelParameters:
+                        VERY_HIGH: {}
+                        HIGH: {}
+                        MEDIUM: {}
+                        LOW: {}
+                        VERY_LOW: {}
+                      defaultAction: FLAG
+                      defaultRiskLevelActions:
+                        VERY_HIGH: FLAG
+                        HIGH: FLAG
+                        MEDIUM: FLAG
+                        LOW: FLAG
+                        VERY_LOW: FLAG
+                      labels:
+                        - string
+                      defaultCasePriority: P1
+      operationId: get-rules
+      description: >-
+        ### Rules List
+
+
+        `GET /rules` endpoint returns a lot of all rule templates supported by flagright. You can use [GET /rules/{ruleId}](/management-api/api-reference/api-reference/get-rules-rule-id) endpoint to fetch the details of any particular rule. 
+
+
+        Each rule is identified by the unique `id` which is of the form `R-{X}` where `X` is an integer. 
+
+
+        Rules have a `parametersSchema` which is a [JSON Schema](https://json-schema.org/) that contains the schema of the parameters supported by the rule. When you create a [ruleInstance](/management-api/api-reference/api-reference/post-rule-instances), you need to provide the values in accordance with the `parametersSchema`. 
+
+
+        All the rules come with default values for all required attributes. 
+
+
+        Rules come with default `name`, `description`. Each rule may take multiple rule parameters, by default they have a `defaultParameters` attribute that contains all the required fields. For use cases where the rule parameters are forked based on customer dynamic risk score, `defaultRiskLevelParameters` are set. 
+
+
+        Rules also come with a `defaultAction` and `defaultRiskLevelActions` for rule actions for the rule. 
+
+
+        All of the above should be configured at the [rule instance](/management-api/api-reference/api-reference/post-rule-instances) level when creating a rule instance. Rules are read only and provided by flagright. You can only manipulate rules instances, not rule templates themselves. 
+
+
+        If you need an update to a rule or a new rule, you can always contact the Flagright team.
+      parameters: []
+  /rules/{ruleId}:
+    parameters:
+      - schema:
+          type: string
+        name: ruleId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule - Get
+      operationId: get-rules-ruleId
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description: >-
+        ### Retrieve a Rule 
+
+
+        `GET /rules/{ruleId}` endpoint returns a rule template supported by flagright.
+  /rule-instances:
+    post:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - Create
+      operationId: post-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    type: TRANSACTION
+                    ruleId: string
+                    action: FLAG
+                    parameters: {}
+                    status: ACTIVE
+                    casePriority: P1
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstanceUpdatable'
+        required: true
+      description: >-
+        ### Create Rule Instance
+
+
+        `POST /rule-instances` endpoint is used to create a new rule instance. A rule instance can be thought of as a live entity, that runs checks for for transactions. Rule instances use `Rule` templates as the blueprint. 
+
+
+        Every rule instance has an associated `ruleId` of the rule from which it is derived. The details of the rule and the required parameters is found by `GET /rules` endpoint. 
+
+
+        Once a rule instance is created, flagright generates an ID for the rule instance and also stores related metadata like:
+
+
+        - `id` - unique identifier for the rule instance
+
+        - `runCount` - how many times the rule instance was run
+
+        - `hitCount` - how many times a rule was hit
+
+        - `createdAt` & `updatedAt` - timestamps
+
+
+        They are generated and maintained by the flagright system and are not updatable by the API.
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - List
+      operationId: get-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleInstance'
+      description: >-
+        ### Retrieve Rule Instances
+
+
+        `GET /rule-instances` endpoint returns a list of all rule instances created by your account on flagright.
+  /rule-instances/{ruleInstanceId}:
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    delete:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - Delete
+      operationId: delete-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description:
+        You can *permanently* delete a rule instance using the `DELETE
+        /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a
+        rule instance, you can update the status on the rule instance using the
+        [POST
+        /rule-instances/{ruleInstanceId}](/management-api/api-reference/api-reference/post-rule-instances-rule-instance-id)
+        endpoint
+    post:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - Update
+      operationId: post-rule-instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstanceUpdatable'
+        required: true
+      description: >
+        ### Update Rule Instance
+
+
+        Created rule instances can be idempotently updated with the `POST /rule-instances/{ruleInstanceId}`.
+  /rule-filters-schema:
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule Filters Schema - Get
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              examples:
+                example-1:
+                  value:
+                    type: object
+                    properties:
+                      paymentMethod:
+                        type: string
+                        ui:schema:
+                          ui:group: transaction
+                          ui:subtype: PAYMENT_METHOD
+                        title: Payment Method
+                        enum:
+                          - ACH
+                          - CARD
+                          - IBAN
+                          - SWIFT
+                          - UPI
+                          - WALLET
+                          - MPESA
+                          - GENERIC_BANK_ACCOUNT
+                          - CHECK
+                          - CASH
+                          - NPP
+                        nullable: true
+      operationId: get-rule-filters-schema
+      description: >-
+        ### Retrieve Rule Filters Schema
+
+
+        `GET /rule-filteres-schema` endpoint returns the rule filters supported by flagright as [JSON Schema](https://json-schema.org/). 
+
+
+        When you create a [rule instance](/management-api/api-reference/api-reference/post-rule-instances), you can use the schema returned by this endpoint to construct `filters` field for a rule instance.
+
+
+        If you need an update to a rule filter or a new rule filter, you can always contact the Flagright team.
+      parameters: []
+    parameters: []
+  /cases:
+    post:
+      security:
+        - x-api-key: []
+      summary: Case - Create
+      operationId: post-cases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+              examples:
+                example-1:
+                  value:
+                    caseId: string
+                    entityDetails:
+                      userId: string
+                      type: USER
+                    caseStatus: OPEN
+                    priority: P1
+                    createdTimestamp: 1713177955000
+                    updatedAt: 1713177955000
+                    relatedCases:
+                      - string
+                    tags:
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+                    assignments:
+                      - $ref: '#/components/schemas/Assignment'
+                    creationReason:
+                      reasons:
+                        - string
+                      comment: string
+                      timestamp: 1713177955000
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseCreationRequest'
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Case - List
+      operationId: get-cases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasesListResponse'
+      parameters:
+        - schema:
+            type: string
+          name: start
+          in: query
+          required: false
+        - schema:
+            type: number
+            minimum: 1
+            maximum: 100
+          name: pageSize
+          in: query
+          required: false
+        - schema:
+            type: string
+            enum:
+              - createdTimestamp
+              - updatedAt
+              - caseId
+              - priority
+          name: sortBy
+          in: query
+          required: false
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          name: sortOrder
+          in: query
+          required: false
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Status'
+          name: filterCaseStatus
+          in: query
+          required: false
+        - schema:
+            $ref: '#/components/schemas/Priority'
+          name: filterPriority
+          in: query
+          required: false
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CaseSource'
+          name: filterCaseSource
+          in: query
+          required: false
+        - schema:
+            type: number
+          name: filterAfterCreatedTimestamp
+          in: query
+          required: false
+        - schema:
+            type: number
+          name: filterBeforeCreatedTimestamp
+          in: query
+          required: false
+      description: '### Retrieve Cases'
+  /cases/{caseId}:
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Case - Get
+      operationId: get-cases-caseId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description: '### Retrieve a Case'
+    patch:
+      security:
+        - x-api-key: []
+      summary: Case - Update
+      operationId: patch-cases-caseId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseUpdateable'
+        required: true
+      description: '### Update Case'
+  /cases/{caseId}/statuses:
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    post:
+      security:
+        - x-api-key: []
+      summary: Case - Update Status
+      operationId: post-cases-caseId-statuses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  caseStatus:
+                    $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseStatusChangeRequest'
+        required: true
+      description: >-
+        ### Update Case Status 
+
+        The `POST /cases/{caseId}/statuses` endpoint is used to update the status of a case. The status can be one of the following values: `OPEN`, `CLOSED`, `REOPENED`, `IN_PROGRESS`, `ON_HOLD`.
+
+        Note: When closing a case the `reason` field is required.
+  /alerts:
+    post:
+      security:
+        - x-api-key: []
+      summary: Alert - Create
+      operationId: post-alerts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+              examples:
+                example-1:
+                  value:
+                    alertId: string
+                    entityDetails:
+                      type: TRANSACTION
+                      transactionIds:
+                        - string
+                    alertStatus: OPEN
+                    priority: P1
+                    createdTimestamp: 1713177955000
+                    updatedAt: 1713177955000
+                    tags:
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+                    assignments:
+                      - $ref: '#/components/schemas/Assignment'
+                    creationReason:
+                      reasons:
+                        - string
+                      comment: string
+                      timestamp: 1713177955000
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertCreationRequest'
+        required: true
+  /alerts/{alertId}:
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Alert - Get
+      operationId: get-alerts-alertId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      description: '### Retrieve an Alert'
+    patch:
+      security:
+        - x-api-key: []
+      summary: Alert - Update
+      operationId: patch-alerts-alertId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertUpdatable'
+        required: true
+      description: '### Update Alert'
+  /alerts/{alertId}/comments:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve Alert Comments
+      description: >
+        ## GET Alert Comments
+
+        `GET /alerts/{alertId}/comments` endpoint returns all comments for an alert.
+      operationId: get-alert-comments
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    - commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                      body: This is a comment
+                      files:
+                        - filename: file.txt
+                          size: 1024
+                          downloadLink: s3://bucket/key
+                      createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      security:
+        - x-api-key: []
+      summary: Create an Alert Comment
+      description: >
+        ## POST Alert Comments 
+
+        `POST /alerts/{alertId}/comments` endpoint is used to create a comment for an alert.
+
+        To attach files in the comment upload the file first using the `POST /pre-signed-url` endpoint and then use the returned `key` to attach the file in the comment with the filename and size.`
+      operationId: post-alert-comment
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+            examples:
+              example-1:
+                value:
+                  body: This is a comment
+                  createdTimestamp: 1641654664000
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    createdTimestamp: 1641654664000
+  /alerts/{alertId}/comments/{commentId}:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve an Alert Comment
+      description: >
+        ## GET Alert Comment
+
+        `GET /alerts/{alertId}/comments/{commentId}` endpoint returns a comment for an alert.
+      operationId: get-alert-comment
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    files:
+                      - filename: file.txt
+                        size: 1024
+                        downloadLink: s3://bucket/key
+                    createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      security:
+        - x-api-key: []
+      summary: Delete an Alert Comment
+      description: >
+        ## DELETE Alert Comment
+
+        `DELETE /alerts/{alertId}/comments/{commentId}` endpoint is used to delete an alert comment.
+      operationId: delete-alert-comment
+      parameters:
+        - name: alertId
+          in: path
+          description: Unique Alert Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted successfully
+          headers: {}
+          content: {}
+        '400':
+          description: Bad Request
+          headers: {}
+  /alerts/{alertId}/statuses:
+    parameters:
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    post:
+      security:
+        - x-api-key: []
+      summary: Alert - Update Status
+      operationId: post-alerts-alertId-statuses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alertStatus:
+                    $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertStatusChangeRequest'
+        required: true
+      description: >-
+        ### Update Alert Status 
+
+        The `POST /alerts/{alertId}/statuses` endpoint is used to update the status of an alert. The status can be one of the following values: `OPEN`, `CLOSED`, `REOPENED`, `IN_PROGRESS`, `ON_HOLD`.
+
+        Note: When closing an alert the `reason` field is required.
+  /pre-signed-url:
+    post:
+      security:
+        - x-api-key: []
+      summary: Get a pre-signed URL
+      operationId: get-upload-presignedUrl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedPostRequest'
+        required: true
+      description: >-
+        ### Generate Pre-Signed URL for File Uploads
+
+
+        The `POST /pre-signed-url` endpoint provides a secure, pre-signed URL that you can use to upload files directly to a designated storage service. The URL is time-limited, remaining valid for 15 minutes, and authenticated to ensure that file uploads are secure. The maximum supported file size is 100000000 bytes (100MB).
+
+
+        #### Uploading Your File
+
+
+        Once you have obtained the pre-signed URL and the accompanying fields (`key`, `name`, `x-amz-Algorithm`, `x-amz-credential`, `x-amz-date`, `x-amz-signature`, `x-amz-security-token`) from the API endpoint:
+
+
+        To upload your file to the designated storage location using the provided data, you need to make a request formatted as follows:
+
+
+        ```bash
+            curl -X POST 'url' \
+            --form 'key="key"' \
+            --form 'name="name"' \
+            --form 'X-Amz-Algorithm="x-amz-algorithm"' \   
+            --form 'X-Amz-Credential="x-amz-credential"' \
+            --form 'X-Amz-Date="x-amz-date"' \
+            --form 'X-Amz-Security-Token="x-amz-security-token"' \
+            --form 'Policy="policy"' \
+            --form 'X-Amz-Signature= "x-amz-signature"' \
+            --form 'file=@"/path/to/file"'
+        ```
+
+        **Important Note:** You must retain the returned `key` as it is essential for later referencing the file in the application, such as attaching it to a case or including it in a user comment.
+  /users/{userId}/comments:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve User Comments
+      description: |
+        ## GET User Comments
+
+        `GET /users/{userId}/comments` endpoint returns all comments for a user.
+      operationId: get-user-comments
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    - commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                      body: This is a comment
+                      createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      security:
+        - x-api-key: []
+      summary: Create a User Comment
+      description: >
+        ## POST User Comments 
+
+        `POST /users/{userId}/comments` endpoint is used to create a comment for a user.
+
+        To attach files in the comment upload the file first using the `POST /pre-signed-url` endpoint and then use the returned `key` to attach the file in the comment with the filename and size.`
+      operationId: post-user-comment
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+            examples:
+              example-1:
+                value:
+                  body: This is a comment
+                  createdTimestamp: 1641654664000
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /users/{userId}/comments/{commentId}:
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve a User Comment
+      description: >
+        ## GET User Comment
+
+        `GET /users/{userId}/comments/{commentId}` endpoint returns a comment for a user.
+      operationId: get-user-comment
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                example-1:
+                  value:
+                    commentId: 96647cfd9e8fe66ee0f3362e011e34e8
+                    body: This is a comment
+                    files:
+                      - filename: file.txt
+                        size: 1024
+                        downloadLink: s3://bucket/key
+                    createdTimestamp: 1641654664000
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      security:
+        - x-api-key: []
+      summary: Delete a User Comment
+      description: >
+        ## DELETE User Comment
+
+        `DELETE /users/{userId}/comments/{commentId}` endpoint is used to delete a user comment.
+      operationId: delete-user-comment
+      parameters:
+        - name: userId
+          in: path
+          description: Unique User Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          description: Unique Comment Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted successfully
+          headers: {}
+          content: {}
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Comment not found
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /users/search:
+    get:
+      security:
+        - x-api-key: []
+      summary: Users - Search
+      operationId: get-users-search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersSearchResponse'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      parameters:
+        - schema:
+            type: string
+          name: name
+          in: query
+        - schema:
+            type: string
+          name: email
+          in: query
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          name: pageSize
+          in: query
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          name: sortOrder
+          in: query
+        - schema:
+            type: string
+            enum:
+              - createdTimestamp
+              - updatedAt
+          name: sortBy
+          in: query
+      description: >
+        ## Users Search
+
+        `GET /users/search` endpoint retrieves a list of users matching the specified search criteria.
+  /lists:
+    get:
+      security:
+        - x-api-key: []
+      summary: Get all lists
+      description: Get all lists
+      operationId: get-lists
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListsResponse'
+    post:
+      security:
+        - x-api-key: []
+      summary: Create or update a list
+      description: POST /lists endpoint creates updates or clears a list.
+      operationId: post-lists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /lists/{listId}:
+    get:
+      security:
+        - x-api-key: []
+      summary: Get a list by id
+      description: Get a list by id
+      operationId: get-list-by-id
+      parameters:
+        - name: listId
+          in: path
+          description: List ID
+          required: true
+          style: simple
+          schema:
+            type: string
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: number
+          name: pageSize
+          in: query
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemsResponse'
+        '404':
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /crm/link:
+    post:
+      security:
+        - x-api-key: []
+      summary: Link a CRM record to a user
+      description: Link a CRM record to a user
+      operationId: post-crm-link
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CRMRecordLinkRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CRMRecordLinkResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+components:
+  schemas:
+    CRMRecordLinkRequest:
+      title: CRMRecordLinkRequest
+      type: object
+      properties:
+        userId:
+          type: string
+        crmRecordId:
+          type: string
+        recordType:
+          type: string
+          enum:
+            - TICKET
+        crmName:
+          type: string
+          enum:
+            - FRESHDESK
+      required:
+        - userId
+        - crmRecordId
+        - recordType
+        - crmName
+    CRMRecordLinkResponse:
+      title: CRMRecordLinkResponse
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+    List:
+      title: List
+      type: object
+      properties:
+        listId:
+          type: string
+        listType:
+          type: string
+          enum:
+            - WHITELIST
+            - BLACKLIST
+        subtype:
+          type: string
+          enum:
+            - USER_ID
+        data:
+          $ref: '#/components/schemas/ListData'
+      required:
+        - listId
+        - listType
+        - subtype
+        - data
+    ListAppendRequest:
+      title: ListAppendRequest
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ListData'
+        operation:
+          type: string
+          enum:
+            - APPEND
+        listId:
+          type: string
+        listType:
+          type: string
+          enum:
+            - WHITELIST
+            - BLACKLIST
+        subtype:
+          type: string
+          enum:
+            - USER_ID
+      required:
+        - data
+        - operation
+        - listId
+        - listType
+        - subtype
+    ListClearRequest:
+      title: ListClearRequest
+      type: object
+      properties:
+        listId:
+          type: string
+        operation:
+          type: string
+          enum:
+            - CLEAR
+      required:
+        - listId
+        - operation
+    ListUpdateRequest:
+      title: ListUpdateRequest
+      oneOf:
+        - $ref: '#/components/schemas/ListAppendRequest'
+        - $ref: '#/components/schemas/ListClearRequest'
+    ListData:
+      title: ListData
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListDataItems'
+      required:
+        - items
+    ListDataItems:
+      title: ListDataItems
+      type: object
+      properties:
+        key:
+          type: string
+      required:
+        - key
+    ListResponse:
+      title: ListResponse
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILURE
+        message:
+          type: string
+        listId:
+          type: string
+      required:
+        - status
+        - message
+        - listId
+    ListHeader:
+      title: ListHeader
+      type: object
+      properties:
+        listId:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            ttl:
+              type: number
+              description: Time to live in seconds
+              nullable: true
+              default: null
+        size:
+          type: number
+        listType:
+          type: string
+          enum:
+            - WHITELIST
+            - BLACKLIST
+        subtype:
+          type: string
+        createdTimestamp:
+          type: number
+      required:
+        - listId
+        - listType
+        - subtype
+        - createdTimestamp
+    ListsResponse:
+      title: ListsResponse
+      type: object
+      properties:
+        lists:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListHeader'
+      required:
+        - lists
+    ListItemsResponse:
+      title: ListItemsResponse
+      type: object
+      properties:
+        listId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListDataItems'
+      required:
+        - listId
+        - items
+    UsersSearchResponse:
+      title: UsersSearchResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            oneOf:
+              - $ref: ../public/openapi-public-original.yaml#/components/schemas/User
+              - $ref: ../public/openapi-public-original.yaml#/components/schemas/Business
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+        next:
+          type: string
+        prev:
+          type: string
+        count:
+          type: integer
+        pageSize:
+          type: integer
+        last:
+          type: string
+    ExternalRequestCaseStatus:
+      type: string
+      title: ExternalRequestCaseStatus
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
+        - IN_PROGRESS
+        - ON_HOLD
+    CommentRequest:
+      title: CommentRequest
+      type: object
+      properties:
+        body:
+          type: string
+          description: Comment body
+          minLength: 1
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestFileInfo'
+        createdTimestamp:
+          type: number
+          description: Timestamp when comment is created
+      required:
+        - body
+    RequestFileInfo:
+      title: RequestFileInfo
+      type: object
+      properties:
+        s3Key:
+          type: string
+          description: S3 key of the file
+        filename:
+          type: string
+          description: Name of the file
+        size:
+          type: number
+          description: Size of the file in bytes
+      required:
+        - s3Key
+        - filename
+        - size
+    CommentResponse:
+      title: CommentResponse
+      type: object
+      properties:
+        commentId:
+          type: string
+          description: Unique comment ID
+        body:
+          type: string
+          description: Comment body
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResponseFileInfo'
+        createdTimestamp:
+          type: number
+          description: Timestamp when comment is created
+        updatedTimestamp:
+          type: number
+          description: Timestamp when comment is updated
+      required:
+        - body
+        - commentId
+    ResponseFileInfo:
+      title: ResponseFileInfo
+      type: object
+      properties:
+        filename:
+          type: string
+          description: Name of the file
+        size:
+          type: number
+          description: Size of the file in bytes
+        downloadLink:
+          type: string
+          description: Download link for the file
+      required:
+        - filename
+        - size
+        - downloadLink
+    PresignedPostRequest:
+      title: PresignedPostRequest
+      type: object
+      description: ''
+      properties:
+        filename:
+          type: string
+        fileSize:
+          type: number
+          maximum: 100000000
+          description: File size should be less than 100000000 bytes
+      required:
+        - filename
+        - fileSize
+    PresignedUrlResponse:
+      title: PresignedUrlResponse
+      type: object
+      description: ''
+      properties:
+        url:
+          type: string
+        fields:
+          type: object
+          description: Fields to be used in the form-data request
+          properties:
+            key:
+              type: string
+            policy:
+              type: string
+            x-amz-algorithm:
+              type: string
+            x-amz-credential:
+              type: string
+            x-amz-date:
+              type: string
+            x-amz-signature:
+              type: string
+            x-amz-security-token:
+              type: string
+            name:
+              type: string
+          required:
+            - key
+            - policy
+            - x-amz-algorithm
+            - x-amz-credential
+            - x-amz-date
+            - x-amz-signature
+            - name
+      required:
+        - url
+        - fields
+    AlertStatusChangeRequest:
+      title: AlertStatusChangeRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        reason:
+          type: array
+          items:
+            type: string
+        otherReason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestFileInfo'
+      required:
+        - status
+    CaseStatusChangeRequest:
+      title: CaseStatusChangeRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/ExternalRequestCaseStatus'
+        reason:
+          type: array
+          items:
+            type: string
+        otherReason:
+          type: string
+        comment:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestFileInfo'
+      required:
+        - status
+    RuleInstance:
+      title: RuleInstance
+      allOf:
+        - $ref: '#/components/schemas/RuleInstanceBase'
+        - $ref: '#/components/schemas/RuleInstanceUpdatable'
+      additionalProperties: false
+    RuleInstanceBase:
+      title: RuleInstanceBase
+      type: object
+      description: ''
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/RuleType'
+        ruleId:
+          type: string
+        runCount:
+          type: number
+        hitCount:
+          type: integer
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        checksFor:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - type
+        - ruleId
+        - checksFor
+    RuleInstanceUpdatable:
+      title: RuleInstanceUpdatable
+      type: object
+      properties:
+        ruleId:
+          type: string
+        alertCreationOnHit:
+          type: boolean
+        filters:
+          type: object
+          description:
+            Rule filters. A key-value json object corresponding to the json
+            schema returned by /rule-filters-schema endpoint.
+        parameters:
+          type: object
+        ruleNameAlias:
+          type: string
+        riskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        riskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
+        triggersOnHit:
+          $ref: '#/components/schemas/TriggersOnHit'
+        riskLevelsTriggersOnHit:
+          $ref: '#/components/schemas/RiskLevelsTriggersOnHit'
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+        casePriority:
+          $ref: '#/components/schemas/Priority'
+    StatusDetails:
+      title: StatusDetails
+      type: object
+      properties:
+        description:
+          type: string
+    UserDirections:
+      title: UserDirections
+      type: string
+      enum:
+        - ALL
+        - ORIGIN
+        - DESTINATION
+    UserStateDetailsInternal:
+      title: UserStateDetailsInternal
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
+        - $ref: '#/components/schemas/StatusDetails'
+      required:
+        - reason
+    KYCStatusDetailsInternal:
+      title: KYCStatusDetailsInternal
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
+        - $ref: '#/components/schemas/StatusDetails'
+      required:
+        - reason
+    TriggersOnHit:
+      title: TriggersOnHit
+      type: object
+      properties:
+        usersToCheck:
+          $ref: '#/components/schemas/UserDirections'
+        userStateDetails:
+          $ref: '#/components/schemas/UserStateDetailsInternal'
+        kycStatusDetails:
+          $ref: '#/components/schemas/KYCStatusDetailsInternal'
+        pepStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+          description: Whether the user is a PEP
+    RiskLevelsTriggersOnHit:
+      title: RiskLevelsTriggersOnHit
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/TriggersOnHit'
+        HIGH:
+          $ref: '#/components/schemas/TriggersOnHit'
+        MEDIUM:
+          $ref: '#/components/schemas/TriggersOnHit'
+        LOW:
+          $ref: '#/components/schemas/TriggersOnHit'
+        VERY_LOW:
+          $ref: '#/components/schemas/TriggersOnHit'
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    RuleAction:
+      type: string
+      title: RuleAction
+      enum:
+        - ALLOW
+        - FLAG
+        - BLOCK
+        - SUSPEND
+      x-examples:
+        example-1: SUSPEND
+      description:
+        Model for rule action if a rule is hit. This is returned in the API
+        response and can be configured on Console by operational accounts like a
+        Compliance Analyst
+    RuleActionAlias:
+      type: object
+      title: RuleActionAlias
+      properties:
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        alias:
+          type: string
+      required:
+        - action
+        - alias
+      additionalProperties: false
+    Priority:
+      type: string
+      title: Priority
+      enum:
+        - P1
+        - P2
+        - P3
+        - P4
+    CaseSource:
+      type: string
+      title: CaseSource
+      enum:
+        - MANUAL
+        - SYSTEM
+        - EXTERNAL
+    RuleLabels:
+      type: string
+      title: RuleLabels
+      enum:
+        - UNEXPECTED_BEHAVIOR
+        - ILLICIT_GAINS_CHECK
+        - RFI_TRIGGER
+        - EDD_TRIGGER
+        - KYC_TRIGGER
+        - SCAM
+        - ABUSE
+        - ACCOUNT_TAKEOVER
+        - DISPUTE
+        - SANCTIONS
+        - SANCTIONS_PEP
+        - SANCTIONS_PEP_ADVERSE_MEDIA
+        - SANCTIONS_MANUAL_REVIEW
+    RiskLevelRuleActions:
+      title: RiskLevelRuleActions
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/RuleAction'
+        HIGH:
+          $ref: '#/components/schemas/RuleAction'
+        MEDIUM:
+          $ref: '#/components/schemas/RuleAction'
+        LOW:
+          $ref: '#/components/schemas/RuleAction'
+        VERY_LOW:
+          $ref: '#/components/schemas/RuleAction'
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    RiskLevelRuleParameters:
+      title: RiskLevelRuleParameters
+      type: object
+      properties:
+        VERY_HIGH:
+          type: object
+        HIGH:
+          type: object
+        MEDIUM:
+          type: object
+        LOW:
+          type: object
+        VERY_LOW:
+          type: object
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    RuleType:
+      title: RuleType
+      type: string
+      enum:
+        - TRANSACTION
+        - USER
+        - USER_ONGOING_SCREENING
+    Rule:
+      title: Rule
+      type: object
+      x-examples:
+        example-1:
+          id: R-1
+          name: Rule name
+          description: Rule description
+          defaultParameters:
+            threshold: 3
+          defaultAction: FLAG
+          ruleImplementationName: code-filename
+          createdAt: 0
+          updatedAt: 0
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/RuleType'
+        name:
+          type: string
+        types:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        parametersSchema:
+          type: object
+        defaultParameters:
+          type: object
+        defaultRiskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
+        defaultAction:
+          $ref: '#/components/schemas/RuleAction'
+        defaultRiskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleLabels'
+        defaultCasePriority:
+          $ref: '#/components/schemas/Priority'
+        defaultNature:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
+        checksFor:
+          type: array
+          items:
+            type: string
+        typologies:
+          type: array
+          items:
+            type: string
+        sampleUseCases:
+          type: string
+      required:
+        - id
+        - type
+        - name
+        - description
+        - defaultParameters
+        - defaultAction
+        - labels
+        - defaultCasePriority
+        - defaultNature
+        - checksFor
+        - types
+        - typologies
+        - sampleUseCases
+    CaseCreationRequest:
+      title: CaseCreationRequest
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - $ref: '#/components/schemas/CaseUpdateable'
+      required:
+        - caseId
+        - entityDetails
+        - priority
+    AlertCreationRequest:
+      title: AlertCreationRequest
+      allOf:
+        - $ref: '#/components/schemas/AlertBase'
+        - $ref: '#/components/schemas/AlertUpdatable'
+      required:
+        - alertId
+        - entityDetails
+        - priority
+        - caseId
+        - ruleDetails
+    CaseBase:
+      title: CaseBase
+      type: object
+      description: ''
+      properties:
+        caseId:
+          type: string
+        createdTimestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - caseId
+        - createdTimestamp
+    AlertBase:
+      title: AlertBase
+      type: object
+      description: ''
+      properties:
+        alertId:
+          type: string
+        createdTimestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+        caseId:
+          type: string
+      required:
+        - alertId
+        - createdTimestamp
+        - caseId
+    TransactionHitDetails:
+      title: TransactionHitDetails
+      type: object
+      description: ''
+      properties:
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+        transactionIds:
+          type: array
+          items:
+            type: string
+      required:
+        - type
+        - transactionIds
+    SanctionsHitDetails:
+      title: SanctionsHitDetails
+      type: object
+      description: ''
+      properties:
+        type:
+          type: string
+          enum:
+            - SANCTIONS
+      required:
+        - type
+        - sanctionIds
+    AlertUpdatable:
+      title: AlertUpdateable
+      type: object
+      description: ''
+      properties:
+        priority:
+          $ref: '#/components/schemas/Priority'
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+        creationReason:
+          $ref: '#/components/schemas/ActionReason'
+        entityDetails:
+          oneOf:
+            - $ref: '#/components/schemas/TransactionHitDetails'
+            - $ref: '#/components/schemas/SanctionsHitDetails'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        ruleDetails:
+          $ref: '#/components/schemas/AlertRuleDetails'
+    AlertDerived:
+      title: AlertDerived
+      type: object
+      description: ''
+      properties:
+        alertStatus:
+          $ref: '#/components/schemas/Status'
+        updatedAt:
+          type: number
+    Alert:
+      title: Alert
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AlertBase'
+        - $ref: '#/components/schemas/AlertUpdatable'
+        - $ref: '#/components/schemas/AlertDerived'
+      required:
+        - alertId
+        - entityDetails
+        - alertStatus
+        - priority
+        - createdTimestamp
+        - updatedAt
+        - caseId
+        - ruleDetails
+    CasesListResponse:
+      title: CasesListResponse
+      type: object
+      description: ''
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        pageSize:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Case'
+    AlertRuleDetails:
+      title: AlertRuleDetails
+      type: object
+      description: ''
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        description:
+          type: string
+        instanceId:
+          type: string
+        nature:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleNature
+      required:
+        - id
+        - name
+        - description
+        - instanceId
+        - action
+    CaseUpdateable:
+      title: CasePatchRequest
+      type: object
+      description: ''
+      properties:
+        priority:
+          $ref: '#/components/schemas/Priority'
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+        creationReason:
+          $ref: '#/components/schemas/ActionReason'
+        entityDetails:
+          oneOf:
+            - $ref: '#/components/schemas/UserEntityDetails'
+            - $ref: '#/components/schemas/PaymentEntityDetails'
+            - $ref: '#/components/schemas/AddressEntityDetails'
+            - $ref: '#/components/schemas/EmailEntityDetails'
+            - $ref: '#/components/schemas/NameEntityDetails'
+        relatedCases:
+          type: array
+          items:
+            type: string
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+    CaseDerived:
+      title: CaseDerived
+      type: object
+      description: ''
+      properties:
+        caseStatus:
+          $ref: '#/components/schemas/Status'
+        alertIds:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: number
+    Status:
+      title: Status
+      type: string
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
+        - IN_REVIEW
+        - ESCALATED
+        - IN_PROGRESS
+        - ON_HOLD
+    Case:
+      title: Case
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/CaseBase'
+        - $ref: '#/components/schemas/CaseDerived'
+        - $ref: '#/components/schemas/CaseUpdateable'
+      required:
+        - caseId
+        - entityDetails
+        - caseStatus
+        - alertIds
+        - priority
+        - createdTimestamp
+        - updatedAt
+    UserEntityDetails:
+      title: UserEntityDetails
+      type: object
+      description: ''
+      properties:
+        userId:
+          type: string
+        type:
+          type: string
+          enum:
+            - USER
+      required:
+        - userId
+        - type
+    AddressEntityDetails:
+      title: AddressEntityDetails
+      type: object
+      description: ''
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+        type:
+          type: string
+          enum:
+            - ADDRESS
+      required:
+        - address
+        - type
+    PaymentEntityDetails:
+      title: PaymentEntityDetails
+      type: object
+      description: ''
+      properties:
+        type:
+          type: string
+          enum:
+            - PAYMENT
+        paymentDetails:
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+      required:
+        - type
+        - paymentDetails
+    EmailEntityDetails:
+      title: EmailEntityDetails
+      type: object
+      description: ''
+      properties:
+        email:
+          type: string
+        type:
+          type: string
+          enum:
+            - EMAIL
+      required:
+        - email
+        - type
+    NameEntityDetails:
+      title: NameEntityDetails
+      type: object
+      description: ''
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - NAME
+      required:
+        - name
+        - type
+    ActionReason:
+      title: ActionReason
+      type: object
+      properties:
+        reasons:
+          type: array
+          items:
+            type: string
+        comment:
+          type: string
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - reasons
+        - comment
+    Assignment:
+      title: Assignment
+      type: object
+      properties:
+        assigneeEmail:
+          type: string
+        assignedByEmail:
+          type: string
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          maximum: 4133890801000
+      required:
+        - assigneeEmail
+    ErrorMessage:
+      title: ErrorMessage
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
+  securitySchemes:
+    x-api-key:
+      name: x-api-key
+      type: apiKey
+      in: header
+      description: API keys are used to authenticate the requests.

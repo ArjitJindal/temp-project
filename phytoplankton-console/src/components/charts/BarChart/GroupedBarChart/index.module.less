@@ -1,0 +1,48 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/charts/shared/highlighting';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 8px;
+
+  &.skeleton {
+    pointer-events: none;
+  }
+}
+
+.bar {
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity, height, width, x, y;
+
+  &.highlighting {
+    opacity: @shaded-opacity;
+
+    &.isHighlighted {
+      opacity: 1;
+
+      &.isHighlightedAccent {
+        stroke: @highlight-outline-color;
+        stroke-width: @highlight-outline-width;
+      }
+    }
+  }
+}
+
+.categoryHighlighting {
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: fill, height, width, x, y;
+  fill: transparent;
+
+  &.isHighlighted {
+    fill: @highlight-background;
+  }
+}
+
+.tick {
+  cursor: default;
+}

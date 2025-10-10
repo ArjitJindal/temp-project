@@ -1,0 +1,1 @@
+export const RESIDENCE_TYPES = ['FOREIGN', 'DOMESTIC'];

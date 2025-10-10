@@ -1,0 +1,50 @@
+@import 'node_modules/antd/es/style/themes/default.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.salesCard {
+  color: red;
+
+  .salesRank {
+    padding: 0 32px 32px 72px;
+  }
+  :global {
+    .ant-tabs-bar,
+    .ant-tabs-nav-wrap {
+      padding-left: 16px;
+      .ant-tabs-nav .ant-tabs-tab {
+        padding-top: 16px;
+        padding-bottom: 14px;
+        line-height: 24px;
+      }
+    }
+    .ant-tabs-extra-content {
+      padding-right: 24px;
+      line-height: 55px;
+    }
+    .ant-card-head {
+      position: relative;
+    }
+    .ant-card-head-title {
+      align-items: normal;
+    }
+
+    .ant-tabs-top > .ant-tabs-nav .ant-tabs-ink-bar {
+      border: 1px solid #1890ff;
+    }
+  }
+}
+
+@media screen and (max-width: @screen-sm) {
+  .salesCard {
+    :global {
+      .ant-tabs-content {
+        padding-top: 30px;
+      }
+    }
+  }
+}

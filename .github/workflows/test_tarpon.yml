@@ -1,0 +1,179 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Test tarpon
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-tarpon
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+    paths:
+      - "tarpon/**"
+      - "lib/**"
+      - "nango-integrations/**"
+  workflow_call:
+    inputs:
+      llm:
+        description: 'Run LLM tests'
+        required: false
+        type: boolean
+        default: false
+jobs:
+  test:
+    runs-on: large
+    if: github.event.pull_request.draft == false
+    services:
+      clickhouse-server:
+        image: clickhouse/clickhouse-server:25.1.2
+        ports:
+          - '8123:8123'
+          - '9000:9000'
+        options: --health-cmd="clickhouse-client --query 'SELECT 1'" --health-interval=10s --health-timeout=5s --health-retries=5
+    timeout-minutes: 30
+    name: test-tarpon
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine changed folder
+        id: changed-folder
+        run: |
+          git fetch origin main
+          tarponChanges=false
+          for file in $(git diff --name-only origin/main HEAD); do
+            if [[ "$file" == tarpon/src/* || "$file" == tarpon/lib/* || "$file" == tarpon/scripts/* ||  "$file" == lib/* ]]; then
+              tarponChanges=true
+            fi
+          done
+          echo "tarponChanges=$tarponChanges" >> "$GITHUB_OUTPUT"
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js 20x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - name: Init Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install Python dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+        working-directory: ./tarpon/torpedo
+      - name: Build Torpedo
+        run: |
+          ./build.sh
+        working-directory: ./tarpon/torpedo
+      - name: Cache jest results
+        uses: actions/cache@v3
+        with:
+          path: ~/.jest-cache
+          key: jest-cache
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.1.7"
+      - name: Build Flagright Lib
+        run: corepack enable && yarn set version 4.0.2 && yarn install --immutable
+        working-directory: "lib"
+      - name: Install tarpon dependencies
+        run: yarn install --immutable
+        working-directory: "tarpon"
+      - name: Install nango
+        run: npm install -g nango@0.61.1
+      - name: Build nango-integrations
+        run: |
+          nango version
+          ls
+          nango generate
+        working-directory: "nango-integrations"
+      - name: Build tarpon
+        run: yarn run build:local
+        working-directory: "tarpon"
+      - name: Format and prepare openapi
+        run: yarn run openapi:format && yarn run openapi:prepare
+        working-directory: "tarpon"
+      - name: Typecheck tarpon
+        run: yarn run tsc:ci
+        working-directory: "tarpon"
+      - run: yarn run lint:ci
+        working-directory: "tarpon"
+      - run: yarn run format:check
+        working-directory: "tarpon"
+      - name: Setup DynamoDB localy
+        if: steps.changed-folder.outputs.tarponChanges == 'true'
+        uses: rrainn/dynamodb-action@v2.0.1
+        with:
+          port: 7999
+          cors: "*"
+      - name: Start MongoDB localy
+        if: steps.changed-folder.outputs.tarponChanges == 'true'
+        uses: supercharge/mongodb-github-action@1.7.0
+        with:
+          mongodb-version: 8.0.4
+          mongodb-port: 27018
+      - name: Run Tests
+        if: steps.changed-folder.outputs.tarponChanges == 'true'
+        run: yarn run test:ci
+        working-directory: "tarpon"
+      - name: Upload Coverage
+        if: github.ref == 'refs/heads/main' && steps.changed-folder.outputs.tarponChanges == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarpon-coverage.json
+          path: tarpon/coverage/coverage-summary.json
+          overwrite: true
+      # - name: Get workflow run id
+      #   if: github.ref != 'refs/heads/main'
+      #   id: get_workflow_run_id
+      #   run: |
+      #     response=$(curl -s -H "Authorization: token ${{secrets.FLAGRIGHT_ACTION_PAT}}" \
+      #       "https://api.github.com/repos/flagright/orca/actions/workflows/deploy_orca.yaml/runs?status=success&per_page=1")
+      #       # Extract workflow_run_if from the response
+      #     workflow_run_id=$(jq -r '.workflow_runs[0].id' <<<"$response")
+      #     echo "::set-output name=workflow_run_id::$workflow_run_id"
+      # - name: Download coverage report from artifact
+      #   if: github.ref != 'refs/heads/main'
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: tarpon-coverage.json
+      #     path: artifact
+      #     run-id: ${{ steps.get_workflow_run_id.outputs.workflow_run_id }}
+      #     github-token: ${{ secrets.FLAGRIGHT_ACTION_PAT }}
+      #     repository: flagright/orca
+      # - name: Generate coverage report and comment on PR
+      #   if: github.ref != 'refs/heads/main'
+      #   run: |
+      #     npm run test:coverage:comment "${{ github.token }}"
+      #   working-directory: "tarpon"
+      - name: Sync OpenAPI schemas
+        if: github.ref == 'refs/heads/main'
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: ${{ secrets.FLAGRIGHT_API_SYNC_PAT }}
+          ORIGINAL_MESSAGE: true
+          COMMIT_BODY: patch
+      - name: Post to a Slack channel on failure
+        id: slack
+        uses: slackapi/slack-github-action@v1.25.0
+        if: ${{ failure() && github.ref_name == 'main' }}
+        with:
+          channel-id: "C03L5KRE2E8"
+          payload: |
+            {
+              "text": "main branch failed for tarpon!"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

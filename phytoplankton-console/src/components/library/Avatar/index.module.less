@@ -1,0 +1,53 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+  background-color: transparent;
+
+  &.isLoading {
+    background-color: @fr-colors-v2-skeleton;
+    animation-name: avatar-loading-animation;
+    animation-duration: 2000ms;
+    animation-direction: alternate;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in;
+    animation-delay: 1000ms;
+  }
+}
+
+@keyframes avatar-loading-animation {
+  0% {
+    background-color: @fr-colors-v2-skeleton;
+  }
+  100% {
+    background-color: mix(#fff, @fr-colors-v2-skeleton, 80%);
+  }
+}
+
+.size-small {
+  width: 36px;
+  height: 36px;
+}
+
+.size-medium {
+  width: 44px;
+  height: 44px;
+}
+
+.size-large {
+  width: 52px;
+  height: 52px;
+}
+
+.size-xs {
+  width: 24px;
+  height: 24px;
+}

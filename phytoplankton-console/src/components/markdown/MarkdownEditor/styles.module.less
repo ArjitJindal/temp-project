@@ -1,0 +1,125 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global {
+    .toastui-editor-defaultUI {
+      flex: 1;
+      border-color: @fr-colors-purpleGrayTint;
+
+      .ProseMirror {
+        padding: 16px;
+      }
+    }
+
+    .toastui-editor-toolbar {
+      height: 32px;
+    }
+
+    .toastui-editor-toolbar-item-wrapper {
+      margin: 0;
+    }
+
+    .toastui-editor-defaultUI-toolbar {
+      height: 32px;
+      border-bottom-color: @fr-colors-purpleGrayTint;
+      padding: 0 8px;
+
+      & button {
+        margin: 0;
+        transform: scale(0.75);
+      }
+    }
+
+    .toastui-editor-toolbar-group {
+      align-items: center;
+    }
+
+    .toastui-editor-toolbar-divider {
+      margin: 0 4px;
+    }
+
+    .toastui-editor-ww-container {
+      border-radius: 3px;
+    }
+  }
+}
+
+.toolButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .header {
+    font-size: 1.2em;
+  }
+
+  .attach {
+    width: 20px;
+  }
+}
+
+.mentionsList {
+  position: relative;
+  pointer-events: all;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 2px;
+  max-height: 200px;
+  overflow-y: scroll;
+  box-shadow: 0 1px 7px -1px #0000000a;
+}
+
+.mentionItem {
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  &:hover {
+    background-color: @fr-colors-brandBlueTint;
+  }
+}
+
+.mention {
+  color: @fr-colors-brandBlue;
+  cursor: pointer;
+  text-decoration: none !important;
+}
+
+.hideCursor {
+  cursor: none;
+}
+
+.mentionIcon {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mentionText {
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.loadingContainer {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

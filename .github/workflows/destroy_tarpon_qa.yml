@@ -1,0 +1,52 @@
+name: Destroy Tarpon QA Env
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - "tarpon/**"
+jobs:
+  destroy:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: "main"
+          clean: false
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Install Nango
+        run: |
+          npm install -g nango@0.61.1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - run: yarn install --immutable
+        working-directory: "tarpon"
+      - name: Build Torpedo
+        run: |
+          ./build.sh
+        working-directory: "tarpon/torpedo"
+      - name: Destroy
+        run: |
+          echo "Creating default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = us-east-2\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          cat ~/.aws/credentials
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          export QA_SUBDOMAIN="qa$(echo "${{ github.head_ref }}" | shasum | head -c5)"
+
+          echo "Destroying QA deploy for $QA_SUBDOMAIN.api.flagright.dev"
+          cd tarpon
+          npm run destroy:qa

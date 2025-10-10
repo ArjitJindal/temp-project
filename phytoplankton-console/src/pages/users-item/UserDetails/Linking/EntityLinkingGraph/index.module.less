@@ -1,0 +1,42 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  flex: 1;
+  &:not(.isScrollEnabled) {
+    canvas {
+      pointer-events: none;
+    }
+  }
+
+  &.isScrollEnabled {
+    .hint {
+      opacity: 0;
+    }
+  }
+}
+
+.hint {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  > :not(.filters) {
+    transition-property: opacity;
+    transition-timing-function: @default-animation-function;
+    transition-duration: @default-animation-speed;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-direction: row;
+  gap: 45px;
+}

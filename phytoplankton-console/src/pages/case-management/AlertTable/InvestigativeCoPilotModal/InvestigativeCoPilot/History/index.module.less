@@ -1,0 +1,27 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  position: relative;
+}
+
+.item {
+  background: white;
+  padding: 16px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  flex: 1;
+  justify-content: center;
+
+  > img {
+    height: 80px;
+  }
+}

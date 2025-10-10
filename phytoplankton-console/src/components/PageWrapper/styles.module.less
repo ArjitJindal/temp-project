@@ -1,0 +1,75 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
+:root {
+  .root {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .head {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 56px;
+  }
+
+  .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title {
+    margin-bottom: 0;
+    color: @fr-colors-v2-gray-10;
+    line-height: 32px;
+  }
+
+  .description {
+    line-height: 24px;
+    margin-bottom: 0;
+    color: @fr-colors-v2-gray-10;
+  }
+
+  .backButton {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: @fr-colors-v2-gray-10;
+    font-weight: 600;
+
+    > svg {
+      width: 20px;
+    }
+  }
+}
+
+.contentContainer {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  flex: 1;
+  gap: 16px;
+}
+
+.customHeader {
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  z-index: @sticky-z-index;
+  background: @fr-global-bg-color;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: white;
+  z-index: @sticky-z-index;
+}

@@ -1,0 +1,137 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+}
+
+.headerGroupList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.columnList {
+  display: flex;
+  flex-direction: column;
+}
+
+.column {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 2px 0;
+
+  &.isDragging {
+    background: @fr-colors-v2-highlight-flagrightBlue;
+  }
+}
+
+.columnLeft,
+.columnRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.columnDropPosition {
+  height: 0;
+  width: 100%;
+  position: relative;
+
+  &,
+  &::before,
+  &::after {
+    pointer-events: none;
+  }
+
+  &.canDrop {
+    &,
+    &::before,
+    &::after {
+      pointer-events: unset;
+    }
+
+    &::before {
+      height: 2px;
+    }
+
+    &::after {
+      height: 20px;
+    }
+  }
+
+  &.isOver {
+    &::before {
+      background: @fr-colors-v2-primary-flagrightBlue;
+    }
+  }
+
+  &::before,
+  &::after {
+    content: ' ';
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    height: 0;
+  }
+
+  &::before {
+    z-index: 1;
+  }
+
+  &::after {
+    z-index: 2;
+  }
+}
+
+.dndIcon {
+  color: @fr-colors-v2-gray-4;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  cursor: grab;
+  position: relative;
+  user-select: none;
+
+  &.isDisabled {
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.25;
+  }
+
+  > svg {
+    position: absolute;
+    height: 100%;
+    top: 0;
+    left: 50%;
+
+    &:nth-child(1) {
+      transform: translateX(-50%) translateX(-2px);
+    }
+    &:nth-child(2) {
+      transform: translateX(-50%) translateX(2px);
+    }
+  }
+}

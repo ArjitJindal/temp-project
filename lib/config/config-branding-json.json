@@ -1,0 +1,18 @@
+{
+  "REGTANK": {
+    "consoleSettings": {
+      "sandbox": {
+        "allowedDomains": ["*.regtank.com"],
+        "host": "qc-staging.console.regtank.com",
+        "auth0Domain": "login.qc-staging.console.regtank.com",
+        "auth0ClientId": "Nz37vE2YAvMRPAIsqLVXcfACo216CMXE"
+      },
+      "prod": {
+        "allowedDomains": ["*.regtank.com"],
+        "host": "transaction.console.regtank.com",
+        "auth0Domain": "login.transaction.console.regtank.com",
+        "auth0ClientId": "nVwFjIjOIyrzQfLtkUXo7sdxODGuHfvc"
+      }
+    }
+  }
+}

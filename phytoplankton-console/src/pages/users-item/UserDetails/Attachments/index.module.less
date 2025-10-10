@@ -1,0 +1,168 @@
+@import 'src/components/ui/colors.less';
+
+.navigation {
+  display: flex;
+  gap: 4px;
+  user-select: none;
+}
+
+.navigationButton {
+  width: 24px;
+  cursor: pointer;
+  color: @fr-colors-v2-primary-flagrightBlue;
+
+  &.isDisabled {
+    color: @fr-colors-v2-gray-4;
+    pointer-events: none;
+  }
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  padding: 12px 12px 0 12px;
+
+  .fileAttachmentButton {
+    cursor: pointer;
+    width: auto;
+    color: @fr-colors-v2-primary-flagrightBlue;
+  }
+}
+
+.title {
+  font-size: 14px;
+  color: @fr-colors-v2-gray-10;
+  font-weight: 700;
+}
+
+.itemLabel {
+  color: @fr-colors-v2-gray-6;
+  white-space: nowrap;
+}
+
+.modalroot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalbody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.commentsection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modaltitle {
+  font-weight: 600;
+  line-height: 20px;
+  font-size: 14px;
+}
+
+.modalsubTitle {
+  font-weight: 400;
+  line-height: 24px;
+  color: @fr-colors-v2-gray-6;
+}
+
+.modalbrowsers {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.modalbrowser {
+  display: flex;
+  gap: 8px;
+  background-color: @fr-global-bg-color;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: black;
+  border-radius: 4px;
+}
+.modalbrowser:hover {
+  color: black;
+  background-color: @fr-colors-v2-highlight-flagrightBlue;
+}
+
+.modalcheckbox {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0;
+}
+.modalcheckbox > span {
+  line-height: 24px;
+}
+
+.modalinfo {
+  display: flex;
+  gap: 4px;
+  background: @fr-colors-brandBlueAlpha;
+  border: 1px solid @fr-colors-brandBlue;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  width: 100%;
+  padding: 0 12px 12px 12px;
+}
+
+.files {
+  width: 100%;
+}
+
+.fileAttachmentButton {
+  align-items: center;
+  display: flex;
+  background-color: @fr-colors-v2-card-background;
+  border-radius: 4px;
+  width: 100%;
+
+  &:hover {
+    background-color: fade(@fr-colors-v2-card-background, 80%);
+  }
+
+  a {
+    width: 100%;
+  }
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+
+  .filename {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .size {
+    flex-shrink: 0;
+  }
+}

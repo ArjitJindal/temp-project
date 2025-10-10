@@ -1,0 +1,15 @@
+node_modules
+cdk.out
+dist
+src/@types/openapi*
+*.mustache
+*.sh
+*.png
+.*
+*.py
+*.txt
+*.xsd
+**/bin/*
+*.xml
+Dockerfile
+*.lock

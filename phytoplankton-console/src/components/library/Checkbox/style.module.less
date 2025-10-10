@@ -1,0 +1,128 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/library/helpers';
+
+.root {
+  position: relative;
+  flex-shrink: 0;
+
+  &.size-S {
+    width: @figma-vars--tokens-sizeIconIconsizeXs;
+    height: @figma-vars--tokens-sizeIconIconsizeXs;
+  }
+
+  &.size-M {
+    width: @figma-vars--tokens-sizeIconIconsizeS;
+    height: @figma-vars--tokens-sizeIconIconsizeS;
+  }
+
+  &.size-L {
+    width: @figma-vars--tokens-sizeIconIconsizeM;
+    height: @figma-vars--tokens-sizeIconIconsizeM;
+  }
+}
+
+.input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0;
+  z-index: 1;
+  cursor: pointer;
+
+  &:checked {
+    + .content {
+      background: @figma-vars--tokens-colorIconAction;
+      border-color: @figma-vars--tokens-colorIconAction;
+
+      .icon {
+        opacity: 1;
+      }
+    }
+  }
+
+  &:disabled {
+    & + .content {
+      pointer-events: none;
+      border-color: @figma-vars--tokens-colorBackgroundDisabled;
+      background: transparent;
+
+      .icon,
+      .indeterminateIcon {
+        color: @figma-vars--tokens-colorIconInvert;
+      }
+    }
+
+    &:checked + .content,
+    &:not(:checked) + .content.isIndeterminate {
+      border-color: @figma-vars--tokens-colorBackgroundDisabled;
+      background: @figma-vars--tokens-colorBackgroundDisabled;
+    }
+  }
+
+  &:focus {
+    + .content {
+      .default-focused-shadow();
+    }
+  }
+}
+
+.content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+  border: 1px solid @figma-vars--tokens-colorStrokePrimary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition-property: opacity, background, box-shadow, border-color;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+
+  &.isIndeterminate {
+    background: @figma-vars--tokens-colorIconAction;
+    border-color: @figma-vars--tokens-colorIconAction;
+    .indeterminateIcon {
+      opacity: 1;
+    }
+  }
+}
+
+.icon {
+  opacity: 0;
+  color: white;
+  transition-property: opacity;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+}
+
+.indeterminateIcon {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  position: absolute;
+  display: block;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition-property: opacity;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  pointer-events: none;
+  color: @figma-vars--tokens-colorIconInvert;
+}
+
+.label {
+  padding-left: 4px;
+}
+
+.label-EXTRA_MARGIN {
+  padding-left: 12px;
+}

@@ -1,0 +1,54 @@
+@import 'src/components/ui/colors';
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  width: 14px;
+}
+
+.root {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid black;
+  border-radius: 4px;
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
+
+  &.isActive {
+    box-shadow: 0 -1px 6px 0 fade(@fr-colors-purpleGray, 25%);
+  }
+
+  &.color-WHITE {
+    background: #fff;
+    border-color: #000;
+
+    .icon,
+    .clearIcon {
+      color: fade(#000, 85%);
+    }
+  }
+  &.color-BLUE-TINT {
+    background: @fr-colors-brandBlueTint;
+    border-color: @fr-colors-brandBlue;
+
+    .icon,
+    .clearIcon {
+      color: fade(#000, 85%);
+    }
+  }
+}
+
+.content {
+  max-width: 150px;
+  overflow: hidden;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.5em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

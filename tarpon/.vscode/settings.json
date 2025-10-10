@@ -1,0 +1,8 @@
+{
+  "eslint.format.enable": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "git.autofetch": true,
+  "git.autofetchPeriod": 180
+}

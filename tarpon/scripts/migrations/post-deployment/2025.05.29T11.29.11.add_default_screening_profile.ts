@@ -1,0 +1,59 @@
+import { migrateAllTenants } from '../utils/tenant'
+import { hasFeature } from '@/core/utils/context'
+import { Tenant } from '@/@types/tenant'
+import { ScreeningProfileService } from '@/services/screening-profile'
+import { CounterRepository } from '@/services/counter/repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantService } from '@/services/tenants'
+import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
+
+async function migrateTenant(tenant: Tenant) {
+  if (!hasFeature('ACURIS')) {
+    return
+  }
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
+  const counterRepository = new CounterRepository(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
+  const screeningProfileService = new ScreeningProfileService(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
+  const tenantService = new TenantService(tenant.id, {
+    mongoDb,
+    dynamoDb,
+  })
+  const tenantSettings = await tenantService.getTenantSettings()
+  const acurisSanctionsSearchType =
+    tenantSettings.sanctions?.providerScreeningTypes?.find(
+      (type) => type.provider === 'acuris'
+    )?.screeningTypes ?? [
+      'SANCTIONS',
+      'PEP',
+      'REGULATORY_ENFORCEMENT_LIST',
+      'ADVERSE_MEDIA',
+    ]
+
+  await screeningProfileService.updateScreeningProfilesOnSanctionsSettingsChange(
+    acurisSanctionsSearchType as AcurisSanctionsSearchType[]
+  )
+  const createDefaultScreeningProfile =
+    await screeningProfileService.checkIfDefaultScreeningProfileExists()
+  if (createDefaultScreeningProfile) {
+    return
+  }
+  await screeningProfileService.createDefaultScreeningProfile(
+    counterRepository,
+    acurisSanctionsSearchType as AcurisSanctionsSearchType[]
+  )
+}
+
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+export const down = async () => {
+  // skip
+}

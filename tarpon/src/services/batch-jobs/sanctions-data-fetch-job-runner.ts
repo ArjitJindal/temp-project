@@ -1,0 +1,143 @@
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { getSanctionsCollectionName } from '../sanctions/utils'
+import { SanctionsDataProviders } from '../sanctions/types'
+import { BatchJobRunner } from './batch-job-runner-base'
+import { BatchJobRepository } from './repositories/batch-job-repository'
+import { sendBatchJobCommand } from './batch-job'
+import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
+import { sanctionsDataFetcher } from '@/services/sanctions/data-fetchers'
+import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
+import dayjs from '@/utils/dayjs'
+import { logger } from '@/core/logger'
+import {
+  createGlobalMongoDBCollections,
+  createMongoDBCollections,
+  getMongoDbClient,
+} from '@/utils/mongodb-utils'
+import {
+  deleteIndexAfterDataLoad,
+  getOpensearchClient,
+  isOpensearchAvailableInRegion,
+  syncOpensearchIndex,
+} from '@/utils/opensearch-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { envIsNot } from '@/utils/env'
+
+export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
+  protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const batchJobRepository = new BatchJobRepository(job.tenantId, client)
+    const existingJobs = await batchJobRepository.getJobs(
+      {
+        type: job.type,
+        tenantId: job.tenantId,
+        latestStatus: {
+          status: 'IN_PROGRESS',
+          latestStatusAfterTimestamp: dayjs().subtract(1, 'day').valueOf(),
+        },
+        providers: job.providers,
+        parameters: {
+          entityType: job.parameters.entityType,
+        },
+        jobId: {
+          notEqualTo: job['jobId'],
+        },
+      },
+      1
+    )
+    if (existingJobs.length > 0 && envIsNot('local')) {
+      logger.info(
+        `Skipping ${job.type} job because it's already running ${existingJobs[0].jobId}`
+      )
+      return
+    }
+    await runSanctionsDataFetchJob(job, client, dynamoDb)
+  }
+}
+
+export async function runSanctionsDataFetchJob(
+  job: SanctionsDataFetchBatchJob,
+  client: MongoClient,
+  dynamoDb: DynamoDBDocumentClient
+) {
+  const { tenantId, providers, settings } = job
+  const opensearchClient = isOpensearchAvailableInRegion()
+    ? await getOpensearchClient()
+    : undefined
+  const runFullLoad = job.parameters?.from
+    ? new Date(job.parameters.from).getDay() === 0
+    : true
+  const version = Date.now().toString()
+  logger.info(`Running full load`)
+  for (const provider of providers) {
+    const fetcher = await sanctionsDataFetcher(
+      tenantId,
+      provider,
+      { mongoDb: client, dynamoDb },
+      settings
+    )
+    if (!fetcher) {
+      continue
+    }
+    const sanctionsCollectionName = getSanctionsCollectionName(
+      { provider, entityType: job.parameters.entityType },
+      tenantId,
+      'full'
+    )
+    const [_a, _b, aliasName] = await Promise.all([
+      createMongoDBCollections(client, dynamoDb, tenantId),
+      createGlobalMongoDBCollections(client),
+      syncOpensearchIndex(opensearchClient, sanctionsCollectionName),
+    ])
+
+    logger.info(`Running ${fetcher.constructor.name}`)
+    if (runFullLoad) {
+      const repo = new MongoSanctionsRepository(
+        sanctionsCollectionName,
+        opensearchClient,
+        aliasName
+      )
+      await fetcher.fullLoad(repo, version, job.parameters.entityType)
+    }
+    const repo = new MongoSanctionsRepository(
+      sanctionsCollectionName,
+      opensearchClient,
+      aliasName
+    )
+    if (provider !== SanctionsDataProviders.ACURIS || runFullLoad) {
+      // To avoid fetching delta for Acuris daily separately, instead it's fetched in delta load
+      await fetcher.delta(
+        repo,
+        version,
+        dayjs(job.parameters.from).toDate(),
+        job.parameters.entityType,
+        runFullLoad
+      )
+    }
+    if (aliasName && opensearchClient) {
+      await deleteIndexAfterDataLoad(
+        opensearchClient,
+        sanctionsCollectionName,
+        aliasName
+      )
+    }
+
+    if (
+      provider === SanctionsDataProviders.ACURIS &&
+      job.parameters.entityType &&
+      isOpensearchAvailableInRegion()
+    ) {
+      await sendBatchJobCommand({
+        type: 'SCREENING_PROFILE_DATA_FETCH',
+        tenantId,
+        parameters: {
+          provider: 'acuris',
+          entityType: job.parameters.entityType,
+          type: 'full',
+        },
+      })
+    }
+  }
+}

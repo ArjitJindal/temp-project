@@ -1,0 +1,42 @@
+name: Deploy Orca Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - "bin/**"
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    strategy:
+      matrix:
+        node-version: [20.x]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js 20x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "yarn"
+          cache-dependency-path: "yarn.lock"
+      - run: yarn install --immutable
+      - name: Synth Pipeline
+        run: |
+          export ENV=deploy
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          npm run synth:pipeline
+      - name: Deploy Orca Pipline
+        run: |
+          export ENV=deploy
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_PIPELINE_ACCESS_KEY }}
+          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_PIPELINE_SECRET_KEY }}
+          npm run deploy:pipeline:actions

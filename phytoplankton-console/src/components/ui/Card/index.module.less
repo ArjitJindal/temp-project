@@ -1,0 +1,191 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/Card/vars';
+
+.flex-helpers() {
+  &.justify-start {
+    justify-content: flex-start;
+  }
+  &.justify-end {
+    justify-content: flex-end;
+  }
+  &.justify-space-between {
+    justify-content: space-between;
+  }
+  &.justify-evenly {
+    justify-content: space-evenly;
+  }
+
+  &.align-start {
+    align-items: flex-start;
+  }
+  &.align-end {
+    align-items: flex-end;
+  }
+  &.align-stretch {
+    align-items: stretch;
+  }
+
+  &.spacing-default {
+    gap: 20px;
+  }
+
+  &.spacing-double {
+    gap: 40px;
+  }
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid @fr-colors-purpleGrayTint;
+  border-radius: 8px;
+  overflow: auto;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  &.noBorder {
+    border: none;
+  }
+
+  &.isInvalid {
+    border-color: @fr-colors-v2-alert-critical;
+
+    > .column,
+    > .row {
+      > * {
+        &:not(:last-child) {
+          border-color: @fr-colors-v2-alert-critical;
+        }
+      }
+    }
+  }
+
+  .container {
+    overflow: auto;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .title {
+    margin-bottom: 0;
+    color: @fr-colors-brandBlue;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 28px;
+    flex: auto;
+
+    &.size-SMALL {
+      font-size: 14px;
+      line-height: 18px;
+    }
+  }
+
+  &.isCollapsable {
+    cursor: pointer;
+  }
+
+  &.isInvalid {
+    > .title {
+      color: @fr-colors-v2-alert-critical !important;
+    }
+  }
+}
+
+.row {
+  display: flex;
+  flex-grow: 1;
+
+  .flex-helpers();
+
+  &.border {
+    > * {
+      &:not(:first-child) {
+        border-left: 1px solid @fr-colors-purpleGrayTint;
+      }
+    }
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  align-items: stretch;
+
+  .flex-helpers();
+
+  &.border {
+    > * {
+      &:not(:last-child) {
+        border-bottom: 1px solid @fr-colors-purpleGrayTint;
+      }
+    }
+  }
+}
+
+.section {
+  display: flex;
+  flex-grow: 1;
+  padding: @v-padding @h-padding;
+
+  .flex-helpers();
+
+  &.direction-vertical {
+    flex-direction: column;
+  }
+
+  &.direction-horizontal {
+    flex-direction: row;
+  }
+}
+
+.titleSection {
+  display: flex;
+  justify-content: space-between;
+}
+
+.subtitle {
+  padding-left: @h-padding;
+  padding-right: @h-padding;
+
+  .item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    height: 60px;
+  }
+
+  .name {
+    display: flex;
+    color: @fr-colors-purpleGray;
+    font-weight: 200 !important;
+    size: 17px !important;
+    line-height: 27px !important;
+    align-items: center;
+  }
+
+  .icon {
+    height: 16px !important;
+    width: 16px !important;
+    margin-right: 4px !important;
+    color: @fr-colors-purpleGray;
+    align-items: center;
+    flex-shrink: 0;
+  }
+}
+
+.additionalPadding {
+  padding: 0.25rem;
+}
+
+.complexTitle {
+  width: 100%;
+}

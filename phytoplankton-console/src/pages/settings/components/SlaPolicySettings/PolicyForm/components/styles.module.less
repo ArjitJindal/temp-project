@@ -1,0 +1,30 @@
+@import 'src/components/ui/colors.less';
+.root {
+  background: @fr-colors-v2-card-background;
+  padding: 12px;
+  border-radius: 8px;
+}
+.table {
+  display: grid;
+  grid-template-columns: 2fr 0.7fr 3fr;
+  column-gap: 16px;
+  row-gap: 20px;
+  align-items: center;
+}
+.header {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.indentedLabel {
+  margin-left: 24px;
+}
+
+.nestedValue {
+  display: flex;
+  justify-content: space-between;
+}
+
+.statusSelect {
+  width: 400px;
+}

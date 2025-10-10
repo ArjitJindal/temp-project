@@ -1,0 +1,68 @@
+@import 'src/components/ui/colors.less';
+
+.rolesTable {
+  :global {
+    td,
+    th,
+    tr,
+    table {
+      border: none !important;
+    }
+    th {
+      background: @fr-colors-gray-4;
+    }
+    td {
+      cursor: pointer;
+    }
+    .ant-pro-card-body {
+      padding: 0 !important;
+    }
+    .ant-pro-table-list-toolbar-container {
+      padding-top: 0 !important;
+    }
+    .ant-pro-table-list-toolbar-title {
+      font-weight: 600;
+      & > div > div {
+        font-weight: normal !important;
+      }
+    }
+  }
+}
+
+.collapseIcon {
+  display: flex;
+  align-items: center;
+  width: 20px;
+  color: @fr-colors-brandBlue;
+  transition: transform 300ms;
+  transform: rotate(180deg);
+
+  &.isCollapsed {
+    transform: none;
+  }
+}
+
+.expandedRow {
+  margin: 0 !important;
+  padding-left: 48px;
+  background: @fr-colors-gray-0 !important;
+  .disabled {
+    color: @fr-colors-gray-4;
+  }
+  :global {
+    .ant-pro-card-body {
+      padding: 0 !important;
+    }
+    .ant-table {
+      background: @fr-colors-gray-0 !important;
+    }
+    td {
+      cursor: default !important;
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+}

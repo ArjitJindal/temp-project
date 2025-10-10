@@ -1,0 +1,280 @@
+openapi: 3.0.0
+info:
+  title: Workflow Models
+  version: 1.0.0
+components:
+  schemas:
+    BaseWorkflow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the workflow
+        workflowType:
+          $ref: '#/components/schemas/WorkflowType'
+        version:
+          type: integer
+          format: int64
+          description: Timestamp in milliseconds when the document was saved
+          example: 1710834000000
+        name:
+          type: string
+          description: Human readable name for the workflow
+        description:
+          type: string
+          description: Detailed description of the workflow
+        author:
+          type: string
+          description: The account that created or last modified the workflow
+        enabled:
+          type: boolean
+          description: Whether the workflow is enabled
+          default: true
+      required:
+        - id
+        - workflowType
+        - version
+        - name
+        - author
+        - enabled
+
+    BaseCaseAlertWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [case, alert]
+              description: Must be case or alert for case and alert workflows
+            statuses:
+              type: array
+              items:
+                type: string
+              description: List of user-defined case statuses
+            statusAssignments:
+              type: object
+              additionalProperties:
+                type: string
+              description: Maps status to role that should be assigned
+              example:
+                OPEN: analyst
+                IN_REVIEW: reviewer
+                ESCALATION_L1: manager
+            transitions:
+              type: object
+              description: Defines allowed status transitions
+            roleTransitions:
+              type: object
+              description: Defines allowed role transitions
+          required:
+            - statuses
+            - statusAssignments
+            - transitions
+            - roleTransitions
+
+    CaseWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseCaseAlertWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [case]
+            autoClose:
+              type: boolean
+              description: Whether cases can be automatically closed
+          required:
+            - autoClose
+
+    AlertWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseCaseAlertWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [alert]
+
+    BaseApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [risk-levels-approval, risk-factors-approval, rule-approval]
+            approvalChain:
+              type: array
+              items:
+                type: string
+              description: List of roles that are part of the approval chain
+          required:
+            - workflowType
+            - approvalChain
+
+    RiskLevelApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseApprovalWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [risk-levels-approval]
+          required:
+            - workflowType
+
+    RiskFactorsApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseApprovalWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [risk-factors-approval]
+          required:
+            - workflowType
+
+    UserUpdateApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseApprovalWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [user-update-approval]
+          required:
+            - workflowType
+
+    RuleApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseApprovalWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [rule-approval]
+          required:
+            - workflowType
+
+    WorkflowResponse:
+      type: object
+      properties:
+        workflows:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnyWorkflow'
+
+    AnyWorkflow:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/CaseWorkflow'
+        - $ref: '#/components/schemas/AlertWorkflow'
+        - $ref: '#/components/schemas/RiskLevelApprovalWorkflow'
+        - $ref: '#/components/schemas/RiskFactorsApprovalWorkflow'
+        - $ref: '#/components/schemas/RuleApprovalWorkflow'
+
+    WorkflowType:
+      type: string
+      enum:
+        [
+          case,
+          alert,
+          risk-levels-approval,
+          risk-factors-approval,
+          user-update-approval,
+          rule-approval,
+        ]
+
+    # Creation schemas for AWS API Gateway compatibility
+    CreateBaseWorkflow:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human readable name for the workflow
+        description:
+          type: string
+          description: Detailed description of the workflow
+        enabled:
+          type: boolean
+          description: Whether the workflow is enabled
+          default: true
+      required:
+        - name
+        - description
+        - enabled
+
+    CreateBaseApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseWorkflow'
+        - type: object
+          properties:
+            approvalChain:
+              type: array
+              items:
+                type: string
+              description: List of roles that are part of the approval chain
+          required:
+            - approvalChain
+
+    CreateRiskLevelApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
+
+    CreateUserUpdateApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
+
+    CreateRuleApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
+
+    CreateRiskFactorsApprovalWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
+
+    CreateBaseCaseAlertWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseWorkflow'
+        - type: object
+          properties:
+            statuses:
+              type: array
+              items:
+                type: string
+              description: List of user-defined case statuses
+            statusAssignments:
+              type: object
+              additionalProperties:
+                type: string
+              description: Maps status to role that should be assigned
+            transitions:
+              type: object
+              description: Defines allowed status transitions
+            roleTransitions:
+              type: object
+              description: Defines allowed role transitions
+          required:
+            - statuses
+            - statusAssignments
+            - transitions
+            - roleTransitions
+
+    CreateCaseWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseCaseAlertWorkflow'
+        - type: object
+          properties:
+            workflowType:
+              type: string
+              enum: [case]
+            autoClose:
+              type: boolean
+              description: Whether cases can be automatically closed
+          required:
+            - autoClose
+
+    CreateAlertWorkflow:
+      allOf:
+        - $ref: '#/components/schemas/CreateBaseCaseAlertWorkflow'

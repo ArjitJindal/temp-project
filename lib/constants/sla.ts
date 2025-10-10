@@ -1,0 +1,1 @@
+export const MAX_SLA_POLICIES_PER_ENTITY = 5

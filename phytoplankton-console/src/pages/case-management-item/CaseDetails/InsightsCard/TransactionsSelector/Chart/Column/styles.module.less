@@ -1,0 +1,21 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  position: absolute;
+  bottom: 0;
+}
+
+.column {
+  position: absolute;
+  bottom: 0;
+  background: @fr-colors-purpleGrayTint;
+  transition: opacity @default-animation-speed @default-animation-function;
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+
+  &.isShadowed {
+    opacity: 0.5;
+  }
+}

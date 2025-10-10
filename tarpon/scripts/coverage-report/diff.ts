@@ -1,0 +1,156 @@
+import coverageDiff, { CoverageDiffOutput } from 'coverage-diff'
+
+interface FileTableRow {
+  icon: string
+  filename: string
+  lines: {
+    pct: string
+    diff: string
+  }
+  branches: {
+    pct: string
+    diff: string
+  }
+  functions: {
+    pct: string
+    diff: string
+  }
+  statements: {
+    pct: string
+    diff: string
+  }
+}
+
+interface Options {
+  allowedToFail?: boolean
+}
+
+const ICONS: Record<string, string> = {
+  OK: '✅',
+  WARN: '⚠️',
+  KO: '🔴',
+}
+
+const CRITERIAS = ['lines', 'branches', 'functions', 'statements']
+
+function _renderPct(pct: number, addSign = true): string {
+  if (addSign && pct >= 0) {
+    return `+${pct.toFixed(2)}%`
+  }
+  return `${pct.toFixed(2)}%`
+}
+
+function computeDiff(base: any, head: any, options: Options = {}): any {
+  const diff: CoverageDiffOutput = coverageDiff(base, head)
+  let totalTitle = 'Total coverage'
+  let summaryTitle = 'click to open the diff coverage report'
+
+  let countRegression = 0
+  const table: FileTableRow[] = []
+  Object.keys(diff.diff).forEach((file) => {
+    if (file === 'total') {
+      return
+    }
+
+    const element = diff.diff[file]
+
+    if (CRITERIAS.every((criteria) => element[criteria].pct === 0)) {
+      return
+    }
+
+    const fileRegression = CRITERIAS.some(
+      (criteria) => element[criteria].pct < 0
+    )
+    if (fileRegression) {
+      countRegression++
+    }
+
+    table.push({
+      icon: fileRegression ? ICONS.KO : ICONS.OK,
+      filename: file,
+      lines: {
+        pct: _renderPct(head[file].lines.pct, false),
+        diff: _renderPct(element.lines.pct),
+      },
+      branches: {
+        pct: _renderPct(head[file].branches.pct, false),
+        diff: _renderPct(element.branches.pct),
+      },
+      functions: {
+        pct: _renderPct(head[file].functions.pct, false),
+        diff: _renderPct(element.functions.pct),
+      },
+      statements: {
+        pct: _renderPct(head[file].statements.pct, false),
+        diff: _renderPct(element.statements.pct),
+      },
+    })
+  })
+
+  if (table.length > 0 && countRegression > 0) {
+    summaryTitle = `${countRegression} file${
+      countRegression > 1 ? 's' : ''
+    } with a coverage regression`
+  }
+
+  const totals: Record<string, string> = {}
+  let globalRegression = false
+  CRITERIAS.forEach((criteria) => {
+    const diffPct = head.total[criteria].pct - base.total[criteria].pct
+    if (diffPct < 0) {
+      globalRegression = true
+    }
+    totals[criteria] = `${_renderPct(
+      head.total[criteria].pct,
+      false
+    )} (${_renderPct(diffPct)})`
+  })
+
+  if (globalRegression) {
+    totalTitle = `${
+      options.allowedToFail ? ICONS.WARN : ICONS.KO
+    } Total coverage is lower than the default branch`
+  }
+
+  return {
+    regression: globalRegression,
+    markdown: `
+### ${totalTitle}
+
+| Lines           | Branches           | Functions           | Statements           |
+| --------------- | ------------------ | ------------------- | -------------------- |
+| ${totals.lines} | ${totals.branches} | ${totals.functions} | ${
+      totals.statements
+    } | 
+${
+  table.length > 0
+    ? `
+
+#### Detailed report
+
+<details><summary>${summaryTitle}</summary>
+
+|   | File | Lines | Branches | Functions | Statements |
+| - | ---- | ----- | -------- | --------- | ---------- |${table
+        .map(
+          (row) =>
+            `\n| ${row.icon} | ${row.filename} | ${row.lines.pct}${
+              row.lines.diff !== '+0.00%' ? ` (${row.lines.diff})` : ''
+            } | ${row.branches.pct}${
+              row.branches.diff !== '+0.00%' ? ` (${row.branches.diff})` : ''
+            } | ${row.functions.pct}${
+              row.functions.diff !== '+0.00%' ? ` (${row.functions.diff})` : ''
+            } | ${row.statements.pct}${
+              row.statements.diff !== '+0.00%'
+                ? ` (${row.statements.diff})`
+                : ''
+            } |`
+        )
+        .join('')}
+</details>`
+    : ''
+}`,
+  }
+}
+
+export { computeDiff }

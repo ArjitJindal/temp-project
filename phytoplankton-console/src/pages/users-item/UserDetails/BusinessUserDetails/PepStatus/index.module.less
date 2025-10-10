@@ -1,0 +1,79 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 12px 12px 12px;
+}
+
+.navigation {
+  display: flex;
+  gap: 4px;
+  user-select: none;
+}
+
+.navigationButton {
+  width: 24px;
+  cursor: pointer;
+  color: @fr-colors-v2-primary-flagrightBlue;
+
+  &.isDisabled {
+    color: @fr-colors-v2-gray-4;
+    pointer-events: none;
+  }
+}
+
+// document section
+.subroot {
+  border: 1px solid @fr-colors-purpleGrayTint;
+  border-radius: 4px;
+}
+
+.header,
+.body {
+  padding: 8px;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: min-content auto;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  gap: 8px;
+}
+
+.title {
+  font-weight: 600;
+}
+
+.documentNumber {
+  text-align: right;
+}
+
+.body {
+  border-top: 1px solid @fr-colors-purpleGrayTint;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.label {
+  font-weight: 600;
+  color: @fr-colors-v2-gray-6;
+}
+
+.value {
+  color: @fr-colors-v2-gray-8;
+}

@@ -1,0 +1,68 @@
+name: Test infra
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+    paths:
+      - "tarpon/infra/**"
+      - "tarpon/lib/**"
+      - "tarpon/torpedo/**"
+      - "lib/**"
+  workflow_call:
+jobs:
+  test:
+    name: test-infra
+    runs-on: ubuntu-22.04
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js 20x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install Python dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+        working-directory: "tarpon/torpedo"
+      - name: Build Torpedo
+        run: |
+          ./build.sh
+        working-directory: "tarpon/torpedo"
+      - run: yarn install --immutable
+        working-directory: "tarpon"
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: Post to a Slack channel on failure
+        id: slack
+        uses: slackapi/slack-github-action@v1.25.0
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        with:
+          channel-id: "C03L5KRE2E8"
+          payload: |
+            {
+              "text": "main branch failed for infra!"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

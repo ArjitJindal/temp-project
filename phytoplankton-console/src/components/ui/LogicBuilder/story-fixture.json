@@ -1,0 +1,3176 @@
+{
+  "entityVariables": [
+    {
+      "key": "BUSINESS_USER:shareHolders__BOTH",
+      "entity": "BUSINESS_USER",
+      "valueType": "array",
+      "uiDefinition": {
+        "label": "Business User / share holders",
+        "type": "!group",
+        "mode": "array",
+        "conjunctions": ["AND", "OR"],
+        "subfields": {
+          "userId": {
+            "label": "user id",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "userIdAsNumber": {
+            "label": "user id (as number)",
+            "type": "number",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.name.firstName": {
+            "label": "general details > name > first name",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.name.middleName": {
+            "label": "general details > name > middle name",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.name.lastName": {
+            "label": "general details > name > last name",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.dateOfBirth": {
+            "label": "general details > date of birth",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.userCategory": {
+            "label": "general details > user category",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.countryOfResidence": {
+            "label": "general details > country of residence",
+            "type": "text",
+            "valueSources": ["value", "field", "func"],
+            "fieldSettings": {
+              "listValues": [
+                {
+                  "title": "Afghanistan (AF)",
+                  "value": "AF"
+                },
+                {
+                  "title": "Albania (AL)",
+                  "value": "AL"
+                },
+                {
+                  "title": "Algeria (DZ)",
+                  "value": "DZ"
+                },
+                {
+                  "title": "American Samoa (AS)",
+                  "value": "AS"
+                },
+                {
+                  "title": "Andorra (AD)",
+                  "value": "AD"
+                }
+              ],
+              "allowCustomValues": true
+            }
+          },
+          "generalDetails.countryOfTaxResidence": {
+            "label": "general details > country of tax residence",
+            "type": "text",
+            "valueSources": ["value", "field", "func"],
+            "fieldSettings": {
+              "listValues": [
+                {
+                  "title": "Afghanistan (AF)",
+                  "value": "AF"
+                },
+                {
+                  "title": "Albania (AL)",
+                  "value": "AL"
+                },
+                {
+                  "title": "Algeria (DZ)",
+                  "value": "DZ"
+                },
+                {
+                  "title": "American Samoa (AS)",
+                  "value": "AS"
+                },
+                {
+                  "title": "Andorra (AD)",
+                  "value": "AD"
+                }
+              ],
+              "allowCustomValues": true
+            }
+          },
+          "generalDetails.countryOfNationality": {
+            "label": "general details > country of nationality",
+            "type": "text",
+            "valueSources": ["value", "field", "func"],
+            "fieldSettings": {
+              "listValues": [
+                {
+                  "title": "Afghanistan (AF)",
+                  "value": "AF"
+                },
+                {
+                  "title": "Albania (AL)",
+                  "value": "AL"
+                },
+                {
+                  "title": "Algeria (DZ)",
+                  "value": "DZ"
+                },
+                {
+                  "title": "American Samoa (AS)",
+                  "value": "AS"
+                },
+                {
+                  "title": "Andorra (AD)",
+                  "value": "AD"
+                }
+              ],
+              "allowCustomValues": true
+            }
+          },
+          "generalDetails.gender": {
+            "label": "general details > gender",
+            "type": "text",
+            "valueSources": ["value", "field", "func"],
+            "fieldSettings": {
+              "listValues": [
+                {
+                  "title": "M",
+                  "value": "M"
+                },
+                {
+                  "title": "F",
+                  "value": "F"
+                },
+                {
+                  "title": "Nb",
+                  "value": "NB"
+                }
+              ],
+              "allowCustomValues": true
+            }
+          },
+          "generalDetails.maritalStatus": {
+            "label": "general details > marital status",
+            "type": "text",
+            "valueSources": ["value", "field", "func"],
+            "fieldSettings": {
+              "listValues": [
+                {
+                  "title": "Divorced",
+                  "value": "DIVORCED"
+                },
+                {
+                  "title": "Married",
+                  "value": "MARRIED"
+                },
+                {
+                  "title": "Single",
+                  "value": "SINGLE"
+                },
+                {
+                  "title": "Widowed",
+                  "value": "WIDOWED"
+                },
+                {
+                  "title": "Na",
+                  "value": "NA"
+                }
+              ],
+              "allowCustomValues": true
+            }
+          },
+          "generalDetails.placeOfBirth.city": {
+            "label": "general details > place of birth > city",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.placeOfBirth.state": {
+            "label": "general details > place of birth > state",
+            "type": "text",
+            "valueSources": ["value", "field", "func"]
+          },
+          "generalDetails.placeOfBirth.country": {
+            "label": "general details > place of birth > country",
+            "type": "text",
+            "valueSources": ["value", "field", "func"],
+            "fieldSettings": {
+              "listValues": [
+                {
+                  "title": "Afghanistan (AF)",
+                  "value": "AF"
+                },
+                {
+                  "title": "Albania (AL)",
+                  "value": "AL"
+                },
+                {
+                  "title": "Algeria (DZ)",
+                  "value": "DZ"
+                },
+                {
+                  "title": "American Samoa (AS)",
+                  "value": "AS"
+                },
+                {
+                  "title": "Andorra (AD)",
+                  "value": "AD"
+                }
+              ],
+              "allowCustomValues": true
+            }
+          },
+          "generalDetails.alias": {
+            "path": ["generalDetails", "alias"],
+            "pathKey": "shareHolders.$i.generalDetails.alias.$i",
+            "type": "multiselect",
+            "arrayGroupLevels": [["generalDetails", "alias"], [""]],
+            "label": "general details > alias",
+            "preferWidgets": ["multiselect"],
+            "valueSources": ["value", "field", "func"],
+            "allowCustomValues": true
+          },
+          "legalDocuments": {
+            "label": "legal documents",
+            "type": "!group",
+            "mode": "array",
+            "conjunctions": ["AND", "OR"],
+            "subfields": {
+              "documentType": {
+                "label": "document type",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "documentNumber": {
+                "label": "document number",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "documentIssuedDate": {
+                "label": "document issued date",
+                "type": "number",
+                "valueSources": ["value", "field", "func"]
+              },
+              "documentExpirationDate": {
+                "label": "document expiration date",
+                "type": "number",
+                "valueSources": ["value", "field", "func"]
+              },
+              "documentIssuedCountry": {
+                "label": "document issued country",
+                "type": "text",
+                "valueSources": ["value", "field", "func"],
+                "fieldSettings": {
+                  "listValues": [
+                    {
+                      "title": "Afghanistan (AF)",
+                      "value": "AF"
+                    },
+                    {
+                      "title": "Albania (AL)",
+                      "value": "AL"
+                    },
+                    {
+                      "title": "Algeria (DZ)",
+                      "value": "DZ"
+                    },
+                    {
+                      "title": "American Samoa (AS)",
+                      "value": "AS"
+                    },
+                    {
+                      "title": "Andorra (AD)",
+                      "value": "AD"
+                    }
+                  ],
+                  "allowCustomValues": true
+                }
+              },
+              "tags": {
+                "label": "tags",
+                "type": "!group",
+                "mode": "array",
+                "conjunctions": ["AND", "OR"],
+                "subfields": {
+                  "key": {
+                    "label": "key",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "value": {
+                    "label": "value",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  }
+                }
+              },
+              "nameOnDocument.firstName": {
+                "label": "name on document > first name",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "nameOnDocument.middleName": {
+                "label": "name on document > middle name",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "nameOnDocument.lastName": {
+                "label": "name on document > last name",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              }
+            }
+          },
+          "contactDetails.emailIds": {
+            "path": ["contactDetails", "emailIds"],
+            "pathKey": "shareHolders.$i.contactDetails.emailIds.$i",
+            "type": "multiselect",
+            "arrayGroupLevels": [["contactDetails", "emailIds"], [""]],
+            "label": "contact details > email ids",
+            "preferWidgets": ["multiselect"],
+            "valueSources": ["value", "field", "func"],
+            "allowCustomValues": true
+          },
+          "contactDetails.contactNumbers": {
+            "path": ["contactDetails", "contactNumbers"],
+            "pathKey": "shareHolders.$i.contactDetails.contactNumbers.$i",
+            "type": "multiselect",
+            "arrayGroupLevels": [["contactDetails", "contactNumbers"], [""]],
+            "label": "contact details > contact numbers",
+            "preferWidgets": ["multiselect"],
+            "valueSources": ["value", "field", "func"],
+            "allowCustomValues": true
+          },
+          "contactDetails.faxNumbers": {
+            "path": ["contactDetails", "faxNumbers"],
+            "pathKey": "shareHolders.$i.contactDetails.faxNumbers.$i",
+            "type": "multiselect",
+            "arrayGroupLevels": [["contactDetails", "faxNumbers"], [""]],
+            "label": "contact details > fax numbers",
+            "preferWidgets": ["multiselect"],
+            "valueSources": ["value", "field", "func"],
+            "allowCustomValues": true
+          },
+          "contactDetails.websites": {
+            "path": ["contactDetails", "websites"],
+            "pathKey": "shareHolders.$i.contactDetails.websites.$i",
+            "type": "multiselect",
+            "arrayGroupLevels": [["contactDetails", "websites"], [""]],
+            "label": "contact details > websites",
+            "preferWidgets": ["multiselect"],
+            "valueSources": ["value", "field", "func"],
+            "allowCustomValues": true
+          },
+          "contactDetails.addresses": {
+            "label": "contact details > addresses",
+            "type": "!group",
+            "mode": "array",
+            "conjunctions": ["AND", "OR"],
+            "subfields": {
+              "addressLines": {
+                "path": ["addressLines"],
+                "pathKey": "shareHolders.$i.contactDetails.addresses.$i.addressLines.$i",
+                "type": "multiselect",
+                "arrayGroupLevels": [["addressLines"], [""]],
+                "label": "address lines",
+                "preferWidgets": ["multiselect"],
+                "valueSources": ["value", "field", "func"],
+                "allowCustomValues": true
+              },
+              "postcode": {
+                "label": "postcode",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "city": {
+                "label": "city",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "state": {
+                "label": "state",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "country": {
+                "label": "country",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "addressType": {
+                "label": "address type",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "tags": {
+                "label": "tags",
+                "type": "!group",
+                "mode": "array",
+                "conjunctions": ["AND", "OR"],
+                "subfields": {
+                  "key": {
+                    "label": "key",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "value": {
+                    "label": "value",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  }
+                }
+              }
+            }
+          },
+          "pepStatus": {
+            "label": "pep status",
+            "type": "!group",
+            "mode": "array",
+            "conjunctions": ["AND", "OR"],
+            "subfields": {
+              "isPepHit": {
+                "label": "is pep hit",
+                "type": "boolean",
+                "valueSources": ["value", "field", "func"]
+              },
+              "pepCountry": {
+                "label": "pep country",
+                "type": "text",
+                "valueSources": ["value", "field", "func"],
+                "fieldSettings": {
+                  "listValues": [
+                    {
+                      "title": "Afghanistan (AF)",
+                      "value": "AF"
+                    },
+                    {
+                      "title": "Albania (AL)",
+                      "value": "AL"
+                    },
+                    {
+                      "title": "Algeria (DZ)",
+                      "value": "DZ"
+                    },
+                    {
+                      "title": "American Samoa (AS)",
+                      "value": "AS"
+                    },
+                    {
+                      "title": "Andorra (AD)",
+                      "value": "AD"
+                    }
+                  ],
+                  "allowCustomValues": true
+                }
+              },
+              "pepRank": {
+                "label": "pep rank",
+                "type": "text",
+                "valueSources": ["value", "field", "func"],
+                "fieldSettings": {
+                  "listValues": [
+                    {
+                      "title": "Level 1",
+                      "value": "LEVEL_1"
+                    },
+                    {
+                      "title": "Level 2",
+                      "value": "LEVEL_2"
+                    },
+                    {
+                      "title": "Level 3",
+                      "value": "LEVEL_3"
+                    }
+                  ],
+                  "allowCustomValues": true
+                }
+              }
+            }
+          },
+          "tags": {
+            "label": "tags",
+            "type": "!group",
+            "mode": "array",
+            "conjunctions": ["AND", "OR"],
+            "subfields": {
+              "key": {
+                "label": "key",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "value": {
+                "label": "value",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              }
+            }
+          },
+          "attachments": {
+            "label": "attachments",
+            "type": "!group",
+            "mode": "array",
+            "conjunctions": ["AND", "OR"],
+            "subfields": {
+              "id": {
+                "label": "id",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "comment": {
+                "label": "comment",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "files": {
+                "label": "files",
+                "type": "!group",
+                "mode": "array",
+                "conjunctions": ["AND", "OR"],
+                "subfields": {
+                  "s3Key": {
+                    "label": "s 3 key",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "bucket": {
+                    "label": "bucket",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "filename": {
+                    "label": "filename",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "size": {
+                    "label": "size",
+                    "type": "number",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "downloadLink": {
+                    "label": "download link",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  },
+                  "aiSummary": {
+                    "label": "ai summary",
+                    "type": "text",
+                    "valueSources": ["value", "field", "func"]
+                  }
+                }
+              },
+              "userId": {
+                "label": "user id",
+                "type": "text",
+                "valueSources": ["value", "field", "func"]
+              },
+              "createdAt": {
+                "label": "created at",
+                "type": "number",
+                "valueSources": ["value", "field", "func"]
+              },
+              "deletedAt": {
+                "label": "deleted at",
+                "type": "number",
+                "valueSources": ["value", "field", "func"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "TRANSACTION:tags",
+      "entity": "TRANSACTION",
+      "valueType": "array",
+      "uiDefinition": {
+        "label": "Transaction / tags",
+        "type": "!group",
+        "mode": "array",
+        "conjunctions": ["AND", "OR"],
+        "subfields": {
+          "label": "tags",
+          "type": "!group",
+          "mode": "array",
+          "conjunctions": ["AND", "OR"],
+          "subfields": {
+            "key": {
+              "label": "key",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "value": {
+              "label": "value",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "TRANSACTION:type",
+      "uiDefinition": {
+        "label": "Transaction / type",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Deposit",
+              "value": "DEPOSIT"
+            },
+            {
+              "title": "Transfer",
+              "value": "TRANSFER"
+            },
+            {
+              "title": "External Payment",
+              "value": "EXTERNAL_PAYMENT"
+            },
+            {
+              "title": "Withdrawal",
+              "value": "WITHDRAWAL"
+            },
+            {
+              "title": "Refund",
+              "value": "REFUND"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:transactionId",
+      "uiDefinition": {
+        "label": "Transaction / transaction id",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:timestamp",
+      "uiDefinition": {
+        "label": "Transaction / timestamp",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "number"
+    },
+    {
+      "key": "TRANSACTION:originUserId",
+      "uiDefinition": {
+        "label": "Transaction / origin user id",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:userId__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / user id (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:destinationUserId",
+      "uiDefinition": {
+        "label": "Transaction / destination user id",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:transactionState",
+      "uiDefinition": {
+        "label": "Transaction / transaction state",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Created",
+              "value": "CREATED"
+            },
+            {
+              "title": "Processing",
+              "value": "PROCESSING"
+            },
+            {
+              "title": "Sent",
+              "value": "SENT"
+            },
+            {
+              "title": "Expired",
+              "value": "EXPIRED"
+            },
+            {
+              "title": "Declined",
+              "value": "DECLINED"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originAmountDetails-transactionAmount",
+      "uiDefinition": {
+        "label": "Transaction / origin amount details > transaction amount",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "number"
+    },
+    {
+      "key": "TRANSACTION:amountDetails-transactionAmount__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / amount details > transaction amount (origin or destination)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "number"
+    },
+    {
+      "key": "TRANSACTION:originAmountDetails-transactionCurrency",
+      "uiDefinition": {
+        "label": "Transaction / origin amount details > transaction currency",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:amountDetails-transactionCurrency__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / amount details > transaction currency (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originAmountDetails-country",
+      "uiDefinition": {
+        "label": "Transaction / origin amount details > country",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:amountDetails-country__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / amount details > country (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:destinationAmountDetails-transactionAmount",
+      "uiDefinition": {
+        "label": "Transaction / destination amount details > transaction amount",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "number"
+    },
+    {
+      "key": "TRANSACTION:destinationAmountDetails-transactionCurrency",
+      "uiDefinition": {
+        "label": "Transaction / destination amount details > transaction currency",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:destinationAmountDetails-country",
+      "uiDefinition": {
+        "label": "Transaction / destination amount details > country",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-method",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > method",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Card",
+              "value": "CARD"
+            },
+            {
+              "title": "Generic Bank Account",
+              "value": "GENERIC_BANK_ACCOUNT"
+            },
+            {
+              "title": "IBAN",
+              "value": "IBAN"
+            },
+            {
+              "title": "ACH",
+              "value": "ACH"
+            },
+            {
+              "title": "SWIFT",
+              "value": "SWIFT"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-method__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > method (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Card",
+              "value": "CARD"
+            },
+            {
+              "title": "Generic Bank Account",
+              "value": "GENERIC_BANK_ACCOUNT"
+            },
+            {
+              "title": "IBAN",
+              "value": "IBAN"
+            },
+            {
+              "title": "ACH",
+              "value": "ACH"
+            },
+            {
+              "title": "SWIFT",
+              "value": "SWIFT"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-cardFingerprint",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > card fingerprint",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-cardFingerprint__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > card fingerprint (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-emailId",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > email id",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-emailId__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > email id (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-cardStatus",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > card status",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Active",
+              "value": "ACTIVE"
+            },
+            {
+              "title": "Frozen",
+              "value": "FROZEN"
+            },
+            {
+              "title": "Blocked",
+              "value": "BLOCKED"
+            },
+            {
+              "title": "Suspected Fraud",
+              "value": "SUSPECTED_FRAUD"
+            },
+            {
+              "title": "Stolen",
+              "value": "STOLEN"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-cardStatus__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > card status (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Active",
+              "value": "ACTIVE"
+            },
+            {
+              "title": "Frozen",
+              "value": "FROZEN"
+            },
+            {
+              "title": "Blocked",
+              "value": "BLOCKED"
+            },
+            {
+              "title": "Suspected Fraud",
+              "value": "SUSPECTED_FRAUD"
+            },
+            {
+              "title": "Stolen",
+              "value": "STOLEN"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-cardIssuedCountry",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > card issued country",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-cardIssuedCountry__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > card issued country (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-transactionReferenceField",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > transaction reference field",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-transactionReferenceField__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > transaction reference field (origin or destination)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "string"
+    },
+    {
+      "key": "TRANSACTION:originPaymentDetails-3dsDone",
+      "uiDefinition": {
+        "label": "Transaction / origin payment details > 3 ds done",
+        "type": "boolean",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "boolean"
+    },
+    {
+      "key": "TRANSACTION:paymentDetails-3dsDone__BOTH",
+      "uiDefinition": {
+        "label": "Transaction / payment details > 3 ds done (origin or destination)",
+        "type": "boolean",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "TRANSACTION",
+      "valueType": "boolean"
+    },
+    {
+      "key": "BUSINESS_USER:userId__SENDER",
+      "uiDefinition": {
+        "label": "Business User / user id (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:userId__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / user id (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:userId__BOTH",
+      "uiDefinition": {
+        "label": "Business User / user id (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:createdTimestamp__SENDER",
+      "uiDefinition": {
+        "label": "Business User / created timestamp (sender)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:createdTimestamp__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / created timestamp (receiver)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:createdTimestamp__BOTH",
+      "uiDefinition": {
+        "label": "Business User / created timestamp (sender or receiver)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > legal name (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > legal name (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > legal name (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > user segment (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Sole Proprietorship",
+              "value": "SOLE_PROPRIETORSHIP"
+            },
+            {
+              "title": "Limited",
+              "value": "LIMITED"
+            },
+            {
+              "title": "Smb",
+              "value": "SMB"
+            },
+            {
+              "title": "Small",
+              "value": "SMALL"
+            },
+            {
+              "title": "Medium",
+              "value": "MEDIUM"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > user segment (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Sole Proprietorship",
+              "value": "SOLE_PROPRIETORSHIP"
+            },
+            {
+              "title": "Limited",
+              "value": "LIMITED"
+            },
+            {
+              "title": "Smb",
+              "value": "SMB"
+            },
+            {
+              "title": "Small",
+              "value": "SMALL"
+            },
+            {
+              "title": "Medium",
+              "value": "MEDIUM"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > user segment (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Sole Proprietorship",
+              "value": "SOLE_PROPRIETORSHIP"
+            },
+            {
+              "title": "Limited",
+              "value": "LIMITED"
+            },
+            {
+              "title": "Smb",
+              "value": "SMB"
+            },
+            {
+              "title": "Small",
+              "value": "SMALL"
+            },
+            {
+              "title": "Medium",
+              "value": "MEDIUM"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-userRegistrationStatus__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > user registration status (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Registered",
+              "value": "REGISTERED"
+            },
+            {
+              "title": "Unregistered",
+              "value": "UNREGISTERED"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-userRegistrationStatus__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > user registration status (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Registered",
+              "value": "REGISTERED"
+            },
+            {
+              "title": "Unregistered",
+              "value": "UNREGISTERED"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyGeneralDetails-userRegistrationStatus__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company general details > user registration status (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Registered",
+              "value": "REGISTERED"
+            },
+            {
+              "title": "Unregistered",
+              "value": "UNREGISTERED"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTransactionAmountPerMonth-amountValue__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected transaction amount per month > amount value (sender)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTransactionAmountPerMonth-amountValue__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected transaction amount per month > amount value (receiver)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTransactionAmountPerMonth-amountValue__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected transaction amount per month > amount value (sender or receiver)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTransactionAmountPerMonth-amountCurrency__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected transaction amount per month > amount currency (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTransactionAmountPerMonth-amountCurrency__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected transaction amount per month > amount currency (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTransactionAmountPerMonth-amountCurrency__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected transaction amount per month > amount currency (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTurnoverPerMonth-amountValue__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected turnover per month > amount value (sender)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTurnoverPerMonth-amountValue__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected turnover per month > amount value (receiver)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTurnoverPerMonth-amountValue__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected turnover per month > amount value (sender or receiver)",
+        "type": "number",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTurnoverPerMonth-amountCurrency__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected turnover per month > amount currency (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTurnoverPerMonth-amountCurrency__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected turnover per month > amount currency (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyFinancialDetails-expectedTurnoverPerMonth-amountCurrency__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company financial details > expected turnover per month > amount currency (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "ADA (Cardano)",
+              "value": "ADA"
+            },
+            {
+              "title": "AED (United Arab Emirates Dirham)",
+              "value": "AED"
+            },
+            {
+              "title": "AFN (Afghan afghani)",
+              "value": "AFN"
+            },
+            {
+              "title": "ALGO (Algorand)",
+              "value": "ALGO"
+            },
+            {
+              "title": "ALL (Albanian lek)",
+              "value": "ALL"
+            }
+          ]
+        }
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyRegistrationDetails-registrationIdentifier__SENDER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company registration details > registration identifier (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyRegistrationDetails-registrationIdentifier__RECEIVER",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company registration details > registration identifier (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "BUSINESS_USER:legalEntity-companyRegistrationDetails-registrationIdentifier__BOTH",
+      "uiDefinition": {
+        "label": "Business User / legal entity > company registration details > registration identifier (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "BUSINESS_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userId__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user id (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userId__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user id (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userId__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user id (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:createdTimestamp__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / created timestamp (sender)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "CONSUMER_USER:createdTimestamp__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / created timestamp (receiver)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "CONSUMER_USER:createdTimestamp__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / created timestamp (sender or receiver)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "CONSUMER_USER:activatedTimestamp__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / activated timestamp (sender)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "CONSUMER_USER:activatedTimestamp__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / activated timestamp (receiver)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "CONSUMER_USER:activatedTimestamp__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / activated timestamp (sender or receiver)",
+        "type": "datetime",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "number"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-firstName__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > first name (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-firstName__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > first name (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-firstName__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > first name (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-middleName__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > middle name (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-middleName__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > middle name (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-middleName__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > middle name (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-lastName__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > last name (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-lastName__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > last name (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-name-lastName__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > name > last name (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-dateOfBirth__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > date of birth (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-dateOfBirth__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > date of birth (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-dateOfBirth__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > date of birth (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"]
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-countryOfResidence__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > country of residence (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-countryOfResidence__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > country of residence (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-countryOfResidence__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > country of residence (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-countryOfNationality__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > country of nationality (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-countryOfNationality__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > country of nationality (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-countryOfNationality__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > country of nationality (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "Afghanistan (AF)",
+              "value": "AF"
+            },
+            {
+              "title": "Albania (AL)",
+              "value": "AL"
+            },
+            {
+              "title": "Algeria (DZ)",
+              "value": "DZ"
+            },
+            {
+              "title": "American Samoa (AS)",
+              "value": "AS"
+            },
+            {
+              "title": "Andorra (AD)",
+              "value": "AD"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-gender__SENDER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > gender (sender)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "M",
+              "value": "M"
+            },
+            {
+              "title": "F",
+              "value": "F"
+            },
+            {
+              "title": "Nb",
+              "value": "NB"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-gender__RECEIVER",
+      "uiDefinition": {
+        "label": "Consumer User / user details > gender (receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "M",
+              "value": "M"
+            },
+            {
+              "title": "F",
+              "value": "F"
+            },
+            {
+              "title": "Nb",
+              "value": "NB"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    },
+    {
+      "key": "CONSUMER_USER:userDetails-gender__BOTH",
+      "uiDefinition": {
+        "label": "Consumer User / user details > gender (sender or receiver)",
+        "type": "text",
+        "valueSources": ["value", "field", "func"],
+        "fieldSettings": {
+          "listValues": [
+            {
+              "title": "M",
+              "value": "M"
+            },
+            {
+              "title": "F",
+              "value": "F"
+            },
+            {
+              "title": "Nb",
+              "value": "NB"
+            }
+          ]
+        }
+      },
+      "entity": "CONSUMER_USER",
+      "valueType": "string"
+    }
+  ],
+  "aggregationVariables": [
+    {
+      "key": "agg:1ee80dbd",
+      "name": "Average transaction amount",
+      "type": "USER_TRANSACTIONS",
+      "userDirection": "SENDER",
+      "transactionDirection": "SENDING",
+      "aggregationFieldKey": "TRANSACTION:originAmountDetails-transactionAmount",
+      "aggregationFunc": "AVG",
+      "baseCurrency": "USD",
+      "timeWindow": {
+        "start": {
+          "units": 1,
+          "granularity": "day"
+        },
+        "end": {
+          "units": 0,
+          "granularity": "now"
+        }
+      },
+      "includeCurrentEntity": true,
+      "version": 1731513893003
+    }
+  ],
+  "entityVariablesInUse": [
+    {
+      "key": "entity:2fd99444",
+      "entityKey": "TRANSACTION:type"
+    },
+    {
+      "key": "entity:00000000",
+      "entityKey": "BUSINESS_USER:shareHolders__BOTH"
+    },
+    {
+      "key": "entity:c152f75e",
+      "entityKey": "TRANSACTION:originAmountDetails-country"
+    }
+  ],
+  "fields": {
+    "entity:00000001": {
+      "label": "Transaction / tags",
+      "type": "!group",
+      "mode": "array",
+      "conjunctions": ["AND", "OR"],
+      "subfields": {
+        "key": {
+          "label": "key",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "value": {
+          "label": "value",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        }
+      }
+    },
+    "entity:158de687": {
+      "label": "Business User / share holders (sender or receiver)",
+      "type": "!group",
+      "mode": "array",
+      "conjunctions": ["AND", "OR"],
+      "subfields": {
+        "userId": {
+          "label": "user id",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.name.firstName": {
+          "label": "general details > name > first name",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.name.middleName": {
+          "label": "general details > name > middle name",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.name.lastName": {
+          "label": "general details > name > last name",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.dateOfBirth": {
+          "label": "general details > date of birth",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.userCategory": {
+          "label": "general details > user category",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.countryOfResidence": {
+          "label": "general details > country of residence",
+          "type": "text",
+          "valueSources": ["value", "field", "func"],
+          "fieldSettings": {
+            "listValues": [
+              {
+                "title": "Afghanistan (AF)",
+                "value": "AF"
+              },
+              {
+                "title": "Albania (AL)",
+                "value": "AL"
+              },
+              {
+                "title": "Algeria (DZ)",
+                "value": "DZ"
+              },
+              {
+                "title": "American Samoa (AS)",
+                "value": "AS"
+              },
+              {
+                "title": "Andorra (AD)",
+                "value": "AD"
+              }
+            ],
+            "allowCustomValues": true
+          }
+        },
+        "generalDetails.countryOfTaxResidence": {
+          "label": "general details > country of tax residence",
+          "type": "text",
+          "valueSources": ["value", "field", "func"],
+          "fieldSettings": {
+            "listValues": [
+              {
+                "title": "Afghanistan (AF)",
+                "value": "AF"
+              },
+              {
+                "title": "Albania (AL)",
+                "value": "AL"
+              },
+              {
+                "title": "Algeria (DZ)",
+                "value": "DZ"
+              },
+              {
+                "title": "American Samoa (AS)",
+                "value": "AS"
+              },
+              {
+                "title": "Andorra (AD)",
+                "value": "AD"
+              }
+            ],
+            "allowCustomValues": true
+          }
+        },
+        "generalDetails.countryOfNationality": {
+          "label": "general details > country of nationality",
+          "type": "text",
+          "valueSources": ["value", "field", "func"],
+          "fieldSettings": {
+            "listValues": [
+              {
+                "title": "Afghanistan (AF)",
+                "value": "AF"
+              },
+              {
+                "title": "Albania (AL)",
+                "value": "AL"
+              },
+              {
+                "title": "Algeria (DZ)",
+                "value": "DZ"
+              },
+              {
+                "title": "American Samoa (AS)",
+                "value": "AS"
+              },
+              {
+                "title": "Andorra (AD)",
+                "value": "AD"
+              }
+            ],
+            "allowCustomValues": true
+          }
+        },
+        "generalDetails.gender": {
+          "label": "general details > gender",
+          "type": "text",
+          "valueSources": ["value", "field", "func"],
+          "fieldSettings": {
+            "listValues": [
+              {
+                "title": "M",
+                "value": "M"
+              },
+              {
+                "title": "F",
+                "value": "F"
+              },
+              {
+                "title": "Nb",
+                "value": "NB"
+              }
+            ],
+            "allowCustomValues": true
+          }
+        },
+        "generalDetails.maritalStatus": {
+          "label": "general details > marital status",
+          "type": "text",
+          "valueSources": ["value", "field", "func"],
+          "fieldSettings": {
+            "listValues": [
+              {
+                "title": "Divorced",
+                "value": "DIVORCED"
+              },
+              {
+                "title": "Married",
+                "value": "MARRIED"
+              },
+              {
+                "title": "Single",
+                "value": "SINGLE"
+              },
+              {
+                "title": "Widowed",
+                "value": "WIDOWED"
+              },
+              {
+                "title": "Na",
+                "value": "NA"
+              }
+            ],
+            "allowCustomValues": true
+          }
+        },
+        "generalDetails.placeOfBirth.city": {
+          "label": "general details > place of birth > city",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.placeOfBirth.state": {
+          "label": "general details > place of birth > state",
+          "type": "text",
+          "valueSources": ["value", "field", "func"]
+        },
+        "generalDetails.placeOfBirth.country": {
+          "label": "general details > place of birth > country",
+          "type": "text",
+          "valueSources": ["value", "field", "func"],
+          "fieldSettings": {
+            "listValues": [
+              {
+                "title": "Afghanistan (AF)",
+                "value": "AF"
+              },
+              {
+                "title": "Albania (AL)",
+                "value": "AL"
+              },
+              {
+                "title": "Algeria (DZ)",
+                "value": "DZ"
+              },
+              {
+                "title": "American Samoa (AS)",
+                "value": "AS"
+              },
+              {
+                "title": "Andorra (AD)",
+                "value": "AD"
+              }
+            ],
+            "allowCustomValues": true
+          }
+        },
+        "generalDetails.alias": {
+          "path": ["generalDetails", "alias"],
+          "pathKey": "shareHolders.$i.generalDetails.alias.$i",
+          "type": "multiselect",
+          "arrayGroupLevels": [["generalDetails", "alias"], [""]],
+          "label": "general details > alias",
+          "preferWidgets": ["multiselect"],
+          "valueSources": ["value", "field", "func"],
+          "allowCustomValues": true
+        },
+        "legalDocuments": {
+          "label": "legal documents",
+          "type": "!group",
+          "mode": "array",
+          "conjunctions": ["AND", "OR"],
+          "subfields": {
+            "documentType": {
+              "label": "document type",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "documentNumber": {
+              "label": "document number",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "documentIssuedDate": {
+              "label": "document issued date",
+              "type": "number",
+              "valueSources": ["value", "field", "func"]
+            },
+            "documentExpirationDate": {
+              "label": "document expiration date",
+              "type": "number",
+              "valueSources": ["value", "field", "func"]
+            },
+            "documentIssuedCountry": {
+              "label": "document issued country",
+              "type": "text",
+              "valueSources": ["value", "field", "func"],
+              "fieldSettings": {
+                "listValues": [
+                  {
+                    "title": "Afghanistan (AF)",
+                    "value": "AF"
+                  },
+                  {
+                    "title": "Albania (AL)",
+                    "value": "AL"
+                  },
+                  {
+                    "title": "Algeria (DZ)",
+                    "value": "DZ"
+                  },
+                  {
+                    "title": "American Samoa (AS)",
+                    "value": "AS"
+                  },
+                  {
+                    "title": "Andorra (AD)",
+                    "value": "AD"
+                  }
+                ],
+                "allowCustomValues": true
+              }
+            },
+            "tags": {
+              "label": "tags",
+              "type": "!group",
+              "mode": "array",
+              "conjunctions": ["AND", "OR"],
+              "subfields": {
+                "key": {
+                  "label": "key",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "value": {
+                  "label": "value",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                }
+              }
+            },
+            "nameOnDocument.firstName": {
+              "label": "name on document > first name",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "nameOnDocument.middleName": {
+              "label": "name on document > middle name",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "nameOnDocument.lastName": {
+              "label": "name on document > last name",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            }
+          }
+        },
+        "contactDetails.emailIds": {
+          "path": ["contactDetails", "emailIds"],
+          "pathKey": "shareHolders.$i.contactDetails.emailIds.$i",
+          "type": "multiselect",
+          "arrayGroupLevels": [["contactDetails", "emailIds"], [""]],
+          "label": "contact details > email ids",
+          "preferWidgets": ["multiselect"],
+          "valueSources": ["value", "field", "func"],
+          "allowCustomValues": true
+        },
+        "contactDetails.contactNumbers": {
+          "path": ["contactDetails", "contactNumbers"],
+          "pathKey": "shareHolders.$i.contactDetails.contactNumbers.$i",
+          "type": "multiselect",
+          "arrayGroupLevels": [["contactDetails", "contactNumbers"], [""]],
+          "label": "contact details > contact numbers",
+          "preferWidgets": ["multiselect"],
+          "valueSources": ["value", "field", "func"],
+          "allowCustomValues": true
+        },
+        "contactDetails.faxNumbers": {
+          "path": ["contactDetails", "faxNumbers"],
+          "pathKey": "shareHolders.$i.contactDetails.faxNumbers.$i",
+          "type": "multiselect",
+          "arrayGroupLevels": [["contactDetails", "faxNumbers"], [""]],
+          "label": "contact details > fax numbers",
+          "preferWidgets": ["multiselect"],
+          "valueSources": ["value", "field", "func"],
+          "allowCustomValues": true
+        },
+        "contactDetails.websites": {
+          "path": ["contactDetails", "websites"],
+          "pathKey": "shareHolders.$i.contactDetails.websites.$i",
+          "type": "multiselect",
+          "arrayGroupLevels": [["contactDetails", "websites"], [""]],
+          "label": "contact details > websites",
+          "preferWidgets": ["multiselect"],
+          "valueSources": ["value", "field", "func"],
+          "allowCustomValues": true
+        },
+        "contactDetails.addresses": {
+          "label": "contact details > addresses",
+          "type": "!group",
+          "mode": "array",
+          "conjunctions": ["AND", "OR"],
+          "subfields": {
+            "addressLines": {
+              "path": ["addressLines"],
+              "pathKey": "shareHolders.$i.contactDetails.addresses.$i.addressLines.$i",
+              "type": "multiselect",
+              "arrayGroupLevels": [["addressLines"], [""]],
+              "label": "address lines",
+              "preferWidgets": ["multiselect"],
+              "valueSources": ["value", "field", "func"],
+              "allowCustomValues": true
+            },
+            "postcode": {
+              "label": "postcode",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "city": {
+              "label": "city",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "state": {
+              "label": "state",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "country": {
+              "label": "country",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "addressType": {
+              "label": "address type",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "tags": {
+              "label": "tags",
+              "type": "!group",
+              "mode": "array",
+              "conjunctions": ["AND", "OR"],
+              "subfields": {
+                "key": {
+                  "label": "key",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "value": {
+                  "label": "value",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                }
+              }
+            }
+          }
+        },
+        "pepStatus": {
+          "label": "pep status",
+          "type": "!group",
+          "mode": "array",
+          "conjunctions": ["AND", "OR"],
+          "subfields": {
+            "isPepHit": {
+              "label": "is pep hit",
+              "type": "boolean",
+              "valueSources": ["value", "field", "func"]
+            },
+            "pepCountry": {
+              "label": "pep country",
+              "type": "text",
+              "valueSources": ["value", "field", "func"],
+              "fieldSettings": {
+                "listValues": [
+                  {
+                    "title": "Afghanistan (AF)",
+                    "value": "AF"
+                  },
+                  {
+                    "title": "Albania (AL)",
+                    "value": "AL"
+                  },
+                  {
+                    "title": "Algeria (DZ)",
+                    "value": "DZ"
+                  },
+                  {
+                    "title": "American Samoa (AS)",
+                    "value": "AS"
+                  },
+                  {
+                    "title": "Andorra (AD)",
+                    "value": "AD"
+                  }
+                ],
+                "allowCustomValues": true
+              }
+            },
+            "pepRank": {
+              "label": "pep rank",
+              "type": "text",
+              "valueSources": ["value", "field", "func"],
+              "fieldSettings": {
+                "listValues": [
+                  {
+                    "title": "Level 1",
+                    "value": "LEVEL_1"
+                  },
+                  {
+                    "title": "Level 2",
+                    "value": "LEVEL_2"
+                  },
+                  {
+                    "title": "Level 3",
+                    "value": "LEVEL_3"
+                  }
+                ],
+                "allowCustomValues": true
+              }
+            }
+          }
+        },
+        "tags": {
+          "label": "tags",
+          "type": "!group",
+          "mode": "array",
+          "conjunctions": ["AND", "OR"],
+          "subfields": {
+            "key": {
+              "label": "key",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "value": {
+              "label": "value",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            }
+          }
+        },
+        "attachments": {
+          "label": "attachments",
+          "type": "!group",
+          "mode": "array",
+          "conjunctions": ["AND", "OR"],
+          "subfields": {
+            "id": {
+              "label": "id",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "comment": {
+              "label": "comment",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "files": {
+              "label": "files",
+              "type": "!group",
+              "mode": "array",
+              "conjunctions": ["AND", "OR"],
+              "subfields": {
+                "s3Key": {
+                  "label": "s 3 key",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "bucket": {
+                  "label": "bucket",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "filename": {
+                  "label": "filename",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "size": {
+                  "label": "size",
+                  "type": "number",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "downloadLink": {
+                  "label": "download link",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                },
+                "aiSummary": {
+                  "label": "ai summary",
+                  "type": "text",
+                  "valueSources": ["value", "field", "func"]
+                }
+              }
+            },
+            "userId": {
+              "label": "user id",
+              "type": "text",
+              "valueSources": ["value", "field", "func"]
+            },
+            "createdAt": {
+              "label": "created at",
+              "type": "number",
+              "valueSources": ["value", "field", "func"]
+            },
+            "deletedAt": {
+              "label": "deleted at",
+              "type": "number",
+              "valueSources": ["value", "field", "func"]
+            }
+          }
+        }
+      }
+    },
+    "entity:b0ffbee3": {
+      "label": "Transaction / type",
+      "type": "text",
+      "valueSources": ["value", "field", "func"],
+      "fieldSettings": {
+        "listValues": [
+          {
+            "title": "Deposit",
+            "value": "DEPOSIT"
+          },
+          {
+            "title": "Transfer",
+            "value": "TRANSFER"
+          },
+          {
+            "title": "External Payment",
+            "value": "EXTERNAL_PAYMENT"
+          },
+          {
+            "title": "Withdrawal",
+            "value": "WITHDRAWAL"
+          },
+          {
+            "title": "Refund",
+            "value": "REFUND"
+          }
+        ]
+      }
+    },
+    "entity:d38e6d30": {
+      "label": "Transaction / amount details > country (origin or destination)",
+      "type": "text",
+      "valueSources": ["value", "field", "func"],
+      "fieldSettings": {
+        "listValues": [
+          {
+            "title": "Afghanistan (AF)",
+            "value": "AF"
+          },
+          {
+            "title": "Albania (AL)",
+            "value": "AL"
+          },
+          {
+            "title": "Algeria (DZ)",
+            "value": "DZ"
+          },
+          {
+            "title": "American Samoa (AS)",
+            "value": "AS"
+          },
+          {
+            "title": "Andorra (AD)",
+            "value": "AD"
+          }
+        ]
+      }
+    },
+    "entity:e893de09": {
+      "label": "Consumer User / user details > place of birth > country (sender)",
+      "type": "text",
+      "valueSources": ["value", "field", "func"],
+      "fieldSettings": {
+        "listValues": [
+          {
+            "title": "Afghanistan (AF)",
+            "value": "AF"
+          },
+          {
+            "title": "Albania (AL)",
+            "value": "AL"
+          },
+          {
+            "title": "Algeria (DZ)",
+            "value": "DZ"
+          },
+          {
+            "title": "American Samoa (AS)",
+            "value": "AS"
+          },
+          {
+            "title": "Andorra (AD)",
+            "value": "AD"
+          }
+        ]
+      }
+    },
+    "agg:b4b8bc21": {
+      "label": "Max of Transaction / timestamp (1 day ago to now)",
+      "type": "number",
+      "valueSources": ["value", "field", "func"]
+    },
+    "agg:a3ecb74e$1": {
+      "label": "Unique values of Transaction / origin amount details > transaction currency (1 day ago to now)",
+      "type": "multiselect",
+      "valueSources": ["value", "field", "func"],
+      "fieldSettings": {
+        "listValues": [
+          {
+            "title": "ADA (Cardano)",
+            "value": "ADA"
+          },
+          {
+            "title": "AED (United Arab Emirates Dirham)",
+            "value": "AED"
+          },
+          {
+            "title": "AFN (Afghan afghani)",
+            "value": "AFN"
+          },
+          {
+            "title": "ALGO (Algorand)",
+            "value": "ALGO"
+          },
+          {
+            "title": "ALL (Albanian lek)",
+            "value": "ALL"
+          }
+        ],
+        "allowCustomValues": true
+      }
+    },
+    "agg:a3ecb74e$2": {
+      "label": "Unique values of Transaction / origin amount details > transaction currency (1 day ago to now)",
+      "type": "text",
+      "valueSources": ["value", "field", "func"]
+    },
+    "agg:ad53fdeb": {
+      "label": "Max of Transaction / origin amount details > transaction amount (1 day ago to now)",
+      "type": "number",
+      "valueSources": ["value", "field", "func"]
+    }
+  },
+  "logic": {
+    "and": [
+      {
+        "!=": [
+          {
+            "var": "agg:ad53fdeb"
+          },
+          null
+        ]
+      },
+      {
+        ">": [
+          {
+            "%": [
+              {
+                "var": "agg:ad53fdeb"
+              },
+              20
+            ]
+          },
+          0
+        ]
+      },
+      {
+        "or": [
+          {
+            "and": [
+              {
+                "or": [
+                  {
+                    "==": [
+                      {
+                        "var": "entity:b0ffbee3"
+                      },
+                      "DEPOSIT"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "<=": [
+          42,
+          {
+            "+": [
+              {
+                "var": "agg:b4b8bc21"
+              },
+              89987
+            ]
+          },
+          42
+        ]
+      },
+      {
+        "and": [
+          {
+            "==": [
+              {
+                "var": "entity:d38e6d30"
+              },
+              null
+            ]
+          },
+          {
+            "!": {
+              "all": [
+                {
+                  "var": "agg:a3ecb74e$1"
+                },
+                {
+                  "in": [
+                    {
+                      "var": ""
+                    },
+                    ["ALGO", "AOA", "ALL", "AMD", "AFN", "ADA", "AED"]
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "==": [
+              {
+                "var": "entity:b0ffbee3"
+              },
+              "TRANSFER"
+            ]
+          }
+        ]
+      },
+      {
+        "some": [
+          {
+            "var": "entity:158de687"
+          },
+          {
+            "==": [
+              {
+                "var": "userId"
+              },
+              "test"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

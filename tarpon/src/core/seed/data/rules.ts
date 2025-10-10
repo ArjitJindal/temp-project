@@ -1,0 +1,3579 @@
+import memoize from 'lodash/memoize'
+import shuffle from 'lodash/shuffle'
+import { getAccounts } from '../samplers/accounts'
+import { BaseSampler } from '../samplers/base'
+import { companies } from '../samplers/dictionary'
+import { getSLAPolicies } from './sla'
+import { RULES_SEED, TRANSACTION_RULES_SEED, USER_RULES_SEED } from './seeds'
+import { CRYPTO_TXN_COUNT, TXN_COUNT } from './transactions'
+import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
+import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { RuleAction } from '@/@types/openapi-internal/RuleAction'
+import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
+import { SanctionsBankUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-bank-name'
+import { getChecklistTemplates } from '@/core/seed/data/checklists'
+import { TransactionsVelocityRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-velocity'
+import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
+import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
+import { RuleChecksForField } from '@/constants/rules'
+import { isShadowRule } from '@/services/rules-engine/utils'
+import { PaymentDetailsScreeningRuleParameters } from '@/services/rules-engine/transaction-rules/payment-details-screening-base'
+import { hasFeature } from '@/core/utils/context'
+import { getRandomRuleQueues } from '@/core/seed/data/rule-queue'
+import { RuleQueue } from '@/@types/openapi-internal/RuleQueue'
+import { GenericSanctionsConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/generic-sanctions-consumer-user'
+
+export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
+  return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
+}
+
+export class RuleFilterSampler extends BaseSampler<LowValueTransactionsRuleParameters> {
+  generateSample(): LowValueTransactionsRuleParameters {
+    const max = this.rng.randomIntInclusive(1000, 10000)
+    const min = this.rng.r(1).randomIntInclusive(1, max)
+    return {
+      lowTransactionCount: this.rng.r(2).randomIntInclusive(1, 50),
+      lowTransactionValues: {
+        USD: {
+          max,
+          min,
+        },
+      },
+    }
+  }
+}
+
+export const ruleInstances: () => RuleInstance[] = memoize(() => {
+  // TODO: r*RuleInstance objects can be wrapped in a Sampler class
+  const rng = new RandomNumberGenerator(RULES_SEED)
+  const ruleFilterSampler = new RuleFilterSampler(rng.randomInt())
+  const customRuleInstances: RuleInstance[] = [
+    {
+      id: 'RC-1',
+      type: 'TRANSACTION',
+      ruleId: 'RC-1',
+      ruleNameAlias: 'High average transaction amount ',
+      ruleDescriptionAlias:
+        'Average transaction amount in a day exceeds threshold',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'agg:67498060',
+              },
+              20,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'agg:67498060',
+                },
+                20,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [],
+      logicAggregationVariables: [
+        {
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
+          aggregationFunc: 'AVG',
+          timeWindow: {
+            start: {
+              granularity: 'day',
+              units: 1,
+            },
+            end: {
+              granularity: 'now',
+              units: 0,
+            },
+          },
+          userDirection: 'SENDER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING',
+          includeCurrentEntity: true,
+          version: 1741948155801,
+          key: 'agg:67498060',
+          baseCurrency: 'USD',
+        },
+      ],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1741948155800,
+      updatedAt: 1741948155800,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: ['UNEXPECTED_BEHAVIOR'],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      checksFor: [],
+      createdBy: rng.r(1).pickRandom(getAccounts()).id,
+
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+    {
+      id: 'RC-2',
+      type: 'TRANSACTION',
+      ruleId: 'RC-2',
+      ruleNameAlias: 'Multiple high value transactions ',
+      ruleDescriptionAlias: 'Multiple high value transactions in 1 week',
+      baseCurrency: 'USD',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'entity:81652f7f',
+              },
+              5000,
+            ],
+          },
+          {
+            '>': [
+              {
+                var: 'agg:413d04d2',
+              },
+              30,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:81652f7f',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+      ],
+      logicAggregationVariables: [
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: {
+              granularity: 'week',
+              rollingBasis: true,
+              units: 1,
+            },
+            end: {
+              granularity: 'now',
+              rollingBasis: true,
+              units: 0,
+            },
+          },
+          filtersLogic: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                  },
+                  5000,
+                ],
+              },
+            ],
+          },
+          userDirection: 'SENDER_OR_RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING_RECEIVING',
+          includeCurrentEntity: true,
+          version: 1742082863218,
+          key: 'agg:413d04d2',
+          baseCurrency: 'USD',
+        },
+      ],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1742082863217,
+      updatedAt: 1742082863217,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        frozenStatuses: [],
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      checksFor: [],
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+    {
+      id: 'RC-3',
+      type: 'TRANSACTION',
+      ruleId: 'RC-3',
+      ruleNameAlias: 'New User High-Risk Transaction',
+      ruleDescriptionAlias: 'New user sending/receiving large amounts',
+      baseCurrency: 'USD',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      logic: {
+        or: [
+          {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:20381d40',
+                  },
+                  500,
+                ],
+              },
+              {
+                '<': [
+                  {
+                    var: 'entity:d97048e1',
+                  },
+                  60,
+                ],
+              },
+            ],
+          },
+          {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:59ea8d82',
+                  },
+                  500,
+                ],
+              },
+              {
+                '<': [
+                  {
+                    var: 'entity:8f0e3a71',
+                  },
+                  60,
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        LOW: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:59ea8d82',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+        {
+          key: 'entity:20381d40',
+          entityKey: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+        },
+        {
+          key: 'entity:8f0e3a71',
+          entityKey: 'CONSUMER_USER:creationAgeDays__SENDER',
+        },
+        {
+          key: 'entity:d97048e1',
+          entityKey: 'CONSUMER_USER:creationAgeDays__RECEIVER',
+        },
+      ],
+      logicAggregationVariables: [],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1742084034299,
+      updatedAt: 1742084034299,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        frozenStatuses: [],
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+      },
+      checksFor: [],
+      createdBy: rng.r(3).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+  ]
+
+  if (hasFeature('EDD_REPORT')) {
+    customRuleInstances.push(
+      {
+        id: 'RC-101',
+        type: 'TRANSACTION',
+        ruleId: 'RC-101',
+        ruleNameAlias: 'EDD Review rule',
+        ruleDescriptionAlias:
+          'Automatically generates EDD alert for analyst review',
+        baseCurrency: 'USD',
+        logic: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:81652f7f',
+                },
+                5000,
+              ],
+            },
+            {
+              '>': [
+                {
+                  var: 'agg:413d04d2',
+                },
+                30,
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+          LOW: {
+            and: [
+              {
+                '>': [
+                  {
+                    var: 'entity:81652f7f',
+                  },
+                  5000,
+                ],
+              },
+              {
+                '>': [
+                  {
+                    var: 'agg:413d04d2',
+                  },
+                  30,
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:81652f7f',
+            entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+          },
+        ],
+        logicAggregationVariables: [
+          {
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: {
+                granularity: 'week',
+                rollingBasis: true,
+                units: 1,
+              },
+              end: {
+                granularity: 'now',
+                rollingBasis: true,
+                units: 0,
+              },
+            },
+            filtersLogic: {
+              and: [
+                {
+                  '==': [
+                    {
+                      var: 'TRANSACTION:originAmountDetails-transactionAmount',
+                    },
+                    5000,
+                  ],
+                },
+              ],
+            },
+            userDirection: 'SENDER_OR_RECEIVER',
+            type: 'USER_TRANSACTIONS',
+            transactionDirection: 'SENDING_RECEIVING',
+            includeCurrentEntity: true,
+            version: 1742082863218,
+            key: 'agg:413d04d2',
+            baseCurrency: 'USD',
+          },
+        ],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1742082863217,
+        updatedAt: 1742082863217,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+          slaPolicies: [
+            rng.r(1).pickRandom(getSLAPolicies()).id,
+            rng.r(2).pickRandom(getSLAPolicies()).id,
+          ],
+        },
+        checksFor: [],
+        createdBy: rng.r(4).pickRandom(getAccounts()).id,
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'EDD Review alerts'
+        )?.id,
+      },
+      {
+        id: 'RC-102',
+        type: 'TRANSACTION',
+        ruleId: 'RC-102',
+        ruleNameAlias: 'Periodic Review rule',
+        ruleDescriptionAlias:
+          'Automatically generates alerts for periodic reviews',
+        baseCurrency: 'USD',
+        checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+        logic: {
+          or: [
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:20381d40',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:d97048e1',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  '>': [
+                    {
+                      var: 'entity:59ea8d82',
+                    },
+                    500,
+                  ],
+                },
+                {
+                  '<': [
+                    {
+                      var: 'entity:8f0e3a71',
+                    },
+                    60,
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          LOW: {
+            or: [
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:20381d40',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:d97048e1',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+              {
+                and: [
+                  {
+                    '>': [
+                      {
+                        var: 'entity:59ea8d82',
+                      },
+                      500,
+                    ],
+                  },
+                  {
+                    '<': [
+                      {
+                        var: 'entity:8f0e3a71',
+                      },
+                      60,
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:59ea8d82',
+            entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+          },
+          {
+            key: 'entity:20381d40',
+            entityKey: 'TRANSACTION:destinationAmountDetails-transactionAmount',
+          },
+          {
+            key: 'entity:8f0e3a71',
+            entityKey: 'CONSUMER_USER:creationAgeDays__SENDER',
+          },
+          {
+            key: 'entity:d97048e1',
+            entityKey: 'CONSUMER_USER:creationAgeDays__RECEIVER',
+          },
+        ],
+        logicAggregationVariables: [],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1742084034299,
+        updatedAt: 1742084034299,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+          slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+        },
+        checksFor: [],
+        createdBy: rng.r(3).pickRandom(getAccounts()).id,
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'EDD Preodic alerts'
+        )?.id,
+      }
+    )
+  }
+  if (hasFeature('CHAINALYSIS')) {
+    customRuleInstances.push(
+      {
+        id: 'RC-4',
+        type: 'TRANSACTION',
+        ruleId: 'RC-4',
+        ruleNameAlias: 'High Chainalysis Risk Score',
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'Chainalysis'
+        )?.id,
+        ruleDescriptionAlias:
+          'Flag transactions with a Chainalysis risk score of 75 or higher',
+        logic: {
+          and: [
+            {
+              '==': [
+                {
+                  var: 'entity:a1745431',
+                },
+                75,
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            and: [
+              {
+                '>=': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+          LOW: {
+            and: [
+              {
+                '==': [
+                  {
+                    var: 'entity:a1745431',
+                  },
+                  75,
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:0e6cc6b7',
+            entityKey: 'TRANSACTION:type',
+          },
+          {
+            name: 'Chainalysis risk score',
+            key: 'entity:a1745431',
+            entityKey:
+              'TRANSACTION:paymentDetails-networkProviderRiskScore__BOTH',
+          },
+        ],
+        logicAggregationVariables: [],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1744106182057,
+        updatedAt: 1744106182057,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+        },
+        checksFor: [],
+        createdBy: rng.pickRandom(getAccounts()).id,
+        logicMachineLearningVariables: [],
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+      },
+      {
+        id: 'RC-5',
+        type: 'TRANSACTION',
+        ruleId: 'RC-5',
+        ruleNameAlias: 'Multiple Chainalysis Risk Indicators Detected',
+        ruleDescriptionAlias:
+          'Flag transactions with two or more Chainalysis risk indicators',
+        queueId: getRandomRuleQueues().find(
+          (queue: RuleQueue) => queue.name === 'Chainalysis'
+        )?.id,
+        logic: {
+          and: [
+            {
+              '>=': [
+                {
+                  reduce: [
+                    {
+                      filter: [
+                        {
+                          var: 'entity:bd548281',
+                        },
+                        {
+                          'op:contains': [
+                            {
+                              var: 'key',
+                            },
+                            [
+                              'sanctions',
+                              'mixer',
+                              'darknet_market',
+                              'scam',
+                              'ransomware',
+                              'stolen_funds',
+                              'terrorist_financing',
+                              'high_risk_exchange',
+                              'gambling',
+                            ],
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      '+': [
+                        1,
+                        {
+                          var: 'accumulator',
+                        },
+                      ],
+                    },
+                    0,
+                  ],
+                },
+                2,
+              ],
+            },
+          ],
+        },
+        riskLevelLogic: {
+          VERY_LOW: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          VERY_HIGH: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          HIGH: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          MEDIUM: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+          LOW: {
+            and: [
+              {
+                '>=': [
+                  {
+                    reduce: [
+                      {
+                        filter: [
+                          {
+                            var: 'entity:bd548281',
+                          },
+                          {
+                            'op:contains': [
+                              {
+                                var: 'key',
+                              },
+                              [
+                                'sanctions',
+                                'mixer',
+                                'darknet_market',
+                                'scam',
+                                'ransomware',
+                                'stolen_funds',
+                                'terrorist_financing',
+                                'high_risk_exchange',
+                                'gambling',
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      {
+                        '+': [
+                          1,
+                          {
+                            var: 'accumulator',
+                          },
+                        ],
+                      },
+                      0,
+                    ],
+                  },
+                  2,
+                ],
+              },
+            ],
+          },
+        },
+        logicEntityVariables: [
+          {
+            key: 'entity:bd548281',
+            entityKey: 'TRANSACTION:tags',
+          },
+        ],
+        logicAggregationVariables: [],
+        action: 'FLAG',
+        riskLevelActions: {
+          VERY_LOW: 'FLAG',
+          VERY_HIGH: 'FLAG',
+          HIGH: 'FLAG',
+          MEDIUM: 'FLAG',
+          LOW: 'FLAG',
+        },
+        status: 'ACTIVE',
+        createdAt: 1744106659805,
+        updatedAt: 1744106659805,
+        runCount: 0,
+        hitCount: 0,
+        casePriority: 'P1',
+        falsePositiveCheckEnabled: false,
+        nature: 'AML',
+        labels: [],
+        riskLevelsTriggersOnHit: {
+          VERY_LOW: {
+            usersToCheck: 'ALL',
+          },
+          VERY_HIGH: {
+            usersToCheck: 'ALL',
+          },
+          HIGH: {
+            usersToCheck: 'ALL',
+          },
+          MEDIUM: {
+            usersToCheck: 'ALL',
+          },
+          LOW: {
+            usersToCheck: 'ALL',
+          },
+        },
+        alertConfig: {
+          frozenStatuses: [],
+          alertCreationInterval: {
+            type: 'INSTANTLY',
+          },
+          alertCreatedFor: ['USER'],
+        },
+        checksFor: [],
+        createdBy: rng.pickRandom(getAccounts()).id,
+        ruleExecutionMode: 'SYNC',
+        ruleRunMode: 'LIVE',
+        alertCreationOnHit: true,
+      }
+    )
+  }
+  const r1RuleInstance: RuleInstance[] = [
+    {
+      id: 'R-1.7',
+      type: 'TRANSACTION',
+      ruleId: 'R-1',
+      ruleNameAlias: 'First transaction of a user',
+      ruleDescriptionAlias: 'First transaction of a user',
+      filters: ruleFilterSampler.getSample(),
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      parameters: {
+        transactionAmountThreshold: {
+          USD: rng.randomIntInclusive(1000, 10000),
+        },
+      } as TransactionAmountRuleParameters,
+      riskLevelParameters: {
+        VERY_LOW: ruleFilterSampler.getSample(),
+        VERY_HIGH: ruleFilterSampler.getSample(),
+        HIGH: ruleFilterSampler.getSample(),
+        MEDIUM: ruleFilterSampler.getSample(),
+        LOW: ruleFilterSampler.getSample(),
+      },
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'INACTIVE',
+      createdAt: 1726843563672,
+      updatedAt: 1729057178462,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+          kycStatusDetails: { reason: 'Fake document', status: 'SUCCESSFUL' },
+        },
+        VERY_HIGH: { usersToCheck: 'ALL' },
+        HIGH: { usersToCheck: 'ALL' },
+        MEDIUM: { usersToCheck: 'ALL' },
+        LOW: { usersToCheck: 'ALL' },
+      },
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
+        ],
+        frozenStatuses: [],
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: ['1st transaction'],
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+    },
+  ]
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 1)
+
+  const r1RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-1.8',
+      type: 'TRANSACTION',
+      ruleId: 'R-1',
+      ruleNameAlias: 'First transaction of a user (shadow)',
+      ruleDescriptionAlias: 'First transaction of a user (shadow)',
+      filters: ruleFilterSampler.getSample(),
+      parameters: {
+        transactionAmountThreshold: {
+          USD: rng.randomIntInclusive(100, 50000),
+        },
+      } as TransactionAmountRuleParameters,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      riskLevelParameters: {
+        VERY_LOW: ruleFilterSampler.getSample(),
+        VERY_HIGH: ruleFilterSampler.getSample(),
+        HIGH: ruleFilterSampler.getSample(),
+        MEDIUM: ruleFilterSampler.getSample(),
+        LOW: ruleFilterSampler.getSample(),
+      },
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1726843563672,
+      updatedAt: 1729057178462,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+          kycStatusDetails: { reason: 'Fake document', status: 'SUCCESSFUL' },
+        },
+        VERY_HIGH: { usersToCheck: 'ALL' },
+        HIGH: { usersToCheck: 'ALL' },
+        MEDIUM: { usersToCheck: 'ALL' },
+        LOW: { usersToCheck: 'ALL' },
+      },
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
+        ],
+        frozenStatuses: [],
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: ['1st transaction'],
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'SHADOW',
+    },
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 2)
+
+  const r2RuleInstance: RuleInstance[] = [
+    {
+      id: 'Es4Zmo',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-2',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+      },
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      } as TransactionAmountRuleParameters,
+      checksFor: ['Transaction amount'],
+      action: 'SUSPEND',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Transaction amount too high (shadow)',
+      ruleDescriptionAlias: 'Transaction amount is >= x in USD or equivalent',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        MEDIUM: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        VERY_LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+            ADA: 1000,
+          },
+        } as TransactionAmountRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(2).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 3)
+
+  const r8RuleInstance: RuleInstance[] = [
+    {
+      id: 'CK4Nh2',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleId: 'R-8',
+      casePriority: 'P2',
+      parameters: {},
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias:
+        'Too many transactions under reporting limit sent by a user.',
+      ruleDescriptionAlias:
+        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
+      filters: {
+        lowTransactionCount: 10,
+        lowTransactionValues: {
+          USD: {
+            max: 1000,
+            min: 100,
+          },
+        },
+      } as LowValueTransactionsRuleParameters,
+      riskLevelParameters: {
+        VERY_HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        MEDIUM: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        VERY_LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 1000,
+              min: 100,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604237253,
+      updatedAt: 1688115753059,
+      createdBy: rng.r(3).pickRandom(getAccounts()).id,
+      checksFor: ['Transaction amount', 'No. of transactions'],
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 4)
+
+  const r8RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-8.1',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleId: 'R-8',
+      casePriority: 'P2',
+      parameters: {},
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias:
+        'Too many transactions under reporting limit sent by a user (shadow)',
+      ruleDescriptionAlias:
+        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
+      filters: {
+        lowTransactionCount: 10,
+        lowTransactionValues: {
+          USD: {
+            max: 1000,
+            min: 100,
+          },
+        },
+      } as LowValueTransactionsRuleParameters,
+      riskLevelParameters: {
+        VERY_HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        MEDIUM: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        VERY_LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604237253,
+      updatedAt: 1688115753059,
+      createdBy: rng.r(3).pickRandom(getAccounts()).id,
+      checksFor: ['Transaction amount', 'No. of transactions'],
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(USER_RULES_SEED + 5)
+
+  const r17RuleInstance: RuleInstance[] = [
+    {
+      id: 'hODvd2',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      ruleId: 'R-17',
+      casePriority: 'P1',
+      parameters: {
+        fuzziness: 20,
+        screeningTypes: ['SANCTIONS', 'PEP'],
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+        fuzzinessRange: {
+          lowerBound: 0,
+          upperBound: 20,
+        },
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'SCP-1',
+      } as GenericSanctionsConsumerUserRuleParameters,
+      action: 'BLOCK',
+      type: 'USER',
+      ruleNameAlias: 'Screening on Consumer users',
+      ruleDescriptionAlias:
+        'Sanctions/PEP/Adverse media screening on Consumer users.',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['SANCTIONS', 'PEP'],
+          ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'SCP-1',
+        } as GenericSanctionsConsumerUserRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'BLOCK',
+        HIGH: 'BLOCK',
+        MEDIUM: 'BLOCK',
+        LOW: 'BLOCK',
+        VERY_LOW: 'BLOCK',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      checksFor: ['Username', 'User’s Y.O.B'],
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 6)
+
+  const r30RuleInstance: RuleInstance[] = [
+    {
+      id: 'ZnTte8',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-30',
+      casePriority: 'P1',
+      checksFor: ['No. of transactions', 'Time'],
+      parameters: {
+        transactionsLimit: 10,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
+      } as TransactionsVelocityRuleParameters,
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'High velocity user',
+      ruleDescriptionAlias: 'High velocity user',
+      alertConfig: {
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+      },
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        HIGH: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        MEDIUM: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        LOW: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+        VERY_LOW: {
+          transactionsLimit: 10,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 10,
+        } as TransactionsVelocityRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(5).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 7)
+
+  const r30RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-30.1',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-30',
+      casePriority: 'P1',
+      checksFor: ['No. of transactions', 'Time'],
+      parameters: {
+        transactionsLimit: 10,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
+      } as TransactionsVelocityRuleParameters,
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'High velocity user (shadow)',
+      ruleDescriptionAlias: 'High velocity user',
+      alertConfig: {
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+      },
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        HIGH: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        MEDIUM: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        LOW: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        VERY_LOW: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(2).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(USER_RULES_SEED + 7)
+
+  const r32RuleInstance: RuleInstance[] = [
+    {
+      id: 'pLRu4m',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-32',
+      casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
+      },
+      parameters: {
+        fuzziness: 20,
+        screeningTypes: ['PEP'],
+        ruleStages: ['INITIAL', 'UPDATE'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+      } as SanctionsBankUserRuleParameters,
+      action: 'SUSPEND',
+      type: 'USER',
+      ruleNameAlias: 'Screening on Bank name',
+      ruleDescriptionAlias:
+        'Sanctions/PEP/Adverse media screening on Bank names. ',
+      filters: {},
+      checksFor: ['User’s bank name'],
+      riskLevelParameters: {
+        VERY_HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        } as SanctionsBankUserRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        } as SanctionsBankUserRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        } as SanctionsBankUserRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        } as SanctionsBankUserRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        } as SanctionsBankUserRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(6).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 8)
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 9)
+
+  const r120RuleInstance: RuleInstance[] = [
+    {
+      id: 'R-120.1',
+      type: 'TRANSACTION',
+      ruleId: 'R-120',
+      ruleNameAlias: 'Average transaction amount exceed past period average',
+      ruleDescriptionAlias:
+        'Average transaction amount exceeds historical benchmarks',
+      filters: {},
+      parameters: {
+        period2: { granularity: 'day', units: 2 },
+        period1: { granularity: 'day', units: 1 },
+        transactionsNumberThreshold2: { min: 5 },
+        multiplierThreshold: { value: 200, currency: 'EUR' },
+        checkSender: 'sending',
+        checkReceiver: 'receiving',
+      },
+      riskLevelParameters: {
+        VERY_LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        VERY_HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        MEDIUM: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+      },
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'INACTIVE',
+      createdAt: 1729169864382,
+      updatedAt: 1731388464109,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: true,
+      nature: 'FRAUD',
+      labels: [],
+      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
+      checksFor: ['Transaction amount', 'Time'],
+      createdBy: rng.pickRandom(getAccounts()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 9)
+
+  const r128RuleInstance: RuleInstance[] = [
+    {
+      id: 'FlWDkd',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleId: 'R-128',
+      casePriority: 'P1',
+      parameters: {
+        fuzziness: 20,
+        screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        entityTypes: ['LEGAL_NAME'],
+        ruleStages: ['INITIAL', 'UPDATE'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'default',
+      } as SanctionsBusinessUserRuleParameters,
+      action: 'SUSPEND',
+      checksFor: ['Entity name'],
+      type: 'USER',
+      ruleNameAlias:
+        'Screening on Business legal entity & shareholders & directors',
+      ruleDescriptionAlias:
+        'Sanctions/PEP/Adverse media screening on Business legal entity & shareholders & directors',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          entityTypes: ['LEGAL_NAME'],
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
+        } as SanctionsBusinessUserRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
+        } as SanctionsBusinessUserRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
+        } as SanctionsBusinessUserRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
+        } as SanctionsBusinessUserRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          entityTypes: ['LEGAL_NAME'],
+          ruleStages: ['INITIAL', 'UPDATE'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningProfileId: 'default',
+        } as SanctionsBusinessUserRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(7).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 10)
+
+  const r121RuleInstance: RuleInstance[] = [
+    {
+      id: 'R-121.1',
+      type: 'TRANSACTION',
+      ruleId: 'R-121',
+      ruleNameAlias:
+        'Average transactions number exceed past period average number',
+      ruleDescriptionAlias:
+        'Average transactions number exceed past period average number',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      filters: {},
+      parameters: {
+        period2: { granularity: 'day', units: 2 },
+        period1: { granularity: 'day', units: 1 },
+        transactionsNumberThreshold2: { min: 5 },
+        multiplierThreshold: 200,
+        checkSender: 'sending',
+        checkReceiver: 'receiving',
+      },
+      riskLevelParameters: {
+        VERY_LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        VERY_HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        MEDIUM: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+      },
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'INACTIVE',
+      createdAt: 1729498903527,
+      updatedAt: 1730824618379,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'FRAUD',
+      labels: [],
+      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
+      checksFor: ['No. of transactions', 'Time'],
+      createdBy: rng.pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 10)
+
+  const r169RuleInstance: RuleInstance[] = [
+    {
+      id: '0a1QSr',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleId: 'R-169',
+      casePriority: 'P1',
+      parameters: {
+        ruleStages: ['INITIAL', 'UPDATE'],
+        screeningFields: ['NAME'],
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'default',
+      } as PaymentDetailsScreeningRuleParameters,
+      action: 'SUSPEND',
+      checksFor: [
+        RuleChecksForField.CounterpartyUsername,
+        RuleChecksForField.CounterpartyBankName,
+      ],
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Tx’s counterparty screening',
+      ruleDescriptionAlias:
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(8).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 11)
+
+  const r169RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-169.1',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleId: 'R-169',
+      casePriority: 'P1',
+      parameters: {
+        screeningFields: ['NAME'],
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+        screeningProfileId: 'default',
+        ruleStages: ['INITIAL', 'UPDATE'],
+      } as PaymentDetailsScreeningRuleParameters,
+      action: 'SUSPEND',
+      checksFor: [
+        RuleChecksForField.CounterpartyUsername,
+        RuleChecksForField.CounterpartyBankName,
+      ],
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Tx’s counterparty screening (shadow)',
+      ruleDescriptionAlias:
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+          fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',
+          screeningFields: ['NAME'],
+          screeningProfileId: 'default',
+        } as PaymentDetailsScreeningRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'SCREENING',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  // Dynamic rule instance for demo data
+  const dynamicRuleInstance: RuleInstance[] = [
+    {
+      id: 'R-11.1',
+      type: 'TRANSACTION',
+      ruleId: 'R-11',
+      ruleNameAlias: 'Transaction anomaly',
+      ruleDescriptionAlias: 'Check for anomalous transaction volumes',
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
+      filters: {},
+      parameters: {},
+      riskLevelParameters: {
+        VERY_LOW: {},
+        VERY_HIGH: {},
+        HIGH: {},
+        MEDIUM: {},
+        LOW: {},
+      },
+      logic: {
+        and: [
+          {
+            '>': [
+              {
+                var: 'entity:transactionAmount',
+              },
+              100000,
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              '>': [
+                {
+                  var: 'entity:transactionAmount',
+                },
+                100000,
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:transactionAmount',
+          entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+        },
+      ],
+      logicAggregationVariables: [],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1741948155800,
+      updatedAt: 1741948155800,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: ['UNEXPECTED_BEHAVIOR'],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+        },
+      },
+      alertConfig: {
+        alertCreationInterval: {
+          type: 'INSTANTLY',
+        },
+        alertCreatedFor: ['USER'],
+        slaPolicies: [
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      checksFor: ['Dynamic Detection'],
+      createdBy: rng.r(1).pickRandom(getAccounts()).id,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: true,
+    },
+  ]
+
+  const data = [
+    ...r1RuleInstance,
+    ...r2RuleInstance,
+    ...r8RuleInstance,
+    ...r17RuleInstance,
+    ...r30RuleInstance,
+    ...r32RuleInstance,
+    ...r120RuleInstance,
+    ...r121RuleInstance,
+    ...r128RuleInstance,
+    ...r169RuleInstance,
+    ...r1RuleInstanceShadow,
+    ...r169RuleInstanceShadow,
+    ...r8RuleInstanceShadow,
+    ...r30RuleInstanceShadow,
+    ...customRuleInstances,
+    ...dynamicRuleInstance,
+  ]
+
+  return data
+})
+
+export const CHAINALYSIS_RULE_IDS = ['RC-4', 'RC-5']
+export const COUNTERPARTY_RULE_IDS = ['R-169', 'R-169.1']
+export const EDD_RULE_IDS = ['RC-101', 'RC-102']
+export const DYNAMIC_RULE_IDS = ['R-11']
+
+export const mapRuleInstanceToExecuteRules = (
+  ruleInstance: RuleInstance,
+  index: number,
+  rng: RandomNumberGenerator,
+  hitRuleIds?: string[]
+): ExecutedRulesResult => {
+  rng.setSeed(TRANSACTION_RULES_SEED + index)
+
+  return {
+    ruleInstanceId: ruleInstance.id as string,
+    ruleName: ruleInstance.ruleNameAlias as string,
+    ruleAction: ruleInstance.action as RuleAction,
+    ruleId: ruleInstance.ruleId as string,
+    nature: ruleInstance.nature,
+    ruleDescription: ruleInstance.ruleDescriptionAlias as string,
+    ruleHit: hitRuleIds?.includes(ruleInstance.id ?? '') ?? true,
+    ruleHitMeta: {
+      falsePositiveDetails:
+        rng.randomInt(10) < 4
+          ? {
+              isFalsePositive: true,
+              confidenceScore: rng.r(1).randomIntInclusive(59, 82),
+            }
+          : { isFalsePositive: false, confidenceScore: 100 },
+      hitDirections: index % 2 ? ['ORIGIN'] : ['DESTINATION'],
+    },
+    isShadow: isShadowRule(ruleInstance),
+  }
+}
+
+export const transactionRules: (
+  isCryptoTransaction?: boolean,
+  hitRuleIds?: string[]
+) => ExecutedRulesResult[] = memoize((isCryptoTransaction, hitRuleIds) => {
+  const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED)
+  if (!isCryptoTransaction) {
+    isCryptoTransaction = false
+  }
+
+  return ruleInstances()
+    .filter((ri) => {
+      if (ri.ruleId) {
+        const counterPartyExists = COUNTERPARTY_RULE_IDS.includes(ri.ruleId)
+        const eddRulesExists = EDD_RULE_IDS.includes(ri.ruleId)
+        if (counterPartyExists || eddRulesExists) {
+          return false
+        }
+        const exists = CHAINALYSIS_RULE_IDS.includes(ri.ruleId)
+        return isCryptoTransaction ? exists : !exists
+      }
+      return false
+    })
+    .filter((ri) => {
+      return ri.type === 'TRANSACTION'
+    })
+    .map(
+      (ri, i): ExecutedRulesResult =>
+        mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+    )
+})
+
+export const counterPartyTransactionRules: (
+  hitRuleIds?: string[]
+) => ExecutedRulesResult[] = memoize((hitRuleIds) => {
+  const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 1000)
+  return ruleInstances()
+    .filter((ri) => {
+      if (ri.ruleId) {
+        return COUNTERPARTY_RULE_IDS.includes(ri.ruleId)
+      }
+      return false
+    })
+    .map(
+      (ri, i): ExecutedRulesResult =>
+        mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+    )
+})
+
+export const eddRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 10000)
+    return ruleInstances()
+      .filter((rule) => {
+        if (rule.ruleId) {
+          return EDD_RULE_IDS.includes(rule.ruleId ?? '')
+        }
+        return false
+      })
+      .map(
+        (ri, i): ExecutedRulesResult =>
+          mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+      )
+  })
+
+export const dynamicRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED + 2000)
+    return ruleInstances()
+      .filter((ri) => {
+        if (ri.ruleId) {
+          return DYNAMIC_RULE_IDS.includes(ri.ruleId)
+        }
+        return false
+      })
+      .map(
+        (ri, i): ExecutedRulesResult =>
+          mapRuleInstanceToExecuteRules(ri, i, rng, hitRuleIds)
+      )
+  })
+
+export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(USER_RULES_SEED)
+
+    return ruleInstances()
+      .filter((ri) => {
+        return ri.type === 'USER'
+      })
+      .map((ri, i): ExecutedRulesResult => {
+        rng.setSeed(USER_RULES_SEED + i)
+
+        return {
+          ruleInstanceId: ri.id as string,
+          ruleName: ri.ruleNameAlias as string,
+          ruleAction: ri.action as RuleAction,
+          ruleId: ri.ruleId as string,
+          nature: ri.nature,
+          ruleDescription: ri.ruleDescriptionAlias as string,
+          ruleHit: hitRuleIds?.includes(ri.id ?? '') ?? true,
+          ruleHitMeta: {
+            falsePositiveDetails:
+              rng.randomInt(10) < 2
+                ? {
+                    isFalsePositive: true,
+                    confidenceScore: rng.r(1).randomIntInclusive(59, 82),
+                  }
+                : { isFalsePositive: false, confidenceScore: 100 },
+            hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
+          },
+          isShadow: isShadowRule(ri),
+        }
+      })
+  })
+const businessUserInstanceId = ['pLRu4m', 'FlWDkd']
+const consumerUserInstanceId = ['pLRu4m', 'hODvd2']
+
+export const businessRules: () => ExecutedRulesResult[] = () => {
+  return userRules().filter((rule) =>
+    businessUserInstanceId.some((id) => id == rule.ruleInstanceId)
+  )
+}
+
+export const consumerRules: () => ExecutedRulesResult[] = () => {
+  return userRules().filter((rule) =>
+    consumerUserInstanceId.some((id) => id == rule.ruleInstanceId)
+  )
+}
+
+export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
+  private entityToRuleHitsMap: Map<number, string[]> = new Map()
+  private availableRules: ExecutedRulesResult[] = []
+  private zeroHitRules: string[] = []
+  intalizeSampler(
+    availableRules: ExecutedRulesResult[],
+    hitPercentages: number[], // Array of hit percentages for rules (e.g. [50, 30, 20] means 50% hit rate for first group)
+    entityCount: number,
+    shouldIncludeZeroHitRule: boolean = false
+  ) {
+    // Validate that we don't have more hit percentages than entities
+    if (hitPercentages.length > entityCount) {
+      throw Error(
+        'Invalid argument: number of hit percentages cannot exceed entity count'
+      )
+    }
+
+    // Sort hit percentages in descending order for consistent distribution
+    hitPercentages = hitPercentages.sort((a, b) => b - a)
+
+    // Initialize tracking of entities and their rule hit counts
+    // Key: number of rule hits, Value: array of entity IDs with that many hits
+    const entityHitCountMap = new Map<number, number[]>()
+    const allEntityIds: number[] = shuffle(
+      Array.from({ length: entityCount }, (_, i) => i)
+    )
+    // Initially all entities have 0 hits
+    entityHitCountMap.set(0, allEntityIds)
+
+    this.availableRules = availableRules
+
+    // Calculate distribution weights for rules
+    const totalDistributionWeight = hitPercentages.reduce(
+      (sum, hits) => sum + 1 / hits,
+      0
+    )
+    const ruleDistributionPercentages = [
+      // If zero-hit rules are required, allocate minimum percentage to ensure at least one rule has 0 hits
+      shouldIncludeZeroHitRule ? 1 / availableRules.length : 0,
+      // Calculate percentage for each hit rate group
+      ...hitPercentages.map(
+        (hitRate) => 1 / (hitRate * totalDistributionWeight)
+      ),
+    ]
+    hitPercentages = [0, ...hitPercentages]
+
+    // Track hit rate for each rule
+    const ruleToHitRateMap = new Map<string, number>()
+    availableRules.forEach((rule) => {
+      ruleToHitRateMap.set(rule.ruleInstanceId ?? '', 3)
+    })
+
+    // Group rules by their hit percentages
+    const ruleGroups = this.divideIntoGroups(
+      availableRules.map((rule) => rule.ruleInstanceId ?? ''),
+      ruleDistributionPercentages
+    )
+    ruleGroups.forEach((group, index) => {
+      group.forEach((ruleId) => {
+        if (hitPercentages[index] === 0) {
+          this.zeroHitRules.push(ruleId)
+        }
+        ruleToHitRateMap.set(ruleId, hitPercentages[index])
+      })
+    })
+
+    // Initialize entity-rule mapping
+    this.entityToRuleHitsMap = new Map()
+
+    // Distribute rules to entities based on hit rates
+    ruleToHitRateMap.forEach((hitRate, ruleId) => {
+      if (hitRate === 0) {
+        return
+      }
+
+      // Add small random variation to entity count for more realistic distribution
+      const randomVariation = this.rng.randomIntInclusive(
+        1,
+        Math.floor(0.009 * entityCount)
+      )
+
+      let targetEntityCount =
+        Math.floor((hitRate * entityCount) / 100) + randomVariation
+
+      const selectedEntities: number[] = []
+      while (targetEntityCount--) {
+        const entity = allEntityIds.shift()
+        if (entity) {
+          selectedEntities.push(entity)
+          allEntityIds.push(entity)
+        }
+      }
+
+      // Record rule assignments in entity-rule mapping
+      selectedEntities.forEach((entityId) => {
+        const existingRules = this.entityToRuleHitsMap.get(entityId) ?? []
+        this.entityToRuleHitsMap.set(entityId, [...existingRules, ruleId])
+      })
+    })
+  }
+
+  private divideIntoGroups = <T>(
+    items: T[],
+    groupPercentages: number[]
+  ): T[][] => {
+    const unassignedItems = new Set(items)
+    const rng = new RandomNumberGenerator()
+    const groups: T[][] = []
+
+    groupPercentages.forEach((percentage) => {
+      const groupSize = Math.ceil(items.length * percentage)
+      const selectedItems = rng.randomSubsetOfSize(
+        Array.from(unassignedItems),
+        groupSize
+      )
+      groups.push(selectedItems)
+      selectedItems.forEach((item) => unassignedItems.delete(item))
+    })
+
+    return groups
+  }
+
+  generateSample(entityId: number): ExecutedRulesResult[] {
+    const ruleIds = this.entityToRuleHitsMap.get(entityId) ?? []
+    return this.availableRules.filter((rule) =>
+      ruleIds.includes(rule.ruleInstanceId ?? '')
+    )
+  }
+
+  getZeroHitRules(): string[] {
+    return this.zeroHitRules
+  }
+}
+
+export class ConsumerUserRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(consumerRules(), [5, 6], 200, false)
+  }
+}
+
+export class BussinessUserRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(businessRules(), [4, 5], companies.length, false)
+  }
+}
+
+export class TransactionRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(
+      transactionRules(false),
+      [4, 5, 6, 7],
+      TXN_COUNT,
+      false
+    )
+  }
+}
+
+export class CryptoTransactionRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(
+      transactionRules(true),
+      [7, 11],
+      CRYPTO_TXN_COUNT,
+      false
+    )
+  }
+}
+
+export class CounterPartyTransactionRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(
+      counterPartyTransactionRules(),
+      [7, 8],
+      CRYPTO_TXN_COUNT,
+      false
+    )
+  }
+}

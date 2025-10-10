@@ -1,0 +1,669 @@
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import compact from 'lodash/compact'
+import slice from 'lodash/slice'
+import uniqBy from 'lodash/uniqBy'
+import { MongoClient } from 'mongodb'
+import { UserRepository } from '../users/repositories/user-repository'
+import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
+import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
+import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
+import { BatchRepository } from './batch-repository'
+import {
+  AsyncBatchRecord,
+  BatchEntity,
+  TransactionValidationOptions,
+} from '@/@types/batch-import'
+import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
+import { BatchResponse } from '@/@types/openapi-public/BatchResponse'
+import { Business } from '@/@types/openapi-public/Business'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { User } from '@/@types/openapi-public/User'
+import { BatchResponseFailedRecord } from '@/@types/openapi-public/BatchResponseFailedRecord'
+import { BatchResponseStatus } from '@/@types/openapi-public/BatchResponseStatus'
+import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { BatchTransactionMonitoringResults } from '@/@types/openapi-public/BatchTransactionMonitoringResults'
+import { UserType } from '@/@types/openapi-internal/UserType'
+import { PaginationParams } from '@/@types/pagination'
+import { BatchTransactionEventMonitoringResults } from '@/@types/openapi-public/BatchTransactionEventMonitoringResults'
+import { pickKnownEntityFields } from '@/utils/object'
+import { BatchTransactionMonitoringResult } from '@/@types/openapi-public/BatchTransactionMonitoringResult'
+import { BatchTransactionEventMonitoringResult } from '@/@types/openapi-public/BatchTransactionEventMonitoringResult'
+import { BatchConsumerUsersWithRulesResults } from '@/@types/openapi-public/BatchConsumerUsersWithRulesResults'
+import { BatchBusinessUsersWithRulesResults } from '@/@types/openapi-public/BatchBusinessUsersWithRulesResults'
+import { BatchConsumerUserWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserWithRulesResult'
+import { BatchConsumerUserEventsWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventsWithRulesResult'
+import { BatchConsumerUserEventWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventWithRulesResult'
+import { BatchBusinessUserEventsWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventsWithRulesResult'
+import { BatchBusinessUserEventWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventWithRulesResult'
+import {
+  BatchImportErrorReason,
+  DUPLICATE_ID_IN_BATCH,
+  ID_ALREADY_EXISTS,
+  RELATED_ID_NOT_FOUND,
+  ORIGIN_USER_ID_NOT_FOUND,
+  DESTINATION_USER_ID_NOT_FOUND,
+  ID_NOT_FOUND,
+} from '@/constants/lists'
+import { traceable } from '@/core/xray'
+
+@traceable
+export class BatchImportService {
+  private readonly transactionRepository: DynamoDbTransactionRepository
+  private readonly userRepository: UserRepository
+  private readonly batchRepository: BatchRepository
+  private readonly userEventRepository: UserEventRepository
+  private readonly transactionEventRepository: TransactionEventRepository
+
+  constructor(
+    private readonly tenantId: string,
+    readonly connections: {
+      dynamoDb: DynamoDBDocumentClient
+      mongoDb: MongoClient
+    }
+  ) {
+    this.transactionRepository = new DynamoDbTransactionRepository(
+      this.tenantId,
+      connections.dynamoDb
+    )
+    this.userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: connections.dynamoDb,
+    })
+    this.batchRepository = new BatchRepository(
+      this.tenantId,
+      connections.dynamoDb
+    )
+    this.userEventRepository = new UserEventRepository(this.tenantId, {
+      dynamoDb: connections.dynamoDb,
+      mongoDb: connections.mongoDb,
+    })
+    this.transactionEventRepository = new TransactionEventRepository(
+      this.tenantId,
+      {
+        dynamoDb: connections.dynamoDb,
+        mongoDb: connections.mongoDb,
+      }
+    )
+  }
+
+  public async importTransactions(
+    batchId: string,
+    transactions: Transaction[],
+    validationOptions?: TransactionValidationOptions
+  ): Promise<{
+    response: BatchResponse
+    validatedTransactions: Transaction[]
+  }> {
+    const existingTransactions =
+      await this.transactionRepository.getTransactionsByIds(
+        transactions.map((transaction) => transaction.transactionId)
+      )
+    const relatedTransactionIds = compact(
+      transactions.flatMap((transaction) => transaction.relatedTransactionIds)
+    )
+    const existingRelatedTransactions =
+      await this.transactionRepository.getTransactionsByIds(
+        relatedTransactionIds
+      )
+    const allUserIds = compact(
+      transactions.flatMap((transaction) => [
+        transaction.originUserId,
+        transaction.destinationUserId,
+      ])
+    )
+    const existingUsers = await this.userRepository.getUsersByIds(allUserIds)
+    const failedRecords: BatchResponseFailedRecord[] = []
+    const idsCountMap = new Map<string, number>()
+    for (const transaction of transactions) {
+      idsCountMap.set(
+        transaction.transactionId,
+        (idsCountMap.get(transaction.transactionId) ?? 0) + 1
+      )
+    }
+    const validatedTransactions: Transaction[] = []
+    for (const transaction of transactions) {
+      const validationError = this.validateTransaction(
+        transaction,
+        {
+          existingTransactions,
+          existingRelatedTransactions,
+          existingUsers,
+          idsCountMap,
+        },
+        validationOptions
+      )
+      if (validationError) {
+        failedRecords.push({
+          id: transaction.transactionId,
+          reasonCode: validationError,
+        })
+      } else {
+        validatedTransactions.push(transaction)
+      }
+    }
+    return {
+      response: {
+        status: this.getBatchResponseStatus(
+          transactions.length,
+          failedRecords.length
+        ),
+        batchId,
+        successful: transactions.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords:
+          failedRecords.length > 0 ? uniqBy(failedRecords, 'id') : undefined,
+        message: this.getBatchResponseMessage(
+          transactions.length,
+          failedRecords.length
+        ),
+      },
+      validatedTransactions,
+    }
+  }
+
+  private validateTransaction(
+    transaction: Transaction,
+    data: {
+      existingTransactions: TransactionWithRulesResult[]
+      existingRelatedTransactions: TransactionWithRulesResult[]
+      existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+      idsCountMap: Map<string, number>
+    },
+    validationOptions?: TransactionValidationOptions
+  ): BatchImportErrorReason | null {
+    if ((data.idsCountMap.get(transaction.transactionId) ?? 0) > 1) {
+      return DUPLICATE_ID_IN_BATCH
+    }
+    if (
+      data.existingTransactions.find(
+        (t) => t.transactionId === transaction.transactionId
+      )
+    ) {
+      return ID_ALREADY_EXISTS
+    }
+    if (
+      transaction.relatedTransactionIds?.some(
+        (id) =>
+          !data.existingRelatedTransactions.find((t) => t.transactionId === id)
+      )
+    ) {
+      return RELATED_ID_NOT_FOUND
+    }
+    if (
+      validationOptions?.validateOriginUserId &&
+      transaction.originUserId &&
+      !data.existingUsers.find((u) => u.userId === transaction.originUserId)
+    ) {
+      return ORIGIN_USER_ID_NOT_FOUND
+    }
+    if (
+      validationOptions?.validateDestinationUserId &&
+      transaction.destinationUserId &&
+      !data.existingUsers.find(
+        (u) => u.userId === transaction.destinationUserId
+      )
+    ) {
+      return DESTINATION_USER_ID_NOT_FOUND
+    }
+    return null
+  }
+
+  public async importTransactionEvents(
+    batchId: string,
+    transactionEvents: TransactionEvent[]
+  ): Promise<{
+    response: BatchResponse
+    validatedTransactionEvents: TransactionEvent[]
+    validatedTransactions: Transaction[]
+  }> {
+    const relatedTransactionIds = compact(
+      transactionEvents.flatMap(
+        (t) => t.updatedTransactionAttributes?.relatedTransactionIds
+      )
+    )
+
+    const [existingTransactions, existingRelatedTransactions] =
+      await Promise.all([
+        this.transactionRepository.getTransactionsByIds(
+          transactionEvents.map((event) => event.transactionId)
+        ),
+        this.transactionRepository.getTransactionsByIds(relatedTransactionIds),
+      ])
+
+    const validatedTransactionEvents: TransactionEvent[] = []
+    const failedRecords: BatchResponseFailedRecord[] = []
+    for (const transactionEvent of transactionEvents) {
+      const validationError = this.validateTransactionEvent(transactionEvent, {
+        existingTransactions,
+        existingRelatedTransactions,
+      })
+      if (validationError) {
+        failedRecords.push({
+          id:
+            validationError === ID_NOT_FOUND
+              ? transactionEvent.transactionId
+              : transactionEvent.eventId,
+          reasonCode: validationError,
+        })
+      } else {
+        validatedTransactionEvents.push(transactionEvent)
+      }
+    }
+    return {
+      response: {
+        status: this.getBatchResponseStatus(
+          transactionEvents.length,
+          failedRecords.length
+        ),
+        batchId,
+        successful: transactionEvents.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords: failedRecords.length > 0 ? failedRecords : undefined,
+        message: this.getBatchResponseMessage(
+          transactionEvents.length,
+          failedRecords.length
+        ),
+      },
+      validatedTransactionEvents,
+      validatedTransactions: existingTransactions,
+    }
+  }
+  private validateTransactionEvent(
+    transactionEvent: TransactionEvent,
+    data: {
+      existingTransactions: TransactionWithRulesResult[]
+      existingRelatedTransactions: TransactionWithRulesResult[]
+    }
+  ): BatchImportErrorReason | null {
+    if (
+      !data.existingTransactions.find(
+        (t) => t.transactionId === transactionEvent.transactionId
+      )
+    ) {
+      return ID_NOT_FOUND
+    }
+    if (
+      transactionEvent.updatedTransactionAttributes?.relatedTransactionIds?.some(
+        (id) =>
+          !data.existingRelatedTransactions.find((t) => t.transactionId === id)
+      )
+    ) {
+      return RELATED_ID_NOT_FOUND
+    }
+    return null
+  }
+
+  public async importConsumerUsers(
+    batchId: string,
+    users: User[]
+  ): Promise<{ response: BatchResponse; validatedUsers: User[] }> {
+    return this.importUsers<User>(batchId, users)
+  }
+
+  public async importBusinessUsers(
+    batchId: string,
+    users: Business[]
+  ): Promise<{ response: BatchResponse; validatedUsers: Business[] }> {
+    return this.importUsers<Business>(batchId, users)
+  }
+
+  private async importUsers<T extends User | Business>(
+    batchId: string,
+    users: Array<T>
+  ): Promise<{
+    response: BatchResponse
+    validatedUsers: Array<T>
+  }> {
+    const existingUsers = await this.userRepository.getUsersByIds(
+      users.map((user) => user.userId)
+    )
+    const idsCountMap = new Map<string, number>()
+    for (const user of users) {
+      idsCountMap.set(user.userId, (idsCountMap.get(user.userId) ?? 0) + 1)
+    }
+    const parentUserIds = compact(
+      users.map((user) => user.linkedEntities?.parentUserId)
+    )
+    const existingParentUsers = await this.userRepository.getUsersByIds(
+      parentUserIds
+    )
+    const failedRecords: BatchResponseFailedRecord[] = []
+    const validatedUsers: T[] = []
+    for (const user of users) {
+      const validationError = this.validateUser(user, {
+        existingUsers,
+        existingParentUsers,
+        idsCountMap,
+      })
+      if (validationError) {
+        failedRecords.push({
+          id: user.userId,
+          reasonCode: validationError,
+        })
+      } else {
+        validatedUsers.push(user)
+      }
+    }
+    return {
+      response: {
+        status: this.getBatchResponseStatus(users.length, failedRecords.length),
+        batchId,
+        successful: users.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords:
+          failedRecords.length > 0 ? uniqBy(failedRecords, 'id') : undefined,
+        message: this.getBatchResponseMessage(
+          users.length,
+          failedRecords.length
+        ),
+      },
+      validatedUsers,
+    }
+  }
+
+  private validateUser(
+    user: User | Business,
+    data: {
+      existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+      existingParentUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+      idsCountMap: Map<string, number>
+    }
+  ): BatchImportErrorReason | null {
+    if ((data.idsCountMap.get(user.userId) ?? 0) > 1) {
+      return DUPLICATE_ID_IN_BATCH
+    }
+    if (data.existingUsers.find((u) => u.userId === user.userId)) {
+      return ID_ALREADY_EXISTS
+    }
+    if (
+      user.linkedEntities?.parentUserId &&
+      !data.existingParentUsers.find(
+        (u) => u.userId === user.linkedEntities?.parentUserId
+      )
+    ) {
+      return RELATED_ID_NOT_FOUND
+    }
+    return null
+  }
+
+  public async importConsumerUserEvents(
+    batchId: string,
+    userEvents: ConsumerUserEvent[]
+  ): Promise<{
+    response: BatchResponse
+    validatedUserEvents: ConsumerUserEvent[]
+  }> {
+    return this.importUserEvents(batchId, userEvents)
+  }
+
+  public async importBusinessUserEvents(
+    batchId: string,
+    userEvents: BusinessUserEvent[]
+  ): Promise<{
+    response: BatchResponse
+    validatedUserEvents: BusinessUserEvent[]
+  }> {
+    return this.importUserEvents(batchId, userEvents)
+  }
+
+  private async importUserEvents(
+    batchId: string,
+    userEvents: Array<ConsumerUserEvent | BusinessUserEvent>
+  ): Promise<{
+    response: BatchResponse
+    validatedUserEvents: Array<ConsumerUserEvent | BusinessUserEvent>
+  }> {
+    const parentUserIds = compact(
+      userEvents.map(
+        (event) =>
+          (event as BusinessUserEvent).updatedBusinessUserAttributes
+            ?.linkedEntities?.parentUserId ??
+          (event as ConsumerUserEvent).updatedConsumerUserAttributes
+            ?.linkedEntities?.parentUserId
+      )
+    )
+    const [existingUsers, existingParentUsers] = await Promise.all([
+      this.userRepository.getUsersByIds(
+        userEvents.map((event) => event.userId)
+      ),
+      this.userRepository.getUsersByIds(parentUserIds),
+    ])
+
+    const failedRecords: BatchResponseFailedRecord[] = []
+    const validatedUserEvents: Array<ConsumerUserEvent | BusinessUserEvent> = []
+    for (const userEvent of userEvents) {
+      const validationError = this.validateUserEvent(userEvent, {
+        existingUsers,
+        existingParentUsers,
+      })
+      if (validationError) {
+        failedRecords.push({
+          id:
+            validationError === ID_NOT_FOUND
+              ? userEvent.userId
+              : userEvent.eventId,
+          reasonCode: validationError,
+        })
+      } else {
+        validatedUserEvents.push(userEvent)
+      }
+    }
+    return {
+      response: {
+        status: this.getBatchResponseStatus(
+          userEvents.length,
+          failedRecords.length
+        ),
+        batchId,
+        successful: userEvents.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords: failedRecords.length > 0 ? failedRecords : undefined,
+        message: this.getBatchResponseMessage(
+          userEvents.length,
+          failedRecords.length
+        ),
+      },
+      validatedUserEvents,
+    }
+  }
+  private validateUserEvent(
+    userEvent: ConsumerUserEvent | BusinessUserEvent,
+    data: {
+      existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+      existingParentUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+    }
+  ): BatchImportErrorReason | null {
+    if (!data.existingUsers.find((u) => u.userId === userEvent.userId)) {
+      return ID_NOT_FOUND
+    }
+    const parentId =
+      (userEvent as ConsumerUserEvent).updatedConsumerUserAttributes
+        ?.linkedEntities?.parentUserId ??
+      (userEvent as BusinessUserEvent).updatedBusinessUserAttributes
+        ?.linkedEntities?.parentUserId
+    if (
+      parentId &&
+      !data.existingParentUsers.find((u) => u.userId === parentId)
+    ) {
+      return RELATED_ID_NOT_FOUND
+    }
+    return null
+  }
+
+  private getBatchResponseStatus(
+    totalRecordsCount: number,
+    failedRecordsCount: number
+  ): BatchResponseStatus {
+    if (failedRecordsCount === 0) {
+      return 'SUCCESS'
+    }
+    if (failedRecordsCount === totalRecordsCount) {
+      return 'FAILURE'
+    }
+    return 'PARTIAL_FAILURE'
+  }
+  private getBatchResponseMessage(
+    totalRecordsCount: number,
+    failedRecordsCount: number
+  ): string | undefined {
+    if (failedRecordsCount === 0) {
+      return
+    }
+    return `${failedRecordsCount} of ${totalRecordsCount} records failed validation`
+  }
+
+  public async getBatchConsumerUserEvents(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchConsumerUserEventsWithRulesResult> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_EVENT_BATCH',
+      paginationParams,
+      'CONSUMER'
+    )
+    const userEvents =
+      await this.userEventRepository.getMongoUserEventsByIds<ConsumerUserEvent>(
+        entityIds
+      )
+    const formattedEvents = userEvents.map((event) =>
+      pickKnownEntityFields(event, BatchConsumerUserEventWithRulesResult)
+    )
+    return {
+      consumerUserEvents: formattedEvents,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchBusinessUserEvents(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchBusinessUserEventsWithRulesResult> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_EVENT_BATCH',
+      paginationParams,
+      'BUSINESS'
+    )
+    const userEvents =
+      await this.userEventRepository.getMongoUserEventsByIds<BusinessUserEvent>(
+        entityIds
+      )
+    const formattedEvents = userEvents.map((event) =>
+      pickKnownEntityFields(event, BatchBusinessUserEventWithRulesResult)
+    )
+    return {
+      businessUserEvents: formattedEvents,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchBusinessUsers(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchBusinessUsersWithRulesResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_BATCH',
+      paginationParams,
+      'BUSINESS'
+    )
+    const users =
+      await this.userRepository.getUsersByIds<BusinessWithRulesResult>(
+        entityIds
+      )
+    return {
+      businessUsers: users,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchConsumerUsers(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchConsumerUsersWithRulesResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'USER_BATCH',
+      paginationParams
+    )
+    const users = await this.userRepository.getUsersByIds<UserWithRulesResult>(
+      entityIds
+    )
+    const formattedUsers = users.map((user) =>
+      pickKnownEntityFields(user, BatchConsumerUserWithRulesResult)
+    )
+    return {
+      consumerUsers: formattedUsers,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchTransactions(
+    batchId: string,
+    paginationParams: PaginationParams
+  ): Promise<BatchTransactionMonitoringResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'TRANSACTION_BATCH',
+      paginationParams
+    )
+    const transactions = await this.transactionRepository.getTransactionsByIds(
+      entityIds
+    )
+    const formattedTransactions = transactions.map((transaction) =>
+      pickKnownEntityFields(transaction, BatchTransactionMonitoringResult)
+    )
+    return {
+      transactions: formattedTransactions,
+      totalCount: totalCount,
+    }
+  }
+
+  public async getBatchTransactionEvents(
+    batchId: string,
+    paginationParams
+  ): Promise<BatchTransactionEventMonitoringResults> {
+    const { entityIds, totalCount } = await this.getPaginatedEntityIds(
+      batchId,
+      'TRANSACTION_EVENT_BATCH',
+      paginationParams
+    )
+    const transactionEvents =
+      await this.transactionEventRepository.getMongoTransactionEventsByIds(
+        entityIds
+      )
+    const formattedEvents = transactionEvents?.map((event) =>
+      pickKnownEntityFields(event, BatchTransactionEventMonitoringResult)
+    )
+    return {
+      transactionEvents: formattedEvents,
+      totalCount: totalCount,
+    }
+  }
+
+  private async getPaginatedEntityIds(
+    batchId: string,
+    entityType: BatchEntity,
+    paginationParams: PaginationParams,
+    userType?: UserType
+  ): Promise<{ entityIds: string[]; totalCount: number }> {
+    const page = paginationParams.page ?? 1
+    const pageSize = paginationParams.pageSize ?? 20
+    const entityIds = await this.batchRepository.getBatchEntityIds(
+      batchId,
+      entityType,
+      userType
+    )
+    const startIndex = (page - 1) * pageSize
+    const requiredIds = slice(entityIds, startIndex, startIndex + pageSize)
+    return { entityIds: requiredIds, totalCount: entityIds?.length ?? 0 }
+  }
+
+  public async saveBatchEntities(entitiesData: AsyncBatchRecord[]) {
+    await this.batchRepository.saveBatchEntities(entitiesData)
+  }
+}

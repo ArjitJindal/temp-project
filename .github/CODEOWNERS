@@ -1,0 +1,35 @@
+# By default, one of the engineering team must approve a PR.
+*       @flagright/engineering
+
+# RBAC
+tarpon/src/core/default-roles.ts  @madhug-nadig @amandugar
+
+# Public APIs
+tarpon/src/lambdas/public-* @madhug-nadig @amandugar
+
+# Rules Engine
+tarpon/src/services/rules-engine/* @madhug-nadig @kavish6
+
+# Core frontend components
+phytoplankton-console/src/components/library/* @koluch
+
+# Sanction
+tarpon/src/services/sanctions/* @patiljayant
+
+# Risk Scoring
+tarpon/src/services/risk-scoring/* @madhug-nadig @kavish6
+
+# Copilot
+tarpon/src/services/copilot/* @BalzySte @amandugar
+
+# Nango
+tarpon/src/services/nango/* @amandugar
+
+# Notifications
+tarpon/src/services/notifications/* @amandugar @patiljayant
+
+# Infra
+tarpon/infra/* @amandugar @BalzySte
+
+# Clickhouse
+tarpon/src/utils/clickhouse/* @amandugar @kr-amitsinha

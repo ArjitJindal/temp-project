@@ -1,0 +1,22 @@
+@import 'src/components/ui/colors.less';
+
+.group {
+  p {
+    padding-bottom: 10px;
+  }
+
+  &:not(:first-child) {
+    border-top: 1px solid @fr-colors-v2-gray-2;
+    padding-top: 16px;
+  }
+
+  &:not(:last-child) {
+    padding-bottom: 16px;
+  }
+}
+
+.comments {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

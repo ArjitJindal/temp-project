@@ -1,0 +1,28 @@
+@import 'src/components/ui/animation.less';
+
+.animated {
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity, transform;
+  transform-origin: center center;
+
+  &.isShadowed {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
+}
+
+.sector {
+  fill: none;
+}
+
+.label {
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-size: 20px;
+}
+
+.popoverAnchor {
+  pointer-events: none;
+}

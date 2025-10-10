@@ -1,0 +1,6 @@
+{
+  "name": "Rule Approval - Reviewer Workflow",
+  "description": "Single-step rule approval workflow where a reviewer role can approve or reject rule change proposals",
+  "author": "system",
+  "approvalChain": ["reviewer"]
+}

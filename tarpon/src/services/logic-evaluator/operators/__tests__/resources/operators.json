@@ -1,0 +1,22 @@
+[
+  "op:inlist",
+  "op:!inlist",
+  "op:contains",
+  "op:!contains",
+  "op:startswith",
+  "op:endswith",
+  "op:similarto",
+  "op:!similarto",
+  "op:similartowords",
+  "op:!similartowords",
+  "op:regexmatch",
+  "op:!regexmatch",
+  "op:between_time",
+  "op:!between_time",
+  "op:time_difference_greater_than",
+  "op:time_difference_lesser_than",
+  "op:contains_in_lists",
+  "op:!contains_in_lists",
+  "op:similar_to_in_lists",
+  "op:!similar_to_in_lists"
+]

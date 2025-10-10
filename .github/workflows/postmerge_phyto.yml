@@ -1,0 +1,49 @@
+name: Postmerge phyto
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "phytoplankton-console/**"
+      - "lib/**"
+    types:
+      - closed
+jobs:
+  update_coverage_stats:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js 20.9.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.9.0
+          cache: "yarn"
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - name: Install root deps
+        run: yarn install --immutable
+      - name: Install tarpon deps
+        run: yarn install --immutable
+        working-directory: "tarpon"
+      - name: Install phyto deps
+        run: yarn install --immutable
+        working-directory: "phytoplankton-console"
+      - name: Prepare types
+        run: npm run openapi:local
+      - name: Update coverage stats
+        run: yarn run test:coverage
+        working-directory: "phytoplankton-console"
+      - name: Commit changes
+        working-directory: "phytoplankton-console"
+        run: |
+          git config --global user.email "github-actions@flagright.com"
+          git config --global user.name "Github Actions"
+          git add coverage-stats.json
+          git diff-index --quiet HEAD || git commit -m 'Update coverage stats'
+      - name: Push changes
+        run: git push

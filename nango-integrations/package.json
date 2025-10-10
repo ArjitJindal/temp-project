@@ -1,0 +1,24 @@
+{
+  "name": "nango-integrations",
+  "version": "1.0.0",
+  "scripts": {
+    "deploy:dev": "ENV=dev ts-node scripts/deploy.ts",
+    "deploy:sandbox": "ENV=sandbox ts-node scripts/deploy.ts",
+    "deploy:prod": "ENV=prod ts-node scripts/deploy.ts",
+    "generate": "NANGO_CLI_UPGRADE_MODE=ignore nango generate"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "packageManager": "yarn@4.0.2",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.716.0",
+    "@flagright/lib": "link:../lib",
+    "@tsconfig/node20": "^20.1.5",
+    "nango": "^0.57.1"
+  },
+  "engines": {
+    "node": "20.x",
+    "yarn": "4.x"
+  }
+}

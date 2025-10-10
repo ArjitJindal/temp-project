@@ -1,0 +1,81 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+@import 'src/components/ui/z-indexes.less';
+
+.root {
+  background: @fr-colors-navyBlueShade;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+.menuWrapper {
+  position: relative;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: @fr-colors-navyBlueShade;
+  border-right: none;
+}
+
+.menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.menuItem {
+  font-weight: 600;
+  font-size: 16px !important;
+}
+
+.menuLinks {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: hsla(0, 0%, 60%, 0.2);
+    border-radius: 3px;
+    box-shadow: inset 0 0 5px hsl(0deg 0% 100% / 5%);
+  }
+  &::-webkit-scrollbar-track {
+    background: hsla(0, 0%, 80%, 0.15);
+    border-radius: 3px;
+    box-shadow: inset 0 0 5px rgb(37 37 37 / 5%);
+  }
+}
+
+.menuGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  &:not(:first-child) {
+    border-top: 1px solid @fr-colors-navyBlue;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+}
+
+.drawerContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  transform: translateX(100%);
+  width: 100vw;
+  overflow: hidden;
+
+  &:not(.isVisible) {
+    pointer-events: none;
+  }
+}

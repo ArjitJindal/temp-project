@@ -1,0 +1,319 @@
+import React, { useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
+import { CaseStatusWithDropDown } from '../../CaseStatusWithDropDown';
+import ExportButton from './ExportButton';
+import SubHeader from './SubHeader';
+import StatusChangeMenu from './StatusChangeMenu';
+import { Account, Case, CaseStatus, Comment } from '@/apis';
+import { useApi } from '@/api';
+import CasesStatusChangeButton, {
+  CasesStatusChangeButtonProps,
+} from '@/pages/case-management/components/CasesStatusChangeButton';
+import CommentButton from '@/components/CommentButton';
+import {
+  canMutateEscalatedCases,
+  findLastStatusForInReview,
+  statusEscalated,
+  statusEscalatedL2,
+  statusInReview,
+} from '@/utils/case-utils';
+import { useAuth0User, useHasResources, useUser } from '@/utils/user-utils';
+import { message } from '@/components/library/Message';
+import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
+import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { useBackUrl } from '@/utils/backUrl';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { SarButton } from '@/components/Sar';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { AsyncResource, getOr, isLoading, map } from '@/utils/asyncResource';
+import { TableUser } from '@/pages/case-management/CaseTable/types';
+
+interface Props {
+  caseId: string;
+  caseItemRes: AsyncResource<Case>;
+  onReload: () => void;
+  onCommentAdded: (newComment: Comment, groupId: string) => void;
+  headerStickyElRef?: React.RefCallback<HTMLDivElement>;
+}
+
+function getStatusChangeButtonConfig(
+  caseItem: Case,
+  caseId: string,
+  userAccount: Account | null,
+  canMutateCases: boolean,
+  isReopenEnabled: boolean,
+  isLoading: boolean,
+  handleStatusChangeSuccess: () => void,
+  isEscalated: boolean,
+  isEscalatedL2: boolean,
+): CasesStatusChangeButtonProps | null {
+  const { caseStatus } = caseItem;
+  const isDisabled = (caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading;
+
+  if (isEscalatedL2 && canMutateCases && userAccount?.escalationLevel === 'L2') {
+    return {
+      caseIds: [caseId],
+      caseStatus,
+      onSaved: handleStatusChangeSuccess,
+      isDisabled,
+      statusTransitions: {
+        ESCALATED_L2: { status: 'CLOSED', actionLabel: 'Close' },
+        ESCALATED_L2_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+        ESCALATED_L2_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+      },
+    };
+  } else if (isEscalated && canMutateCases && !isEscalatedL2) {
+    return {
+      caseIds: [caseId],
+      caseStatus,
+      onSaved: handleStatusChangeSuccess,
+      isDisabled,
+      statusTransitions: {
+        ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+        ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+      },
+    };
+  } else if (!isEscalated && !isEscalatedL2) {
+    return {
+      caseIds: [caseId],
+      caseStatus,
+      onSaved: handleStatusChangeSuccess,
+      isDisabled,
+      statusTransitions: {
+        OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+        OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+      },
+    };
+  }
+  return null;
+}
+
+interface StatusChangeButtonProps {
+  caseItem: Case;
+  caseId: string;
+  userAccount: Account | null;
+  canMutateCases: boolean;
+  isReopenEnabled: boolean;
+  isLoading: boolean;
+  handleStatusChangeSuccess: () => void;
+  isEscalated: boolean;
+  isEscalatedL2: boolean;
+  user?: TableUser;
+}
+
+const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
+  caseItem,
+  caseId,
+  userAccount,
+  canMutateCases,
+  isReopenEnabled,
+  isLoading,
+  handleStatusChangeSuccess,
+  isEscalated,
+  isEscalatedL2,
+  user,
+}) => {
+  const config = getStatusChangeButtonConfig(
+    caseItem,
+    caseId,
+    userAccount,
+    canMutateCases,
+    isReopenEnabled,
+    isLoading,
+    handleStatusChangeSuccess,
+    isEscalated,
+    isEscalatedL2,
+  );
+
+  return config ? <CasesStatusChangeButton {...config} user={user} haveModal={true} /> : null;
+};
+
+export default function Header(props: Props) {
+  const { caseId, caseItemRes, onReload, headerStickyElRef, onCommentAdded } = props;
+  const caseItem = getOr(caseItemRes, undefined);
+  const backUrl = useBackUrl();
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
+  const navigate = useNavigate();
+  const user = useAuth0User();
+  const userAccount = useUser(user.userId);
+  const isReopenEnabled = useHasResources(['write:::case-management/case-reopen/*']);
+
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  const previousStatus = useMemo(() => {
+    return findLastStatusForInReview(caseItem?.statusChanges ?? []);
+  }, [caseItem]);
+
+  const handleStatusChangeSuccess = (updatedStatus?: CaseStatus) => {
+    if (updatedStatus === 'CLOSED') {
+      if (backUrl && backUrl.startsWith('/case-management/cases')) {
+        navigate(backUrl);
+      } else {
+        navigate('/case-management/cases');
+      }
+    } else {
+      onReload();
+    }
+  };
+
+  const caseStatus = caseItem?.caseStatus;
+
+  const { isReview, isEscalated, isEscalatedL2 } = useMemo(() => {
+    return {
+      isReview: statusInReview(caseStatus),
+      isEscalated: statusEscalated(caseStatus),
+      isEscalatedL2: statusEscalatedL2(caseStatus),
+    };
+  }, [caseStatus]);
+  const canMutateCases = useMemo(() => {
+    if (caseItem == null) {
+      return false;
+    }
+    return canMutateEscalatedCases(
+      { [caseId ?? '']: caseItem },
+      user.userId,
+      isMultiLevelEscalationEnabled,
+    );
+  }, [caseId, caseItem, isMultiLevelEscalationEnabled, user.userId]);
+  const statusChangeMutation = useMutation(
+    async (newStatus: CaseStatus) => {
+      if (caseId == null) {
+        throw new Error(`Case ID is not defined`);
+      }
+      const hideMessage = message.loading('Changing case status...');
+      try {
+        await api.patchCasesStatusChange({
+          CasesStatusUpdateRequest: {
+            caseIds: [caseId],
+            updates: {
+              reason: [],
+              caseStatus: newStatus,
+            },
+          },
+        });
+        handleStatusChangeSuccess(newStatus);
+      } finally {
+        hideMessage();
+      }
+    },
+    {
+      onSuccess: async () => {
+        if (caseId != null) {
+          await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
+        }
+      },
+      onError: () => {
+        message.error('Failed to change case status');
+      },
+    },
+  );
+
+  return (
+    <EntityHeader
+      stickyElRef={headerStickyElRef}
+      breadcrumbItems={[
+        {
+          title: 'Cases',
+          to: '/case-management/cases',
+        },
+        map(caseItemRes, (caseItem) => ({
+          title: caseItem.caseId ?? '',
+        })),
+      ]}
+      chips={[
+        ...(caseItem?.caseType === 'MANUAL' || caseItem?.caseType === 'EXTERNAL'
+          ? [
+              <CaseGenerationMethodTag
+                method={caseItem.caseType}
+                key={`case-generation-method-tag-${caseItem.caseId}`}
+              />,
+            ]
+          : []),
+        ...(caseStatus
+          ? [
+              <CaseStatusWithDropDown
+                caseStatus={caseStatus}
+                statusChanges={caseItem.statusChanges ?? []}
+                previousStatus={previousStatus}
+                assignments={caseItem.assignments ?? []}
+                onSelect={(newStatus) => {
+                  statusChangeMutation.mutate(newStatus);
+                }}
+                key={`case-status-drop-down-${caseItem.caseId}`}
+                reviewAssignments={caseItem.reviewAssignments ?? []}
+              />,
+            ]
+          : []),
+      ]}
+      buttons={[
+        <CommentButton
+          key={`comment-button-${caseId}`}
+          disabled={isLoading(caseItemRes)}
+          onSuccess={(newComment) => {
+            onCommentAdded(newComment, caseId ?? '');
+          }}
+          submitRequest={async (commentFormValues) => {
+            if (caseId == null) {
+              throw new Error(`Case ID is not defined`);
+            }
+            const commentData = {
+              CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
+            };
+            return await api.postCaseComments({
+              caseId: caseId,
+              ...commentData,
+            });
+          }}
+          requiredResources={['write:::case-management/case-overview/*']}
+        />,
+        ...getOr(
+          map(caseItemRes, (caseItem) => {
+            const user: TableUser = {
+              ...caseItem.caseUsers?.destination,
+              ...caseItem.caseUsers?.origin,
+            } as TableUser;
+            return [
+              <ExportButton caseItem={caseItem} key={`export-button-${caseItem.caseId}`} />,
+              <SarButton
+                caseId={caseId}
+                alertIds={[]}
+                transactionIds={[]}
+                key={`sar-button-${caseId}`}
+              />,
+              ...(!isReview && caseId
+                ? [
+                    <StatusChangeButton
+                      caseItem={caseItem}
+                      caseId={caseId}
+                      userAccount={userAccount}
+                      canMutateCases={canMutateCases}
+                      isReopenEnabled={isReopenEnabled}
+                      isLoading={isLoading(caseItemRes)}
+                      handleStatusChangeSuccess={handleStatusChangeSuccess}
+                      isEscalated={isEscalated}
+                      isEscalatedL2={isEscalatedL2}
+                      key={`status-change-button-${caseItem.caseId}`}
+                      user={user}
+                    />,
+                  ]
+                : []),
+              <StatusChangeMenu
+                isDisabled={isLoading(caseItemRes)}
+                caseItem={caseItem}
+                onReload={handleStatusChangeSuccess}
+                key={`status-change-menu-${caseItem.caseId}`}
+              />,
+            ];
+          }),
+          [],
+        ),
+      ]}
+      subHeader={
+        <SubHeader caseId={caseId} caseItemRes={caseItemRes} key={`sub-header-${caseId}`} />
+      }
+    />
+  );
+}

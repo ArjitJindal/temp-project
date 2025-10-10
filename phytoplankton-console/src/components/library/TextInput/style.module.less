@@ -1,0 +1,158 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+@border-width: 1px;
+
+.root {
+  display: flex;
+  flex-direction: column;
+
+  &.disableBorders {
+    .inputWrapper {
+      border: none;
+    }
+  }
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  border: @border-width solid @figma-vars--tokens-colorStrokeTertiary;
+  border-radius: @figma-vars--tokens-borderRadiusBorderradiusS;
+  background: white;
+
+  &.isDisabled {
+    pointer-events: none;
+    border-color: @figma-vars--tokens-colorBackgroundDisabled;
+    background: @figma-vars--tokens-colorBackgroundDisabled;
+
+    .input {
+      border-color: transparent;
+      background: transparent;
+      color: @figma-vars--tokens-colorTextSecondary;
+
+      &::placeholder {
+        color: @figma-vars--tokens-colorTextSecondary;
+      }
+    }
+
+    .icon {
+      color: @figma-vars--tokens-colorIconDisabled;
+    }
+  }
+
+  &:not(.isDisabled) {
+    &:not(.isError):not(.isSuccess) {
+      &.isFocused {
+        border-color: @figma-vars--tokens-colorStrokeAction;
+      }
+    }
+    &.isError {
+      border-color: @figma-vars--tokens-colorStrokeError;
+    }
+    &.isSuccess {
+      border-color: @figma-vars--tokens-colorStrokeSuccess;
+    }
+
+    &.isFocused,
+    &.isFilled {
+      .icon {
+        color: @figma-vars--tokens-colorIconPrimary;
+      }
+    }
+  }
+
+  &.size-X1 {
+    .sizeProps(@figma-vars--tokens-spacingSpacingXs);
+  }
+
+  &.size-X2 {
+    .sizeProps(@figma-vars--tokens-spacingSpacingM);
+  }
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  transition-property: border-color;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
+
+  &::placeholder {
+    color: @figma-vars--tokens-colorTextSecondary;
+  }
+}
+
+.icon {
+  width: @figma-vars--tokens-sizeIconIconsizeS;
+  height: @figma-vars--tokens-sizeIconIconsizeS;
+  color: @figma-vars--tokens-colorIconSecondary;
+  flex-shrink: 0;
+
+  &.iconRight,
+  &.iconLeft {
+    display: flex;
+  }
+
+  &.clearIcon {
+    height: 12px;
+    width: 12px;
+    transition-property: opacity;
+    transition-timing-function: @default-animation-function;
+    transition-duration: @default-animation-speed;
+    cursor: pointer;
+
+    &:not(.isVisible) {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  &.loadingIcon {
+    animation-name: TextInput__loadingIcon;
+    animation-duration: @default-animation-speed * 8;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+  }
+}
+
+.description {
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+  color: @figma-vars--tokens-colorTextSecondary;
+  line-height: @figma-vars--primitives-typographyFontLineHeightS;
+}
+
+@keyframes TextInput__loadingIcon {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+  Helpers
+ */
+.sizeProps(@spacing) {
+  .input {
+    padding: (@spacing - @border-width * 2) @spacing;
+  }
+  .iconLeft {
+    margin-left: @spacing;
+  }
+  .iconRight {
+    margin-right: @spacing;
+  }
+}

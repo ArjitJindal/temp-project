@@ -1,0 +1,89 @@
+@import '~antd/es/style/themes/default.less';
+@import '~antd/dist/antd.less'; // Import Ant Design styles by less entry
+@import 'components/ui/colors';
+@import 'antd-theme.less'; // variables to override above
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: black;
+}
+
+.react-resizable {
+  position: relative;
+  background-clip: padding-box;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  right: -5px;
+  bottom: 0;
+  z-index: 1;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+@media print {
+  /* stylelint-disable */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* stylelint-enable */
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+
+  .print-container {
+    width: 100%;
+    position: absolute;
+    padding: 0 !important;
+    left: 0;
+    top: 0;
+  }
+
+  .hide-on-print {
+    display: none !important;
+  }
+
+  ::-webkit-scrollbar {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+  }
+
+  @page {
+    size: a3 landscape !important;
+    margin: 0 !important;
+  }
+}
+
+* {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: fade(@fr-colors-v2-gray-3, 50%);
+    border-radius: 2.5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: fade(@fr-colors-v2-gray-5, 50%);
+    border-radius: 2.5px;
+
+    &:hover {
+      background-color: @fr-colors-v2-gray-5;
+    }
+  }
+}

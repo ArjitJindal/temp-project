@@ -1,0 +1,60 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+@button-bg: @fr-base-blue-shade-02;
+
+.root {
+  overflow: hidden;
+  &:not(.isCollapsed) {
+    background-color: @button-bg;
+  }
+}
+
+.button {
+  display: flex;
+  color: white;
+  white-space: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px;
+  border-radius: 4px;
+  min-height: 46px;
+  transition-duration: @default-animation-speed;
+  transition-property: background-color;
+  &:not(.isCollapsed) {
+    background-color: @button-bg;
+  }
+
+  .switch {
+    display: flex;
+    position: relative;
+    border: none;
+    cursor: pointer;
+    margin: 0;
+    background: fade(white, 4%);
+    padding: 4px;
+    border-radius: 4px;
+
+    .item {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+
+      &.isOn {
+        background: @fr-colors-red;
+        font-weight: 600;
+      }
+      &.isOff {
+        background: @fr-colors-brandBlue;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+.icon {
+  color: white;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}

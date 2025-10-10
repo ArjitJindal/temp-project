@@ -1,0 +1,12 @@
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="globe">
+    <path id="Vector"
+          d="M10.0003 18.3307C14.6027 18.3307 18.3337 14.5998 18.3337 9.9974C18.3337 5.39502 14.6027 1.66406 10.0003 1.66406C5.39795 1.66406 1.66699 5.39502 1.66699 9.9974C1.66699 14.5998 5.39795 18.3307 10.0003 18.3307Z"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path id="Vector_2" d="M1.66699 10H18.3337" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          stroke-linejoin="round"/>
+    <path id="Vector_3"
+          d="M10.0003 1.66406C12.0847 3.94602 13.2693 6.90742 13.3337 9.9974C13.2693 13.0874 12.0847 16.0488 10.0003 18.3307C7.91593 16.0488 6.73136 13.0874 6.66699 9.9974C6.73136 6.90742 7.91593 3.94602 10.0003 1.66406Z"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

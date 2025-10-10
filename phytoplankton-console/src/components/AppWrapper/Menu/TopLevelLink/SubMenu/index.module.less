@@ -1,0 +1,26 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 7px -1px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background: white;
+  overflow: hidden;
+}
+
+.item {
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 14px;
+
+  &,
+  &:hover {
+    color: @fr-colors-navyBlueShade;
+  }
+
+  &:hover {
+    background: @fr-colors-v2-gray-1;
+  }
+}

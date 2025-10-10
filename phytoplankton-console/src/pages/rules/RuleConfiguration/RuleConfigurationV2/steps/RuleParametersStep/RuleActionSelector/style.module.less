@@ -1,0 +1,43 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+}
+
+.radio {
+  margin-top: 2px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: 600;
+  line-height: 20px;
+
+  &.color-FLAG {
+    color: @fr-colors-v2-risk-level-base-medium;
+  }
+
+  &.color-SUSPEND {
+    color: @fr-colors-v2-risk-level-base-high;
+  }
+
+  &.color-BLOCK {
+    color: @fr-colors-v2-risk-level-base-very-high;
+  }
+}
+
+.description {
+  color: @fr-colors-v2-gray-6;
+  line-height: 24px;
+}

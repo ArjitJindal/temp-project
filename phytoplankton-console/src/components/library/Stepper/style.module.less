@@ -1,0 +1,164 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+
+  &.layout-VERTICAL {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+.steps {
+  --step-gap: 24px;
+  --step-number-size: 24px;
+
+  display: flex;
+  gap: var(--step-gap);
+  grid-auto-flow: column;
+
+  &.layout-VERTICAL {
+    --step-gap: 32px;
+
+    flex-direction: column;
+
+    .step:not(:last-child) {
+      &::before {
+        content: ' ';
+        display: block;
+        height: calc(100% + var(--step-gap));
+        width: 1px;
+        background: @fr-colors-v2-gray-2;
+        left: calc(var(--step-number-size) / 2);
+        position: absolute;
+        transform: translateX(-50%);
+      }
+    }
+  }
+}
+
+.sticky {
+  border-radius: 4px;
+
+  .steps {
+    position: sticky;
+    top: 0;
+    left: 0;
+  }
+}
+
+.step {
+  display: flex;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+
+  * {
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+  }
+
+  .stepTitle {
+    transition-property: color;
+  }
+  .optional {
+    transition-property: color;
+  }
+  .required {
+    color: @fr-colors-red;
+  }
+  .stepNumber {
+    transition-property: color, background-color;
+  }
+
+  &.isActive {
+    .stepTitle {
+      &,
+      .optional {
+        color: @fr-colors-brandBlue;
+      }
+    }
+  }
+
+  &.isInvalid {
+    &,
+    &.isActive,
+    &.isPassed {
+      .stepNumber {
+        background-color: @fr-colors-v2-alert-critical;
+        color: white;
+      }
+    }
+
+    &.isActive {
+      .stepTitle {
+        &,
+        .optional {
+          color: @fr-colors-v2-alert-critical;
+        }
+      }
+    }
+  }
+
+  &.isPassed,
+  &.isActive {
+    .stepNumber {
+      background-color: @fr-colors-brandBlue;
+      color: white;
+    }
+  }
+
+  &.isDisabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    .stepNumber {
+      background-color: @fr-colors-v2-gray-2;
+      color: @fr-colors-v2-gray-4;
+    }
+  }
+}
+
+.stepNumber {
+  width: var(--step-number-size);
+  height: var(--step-number-size);
+  border-radius: 50%;
+  background: @fr-colors-v2-gray-2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px;
+  z-index: 1;
+}
+
+.stepTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  transition-property: color;
+
+  .optional {
+    font-weight: normal;
+    transition-property: color;
+    color: @fr-colors-gray-4;
+  }
+}
+
+.stepDescription {
+  font-size: 12px;
+  font-style: italic;
+  color: @fr-colors-gray-4;
+  line-height: 20px;
+  margin-top: 2px;
+  max-width: 200px;
+}
+
+.children {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}

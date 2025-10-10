@@ -1,0 +1,108 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
+@collapsed-menu-width: 60px;
+@open-menu-width: 220px;
+@menu-animation-speed: @default-animation-speed;
+
+:root {
+  .root {
+    min-height: 100vh;
+    background: @fr-global-bg-color;
+
+    &.isCollapsed {
+      .aside {
+        width: @collapsed-menu-width;
+      }
+      .main {
+        padding-left: @collapsed-menu-width;
+      }
+      .demoMode {
+        left: @collapsed-menu-width;
+        width: ~'calc(100% - @{collapsed-menu-width})';
+      }
+    }
+  }
+
+  .header {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: @header-z-index;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    padding: 0 24px;
+    overflow: auto;
+    color: #fff;
+    background-color: @fr-colors-brandBlue;
+    box-shadow: 0 4px 4px rgb(0 0 0 / 10%);
+    transition: background-color @default-animation-speed, color @default-animation-speed;
+  }
+
+  .aside {
+    position: fixed;
+    z-index: @menu-z-index;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    width: @open-menu-width;
+    height: 100vh;
+    transition: width @menu-animation-speed;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: @open-menu-width;
+    transition: padding-left @menu-animation-speed;
+  }
+
+  .footer {
+    background: none;
+    :global {
+      .ant-pro-global-footer-copyright {
+        color: #fff;
+        opacity: 45%;
+      }
+      .ant-pro-global-footer {
+        padding-bottom: 40px !important;
+      }
+    }
+  }
+}
+
+.demoMode {
+  background: @fr-colors-brandBlue;
+  height: 4px;
+  pointer-events: none;
+  z-index: @demo-mode-notification-z-index;
+  position: fixed;
+  top: 0;
+  left: @open-menu-width;
+  width: ~'calc(100% - @{open-menu-width})';
+  transition-property: left, width;
+  transition-duration: @menu-animation-speed;
+
+  > div {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: @fr-colors-brandBlue;
+    color: white;
+    font-size: 12px;
+    border-radius: 0 0 4px 4px;
+    padding: 0 12px;
+  }
+}

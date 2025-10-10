@@ -1,0 +1,101 @@
+@import 'src/components/ui/colors';
+
+@h-padding: 16px;
+
+.root,
+.rootEmpty {
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.rootEmpty {
+  margin-top: 16px;
+}
+
+.aiSection {
+  padding: 0 @h-padding;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: @h-padding;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.subheader {
+  padding: 4px @h-padding;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0.01em;
+  text-align: left;
+  color: @fr-colors-v2-gray-6;
+}
+
+.item {
+  padding: 8px @h-padding;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: @fr-colors-v2-highlight-flagrightBlue;
+    border-top-color: @fr-colors-v2-highlight-flagrightBlue;
+  }
+
+  &:not(:first-child) {
+    border-top: 1px solid @fr-colors-v2-gray-2;
+  }
+
+  .itemId {
+    color: @fr-colors-v2-primary-flagrightBlue;
+  }
+
+  .itemName {
+    color: @fr-colors-v2-gray-10;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0.14px;
+  }
+
+  .minimalItemName {
+    font-weight: 400;
+  }
+
+  .itemDescription {
+    grid-column: span 2;
+    color: @fr-colors-v2-gray-8;
+  }
+}
+
+.minimalItem {
+  padding: 6px 8px;
+
+  &:not(:first-child) {
+    border-top: none;
+  }
+}
+
+.seeAllButton {
+  padding: 8px @h-padding;
+  color: @fr-colors-v2-primary-flagrightBlue;
+  text-align: center;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px;
+  background: @fr-colors-v2-card-background;
+  border: none;
+  cursor: pointer;
+  position: sticky;
+  bottom: 0;
+}

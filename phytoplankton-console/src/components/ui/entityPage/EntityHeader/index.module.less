@@ -1,0 +1,60 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/Card/vars';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0 !important;
+  padding: 0;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbsSeparator {
+  height: 20px;
+  width: 1px;
+  background: @fr-colors-v2-gray-2;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.main,
+.subHeader {
+  padding-left: @h-padding;
+  padding-right: @h-padding;
+}
+
+.main {
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+  flex: 1;
+  padding-top: @v-padding;
+  padding-bottom: @v-padding;
+  background: white;
+
+  &.isSticky {
+    border-radius: 0;
+  }
+}
+
+.subHeader {
+  padding-bottom: @v-padding;
+  display: flex;
+  flex-direction: column;
+  gap: @v-padding;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+}

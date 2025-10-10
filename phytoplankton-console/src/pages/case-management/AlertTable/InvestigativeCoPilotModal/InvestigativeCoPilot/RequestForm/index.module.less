@@ -1,0 +1,18 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  gap: 16px;
+  flex-direction: column;
+  border-radius: 8px;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity;
+
+  &.isLoading {
+    opacity: 0.5;
+    pointer-events: none;
+    transition-delay: 100ms;
+  }
+}

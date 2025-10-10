@@ -1,0 +1,46 @@
+@import 'components/ui/colors';
+
+@import (css)
+  url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
+
+@font-size-base: 14px;
+@font-size-sm: 12px;
+@heading-1-size: 32px;
+@heading-2-size: 24px;
+@heading-3-size: 20px;
+@heading-4-size: 16px;
+@heading-5-size: 14px;
+@heading-6-size: 12px;
+@font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+  Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+  'Noto Color Emoji';
+@primary-color: @fr-colors-brandBlue;
+
+// Semantic colors
+@info-color: @fr-colors-infoColor;
+@success-color: @fr-colors-successColor;
+@warning-color: @fr-colors-warningColor;
+@error-color: @fr-colors-errorColor;
+
+// Buttons
+@btn-font-size-sm: 12px;
+
+// Forms
+@label-color: @fr-colors-purpleGray;
+@form-vertical-label-padding: 0px 0 4px 0;
+@form-item-margin-bottom: 20px;
+
+.ant-form-vertical {
+  > .ant-form-item {
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.ant-collapse-header-text {
+  width: 100%;
+}
+.ant-spin-dot {
+  color: @fr-colors-v2-primary-flagrightBlue;
+}

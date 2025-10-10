@@ -1,0 +1,13 @@
+.drawerContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  transform: translateX(100%);
+  width: 100vw;
+  overflow: hidden;
+
+  &:not(.isVisible) {
+    pointer-events: none;
+  }
+}

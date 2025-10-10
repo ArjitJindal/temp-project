@@ -1,0 +1,59 @@
+import { JSONSchemaType } from 'ajv'
+import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { UserRuleFilter } from './filter'
+import { Business } from '@/@types/openapi-public/Business'
+import { User } from '@/@types/openapi-public/User'
+import { expandCountryGroup } from '@/utils/countries'
+
+export type UserCountryOfNationalityRuleFilterParameter = {
+  userNationalityCountries?: string[]
+}
+
+export class UserCountryOfNationalityRuleFilter extends UserRuleFilter<UserCountryOfNationalityRuleFilterParameter> {
+  public static getSchema(): JSONSchemaType<UserCountryOfNationalityRuleFilterParameter> {
+    return {
+      type: 'object',
+      properties: {
+        userNationalityCountries: COUNTRIES_OPTIONAL_SCHEMA({
+          title: 'Nationality countries',
+          description:
+            "For business {{userAlias}}s, this field will filter based on shareholder and director country of nationality. For consumer {{userAlias}}s, this field will filter based on the {{userAlias}}'s country of nationality.",
+          uiSchema: {
+            group: 'geography',
+          },
+        }),
+      },
+    }
+  }
+  public async predicate(): Promise<boolean> {
+    if (process.env.__INTERNAL_ENBALE_RULES_ENGINE_V8__) {
+      return await this.v8Runner()
+    }
+    return this.isUserCountry(this.user)
+  }
+
+  private isUserCountry(user: User | Business): boolean {
+    const consumerUser = user as User
+    const businessUser = user as Business // For typescript
+
+    const userNationalityCountries = expandCountryGroup(
+      this.parameters.userNationalityCountries ?? []
+    )
+    return (
+      (userNationalityCountries.some(
+        (x) => x === consumerUser.userDetails?.countryOfNationality
+      ) ||
+        businessUser.shareHolders?.some((item) =>
+          userNationalityCountries?.some(
+            (x) => x === item.generalDetails?.countryOfNationality
+          )
+        ) ||
+        businessUser.directors?.some((item) =>
+          userNationalityCountries?.some(
+            (x) => x === item.generalDetails.countryOfNationality
+          )
+        )) ??
+      false
+    )
+  }
+}

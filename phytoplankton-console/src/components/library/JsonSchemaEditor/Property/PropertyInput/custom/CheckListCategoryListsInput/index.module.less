@@ -1,0 +1,43 @@
+@import 'src/components/ui/colors.less';
+
+.button {
+  max-width: fit-content;
+}
+
+.checkListItems {
+  border: 1px solid @fr-colors-v2-gray-2;
+  padding: 8px;
+}
+
+.editableChecklistItem {
+  display: grid;
+  grid-template-columns: 11fr 1fr;
+  align-items: center;
+}
+
+.editableChecklistItemButtons {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+}
+
+.addNewChecklistItemButton {
+  background-color: @fr-colors-v2-unknown-1;
+}
+
+.root {
+  display: grid;
+  gap: 16px;
+}
+
+.divider {
+  margin: 16px 0;
+  height: 1px;
+  background-color: rgba(5, 5, 5, 0.06);
+  border: 0;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}

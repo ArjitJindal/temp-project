@@ -1,0 +1,134 @@
+{{#imports}}
+import { {{classname}} } from '@/@types/openapi-{{api}}/{{classname}}';
+{{/imports}}
+import { SimulationBeaconType } from "@/@types/openapi-internal/SimulationBeaconType";
+import { SimulationRiskLevelsType } from "@/@types/openapi-internal/SimulationRiskLevelsType";
+import { Permission } from "@/@types/openapi-internal/Permission";
+import { pickKnownEntityFields } from "@/utils/object";
+import {
+APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Context } from '@/console-api/context'
+import { BadRequest } from "http-errors";
+import { fromGlobalContext } from '@/console-api/context'
+import { getContext } from '@/core/utils/context-storage'
+{{#operations}}
+{{#operation}}
+import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request} from "@/@types/openapi-{{api}}/RequestParameters";
+{{/operation}}
+{{/operations}}
+
+export class Handlers {
+{{#operations}}
+    {{#operation}}
+        private {{nickname}}Handler?: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}}  | null> | {{{returnType}}} {{^returnType}}void{{/returnType}} | Promise<null> | null
+    {{/operation}}
+{{/operations}}
+{{#operations}}
+    {{#operation}}
+        private {{nickname}}(ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request): Promise<{{{returnType}}} {{^returnType}}void{{/returnType}} | null> | {{{returnType}}} {{^returnType}}void{{/returnType}} | Promise<null> | null {
+           if (this.{{nickname}}Handler == undefined) {
+               throw new Error("No handler registered")
+           }
+           return this.{{nickname}}Handler(ctx, request)
+        }
+        register{{#lambda.titlecase}}{{nickname}}{{/lambda.titlecase}}(handler: (ctx: Context, request: DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request) => Promise<{{{returnType}}} {{^returnType}}void{{/returnType}} | null> | {{{returnType}}} {{^returnType}}void{{/returnType}} | Promise<null> | null) {
+           this.{{nickname}}Handler = handler
+        }
+    {{/operation}}
+{{/operations}}
+        handle<T>(event: APIGatewayProxyWithLambdaAuthorizerEvent<T>) {
+            const ctx = fromGlobalContext(getContext())
+    {{#operations}}
+    {{#operation}}
+            if (event.httpMethod === '{{httpMethod}}' && event.resource === '{{path}}') {
+                {{#bodyParam}}
+                if (!event.body) {
+                    throw new BadRequest('Empty request body')
+                }
+                {{/bodyParam}}
+                return this.{{nickname}}(
+                    ctx,
+                    {
+                        {{#pathParams}}
+                            {{#isNumber}}
+                        {{paramName}}: event.pathParameters?.{{paramName}} ? parseInt(event.pathParameters?.{{paramName}}) : undefined,
+                            {{/isNumber}}
+                            {{^isNumber}}
+                        {{paramName}}: event.pathParameters?.{{paramName}} as string,
+                            {{/isNumber}}
+                        {{/pathParams}}
+                        {{#queryParams}}
+                            {{#isArray}}
+                              {{#isNumber}}
+                        {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',').map(i => parseInt(i)) : undefined) as {{baseType}}[],
+                              {{/isNumber}}
+                              {{^isNumber}}
+                        {{paramName}}: (event.queryStringParameters?.{{paramName}} ? event.queryStringParameters.{{paramName}}.split(',') : undefined) as {{baseType}}[],
+                              {{/isNumber}}
+                            {{/isArray}}
+                            {{^isArray}}
+                                {{#isNumber}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} ? parseInt(event.queryStringParameters?.{{paramName}}) : {{#required}}0{{/required}}{{^required}}undefined{{/required}},
+                                {{/isNumber}}
+                                {{#isInteger}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} ? parseInt(event.queryStringParameters?.{{paramName}}) : {{#required}}0{{/required}}{{^required}}undefined{{/required}},
+                                {{/isInteger}}
+                                {{#isString}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} as {{{dataType}}},
+                                {{/isString}}
+                                {{#isBoolean}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} == "true",
+                                {{/isBoolean}}
+                                {{^isNumber}}
+                                {{^isString}}
+                                {{^isBoolean}}
+                                {{^isInteger}}
+                                {{^isEnum}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} as {{{dataType}}},
+                                {{/isEnum}}
+                                {{/isInteger}}
+                                {{/isBoolean}}
+                                {{/isString}}
+                                {{/isNumber}}
+                            {{/isArray}}
+                        {{/queryParams}}
+                        {{#bodyParam}}
+                        {{paramName}}: {{#isArray}}JSON.parse(event.body){{/isArray}}{{^isArray}}pickKnownEntityFields(JSON.parse(event.body) as {{{dataType}}}, {{{dataType}}}){{/isArray}} as {{{dataType}}}
+                        {{/bodyParam}}
+                    }
+                )
+            }
+        {{/operation}}
+            throw new BadRequest('Unhandled request')
+{{/operations}}
+    }
+}
+
+export function getApiRequiredResources(resource: string, method: string): string[] {
+    return {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_RESOURCES[`${resource}-${method}`]
+}
+
+export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_RESOURCES: {[key: string]: string[]} = {
+{{#operations}}
+  {{#operation}}
+    "{{path}}-{{httpMethod}}": [
+        {{#vendorExtensions.x-flagright.resources}}
+        "{{.}}"{{^-last}},{{/-last}}
+        {{/vendorExtensions.x-flagright.resources}}
+    ],
+  {{/operation}}
+{{/operations}}
+}
+
+export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_ALWAYS_ALLOWED: {[key: string]: boolean} = {
+{{#operations}}
+  {{#operation}}
+    "{{path}}-{{httpMethod}}": {{#vendorExtensions.x-flagright.alwaysAllowedAccess}}true{{/vendorExtensions.x-flagright.alwaysAllowedAccess}}{{^vendorExtensions.x-flagright.alwaysAllowedAccess}}false{{/vendorExtensions.x-flagright.alwaysAllowedAccess}},
+  {{/operation}}
+{{/operations}}
+};
+
+export function getAlwaysAllowedAccess(resource: string, method: string): boolean {
+    return {{#lambda.uppercase}}{{#lambda.snakecase}}{{api}}{{/lambda.snakecase}}{{/lambda.uppercase}}_ALWAYS_ALLOWED[`${resource}-${method}`]
+}

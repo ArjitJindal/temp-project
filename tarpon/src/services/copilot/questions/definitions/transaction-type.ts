@@ -1,0 +1,83 @@
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
+import { buildTransactionTypeQuery } from './queries/transaction-type-query'
+import { BarchartQuestion } from '@/services/copilot/questions/types'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
+import {
+  humanReadablePeriod,
+  matchPeriod,
+  casePaymentIdentifierQuery,
+  Period,
+  periodDefaults,
+  periodVars,
+} from '@/services/copilot/questions/definitions/util'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+
+export const TransactionType: BarchartQuestion<Period> = {
+  type: 'BARCHART',
+  questionId: COPILOT_QUESTIONS.TRANSACTIONS_BY_TYPE,
+  categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
+  title: async (_, vars) => {
+    return `Transactions by type ${humanReadablePeriod(vars)}`
+  },
+  aggregationPipeline: async (
+    { tenantId, userId, humanReadableId, paymentIdentifier },
+    period
+  ) => {
+    const getClickhouseResults = async (): Promise<
+      { type: InternalTransaction['type']; count: number }[]
+    > => {
+      const clickhouseClient = await getClickhouseClient(tenantId)
+
+      const query = buildTransactionTypeQuery(userId, paymentIdentifier, period)
+
+      return await executeClickhouseQuery<
+        Array<{ type: InternalTransaction['type']; count: number }>
+      >(clickhouseClient, {
+        query,
+        format: 'JSONEachRow',
+      })
+    }
+
+    const getMongoResults = async (): Promise<
+      { type: InternalTransaction['type']; count: number }[]
+    > => {
+      const client = await getMongoDbClient()
+      const db = client.db()
+      const condition = userId
+        ? [{ originUserId: userId }, { destinationUserId: userId }]
+        : casePaymentIdentifierQuery(paymentIdentifier)
+
+      return db
+        .collection(TRANSACTIONS_COLLECTION(tenantId))
+        .aggregate<{ type: InternalTransaction['type']; count: number }>([
+          { $match: { $or: condition, ...matchPeriod('timestamp', period) } },
+          { $group: { _id: '$type', count: { $sum: 1 } } },
+          { $project: { type: '$_id', count: 1, _id: 0 } },
+        ])
+        .toArray()
+    }
+
+    const data = isClickhouseEnabled()
+      ? await getClickhouseResults()
+      : await getMongoResults()
+
+    const totalTransactions = data.reduce((acc, curr) => acc + curr.count, 0)
+
+    return {
+      data: data.map((r) => ({ x: r.type, y: r.count })),
+      summary: `There have been ${totalTransactions} transactions for ${humanReadableId} ${humanReadablePeriod(
+        period
+      )}.`,
+    }
+  },
+  variableOptions: {
+    ...periodVars,
+  },
+  defaults: () => {
+    return periodDefaults()
+  },
+}

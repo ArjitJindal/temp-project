@@ -1,0 +1,63 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  padding: 16px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: 8px;
+  height: 100%;
+
+  &.fixedHeight {
+    .childrenWrapper {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .children {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  }
+}
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  color: @fr-colors-v2-gray-10;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.icon {
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+
+  &.isLoading {
+    pointer-events: none;
+    color: @fr-colors-v2-gray-4;
+  }
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.childrenWrapper {
+  flex: 1;
+}

@@ -1,0 +1,27 @@
+@import '~antd/es/style/themes/default.less';
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  :global {
+    .ant-radio-button-wrapper {
+      font-size: 12px;
+      padding: 0 4px !important;
+    }
+  }
+}
+
+.lockIcon {
+  width: 16px;
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+
+  &.isDisabled,
+  &.isLoading {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}

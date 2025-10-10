@@ -1,0 +1,84 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.noBorder {
+  border: none;
+  border-bottom: none !important;
+}
+
+.option {
+  flex: 0 0 auto;
+  border: 1px solid @fr-colors-v2-gray-4;
+  padding: 10px 12px;
+  border-radius: 4px;
+  color: @fr-colors-v2-gray-6;
+  background: white;
+  min-width: 80px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition-property: background-color, color;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+
+  &.fullWidth {
+    flex: 1;
+    max-width: unset;
+  }
+
+  &.isActive:not(.isDisabled) {
+    background: @fr-colors-v2-highlight-flagrightBlue;
+    border-color: @fr-colors-v2-primary-flagrightBlue;
+
+    .label {
+      font-weight: 600;
+      color: @fr-colors-v2-primary-flagrightBlue;
+    }
+
+    .description {
+      color: black;
+    }
+  }
+
+  &.isDisabled {
+    border-color: @fr-colors-v2-state-disabled;
+    pointer-events: none;
+    background: none;
+
+    .label,
+    .description {
+      opacity: 0.85;
+    }
+  }
+
+  &:hover:not(.isActive) {
+    border-color: @fr-colors-v2-state-hover;
+  }
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  color: @fr-colors-v2-gray-6;
+  transition-property: color;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+}
+
+.description {
+  transition-property: color;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+}

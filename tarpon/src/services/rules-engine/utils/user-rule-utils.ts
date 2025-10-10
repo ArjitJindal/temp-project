@@ -1,0 +1,75 @@
+import { isV8RuleInstance } from '../utils'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
+
+export function isConsumerUser(user: User | Business): user is User {
+  return !isBusinessUser(user)
+}
+
+export function isBusinessUser(user: User | Business): user is Business {
+  return (user as Business).legalEntity !== undefined
+}
+
+export function isOngoingUserRuleInstance(
+  ruleInstance: RuleInstance,
+  isRiskLevelsEnabled: boolean
+) {
+  const schedule = ruleInstance.userRuleRunCondition?.schedule
+  if (schedule) {
+    return true
+  }
+
+  const checkForOngoing = (parameters: {
+    ongoingScreening?: boolean
+    ruleStages?: UserRuleStage[]
+  }) =>
+    Boolean(
+      parameters?.ongoingScreening ||
+        parameters?.ruleStages?.includes('ONGOING')
+    )
+
+  if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
+    return Boolean(
+      Object.values(ruleInstance.riskLevelParameters).find(checkForOngoing)
+    )
+  }
+  return checkForOngoing(ruleInstance.parameters)
+}
+
+export function isRuleInstanceUpdateOrOnboarding(
+  ruleInstance: RuleInstance,
+  stage: UserRuleStage,
+  isRiskLevelsEnabled: boolean
+) {
+  const checkForUpdatedEntity = (parameters: {
+    ongoingScreening?: boolean
+    ruleStages?: UserRuleStage[]
+  }) => {
+    return Boolean(
+      (isV8RuleInstance(ruleInstance) &&
+        ruleInstance.userRuleRunCondition?.entityUpdated !== false) ||
+        (!isV8RuleInstance(ruleInstance) &&
+          (parameters?.ruleStages == null ||
+            parameters.ruleStages.includes(stage)))
+    )
+  }
+
+  if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
+    return Boolean(
+      Object.values(ruleInstance.riskLevelParameters).find(
+        checkForUpdatedEntity
+      )
+    )
+  }
+  return checkForUpdatedEntity(ruleInstance.parameters)
+}
+
+export const RuleIdsFor314AConsumer = ['R-42']
+export const RuleIdsFor314ABusiness = ['R-43']
+export const RuleIdsFor314A: string[] = [
+  ...RuleIdsFor314AConsumer,
+  ...RuleIdsFor314ABusiness,
+]
+export const ListSubTypesFor314A = ['314A_INDIVIDUAL', '314A_BUSINESS']

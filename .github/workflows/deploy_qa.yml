@@ -1,0 +1,162 @@
+name: Deploy to QA
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        node-version: [20.x]
+    runs-on: medium
+    timeout-minutes: 30
+    steps:
+      - uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check
+        with:
+          trigger: "/deploy"
+          prefix_only: "true"
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get PR branch
+        if: steps.check.outputs.triggered == 'true'
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Set latest commit status as pending
+        if: steps.check.outputs.triggered == 'true'
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: pending
+          context: Deploy to QA
+      - name: Checkout PR branch
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+          clean: false
+          fetch-depth: 0
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - name: Use Python
+        if: steps.check.outputs.triggered == 'true'
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install Python dependencies
+        if: steps.check.outputs.triggered == 'true'
+        run: | 
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+        working-directory: "tarpon/torpedo"
+      - name: Build Torpedo
+        if: steps.check.outputs.triggered == 'true'
+        run: |
+          ./build.sh
+        working-directory: "tarpon/torpedo"
+      - name: Install infra dependencies
+        if: steps.check.outputs.triggered == 'true'
+        run: corepack enable && yarn set version 4.0.2 && yarn install --immutable
+      - name: Install dependencies for tarpon
+        run: yarn install --immutable
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon"
+      - name: Install dependencies for phytoplankton-console
+        run: yarn install --immutable
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "phytoplankton-console"
+      - name: Install dependencies for nango-integrations
+        run: yarn install --immutable
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "nango-integrations"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.1.7"
+      - name: Build Openapi
+        run: npm run openapi:build
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon"
+      - name: Prepare Openapi
+        run: npm run openapi:prepare
+        if: steps.check.outputs.triggered == 'true'
+        working-directory: "tarpon"
+      - name: Deploy
+        if: steps.check.outputs.triggered == 'true'
+        id: deploy
+        run: |
+          export QA=true
+          export NODE_OPTIONS="--max-old-space-size=8192"
+          echo "Create default AWS profile"
+          mkdir ~/.aws
+          printf "[default]\nregion = eu-central-1\naws_access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}\naws_secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          cat ~/.aws/credentials
+          export QA_SUBDOMAIN="qa$(echo "${{ steps.comment-branch.outputs.head_ref }}" | shasum | head -c5)"
+
+          if $(git diff --quiet origin/main HEAD -- tarpon); then
+            echo "Using Dev API"
+            echo "tarpon=api" >> $GITHUB_OUTPUT
+          else
+            echo "Deploying Tarpon"
+            cd tarpon
+            npm run deploy:qa
+            comment="${{ github.event.comment.body }}"
+            commentArgs=($comment)
+            export TARPON_BRANCH=${{ steps.comment-branch.outputs.head_ref }}
+            echo "tarpon=${QA_SUBDOMAIN}.api" >> $GITHUB_OUTPUT
+            
+            export QA_API_KEY=$(npm --silent run get-qa-api-key)
+            echo "api_key=${QA_API_KEY}" >> $GITHUB_OUTPUT
+            export QA_INTEGRATION_TEST_API_KEY=$(npm --silent run get-qa-integration-test-api-key)
+            echo "integration_test_api_key=${QA_INTEGRATION_TEST_API_KEY}" >> $GITHUB_OUTPUT
+            
+            cd ../
+          fi
+
+          echo "Deploying Phytoplankton"
+          cd phytoplankton-console
+          yarn run deploy:qa
+          echo "phyto=${QA_SUBDOMAIN}" >> $GITHUB_OUTPUT
+          cd ../
+      - name: Comment PR
+        if: steps.check.outputs.triggered == 'true'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            🚀🚀🚀 Branch deployed 🚀🚀🚀
+
+            | Resource | Value |
+            |--------|--------|
+            | Frontend | https://${{ steps.deploy.outputs.phyto }}.console.flagright.dev/ |
+            | Backend | https://${{ steps.deploy.outputs.tarpon }}.flagright.dev/ |
+            | API Key | `${{ steps.deploy.outputs.api_key }}` |
+      - name: Set latest commit status as ${{ job.status }}
+        if: always() && steps.check.outputs.triggered == 'true'
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.DEPLOY_PAT }}
+          status: ${{ job.status }}
+          context: Deploy to QA

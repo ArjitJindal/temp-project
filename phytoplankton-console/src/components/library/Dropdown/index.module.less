@@ -1,0 +1,87 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  :global {
+    .ant-message-custom-content {
+      display: flex;
+      gap: 8px;
+      max-width: 800px;
+    }
+
+    .ant-message-notice-content {
+      min-height: 56px;
+      padding: 16px 18px;
+      border-radius: 4px;
+    }
+
+    .ant-message-warning {
+      .anticon {
+        display: flex;
+        align-items: center;
+        margin-right: 4px;
+      }
+    }
+  }
+
+  &.isDisabled {
+    pointer-events: none;
+    border-color: @figma-vars--tokens-colorBackgroundDisabled;
+    background: @figma-vars--tokens-colorBackgroundDisabled;
+    color: @figma-vars--tokens-colorTextSecondary;
+
+    .arrow {
+      color: @figma-vars--tokens-colorIconDisabled;
+    }
+  }
+}
+
+.icon {
+  width: 20px;
+  flex-shrink: 0;
+
+  &.success {
+    color: @fr-colors-v2-alert-success;
+  }
+
+  &.error {
+    color: @fr-colors-v2-alert-critical;
+  }
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  gap: 32px;
+}
+
+.closeIcon {
+  width: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.extraBottomMargin {
+  margin-bottom: 8px;
+}
+
+.arrow {
+  height: 16px;
+  width: 16px;
+}
+
+.dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.bordered {
+  border: 1px solid @fr-colors-v2-gray-2;
+  border-radius: 4px;
+  padding: 4px 8px;
+  background-color: white;
+}

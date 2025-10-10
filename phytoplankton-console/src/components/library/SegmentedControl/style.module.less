@@ -1,0 +1,68 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  background: @fr-colors-v2-gray-1;
+  padding: 2px;
+  border-radius: @figma-vars--primitives-borderRadiusXs;
+  width: fit-content;
+
+  &.size-SMALL {
+    > .item {
+      padding: @figma-vars--primitives-spacing4xs @figma-vars--primitives-spacingXs;
+    }
+  }
+
+  &.size-MEDIUM {
+    > .item {
+      padding: @figma-vars--primitives-spacing3xs @figma-vars--primitives-spacingXs;
+    }
+  }
+
+  &.size-LARGE {
+    > .item {
+      padding: @figma-vars--primitives-spacing2xs @figma-vars--primitives-spacingXs;
+    }
+  }
+}
+
+.item {
+  color: @figma-vars--tokens-colorTextPrimary;
+  cursor: pointer;
+  border-radius: 2px;
+  border: none;
+  background: transparent;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-family: @figma-vars--primitives-typographyFontFamilyBody;
+  font-weight: 400;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
+  line-height: @figma-vars--primitives-typographyFontLineHeightM;
+  transition-property: background, color, box-shadow, font-weight;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+
+  &:disabled {
+    pointer-events: none;
+    color: @figma-vars--tokens-colorTextDisabled;
+  }
+
+  &:hover {
+    color: @figma-vars--tokens-colorTextSecondary;
+  }
+
+  &:not(:disabled).isActive {
+    background: white;
+    color: @figma-vars--tokens-colorTextAction;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.itemIcon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}

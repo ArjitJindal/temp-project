@@ -1,0 +1,6 @@
+{
+  "name": "Risk Factor Approval - Reviewer Workflow",
+  "description": "Single-step risk factor approval workflow where a reviewer role can approve or reject risk factor creation/modification/deletion proposals",
+  "author": "system",
+  "approvalChain": ["reviewer"]
+}

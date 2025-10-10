@@ -1,0 +1,98 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  overflow: hidden;
+  width: 100%;
+
+  &:not(.showMore) {
+    height: 32px;
+  }
+}
+
+.suggestions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.moreButton {
+  height: 32px;
+  padding: 6px;
+}
+
+.suggestion {
+  background: linear-gradient(180deg, @fr-colors-v2-unknown-10 0%, @fr-colors-v2-unknown-11 81.16%);
+  height: 32px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  border: 1px solid transparent;
+
+  &.isHighlighted {
+    border: 1px solid @fr-colors-v2-unknown-7;
+  }
+}
+
+.form {
+  background-color: #fff;
+  height: 44px;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0;
+  box-shadow: 2px 2px 36px 0 @fr-colors-v2-unknown-9;
+  padding: 6px 8px;
+  border-radius: 0 0 4px 4px;
+
+  > button {
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    &:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+}
+
+.textInput {
+  flex: 1;
+}
+
+.autoButton {
+  padding: 4px 12px;
+  gap: 4px;
+  height: 32px;
+  background: linear-gradient(
+    96.68deg,
+    @fr-colors-v2-unknown-7 -14.68%,
+    @fr-colors-v2-unknown-8 100%
+  ) !important;
+  border-radius: 4px;
+  color: white;
+}
+
+.divider {
+  height: 32px;
+  width: 1px;
+  background-color: @fr-colors-v2-gray-2;
+  margin: 0 8px;
+}

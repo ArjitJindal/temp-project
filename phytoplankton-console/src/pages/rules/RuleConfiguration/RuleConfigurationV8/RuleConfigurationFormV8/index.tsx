@@ -1,0 +1,378 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { ConfigProvider } from 'antd';
+import cn from 'clsx';
+import { Mode } from '..';
+import s from './style.module.less';
+import BasicDetailsStep, {
+  BasicDetailsFormValues as BasicDetailsStepFormValues,
+  INITIAL_VALUES as BASIC_DETAILS_STEP_INITIAL_VALUES,
+} from './steps/BasicDetailsStep';
+import RuleIsHitWhenStep, {
+  INITIAL_VALUES as RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES,
+  RuleIsHitWhenStepFormValues,
+} from './steps/RuleIsHitWhenStep';
+import AlertCreationDetailsStep, {
+  FormValues as AlertCreationDetailsStepFormValues,
+  INITIAL_VALUES as ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES,
+} from './steps/AlertCreationDetailsStep';
+import { useId, useSafeLocalStorageState } from '@/utils/hooks';
+import * as Card from '@/components/ui/Card';
+
+import { Rule, RuleType } from '@/apis';
+import { Step, StepperSteps } from '@/components/library/Stepper';
+import Form, { FormRef } from '@/components/library/Form';
+import { validateField } from '@/components/library/Form/utils/validation/utils';
+import { message } from '@/components/library/Message';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { FieldValidators, isResultValid } from '@/components/library/Form/utils/validation/types';
+import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import { RISK_LEVELS } from '@/utils/risk-levels';
+import NestedForm from '@/components/library/Form/NestedForm';
+import NameAndDescription from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/NameAndDescription';
+import ExpandContainer from '@/components/utils/ExpandContainer';
+
+const BASIC_DETAILS_STEP = 'basicDetailsStep';
+const RULE_IS_HIT_WHEN_STEP = 'ruleIsHitWhenStep';
+const ALERT_CREATION_DETAILS_STEP = 'alertCreationDetailsStep';
+
+export const STEPS = [BASIC_DETAILS_STEP, RULE_IS_HIT_WHEN_STEP, ALERT_CREATION_DETAILS_STEP];
+
+export interface RuleConfigurationFormV8Values {
+  basicDetailsStep: Partial<BasicDetailsStepFormValues>;
+  ruleIsHitWhenStep: Partial<RuleIsHitWhenStepFormValues>;
+  alertCreationDetailsStep: Partial<AlertCreationDetailsStepFormValues>;
+}
+
+interface RuleConfigurationFormProps {
+  rule?: Rule | null;
+  mode: Mode;
+  formInitialValues?: Partial<RuleConfigurationFormV8Values>;
+  readOnly?: boolean;
+  simulationMode?: boolean;
+  showValidationError?: boolean;
+  activeStepKey?: string;
+  onActiveStepKeyChange: (key: string) => void;
+  onSubmit: (formValues: RuleConfigurationFormV8Values) => void;
+  setIsValuesSame?: (isSame: boolean) => void;
+  renderButtonsFooter?: () => React.ReactNode;
+  newRuleId?: string;
+}
+
+function RuleConfigurationFormV8(
+  props: RuleConfigurationFormProps,
+  ref: React.Ref<FormRef<RuleConfigurationFormV8Values>>,
+) {
+  const {
+    formInitialValues,
+    rule,
+    mode,
+    onSubmit,
+    readOnly = false,
+    showValidationError = false,
+    activeStepKey = BASIC_DETAILS_STEP,
+    onActiveStepKeyChange,
+    setIsValuesSame,
+    newRuleId,
+    simulationMode,
+  } = props;
+  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const defaultInitialValues = useDefaultInitialValues(rule);
+  const initialValues: RuleConfigurationFormV8Values = formInitialValues
+    ? {
+        ...defaultInitialValues,
+        ...formInitialValues,
+      }
+    : defaultInitialValues;
+  const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
+  const isAsyncRulesEnabled = useFeatureEnabled('ASYNC_RULES');
+  const [isSimulationModeEnabled] = useSafeLocalStorageState('SIMULATION_RULES', false);
+
+  const formId = useId(`form-`);
+
+  const [formState, setFormState] = useState<RuleConfigurationFormV8Values>(initialValues);
+
+  const fieldValidators: FieldValidators<RuleConfigurationFormV8Values> = useMemo(() => {
+    const alertCreationDetailsStep = formState?.alertCreationDetailsStep;
+    return {
+      basicDetailsStep: {
+        ruleName: notEmpty,
+        ruleDescription: notEmpty,
+        ruleNature: notEmpty,
+        ruleExecutionMode: !isAsyncRulesEnabled || isSimulationModeEnabled ? undefined : notEmpty,
+      },
+      ruleIsHitWhenStep: {
+        ruleLogic: isRiskLevelsEnabled ? undefined : notEmpty,
+        riskLevelRuleLogic: isRiskLevelsEnabled
+          ? (value) => {
+              const emptyRiskLevels = RISK_LEVELS.filter((riskLevel) => {
+                const valueElement = value?.[riskLevel];
+                const result = notEmpty(valueElement);
+                return !isResultValid(result);
+              });
+              if (emptyRiskLevels.length === 0) {
+                return null;
+              }
+              return `Rule logic definition should be configured for all risk levels and cannot be empty.`;
+            }
+          : undefined,
+      },
+      alertCreationDetailsStep: {
+        alertCreatedFor: notEmpty,
+        alertAssignees: (value) => {
+          return alertCreationDetailsStep?.alertAssigneesType === 'EMAIL' ? notEmpty(value) : null;
+        },
+        alertAssigneeRole: (value) => {
+          return alertCreationDetailsStep?.alertAssigneesType === 'ROLE' ? notEmpty(value) : null;
+        },
+      },
+    };
+  }, [
+    isRiskLevelsEnabled,
+    formState?.alertCreationDetailsStep,
+    isAsyncRulesEnabled,
+    isSimulationModeEnabled,
+  ]);
+
+  const isAlertCreationDetailsStepDisabled = useMemo(() => {
+    return formState.basicDetailsStep.alertCreationOnHit === false;
+  }, [formState.basicDetailsStep.alertCreationOnHit]);
+
+  const STEPS: Step[] = useMemo(
+    () =>
+      [
+        {
+          key: BASIC_DETAILS_STEP,
+          title: 'Basic details',
+          isOptional: false,
+          description: 'Define rule name and description based on the rule condition',
+        },
+        {
+          key: RULE_IS_HIT_WHEN_STEP,
+          title: 'Rule is hit when',
+          isOptional: false,
+          description: 'Define rule variables and conditions for which the rule is hit',
+        },
+        ...(!isAlertCreationDetailsStepDisabled
+          ? [
+              {
+                key: ALERT_CREATION_DETAILS_STEP,
+                title: 'Alert creation details',
+                description: 'Define alert creation details for the defined rule when hit',
+              },
+            ]
+          : []),
+      ].map((step) => ({
+        ...step,
+        isInvalid:
+          (showValidationError || alwaysShowErrors) &&
+          validateField(fieldValidators?.[step.key], formState?.[step.key]) != null,
+      })),
+    [
+      alwaysShowErrors,
+      fieldValidators,
+      formState,
+      showValidationError,
+      isAlertCreationDetailsStepDisabled,
+    ],
+  );
+
+  const handleSubmit = (
+    formValues: RuleConfigurationFormV8Values,
+    { isValid }: { isValid: boolean },
+  ) => {
+    if (isValid) {
+      onSubmit(formValues);
+    } else {
+      message.warn('Please, make sure that all required fields are filled and values are valid!');
+      setAlwaysShowErrors(true);
+    }
+  };
+
+  const { ruleName, ruleDescription } = formState.basicDetailsStep;
+  const [showTopCard, setShowTopCard] = useState(false);
+  const isRuleNameDefined = !!ruleName && !!ruleDescription;
+  const isInitialNameDescriptionDefined =
+    !!initialValues.basicDetailsStep.ruleName && !!initialValues.basicDetailsStep.ruleDescription;
+  useEffect(() => {
+    if (simulationMode) {
+      return;
+    }
+    setShowTopCard(
+      showTopCard ||
+        (activeStepKey !== BASIC_DETAILS_STEP && isRuleNameDefined) ||
+        isInitialNameDescriptionDefined,
+    );
+  }, [
+    showTopCard,
+    activeStepKey,
+    isRuleNameDefined,
+    isInitialNameDescriptionDefined,
+    simulationMode,
+  ]);
+
+  // After we leave the Basic Details step, we can assume that the rule type is set and it won't be able to be changed
+  const [isRuleTypeSet, setIsRuleTypeSet] = useState(mode === 'EDIT');
+
+  return (
+    <ConfigProvider
+      getPopupContainer={(trigger: any) =>
+        trigger === undefined ? document.body : trigger.parentElement
+      }
+    >
+      <Form<RuleConfigurationFormV8Values>
+        key={formId}
+        id={formId}
+        ref={ref}
+        className={s.root}
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        fieldValidators={fieldValidators}
+        alwaysShowErrors={alwaysShowErrors || showValidationError}
+        onChange={({ values }) => {
+          setFormState(values);
+          setIsValuesSame?.(JSON.stringify(values) === JSON.stringify(initialValues)); // Is Equal was not working
+        }}
+      >
+        <ExpandContainer isCollapsed={!showTopCard}>
+          {isRuleNameDefined && (
+            <NameAndDescription ruleName={ruleName} ruleDescription={ruleDescription} />
+          )}
+        </ExpandContainer>
+        <div className={s.stepper}>
+          <Card.Root className={s.steps}>
+            <Card.Section>
+              <StepperSteps
+                layout="VERTICAL"
+                steps={STEPS}
+                active={activeStepKey}
+                onChange={onActiveStepKeyChange}
+              />
+            </Card.Section>
+          </Card.Root>
+          <div className={cn(s.stepperContent)}>
+            <div className={cn(props.readOnly ? s.readOnlyFormContent : '')}>
+              <NestedForm<RuleConfigurationFormV8Values> name={activeStepKey}>
+                <StepSubform
+                  isRuleTypeSet={isRuleTypeSet}
+                  ruleType={formState.basicDetailsStep.ruleType ?? 'TRANSACTION'}
+                  activeStepKey={activeStepKey}
+                  readOnly={readOnly}
+                  newRuleId={newRuleId}
+                  simulationMode={simulationMode}
+                  setRuleTypeSelectionStatus={setIsRuleTypeSet}
+                />
+              </NestedForm>
+            </div>
+          </div>
+        </div>
+      </Form>
+    </ConfigProvider>
+  );
+}
+
+function StepSubform(props: {
+  ruleType: RuleType;
+  isRuleTypeSet: boolean;
+  activeStepKey: string;
+  readOnly: boolean;
+  newRuleId?: string;
+  simulationMode?: boolean;
+  setRuleTypeSelectionStatus: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const {
+    activeStepKey,
+    newRuleId,
+    simulationMode,
+    ruleType,
+    isRuleTypeSet,
+    setRuleTypeSelectionStatus,
+  } = props;
+  if (activeStepKey === BASIC_DETAILS_STEP) {
+    return (
+      <BasicDetailsStep
+        newRuleId={newRuleId}
+        simulationMode={simulationMode}
+        isRuleTypeSet={isRuleTypeSet}
+      />
+    );
+  }
+  if (activeStepKey === RULE_IS_HIT_WHEN_STEP) {
+    return (
+      <RuleIsHitWhenStep
+        ruleType={ruleType}
+        readOnly={props.readOnly}
+        setRuleTypeSelectionStatus={setRuleTypeSelectionStatus}
+      />
+    );
+  }
+  if (activeStepKey === ALERT_CREATION_DETAILS_STEP) {
+    return <AlertCreationDetailsStep ruleType={ruleType} />;
+  }
+  return <></>;
+}
+
+export default React.forwardRef(RuleConfigurationFormV8);
+
+function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurationFormV8Values {
+  const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  return useMemo(() => {
+    const ruleIsHitWhenStep: RuleIsHitWhenStepFormValues = {
+      ...RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES,
+      ruleLogic: rule?.defaultLogic,
+      ruleLogicEntityVariables: [],
+      ruleLogicAggregationVariables: rule?.defaultLogicAggregationVariables ?? [],
+      baseCurrency: rule?.defaultBaseCurrency,
+    };
+    if (isRiskLevelsEnabled) {
+      ruleIsHitWhenStep.riskLevelRuleLogic = rule?.defaultRiskLevelLogic ?? {
+        VERY_HIGH: rule?.defaultLogic,
+        HIGH: rule?.defaultLogic,
+        MEDIUM: rule?.defaultLogic,
+        LOW: rule?.defaultLogic,
+        VERY_LOW: rule?.defaultLogic,
+      };
+      ruleIsHitWhenStep.riskLevelRuleActions = rule?.defaultRiskLevelActions ?? {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      };
+    } else {
+      ruleIsHitWhenStep.ruleAction =
+        rule?.defaultAction ?? RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES.ruleAction;
+    }
+    return {
+      basicDetailsStep: {
+        ruleName: rule?.name,
+        ruleDescription: rule?.description,
+        ruleNature: rule?.defaultNature ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleNature,
+        ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
+        ruleType: 'TRANSACTION',
+        ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
+        alertCreationOnHit: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreationOnHit,
+      },
+      ruleIsHitWhenStep,
+      alertCreationDetailsStep: {
+        alertCreatedFor: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
+        alertCreationInterval: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreationInterval,
+        alertPriority: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertPriority,
+        falsePositiveCheckEnabled:
+          ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.falsePositiveCheckEnabled,
+        frozenStatuses: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
+      },
+    };
+  }, [
+    isRiskLevelsEnabled,
+    rule?.defaultAction,
+    rule?.defaultLogic,
+    rule?.defaultLogicAggregationVariables,
+    rule?.defaultNature,
+    rule?.defaultRiskLevelActions,
+    rule?.defaultRiskLevelLogic,
+    rule?.description,
+    rule?.labels,
+    rule?.name,
+    rule?.defaultBaseCurrency,
+  ]);
+}

@@ -1,0 +1,48 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.bold {
+    .title {
+      font-weight: bold;
+    }
+  }
+
+  &.orientation-horizontal {
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.header {
+  display: flex;
+  gap: 4px;
+  color: @fr-colors-v2-gray-6;
+  align-items: center;
+}
+
+.title {
+  display: flex;
+  gap: 4px;
+}
+
+.dark {
+  color: #000;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.isChangedIcon {
+  width: 8px;
+  height: 8px;
+  background-color: @fr-colors-tabsBadgeColor;
+  border-radius: 50%;
+}

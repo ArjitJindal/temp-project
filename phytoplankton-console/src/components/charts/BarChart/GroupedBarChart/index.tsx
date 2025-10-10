@@ -1,0 +1,478 @@
+import React, { useMemo, useState } from 'react';
+import { BarGroup } from '@visx/shape';
+import { Group } from '@visx/group';
+import { StringLike } from '@visx/scale';
+import { localPoint } from '@visx/event';
+import { groupBy, mapKeys, uniq } from 'lodash';
+import cn from 'clsx';
+import { ColorsMap } from '../types';
+import { BarChartData, Props as BarChartProps, BarGrouping } from '../index';
+import {
+  ChartParts,
+  DEFAULT_CHART_CONFIGURATION,
+  SKELETON_TICK_COMPONENT,
+  ToolTipOptions,
+  useColorScale,
+  usePreparedCustomColoring,
+  Configuration,
+} from '../helpers';
+import s from './index.module.less';
+import { Highlighted, SKELETON_PADDINGS, useScales } from './helpers';
+import CustomLegendOrdinal from '@/components/charts/shared/CustomLegendOrdinal';
+import Tooltip from '@/components/charts/shared/SeriesTooltip';
+import { makeRandomNumberGenerator } from '@/utils/prng';
+import { getOr, isLoading, map } from '@/utils/asyncResource';
+import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
+import { StatePair } from '@/utils/state';
+import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
+import { DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
+import { DEFAULT_FORMATTER, DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
+import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
+import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
+import { DefaultAxisBottom, DefaultAxisLeft } from '@/components/charts/shared/DefaultAxis';
+
+const random = makeRandomNumberGenerator(999999);
+const SKELETON_DATA: BarChartData<string, string> = [...new Array(10)].flatMap((_, category) =>
+  [...new Array(3)].map((_, series) => ({
+    series: `series_${series}`,
+    category: `category_${category}`,
+    value: 1 + 29 * random(),
+  })),
+);
+
+function getCategory(d: PreparedDataItem) {
+  return d.category;
+}
+
+function getSeriesValue(item: PreparedDataItem, key: string) {
+  const value = item[key];
+  return typeof value === 'number' ? value : 0;
+}
+
+type PreparedDataItem = {
+  category: string;
+} & { [key: string]: number | undefined };
+
+interface Props<Category extends StringLike, Series extends StringLike>
+  extends BarChartProps<Category, Series> {}
+
+export default function GropedColumn<
+  Category extends StringLike = string,
+  Series extends StringLike = string,
+>(props: Props<Category, Series>) {
+  const {
+    data,
+    colors,
+    height,
+    hideLegend,
+    grouping,
+    formatValue = DEFAULT_NUMBER_FORMATTER,
+    formatSeries = DEFAULT_FORMATTER,
+    formatCategory = DEFAULT_FORMATTER,
+    customBarColors,
+    configuration,
+  } = props;
+  const showSkeleton = isLoading(data) && getOr(data, null) == null;
+
+  const [highlighted, setHighlighted] = useState<Highlighted>({
+    category: null,
+    series: null,
+  });
+
+  const [disabledSeries, setDisabledSeries] = useState<string[]>([]);
+
+  const dataValue = useMemo(() => {
+    return getOr(
+      map(data, (value) => {
+        return value.map((item) => {
+          const series = formatSeries(item.series);
+          const category = formatCategory(item.category);
+          return {
+            ...item,
+            value: disabledSeries.includes(series) ? 0 : item.value,
+            series,
+            category,
+          };
+        });
+      }),
+      showSkeleton ? SKELETON_DATA : [],
+    );
+  }, [data, showSkeleton, formatSeries, formatCategory, disabledSeries]);
+
+  const preparedCustomBarColors = usePreparedCustomColoring(
+    data,
+    customBarColors,
+    showSkeleton,
+    formatSeries,
+    formatCategory,
+  );
+
+  const preparedColors = mapKeys(colors, (_, key) => formatSeries(key as unknown as Series));
+
+  const colorScale = useColorScale(dataValue, preparedColors);
+
+  return (
+    <DefaultChartContainer
+      height={height}
+      showSkeleton={showSkeleton}
+      hideLegend={showSkeleton || hideLegend}
+      renderChart={({ size }) => (
+        <Chart<string, string>
+          data={dataValue}
+          size={size}
+          colors={
+            showSkeleton
+              ? SKELETON_DATA.reduce(
+                  (acc, { series }) => ({
+                    ...acc,
+                    [series]: COLORS_V2_SKELETON_COLOR,
+                  }),
+                  {},
+                )
+              : preparedColors
+          }
+          formatValue={formatValue}
+          showSkeleton={showSkeleton}
+          highlightedState={[highlighted, setHighlighted]}
+          customBarColors={preparedCustomBarColors}
+          configuration={configuration}
+          grouping={grouping}
+        />
+      )}
+      renderLegend={(props) => (
+        <CustomLegendOrdinal<string>
+          {...props}
+          scale={colorScale}
+          disabledSeries={disabledSeries}
+          onItemClick={(series, toDisable) => {
+            setDisabledSeries((prevState) =>
+              toDisable ? [...prevState, series] : prevState.filter((x) => x !== series),
+            );
+          }}
+          onItemMouseMove={(series: string) => {
+            setHighlighted((prevState) => ({
+              ...prevState,
+              category: null,
+              series: series,
+            }));
+          }}
+          onItemMouseLeave={() => {
+            setHighlighted((prevState) => ({
+              ...prevState,
+              category: null,
+              series: null,
+            }));
+          }}
+        />
+      )}
+    />
+  );
+}
+
+/*
+  Helpers
+ */
+
+type TooltipData =
+  | {
+      toolTip: ToolTipOptions.VALUE;
+      datum: PreparedDataItem;
+      key: string[];
+      category: string;
+      color: string;
+    }
+  | {
+      toolTip: ToolTipOptions.CATEGORY;
+      category: string;
+    };
+export type ChartProps<Category extends StringLike, Series extends StringLike> = {
+  colors: ColorsMap;
+  data: BarChartData<Category, Series>;
+  size: {
+    width: number;
+    height: number;
+  };
+  showSkeleton?: boolean;
+  paddings?: Paddings;
+  highlightedState: StatePair<Highlighted>;
+  customBarColors?: (category: string, series: string, defaultColor: string) => string;
+  configuration?: Configuration;
+  grouping?: BarGrouping;
+};
+
+function Chart<Category extends StringLike, Series extends StringLike>(
+  props: ChartProps<Category, Series> & Pick<Props<Category, Series>, 'formatValue'>,
+) {
+  const {
+    colors,
+    data,
+    size,
+    formatValue = DEFAULT_FORMATTER,
+    showSkeleton = false,
+    highlightedState,
+    customBarColors,
+    configuration = DEFAULT_CHART_CONFIGURATION,
+    grouping,
+  } = props;
+
+  const initialPaddings = showSkeleton ? SKELETON_PADDINGS : DEFAULT_PADDINGS;
+
+  const [highlighted, setHighlighted] = highlightedState;
+
+  const { scales, paddings } = useScales(data, size, initialPaddings);
+  const { x0Scale, x1Scale, yScale } = scales;
+  const colorScale = useColorScale(data, colors);
+
+  const preparedData: PreparedDataItem[] = useMemo(() => {
+    const grouped = groupBy(data, (x) => {
+      return x.category;
+    });
+
+    return Object.entries(grouped).map(([category, items]) =>
+      items.reduce(
+        (acc, item) => ({
+          ...acc,
+          [item.series.toString()]: item.value,
+        }),
+        {
+          category: category,
+        } as PreparedDataItem,
+      ),
+    );
+  }, [data]);
+
+  const axisColor = showSkeleton ? COLORS_V2_SKELETON_COLOR : COLORS_V2_GRAY_6;
+  const series = uniq(data.map(({ series }) => series.toString()));
+
+  const { showTooltip, hideTooltip, state } = useTooltipState<TooltipData>();
+
+  const chartHeight = size.height - paddings.top - paddings.bottom;
+
+  const categoryHighlightRects: (Rect & { category: Category })[] = useMemo(() => {
+    return x0Scale.domain().map((category) => {
+      const width = x0Scale.step();
+      const x = paddings.left + (x0Scale(category) ?? 0) - (width * x0Scale.paddingInner()) / 2;
+      const y = paddings.top;
+      const height = chartHeight;
+      return {
+        category,
+        width,
+        height,
+        x,
+        y,
+      };
+    });
+  }, [x0Scale, chartHeight, paddings.top, paddings.left]);
+
+  return (
+    <TooltipWrapper
+      tooltipState={state}
+      tooltipComponent={({ tooltipData }) => {
+        if (tooltipData.toolTip === ToolTipOptions.VALUE) {
+          return (
+            <Tooltip
+              items={tooltipData.key.map((key) => ({
+                ...(tooltipData.color && {
+                  color: customBarColors
+                    ? customBarColors(tooltipData.datum.category, key, tooltipData.color)
+                    : tooltipData.color,
+                }),
+                label: key,
+                value: formatValue(getSeriesValue(tooltipData.datum, key)),
+              }))}
+            />
+          );
+        }
+        return <DefaultChartTooltip>{tooltipData.category}</DefaultChartTooltip>;
+      }}
+    >
+      {({ containerRef }) => (
+        <svg width={size.width} height={size.height} ref={containerRef} className={s.svg}>
+          {categoryHighlightRects.map(({ category, width, height, x, y }, index) => {
+            const dataItem = preparedData[index];
+            const { toolTipType, shouldRender } = configuration[ChartParts.SPACE];
+            return (
+              <rect
+                className={cn(s.categoryHighlighting, {
+                  [s.isHighlighted]: highlighted.category === category,
+                })}
+                key={category.toString()}
+                x={x}
+                y={y}
+                height={height}
+                width={width}
+                onMouseLeave={() => {
+                  hideTooltip();
+                  setHighlighted((prevState) => ({
+                    ...prevState,
+                    category: null,
+                    series: null,
+                  }));
+                }}
+                onMouseMove={() => {
+                  if (shouldRender) {
+                    setHighlighted({
+                      category: category.toString(),
+                      series: null,
+                    });
+                    showTooltip({
+                      tooltipData: {
+                        ...(toolTipType === ToolTipOptions.CATEGORY
+                          ? {
+                              category: category.toString(),
+                              toolTip: toolTipType,
+                            }
+                          : {
+                              datum: dataItem,
+                              toolTip: toolTipType,
+                              key: Object.keys(dataItem).filter((key) => key !== 'category'),
+                              color: '#000',
+                              category: category.toString(),
+                            }),
+                      },
+                      tooltipTop: y,
+                      tooltipLeft: x + width,
+                    });
+                  }
+                }}
+              />
+            );
+          })}
+          <Group top={paddings.top} left={paddings.left}>
+            <BarGroup<PreparedDataItem, string>
+              data={preparedData}
+              keys={series}
+              x0={getCategory}
+              x0Scale={x0Scale}
+              x1Scale={x1Scale}
+              yScale={yScale}
+              height={size.height - paddings.bottom - paddings.top}
+              color={(series) => colorScale(series as unknown as Series)}
+            >
+              {(barGroups) =>
+                barGroups.map((barGroup) => {
+                  const dataItem = preparedData[barGroup.index];
+
+                  const { shouldRender, renderWholeGroupData } = configuration[ChartParts.BAR];
+                  return (
+                    <Group key={`bar-stack-${barGroup.index}`} left={barGroup.x0}>
+                      {barGroup.bars.map((bar) => {
+                        const barCategory = dataItem.category;
+                        const barSeries = bar.key;
+                        return (
+                          <React.Fragment key={`bar-stack-${barGroup.index}-${bar.index}`}>
+                            <rect
+                              x={bar.x}
+                              y={bar.y}
+                              className={cn(s.bar, {
+                                [s.highlighting]:
+                                  highlighted.category != null || highlighted.series != null,
+                                [s.isHighlightedAccent]:
+                                  highlighted.category !== barCategory ||
+                                  highlighted.series === barSeries,
+                                [s.isHighlighted]:
+                                  highlighted.category === barCategory ||
+                                  highlighted.series === barSeries,
+                              })}
+                              height={bar.height}
+                              width={bar.width}
+                              fill={
+                                customBarColors
+                                  ? customBarColors(
+                                      barCategory.toString(),
+                                      barSeries.toString(),
+                                      bar.color,
+                                    )
+                                  : bar.color
+                              }
+                              onMouseLeave={() => {
+                                hideTooltip();
+                                setHighlighted((prevState) => ({
+                                  ...prevState,
+                                  category: null,
+                                  series: null,
+                                }));
+                              }}
+                              onMouseMove={(event) => {
+                                const eventSvgCoords = localPoint(event);
+                                if (shouldRender) {
+                                  setHighlighted((prevState) => ({
+                                    ...prevState,
+                                    category: barCategory,
+                                    series: barSeries,
+                                  }));
+                                  showTooltip({
+                                    tooltipData: {
+                                      toolTip: ToolTipOptions.VALUE,
+                                      datum: dataItem,
+                                      key: renderWholeGroupData
+                                        ? Object.keys(dataItem).filter((key) => key !== 'category')
+                                        : [bar.key],
+                                      color: bar.color,
+                                      category: barCategory,
+                                    },
+                                    tooltipTop: eventSvgCoords?.y,
+                                    tooltipLeft: eventSvgCoords?.x,
+                                  });
+                                }
+                              }}
+                            />
+                          </React.Fragment>
+                        );
+                      })}
+                    </Group>
+                  );
+                })
+              }
+            </BarGroup>
+            {!showSkeleton && (
+              <DefaultAxisLeft hideTicks hideAxisLine left={0} scale={yScale} grouping={grouping} />
+            )}
+            <DefaultAxisBottom
+              centerBandTicks
+              hideTicks={showSkeleton}
+              left={0}
+              top={size.height - paddings.top - paddings.bottom}
+              scale={x0Scale}
+              stroke={axisColor}
+              tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : undefined}
+              tickStroke={axisColor}
+              tickLabelProps={(category) => {
+                const { shouldRender } = configuration[ChartParts.AXIS];
+                return {
+                  className: s.tick,
+                  onMouseMove: () => {
+                    const rect = categoryHighlightRects.find(
+                      (x) => x.category.toString() === category.toString(),
+                    );
+                    if (rect && shouldRender) {
+                      setHighlighted({
+                        category: category.toString(),
+                        series: null,
+                      });
+                      showTooltip({
+                        tooltipData: {
+                          toolTip: ToolTipOptions.CATEGORY,
+                          category: category.toString(),
+                        },
+                        tooltipTop: rect.y,
+                        tooltipLeft: rect.x + rect.width,
+                      });
+                    }
+                  },
+                  onMouseLeave: () => {
+                    setHighlighted({
+                      category: null,
+                      series: null,
+                    });
+                    hideTooltip();
+                  },
+                };
+              }}
+            />
+          </Group>
+        </svg>
+      )}
+    </TooltipWrapper>
+  );
+}

@@ -1,0 +1,29 @@
+.inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-small);
+}
+
+.buttons {
+  display: flex;
+  gap: var(--space-small);
+}
+
+.input {
+  display: block;
+  width: 100%;
+  height: 28px;
+  padding: 0 var(--space-extra-small);
+  background-color: transparent;
+  outline: 1px solid var(--figma-color-border-brand-strong);
+  border-radius: var(--border-radius-2);
+
+  &:focus {
+    outline-color: var(--figma-color-border-brand-strong);
+    outline-width: 2px;
+  }
+
+  &.isInvalid {
+    outline-color: var(--figma-color-bg-danger);
+  }
+}

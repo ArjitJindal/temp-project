@@ -1,0 +1,1012 @@
+[
+  {
+    "id": "1004639",
+    "documentIds": [],
+    "names": ["Madinah Mohamad", "Madinah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1004639\",\"name\":\"Madinah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nTechnology Park Malaysia Corporation Sdn Bhd\\nSuruhanjaya Komunikasi Dan Multimedia Malaysia\\nAhmad Zaki Resources Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Secretary General, Ministry of Science, Technology and Innovation, Secretary General, Ministry of Education, Deputy Secretary General, Ministry of Science, Technology and Innovation, Auditor General\",\"occupationCode\":\"senior_civil_servants_national_government\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Madinah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1956\",\"associates\":[{\"name\":\"Rizuan Abdul Hamid\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "11494027",
+    "documentIds": [],
+    "names": ["Hassan Abdul Karim", "Hassan Bin Abdul Karim", "Hassan Karim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11494027\",\"name\":\"Hassan Abdul Karim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, House of Representatives, PKR PH, Pasir Gudang, Johor\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Hassan Bin Abdul Karim\",\"Hassan Karim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1951\",\"associates\":[{\"name\":\"Rodiah Iliyas\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"},{\"name\":\"Muhammad Faez Hassan\",\"sanctionsSearchTypes\":[],\"association\":\"Son\"}]}"
+  },
+  {
+    "id": "1004639",
+    "documentIds": [],
+    "names": ["Madinah Mohamad", "Madinah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1004639\",\"name\":\"Madinah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nTechnology Park Malaysia Corporation Sdn Bhd\\nSuruhanjaya Komunikasi Dan Multimedia Malaysia\\nAhmad Zaki Resources Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Secretary General, Ministry of Science, Technology and Innovation, Secretary General, Ministry of Education, Deputy Secretary General, Ministry of Science, Technology and Innovation, Auditor General\",\"occupationCode\":\"senior_civil_servants_national_government\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Madinah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1956\"}"
+  },
+  {
+    "id": "12347605",
+    "documentIds": [],
+    "names": ["Mohd Razali Wahab", "Mohd Razali Bin Wahab"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12347605\",\"name\":\"Mohd Razali Wahab\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deputy Director General, Implementation Coordination Unit (ICU), Prime Minister's Department\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Razali Bin Wahab\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "3235323",
+    "documentIds": [],
+    "names": ["Jaafar Kasim", "Jaafar Bin Kasim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"3235323\",\"name\":\"Jaafar Kasim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Defense, Military, Naval and Air Attaché, Malaysian Embassy, United States\",\"occupationCode\":\"embassy_consular_staff\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Jaafar Bin Kasim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11515472",
+    "documentIds": [],
+    "names": ["Azman Ibrahim", "Azman Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11515472\",\"name\":\"Azman Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Council, Terengganu\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, State Assembly, Terengganu\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Central Working Committee, Pan-Malaysian Islamic Party (PAS)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azman Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1974\",\"associates\":[{\"name\":\"Nik Yushanida Nik Yusof\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"},{\"name\":\"Ibrahim Saman\",\"sanctionsSearchTypes\":[],\"association\":\"Father\"},{\"name\":\"Habidah Mat Nor\",\"sanctionsSearchTypes\":[],\"association\":\"Mother\"}]}"
+  },
+  {
+    "id": "11332895",
+    "documentIds": [],
+    "names": [
+      "Ismail Hasim",
+      "Ismail Bin Hasim",
+      "Ismail Hashim",
+      "Ismail Bin Hashim"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11332895\",\"name\":\"Ismail Hasim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"President, Alor Gajah Municipal Council\",\"occupationCode\":\"city_mayors\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Hasim\",\"Ismail Hashim\",\"Ismail Bin Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13364063",
+    "documentIds": [],
+    "names": ["Roslan Ismail", "Roslan Bin Ismail"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13364063\",\"name\":\"Roslan Ismail\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Director General, Public Works Department (JKR)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Roslan Bin Ismail\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11344550",
+    "documentIds": [],
+    "names": ["Fadzilah Salim", "Fadzilah Binti Salim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11344550\",\"name\":\"Fadzilah Salim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fadzilah Binti Salim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13388803",
+    "documentIds": [],
+    "names": ["Kamariah Othman", "Kamariah Binti Othman"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13388803\",\"name\":\"Kamariah Othman\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kamariah Binti Othman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "338720",
+    "documentIds": [],
+    "names": [
+      "Mohamed Nasir Ahmad",
+      "Mohd Nasir Ahmad",
+      "Mohamed Nasir Bin Ahmad",
+      "Mohd Nasir Bin Ahmad"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"338720\",\"name\":\"Mohamed Nasir Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nBank Perusahaan Kecil dan Sederhana Malaysia Bhd\\nSmall Medium Enterprise Development Bank Malaysia Berhad\\nCIMB Group Holdings Bhd\\nMextec Corporation (M) Sdn Bhd\\nPelaburan Mara Berhad\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Chairman, Board of Directors, CIMB Group Holdings\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Nasir Ahmad\",\"Mohamed Nasir Bin Ahmad\",\"Mohd Nasir Bin Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12410243",
+    "documentIds": [],
+    "names": ["Normah Ibrahim", "Normah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12410243\",\"name\":\"Normah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Normah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11613004",
+    "documentIds": [],
+    "names": ["Hasnah Mohamad", "Hasnah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11613004\",\"name\":\"Hasnah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"\",\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hasnah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Razali Ab. Malik\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12448967",
+    "documentIds": [],
+    "names": ["Yatimah Mohamad", "Yatimah Binti Mohamad", "Yatimah Mohammad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12448967\",\"name\":\"Yatimah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Yatimah Binti Mohamad\",\"Yatimah Mohammad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "3419064",
+    "documentIds": [],
+    "names": [
+      "Kalsom 'Abdu'llah",
+      "Kalsom Binti 'Abdu'llah",
+      "Sultana Hajjah Kalsom 'Abdu'llah",
+      "Sultana Hajjah Kalsom Binti 'Abdu'llah",
+      "Kalsom Abdullah",
+      "Kalsom Binti Abdullah"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"3419064\",\"name\":\"Kalsom 'Abdu'llah\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"screeningSources\":[{\"name\":\"​http://www.icij.org/project/swiss-leaks/explore-swiss-leaks-data\"}],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kalsom Binti 'Abdu'llah\",\"Sultana Hajjah Kalsom 'Abdu'llah\",\"Sultana Hajjah Kalsom Binti 'Abdu'llah\",\"Kalsom Abdullah\",\"Kalsom Binti Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1951\"}"
+  },
+  {
+    "id": "13012038",
+    "documentIds": [],
+    "names": ["Hanita Hashim", "Hanita Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13012038\",\"name\":\"Hanita Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hanita Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Azian Osman\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12453061",
+    "documentIds": ["631030-02-5497", "631030025497"],
+    "names": ["Abdullah Hashim", "Abdullah Bin Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12453061\",\"name\":\"Abdullah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"Additional Domestic Screening Requirement\"],\"documents\":[{\"id\":\"631030-02-5497\",\"name\":\"National ID\",\"formattedId\":\"631030025497\"}],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"President, Bandar Baharu District Council\",\"occupationCode\":\"city_mayors\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP) - Additional Domestic Screening Requirement\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdullah Bin Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1963\"}"
+  },
+  {
+    "id": "345255",
+    "documentIds": [],
+    "names": [
+      "Zainol Abidin Omar",
+      "Zainol Abedin Bin Omar",
+      "Zainol Abedin Omar",
+      "Zaynol Abidin Omar",
+      "Zainol Abidin Bin Omar",
+      "Zaynol Abidin Bin Omar"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"345255\",\"name\":\"Zainol Abidin Omar\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Malaysian Ambassador to Russia, Malaysian Ambassador to Cuba, Non-resident Malaysian Ambassador to Bahamas, Dominican Republic, Haiti and Jamaica, Non-resident Malaysian Ambassador to Armenia and Belarus, Deputy Chairman, Malaysia Tourism Promotion Board (MTPB), Deputy Secretary General, Ministry of Foreign Affairs\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Zainol Abedin Bin Omar\",\"Zainol Abedin Omar\",\"Zaynol Abidin Omar\",\"Zainol Abidin Bin Omar\",\"Zaynol Abidin Bin Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "346882",
+    "documentIds": [],
+    "names": ["Ali Abdullah", "Ali Bin Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"346882\",\"name\":\"Ali Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Malaysian High Commissioner to Zimbabwe, Malaysian Ambassador to Ireland, Malaysian High Commissioner to Brunei\",\"occupationCode\":\"embassy_consular_staff\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ali Bin Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1949\"}"
+  },
+  {
+    "id": "347179",
+    "documentIds": [],
+    "names": ["Ramlan Ibrahim", "Ramlan Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"347179\",\"name\":\"Ramlan Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Malaysian Ambassador to Bosnia and Herzegovina, Malaysian Ambassador to South Korea, Malaysian Permanent Representative to United Nations, New York, United States, Malaysian Deputy High Commissioner to Singapore, Secretary General, Ministry of Foreign Affairs, Chairman, Malaysia Tourism Promotion Board (MTPB), Deputy Secretary General, Ministry of Foreign Affairs\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ramlan Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "358865",
+    "documentIds": [],
+    "names": ["Abu Talib Othman", "Abu Talib Bin Othman"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"358865\",\"name\":\"Abu Talib Othman\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nIGB Corporation Bhd\\nCYL Corporation Bhd\\nBritish American Tobacco (Malaysia) Bhd\\nIGB Berhad\\nGleneagles Hospital (Kuala Lumpur) Sdn. Bhd.\\nSumatec Resources Bhd\\nAlliance Unit Trust Management Bhd\\nOncology Centre (Kl) Sdn Bhd\\nSuruhanjaya Hak Asasi Manusia Malaysia\\nAlliance Capital Asset Management Sdn Bhd\\nIhm Sdn. Bhd.\\nPilgrim Fund Board of Malaysia\\nTH Plantations Berhad\\nMui Continental Insurance Berhad\\nAlliance Merchant Bank Berhad\\nSeberang Flour Mill Sdn. Bhd.\\nPerusahaan Jaya Plastik (M) Sdn Bhd\\nBtc Clothier Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Board of Directors, Lembaga Tabung Haji, Attorney General, Chairman, Malaysian Human Rights Commission (Suhakam)\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abu Talib Bin Othman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1938\"}"
+  },
+  {
+    "id": "11675574",
+    "documentIds": [],
+    "names": ["Mohd Zakaria Ahmad", "Mohd Zakaria Bin Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11675574\",\"name\":\"Mohd Zakaria Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Police Chief, Pahang, Deputy Police Chief, Johor, Director, Commercial Crime Investigation Department (JSJK)\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Zakaria Bin Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1960\",\"associates\":[{\"name\":\"Noor Amirzah Othman\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "11703058",
+    "documentIds": [],
+    "names": ["Mohd. Zain Ahmad", "Mohd. Zain Bin Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11703058\",\"name\":\"Mohd. Zain Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd. Zain Bin Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Ismail Mohammed Ali\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Brother-in-law\"},{\"name\":\"Mohamed Hashim Mohamed Ali\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Brother-in-law\"}]}"
+  },
+  {
+    "id": "11704158",
+    "documentIds": [],
+    "names": [
+      "Maznah Ibrahim",
+      "Maznah Binti Ibrahim",
+      "Tengku Maznah Sultan Ibrahim",
+      "Tengku Maznah Binti Sultan Ibrahim"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11704158\",\"name\":\"Maznah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Maznah Binti Ibrahim\",\"Tengku Maznah Sultan Ibrahim\",\"Tengku Maznah Binti Sultan Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Ismail Petra Yahya Petra\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Nephew\"},{\"name\":\"Yahya Petra Ibrahim\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Brother\"},{\"name\":\"Mohd Arif Abu Bakar\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Brother-in-law\"},{\"name\":\"Ibrahim Petra Bin Tengku Indra Petra\",\"sanctionsSearchTypes\":[\"ADVERSE_MEDIA\"],\"association\":\"Nephew\"}]}"
+  },
+  {
+    "id": "1483520",
+    "documentIds": [],
+    "names": ["Abdullah Bin Hashim", "Abdullah Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1483520\",\"name\":\"Abdullah Bin Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"BURSA MALAYSIA NOTES:\\n\\n3 Mar 2011\\nPUBLIC REPRIMAND ON TANJUNG OFFSHORE BERHAD\\n\\nBreach of paragraph 9.16(1)(a) of the Bursa Malaysia Securities Berhad Main Market Listing Requirements (“Main Market LR”) \\n\\n1. Bursa Malaysia Securities Berhad (“Bursa Securities”) hereby publicly reprimands Tanjung Offshore Berhad (\\\"the Company\\\") for breach of paragraph 9.16(1)(a) of the Main Market LR.\\n\\nThe Company is also required to: \\na. carry out a limited review on its quarterly report submissions. The limited review must be performed by the Company’s external auditors for four quarterly reports commencing no later from the Company’s quarterly report for the financial period ended 31 March 2011; and\\n\\nb. ensure all its directors and the relevant personnel of the Company attend a training programme in relation to compliance with the Main Market LR particularly pertaining to financial statements. \\n\\n2. Pursuant to paragraph 9.16(1)(a) of the Main Market LR, a listed issuer must ensure that each announcement is factual, clear, unambiguous, accurate, succinct and contains sufficient information to enable investors to make informed investment decisions.\\n\\n3. The Company had reported an unaudited profit after taxation and minority interest of RM4,884,000 in the Company’s fourth quarterly report for the financial period ended 31 December 2009 (“Unaudited Results”) as compared to an audited profit after taxation and minority interest of RM3,075,694 (“Audited Results”) in its annual audited accounts for the financial year ended 31 December 2009. The difference of RM1,808,306 between the Unaudited Results and the Audited Results for the financial year ended 31 December 2009 represents a deviation of approximately 37% (“Deviation”). \\n\\nIn addition to the adjustment arising from the reversal of income recognized from claims made by an associate company, Cendor Mopu Producer Ltd as stated in the Company’s announcement dated 30 April 2010, the Deviation was also due to the under recognition of revenue and post acquisition profit in respect of the Company’s subsidiaries.\\n\\nThe Company had breached paragraph 9.16(1)(a) of the Main Market LR in respect of the Company’s announcement dated 23 February 2010 on its Unaudited Results which failed to take into account the adjustments arising from under recognition of revenue and post acquisition profit in respect of the Company’s subsidiaries which was due to the Company’s oversight.\\n\\n4. The public reprimand was imposed pursuant to paragraph 16.19(1) of the Main Market LR after taking into consideration all facts and circumstances of the matter and upon completion of due process.\\n\\n5. Bursa Securities views the contravention seriously and reminds the Company and its Board of Directors on their responsibility to maintain appropriate standards of corporate responsibility and accountability in order to achieve greater disclosure and transparency to the shareholders and the investing public. In this respect, the Company and its directors are required to take all reasonable steps including putting in place or enhancing the Company's procedures and processes and review the effective implementation of the same to ensure compliance with the Main Market LR at all times.\\n\\n6. Whilst Bursa Securities has not made a finding that any of the directors of the Company caused or permitted the aforesaid breach by the Company, Bursa Securities nevertheless wishes to highlight that it is the responsibility of directors of listed companies to maintain appropriate standards of responsibility and accountability within the Company and amongst its officers and employees including, amongst others, an awareness of the importance of compliance with the Main Market LR. The Board of Directors of the Company at the material time are as follows:- \\n\\n1) Datuk Wira Syed Ali Bin Tan Sri Syed Abbas Alhabshee \\n2) Haji Omar Bin Khalid \\n3) Haji Hamidon Bin Md Khayon \\n4) Zaaba bin Sedek \\n5) Dato’ Ab Wahab Bin Haji Ibrahim \\n6) Edwanee Cheah Bin Abdullah \\n7) George William Warren Jr \\n8) Haji Abdullah bin Hashim\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"https://www.bursamalaysia.com/about_bursa/media_centre/media_releases?year=all&subject=\"},{\"name\":\"https://www.bursamalaysia.com/about_bursa/media_centre/public-reprimand-on-tanjung-offshore-berhad\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdullah Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "1485822",
+    "documentIds": [],
+    "names": [
+      "Faisal Abdul Ghani",
+      "Faisal Bin Abdul Ghani",
+      "Pisal Abdul Ghani",
+      "Pisal Bin Abdul Ghani"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1485822\",\"name\":\"Faisal Abdul Ghani\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nComposites Technology Research Malaysia Sdn Bhd\\nCTRM Aviation Sdn Bhd\\nCTRM Aero Composites Sdn Bhd\\nSuria Strategic Energy Resources Sdn Bhd\\nTelekom Malaysia Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Committee, Suria Strategic Energy Resources\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Faisal Bin Abdul Ghani\",\"Pisal Abdul Ghani\",\"Pisal Bin Abdul Ghani\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12552322",
+    "documentIds": [],
+    "names": ["Narimah Hashim", "Narimah Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12552322\",\"name\":\"Narimah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Narimah Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12554330",
+    "documentIds": [],
+    "names": ["Zaharah Ahmad", "Zaharah Binti Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12554330\",\"name\":\"Zaharah Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zaharah Binti Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11763987",
+    "documentIds": [],
+    "names": ["Kamariah Mohamad", "Kamariah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11763987\",\"name\":\"Kamariah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kamariah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Salehudin Ishak\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "11768226",
+    "documentIds": [],
+    "names": ["Azizah Ibrahim", "Azizah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11768226\",\"name\":\"Azizah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Azizah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Amiruddin Muhamed\",\"ranks\":[\"LEVEL_2\",\"LEVEL_2\",\"LEVEL_2\",\"LEVEL_2\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "11494027",
+    "documentIds": [],
+    "names": ["Hassan Abdul Karim", "Hassan Bin Abdul Karim", "Hassan Karim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11494027\",\"name\":\"Hassan Abdul Karim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, House of Representatives, PKR PH, Pasir Gudang, Johor\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Hassan Bin Abdul Karim\",\"Hassan Karim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1951\"}"
+  },
+  {
+    "id": "12571619",
+    "documentIds": [],
+    "names": ["Razali Bakar", "Razali Bin Bakar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12571619\",\"name\":\"Razali Bakar\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"President, Tapah District Council\",\"occupationCode\":\"city_mayors\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Razali Bin Bakar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "1527291",
+    "documentIds": [],
+    "names": ["Malim Bin Mohamed", "Malim Mohamed"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1527291\",\"name\":\"Malim Bin Mohamed\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"BURSA MALAYSIA NOTES:\\n\\n30 Jun 2011\\nSATANG HOLDINGS BERHAD PUBLICLY REPRIMANDED AND SIX DIRECTORS FINED A TOTAL OF RM180,000\\n\\nBursa Malaysia Securities Berhad (“Bursa Securities”) publicly reprimands Satang Holdings Berhad (“ SATANG”) for breaches of the Main Market Listing Requirements (“Main LR”); and publicly reprimands and fines its directors a total of RM180,000.00.\\nBursa Securities wishes to remind SATANG and its Board of Directors of their responsibility to maintain appropriate standards of corporate responsibility and accountability to the shareholders and the investing public.\\n\\n(A) PUBLIC REPRIMAND ON SATANG HOLDINGS BERHAD\\n- Bursa Securities publicly reprimands SATANG for breach of paragraph 15.09(1) of the Main LR. \\n- Pursuant to paragraph 15.09(1) of the Main LR, a listed issuer must appoint and maintain an audit committee at all material times. \\n- SATANG had breached paragraph 15.09(1) of the Main LR arising from the dissolution of its audit committee on 1 November 2010.\\n\\nSATANG had during its Board of Directors’ meeting on 1 November 2010 approved the dissolution of its audit committee entirely with immediate effect. In response to Bursa Securities’ query, SATANG had clarified that the dissolution was in view of the resignation of its audit committee member with the Malaysian Institute of Accountants qualification. The dissolution was undertaken despite SATANG having up to 3 months from the resignation to fill the vacancy pursuant to paragraph 15.19 of the Main LR.\\n\\n(B) PUBLIC REPRIMAND AND TOTAL FINES OF RM180,000.00 ON 6 DIRECTORS\\n- The following directors of SATANG who had approved the dissolution were found to be in breach of paragraph 16.13(b) of the Main LR for permitting knowingly or where they had reasonable means of obtaining such knowledge, SATANG to commit the above breach and were imposed with the following penalties:- \\n\\nMAJOR (R) JAMALUDIN BIN HASAN \\nChairman & Executive Director \\nAppointed on 3 July 2009 \\nResigned on 11 November 2010 \\nPublic Reprimand & Fine of RM30,000\\n\\nMALIM BIN MOHAMED \\nManaging Director \\nAppointed on 3 July 2009 \\nResigned on 1 January 2011\\t\\nPublic Reprimand & Fine of RM30,000\\n\\nTAJUDIN BIN TALIB \\nExecutive Director \\nAppointed on 21 December 2009 \\nResigned on 5 January 2011\\t\\nPublic Reprimand & Fine of RM30,000 \\n\\nLOTFI BIN MISKAM \\nNon-Independent and Non-Executive Director \\nAppointed on 17 August 2010\\tPublic Reprimand & Fine of RM30,000\\n\\nAZHAR BIN AZIZAN @ HARUN \\nNon-Independent and Non-Executive Director \\nAppointed on 28 August 2010\\nPublic Reprimand & Fine of RM30,000\\n\\nDR MOHAMAD SALMI BIN MOHD SOHOD \\nIndependent and Non-Executive Director \\nAppointed on 20 September 2010\\t\\nPublic Reprimand & Fine of RM30,000\\n\\nThe finding of breach and imposition of the above penalties on SATANG and the directors are made pursuant to paragraph 16.19 of the Main LR upon completion of due process and after taking into consideration all facts and circumstances of the matter and in particular:- \\n\\n- The materiality of the breach including that the requirement for a listed company to maintain an audit committee at all times is one of the fundamental obligations of companies listed on the Official List of Bursa Securities. In this regard, an audit committee plays a crucial role in the corporate governance of a listed company and protecting the interest of shareholders via the assessment of the risks and control environment of a listed company, overseeing the financial reporting, evaluating the internal and external audit process and reviewing conflict of interest situations and related party transactions. As such, whilst SATANG had reconstituted its audit committee on 3 November 2010 (i.e, 2 market days later) in accordance with the directive of Bursa Securities, Bursa Securities views the breach seriously in view of its significance towards market integrity; and \\n- The conduct of the directors in blatantly disregarding the obligations under the Main LR despite being advised that the audit committee need not be dissolved and that the listing requirements allow the vacancy to be filled up within 3 months.\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.bursamalaysia.com/website/bm/media_centre/listing.jsp?mode=date&sel=2011&a=%2Fbm%2Fmedia_centre%2Fmedia_releases%2Fyears%2F2011%2F20110630_181146078.html#top\"},{\"name\":\"http://www.bursamalaysia.com/website/bm/media_centre/media_releases.html#\"},{\"name\":\"http://www.bursamalaysia.com/corporate/media-centre/media-releases#/?year=All&subject=All&page=1\"},{\"name\":\"http://www.bursamalaysia.com/corporate/media-centre/media-releases/571\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Malim Mohamed\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "4335393",
+    "documentIds": ["851221-01-6408", "851221016408"],
+    "names": ["Khatijah Mohamad", "Khatijah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"4335393\",\"name\":\"Khatijah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\",\"Financial Crime\"],\"freetext\":\"[Reported Allegation Details]\\nDetails Item: 1\\nCategory2: Financial Crime\\nCategory3: Lower Threshold\\nReported Monetary Value Note: Reported Monetary Value does not apply to the entire item, but to individual reported allegations\\nReported Monetary Value Type: Exact\\nCurrency: MYR\\nReported Monetary Value: 40,000\\nSource Name 1: Bernama Daily Malaysian News\\nSource Date 1: 05-Aug-2015\\nSource Accession Number 1: https://global.factiva.com/redir/default.aspx?P=sa&AN=BRNAMA0020150806eb850001l&cat=a&ep=ASE\\nSource Language 1: English\\n\\nDow Jones Comment: The information in this file is derived from news articles published by various media providers around the world.  It is not an exhaustive source of information about the individual or any related allegations of criminal activity, but reflects references in those articles to alleged criminal misconduct.  The database may not reflect all or subsequent developments in a particular criminal matter; users are advised to conduct a further inquiry for any information that post-dates the date on which the profile was last modified.\",\"documents\":[{\"id\":\"851221-01-6408\",\"name\":\"National ID\",\"formattedId\":\"851221016408\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\",\"Special Interest Person (SIP) - Financial Crime - Lower Threshold\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/001-shame.xhtml?id=1631&uweb=jtl&mid=844\"},{\"name\":\"Bernama Daily Malaysian News\",\"createdAt\":1438732800000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=BRNAMA0020150806eb850001l&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=BRNAMA0020150806eb850001l&cat=a&ep=ASE\"]}]},{\"name\":\"http://www.sprm.gov.my/\"}],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Khatijah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11515472",
+    "documentIds": [],
+    "names": ["Azman Ibrahim", "Azman Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11515472\",\"name\":\"Azman Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Council, Terengganu\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, State Assembly, Terengganu\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Central Working Committee, Pan-Malaysian Islamic Party (PAS)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azman Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1974\"}"
+  },
+  {
+    "id": "1551848",
+    "documentIds": [],
+    "names": ["Halijah Abbas", "Halijah Binti Abbas"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1551848\",\"name\":\"Halijah Abbas\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Judge, High Court\",\"occupationCode\":\"senior_members_of_the_judiciary\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Halijah Binti Abbas\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13172344",
+    "documentIds": [],
+    "names": ["Kamariah Omar", "Kamariah Binti Omar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13172344\",\"name\":\"Kamariah Omar\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kamariah Binti Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Allaudeen Abdul Majid\",\"ranks\":[],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "11344550",
+    "documentIds": [],
+    "names": ["Fadzilah Salim", "Fadzilah Binti Salim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11344550\",\"name\":\"Fadzilah Salim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fadzilah Binti Salim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Shahrin Sahib\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "437823",
+    "documentIds": [],
+    "names": [
+      "Zanariah Ahmad",
+      "Zanariah Binti Ahmad",
+      "Tengku Puan Zanariah Tengku Ahmad",
+      "Tengku Puan Zanariah Binti Tengku Ahmad"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"437823\",\"name\":\"Zanariah Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{}],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zanariah Binti Ahmad\",\"Tengku Puan Zanariah Tengku Ahmad\",\"Tengku Puan Zanariah Binti Tengku Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1940\"}"
+  },
+  {
+    "id": "438295",
+    "documentIds": [],
+    "names": [
+      "Iria'a Ja'afar",
+      "Irina Binti Ja'afar",
+      "Tunku Irina Tuanku Ja'afar",
+      "Tunku Irina Binti Tuanku Ja'afar",
+      "Irina Ja'afar",
+      "Irina Jaafar",
+      "Irinah Ja'afar",
+      "Irinah Jaafar",
+      "Iriaa Jaafar",
+      "Irina Binti Jaafar",
+      "Irinah Binti Ja'afar",
+      "Irinah Binti Jaafar",
+      "Tunku Irinah Tuanku Ja'afar",
+      "Tunku Irina Tuanku Jaafar",
+      "Tunku Irinah Tuanku Jaafar",
+      "Tunku Irina Binti Tuanku Jaafar",
+      "Tunku Irinah Binti Tuanku Ja'afar",
+      "Tunku Irinah Binti Tuanku Jaafar"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"438295\",\"name\":\"Iria'a Ja'afar\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nSyarikat Pesaka Antah Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Irina Binti Ja'afar\",\"Tunku Irina Tuanku Ja'afar\",\"Tunku Irina Binti Tuanku Ja'afar\",\"Irina Ja'afar\",\"Irina Jaafar\",\"Irinah Ja'afar\",\"Irinah Jaafar\",\"Iriaa Jaafar\",\"Irina Binti Jaafar\",\"Irinah Binti Ja'afar\",\"Irinah Binti Jaafar\",\"Tunku Irinah Tuanku Ja'afar\",\"Tunku Irina Tuanku Jaafar\",\"Tunku Irinah Tuanku Jaafar\",\"Tunku Irina Binti Tuanku Jaafar\",\"Tunku Irinah Binti Tuanku Ja'afar\",\"Tunku Irinah Binti Tuanku Jaafar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\"}"
+  },
+  {
+    "id": "12635067",
+    "documentIds": [],
+    "names": ["Mohammad Ab. Rahman", "Mohammad Bin Ab. Rahman"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12635067\",\"name\":\"Mohammad Ab. Rahman\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Chief of Defence Force, Malaysian Armed Forces\",\"occupationCode\":\"senior_members_of_the_armed_forces\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Board of Directors, Lembaga Tabung Angkatan Tentera\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohammad Bin Ab. Rahman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1964\"}"
+  },
+  {
+    "id": "12638927",
+    "documentIds": [],
+    "names": ["Zainah Ibrahim", "Zainah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12638927\",\"name\":\"Zainah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deputy Director General, Town and Country Planning Department (PLANMalaysia)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zainah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13264346",
+    "documentIds": [],
+    "names": ["Azman Ibrahim", "Azman Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13264346\",\"name\":\"Azman Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Director General, Implementation Coordination Unit (ICU), Prime Minister's Department\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azman Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Rosmawati Hassan\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "11613004",
+    "documentIds": [],
+    "names": ["Hasnah Mohamad", "Hasnah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11613004\",\"name\":\"Hasnah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"\",\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hasnah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "4488346",
+    "documentIds": [],
+    "names": ["Mohd Zain Ahmad", "Mohd Zain Bin Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"4488346\",\"name\":\"Mohd Zain Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[\"Additional Domestic Screening Requirement\"],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, State Assembly, Pulau Pinang\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP) - Additional Domestic Screening Requirement\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Zain Bin Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "450418",
+    "documentIds": [],
+    "names": [
+      "Hamzah Zainuddin",
+      "Hamzah Bin Zainudin",
+      "Hamzah Zainudin",
+      "Hamzah Bin Zainuddin"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"450418\",\"name\":\"Hamzah Zainuddin\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\",\"Investigations\"],\"freetext\":\"Investigative Body: Malaysian Anti-Corruption Commission\\nInvestigation Start Date: 01-Aug-2023\\nInvestigation Notes: Hamzah Zainudin was the subject of an investigation by the Malaysian Anti-Corruption Commission (MACC) into allegations of bribery involving MYR 15m, as reported on August 25, 2023. A businessman reportedly solicited MYR 15m in bribes from a senior official of Asia Coding Centre Sdn Bhd through an intermediary in exchange for Hamzah's help in securing projects with the Ministry of Home Affairs.\\n\\nASSOCIATED ENTITIES INFORMATION:\\nGps Tech Solutions Sdn Bhd\\nFELCRA Berhad\\nAsian Pac Holdings Bhd\\nSouth Malaysia Industries Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\",\"ADVERSE_MEDIA\"],\"occupations\":[{\"title\":\"Member, House of Representatives, PPBM PN, Larut, Perak\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"},{\"title\":\"Secretary General, Parti Pribumi Bersatu Malaysia (PPBM)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Supreme Leadership Council, Parti Pribumi Bersatu Malaysia (PPBM)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\",\"Special Interest Person (SIP) - Investigations - Corruption\"],\"screeningSources\":[{\"name\":\"New Straits Times\",\"createdAt\":1692921600000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230825ej8p0000t&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230825ej8p0000t&cat=a&ep=ASE\"]}]}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Hamzah Bin Zainudin\",\"Hamzah Zainudin\",\"Hamzah Bin Zainuddin\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\"}"
+  },
+  {
+    "id": "450545",
+    "documentIds": [],
+    "names": ["Jamilah Ibrahim", "Jamilah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"450545\",\"name\":\"Jamilah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nSabah Softwoods Berhad\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Senate, PAS, Member, Central Committee, Pan-Malaysian Islamic Party (PAS)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Jamilah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "450936",
+    "documentIds": [],
+    "names": [
+      "Yusof Yacob",
+      "Josree Yacob",
+      "Yusof Bin Yacob",
+      "Josree Bin Yacob",
+      "Yusof Yaacob",
+      "Yusuf Yacob",
+      "Yusuf Yaacob"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"450936\",\"name\":\"Yusof Yacob\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nClinipath (Malaysia) Sdn Bhd\\nZecon Bhd\\nNadicorp Holdings Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, State Assembly, Sabah\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Josree Yacob\",\"Yusof Bin Yacob\",\"Josree Bin Yacob\",\"Yusof Yaacob\",\"Yusuf Yacob\",\"Yusuf Yaacob\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "3235323",
+    "documentIds": [],
+    "names": ["Jaafar Kasim", "Jaafar Bin Kasim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"3235323\",\"name\":\"Jaafar Kasim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Defense, Military, Naval and Air Attaché, Malaysian Embassy, United States\",\"occupationCode\":\"embassy_consular_staff\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Jaafar Bin Kasim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Azmiyatul Shima Zainol Abidin\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "11675574",
+    "documentIds": [],
+    "names": ["Mohd Zakaria Ahmad", "Mohd Zakaria Bin Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11675574\",\"name\":\"Mohd Zakaria Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Police Chief, Pahang, Deputy Police Chief, Johor, Director, Commercial Crime Investigation Department (JSJK)\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Zakaria Bin Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1960\"}"
+  },
+  {
+    "id": "4335393",
+    "documentIds": ["851221-01-6408", "851221016408"],
+    "names": ["Khatijah Mohamad", "Khatijah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"4335393\",\"name\":\"Khatijah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\",\"Financial Crime\"],\"freetext\":\"[Reported Allegation Details]\\nDetails Item: 1\\nCategory2: Financial Crime\\nCategory3: Lower Threshold\\nReported Monetary Value Note: Reported Monetary Value does not apply to the entire item, but to individual reported allegations\\nReported Monetary Value Type: Exact\\nCurrency: MYR\\nReported Monetary Value: 40,000\\nSource Name 1: Bernama Daily Malaysian News\\nSource Date 1: 05-Aug-2015\\nSource Accession Number 1: https://global.factiva.com/redir/default.aspx?P=sa&AN=BRNAMA0020150806eb850001l&cat=a&ep=ASE\\nSource Language 1: English\\n\\nDow Jones Comment: The information in this file is derived from news articles published by various media providers around the world.  It is not an exhaustive source of information about the individual or any related allegations of criminal activity, but reflects references in those articles to alleged criminal misconduct.  The database may not reflect all or subsequent developments in a particular criminal matter; users are advised to conduct a further inquiry for any information that post-dates the date on which the profile was last modified.\",\"documents\":[{\"id\":\"851221-01-6408\",\"name\":\"National ID\",\"formattedId\":\"851221016408\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\",\"Special Interest Person (SIP) - Financial Crime - Lower Threshold\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/001-shame.xhtml?id=1631&uweb=jtl&mid=844\"},{\"name\":\"Bernama Daily Malaysian News\",\"createdAt\":1438732800000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=BRNAMA0020150806eb850001l&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=BRNAMA0020150806eb850001l&cat=a&ep=ASE\"]}]},{\"name\":\"http://www.sprm.gov.my/\"}],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Khatijah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Ruzaidy Ibrahim\",\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12757732",
+    "documentIds": [],
+    "names": ["Fatimah Danial", "Fatimah Binti Danial"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12757732\",\"name\":\"Fatimah Danial\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fatimah Binti Danial\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12759625",
+    "documentIds": [],
+    "names": [
+      "Hamsiah Mohamad Hanis",
+      "Hamsiah Binti Mohamad Hanis",
+      "Hamsiah Mohd Hanis",
+      "Hamsiah Binti Mohd Hanis"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12759625\",\"name\":\"Hamsiah Mohamad Hanis\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hamsiah Binti Mohamad Hanis\",\"Hamsiah Mohd Hanis\",\"Hamsiah Binti Mohd Hanis\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13364063",
+    "documentIds": [],
+    "names": ["Roslan Ismail", "Roslan Bin Ismail"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13364063\",\"name\":\"Roslan Ismail\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Director General, Public Works Department (JKR)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Roslan Bin Ismail\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Mahmudah Yahya\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "12049750",
+    "documentIds": [],
+    "names": ["Jamaliah Ibrahim", "Jamaliah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12049750\",\"name\":\"Jamaliah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Jamaliah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Basaruddin Sadali\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12779074",
+    "documentIds": [],
+    "names": ["Mazlan Ibrahim", "Mazlan Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12779074\",\"name\":\"Mazlan Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nCaring Pharmacy Group Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Acting Chief Executive Officer, Perbadanan Nasional Berhad (PNS)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mazlan Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11703058",
+    "documentIds": [],
+    "names": ["Mohd. Zain Ahmad", "Mohd. Zain Bin Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11703058\",\"name\":\"Mohd. Zain Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd. Zain Bin Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11704158",
+    "documentIds": [],
+    "names": [
+      "Maznah Ibrahim",
+      "Maznah Binti Ibrahim",
+      "Tengku Maznah Sultan Ibrahim",
+      "Tengku Maznah Binti Sultan Ibrahim"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11704158\",\"name\":\"Maznah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Maznah Binti Ibrahim\",\"Tengku Maznah Sultan Ibrahim\",\"Tengku Maznah Binti Sultan Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "1797334",
+    "documentIds": ["G/12553", "G/12553"],
+    "names": ["Azmi Bin Abdullah", "Azmi Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1797334\",\"name\":\"Azmi Bin Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"documents\":[{\"id\":\"G/12553\",\"name\":\"Others\",\"formattedId\":\"G/12553\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azmi Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "1797927",
+    "documentIds": ["581115-11-5165", "581115115165"],
+    "names": ["Hassan Bin Mamat", "Hassan Mamat"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1797927\",\"name\":\"Hassan Bin Mamat\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"MALAYSIAN ANTI-CORRUPTION COMMISSION NOTES:\\n\\nCase No.   :  42S(A)-03-10\\nPrevious Date of Conviction: 13/06/10\",\"documents\":[{\"id\":\"581115-11-5165\",\"name\":\"National ID\",\"formattedId\":\"581115115165\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Hassan Mamat\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1958\"}"
+  },
+  {
+    "id": "437823",
+    "documentIds": [],
+    "names": [
+      "Zanariah Ahmad",
+      "Zanariah Binti Ahmad",
+      "Tengku Puan Zanariah Tengku Ahmad",
+      "Tengku Puan Zanariah Binti Tengku Ahmad"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"437823\",\"name\":\"Zanariah Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{}],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zanariah Binti Ahmad\",\"Tengku Puan Zanariah Tengku Ahmad\",\"Tengku Puan Zanariah Binti Tengku Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1940\",\"associates\":[{\"name\":\"Mahmood Iskandar Ismail\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"},{\"name\":\"Ibrahim Ismail Iskandar\",\"ranks\":[\"LEVEL_1\",\"LEVEL_1\",\"LEVEL_1\",\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Step-Son\"},{\"name\":\"Zarith Sofiah Sultan Idris Syah\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Daughter-in-law\"},{\"name\":\"Abdul Rahman Ismail\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Brother-in-law\"}]}"
+  },
+  {
+    "id": "438295",
+    "documentIds": [],
+    "names": [
+      "Iria'a Ja'afar",
+      "Irina Binti Ja'afar",
+      "Tunku Irina Tuanku Ja'afar",
+      "Tunku Irina Binti Tuanku Ja'afar",
+      "Irina Ja'afar",
+      "Irina Jaafar",
+      "Irinah Ja'afar",
+      "Irinah Jaafar",
+      "Iriaa Jaafar",
+      "Irina Binti Jaafar",
+      "Irinah Binti Ja'afar",
+      "Irinah Binti Jaafar",
+      "Tunku Irinah Tuanku Ja'afar",
+      "Tunku Irina Tuanku Jaafar",
+      "Tunku Irinah Tuanku Jaafar",
+      "Tunku Irina Binti Tuanku Jaafar",
+      "Tunku Irinah Binti Tuanku Ja'afar",
+      "Tunku Irinah Binti Tuanku Jaafar"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"438295\",\"name\":\"Iria'a Ja'afar\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nSyarikat Pesaka Antah Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Irina Binti Ja'afar\",\"Tunku Irina Tuanku Ja'afar\",\"Tunku Irina Binti Tuanku Ja'afar\",\"Irina Ja'afar\",\"Irina Jaafar\",\"Irinah Ja'afar\",\"Irinah Jaafar\",\"Iriaa Jaafar\",\"Irina Binti Jaafar\",\"Irinah Binti Ja'afar\",\"Irinah Binti Jaafar\",\"Tunku Irinah Tuanku Ja'afar\",\"Tunku Irina Tuanku Jaafar\",\"Tunku Irinah Tuanku Jaafar\",\"Tunku Irina Binti Tuanku Jaafar\",\"Tunku Irinah Binti Tuanku Ja'afar\",\"Tunku Irinah Binti Tuanku Jaafar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\",\"associates\":[{\"name\":\"Azlan Abu Bakar\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Brother-in-law\"},{\"name\":\"Sharafuddin Idris Shah Salahuddin Abdul Aziz Shah\",\"ranks\":[\"LEVEL_1\",\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Brother-in-law\"},{\"name\":\"Sulaiman Shah Al-Haj Ibni Al-Marhum Sultan Salahuddin Abdul Aziz Shah Al-Haj\",\"sanctionsSearchTypes\":[\"ADVERSE_MEDIA\"],\"association\":\"Brother-in-law\"},{\"name\":\"Jaafar Abdul Rahman\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Father\"},{\"name\":\"Naquiy Ud-din Jaafar\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"ADVERSE_MEDIA\"],\"association\":\"Brother\"},{\"name\":\"Munawir Abdul Rahman\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Uncle\"},{\"name\":\"Muhriz Munawir\",\"ranks\":[\"LEVEL_1\",\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Cousin\"},{\"name\":\"Abdullah Abdul Rahman\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Uncle\"},{\"name\":\"Imran Ja'afar\",\"ranks\":[\"LEVEL_2\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Brother\"},{\"name\":\"Salahuddin Abdul Aziz Shah Hisamuddin Alam Shah\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Father-in-law\"}]}"
+  },
+  {
+    "id": "1804095",
+    "documentIds": ["570311-04-6183", "570311046183"],
+    "names": ["Othman Bin Omar", "Othman Omar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1804095\",\"name\":\"Othman Bin Omar\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"documents\":[{\"id\":\"570311-04-6183\",\"name\":\"National ID\",\"formattedId\":\"570311046183\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Othman Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\"}"
+  },
+  {
+    "id": "11711918",
+    "documentIds": [],
+    "names": ["Jamilah Hashim", "Jamilah Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11711918\",\"name\":\"Jamilah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nMalaysia Airports Holdings Bhd\\nMalaysia Airports Consultancy Services Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Board of Directors, Malaysia Airports Holdings\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Jamilah Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11713097",
+    "documentIds": [],
+    "names": ["Azli Mohamed", "Azli Bin Mohamed"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11713097\",\"name\":\"Azli Mohamed\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nMalaysia Airports Holdings Bhd\\nAeon Co. (M) Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Chief Strategy Officer, Malaysia Airports Holdings\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azli Bin Mohamed\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "468926",
+    "documentIds": [],
+    "names": ["Ramli Mahmud", "Ramli Bin Mahmud"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"468926\",\"name\":\"Ramli Mahmud\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Mayor of Shah Alam, State Secretary, Selangor, Member, Executive Council, Selangor\",\"occupationCode\":\"senior_civil_servants_regional_government\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ramli Bin Mahmud\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1954\"}"
+  },
+  {
+    "id": "13388803",
+    "documentIds": [],
+    "names": ["Kamariah Othman", "Kamariah Binti Othman"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13388803\",\"name\":\"Kamariah Othman\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kamariah Binti Othman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Mohd Amran Mohd Haris\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "3419064",
+    "documentIds": [],
+    "names": [
+      "Kalsom 'Abdu'llah",
+      "Kalsom Binti 'Abdu'llah",
+      "Sultana Hajjah Kalsom 'Abdu'llah",
+      "Sultana Hajjah Kalsom Binti 'Abdu'llah",
+      "Kalsom Abdullah",
+      "Kalsom Binti Abdullah"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"3419064\",\"name\":\"Kalsom 'Abdu'llah\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"screeningSources\":[{\"name\":\"​http://www.icij.org/project/swiss-leaks/explore-swiss-leaks-data\"}],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kalsom Binti 'Abdu'llah\",\"Sultana Hajjah Kalsom 'Abdu'llah\",\"Sultana Hajjah Kalsom Binti 'Abdu'llah\",\"Kalsom Abdullah\",\"Kalsom Binti Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1951\",\"associates\":[{\"name\":\"Azlan Abu Bakar\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Brother-in-law\"},{\"name\":\"Ahmad Shah Al-Musta'in Billah Abu Bakar Riayat Ud-Din Al-Mu'azam Shah\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"},{\"name\":\"Abdullah Ahmad Shah Al-Musta'in Billah\",\"ranks\":[\"LEVEL_1\",\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Step-Son\"}]}"
+  },
+  {
+    "id": "12144123",
+    "documentIds": [],
+    "names": ["Zaitun Abu Bakar", "Zaitun Binti Abu Bakar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12144123\",\"name\":\"Zaitun Abu Bakar\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zaitun Binti Abu Bakar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Khalid Abd Samad\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Husband\"},{\"name\":\"Shahrir Abdul Samad\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"ADVERSE_MEDIA\"],\"association\":\"Brother-in-law\"}]}"
+  },
+  {
+    "id": "11763987",
+    "documentIds": [],
+    "names": ["Kamariah Mohamad", "Kamariah Binti Mohamad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11763987\",\"name\":\"Kamariah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kamariah Binti Mohamad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "11766440",
+    "documentIds": [],
+    "names": ["Hakimah Mohd Yusoff", "Hakimah Binti Mohd Yusoff"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11766440\",\"name\":\"Hakimah Mohd Yusoff\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Director General, Department of Islamic Development Malaysia (JAKIM)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hakimah Binti Mohd Yusoff\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "4761181",
+    "documentIds": [],
+    "names": ["Azmi Abdullah", "Azmi Bin Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"4761181\",\"name\":\"Azmi Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nFirst World Hotels & Resorts Sdn Bhd\\nE-Genting Holdings Sdn Bhd\\nBank Perusahaan Kecil dan Sederhana Malaysia Bhd\\nGentinggi Sdn Bhd\\nPapago Sdn Bhd\\nE-Genting Sdn. Bhd.\\nGenting Berhad\\nAmanah Raya Berhad\\nIreka Corporation Bhd\\nAPFT Bhd\\nKumpulan Wang Persaraan (Diperbadankan)\\nDagang Nexchange Berhad\\nGenting Global Pte. Ltd.\\nGenting Worldcard Services Sdn Bhd\\nGenting Information Knowledge Enterprise Sdn. Bhd.\\nWiduri Pelangi Sdn Bhd\\nErf Sdn Bhd\\nBank Muamalat Malaysia Berhad\\nTransnational Insurance Brokers (M) Sdn. Bhd.\\nUniversiti Kebangsaan Malaysia\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Board of Directors, Kumpulan Wang Persaraan\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azmi Bin Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "450418",
+    "documentIds": [],
+    "names": [
+      "Hamzah Zainuddin",
+      "Hamzah Bin Zainudin",
+      "Hamzah Zainudin",
+      "Hamzah Bin Zainuddin"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"450418\",\"name\":\"Hamzah Zainuddin\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\",\"Investigations\"],\"freetext\":\"Investigative Body: Malaysian Anti-Corruption Commission\\nInvestigation Start Date: 01-Aug-2023\\nInvestigation Notes: Hamzah Zainudin was the subject of an investigation by the Malaysian Anti-Corruption Commission (MACC) into allegations of bribery involving MYR 15m, as reported on August 25, 2023. A businessman reportedly solicited MYR 15m in bribes from a senior official of Asia Coding Centre Sdn Bhd through an intermediary in exchange for Hamzah's help in securing projects with the Ministry of Home Affairs.\\n\\nASSOCIATED ENTITIES INFORMATION:\\nGps Tech Solutions Sdn Bhd\\nFELCRA Berhad\\nAsian Pac Holdings Bhd\\nSouth Malaysia Industries Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\",\"ADVERSE_MEDIA\"],\"occupations\":[{\"title\":\"Member, House of Representatives, PPBM PN, Larut, Perak\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"},{\"title\":\"Secretary General, Parti Pribumi Bersatu Malaysia (PPBM)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Supreme Leadership Council, Parti Pribumi Bersatu Malaysia (PPBM)\",\"occupationCode\":\"political_party_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\",\"Special Interest Person (SIP) - Investigations - Corruption\"],\"screeningSources\":[{\"name\":\"New Straits Times\",\"createdAt\":1692921600000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230825ej8p0000t&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230825ej8p0000t&cat=a&ep=ASE\"]}]}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Hamzah Bin Zainudin\",\"Hamzah Zainudin\",\"Hamzah Bin Zainuddin\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\",\"associates\":[{\"name\":\"Noraini Abdul Rashid\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"},{\"name\":\"Norasyikin Abdul Ghani\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"},{\"name\":\"Nurul Amilyn Hamzah\",\"sanctionsSearchTypes\":[],\"association\":\"Daughter\"},{\"name\":\"Muhammad Faisal Hamzah\",\"sanctionsSearchTypes\":[\"ADVERSE_MEDIA\"],\"association\":\"Son\"}]}"
+  },
+  {
+    "id": "450936",
+    "documentIds": [],
+    "names": [
+      "Yusof Yacob",
+      "Josree Yacob",
+      "Yusof Bin Yacob",
+      "Josree Bin Yacob",
+      "Yusof Yaacob",
+      "Yusuf Yacob",
+      "Yusuf Yaacob"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"450936\",\"name\":\"Yusof Yacob\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nClinipath (Malaysia) Sdn Bhd\\nZecon Bhd\\nNadicorp Holdings Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, State Assembly, Sabah\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Josree Yacob\",\"Yusof Bin Yacob\",\"Josree Bin Yacob\",\"Yusof Yaacob\",\"Yusuf Yacob\",\"Yusuf Yaacob\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Ahmad Marzuki Nasir\",\"sanctionsSearchTypes\":[],\"association\":\"Son-in-law\"},{\"name\":\"Nazahtul Sakinah Yusof\",\"sanctionsSearchTypes\":[],\"association\":\"Daughter\"},{\"name\":\"Azizah Beniamen\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "12178675",
+    "documentIds": [],
+    "names": ["Abdul Rahman Ayob", "Abdul Rahman Bin Ayob"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12178675\",\"name\":\"Abdul Rahman Ayob\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deputy Chief, Royal Malaysian Navy (TLDM), Member, Board of Directors, Lembaga Tabung Angkatan Tentera, Chief, Royal Malaysian Navy (TLDM)\",\"occupationCode\":\"senior_members_of_the_armed_forces\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdul Rahman Bin Ayob\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1964\",\"associates\":[{\"name\":\"Norinah Mustapha\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "11768226",
+    "documentIds": [],
+    "names": ["Azizah Ibrahim", "Azizah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11768226\",\"name\":\"Azizah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Azizah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "345255",
+    "documentIds": [],
+    "names": [
+      "Zainol Abidin Omar",
+      "Zainol Abedin Bin Omar",
+      "Zainol Abedin Omar",
+      "Zaynol Abidin Omar",
+      "Zainol Abidin Bin Omar",
+      "Zaynol Abidin Bin Omar"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"345255\",\"name\":\"Zainol Abidin Omar\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Malaysian Ambassador to Russia, Malaysian Ambassador to Cuba, Non-resident Malaysian Ambassador to Bahamas, Dominican Republic, Haiti and Jamaica, Non-resident Malaysian Ambassador to Armenia and Belarus, Deputy Chairman, Malaysia Tourism Promotion Board (MTPB), Deputy Secretary General, Ministry of Foreign Affairs\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Zainol Abedin Bin Omar\",\"Zainol Abedin Omar\",\"Zaynol Abidin Omar\",\"Zainol Abidin Bin Omar\",\"Zaynol Abidin Bin Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Rusamelia Ruslan\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "346882",
+    "documentIds": [],
+    "names": ["Ali Abdullah", "Ali Bin Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"346882\",\"name\":\"Ali Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Malaysian High Commissioner to Zimbabwe, Malaysian Ambassador to Ireland, Malaysian High Commissioner to Brunei\",\"occupationCode\":\"embassy_consular_staff\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ali Bin Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1949\",\"associates\":[{\"name\":\"Wan Kamariah Wan Abd. Rahman\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "347179",
+    "documentIds": [],
+    "names": ["Ramlan Ibrahim", "Ramlan Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"347179\",\"name\":\"Ramlan Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Malaysian Ambassador to Bosnia and Herzegovina, Malaysian Ambassador to South Korea, Malaysian Permanent Representative to United Nations, New York, United States, Malaysian Deputy High Commissioner to Singapore, Secretary General, Ministry of Foreign Affairs, Chairman, Malaysia Tourism Promotion Board (MTPB), Deputy Secretary General, Ministry of Foreign Affairs\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ramlan Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Hafipah Mohd Shah\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"},{\"name\":\"Mohd Helmi Ramlan\",\"sanctionsSearchTypes\":[],\"association\":\"Son\"},{\"name\":\"Noor Diana Ramlan\",\"sanctionsSearchTypes\":[],\"association\":\"Daughter\"}]}"
+  },
+  {
+    "id": "358865",
+    "documentIds": [],
+    "names": ["Abu Talib Othman", "Abu Talib Bin Othman"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"358865\",\"name\":\"Abu Talib Othman\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nIGB Corporation Bhd\\nCYL Corporation Bhd\\nBritish American Tobacco (Malaysia) Bhd\\nIGB Berhad\\nGleneagles Hospital (Kuala Lumpur) Sdn. Bhd.\\nSumatec Resources Bhd\\nAlliance Unit Trust Management Bhd\\nOncology Centre (Kl) Sdn Bhd\\nSuruhanjaya Hak Asasi Manusia Malaysia\\nAlliance Capital Asset Management Sdn Bhd\\nIhm Sdn. Bhd.\\nPilgrim Fund Board of Malaysia\\nTH Plantations Berhad\\nMui Continental Insurance Berhad\\nAlliance Merchant Bank Berhad\\nSeberang Flour Mill Sdn. Bhd.\\nPerusahaan Jaya Plastik (M) Sdn Bhd\\nBtc Clothier Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Board of Directors, Lembaga Tabung Haji, Attorney General, Chairman, Malaysian Human Rights Commission (Suhakam)\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abu Talib Bin Othman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1938\",\"associates\":[{\"name\":\"Azizah Ali\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "11790739",
+    "documentIds": [],
+    "names": ["Azizah Binti Hashim", "Azizah Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11790739\",\"name\":\"Azizah Binti Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"MALAYSIAN ANTI-CORRUPTION COMMISSION NOTES:\\n\\nIdentification No. : 680605-02-XXXX\\nCase No. : BA-61R-2-08/2018\\nSummary of charges: Tertuduh merupakan seorang ejen kepada Majlis Amanah Rakyat (MARA) iaitu Pegawai MARA Daerah Klang, Selangor, telah secara rasuah memperoleh untuk diri sendiri suatu upah iaitu wang tunai berjumlah RM20, 000.00 daripada Shahrul Junaidy bin Mohd Arif Shah bagi memberikan sokongan untuk menyokong proses permohonan pembiayaan perniagaan bagi Bengkel Servis Madie.\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/\"},{\"name\":\"https://www.sprm.gov.my/index.php?id=21&page_id=96\"}],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Azizah Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1968\"}"
+  },
+  {
+    "id": "468926",
+    "documentIds": [],
+    "names": ["Ramli Mahmud", "Ramli Bin Mahmud"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"468926\",\"name\":\"Ramli Mahmud\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Mayor of Shah Alam, State Secretary, Selangor, Member, Executive Council, Selangor\",\"occupationCode\":\"senior_civil_servants_regional_government\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ramli Bin Mahmud\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1954\",\"associates\":[{\"name\":\"Shahariah Hashim\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "481785",
+    "documentIds": [],
+    "names": ["Hafsah Hashim", "Hafsah Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"481785\",\"name\":\"Hafsah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nUniversiti Malaysia Kelantan\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Chief Executive Officer, SME Corporation Malaysia\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hafsah Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\"}"
+  },
+  {
+    "id": "4761181",
+    "documentIds": [],
+    "names": ["Azmi Abdullah", "Azmi Bin Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"4761181\",\"name\":\"Azmi Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nFirst World Hotels & Resorts Sdn Bhd\\nE-Genting Holdings Sdn Bhd\\nBank Perusahaan Kecil dan Sederhana Malaysia Bhd\\nGentinggi Sdn Bhd\\nPapago Sdn Bhd\\nE-Genting Sdn. Bhd.\\nGenting Berhad\\nAmanah Raya Berhad\\nIreka Corporation Bhd\\nAPFT Bhd\\nKumpulan Wang Persaraan (Diperbadankan)\\nDagang Nexchange Berhad\\nGenting Global Pte. Ltd.\\nGenting Worldcard Services Sdn Bhd\\nGenting Information Knowledge Enterprise Sdn. Bhd.\\nWiduri Pelangi Sdn Bhd\\nErf Sdn Bhd\\nBank Muamalat Malaysia Berhad\\nTransnational Insurance Brokers (M) Sdn. Bhd.\\nUniversiti Kebangsaan Malaysia\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Board of Directors, Kumpulan Wang Persaraan\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azmi Bin Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "1483520",
+    "documentIds": [],
+    "names": ["Abdullah Bin Hashim", "Abdullah Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1483520\",\"name\":\"Abdullah Bin Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"BURSA MALAYSIA NOTES:\\n\\n3 Mar 2011\\nPUBLIC REPRIMAND ON TANJUNG OFFSHORE BERHAD\\n\\nBreach of paragraph 9.16(1)(a) of the Bursa Malaysia Securities Berhad Main Market Listing Requirements (“Main Market LR”) \\n\\n1. Bursa Malaysia Securities Berhad (“Bursa Securities”) hereby publicly reprimands Tanjung Offshore Berhad (\\\"the Company\\\") for breach of paragraph 9.16(1)(a) of the Main Market LR.\\n\\nThe Company is also required to: \\na. carry out a limited review on its quarterly report submissions. The limited review must be performed by the Company’s external auditors for four quarterly reports commencing no later from the Company’s quarterly report for the financial period ended 31 March 2011; and\\n\\nb. ensure all its directors and the relevant personnel of the Company attend a training programme in relation to compliance with the Main Market LR particularly pertaining to financial statements. \\n\\n2. Pursuant to paragraph 9.16(1)(a) of the Main Market LR, a listed issuer must ensure that each announcement is factual, clear, unambiguous, accurate, succinct and contains sufficient information to enable investors to make informed investment decisions.\\n\\n3. The Company had reported an unaudited profit after taxation and minority interest of RM4,884,000 in the Company’s fourth quarterly report for the financial period ended 31 December 2009 (“Unaudited Results”) as compared to an audited profit after taxation and minority interest of RM3,075,694 (“Audited Results”) in its annual audited accounts for the financial year ended 31 December 2009. The difference of RM1,808,306 between the Unaudited Results and the Audited Results for the financial year ended 31 December 2009 represents a deviation of approximately 37% (“Deviation”). \\n\\nIn addition to the adjustment arising from the reversal of income recognized from claims made by an associate company, Cendor Mopu Producer Ltd as stated in the Company’s announcement dated 30 April 2010, the Deviation was also due to the under recognition of revenue and post acquisition profit in respect of the Company’s subsidiaries.\\n\\nThe Company had breached paragraph 9.16(1)(a) of the Main Market LR in respect of the Company’s announcement dated 23 February 2010 on its Unaudited Results which failed to take into account the adjustments arising from under recognition of revenue and post acquisition profit in respect of the Company’s subsidiaries which was due to the Company’s oversight.\\n\\n4. The public reprimand was imposed pursuant to paragraph 16.19(1) of the Main Market LR after taking into consideration all facts and circumstances of the matter and upon completion of due process.\\n\\n5. Bursa Securities views the contravention seriously and reminds the Company and its Board of Directors on their responsibility to maintain appropriate standards of corporate responsibility and accountability in order to achieve greater disclosure and transparency to the shareholders and the investing public. In this respect, the Company and its directors are required to take all reasonable steps including putting in place or enhancing the Company's procedures and processes and review the effective implementation of the same to ensure compliance with the Main Market LR at all times.\\n\\n6. Whilst Bursa Securities has not made a finding that any of the directors of the Company caused or permitted the aforesaid breach by the Company, Bursa Securities nevertheless wishes to highlight that it is the responsibility of directors of listed companies to maintain appropriate standards of responsibility and accountability within the Company and amongst its officers and employees including, amongst others, an awareness of the importance of compliance with the Main Market LR. The Board of Directors of the Company at the material time are as follows:- \\n\\n1) Datuk Wira Syed Ali Bin Tan Sri Syed Abbas Alhabshee \\n2) Haji Omar Bin Khalid \\n3) Haji Hamidon Bin Md Khayon \\n4) Zaaba bin Sedek \\n5) Dato’ Ab Wahab Bin Haji Ibrahim \\n6) Edwanee Cheah Bin Abdullah \\n7) George William Warren Jr \\n8) Haji Abdullah bin Hashim\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"https://www.bursamalaysia.com/about_bursa/media_centre/media_releases?year=all&subject=\"},{\"name\":\"https://www.bursamalaysia.com/about_bursa/media_centre/public-reprimand-on-tanjung-offshore-berhad\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdullah Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"association\":\"Associate\"}]}"
+  },
+  {
+    "id": "1485822",
+    "documentIds": [],
+    "names": [
+      "Faisal Abdul Ghani",
+      "Faisal Bin Abdul Ghani",
+      "Pisal Abdul Ghani",
+      "Pisal Bin Abdul Ghani"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1485822\",\"name\":\"Faisal Abdul Ghani\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nComposites Technology Research Malaysia Sdn Bhd\\nCTRM Aviation Sdn Bhd\\nCTRM Aero Composites Sdn Bhd\\nSuria Strategic Energy Resources Sdn Bhd\\nTelekom Malaysia Bhd\",\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Committee, Suria Strategic Energy Resources\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Faisal Bin Abdul Ghani\",\"Pisal Abdul Ghani\",\"Pisal Bin Abdul Ghani\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"association\":\"Employer\"}]}"
+  },
+  {
+    "id": "12285867",
+    "documentIds": [],
+    "names": ["Iasah Ibrahim", "Iasah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12285867\",\"name\":\"Iasah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Iasah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Abdul Halim Abd. Samad\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "1527291",
+    "documentIds": [],
+    "names": ["Malim Bin Mohamed", "Malim Mohamed"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"1527291\",\"name\":\"Malim Bin Mohamed\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"BURSA MALAYSIA NOTES:\\n\\n30 Jun 2011\\nSATANG HOLDINGS BERHAD PUBLICLY REPRIMANDED AND SIX DIRECTORS FINED A TOTAL OF RM180,000\\n\\nBursa Malaysia Securities Berhad (“Bursa Securities”) publicly reprimands Satang Holdings Berhad (“ SATANG”) for breaches of the Main Market Listing Requirements (“Main LR”); and publicly reprimands and fines its directors a total of RM180,000.00.\\nBursa Securities wishes to remind SATANG and its Board of Directors of their responsibility to maintain appropriate standards of corporate responsibility and accountability to the shareholders and the investing public.\\n\\n(A) PUBLIC REPRIMAND ON SATANG HOLDINGS BERHAD\\n- Bursa Securities publicly reprimands SATANG for breach of paragraph 15.09(1) of the Main LR. \\n- Pursuant to paragraph 15.09(1) of the Main LR, a listed issuer must appoint and maintain an audit committee at all material times. \\n- SATANG had breached paragraph 15.09(1) of the Main LR arising from the dissolution of its audit committee on 1 November 2010.\\n\\nSATANG had during its Board of Directors’ meeting on 1 November 2010 approved the dissolution of its audit committee entirely with immediate effect. In response to Bursa Securities’ query, SATANG had clarified that the dissolution was in view of the resignation of its audit committee member with the Malaysian Institute of Accountants qualification. The dissolution was undertaken despite SATANG having up to 3 months from the resignation to fill the vacancy pursuant to paragraph 15.19 of the Main LR.\\n\\n(B) PUBLIC REPRIMAND AND TOTAL FINES OF RM180,000.00 ON 6 DIRECTORS\\n- The following directors of SATANG who had approved the dissolution were found to be in breach of paragraph 16.13(b) of the Main LR for permitting knowingly or where they had reasonable means of obtaining such knowledge, SATANG to commit the above breach and were imposed with the following penalties:- \\n\\nMAJOR (R) JAMALUDIN BIN HASAN \\nChairman & Executive Director \\nAppointed on 3 July 2009 \\nResigned on 11 November 2010 \\nPublic Reprimand & Fine of RM30,000\\n\\nMALIM BIN MOHAMED \\nManaging Director \\nAppointed on 3 July 2009 \\nResigned on 1 January 2011\\t\\nPublic Reprimand & Fine of RM30,000\\n\\nTAJUDIN BIN TALIB \\nExecutive Director \\nAppointed on 21 December 2009 \\nResigned on 5 January 2011\\t\\nPublic Reprimand & Fine of RM30,000 \\n\\nLOTFI BIN MISKAM \\nNon-Independent and Non-Executive Director \\nAppointed on 17 August 2010\\tPublic Reprimand & Fine of RM30,000\\n\\nAZHAR BIN AZIZAN @ HARUN \\nNon-Independent and Non-Executive Director \\nAppointed on 28 August 2010\\nPublic Reprimand & Fine of RM30,000\\n\\nDR MOHAMAD SALMI BIN MOHD SOHOD \\nIndependent and Non-Executive Director \\nAppointed on 20 September 2010\\t\\nPublic Reprimand & Fine of RM30,000\\n\\nThe finding of breach and imposition of the above penalties on SATANG and the directors are made pursuant to paragraph 16.19 of the Main LR upon completion of due process and after taking into consideration all facts and circumstances of the matter and in particular:- \\n\\n- The materiality of the breach including that the requirement for a listed company to maintain an audit committee at all times is one of the fundamental obligations of companies listed on the Official List of Bursa Securities. In this regard, an audit committee plays a crucial role in the corporate governance of a listed company and protecting the interest of shareholders via the assessment of the risks and control environment of a listed company, overseeing the financial reporting, evaluating the internal and external audit process and reviewing conflict of interest situations and related party transactions. As such, whilst SATANG had reconstituted its audit committee on 3 November 2010 (i.e, 2 market days later) in accordance with the directive of Bursa Securities, Bursa Securities views the breach seriously in view of its significance towards market integrity; and \\n- The conduct of the directors in blatantly disregarding the obligations under the Main LR despite being advised that the audit committee need not be dissolved and that the listing requirements allow the vacancy to be filled up within 3 months.\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.bursamalaysia.com/website/bm/media_centre/listing.jsp?mode=date&sel=2011&a=%2Fbm%2Fmedia_centre%2Fmedia_releases%2Fyears%2F2011%2F20110630_181146078.html#top\"},{\"name\":\"http://www.bursamalaysia.com/website/bm/media_centre/media_releases.html#\"},{\"name\":\"http://www.bursamalaysia.com/corporate/media-centre/media-releases#/?year=All&subject=All&page=1\"},{\"name\":\"http://www.bursamalaysia.com/corporate/media-centre/media-releases/571\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Malim Mohamed\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"association\":\"Associate\"}]}"
+  },
+  {
+    "id": "481785",
+    "documentIds": [],
+    "names": ["Hafsah Hashim", "Hafsah Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"481785\",\"name\":\"Hafsah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nUniversiti Malaysia Kelantan\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Chief Executive Officer, SME Corporation Malaysia\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hafsah Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\"}"
+  },
+  {
+    "id": "481785",
+    "documentIds": [],
+    "names": ["Hafsah Hashim", "Hafsah Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"481785\",\"name\":\"Hafsah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nUniversiti Malaysia Kelantan\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Chief Executive Officer, SME Corporation Malaysia\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hafsah Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1957\",\"associates\":[{\"name\":\"Fazil Shuhaimi Taib\",\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12319968",
+    "documentIds": [],
+    "names": ["Othman Omar", "Othman Bin Omar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12319968\",\"name\":\"Othman Omar\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nSelangor Industrial Corporation Sdn Bhd\\nSunway PKNS Sdn Bhd\\nWorldwide Holdings Berhad\\nOxley Holdings Limited\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Director General, Lembaga Kemajuan Tanah Persekutuan (FELDA)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Othman Bin Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Sharon Suraya Abdullah\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "11938024",
+    "documentIds": [],
+    "names": ["Rohayah Mohd Zain", "Rohayah Binti Mohd Zain"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11938024\",\"name\":\"Rohayah Mohd Zain\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Deputy Director General, People's Trust Council (MARA)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Rohayah Binti Mohd Zain\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12977156",
+    "documentIds": [],
+    "names": ["Razali Saad", "Razali Bin Saad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12977156\",\"name\":\"Razali Saad\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Council, Perlis\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, State Assembly, Perlis\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Razali Bin Saad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1965\"}"
+  },
+  {
+    "id": "11944274",
+    "documentIds": [],
+    "names": ["Hassan Abdul Ghani", "Hassan Bin Abdul Ghani"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"11944274\",\"name\":\"Hassan Abdul Ghani\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Judge, High Court\",\"occupationCode\":\"senior_members_of_the_judiciary\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Hassan Bin Abdul Ghani\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13012038",
+    "documentIds": [],
+    "names": ["Hanita Hashim", "Hanita Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13012038\",\"name\":\"Hanita Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hanita Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12410243",
+    "documentIds": [],
+    "names": ["Normah Ibrahim", "Normah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12410243\",\"name\":\"Normah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Normah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Lamien Sawiyo\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "2852974",
+    "documentIds": ["711202-71-5137", "711202715137"],
+    "names": [
+      "Mohamad Sahri Bin Hassan",
+      "Mohamad Sahri Hassan",
+      "Mohd Sahri Bin Hassan",
+      "Mohd Sahri Hassan"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"2852974\",\"name\":\"Mohamad Sahri Bin Hassan\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"documents\":[{\"id\":\"711202-71-5137\",\"name\":\"National ID\",\"formattedId\":\"711202715137\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/001-shame.xhtml?id=1229&uweb=jtl&mid=844\"},{\"name\":\"http://www.sprm.gov.my/\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohamad Sahri Hassan\",\"Mohd Sahri Bin Hassan\",\"Mohd Sahri Hassan\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1971\"}"
+  },
+  {
+    "id": "12448967",
+    "documentIds": [],
+    "names": ["Yatimah Mohamad", "Yatimah Binti Mohamad", "Yatimah Mohammad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12448967\",\"name\":\"Yatimah Mohamad\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Yatimah Binti Mohamad\",\"Yatimah Mohammad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Juraimin Jadil\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12049750",
+    "documentIds": [],
+    "names": ["Jamaliah Ibrahim", "Jamaliah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12049750\",\"name\":\"Jamaliah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Jamaliah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "13077969",
+    "documentIds": [],
+    "names": [
+      "Hamidah Muhamad",
+      "Hamidah Binti Muhamad",
+      "Hamidah Md.",
+      "Hamidah Binti Md."
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13077969\",\"name\":\"Hamidah Muhamad\",\"entityType\":\"Person\",\"matchTypes\":[\"Corruption\"],\"freetext\":\"[Reported Allegation Details]\\nDetails Item: 1\\nCategory2: Corruption\\nCategory3: Lower Threshold\\nReported Monetary Value Note: Reported Monetary Value does not apply to the entire item, but to individual reported allegations\\nReported Monetary Value Type: Exact\\nCurrency: MYR\\nReported Monetary Value: 350,802\\nSource Name 1: New Straits Times\\nSource Date 1: 24-Jun-2023\\nSource Accession Number 1: https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230626ej6o0000z&cat=a&ep=ASE\\nSource Language 1: English\\n\\nDow Jones Comment: The information in this file is derived from news articles published by various media providers around the world.  It is not an exhaustive source of information about the individual or any related allegations of criminal activity, but reflects references in those articles to alleged criminal misconduct.  The database may not reflect all or subsequent developments in a particular criminal matter; users are advised to conduct a further inquiry for any information that post-dates the date on which the profile was last modified.\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Corruption - Lower Threshold\"],\"screeningSources\":[{\"name\":\"New Straits Times\",\"createdAt\":1687564800000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230626ej6o0000z&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=NSTRAT0020230626ej6o0000z&cat=a&ep=ASE\"]}]}],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hamidah Binti Muhamad\",\"Hamidah Md.\",\"Hamidah Binti Md.\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12053731",
+    "documentIds": [],
+    "names": ["Azmi Abdullah", "Azmi Bin Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12053731\",\"name\":\"Azmi Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Judge, High Court\",\"occupationCode\":\"senior_members_of_the_judiciary\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azmi Bin Abdullah\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12552322",
+    "documentIds": [],
+    "names": ["Narimah Hashim", "Narimah Binti Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12552322\",\"name\":\"Narimah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Narimah Binti Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Cheremi Tarman\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12554330",
+    "documentIds": [],
+    "names": ["Zaharah Ahmad", "Zaharah Binti Ahmad"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12554330\",\"name\":\"Zaharah Ahmad\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zaharah Binti Ahmad\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Mohd Rabin Basir\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "2951705",
+    "documentIds": [],
+    "names": ["Azri Bin Abdullah", "Azri Abdullah"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"2951705\",\"name\":\"Azri Bin Abdullah\",\"entityType\":\"Person\",\"matchTypes\":[\"Trafficking\"],\"freetext\":\"[Reported Allegation Details]\\nDetails Item: 1\\nCategory2: Trafficking\\nCategory3: Lower Threshold\\nReported Monetary Value Note: Reported Monetary Value does not apply to the entire item, but to individual reported allegations\\nReported Monetary Value Type: Unknown\\nSource Name 1: Antara\\nSource Date 1: 11-Jan-2012\\nSource Accession Number 1: https://global.factiva.com/redir/default.aspx?P=sa&AN=ANTAID0020120111e81b004v7&cat=a&ep=ASE\\nSource Language1: Bahasa Indonesian\\nSource Name 2: The Jakarta Post\\nSource Date 2: 29-Feb-2012\\nSource Accession Number 2: https://global.factiva.com/redir/default.aspx?P=sa&AN=JKPOST0020120229e82t00008&cat=a&ep=ASE\\nSource Language2: English\\n\\nDow Jones Comment: The information in this file is derived from news articles published by various media providers around the world.  It is not an exhaustive source of information about the individual or any related allegations of criminal activity, but reflects references in those articles to alleged criminal misconduct.  The database may not reflect all or subsequent developments in a particular criminal matter; users are advised to conduct a further inquiry for any information that post-dates the date on which the profile was last modified.\",\"documents\":[],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Trafficking - Lower Threshold\"],\"screeningSources\":[{\"name\":\"Antara (Bahasa Indonesian Language)\",\"createdAt\":1326240000000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=ANTAID0020120111e81b004v7&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=ANTAID0020120111e81b004v7&cat=a&ep=ASE\"]}]},{\"name\":\"The Jakarta Post\",\"createdAt\":1330473600000,\"url\":\"https://global.factiva.com/redir/default.aspx?P=sa&AN=JKPOST0020120229e82t00008&cat=a&ep=ASE\",\"fields\":[{\"name\":\"URL\",\"values\":[\"https://global.factiva.com/redir/default.aspx?P=sa&AN=JKPOST0020120229e82t00008&cat=a&ep=ASE\"]}]}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azri Abdullah\"],\"countries\":[\"Malaysia\",\"Indonesia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\",\"ID\"]}"
+  },
+  {
+    "id": "2957825",
+    "documentIds": ["650724-01-5035", "650724015035"],
+    "names": ["Amir Bin Mohamed", "Amir Mohamed"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"2957825\",\"name\":\"Amir Bin Mohamed\",\"entityType\":\"Person\",\"matchTypes\":[\"Other Official Lists\"],\"freetext\":\"MALAYSIAN ANTI-CORRUPTION COMMISSION NOTES:\\n\\nCase No. : N-09-275-10/2013\\nConviction date: 02/07/2014\\n\\nCase No.   :  42-51-09/2012\\nConviction date: 27/09/2013\",\"documents\":[{\"id\":\"650724-01-5035\",\"name\":\"National ID\",\"formattedId\":\"650724015035\"}],\"sanctionSearchTypes\":[\"ADVERSE_MEDIA\"],\"types\":[\"Special Interest Person (SIP) - Other Official Lists\"],\"screeningSources\":[{\"name\":\"http://www.sprm.gov.my/\"},{\"name\":\"http://www.sprm.gov.my/001-shame.xhtml?id=1299&uweb=jtl&mid=844\"}],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Amir Mohamed\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1965\"}"
+  },
+  {
+    "id": "773236",
+    "documentIds": ["590415-05-5103", "590415055103"],
+    "names": ["Ismail Lasim", "Ismail Bin Lasim", "Ismail Lassim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"773236\",\"name\":\"Ismail Lasim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"\",\"documents\":[{\"id\":\"590415-05-5103\",\"name\":\"National ID\",\"formattedId\":\"590415055103\"}],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Council, Negeri Sembilan\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, State Assembly, Negeri Sembilan\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Lasim\",\"Ismail Lassim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\"}"
+  },
+  {
+    "id": "773236",
+    "documentIds": ["590415-05-5103", "590415055103"],
+    "names": ["Ismail Lasim", "Ismail Bin Lasim", "Ismail Lassim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"773236\",\"name\":\"Ismail Lasim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"\",\"documents\":[{\"id\":\"590415-05-5103\",\"name\":\"National ID\",\"formattedId\":\"590415055103\"}],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Council, Negeri Sembilan\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, State Assembly, Negeri Sembilan\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Lasim\",\"Ismail Lassim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\",\"associates\":[{\"name\":\"Noraishah Othman\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"},{\"name\":\"Hayati Hashim\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "12144123",
+    "documentIds": [],
+    "names": ["Zaitun Abu Bakar", "Zaitun Binti Abu Bakar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12144123\",\"name\":\"Zaitun Abu Bakar\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Zaitun Binti Abu Bakar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "819570",
+    "documentIds": ["591002-09-5101", "591002095101"],
+    "names": [
+      "Ismail Kasim",
+      "Ismail Bin Kasim",
+      "Ismail Kassim",
+      "Ismail Bin Kassim"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"819570\",\"name\":\"Ismail Kasim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"\",\"documents\":[{\"id\":\"591002-09-5101\",\"name\":\"National ID\",\"formattedId\":\"591002095101\"}],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deceased\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Kasim\",\"Ismail Kassim\",\"Ismail Bin Kassim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\",\"associates\":[{\"name\":\"Shahidan Kassim\",\"ranks\":[\"LEVEL_1\",\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Brother\"},{\"name\":\"Shamsiah Mohd. Yussin\",\"sanctionsSearchTypes\":[],\"association\":\"Sister-in-law\"},{\"name\":\"Nurshafizah Shahidan\",\"sanctionsSearchTypes\":[],\"association\":\"Niece\"},{\"name\":\"Nurmazidah Shahidan\",\"sanctionsSearchTypes\":[],\"association\":\"Niece\"},{\"name\":\"Nurzafirah Shahidan\",\"sanctionsSearchTypes\":[],\"association\":\"Niece\"},{\"name\":\"Ameer Shafiq Shahidan\",\"sanctionsSearchTypes\":[],\"association\":\"Nephew\"},{\"name\":\"Ameer Muhammad Afif Shahidan\",\"sanctionsSearchTypes\":[],\"association\":\"Nephew\"},{\"name\":\"Ameer Muhammad Fawwaz Shahidan\",\"ranks\":[],\"sanctionsSearchTypes\":[],\"association\":\"Nephew\"}]}"
+  },
+  {
+    "id": "823935",
+    "documentIds": [],
+    "names": ["Abdul Hamid Bador", "Abdul Hamid Bin Bador"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"823935\",\"name\":\"Abdul Hamid Bador\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Director, Bukit Aman Special Branch, Acting Deputy Inspector General of Police, Inspector General of Police\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdul Hamid Bin Bador\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1958\",\"associates\":[{\"name\":\"Bador Ijoh\",\"ranks\":[],\"sanctionsSearchTypes\":[],\"association\":\"Father\"},{\"name\":\"Nor Azrin Marzuki\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "819570",
+    "documentIds": ["591002-09-5101", "591002095101"],
+    "names": [
+      "Ismail Kasim",
+      "Ismail Bin Kasim",
+      "Ismail Kassim",
+      "Ismail Bin Kassim"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"819570\",\"name\":\"Ismail Kasim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"\",\"documents\":[{\"id\":\"591002-09-5101\",\"name\":\"National ID\",\"formattedId\":\"591002095101\"}],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deceased\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Kasim\",\"Ismail Kassim\",\"Ismail Bin Kassim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\"}"
+  },
+  {
+    "id": "823935",
+    "documentIds": [],
+    "names": ["Abdul Hamid Bador", "Abdul Hamid Bin Bador"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"823935\",\"name\":\"Abdul Hamid Bador\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Director, Bukit Aman Special Branch, Acting Deputy Inspector General of Police, Inspector General of Police\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdul Hamid Bin Bador\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1958\"}"
+  },
+  {
+    "id": "838986",
+    "documentIds": [],
+    "names": [
+      "Ismail Sulaiman",
+      "Ismail Bin Sulaiman",
+      "Tunku Dato' Ismail Tunku Sulaiman",
+      "Tunku Dato' Ismail Bin Tunku Sulaiman"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"838986\",\"name\":\"Ismail Sulaiman\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Sulaiman\",\"Tunku Dato' Ismail Tunku Sulaiman\",\"Tunku Dato' Ismail Bin Tunku Sulaiman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1937\"}"
+  },
+  {
+    "id": "12635067",
+    "documentIds": [],
+    "names": ["Mohammad Ab. Rahman", "Mohammad Bin Ab. Rahman"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12635067\",\"name\":\"Mohammad Ab. Rahman\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Chief of Defence Force, Malaysian Armed Forces\",\"occupationCode\":\"senior_members_of_the_armed_forces\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Board of Directors, Lembaga Tabung Angkatan Tentera\",\"occupationCode\":\"state_corporation_executives\",\"rank\":\"LEVEL_2\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohammad Bin Ab. Rahman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1964\",\"associates\":[{\"name\":\"Ramlah Dawi\",\"sanctionsSearchTypes\":[],\"association\":\"Wife\"}]}"
+  },
+  {
+    "id": "13172344",
+    "documentIds": [],
+    "names": ["Kamariah Omar", "Kamariah Binti Omar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13172344\",\"name\":\"Kamariah Omar\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Kamariah Binti Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "838986",
+    "documentIds": [],
+    "names": [
+      "Ismail Sulaiman",
+      "Ismail Bin Sulaiman",
+      "Tunku Dato' Ismail Tunku Sulaiman",
+      "Tunku Dato' Ismail Bin Tunku Sulaiman"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"838986\",\"name\":\"Ismail Sulaiman\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Sulaiman\",\"Tunku Dato' Ismail Tunku Sulaiman\",\"Tunku Dato' Ismail Bin Tunku Sulaiman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1937\",\"associates\":[{\"name\":\"Azlan Abu Bakar\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Brother-in-law\"},{\"name\":\"Ahmad Shah Al-Musta'in Billah Abu Bakar Riayat Ud-Din Al-Mu'azam Shah\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Brother-in-law\"}]}"
+  },
+  {
+    "id": "12178675",
+    "documentIds": [],
+    "names": ["Abdul Rahman Ayob", "Abdul Rahman Bin Ayob"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12178675\",\"name\":\"Abdul Rahman Ayob\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deputy Chief, Royal Malaysian Navy (TLDM), Member, Board of Directors, Lembaga Tabung Angkatan Tentera, Chief, Royal Malaysian Navy (TLDM)\",\"occupationCode\":\"senior_members_of_the_armed_forces\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdul Rahman Bin Ayob\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1964\"}"
+  },
+  {
+    "id": "773236",
+    "documentIds": ["590415-05-5103", "590415055103"],
+    "names": ["Ismail Lasim", "Ismail Bin Lasim", "Ismail Lassim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"773236\",\"name\":\"Ismail Lasim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"freetext\":\"\",\"documents\":[{\"id\":\"590415-05-5103\",\"name\":\"National ID\",\"formattedId\":\"590415055103\"}],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Member, Executive Council, Negeri Sembilan\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, State Assembly, Negeri Sembilan\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Lasim\",\"Ismail Lassim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\"}"
+  },
+  {
+    "id": "883637",
+    "documentIds": [],
+    "names": [
+      "Mohd Radzi Manan",
+      "Mohd Radzi Bin Manan",
+      "Mohammed Radzi Manan",
+      "Mohammed Radzi Bin Manan",
+      "Mohamed Radzi Manan"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"883637\",\"name\":\"Mohd Radzi Manan\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nYaku Shin (Malaysia) Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Executive Council, Perak, Member, Senate, UMNO BN, Member, State Assembly, Perak\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Radzi Bin Manan\",\"Mohammed Radzi Manan\",\"Mohammed Radzi Bin Manan\",\"Mohamed Radzi Manan\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Nolee Ashilin Mohammed Radzi\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Daughter\"},{\"name\":\"Ahmad Faizal Azumu\",\"ranks\":[\"LEVEL_1\",\"LEVEL_1\"],\"sanctionsSearchTypes\":[\"PEP\"],\"association\":\"Son-in-law\"},{\"name\":\"Nomee Ashikin Mohammed Radzi\",\"sanctionsSearchTypes\":[],\"association\":\"Daughter\"},{\"name\":\"Ahmad Fariz Hassani Hassan\",\"sanctionsSearchTypes\":[],\"association\":\"Son-in-law\"}]}"
+  },
+  {
+    "id": "883637",
+    "documentIds": [],
+    "names": [
+      "Mohd Radzi Manan",
+      "Mohd Radzi Bin Manan",
+      "Mohammed Radzi Manan",
+      "Mohammed Radzi Bin Manan",
+      "Mohamed Radzi Manan"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"883637\",\"name\":\"Mohd Radzi Manan\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nYaku Shin (Malaysia) Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Executive Council, Perak, Member, Senate, UMNO BN, Member, State Assembly, Perak\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Radzi Bin Manan\",\"Mohammed Radzi Manan\",\"Mohammed Radzi Bin Manan\",\"Mohamed Radzi Manan\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12223518",
+    "documentIds": [],
+    "names": ["Abdullah Hashim", "Abdullah Bin Hashim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12223518\",\"name\":\"Abdullah Hashim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Deputy Director General, Malaysian Highway Authority (LLM)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdullah Bin Hashim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "819570",
+    "documentIds": ["591002-09-5101", "591002095101"],
+    "names": [
+      "Ismail Kasim",
+      "Ismail Bin Kasim",
+      "Ismail Kassim",
+      "Ismail Bin Kassim"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"819570\",\"name\":\"Ismail Kasim\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"\",\"documents\":[{\"id\":\"591002-09-5101\",\"name\":\"National ID\",\"formattedId\":\"591002095101\"}],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Deceased\",\"occupationCode\":\"local_public_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Kasim\",\"Ismail Kassim\",\"Ismail Bin Kassim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\"}"
+  },
+  {
+    "id": "823935",
+    "documentIds": [],
+    "names": ["Abdul Hamid Bador", "Abdul Hamid Bin Bador"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"823935\",\"name\":\"Abdul Hamid Bador\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Director, Bukit Aman Special Branch, Acting Deputy Inspector General of Police, Inspector General of Police\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Abdul Hamid Bin Bador\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1958\"}"
+  },
+  {
+    "id": "838986",
+    "documentIds": [],
+    "names": [
+      "Ismail Sulaiman",
+      "Ismail Bin Sulaiman",
+      "Tunku Dato' Ismail Tunku Sulaiman",
+      "Tunku Dato' Ismail Bin Tunku Sulaiman"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"838986\",\"name\":\"Ismail Sulaiman\",\"entityType\":\"Person\",\"matchTypes\":[\"RCA\"],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Ismail Bin Sulaiman\",\"Tunku Dato' Ismail Tunku Sulaiman\",\"Tunku Dato' Ismail Bin Tunku Sulaiman\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1937\"}"
+  },
+  {
+    "id": "12757732",
+    "documentIds": [],
+    "names": ["Fatimah Danial", "Fatimah Binti Danial"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12757732\",\"name\":\"Fatimah Danial\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fatimah Binti Danial\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"R. Badlishah Ahmad\",\"ranks\":[\"LEVEL_1\"],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "12759625",
+    "documentIds": [],
+    "names": [
+      "Hamsiah Mohamad Hanis",
+      "Hamsiah Binti Mohamad Hanis",
+      "Hamsiah Mohd Hanis",
+      "Hamsiah Binti Mohd Hanis"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12759625\",\"name\":\"Hamsiah Mohamad Hanis\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Hamsiah Binti Mohamad Hanis\",\"Hamsiah Mohd Hanis\",\"Hamsiah Binti Mohd Hanis\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"associates\":[{\"name\":\"Razali Abu Samah\",\"ranks\":[],\"sanctionsSearchTypes\":[],\"association\":\"Husband\"}]}"
+  },
+  {
+    "id": "964050",
+    "documentIds": ["590713-01-6022", "590713016022"],
+    "names": ["Fuziah Salleh", "Fuziah Binti Salleh"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"964050\",\"name\":\"Fuziah Salleh\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[{\"id\":\"590713-01-6022\",\"name\":\"National ID\",\"formattedId\":\"590713016022\"}],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Deputy Minister of Domestic Trade and Cost of Living\",\"occupationCode\":\"national_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Senate, PKR PH\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fuziah Binti Salleh\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\",\"associates\":[{\"name\":\"Russly Abdul Rahman\",\"sanctionsSearchTypes\":[],\"association\":\"Husband\"},{\"name\":\"Siti Ruwaida Russly\",\"sanctionsSearchTypes\":[],\"association\":\"Daughter\"},{\"name\":\"Muhammad Firdaus Mohd Roslee\",\"sanctionsSearchTypes\":[],\"association\":\"Son-in-law\"}]}"
+  },
+  {
+    "id": "13264346",
+    "documentIds": [],
+    "names": ["Azman Ibrahim", "Azman Bin Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"13264346\",\"name\":\"Azman Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Director General, Implementation Coordination Unit (ICU), Prime Minister's Department\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Azman Bin Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "963875",
+    "documentIds": [],
+    "names": ["Amran Abdul Ghani", "Amran Bin Abdul Ghani"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"963875\",\"name\":\"Amran Abdul Ghani\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, House of Representatives, PR PKR, Tanah Merah, Kelantan\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Amran Bin Abdul Ghani\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "964050",
+    "documentIds": ["590713-01-6022", "590713016022"],
+    "names": ["Fuziah Salleh", "Fuziah Binti Salleh"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"964050\",\"name\":\"Fuziah Salleh\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[{\"id\":\"590713-01-6022\",\"name\":\"National ID\",\"formattedId\":\"590713016022\"}],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Deputy Minister of Domestic Trade and Cost of Living\",\"occupationCode\":\"national_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Senate, PKR PH\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fuziah Binti Salleh\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\"}"
+  },
+  {
+    "id": "883637",
+    "documentIds": [],
+    "names": [
+      "Mohd Radzi Manan",
+      "Mohd Radzi Bin Manan",
+      "Mohammed Radzi Manan",
+      "Mohammed Radzi Bin Manan",
+      "Mohamed Radzi Manan"
+    ],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"883637\",\"name\":\"Mohd Radzi Manan\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nYaku Shin (Malaysia) Sdn Bhd\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, Executive Council, Perak, Member, Senate, UMNO BN, Member, State Assembly, Perak\",\"occupationCode\":\"regional_government_ministers\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Mohd Radzi Bin Manan\",\"Mohammed Radzi Manan\",\"Mohammed Radzi Bin Manan\",\"Mohamed Radzi Manan\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12285867",
+    "documentIds": [],
+    "names": ["Iasah Ibrahim", "Iasah Binti Ibrahim"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12285867\",\"name\":\"Iasah Ibrahim\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"types\":[\"Relative or Close Associate (RCA)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Iasah Binti Ibrahim\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "12319968",
+    "documentIds": [],
+    "names": ["Othman Omar", "Othman Bin Omar"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"12319968\",\"name\":\"Othman Omar\",\"entityType\":\"Person\",\"matchTypes\":[],\"freetext\":\"ASSOCIATED ENTITIES INFORMATION:\\nSelangor Industrial Corporation Sdn Bhd\\nSunway PKNS Sdn Bhd\\nWorldwide Holdings Berhad\\nOxley Holdings Limited\",\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Director General, Lembaga Kemajuan Tanah Persekutuan (FELDA)\",\"occupationCode\":\"state_agency_officials\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Othman Bin Omar\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "963875",
+    "documentIds": [],
+    "names": ["Amran Abdul Ghani", "Amran Bin Abdul Ghani"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"963875\",\"name\":\"Amran Abdul Ghani\",\"entityType\":\"Person\",\"matchTypes\":[],\"documents\":[],\"sanctionSearchTypes\":[],\"occupations\":[{\"title\":\"Member, House of Representatives, PR PKR, Tanah Merah, Kelantan\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Male\",\"dateMatched\":true,\"aka\":[\"Amran Bin Abdul Ghani\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"]}"
+  },
+  {
+    "id": "964050",
+    "documentIds": ["590713-01-6022", "590713016022"],
+    "names": ["Fuziah Salleh", "Fuziah Binti Salleh"],
+    "data": "{\"version\":\"2024-10\",\"provider\":\"dowjones\",\"id\":\"964050\",\"name\":\"Fuziah Salleh\",\"entityType\":\"Person\",\"matchTypes\":[\"PEP\"],\"documents\":[{\"id\":\"590713-01-6022\",\"name\":\"National ID\",\"formattedId\":\"590713016022\"}],\"sanctionSearchTypes\":[\"PEP\"],\"occupations\":[{\"title\":\"Deputy Minister of Domestic Trade and Cost of Living\",\"occupationCode\":\"national_government_ministers\",\"rank\":\"LEVEL_1\"},{\"title\":\"Member, Senate, PKR PH\",\"occupationCode\":\"members_of_the_national_legislature\",\"rank\":\"LEVEL_1\"}],\"types\":[\"Politically Exposed Person (PEP)\"],\"gender\":\"Female\",\"dateMatched\":true,\"aka\":[\"Fuziah Binti Salleh\"],\"countries\":[\"Malaysia\"],\"nationality\":[\"MY\"],\"countryCodes\":[\"MY\"],\"yearOfBirth\":\"1959\"}"
+  }
+]

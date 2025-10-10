@@ -1,0 +1,28 @@
+{{#models}}
+{{#model}}
+import { {{classname}} } from '@/@types/openapi-{{api}}/{{classname}}'
+
+{{#isEnum}}
+export const {{#lambda.uppercase}}{{#lambda.snakecase}}{{classname}}{{/lambda.snakecase}}{{/lambda.uppercase}}S: {{classname}}[] = [{{#allowableValues}}{{#values}} "{{.}}" {{^-last}},{{/-last}}{{/values}}{{/allowableValues}}]
+
+export function isValid{{classname}}(input: unknown): input is {{classname}} {
+  if (input == null || typeof input !== 'string') {
+    return false
+  }
+  return {{#lambda.uppercase}}{{#lambda.snakecase}}{{classname}}{{/lambda.snakecase}}{{/lambda.uppercase}}S.indexOf(input as {{classname}}) !== -1
+}
+
+{{/isEnum}}
+
+
+export const {{classname}}RequiredFields: (keyof {{classname}})[] = [
+{{#vars}}
+{{#required}}
+  '{{name}}',
+{{/required}}
+{{/vars}}
+]
+
+
+{{/model}}
+{{/models}}

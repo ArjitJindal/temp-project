@@ -1,0 +1,19 @@
+{
+  "mode": "production",
+  "envName": "sandbox",
+  "define": {
+    "EXPORT_ENTRIES_LIMIT": 10000,
+    "API_BASE_PATH": null,
+    "AUTH0_AUDIENCE": "https://sandbox.api.flagright.com/",
+    "AUTH0_DOMAIN": "login.sandbox.console.flagright.com",
+    "AUTH0_CLIENT_ID": "dbinWZ63vFLquTEcbvg56o32HpVpuEJU",
+    "SENTRY_DSN": "https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175",
+    "SLACK_CLIENT_ID": "2800969986821.3789460302231",
+    "FEATURES_ENABLED": [],
+    "POSTHOG_API_KEY": "phc_o3AIU7twnvMe1oXKZs8ZWYgVjVrI2BgJILpjvm0DWQY",
+    "INTERNAL_POSTHOG_API_KEY": "phc_OKbrVO1aueNvmwJs5VykcH22Y8ji8QRBI41H3mVSr2R",
+    "POSTHOG_HOST": "https://eu.i.posthog.com",
+    "INTERCOM_WIDGET_KEY": "mwv4pixl",
+    "FRESHWORK_WIDGET_KEY": 154000003695
+  }
+}

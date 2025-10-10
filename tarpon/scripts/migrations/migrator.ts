@@ -1,0 +1,202 @@
+process.env.AWS_XRAY_CONTEXT_MISSING = 'IGNORE_ERROR'
+import path from 'path'
+import { exit } from 'process'
+import { Umzug, MongoDBStorage } from 'umzug'
+import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
+import { RuleInstanceService } from '../../src/services/rules-engine/rule-instance-service'
+import { migrateClickhouse } from '../clickhouse-migrations'
+import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
+import { initializeEnvVars, loadConfigEnv } from './utils/config'
+import { syncListLibrary } from './always-run/sync-list-library'
+import { migrateAllTenants, syncFeatureFlags } from './utils/tenant'
+import { syncAccountsLocally } from './always-run/sync-accounts'
+import { syncClickhouseTables } from './always-run/sync-clickhouse-v2'
+import { syncPermissions } from './always-run/sync-permissions'
+import { envIs } from '@/utils/env'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { RuleService } from '@/services/rules-engine'
+import { seedDemoData } from '@/core/seed'
+import { getAuth0ManagementClient } from '@/utils/auth0-utils'
+import { hasFeature } from '@/core/utils/context'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
+import { isDemoTenant } from '@/utils/tenant-id'
+import { saveMigrationProgressToDynamo } from '@/utils/migration-progress'
+
+const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
+import { Tenant } from '@/services/accounts/repository'
+
+async function migrateTenant(tenant: Tenant) {}
+
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+export const down = async () => {
+  // skip
+}
+`
+
+type MigrationType = 'PRE_DEPLOYMENT' | 'POST_DEPLOYMENT'
+const migrationType = process.env.MIGRATION_TYPE as MigrationType
+
+loadConfigEnv()
+
+async function refreshCredentials() {
+  try {
+    const sts = new STS({
+      region: process.env.AWS_REGION,
+    })
+
+    const assumeRoleCommand = new AssumeRoleCommand({
+      RoleArn: process.env.ASSUME_ROLE_ARN as string,
+      RoleSessionName: 'migration',
+    })
+
+    const assumeRoleResult = await sts.send(assumeRoleCommand)
+
+    process.env.AWS_ACCESS_KEY_ID = assumeRoleResult.Credentials?.AccessKeyId
+    process.env.AWS_SECRET_ACCESS_KEY =
+      assumeRoleResult.Credentials?.SecretAccessKey
+    process.env.AWS_SESSION_TOKEN = assumeRoleResult.Credentials?.SessionToken
+    console.info('Refreshed AWS credentials')
+  } catch (e) {
+    console.error('Failed to refresh AWS credentials')
+    console.error(e)
+  }
+}
+
+function refreshCredentialsPeriodically() {
+  // Refresh the AWS credentials before it expires (1 hour). We're using role chaining to
+  // assume a cross-account role in deployment and the max session duration is 1 hour.
+  setInterval(
+    async () => {
+      await refreshCredentials()
+    },
+    // 30 minutes
+    30 * 60 * 1000
+  )
+}
+
+async function main() {
+  refreshCredentialsPeriodically()
+  initializeEnvVars()
+  const isMigrationFileCreation = process.argv.includes('create')
+
+  if (process.argv.includes('seed-demo-data')) {
+    await seedDemoData('cypress-tenant')
+    await cleanUpCypressTestAuth0Users()
+    return
+  }
+
+  if (process.argv.includes('sync')) {
+    await syncData()
+    return
+  }
+
+  if (
+    migrationType !== 'PRE_DEPLOYMENT' &&
+    migrationType !== 'POST_DEPLOYMENT'
+  ) {
+    throw new Error(`Unknown migration type: ${migrationType}`)
+  }
+
+  if (!isMigrationFileCreation && migrationType === 'POST_DEPLOYMENT') {
+    console.info(`Sync data before POST_DEPLOYMENT step`)
+    await syncData()
+  }
+
+  const directory =
+    migrationType === 'PRE_DEPLOYMENT' ? 'pre-deployment' : 'post-deployment'
+  const migrationCollection =
+    migrationType === 'PRE_DEPLOYMENT'
+      ? 'migrations-pre-deployment'
+      : 'migrations-post-deployment'
+
+  if (!isMigrationFileCreation && migrationType === 'PRE_DEPLOYMENT') {
+    console.info('Syncing clickhouse tables before handling migrations')
+    // Sync clickhouse tables before handling migrations
+    await syncClickhouseTables()
+    await migrateClickhouse()
+  }
+
+  const mongodb = await getMongoDbClient()
+  const umzug = new Umzug({
+    migrations: {
+      glob: [`${directory}/*.ts`, { cwd: __dirname }],
+    },
+    storage: new MongoDBStorage({
+      connection: mongodb,
+      collection: mongodb.db().collection(migrationCollection),
+    }),
+    logger: console,
+    create: {
+      template: (filePath) => [[filePath, MIGRATION_TEMPLATE]],
+      folder: path.join(__dirname, directory),
+    },
+  })
+
+  umzug.on('migrated', async (params) => {
+    const name = params.name
+    await saveMigrationProgressToDynamo(
+      [{ migrationName: name }],
+      migrationType
+    )
+  })
+
+  const success = await umzug.runAsCLI()
+  if (!success) {
+    exit(1)
+  }
+}
+
+async function cleanUpCypressTestAuth0Users() {
+  const managementClient = await getAuth0ManagementClient(
+    'dev-flagright.eu.auth0.com'
+  )
+  const userManager = managementClient.users
+  const users = await userManager.getAll({
+    q: 'email:test-cypress*',
+  })
+  for (const user of users.data) {
+    if (user.email.startsWith('test-cypress')) {
+      await userManager.delete({ id: user.user_id })
+      console.info(`Deleted user: ${user.email}`)
+    }
+  }
+}
+
+async function syncData() {
+  await syncMongoDbIndexes()
+  await RuleService.syncRulesLibrary()
+  await syncListLibrary()
+  await syncFeatureFlags()
+  await syncPermissions()
+  await migrateAllTenants(async (tenant) => {
+    if (isDemoTenant(tenant.id)) {
+      return
+    }
+
+    await RuleInstanceService.migrateV2RuleInstancesToV8(tenant.id)
+    if (hasFeature('PNB')) {
+      const ruleInstanceService = new RuleInstanceService(tenant.id, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      })
+      await Promise.all(
+        PNB_INTERNAL_RULES.map((rule) =>
+          ruleInstanceService.createOrUpdateRuleInstance(rule)
+        )
+      )
+    }
+  })
+  if (envIs('local')) {
+    await syncAccountsLocally()
+  }
+}
+
+main()
+  .then(() => exit(0))
+  .catch((e) => {
+    console.error(e)
+    exit(1)
+  })

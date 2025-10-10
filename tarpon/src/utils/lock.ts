@@ -1,0 +1,119 @@
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
+import { Mutex, MutexInterface } from 'async-mutex'
+import { backOff } from 'exponential-backoff'
+import compact from 'lodash/compact'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+
+const DEFAULT_TTL = 600
+const DEFAULT_DELAY = 5
+const DEFAULT_NUM_OF_ATTEMPTS = DEFAULT_TTL / DEFAULT_DELAY
+
+export async function acquireLock(
+  client: DynamoDBDocumentClient,
+  lockKey: string,
+  retryOptions?: {
+    startingDelay?: number
+    maxDelay?: number
+    numOfAttempts?: number
+    ttlSeconds?: number
+  }
+): Promise<void> {
+  if (!lockKey) {
+    return
+  }
+  await backOff(
+    async () => {
+      await acquireLockInternal(
+        client,
+        lockKey,
+        retryOptions?.ttlSeconds ?? DEFAULT_TTL
+      )
+    },
+    {
+      startingDelay: retryOptions?.startingDelay ?? DEFAULT_DELAY * 1000,
+      maxDelay: retryOptions?.maxDelay ?? DEFAULT_DELAY * 1000,
+      numOfAttempts: retryOptions?.numOfAttempts ?? DEFAULT_NUM_OF_ATTEMPTS,
+    }
+  )
+}
+
+async function acquireLockInternal(
+  client: DynamoDBDocumentClient,
+  lockKey: string,
+  ttl = 60
+): Promise<void> {
+  const nowInSeconds = Math.floor(Date.now() / 1000)
+  const partitionKey = DynamoDbKeys.SHARED_LOCKS(lockKey).PartitionKeyID
+  await client.send(
+    new PutCommand({
+      TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
+      Item: {
+        PartitionKeyID: partitionKey,
+        SortKeyID: 'default',
+        ttl: (nowInSeconds + ttl).toString(),
+      },
+      ConditionExpression:
+        'attribute_not_exists(PartitionKeyID) OR #ttl < :now',
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl',
+      },
+      ExpressionAttributeValues: {
+        ':now': nowInSeconds.toString(),
+      },
+    })
+  )
+}
+
+export async function releaseLock(
+  client: DynamoDBDocumentClient,
+  lockKey: string
+): Promise<void> {
+  if (!lockKey) {
+    return
+  }
+  const partitionKey = DynamoDbKeys.SHARED_LOCKS(lockKey).PartitionKeyID
+  await client.send(
+    new DeleteCommand({
+      TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
+      Key: {
+        PartitionKeyID: partitionKey,
+        SortKeyID: 'default',
+      },
+    })
+  )
+}
+
+const inMemoryLocks = new Map<string, Mutex>()
+
+const getInMemoryLock = (lockKey: string): Mutex => {
+  if (!inMemoryLocks.has(lockKey)) {
+    inMemoryLocks.set(lockKey, new Mutex())
+  }
+  return inMemoryLocks.get(lockKey) as Mutex
+}
+export const clearInMemoryLocks = () => {
+  inMemoryLocks.clear()
+}
+export const acquireInMemoryLocks = async (
+  rawLockKeys: Array<string | undefined>
+): Promise<MutexInterface.Releaser> => {
+  const lockKeys = compact(rawLockKeys)
+  lockKeys.sort()
+  const locks = lockKeys.map(getInMemoryLock)
+
+  const releaseLocks: MutexInterface.Releaser[] = []
+  for (const lock of locks) {
+    releaseLocks.push(await lock.acquire())
+  }
+
+  return () => {
+    for (const releaseLock of releaseLocks) {
+      releaseLock()
+    }
+  }
+}

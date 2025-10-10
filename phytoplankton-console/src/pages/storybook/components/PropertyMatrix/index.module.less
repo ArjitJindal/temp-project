@@ -1,0 +1,40 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+}
+
+.label {
+  font-size: 8px;
+  text-align: center;
+  background: #f3f3f3;
+  border-radius: 2px;
+  font-family: monospace;
+  width: 100%;
+}
+
+.corner {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.stretchButton {
+  width: 12px;
+  height: 12px;
+  border: 1px solid black;
+  cursor: pointer;
+  font-size: 8px;
+  line-height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.25;
+  user-select: none;
+
+  &:hover {
+    opacity: 1;
+  }
+}

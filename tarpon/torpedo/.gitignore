@@ -1,0 +1,10 @@
+build/
+dist/
+*.egg-info/
+*.tar.gz
+*.whl
+*.dist-info
+*.egg-info
+*.dist-info
+*.dist-info
+*.dist-info

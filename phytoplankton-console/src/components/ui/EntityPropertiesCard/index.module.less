@@ -1,0 +1,40 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  left: 0;
+  padding: 12px 12px 0 12px;
+}
+
+.title {
+  font-size: 14px;
+  color: @fr-colors-v2-gray-10;
+  font-weight: 700;
+}
+
+.items {
+  display: grid;
+  grid-template-columns: auto minmax(auto, min-content);
+  gap: 12px 40px;
+  padding: 0 12px 12px 12px;
+}
+
+.itemLabel {
+  color: @fr-colors-v2-gray-6;
+  max-width: 250px;
+}
+
+.itemValue {
+  word-break: break-all;
+}

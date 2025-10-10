@@ -1,0 +1,79 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  border-left: 2px solid transparent;
+  font-size: 14px;
+  color: @fr-colors-gray-4;
+  cursor: pointer;
+  transition: background-color @default-animation-speed, border-left-color @default-animation-speed,
+    color @default-animation-speed;
+
+  &.isActive {
+    border-left-color: @fr-colors-brandBlue;
+    background-color: @fr-colors-brandBlueTint;
+
+    > .title {
+      font-weight: 600;
+      color: black;
+    }
+  }
+
+  &.isInvalid {
+    &,
+    &.isActive {
+      border-left-color: @fr-colors-v2-alert-critical;
+    }
+
+    &.isActive {
+      background-color: @fr-colors-v2-risk-level-bg-very-high;
+
+      > .title,
+      > .icon {
+        color: @fr-colors-v2-alert-critical;
+      }
+    }
+  }
+}
+
+.title {
+  &::after {
+    display: block;
+    content: attr(title);
+    font-weight: bold;
+    height: 1px;
+    color: transparent;
+    overflow: hidden;
+    visibility: hidden;
+  }
+}
+
+.children {
+  padding-bottom: 16px;
+  flex: 1;
+
+  &:not(:first-child) {
+    border-left: 1px solid @fr-colors-v2-gray-3;
+    padding-left: 16px;
+  }
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}

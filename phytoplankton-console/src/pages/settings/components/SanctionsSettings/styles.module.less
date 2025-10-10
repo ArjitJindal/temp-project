@@ -1,0 +1,300 @@
+@import 'src/components/ui/colors';
+
+.sanctionsModal {
+  padding: '16px';
+  background-color: '#F8F9FA';
+  border-radius: '4px';
+}
+.sanctionsLayout {
+  display: flex;
+  justify-content: space-between;
+}
+.sanctionsText {
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.sanctionsAccessButton {
+  margin-top: 8px;
+}
+
+.sanctionsDownloadButton {
+  margin-top: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.idContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sanctionsSettingsRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.sanctionsSettingsButton {
+  width: fit-content;
+}
+
+.filterTextInput {
+  height: 32px;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+
+  :global {
+    .ant-tabs {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      .ant-tabs-tab {
+        padding-right: 20px !important;
+      }
+    }
+
+    .ant-tabs-content-holder {
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .ant-tabs-content {
+      height: 100%;
+    }
+
+    .ant-tabs-tabpane {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .filtersSection {
+    margin-top: 24px;
+
+    .filtersSectionHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+
+      h4 {
+        margin: 0;
+      }
+    }
+
+    .filtersSectionTitle {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 28px;
+      margin-bottom: 16px;
+    }
+
+    .filterInputRow {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+
+      .filterSelect,
+      .filterValue {
+        flex: 1;
+      }
+
+      button {
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+.filtersList {
+  margin-top: 16px;
+}
+
+.filterSelect {
+  width: 100%;
+  height: 32px;
+}
+
+.filterSelectLabel,
+.filterValueLabel {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  margin-bottom: 4px;
+}
+
+.addFilterButton {
+  align-self: flex-end;
+  width: 90px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .filterLabel {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .filterValueDisplay {
+    flex: 1;
+  }
+
+  .filterDelete {
+    flex-shrink: 0;
+  }
+}
+
+.inputContainer {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.textInput {
+  flex: 1;
+}
+
+.select {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  margin-bottom: 4px;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  gap: 12px;
+  &:nth-child(even) {
+    background: #fff;
+  }
+
+  &:nth-child(odd) {
+    background: @fr-colors-v2-unknown-1;
+  }
+}
+
+.sourceTabContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sourceList {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sourceHeaderFlex {
+  display: flex;
+  padding: 8px;
+  align-items: center;
+  font-weight: 600;
+  background: @fr-colors-v2-gray-2;
+  font-size: 14px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  min-height: 100px;
+  width: 100%;
+
+  p {
+    color: #888;
+    font-size: 14px;
+    text-align: center;
+  }
+}
+
+.sourceListContainer {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.tableContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.filtersContainer {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.defaultFiltersContainer {
+  position: relative;
+}
+
+.actionsContainer {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.validationError {
+  color: @fr-colors-errorColor;
+  margin-bottom: 8px;
+  font-size: 12px;
+}

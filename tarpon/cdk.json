@@ -1,0 +1,11 @@
+{
+  "app": "./node_modules/.bin/ts-node --project tsconfig.infra.json --prefer-ts-exts infra/bin/cdk-tarpon-pipeline.ts",
+  "context": {
+    "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": true,
+    "aws-cdk:enableDiffNoFail": "true",
+    "@aws-cdk/core:stackRelativeExports": "true",
+    "@aws-cdk/aws-ecs-patterns:removeDefaultDesiredCount": true,
+    "@aws-cdk/aws-rds:lowercaseDbIdentifier": true,
+    "@aws-cdk/aws-efs:defaultEncryptionAtRest": true
+  }
+}

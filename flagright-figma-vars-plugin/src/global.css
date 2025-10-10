@@ -1,0 +1,12 @@
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#create-figma-plugin {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+}

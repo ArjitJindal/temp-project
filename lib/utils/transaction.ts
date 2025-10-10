@@ -1,0 +1,10 @@
+export const TRANSACTION_TYPES: readonly string[] = [
+  'DEPOSIT',
+  'TRANSFER',
+  'EXTERNAL_PAYMENT',
+  'WITHDRAWAL',
+  'REFUND',
+  'OTHER',
+]
+
+export const PAYMENT_APPROVAL_START_TIMESTAMP = 1756684800000 // 1 september 2025 GMT

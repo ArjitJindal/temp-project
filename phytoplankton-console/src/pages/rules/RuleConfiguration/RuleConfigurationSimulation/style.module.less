@@ -1,0 +1,62 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: min-content min-content;
+  justify-content: space-between;
+  width: 100%;
+  position: sticky;
+  bottom: 0;
+  background: @fr-global-bg-color;
+  padding: 16px 0;
+  margin-bottom: -16px;
+  z-index: @sticky-z-index;
+}
+
+.footerButtons {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+
+  button {
+    width: max-content;
+  }
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+  margin-top: 24px;
+}
+
+.duplicateButton {
+  display: flex;
+  gap: 4px;
+}
+
+.loadingCard {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  background-color: white;
+  border-radius: 4px;
+  justify-content: center;
+  height: 75vh;
+}
+
+.pdfTarget {
+  position: fixed;
+  left: -999999999px;
+  top: 0;
+  width: 800px;
+}

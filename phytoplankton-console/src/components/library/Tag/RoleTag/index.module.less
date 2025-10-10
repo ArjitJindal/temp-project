@@ -1,0 +1,27 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  background: @fr-colors-brandBlueTint;
+  border-color: @fr-colors-brandBlue;
+  color: @fr-colors-brandBlue;
+
+  &.role-root {
+    background: @fr-colors-redTint;
+    border-color: @fr-colors-red;
+    color: @fr-colors-red;
+  }
+  &.role-admin {
+    background: @fr-colors-orangeTint;
+    border-color: @fr-colors-orange;
+    color: @fr-colors-orange;
+  }
+  &.role-user,
+  &.role-analyst,
+  &.role-approver,
+  &.role-auditor,
+  &.role-developer {
+    background: @fr-colors-leafGreenTint;
+    border-color: @fr-colors-leafGreen;
+    color: @fr-colors-leafGreen;
+  }
+}

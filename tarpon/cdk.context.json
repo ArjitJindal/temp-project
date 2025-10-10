@@ -1,0 +1,83 @@
+{
+  "availability-zones:account=911899431626:region=eu-central-1": [
+    "eu-central-1a",
+    "eu-central-1b",
+    "eu-central-1c"
+  ],
+  "availability-zones:account=911899431626:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "availability-zones:account=870721492449:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "availability-zones:account=293986822825:region=eu-central-1": [
+    "eu-central-1a",
+    "eu-central-1b",
+    "eu-central-1c"
+  ],
+  "availability-zones:account=870721492449:region=eu-central-1": [
+    "eu-central-1a",
+    "eu-central-1b",
+    "eu-central-1c"
+  ],
+  "availability-zones:account=870721492449:region=ap-southeast-1": [
+    "ap-southeast-1a",
+    "ap-southeast-1b",
+    "ap-southeast-1c"
+  ],
+  "availability-zones:account=870721492449:region=ap-south-1": [
+    "ap-south-1a",
+    "ap-south-1b",
+    "ap-south-1c"
+  ],
+  "acknowledged-issue-numbers": [19179],
+  "availability-zones:account=073830519512:region=eu-central-1": [
+    "eu-central-1a",
+    "eu-central-1b",
+    "eu-central-1c"
+  ],
+  "availability-zones:account=073830519512:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "hosted-zone:account=911899431626:domainName=flagright.dev:privateZone=false:region=eu-central-1": {
+    "Id": "/hostedzone/Z02779472Q4TP6FMKTK45",
+    "Name": "flagright.dev."
+  },
+  "availability-zones:account=870721492449:region=ap-southeast-2": [
+    "ap-southeast-2a",
+    "ap-southeast-2b",
+    "ap-southeast-2c"
+  ],
+  "availability-zones:account=870721492449:region=me-central-1": [
+    "me-central-1a",
+    "me-central-1b",
+    "me-central-1c"
+  ],
+  "availability-zones:account=293986822825:region=ap-southeast-1": [
+    "ap-southeast-1a",
+    "ap-southeast-1b",
+    "ap-southeast-1c"
+  ],
+  "availability-zones:account=870721492449:region=eu-west-2": [
+    "eu-west-2a",
+    "eu-west-2b",
+    "eu-west-2c"
+  ],
+  "availability-zones:account=870721492449:region=ap-east-1": [
+    "ap-east-1a",
+    "ap-east-1b",
+    "ap-east-1c"
+  ],
+  "availability-zones:account=870721492449:region=us-west-2": [
+    "us-west-2a",
+    "us-west-2b",
+    "us-west-2c",
+    "us-west-2d"
+  ]
+}

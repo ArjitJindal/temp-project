@@ -1,0 +1,43 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.blockLabel {
+  display: inline-flex;
+  padding: 0 8px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+
+  > svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &.if {
+    background: @fr-colors-v2-status-in-progress-bg;
+  }
+
+  &.then {
+    background: @fr-colors-v2-status-in-progress-bg;
+  }
+}
+
+.blockContent {
+  display: flex;
+  position: relative;
+  padding: 12px 12px 12px 24px;
+  flex-direction: column;
+
+  &.if {
+    padding-left: 12px;
+    margin-left: 12px;
+    border-left: 1px solid @fr-colors-v2-gray-2;
+  }
+}

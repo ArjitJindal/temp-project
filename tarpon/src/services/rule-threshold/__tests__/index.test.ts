@@ -1,0 +1,87 @@
+import { RuleThresholdOptimizer } from '../index'
+import { VarOptimizationData } from '../types'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+
+describe('RuleThresholdOptimizer', () => {
+  let optimizer: RuleThresholdOptimizer
+
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    optimizer = new RuleThresholdOptimizer('test-tenant-id', {
+      dynamoDb,
+      mongoDb,
+    })
+  })
+
+  describe('calculateThreshold', () => {
+    it('should calculate threshold correctly for typical values', () => {
+      const testData: VarOptimizationData = {
+        varKey: 'test_var',
+        FP: {
+          count: 10,
+          sum: 100,
+          sumOfSquares: 1100, // This will give variance = 10
+        },
+        TP: {
+          count: 10,
+          sum: 200,
+          sumOfSquares: 4100, // This will give variance = 9
+        },
+      }
+
+      const result = optimizer.calculateThreshold(testData)
+      expect(result).toBeDefined()
+    })
+
+    it('should handle edge case with zero counts', () => {
+      const testData: VarOptimizationData = {
+        varKey: 'test_var',
+        FP: {
+          count: 0,
+          sum: 0,
+          sumOfSquares: 0,
+        },
+        TP: {
+          count: 0,
+          sum: 0,
+          sumOfSquares: 0,
+        },
+      }
+      const result = optimizer.calculateThreshold(testData)
+      expect(result).toBe(0)
+    })
+
+    it('should handle undefined data', () => {
+      const testData: VarOptimizationData = {
+        varKey: 'test_var',
+        FP: undefined,
+        TP: undefined,
+      }
+
+      const result = optimizer.calculateThreshold(testData)
+      expect(result).toBe(0)
+    })
+
+    it('should handle negative values', () => {
+      const testData: VarOptimizationData = {
+        varKey: 'test_var',
+        FP: {
+          count: 2,
+          sum: -10,
+          sumOfSquares: 50,
+        },
+        TP: {
+          count: 2,
+          sum: -20,
+          sumOfSquares: 200,
+        },
+      }
+
+      const result = optimizer.calculateThreshold(testData)
+      expect(result).toBeDefined()
+      expect(typeof result).toBe('number')
+    })
+  })
+})

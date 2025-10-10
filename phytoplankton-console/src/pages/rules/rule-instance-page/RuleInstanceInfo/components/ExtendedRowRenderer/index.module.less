@@ -1,0 +1,48 @@
+@import 'src/components/ui/colors.less';
+.metricGrid {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+}
+
+.title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.infoIcon {
+  height: 16px;
+  width: 16px;
+  color: @fr-colors-v2-gray-10;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.valueRoot {
+  font-size: 30px;
+  display: flex;
+  justify-content: space-between;
+}
+.percentageContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+
+.downArrow {
+  color: @fr-colors-v2-alert-success;
+  width: 20px;
+  height: 20px;
+  margin-top: 8px;
+}
+
+.zigZag {
+  height: 26px;
+  width: 68px;
+}

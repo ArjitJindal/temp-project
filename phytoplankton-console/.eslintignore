@@ -1,0 +1,11 @@
+/lambda/
+/scripts
+/config
+.history
+public
+dist
+.umi
+mock
+src/apis
+jest
+analyze-bundle.js

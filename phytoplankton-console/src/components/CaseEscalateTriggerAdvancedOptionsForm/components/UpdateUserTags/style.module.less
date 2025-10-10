@@ -1,0 +1,59 @@
+@import 'src/components/ui/colors.less';
+
+.stateDetailsSingle {
+  display: grid;
+  gap: 16px;
+}
+
+.rowLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.5fr;
+  gap: 1rem;
+}
+
+.rowLayout > .fullWidth {
+  width: 100%;
+}
+
+.inputContainer {
+  border-radius: 2px !important;
+}
+
+.textInput {
+  padding: 4px 11px !important;
+}
+
+.tagWrapper {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  background-color: @fr-colors-v2-highlight-flagrightBlue;
+  border-radius: 0.25rem;
+  padding: 1rem;
+}
+
+.tagContainer {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+}
+
+.iconButton {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconButtonDisabled {
+  color: @fr-colors-v2-state-disabled;
+}
+
+.scroll {
+  max-height: 22.5rem;
+  overflow-y: auto;
+}
+
+.iconButton svg {
+  cursor: pointer;
+}

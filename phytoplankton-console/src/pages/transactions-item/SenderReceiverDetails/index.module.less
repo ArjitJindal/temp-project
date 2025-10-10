@@ -1,0 +1,25 @@
+@import 'src/components/ui/colors.less';
+
+.verticalDetailsItem {
+  > div {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.commentBody {
+  white-space: pre-line;
+}
+
+.verticalDetailsItemLabel {
+  color: @fr-colors-purpleGray !important;
+}
+
+.tag {
+  :global {
+    .ant-tag {
+      font-size: 14px !important;
+      line-height: 24px !important;
+    }
+  }
+}

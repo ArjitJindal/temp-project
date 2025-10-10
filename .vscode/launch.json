@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node-terminal",
+      "name": "Run Console API",
+      "request": "launch",
+      "command": "cd tarpon && npm run dev:api:console",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Public API",
+      "request": "launch",
+      "command": "cd tarpon && npm run dev:api:public",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Public Management API",
+      "request": "launch",
+      "command": "cd tarpon && npm run dev:api:public-management",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Public Sanctions API",
+      "request": "launch",
+      "command": "cd tarpon && npm run dev:api:public-sanctions",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run all APIs",
+      "request": "launch",
+      "command": "cd tarpon && npm run dev:api",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Phytoplankton Console",
+      "request": "launch",
+      "command": "cd phytoplankton-console && ENV=local yarn dev",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+@import 'src/components/ui/z-indexes.less';
+
+.root {
+  display: grid;
+  grid-template-columns: min-content auto min-content;
+  align-items: center;
+  padding: 8px;
+  gap: 8px;
+  border-radius: 4px;
+  transition: background @default-animation-speed;
+  cursor: pointer;
+
+  &.isUnread {
+    background: @fr-colors-v2-card-background;
+
+    .unreadIndicator {
+      opacity: 1;
+    }
+  }
+}
+
+.unreadIndicator {
+  background: @fr-colors-v2-state-active;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity @default-animation-speed;
+}
+
+.content {
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: @fr-colors-v2-gray-6 !important;
+  font-size: 12px;
+
+  .separator {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: @fr-colors-v2-gray-6 !important;
+  }
+}
+
+.message {
+  color: black;
+}

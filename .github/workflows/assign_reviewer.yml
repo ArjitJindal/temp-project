@@ -1,0 +1,32 @@
+name: Assign reviewers triggered by comment
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  assign_reviewers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: khan/pull-request-comment-trigger@v1.1.0
+        id: check
+        with:
+          trigger: "review"
+          reaction: eyes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get PR branch
+        if: steps.check.outputs.triggered == 'true'
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Assign reviewers
+        if: steps.check.outputs.triggered == 'true'
+        run: |
+          user_list=$(echo "${{ github.event.comment.body }}" | grep -o '@[a-zA-Z0-9_/-]*' | sed 's/@//g' | tr '\n' ',' | sed 's/,*$//')
+          gh pr edit ${{steps.comment-branch.outputs.head_ref}} --add-reviewer $user_list --repo $OWNER/$REPO
+        env:
+          GITHUB_TOKEN: ${{ secrets.REVIEW_BOT_PAT }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}

@@ -1,0 +1,14 @@
+backend:
+  - tarpon/**
+
+infra:
+  - tarpon/infra/**
+
+frontend:
+  - phytoplankton-console/**
+
+viper:
+  - viper/**
+
+pipeline:
+  - bin/**

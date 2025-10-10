@@ -1,0 +1,77 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+@bg-color: @fr-colors-v2-gray-2;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: @bg-color;
+  flex: 1;
+  position: absolute;
+  top: 0;
+  height: 100%;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.alertInfo {
+  position: sticky;
+  top: 0;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  box-shadow: 0 1px 7px -1px rgba(0, 0, 0, 0.2);
+  z-index: 3;
+}
+
+.history {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 2;
+}
+
+.form {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: @bg-color;
+  padding: 16px;
+  padding-top: 0;
+  z-index: 3;
+
+  &::before {
+    content: ' ';
+    display: block;
+    background: linear-gradient(0deg, @bg-color, transparent);
+    height: 40px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+}
+
+.scrollToBottom {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateY(-100%) translateX(-50%);
+  background: white;
+  border-radius: 3px;
+  border: 1px solid fade(@fr-colors-v2-gray-2, 25%);
+  transition: opacity @default-animation-speed;
+
+  &.isHidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+}

@@ -1,0 +1,288 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const detectPort = require('detect-port');
+const prompts = require('prompts');
+const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+const { fromIni } = require('@aws-sdk/credential-providers');
+const { CloudWatchClient, PutMetricDataCommand } = require('@aws-sdk/client-cloudwatch');
+const { WebClient } = require('@slack/web-api');
+const slackifyMarkdown = require('slackify-markdown');
+
+const DEPLOYMENT_SLACK_CHANNEL = 'C03L5KRE2E8';
+const ENGINEERING_ON_CALL_GROUP_ID = 'S063WMNMSCD';
+const CYPRESS_CREDS_SECRET_ARN = 'rbacCypressCreds';
+
+if (!process.env.ENV) {
+  process.env.ENV = 'local';
+}
+
+async function notifySlack(failedTests) {
+  // failedTests -> Record<string, { failedCount: number; errors: string[] }
+  const slackClient = new WebClient(process.env.SLACK_TOKEN);
+  const buildNumber = process.env.CODEBUILD_BUILD_NUMBER;
+  const buildUrl =
+    getCodeBuildConsoleUrlFromArn() ?? 'https://console.aws.amazon.com/codebuild/home';
+
+  const message = slackifyMarkdown(
+    `<!subteam^${ENGINEERING_ON_CALL_GROUP_ID}> E2E tests failing summary <${buildUrl}|Build #${buildNumber}>
+
+# List of failing E2E tests
+${Object.entries(failedTests)
+  .map(([test, description]) => {
+    if (description.failedCount === 1) {
+      return `⚠️ *${test}* - Failing *${description.failedCount} time*`;
+    } else {
+      return `❌ *${test}* - Failing *${description.failedCount} times*`;
+    }
+  })
+  .join('\n')}
+`,
+  );
+  console.log('Publishing slack message');
+  try {
+    const postedMessage = await slackClient.chat.postMessage({
+      channel: DEPLOYMENT_SLACK_CHANNEL,
+      blocks: [
+        {
+          type: 'section',
+          text: { type: 'mrkdwn', text: message },
+        },
+      ],
+    });
+    if (postedMessage.ts) {
+      const sendSlackThread = async (threadGroupMessages) => {
+        const message = slackifyMarkdown(threadGroupMessages.join('\n'));
+        await slackClient.chat.postMessage({
+          channel: DEPLOYMENT_SLACK_CHANNEL,
+          blocks: [
+            {
+              type: 'section',
+              text: { type: 'mrkdwn', text: message },
+            },
+          ],
+          thread_ts: postedMessage.ts,
+        });
+      };
+      // sending errors in the thread limit of a message is 3001 characters
+      let threadGroupMessages = [];
+      let currentThreadCharacters = 0;
+      const MESSAGE_MAX_CHARS = 2800; // account for new line charcters max limit is 3001
+      Object.entries(failedTests).forEach(async ([test, description]) => {
+        const header = `***${test} -> errors*** \n`;
+        const errors = description.errors.join('\n');
+        const currentMessageChars = header.length + errors.length;
+        if (currentMessageChars + currentThreadCharacters > MESSAGE_MAX_CHARS) {
+          await sendSlackThread(threadGroupMessages);
+          currentThreadCharacters = 0;
+          threadGroupMessages = [];
+        }
+        currentThreadCharacters += currentMessageChars;
+        threadGroupMessages.push(header);
+        threadGroupMessages.push(errors);
+      });
+
+      if (threadGroupMessages.length > 0) {
+        await sendSlackThread(threadGroupMessages);
+      }
+    }
+  } catch (e) {
+    console.log(e);
+  }
+  console.log('Finished publishing slack message');
+}
+
+function getCodeBuildConsoleUrlFromArn() {
+  const buildArn = process.env.CODEBUILD_BUILD_ARN;
+  if (buildArn) {
+    const arnRegex = /^arn:aws:codebuild:([^:]+):([^:]+):build\/([^:]+):(.+)$/;
+    const match = buildArn.match(arnRegex);
+
+    if (!match) {
+      console.error(`Invalid CodeBuild ARN format: ${buildArn}`);
+      return '-';
+    }
+
+    const [, region, _accountId, projectName, buildGuid] = match;
+    const buildId = `${projectName}:${buildGuid}`;
+    console.log('Creating build url');
+    return `https://console.aws.amazon.com/codesuite/codebuild/projects/${projectName}/build/${buildId}/log?region=${region}`;
+  }
+}
+
+async function updateCloudWatchMetrics(failedTests) {
+  const buildNumber = process.env.CODEBUILD_BUILD_NUMBER || 'unknown';
+  const cloudWatchClient = new CloudWatchClient({
+    region: 'eu-central-1',
+  });
+
+  const metricData = Object.entries(failedTests).map(([testName, description]) => ({
+    // failedTests -> Record<string, { failedCount: number; errors: string[] }
+    MetricName: 'E2ETestFailure',
+    Dimensions: [
+      { Name: 'TestName', Value: testName },
+      { Name: 'BuildNumber', Value: buildNumber },
+    ],
+    Value: description.failedCount,
+    Unit: 'Count',
+  }));
+
+  const metricParams = new PutMetricDataCommand({
+    Namespace: 'E2ETestSuite',
+    MetricData: metricData,
+  });
+
+  console.log('Publishing cloudwatch metrics');
+  try {
+    await cloudWatchClient.send(metricParams);
+  } catch (e) {
+    console.error('Error publishing cloudwatch metrics', e);
+  }
+  console.log('Finished publishing cloudwatch metrics');
+}
+
+async function afterCypressRun() {
+  console.info('Process CI', process.env.ENV);
+  if (process.env.ENV !== 'local') {
+    const filePath = path.resolve(__dirname, 'cypress', 'failed-e2e-tests.json');
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      const failedTests = JSON.parse(data); // type of this parsed object Record<string, { failedCount: number; errors: string[] }
+
+      const failedTestsCount = Object.values(failedTests).reduce(
+        (acc, testDescription) => acc + testDescription.failedCount,
+        0,
+      );
+      if (failedTestsCount > 0) {
+        await notifySlack(failedTests);
+      }
+      await updateCloudWatchMetrics(failedTests);
+    } else {
+      console.warn('No failed tests found at', filePath);
+    }
+  }
+}
+
+async function getCypressCreds() {
+  console.info('🔑 Getting Cypress credentials from AWS Secrets Manager...');
+  try {
+    const smClient = new SecretsManagerClient({
+      region: 'eu-central-1',
+      credentials: fromIni({
+        profile: `AWSAdministratorAccess-911899431626`,
+      }),
+    });
+    const secretString = (
+      await smClient.send(
+        new GetSecretValueCommand({
+          SecretId: CYPRESS_CREDS_SECRET_ARN,
+        }),
+      )
+    ).SecretString;
+    const { super_admin, custom_role, admin } = JSON.parse(secretString);
+    return {
+      super_admin,
+      custom_role,
+      admin,
+    };
+  } catch (e) {
+    console.error(
+      `❗❗Please run 'npm run aws-login dev' to refresh the aws credentials for the Dev account!`,
+    );
+    throw e;
+  }
+}
+
+(async () => {
+  const cypressCreds = process.env.CYPRESS_CREDS ?? {};
+  console.info('🔑 Cypress creds in env', cypressCreds);
+  let { super_admin, custom_role, admin } =
+    typeof cypressCreds === 'string' ? JSON.parse(cypressCreds) : cypressCreds;
+  try {
+    const cypressEnv = JSON.parse(fs.readFileSync('cypress.env.json'));
+    super_admin = cypressEnv.super_admin;
+    custom_role = cypressEnv.custom_role;
+    admin = cypressEnv.admin;
+  } catch (e) {
+    // ignore
+  }
+
+  if (!super_admin && !custom_role && !admin) {
+    const creds = await getCypressCreds();
+    super_admin = creds.super_admin;
+    custom_role = creds.custom_role;
+    admin = creds.admin;
+  }
+  const type = process.argv[2];
+  const headlessFlag =
+    type === 'run' ? (process.env.CI === 'true' ? '--headless' : '--headed') : '';
+
+  if (process.env.ENV === 'local') {
+    const isLocalConsoleRunning = (await detectPort(8001)) !== 8001;
+    const isLocalTarponRunning = (await detectPort(3002)) !== 3002;
+    if (!isLocalConsoleRunning) {
+      console.error(`Please start local Console first (port 8001) ('yarn start:local')`);
+      process.exit(1);
+    }
+
+    const consoleResponse = await prompts({
+      type: 'confirm',
+      name: 'value',
+      initial: 'Y',
+      message: `You'll use local Console to run the tests. Are you sure?`,
+    });
+    if (consoleResponse.value === false) {
+      process.exit(1);
+    }
+    const apiMessage = isLocalTarponRunning
+      ? `You'll use local API to run the tests. Did you run 'TENANT=cypress-tenant npm run dev:databases:init' in tarpon to seed the data for testing?`
+      : `Your local Console API is not running. You'll use Dev API to run the tests. Are you sure?`;
+    const apiResponse = await prompts({
+      type: 'confirm',
+      name: 'value',
+      initial: 'Y',
+      message: apiMessage,
+    });
+    if (apiResponse.value === false) {
+      process.exit(1);
+    }
+  }
+
+  const credentials = {
+    super_admin: super_admin,
+    custom_role: custom_role,
+    admin: admin,
+  };
+  let ENV_VARS = [];
+  Object.keys(credentials).map((key, index) => {
+    ENV_VARS.push(`${key}_username=${credentials[key].username}`);
+    ENV_VARS.push(`${key}_password=${credentials[key].password}`);
+  });
+
+  try {
+    // const spec = ` --spec "cypress/e2e/cases/case-details*.cy.ts"`;
+    const spec = ``;
+    let e2eFailed = false;
+    try {
+      execSync(
+        `./node_modules/.bin/cypress ${type} --env ${ENV_VARS.join(',')} ${headlessFlag} ${spec}`,
+        {
+          stdio: 'inherit',
+        },
+      );
+    } catch (e) {
+      e2eFailed = true;
+      console.error(e);
+    }
+    await afterCypressRun();
+    if (e2eFailed) {
+      throw new Error('E2E failed');
+    }
+  } catch (e) {
+    await afterCypressRun();
+    console.error(e);
+    process.exit(1);
+  }
+})();

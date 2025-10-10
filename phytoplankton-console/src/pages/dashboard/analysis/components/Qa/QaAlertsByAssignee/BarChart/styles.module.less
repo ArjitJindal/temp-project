@@ -1,0 +1,47 @@
+@import 'src/components/ui/colors';
+
+.container {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+
+  &.skeleton {
+    .column {
+      background-color: @fr-colors-v2-skeleton;
+    }
+  }
+}
+
+.row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 5fr 1fr;
+  align-items: end;
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.columnContainer {
+  display: grid;
+  gap: 4px;
+  align-items: center;
+}
+
+.label,
+.columnValue {
+  font-size: 12px;
+}
+
+.column {
+  background-color: @fr-colors-v2-analytics-charts-02;
+  height: 20px;
+}
+
+.info {
+  display: flex;
+  justify-content: end;
+}

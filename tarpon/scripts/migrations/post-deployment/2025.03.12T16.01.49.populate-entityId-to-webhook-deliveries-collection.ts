@@ -1,0 +1,91 @@
+import { migrateAllTenants } from '../utils/tenant'
+import { Tenant } from '@/@types/tenant'
+import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongo-table-names'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+
+const EVENT_TYPE_TO_ENTITY_MAP = {
+  CASE_CLOSED: (data: any) => data.caseId || null,
+  CASE_OPENED: (data: any) => data.caseId || null,
+  USER_STATE_UPDATED: (data: any) => data.userId || null,
+  KYC_STATUS_UPDATED: (data: any) => data.userId || null,
+  PEP_STATUS_UPDATED: (data: any) => data.userId || null,
+  USER_TAGS_UPDATED: (data: any) => data.userId || null,
+  CRA_RISK_LEVEL_UPDATED: (data: any) => data.userId || null,
+  LIST_UPDATED: (data: any) => data.userId || null,
+  ALERT_CLOSED: (data: any) => data.alertId || null,
+  ALERT_OPENED: (data: any) => data.alertId || null,
+  TRANSACTION_STATUS_UPDATED: (data: any) =>
+    data.transactionId ||
+    (data.transactionIds && data.transactionIds.length > 0
+      ? data.transactionIds[0]
+      : null),
+} as const
+
+function extractEntityId(webhookEvent: any): string | null {
+  const { type, data } = webhookEvent
+  const extractFn = EVENT_TYPE_TO_ENTITY_MAP[type]
+  return extractFn ? extractFn(data) : null
+}
+
+async function migrateTenant(tenant: Tenant) {
+  const mongoDb = await getMongoDbClient()
+  const collection = mongoDb
+    .db()
+    .collection(WEBHOOK_DELIVERY_COLLECTION(tenant.id))
+
+  const cursor = collection.find({
+    entityId: { $exists: false },
+    requestStartedAt: { $gte: Date.now() - 30 * 24 * 60 * 60 * 1000 },
+  })
+
+  let count = 0
+  const BATCH_SIZE = 1000 // Adjust based on your needs
+  let bulkOperations: any[] = []
+
+  for await (const doc of cursor) {
+    if (doc.request?.body) {
+      try {
+        // Handle both cases where body might be a string or already an object
+        const jsonBody =
+          typeof doc.request.body === 'string'
+            ? JSON.parse(doc.request.body)
+            : doc.request.body
+
+        const entityId = extractEntityId(jsonBody)
+
+        if (entityId) {
+          bulkOperations.push({
+            updateOne: {
+              filter: { _id: doc._id },
+              update: { $set: { entityId } },
+            },
+          })
+          count++
+
+          if (bulkOperations.length >= BATCH_SIZE) {
+            await collection.bulkWrite(bulkOperations, { ordered: false })
+            console.log(`Processed ${count} documents for tenant ${tenant.id}`)
+            bulkOperations = []
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to process document ${doc._id}: ${error}`)
+        continue
+      }
+    }
+  }
+
+  if (bulkOperations.length > 0) {
+    await collection.bulkWrite(bulkOperations, { ordered: false })
+  }
+
+  console.log(`Updated total ${count} documents for tenant ${tenant.id}`)
+}
+
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+
+export const down = async () => {
+  // skip
+}

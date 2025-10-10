@@ -1,0 +1,19 @@
+{
+  "name": "emails",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "email dev",
+    "export": "email export --pretty"
+  },
+  "author": "",
+  "dependencies": {
+    "@react-email/components": "0.5.5",
+    "react-email": "^4.2.12"
+  },
+  "engines": {
+    "node": "20.x",
+    "npm": "10.x"
+  }
+}

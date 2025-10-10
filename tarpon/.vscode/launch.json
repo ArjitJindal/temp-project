@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "type": "node-terminal",
+      "name": "Run Console API",
+      "request": "launch",
+      "command": "yarn dev:api:console",
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Public API",
+      "request": "launch",
+      "command": "yarn dev:api:public",
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Public Management API",
+      "request": "launch",
+      "command": "yarn dev:api:public-management",
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run all APIs",
+      "request": "launch",
+      "command": "yarn dev:api",
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Playground",
+      "request": "launch",
+      "command": "npm run playground",
+      "cwd": "${workspaceFolder}",
+      "outFiles": []
+    },
+    {
+      "name": "Run current test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/.bin/jest", "${relativeFile}", "--runInBand", "--forceExit", "--coverage", "false"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "outFiles": []
+    }
+  ]
+}

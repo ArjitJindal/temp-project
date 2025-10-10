@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node 20",
+  "_version": "20.9.0",
+
+  "include": ["**/*.ts"],
+  "exclude": [],
+
+  "compilerOptions": {
+    "lib": ["es2023"],
+    "module": "commonjs",
+    "target": "es2022",
+    "outDir": "../dist/bin",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+
+    "alwaysStrict": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": false,
+    "noPropertyAccessFromIndexSignature": false
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}

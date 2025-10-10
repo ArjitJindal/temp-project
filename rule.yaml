@@ -1,0 +1,92 @@
+rules:
+  - id: antd_no_form
+    pattern: import { Form } from 'antd'
+    message: use "import Form from '@/components/library/Form'" instead
+    paths:
+      include:
+        - 'phytoplankton-console'
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: antd_no_popover
+    pattern: import { Popover } from 'antd'
+    message: use "import Popover from '@/components/ui/Popover'" instead
+    paths:
+      include:
+        - 'phytoplankton-console'
+      exclude:
+        - 'phytoplankton-console/src/components/ui/Popover'
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: antd_no_tooltip
+    pattern: import { Tooltip } from 'antd'
+    message: use "import Tooltip from '@/components/library/Tooltip'" instead
+    paths:
+      include:
+        - 'phytoplankton-console'
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: lodash
+    pattern: import _ from 'lodash'
+    message: import { ... } from 'lodash' instead
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: dayjs
+    pattern: import dayjs from 'dayjs'
+    message: import dayjs from '@/utils/dayjs' instead
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: ant_sentence_case
+    pattern: import { sentenceCase } from '@antv/x6/es/util/string/format';
+    message: Use "import { startCase } from 'lodash'" instead
+    languages:
+      - typescript
+    severity: ERROR
+    metadata:
+      category: best-practice
+      technology:
+        - typescript
+  - id: ock_string
+    paths:
+      include:
+        - 'phytoplankton-console'
+    patterns:
+      - pattern-regex: "ock\\("
+    message: This is crazy, but files should not include "ock(" string to make it work with `esbuild-jest`. See https://github.com/aelbore/esbuild-jest/issues/57#issuecomment-1005756206 for details
+    languages:
+      - typescript
+    severity: ERROR
+  - id: localchangehandler
+    paths:
+      include:
+        - 'tarpon'
+    patterns:
+      - pattern-regex: "import\\s+.*\\s+from\\s+['\"]@/core/local-handlers/"
+    message: Direct importing of local change handlers is not allowed, instead try doing a lazy import
+    languages:
+      - typescript
+    severity: ERROR

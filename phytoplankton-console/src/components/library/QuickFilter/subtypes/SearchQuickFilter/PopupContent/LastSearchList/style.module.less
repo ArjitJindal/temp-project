@@ -1,0 +1,25 @@
+@import 'src/components/ui/colors';
+
+.subtitle {
+  padding: 8px 12px;
+  color: @fr-colors-brandBlue;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.item {
+  padding: 4px 12px !important;
+  border: none !important;
+  cursor: pointer;
+
+  &:hover,
+  &.isActive {
+    background: @fr-colors-brandBlueTint;
+  }
+
+  &.isActive {
+    .userName {
+      color: @fr-colors-brandBlue;
+    }
+  }
+}

@@ -1,0 +1,50 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 460px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 1rem;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.header,
+.footer {
+  padding: 8px 12px;
+}
+
+.title {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16px;
+
+  .icon {
+    height: 18px;
+    color: @fr-colors-purpleGrayTint;
+  }
+}
+
+.searchIcon {
+  width: 14px;
+  color: fade(@fr-colors-gray-2, 45%);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

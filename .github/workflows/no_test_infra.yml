@@ -1,0 +1,12 @@
+name: No test infra
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "infra/**"
+jobs:
+  test:
+    name: test-infra
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'

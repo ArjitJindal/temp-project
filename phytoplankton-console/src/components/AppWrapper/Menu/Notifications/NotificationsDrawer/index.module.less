@@ -1,0 +1,39 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+@import 'src/components/ui/z-indexes.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.scrollContainer {
+  position: relative;
+  flex: 1;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: absolute;
+  padding: 16px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.empty {
+  padding: 20px;
+  color: @fr-colors-v2-gray-6;
+  text-align: center;
+}

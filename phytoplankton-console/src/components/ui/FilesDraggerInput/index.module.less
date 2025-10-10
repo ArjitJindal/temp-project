@@ -1,0 +1,75 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  :global {
+    .ant-upload {
+      background-color: @fr-colors-v2-highlight-flagrightBlue !important;
+      border-color: @fr-colors-brandBlue !important;
+      border-radius: 4px !important;
+      border-width: 1px !important;
+    }
+  }
+}
+
+.textRoot {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  border-radius: 4px;
+  justify-content: center;
+  gap: 16px;
+}
+
+.large {
+  flex-direction: column;
+  padding: 20px 20px;
+}
+
+.small {
+  flex-direction: row;
+  padding: 0 28px;
+}
+
+.icon {
+  color: @fr-colors-v2-primary-flagrightBlue;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+}
+
+.alignItemsStart {
+  align-items: start;
+  font-size: 8px;
+}
+
+.title1 {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.title2 {
+  color: @fr-colors-v2-gray-6;
+  font-size: 14px;
+  line-height: 24px;
+  margin-top: 4px;
+}
+
+.textAlignStart {
+  text-align: start;
+  line-height: 16px;
+  font-size: 12px;
+}
+
+.required {
+  color: @fr-colors-errorColor;
+}

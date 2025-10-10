@@ -1,0 +1,25 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  min-height: 100vh;
+  gap: 40px;
+
+  --storybook-color-1: @fr-colors-v2-primary-flagrightBlue;
+  --storybook-color-2: @fr-colors-v2-gray-1;
+}
+
+.menu {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  flex: 1;
+}

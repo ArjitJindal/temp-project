@@ -1,0 +1,64 @@
+@import 'src/components/ui/colors';
+
+.stepsContainer {
+  max-width: 900px;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.idContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ruleName {
+  font-size: 12px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.rowDark {
+  :global {
+    .ant-table-cell-fix-right {
+      background-color: @fr-colors-brandBlueTint !important;
+    }
+  }
+}
+
+.tableRowLight {
+  &,
+  &:hover {
+    > td {
+      background-color: #fff !important;
+    }
+  }
+}
+
+.tableRowDark {
+  background-color: fade(@fr-colors-brandBlueTint, 45%) !important;
+}
+
+.checksForRoot {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  align-items: start;
+  justify-content: start;
+  flex-wrap: wrap;
+}
+
+.icon {
+  color: @fr-colors-brandBlue;
+}
+
+.recommendedTag {
+  background: @fr-colors-brandBlueTint;
+  color: @fr-colors-brandBlue;
+  border-color: @fr-colors-brandBlueTint;
+}

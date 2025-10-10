@@ -1,0 +1,78 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+  padding: 1rem 0;
+  border-bottom: 1px solid @fr-colors-v2-highlight-stroke;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.left {
+  display: flex;
+  gap: 12px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-size: cover;
+  background-color: @fr-colors-v2-unknown-4;
+  text-align: center;
+  padding: 6px 0;
+  color: white;
+  font-size: 20px;
+}
+
+.commentHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.greyText {
+  color: @fr-colors-v2-gray-6;
+  font-size: 12px;
+}
+
+.bold {
+  font-weight: 400;
+}
+
+.emailContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.emailText {
+  color: @fr-colors-v2-primary-shades-blue-900;
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.emailBody {
+  font-size: 14px;
+  font-family: Noto Sans;
+  line-height: 24px;
+}
+
+.expandButton {
+  border: none;
+  background: none;
+  color: @fr-colors-v2-primary-shades-blue-900;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  &:hover {
+    text-decoration: underline;
+  }
+}

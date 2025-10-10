@@ -1,0 +1,99 @@
+@import 'src/components/ui/colors.less';
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.fileListContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fileListContainerFixedHeight {
+  max-height: 30vh;
+  overflow-y: scroll;
+}
+
+.fileListText {
+  color: @fr-colors-purpleGray !important;
+}
+
+.headerText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+
+  p {
+    padding-bottom: 0 !important;
+  }
+}
+
+.fileListDeleteButton {
+  padding: 0;
+  border-radius: 100%;
+  border: none;
+  cursor: pointer;
+  color: @fr-colors-v2-gray-10;
+  display: flex;
+  align-items: center;
+  background: transparent;
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
+
+  &:disabled {
+    pointer-events: none;
+  }
+
+  > svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.fileAttachmentButton {
+  align-items: center;
+  display: flex;
+  background-color: @fr-colors-v2-card-background;
+  padding: 8px;
+  border-radius: 4px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-content: space-between;
+  width: fit-content;
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.size {
+  flex-shrink: 0;
+}
+
+.aiSummaryContainer {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.fileListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.downloadLink {
+  &.isDisabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}

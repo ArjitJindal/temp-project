@@ -1,0 +1,27 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
+.root {
+  width: 100%;
+}
+
+.dropdown {
+  position: relative;
+  width: 100%;
+  z-index: @universal-search-z-index;
+}
+
+.dropdownPosition {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.1));
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 450px;
+}
+
+.minimalDropdownPosition {
+  max-height: 270px;
+}

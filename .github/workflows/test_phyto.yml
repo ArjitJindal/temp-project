@@ -1,0 +1,93 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Test phytoplankton
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-phytoplankton
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+    paths:
+      - "phytoplankton-console/**"
+      - "lib/**"
+      - "tarpon/lib/openapi/**"
+  workflow_call:
+jobs:
+  test:
+    name: test-phytoplankton
+    runs-on: ubuntu-22.04
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine changed folder
+        id: changed-folder
+        run: |
+          git fetch origin main
+          phytoChanges=false
+          for file in $(git diff --name-only origin/main HEAD); do
+            if [[ "$file" == phytoplankton-console/src/* || "$file" == phytoplankton-console/jest/* || "$file" == lib/* ]]; then
+              phytoChanges=true
+            fi
+          done
+          echo "phytoChanges=$phytoChanges" >> "$GITHUB_OUTPUT"
+      - name: Corepack enable
+        run: corepack enable && yarn set version 4.0.2
+      - name: Use Node.js 20x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "yarn"
+          cache-dependency-path: "tarpon/yarn.lock"
+      - name: Use Node.js 20x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "yarn"
+          cache-dependency-path: "phytoplankton-console/yarn.lock"
+      - name: Build Root
+        run: yarn install --immutable
+      - run: yarn install --immutable
+        working-directory: "tarpon"
+      - name: Install nango
+        run: npm install -g nango@0.61.1
+        working-directory: "tarpon"
+      - name: Build Tarpon Openapi
+        run: npm run openapi:build
+        working-directory: "tarpon"
+      - run: npm run openapi:prepare
+        working-directory: "tarpon"
+      - run: yarn install --immutable
+        working-directory: "phytoplankton-console"
+      - run: yarn run build:local
+        working-directory: "phytoplankton-console"
+      - run: yarn run lint
+        working-directory: "phytoplankton-console"
+      - run: yarn run format:check
+        working-directory: "phytoplankton-console"
+      - run: yarn run tsc
+        working-directory: "phytoplankton-console"
+      - name: Phyto test
+        if: steps.changed-folder.outputs.phytoChanges == 'true'
+        run: yarn run test:unit
+        working-directory: "phytoplankton-console"
+      - name: Post to a Slack channel on failure
+        id: slack
+        uses: slackapi/slack-github-action@v1.25.0
+        if: ${{ failure() && github.ref_name == 'main' }}
+        with:
+          channel-id: "C03L5KRE2E8"
+          payload: |
+            {
+              "text": "main branch failed for phytoplankton!"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

@@ -1,0 +1,51 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  border-radius: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: white;
+  z-index: 1;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  transition-property: opacity, transform, border-color, outline-color;
+  transform-origin: bottom;
+  transition-delay: @default-animation-speed;
+  border: 2px solid transparent;
+  outline: transparent solid 3px;
+  outline-offset: 2px;
+
+  &.isLoading {
+    opacity: 0.5;
+  }
+
+  &.isUnread {
+    outline-color: @fr-colors-v2-primary-shades-blue-300;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font-weight: 600;
+}
+.description {
+  font-weight: 400;
+}
+
+.tools {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.commentPopover {
+  width: 600px;
+}

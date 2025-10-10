@@ -1,0 +1,32 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: min-content min-content;
+  justify-content: space-between;
+  width: 100%;
+  position: sticky;
+  bottom: 0;
+  background: @fr-global-bg-color;
+  padding: 16px 0;
+  margin-bottom: -16px;
+  z-index: @sticky-z-index;
+}
+
+.footerButtons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+
+  button {
+    width: max-content;
+  }
+}

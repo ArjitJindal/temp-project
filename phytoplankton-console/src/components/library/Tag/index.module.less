@@ -1,0 +1,164 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: inline-flex;
+  font-weight: normal;
+  font-style: normal;
+
+  &.trimText {
+    .text {
+      max-width: 200px;
+    }
+  }
+}
+
+.body {
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid @fr-colors-v2-gray-3;
+  background: @fr-colors-gray-0;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 12px;
+  line-height: 12px;
+  align-items: center;
+  cursor: default;
+
+  &.isClickable {
+    cursor: pointer;
+  }
+
+  &.color-action {
+    background: @fr-colors-v2-risk-level-bg-medium;
+    border-color: @fr-colors-yellow;
+    justify-content: space-between;
+  }
+
+  // These colors copied from Ant's Tag component
+  &.color-green {
+    color: #389e0d;
+    background: #f6ffed;
+    border-color: #b7eb8f;
+  }
+
+  &.color-blue {
+    color: #096dd9;
+    background: #e6f7ff;
+    border-color: #91d5ff;
+  }
+
+  &.color-cyan {
+    color: #08979c;
+    background: #e6fffb;
+    border-color: #87e8de;
+  }
+
+  &.color-gold {
+    color: #d48806;
+    background: #fffbe6;
+    border-color: #ffe58f;
+  }
+
+  &.color-pink {
+    color: #c41d7f;
+    background: #fff0f6;
+    border-color: #ffadd2;
+  }
+
+  &.color-purple {
+    color: #531dab;
+    background: #f9f0ff;
+    border-color: #d3adf7;
+  }
+
+  &.color-magenta {
+    color: #c41d7f;
+    background: #fff0f6;
+    border-color: #ffadd2;
+  }
+
+  &.color-volcano {
+    color: #d4380d;
+    background: #fff2e8;
+    border-color: #ffbb96;
+  }
+
+  &.color-red {
+    color: #cf1322;
+    background: #fff1f0;
+    border-color: #ffa39e;
+  }
+
+  &.color-orange {
+    color: #d46b08;
+    background: #fff7e6;
+    border-color: #ffd591;
+  }
+
+  // Types
+  &.color-processing {
+    color: #78cbeb;
+    background: #f0fdff;
+    border-color: #f0fcff;
+  }
+  &.color-success {
+    color: #52c41a;
+    background: #f6ffed;
+    border-color: #b7eb8f;
+  }
+  &.color-error {
+    color: #ff4d4f;
+    background: #fff2f0;
+    border-color: #ffccc7;
+  }
+  &.color-warning {
+    color: #f6a429;
+    background: #fffbf0;
+    border-color: #ffe4a6;
+  }
+  &.color-gray {
+    color: #262626;
+    background: #f0f4fb;
+    border-color: #dfe6f2;
+  }
+}
+
+.icon {
+  height: 13px;
+  min-width: 13px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.text {
+  font-size: 12px;
+  line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wrapText {
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.action {
+  border: none;
+  background: transparent;
+  width: 12px;
+  padding: 0;
+  display: flex;
+  cursor: pointer;
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.25;
+  }
+}

@@ -1,0 +1,77 @@
+@import 'src/components/ui/colors';
+
+.root {
+  border: 1px solid transparent;
+  padding: @figma-vars--tokens-spacingSpacingXs;
+  display: flex;
+  gap: @figma-vars--tokens-spacingSpacing3xs;
+  align-items: center;
+  border-radius: @figma-vars--primitives-borderRadiusS;
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+
+  &.type-ERROR {
+    border-color: @figma-vars--tokens-colorStrokeError;
+    background-color: @figma-vars--tokens-colorBackgroundErrorHue;
+
+    .icon {
+      color: @figma-vars--tokens-colorStrokeError;
+    }
+  }
+
+  &.type-WARNING {
+    border-color: @figma-vars--tokens-colorStrokeWarning;
+    background-color: @figma-vars--tokens-colorBackgroundWarning;
+
+    .icon {
+      color: @figma-vars--tokens-colorStrokeWarning;
+    }
+  }
+
+  &.type-INFO {
+    border-color: @figma-vars--tokens-colorStrokeAction;
+    background-color: @figma-vars--tokens-colorBackgroundInformationHue;
+
+    .icon {
+      color: @figma-vars--tokens-colorStrokeAction;
+    }
+  }
+
+  &.type-SUCCESS {
+    border-color: @figma-vars--tokens-colorStrokeSuccess;
+    background-color: @figma-vars--tokens-colorBackgroundSuccessHue;
+
+    .icon {
+      color: @figma-vars--tokens-colorStrokeSuccess;
+    }
+  }
+
+  &.type-TRANSPARENT {
+    border-color: transparent;
+    background-color: transparent;
+
+    .icon {
+      color: @figma-vars--tokens-colorStrokeAction;
+    }
+  }
+}
+
+.icon {
+  width: @figma-vars--tokens-spacingSpacingL;
+}
+
+.iconContainer {
+  padding-top: 1px;
+  height: @figma-vars--primitives-typographyFontLineHeightS;
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.text {
+  font-family: @figma-vars--primitives-typographyFontFamilyBody;
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+  line-height: @figma-vars--primitives-typographyFontLineHeightS;
+}

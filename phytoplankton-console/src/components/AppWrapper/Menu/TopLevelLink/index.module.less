@@ -1,0 +1,77 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  background: @fr-colors-navyBlueShade;
+  padding: 12px 20px;
+  gap: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+
+  &.isActive {
+    background: @fr-colors-v2-primary-flagrightBlue;
+  }
+
+  &.isCollapsed {
+    .title {
+      opacity: 0;
+    }
+  }
+
+  &.isDisabled {
+    cursor: default;
+
+    &,
+    & * {
+      color: fade(white, 50%);
+    }
+  }
+
+  &:not(.isDisabled) {
+    cursor: pointer;
+
+    &,
+    & * {
+      color: white;
+    }
+
+    &:not(.isActive):hover {
+      background: @fr-colors-purpleGrayShade;
+    }
+  }
+}
+
+.left {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.icon {
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.title {
+  flex-basis: 0;
+  white-space: nowrap;
+  transition: opacity @default-animation-speed;
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-height: 800px) {
+  .root {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}

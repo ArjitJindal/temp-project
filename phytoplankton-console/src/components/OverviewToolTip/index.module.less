@@ -1,0 +1,38 @@
+@import 'src/components/ui/colors.less';
+
+.tooltip {
+  color: @fr-colors-v2-gray-10 !important;
+  background: white;
+  padding: 8px;
+  border-radius: @figma-vars--tokens-borderRadiusBorderradiusS;
+  box-shadow: 0 8px 30px 0 fade(#00003d, 30%);
+}
+
+.tooltipTitle {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  align-items: center;
+}
+
+.tooltipTitleLeft {
+  display: flex;
+  align-items: center;
+}
+
+.tooltipList {
+  padding-left: 16px !important;
+  margin-bottom: 0 !important;
+}
+
+:global {
+  .ant-tooltip-inner:has(.ant-tooltip-inner-overview-tooltip) {
+    width: 350px !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+  }
+
+  .ant-tooltip-arrow:has(.ant-tooltip-arrow-content) {
+    display: none !important;
+  }
+}

@@ -1,0 +1,37 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.variables {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 16px;
+}
+
+.variablesModal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  &.singleVariable {
+    grid-template-columns: 1fr;
+  }
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.autocomplete {
+  flex: 1;
+  min-width: 150px;
+}
+
+.input {
+  display: flex;
+}

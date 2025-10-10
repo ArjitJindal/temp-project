@@ -1,0 +1,29 @@
+@import 'node_modules/antd/es/style/themes/default.less';
+@import 'src/components/ui/colors.less';
+
+.salesExtra {
+  display: inline-block;
+  margin-right: 24px;
+  a {
+    margin-left: 24px;
+    color: @text-color;
+    &:hover {
+      color: @fr-colors-brandBlue;
+    }
+    &.currentDate {
+      color: @fr-colors-brandBlue;
+    }
+  }
+}
+
+@media screen and (max-width: @screen-lg) {
+  .salesExtra {
+    display: none;
+  }
+}
+
+@media screen and (max-width: @screen-sm) {
+  .salesExtraWrap {
+    display: none;
+  }
+}

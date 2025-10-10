@@ -1,0 +1,51 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  flex: 1;
+  min-width: 300px;
+
+  &.type-ORIGIN {
+    background: fade(@fr-colors-redTint, 25%);
+    border-color: fade(@fr-colors-red, 25%);
+
+    .icon {
+      color: @fr-colors-red;
+    }
+  }
+  &.type-DESTINATION {
+    background: fade(@fr-colors-leafGreenTint, 25%);
+    border-color: fade(@fr-colors-leafGreen, 25%);
+
+    .icon {
+      color: @fr-colors-leafGreen;
+    }
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.user {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  gap: 4px 12px;
+  align-items: center;
+
+  > *:nth-child(1) {
+    grid-row: span 2;
+  }
+
+  > *:nth-child(3) {
+    grid-column-start: 2;
+  }
+}
+
+.mainInfo {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}

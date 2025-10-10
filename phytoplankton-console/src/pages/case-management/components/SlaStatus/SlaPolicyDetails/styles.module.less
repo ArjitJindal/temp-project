@@ -1,0 +1,33 @@
+@import 'src/components/ui/colors.less';
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statusDisplay {
+  border-radius: 4px;
+  padding: 4px;
+  text-align: center;
+  vertical-align: middle;
+  color: #fff;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.warning {
+  background-color: @fr-colors-v2-sla-warning;
+}
+
+.breached {
+  background-color: @fr-colors-v2-sla-breached;
+}
+
+.ok {
+  background-color: @fr-colors-v2-sla-ok;
+}
+
+.timeText {
+  padding-right: 4px;
+}

@@ -1,0 +1,59 @@
+{
+  "name": "tarpon",
+  "version": "1.0.0",
+  "description": "`phytoplankton` - Frontend code for the console `tarpon` - Our backend API `viper` - Our data platform",
+  "main": "index.js",
+  "scripts": {
+    "preinstall": "cd lib && corepack enable && yarn",
+    "prepare": "husky install .husky",
+    "openapi:local": "cd tarpon && npm run openapi:build && npm run openapi:prepare && cd ../phytoplankton-console && ENV=local npm run openapi:build && cd ..",
+    "deploy:pipeline": "ENV=deploy cdk deploy orca-pipeline --require-approval never --profile=AWSAdministratorAccess-073830519512",
+    "deploy:pipeline:clean": "export ENV=deploy && npm run aws-login deploy && npm run synth:pipeline && npm run deploy:pipeline",
+    "deploy:pipeline:actions": "ENV=deploy cdk deploy orca-pipeline --require-approval never",
+    "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-login deploy && npm run synth:pipeline && npm run deploy:pipeline",
+    "aws-login": "npx ts-node ./lib/scripts/aws-login.ts",
+    "synth:pipeline": "cdk synth orca-pipeline",
+    "create-release": "ts-node scripts/create-release.ts"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cloudformation": "^3.441.0",
+    "@tsconfig/node20": "^20.1.5",
+    "constructs": "^10.4.2",
+    "husky": "^8.0.1",
+    "prettier": "^3.1.1",
+    "purgecss": "^7.0.2",
+    "slackify-markdown": "^4.4.0",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flagright/tarpon.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/flagright/tarpon/issues"
+  },
+  "homepage": "https://github.com/flagright/tarpon#readme",
+  "lint-staged": {
+    "{bin,scripts}/**/*.{js,ts}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@flagright/lib": "link:./lib",
+    "@linear/sdk": "^37.0.0",
+    "@slack/web-api": "^7.10.0",
+    "@types/lodash": "^4.17.20",
+    "aws-cdk": "~2.1029.3",
+    "aws-cdk-lib": "~2.217.0",
+    "lodash": "^4.17.21",
+    "octokit": "^3.2.1"
+  },
+  "packageManager": "yarn@4.0.2",
+  "engines": {
+    "node": "20.x",
+    "yarn": "4.x"
+  }
+}

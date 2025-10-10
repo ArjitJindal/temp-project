@@ -1,0 +1,72 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.optional {
+  font-weight: normal;
+  color: @fr-colors-v2-gray-6;
+}
+
+.required {
+  color: @fr-colors-red;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-content: center;
+  align-items: center;
+}
+
+.label {
+  display: inline-flex;
+  line-height: 20px;
+  white-space: pre-wrap;
+  gap: 3px;
+
+  .icon {
+    width: 16px;
+    height: 20px;
+  }
+  .labelText {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px;
+  }
+  .iconRight {
+    display: flex;
+    width: fit-content;
+    height: fit-content;
+  }
+
+  &.level-1 {
+    font-weight: 600;
+  }
+
+  &.level-2 {
+  }
+
+  &.level-3 {
+    color: @fr-colors-v2-gray-6;
+  }
+
+  &.level-4 {
+    color: @fr-colors-purpleGray;
+  }
+}
+
+.description {
+  color: @fr-colors-v2-gray-6;
+  line-height: 24px;
+}
+
+.labelDescription {
+  //margin-bottom: 8px;
+}

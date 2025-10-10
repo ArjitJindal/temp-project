@@ -1,0 +1,630 @@
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
+import { Document, MongoClient } from 'mongodb'
+import { BadRequest, NotFound, InternalServerError } from 'http-errors'
+import { S3 } from '@aws-sdk/client-s3'
+import { Upload } from '@aws-sdk/lib-storage'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { CaseRepository } from '../cases/repository'
+import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import { LogicEvaluator } from '../logic-evaluator/engine'
+import { CaseService } from '../cases'
+import { ReportRepository } from './repositories/report-repository'
+import { UNIMPLEMENTED_GENERATORS } from './utils/helper'
+import { AuSmrReportGenerator } from './generators/AU/SMR'
+import { CanadaStrReportGenerator } from './generators/CA/STR'
+import { KenyaSARReportGenerator } from './generators/KE/SAR'
+import { LithuaniaSTRReportGenerator } from './generators/LT/STR'
+import { LithuaniaCTRReportGenerator } from './generators/LT/CTR'
+import { UsSarReportGenerator } from './generators/US/SAR'
+import { UsCtrReportGenerator } from './generators/US/CTR'
+import { MalaysianSTRReportGenerator } from './generators/MY/STR'
+import { ReportGenerator } from './generators'
+import { ReportType } from '@/@types/openapi-internal/ReportType'
+import { Report } from '@/@types/openapi-internal/Report'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import {
+  DefaultApiGetReportsRequest,
+  DefaultApiDeleteReportsRequest,
+} from '@/@types/openapi-internal/RequestParameters'
+import { formatCountry } from '@/utils/countries'
+import { mergeObjects } from '@/utils/object'
+import { traceable } from '@/core/xray'
+import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
+import { getContext } from '@/core/utils/context-storage'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getUserName } from '@/utils/helpers'
+import { FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/FincenReportValidStatus'
+import { NON_FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/NonFincenReportValidStatus'
+import { Account } from '@/@types/openapi-internal/Account'
+import {
+  auditLog,
+  AuditLogEntity,
+  AuditLogReturnData,
+  getReportAuditLogMetadata,
+} from '@/utils/audit-log'
+import { AUDITLOG_COLLECTION } from '@/utils/mongo-table-names'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { SAR_COUNTRIESS } from '@/@types/openapi-internal-custom/SarCountries'
+
+const reportGenerators: {
+  [K in (typeof SAR_COUNTRIESS)[number]]: (new () => ReportGenerator)[]
+} = {
+  AU: [AuSmrReportGenerator],
+  CA: [CanadaStrReportGenerator],
+  KE: [KenyaSARReportGenerator],
+  LT: [LithuaniaSTRReportGenerator, LithuaniaCTRReportGenerator],
+  US: [UsSarReportGenerator, UsCtrReportGenerator],
+  MY: [MalaysianSTRReportGenerator],
+}
+
+const REPORT_GENERATORS = new Map<string, ReportGenerator>(
+  Object.values(reportGenerators)
+    .flat()
+    .map((rg) => {
+      const generator = new rg()
+      const type = generator.getType()
+      const id = `${type.countryCode}-${type.type}`
+      return [id, generator]
+    })
+)
+
+// Custom AuditLogReturnData types
+type SarCreationAuditLogReturnData = AuditLogReturnData<
+  Report,
+  object,
+  Report | Partial<Report>
+>
+
+type SarUpdateAuditLogReturnData = AuditLogReturnData<
+  void,
+  Report | Partial<Report>,
+  Report | Partial<Report>
+>
+
+type SarDeleteAuditLogReturnData = AuditLogReturnData<void>
+
+function withSchema(report: Report): Report {
+  const generator = REPORT_GENERATORS.get(report.reportTypeId)
+  return {
+    ...report,
+    schema: generator?.getSchema(),
+  }
+}
+
+type S3Config = {
+  documentBucket: string
+}
+
+@traceable
+export class ReportService {
+  reportRepository!: ReportRepository
+  tenantId: string
+  mongoDb: MongoClient
+  riskScoringService: RiskScoringV8Service
+  caseService: CaseService
+  s3: S3
+  s3Config: S3Config
+  dynamoDb: DynamoDBDocumentClient
+
+  private static readonly MAX_TRANSACTIONS = 30
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ): Promise<ReportService> {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const s3 = getS3ClientByEvent(event)
+    const { DOCUMENT_BUCKET } = process.env as {
+      DOCUMENT_BUCKET: string
+    }
+
+    return new ReportService(tenantId, client, dynamoDb, s3, {
+      documentBucket: DOCUMENT_BUCKET,
+    })
+  }
+
+  constructor(
+    tenantId: string,
+    mongoDb: MongoClient,
+    dynamoDb: DynamoDBDocumentClient,
+    s3: S3,
+    s3Config: S3Config
+  ) {
+    this.reportRepository = new ReportRepository(tenantId, mongoDb, dynamoDb)
+    this.tenantId = tenantId
+    this.mongoDb = mongoDb
+    this.dynamoDb = dynamoDb
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    this.riskScoringService = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      { dynamoDb, mongoDb }
+    )
+    this.s3 = s3
+    this.s3Config = s3Config
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
+    this.caseService = new CaseService(caseRepository, s3, {
+      tmpBucketName: this.s3Config.documentBucket,
+      documentBucketName: this.s3Config.documentBucket,
+    })
+  }
+
+  private isNotValidSarReport(
+    getAllReport: boolean,
+    sarJurisdictions: Array<string> | undefined,
+    countryCode: string
+  ) {
+    return (
+      !getAllReport &&
+      sarJurisdictions &&
+      !sarJurisdictions.includes(countryCode)
+    )
+  }
+
+  public getTypes(getAllReport?: boolean): ReportType[] {
+    if (!getAllReport) {
+      getAllReport = false
+    }
+    const sarJurisdictions = getContext()?.settings?.sarJurisdictions
+    const types: ReportType[] = []
+    for (const [id, generator] of REPORT_GENERATORS.entries()) {
+      const type = generator.getType()
+      if (
+        this.isNotValidSarReport(
+          getAllReport ?? false,
+          sarJurisdictions,
+          type.countryCode
+        )
+      ) {
+        continue
+      }
+      types.push({
+        country: formatCountry(type.countryCode) || 'Unknown',
+        countryCode: type.countryCode,
+        directSubmission: type.directSubmission,
+        subjectType: type.subjectTypes,
+        id,
+        implemented: true,
+        type: type.type,
+        reportStatuses: type.directSubmission
+          ? FINCEN_REPORT_VALID_STATUSS
+          : NON_FINCEN_REPORT_VALID_STATUSS,
+      })
+    }
+    // For demos, append some generators we want to implement.
+    return types.concat(
+      UNIMPLEMENTED_GENERATORS.filter(([countryCode]) => {
+        if (
+          this.isNotValidSarReport(
+            getAllReport ?? false,
+            sarJurisdictions,
+            countryCode
+          )
+        ) {
+          return false
+        }
+        return true
+      }).map(
+        ([countryCode, type, subjectType]): ReportType => ({
+          country: formatCountry(countryCode) || 'Unknown',
+          countryCode,
+          directSubmission: false,
+          id: `${countryCode}-${type}`,
+          implemented: false,
+          type,
+          reportStatuses: NON_FINCEN_REPORT_VALID_STATUSS,
+          subjectType,
+        })
+      )
+    )
+  }
+
+  public async getUserReportDraft(
+    reportTypeId: string,
+    userId: string,
+    alertIds?: string[],
+    transactionIds?: string[]
+  ): Promise<Report> {
+    if (
+      transactionIds != null &&
+      transactionIds.length > ReportService.MAX_TRANSACTIONS
+    ) {
+      throw new NotFound(
+        `Cant select more than ${ReportService.MAX_TRANSACTIONS} transactions`
+      )
+    }
+    const userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const user = await userRepository.getUserById(userId)
+    if (!user) {
+      throw new NotFound(`Cannot find user ${userId}`)
+    }
+
+    const txpRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb,
+      this.dynamoDb
+    )
+
+    const transactions = await txpRepo.getTransactions({
+      filterUserId: userId,
+      pageSize: 100,
+    })
+
+    const account = getContext()?.user as Account
+    const generator = this.getReportGenerator(reportTypeId)
+    if (!generator) {
+      throw new NotFound(`Cannot find report generator`)
+    }
+    generator.tenantId = this.tenantId
+    const lastGeneratedReport =
+      await this.reportRepository.getLastGeneratedReport(reportTypeId)
+
+    const populatedParameters = await generator.getUserPopulatedParameters(
+      user,
+      transactions.data,
+      account
+    )
+
+    const prefillReport = mergeObjects(
+      lastGeneratedReport?.parameters.report,
+      populatedParameters.report
+    )
+    const now = new Date().valueOf()
+
+    const report: Report = {
+      name: getUserName(user),
+      description: `SAR report for ${getUserName(user)}`,
+      reportTypeId,
+      createdAt: now,
+      updatedAt: now,
+      createdById: account.id,
+      status: 'DRAFT' as ReportStatus,
+      parameters: {
+        ...populatedParameters,
+        report: prefillReport,
+      },
+      comments: [],
+      revisions: [],
+      caseUserId: userId,
+    }
+    const userTransactions = await this.caseService.getUserTransactions(userId)
+    report.parameters.transactions = report.parameters.transactions?.filter(
+      (tx) => userTransactions.includes(tx.id)
+    )
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
+    return withSchema(savedReport)
+  }
+
+  public async getCaseReportDraft(
+    reportTypeId: string,
+    caseId: string,
+    alertIds?: string[],
+    transactionIds?: string[]
+  ): Promise<Report> {
+    if (
+      transactionIds != null &&
+      transactionIds.length > ReportService.MAX_TRANSACTIONS
+    ) {
+      throw new NotFound(
+        `Cant select more than ${ReportService.MAX_TRANSACTIONS} transactions`
+      )
+    }
+
+    const caseRepository = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    const c = await caseRepository.getCaseById(caseId)
+    if (!c) {
+      throw new NotFound(`Cannot find case ${caseId}`)
+    }
+    const caseUser =
+      c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? ''
+    if (!caseUser) {
+      throw new BadRequest(`No case user found for case ${caseId}`)
+    }
+    if (!transactionIds || transactionIds.length === 0) {
+      transactionIds = c.caseTransactionsIds || []
+    }
+
+    const txpRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb,
+      this.dynamoDb
+    )
+
+    const transactions = await txpRepo.getTransactions({
+      filterTransactionIds: transactionIds ?? [],
+      includeUsers: true,
+      pageSize: ReportService.MAX_TRANSACTIONS,
+    })
+
+    const account = getContext()?.user as Account
+    const generator = this.getReportGenerator(reportTypeId)
+    if (!c.caseId) {
+      throw new NotFound(`No case ID`)
+    }
+    if (!generator) {
+      throw new NotFound(`Cannot find report generator`)
+    }
+    generator.tenantId = this.tenantId
+    const lastGeneratedReport =
+      await this.reportRepository.getLastGeneratedReport(reportTypeId)
+
+    const populatedParameters = await generator.getPopulatedParameters(
+      c,
+      transactions.data,
+      account
+    )
+
+    const prefillReport = mergeObjects(
+      lastGeneratedReport?.parameters.report,
+      populatedParameters.report
+    )
+    const now = new Date().valueOf()
+
+    const report: Report = {
+      name: c.caseId,
+      description: `SAR report for ${c.caseId}`,
+      caseId: c.caseId,
+      reportTypeId,
+      createdAt: now,
+      updatedAt: now,
+      createdById: account.id,
+      status: 'DRAFT' as ReportStatus,
+      parameters: {
+        ...populatedParameters,
+        report: prefillReport,
+      },
+      comments: [],
+      revisions: [],
+      caseUserId: caseUser,
+    }
+    const caseTransactions = await this.caseService.getCaseTransactions(caseId)
+    report.parameters.transactions = report.parameters.transactions?.filter(
+      (tx) => caseTransactions.includes(tx.id)
+    )
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
+    return withSchema(savedReport)
+  }
+
+  @auditLog('SAR', 'SAR_LIST', 'VIEW')
+  async getReports(
+    params: DefaultApiGetReportsRequest
+  ): Promise<AuditLogReturnData<{ total: number; items: Report[] }>> {
+    const reports = await this.reportRepository.getReports(params)
+    return {
+      result: reports,
+      entities:
+        params.view === 'DOWNLOAD'
+          ? [{ entityId: 'SAR_LIST', entityAction: 'DOWNLOAD' }]
+          : [],
+      publishAuditLog: () => params.view === 'DOWNLOAD',
+    }
+  }
+
+  @auditLog('SAR', 'SAR_DELETE', 'DELETE')
+  async deleteReports(
+    params: DefaultApiDeleteReportsRequest
+  ): Promise<SarDeleteAuditLogReturnData> {
+    await this.reportRepository.deleteReports(
+      params.ReportsDeleteRequest.reportIds
+    )
+    const auditLogEntities: AuditLogEntity<object>[] = []
+    params.ReportsDeleteRequest.reportIds.map((id) =>
+      auditLogEntities.push({
+        entityId: id,
+      })
+    )
+    return {
+      result: undefined,
+      entities: auditLogEntities,
+    }
+  }
+
+  async getReport(reportId: string): Promise<Report> {
+    const report = await this.reportRepository.getReport(reportId)
+    if (!report) {
+      throw new NotFound(`Cannot find report ${reportId}`)
+    }
+    return withSchema(report)
+  }
+
+  @auditLog('SAR', 'CREATION', 'CREATE')
+  async completeReport(report: Report): Promise<SarCreationAuditLogReturnData> {
+    try {
+      const generator = this.getReportGenerator(report.reportTypeId)
+      if (!generator) {
+        throw new BadRequest(
+          `No report generator found for ${report.reportTypeId}`
+        )
+      }
+      const { directSubmission } = generator.getType()
+      report.parameters =
+        generator?.getAugmentedReportParams(report) ?? report.parameters
+      report.id = report.id ?? (await this.reportRepository.getId())
+      report.status = 'COMPLETE' as ReportStatus
+      const generationResult = await generator.generate(
+        report.parameters,
+        report
+      )
+      const now = Date.now()
+
+      const fileExtension =
+        generationResult?.type === 'STRING'
+          ? 'xml'
+          : generationResult.contentType.toLowerCase()
+
+      const key = `${this.tenantId}/reports/${report.id}-${now}.${fileExtension}`
+
+      const body =
+        generationResult?.type === 'STRING'
+          ? Buffer.from(generationResult.value)
+          : await this.streamToBuffer(generationResult.stream)
+
+      const parallelUploadS3 = new Upload({
+        client: this.s3,
+        params: {
+          Bucket: this.s3Config.documentBucket,
+          Key: key,
+          Body: body,
+        },
+      })
+      await parallelUploadS3.done()
+
+      report.revisions.push({
+        output: `s3:document:${key}`,
+        createdAt: now,
+      })
+
+      if (directSubmission && generator.submit) {
+        report.status = 'SUBMITTING' as ReportStatus
+        report.statusInfo = await generator.submit(report)
+      }
+
+      const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+
+      await this.riskScoringService.handleReRunTriggers('SAR', {
+        userIds: [report.caseUserId],
+      }) // To rerun risk scores for user
+
+      // audit log for report which are not submitted from being in draft
+      const db = this.mongoDb.db()
+      const auditLogCollection = db.collection<AuditLog>(
+        AUDITLOG_COLLECTION(this.tenantId)
+      )
+      const auditLogs = await auditLogCollection
+        .find({
+          type: 'SAR',
+          subtype: 'CREATION',
+          action: 'CREATE',
+          entityId: savedReport.id,
+        })
+        .toArray()
+
+      const auditLogExists = auditLogs.length > 0
+
+      return {
+        result: withSchema(savedReport),
+        entities: [
+          {
+            entityId: savedReport.id ?? '',
+            newImage: savedReport,
+            logMetadata: getReportAuditLogMetadata(savedReport),
+            ...(auditLogExists && {
+              entityAction: 'UPDATE',
+              entitySubtype: 'SAR_UPDATE',
+              oldImage: report,
+            }),
+          },
+        ],
+      }
+    } catch (e) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        (('code' in e && e.code === 'ERR_GENERIC_CLIENT') ||
+          ('message' in e &&
+            e.message === 'Connection attempt timed out after 15 seconds'))
+      ) {
+        throw new InternalServerError('Unable to connect to FinCen Server')
+      }
+      throw e
+    }
+  }
+
+  public async reportsFiledForUser(
+    userId: string,
+    project: Document = {}
+  ): Promise<{
+    total: number
+    items: Partial<Report>[]
+  }> {
+    return await this.reportRepository.reportsFiledForUser(userId, project)
+  }
+
+  @auditLog('SAR', 'CREATION', 'CREATE')
+  async draftReport(report: Report): Promise<SarCreationAuditLogReturnData> {
+    report.status = 'DRAFT' as ReportStatus
+    report.updatedAt = Date.now()
+    report.parameters =
+      this.getReportGenerator(report.reportTypeId)?.getAugmentedReportParams(
+        report
+      ) ?? report.parameters
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
+    return {
+      result: withSchema(savedReport),
+      entities: [
+        {
+          entityId: savedReport.id ?? '',
+          newImage: savedReport,
+          logMetadata: getReportAuditLogMetadata(savedReport),
+        },
+      ],
+    }
+  }
+
+  @auditLog('SAR', 'SAR_UPDATE', 'UPDATE')
+  async updateReportStatus(
+    reportId: string,
+    status: ReportStatus,
+    statusInfo?: string
+  ): Promise<SarUpdateAuditLogReturnData> {
+    const report = await this.getReport(reportId)
+    await this.reportRepository.updateReportStatus(reportId, status, statusInfo)
+    return {
+      result: undefined,
+      entities: [
+        {
+          entityId: report.id ?? '-',
+          logMetadata: getReportAuditLogMetadata(report),
+          oldImage: { status: report.status, statusInfo: report.statusInfo },
+          newImage: { status, statusInfo },
+        },
+      ],
+    }
+  }
+
+  private getReportGenerator(reportTypeId: string) {
+    const generator = REPORT_GENERATORS.get(reportTypeId)
+    if (generator) {
+      generator.tenantId = this.tenantId
+    }
+    return generator
+  }
+
+  private async streamToBuffer(stream: any): Promise<Buffer> {
+    const buffers: Buffer[] = []
+    for await (const data of stream) {
+      if (typeof data !== 'string') {
+        buffers.push(data)
+      }
+    }
+    return Buffer.concat(buffers)
+  }
+}

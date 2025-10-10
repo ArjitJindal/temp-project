@@ -1,0 +1,180 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+@import 'src/components/library/helpers.less';
+
+.outline(@color) {
+  &:focus {
+    .default-focused-shadow(@color);
+  }
+}
+
+.root {
+  display: flex;
+  gap: @figma-vars--primitives-spacing3xs;
+  align-items: center;
+  justify-content: center;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: @figma-vars--primitives-borderRadiusXs;
+  padding: 0 16px;
+  cursor: pointer;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: box-shadow, border-color, background, color;
+  outline: none;
+  line-height: @figma-vars--primitives-typographyFontLineHeightM;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
+
+  .outline(@figma-vars--primitives-colorBrand500);
+
+  &:disabled,
+  &.isDisabled {
+    pointer-events: none;
+    color: @figma-vars--tokens-colorTextDisabled;
+  }
+
+  &.type-PRIMARY {
+    border-color: @figma-vars--tokens-colorButtonFillPrimaryDefault;
+    background: @figma-vars--tokens-colorButtonFillPrimaryDefault;
+    color: white;
+
+    &:hover,
+    &:active {
+      background: @figma-vars--tokens-colorButtonFillPrimaryHover;
+      border-color: @figma-vars--tokens-colorButtonFillPrimaryHover;
+    }
+
+    &:disabled,
+    &.isDisabled {
+      border-color: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
+      background: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
+      color: @figma-vars--tokens-colorTextDisabled;
+    }
+  }
+
+  &.type-DANGER {
+    .outline(@figma-vars--primitives-colorRed600);
+
+    border-color: @figma-vars--tokens-colorButtonFillDangerDefault;
+    background: @figma-vars--tokens-colorButtonFillDangerDefault;
+    color: white;
+
+    &:hover,
+    &:active {
+      border-color: @figma-vars--tokens-colorButtonFillDangerHover;
+      background: @figma-vars--tokens-colorButtonFillDangerHover;
+    }
+
+    &:disabled,
+    &.isDisabled {
+      border-color: @figma-vars--tokens-colorButtonFillDangerDisabled;
+      background: @figma-vars--tokens-colorButtonFillDangerDisabled;
+      color: @figma-vars--tokens-colorTextInvert;
+    }
+  }
+
+  &.type-SECONDARY {
+    border-color: @figma-vars--tokens-colorStrokeAction;
+    background: @figma-vars--tokens-colorButtonFillSecondaryDefault;
+    color: @figma-vars--tokens-colorStrokeAction;
+
+    &:hover,
+    &:active {
+      border-color: @figma-vars--tokens-colorButtonStrokeSecondaryHover;
+      background: @figma-vars--tokens-colorButtonFillSecondaryHover;
+      color: @figma-vars--tokens-colorTextHover;
+    }
+
+    &:disabled,
+    &.isDisabled {
+      border-color: @figma-vars--tokens-colorButtonStrokeSecondaryDisabled;
+      background: @figma-vars--tokens-colorButtonFillSecondaryDisabled;
+      color: @figma-vars--tokens-colorTextDisabled;
+    }
+  }
+
+  &.type-TETRIARY {
+    border-color: @figma-vars--tokens-colorButtonStrokeTertiaryDefault;
+    background: @figma-vars--tokens-colorButtonFillTertiaryDefault;
+    color: @figma-vars--tokens-colorTextPrimary;
+
+    &:hover,
+    &:active {
+      border-color: @figma-vars--tokens-colorButtonFillTertiaryHover;
+      background: @figma-vars--tokens-colorButtonFillTertiaryHover;
+      color: @figma-vars--tokens-colorTextPrimary;
+    }
+
+    &:disabled,
+    &.isDisabled {
+      border-color: @figma-vars--tokens-colorButtonFillTertiaryDisabled;
+      background: @figma-vars--tokens-colorButtonFillTertiaryDisabled;
+      color: @figma-vars--tokens-colorTextDisabled;
+    }
+  }
+
+  &.type-TEXT {
+    background: transparent;
+    border-color: transparent;
+    color: @figma-vars--tokens-colorLinkDefault;
+
+    &:hover,
+    &:active {
+      color: @figma-vars--tokens-colorLinkHover;
+    }
+
+    &:disabled,
+    &.isDisabled {
+      color: @figma-vars--tokens-colorLinkDisabled;
+    }
+  }
+
+  &.size-SMALL {
+    padding: @figma-vars--primitives-spacing4xs @figma-vars--primitives-spacingS;
+
+    .icon {
+      width: @figma-vars--tokens-sizeIconIconsize2xs;
+      height: @figma-vars--tokens-sizeIconIconsize2xs;
+    }
+  }
+
+  &.size-MEDIUM {
+    padding: @figma-vars--primitives-spacing3xs @figma-vars--primitives-spacingM;
+
+    .icon {
+      width: @figma-vars--tokens-sizeIconIconsizeS;
+      height: @figma-vars--tokens-sizeIconIconsizeS;
+    }
+  }
+
+  &.size-LARGE {
+    padding: @figma-vars--primitives-spacingXs @figma-vars--primitives-spacingM;
+
+    .icon {
+      width: @figma-vars--tokens-sizeIconIconsizeS;
+      height: @figma-vars--tokens-sizeIconIconsizeS;
+    }
+  }
+
+  &.iconOnly {
+    padding: 0;
+
+    &.size-SMALL {
+      padding: @figma-vars--primitives-spacing2xs;
+    }
+
+    &.size-MEDIUM {
+      padding: @figma-vars--primitives-spacing2xs;
+    }
+
+    &.size-LARGE {
+      padding: @figma-vars--primitives-spacingS;
+    }
+  }
+}
+
+.icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

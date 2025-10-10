@@ -1,0 +1,30 @@
+@import 'src/components/ui/colors.less';
+
+.tag {
+  &.status-DRAFT {
+    border-color: @fr-colors-purple;
+    background: @fr-colors-purpleTint;
+    color: @fr-colors-v2-gray-10;
+  }
+  &.status-COMPLETE {
+    border-color: @fr-colors-limeGreenShade;
+    background: @fr-colors-v2-risk-level-bg-low;
+    color: @fr-colors-v2-gray-10;
+  }
+}
+
+.status {
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.verticalContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}

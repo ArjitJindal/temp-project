@@ -1,0 +1,127 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.root {
+  position: relative;
+  border-radius: 58px;
+  outline: none;
+  z-index: 0;
+  border: none;
+
+  &:focus {
+    box-shadow: 0 0 0 3px fade(@fr-colors-v2-primary-flagrightBlue, 30%);
+  }
+
+  &:disabled {
+    pointer-events: none;
+  }
+
+  &.size-SMALL {
+    height: 24px;
+    min-width: 24px;
+  }
+  &.size-MEDIUM {
+    height: 32px;
+    min-width: 32px;
+  }
+  &.size-LARGE {
+    height: 40px;
+    min-width: 40px;
+  }
+
+  &.iconOnly {
+    padding: 0;
+  }
+}
+
+.icon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+}
+
+.body {
+  z-index: 3;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: inherit;
+  cursor: pointer;
+  background: linear-gradient(90.04deg, @fr-colors-v2-unknown-14 0%, @fr-colors-v2-unknown-15 100%);
+  background-size: 100% 100%;
+  transition: background-size background 1s ease-in-out;
+
+  .text {
+    background: linear-gradient(
+      180deg,
+      @fr-colors-v2-unknown-7 18.84%,
+      @fr-colors-v2-unknown-8 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, @fr-colors-v2-unknown-16 0%, @fr-colors-v2-unknown-17 100%);
+    background-size: 200% 200%;
+    animation: gradientMove 3s ease-in-out infinite 0.25s;
+  }
+}
+
+.bodyDisabled {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: inherit;
+  background: @fr-colors-gray-3 !important;
+}
+
+// applies gradient border to the button
+.rootBorder::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    @fr-colors-v2-unknown-18 18.84%,
+    @fr-colors-v2-unknown-19 100%
+  );
+  border-radius: 58px;
+}
+
+.rootBorder::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 1px;
+  left: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  background: white;
+  border-radius: 56px;
+}

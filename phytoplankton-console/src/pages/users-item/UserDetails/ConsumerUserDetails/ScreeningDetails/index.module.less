@@ -1,0 +1,75 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  flex: 1;
+}
+
+.details {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 3rem;
+}
+
+.icon {
+  height: 14px;
+  color: black;
+  cursor: pointer;
+}
+
+.ongoingSanctions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  .successIcon {
+    width: 16px;
+    height: 16px;
+    color: @fr-colors-v2-alert-success;
+  }
+}
+
+.pepStatus {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pepform {
+  display: flex;
+  gap: 1rem;
+}
+
+.flexGrowQuater {
+  flex-grow: 0.25;
+}
+
+.flexGrowTwo {
+  flex-grow: 2;
+}
+
+.iconButton {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconButton > svg {
+  cursor: pointer;
+}
+
+.labelFlexGrowTwo {
+  flex: none;
+  flex-grow: 2;
+}
+
+.flexNone {
+  flex: none;
+}

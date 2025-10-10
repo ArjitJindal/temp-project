@@ -1,0 +1,26 @@
+export const ActivityPartyTypeCodes = {
+  SUBJECT: '33',
+  FINANCIAL_INSTITUTION: '34',
+  TRANSMITTER: '35',
+  TRANSMITTER_CONTACT: '37',
+  FILING_INSTITUTION: '30',
+  CONTACT_OFFICE: '8',
+  LE_CONTACT_AGENCY: '18',
+  LE_CONTACT_NAME: '19',
+  FINANCIAL_INSTITUTION_WHERE_ACTIVITY_OCCURRED: '34',
+} as const
+
+export const ActivityPartyTypeCodesCTR = {
+  TRANSMITTER: '35',
+  TRANSMITTER_CONTACT: '37',
+  FILING_INSTITUTION: '30',
+  ASSISTANCE_CONTACT: '8',
+  TRANSMITTER_LOCATION: '34',
+  PERSON_TXN_ON_OWN_BEHALF: '50',
+  PERSON_TXN_FOR_ANOTHER: '17',
+  PERSON_TXN_BEHALF: '23',
+  COMMON_CARRIER: '58',
+}
+
+export const FincenSubmissionDirectory = 'submissions'
+export const FincenAcknowlegementDirectory = 'acks'

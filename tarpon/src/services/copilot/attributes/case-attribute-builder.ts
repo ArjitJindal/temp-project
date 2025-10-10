@@ -1,0 +1,37 @@
+import { AttributeSet } from './attribute-set'
+import {
+  InputData,
+  AttributeBuilder,
+  BuilderKey,
+} from '@/@types/copilot/attributeBuilder'
+import { traceable } from '@/core/xray'
+
+@traceable
+export class CaseAttributeBuilder implements AttributeBuilder {
+  dependencies(): BuilderKey[] {
+    return ['user']
+  }
+
+  build(attributes: AttributeSet, inputData: InputData) {
+    if (!inputData._case) {
+      return
+    }
+
+    if (!attributes.getAttribute('reasons')) {
+      attributes.setAttribute('reasons', inputData.reasons)
+    }
+
+    attributes.setAttribute(
+      'caseComments',
+      inputData._case?.comments?.map((c) => c.body) || []
+    )
+
+    attributes.setAttribute(
+      'caseGenerationDate',
+      new Date(inputData._case?.createdTimestamp || 0).toLocaleDateString() ||
+        undefined
+    )
+
+    attributes.setAttribute('caseActionDate', new Date().toLocaleDateString())
+  }
+}

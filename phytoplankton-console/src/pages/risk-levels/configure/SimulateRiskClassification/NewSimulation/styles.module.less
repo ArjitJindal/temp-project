@@ -1,0 +1,28 @@
+.basicDetailsContainer {
+  display: grid;
+  grid-template-columns: minmax(0, 400px) minmax(0, 400px);
+  justify-content: space-between;
+  grid-gap: 6rem;
+  margin-bottom: 36px;
+}
+
+.tableContainer {
+  min-width: 100%;
+
+  :global {
+    .ant-pro-card-body {
+      padding: 0 !important;
+    }
+  }
+
+  .simulateButtonContainer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+  }
+}
+
+.cardRoot {
+  padding: 1.5rem;
+}

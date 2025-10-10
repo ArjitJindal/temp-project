@@ -1,0 +1,47 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.datePicker {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+}
+
+.relatedEntities {
+  a ~ a::before {
+    content: ', ';
+    white-space: pre;
+  }
+}
+
+.nameContainer {
+  display: flex;
+  align-items: center;
+}
+
+.nameContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user {
+  background-color: @fr-colors-v2-highlight-flagrightBlue;
+}
+
+.iban {
+  background-color: @fr-colors-yellowTint;
+}
+
+.bank {
+  background-color: @fr-colors-orangeTint;
+}
+
+.counterPartyUser {
+  background-color: @fr-colors-purpleTint;
+}

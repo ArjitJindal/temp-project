@@ -1,0 +1,41 @@
+@import 'src/components/ui/colors';
+
+.expandContentButton {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+
+  button {
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+}
+
+.hr {
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  margin: 0;
+  z-index: 0;
+  color: @fr-colors-v2-gray-2;
+  border-color: @fr-colors-v2-gray-2;
+  background-color: @fr-colors-v2-gray-2;
+  background-clip: padding-box;
+  border-style: solid;
+  border-bottom: 0;
+}
+
+.hrBottom {
+  width: 100%;
+  margin: 0;
+  margin-top: 1rem;
+  color: @fr-colors-v2-gray-2;
+  border-color: @fr-colors-v2-gray-2;
+  background-color: @fr-colors-v2-gray-2;
+  background-clip: padding-box;
+  border-style: solid;
+  border-bottom: 0;
+}

@@ -1,0 +1,5 @@
+flagright/flagright-api:
+  - source: tarpon/dist/openapi/public/openapi-public-original.yaml
+    dest: fern/apis/api/openapi/openapi.yml
+  - source: tarpon/dist/openapi/public-management/openapi-public-management-original.yaml
+    dest: fern/apis/management/openapi/openapi.yml

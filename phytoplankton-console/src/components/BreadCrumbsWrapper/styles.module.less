@@ -1,0 +1,27 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: @fr-global-bg-color;
+  z-index: @sticky-z-index;
+
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+}
+
+.history {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon {
+  height: 14px;
+}
