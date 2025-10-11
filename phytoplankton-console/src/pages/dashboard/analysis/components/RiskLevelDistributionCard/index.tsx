@@ -14,9 +14,7 @@ import {
   COLORS_V2_PRIMARY_TINTS_BLUE_900,
 } from '@/components/ui/colors';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useQuery } from '@/utils/queries/hooks';
-import { USERS_STATS } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useDashboardUsersStats } from '@/hooks/api/dashboard';
 import { DashboardStatsUsersStats, RiskLevel } from '@/apis';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { RISK_LEVELS } from '@/utils/risk-levels';
@@ -62,10 +60,7 @@ function RiskLevelDistributionCardBase(props: Props & { groupBy: GroupBy }) {
     granularity: granularity,
   };
   const settings = useSettings();
-  const api = useApi();
-  const queryResult = useQuery(USERS_STATS(params), async () => {
-    return await api.getDashboardStatsUsersByTime(params);
-  });
+  const queryResult = useDashboardUsersStats(params);
   const valueNames = useMemo(
     () =>
       Object.fromEntries(

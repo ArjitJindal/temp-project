@@ -17,14 +17,14 @@ import {
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
 import { neverReturn } from '@/utils/lang';
-import { useWorkflows, WorkflowItem } from '@/utils/api/workflows';
+import { useWorkflows, WorkflowItem } from '@/hooks/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';
 import { notEmpty } from '@/utils/array';
 import Button from '@/components/library/Button';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useApi } from '@/api';
+import { useProcessUserApprovalMutation } from '@/hooks/api/users';
 import { message } from '@/components/library/Message';
 import {
   USER_CHANGES_PROPOSALS,
@@ -67,8 +67,8 @@ export default function UserPendingApprovalsModal(props: Props) {
 
   const errorsRes = useErrors(pendingProposalsRes, workflowsRes);
 
-  const api = useApi();
   const queryClient = useQueryClient();
+  const processApproval = useProcessUserApprovalMutation();
   const changeProposalMutation = useMutation<
     unknown,
     unknown,
@@ -80,13 +80,7 @@ export default function UserPendingApprovalsModal(props: Props) {
     async (vars) => {
       const { proposalIds, action } = vars;
       for (const proposalId of proposalIds) {
-        await api.postUserApprovalProcess({
-          userId: userId,
-          id: proposalId.toString(),
-          UserApprovalRequest: {
-            action,
-          },
-        });
+        await processApproval.mutateAsync({ userId, id: proposalId.toString(), action });
       }
     },
     {

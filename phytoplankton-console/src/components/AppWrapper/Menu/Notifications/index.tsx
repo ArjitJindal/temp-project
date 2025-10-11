@@ -3,10 +3,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import NotificationsDrawer from './NotificationsDrawer';
 import s from './index.module.less';
-import { useApi } from '@/api';
-import { useInfiniteQuery } from '@/utils/queries/hooks';
-import { NOTIFICATIONS } from '@/utils/queries/keys';
-import { NotificationListResponse } from '@/apis';
+import { useNotificationsInfinite } from '@/hooks/api';
 
 interface Props {
   isNotificationsDrawerVisible: boolean;
@@ -23,24 +20,14 @@ export const Notifications = (props: Props) => {
     setHasUnreadNotifications,
   } = props;
   const [tab, setTab] = useState<'ALL' | 'UNREAD'>('ALL');
-  const api = useApi();
   const queryClient = useQueryClient();
-  const queryResult = useInfiniteQuery<NotificationListResponse>(
-    NOTIFICATIONS(tab),
-    async ({ pageParam = '' }): Promise<NotificationListResponse> => {
-      return await api.getNotifications({ start: pageParam, notificationStatus: tab });
-    },
-    {
-      getNextPageParam(lastPage) {
-        return lastPage?.hasNext ? lastPage?.next : null;
-      },
-      refetchInterval: NOTIFICATION_REFETCH_INTERVAL * 1000,
-    },
-  );
+  const queryResult = useNotificationsInfinite(tab, {
+    refetchIntervalSeconds: NOTIFICATION_REFETCH_INTERVAL,
+  });
 
   const invalidateAll = async () => {
-    await queryClient.invalidateQueries(NOTIFICATIONS('ALL'));
-    await queryClient.invalidateQueries(NOTIFICATIONS('UNREAD'));
+    await queryClient.invalidateQueries({ queryKey: ['notifications', 'tab-ALL'] });
+    await queryClient.invalidateQueries({ queryKey: ['notifications', 'tab-UNREAD'] });
   };
   useEffect(() => {
     if (isNotificationsDrawerVisible) {

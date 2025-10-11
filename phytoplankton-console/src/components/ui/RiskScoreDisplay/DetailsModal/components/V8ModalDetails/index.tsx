@@ -1,5 +1,4 @@
 import React from 'react';
-import { keyBy } from 'lodash';
 import MainPanel from '../../../MainPanel';
 import { ValueItem } from '../../../types';
 import { v8Columns, V8TableRow, VARIABLES } from '../../consts';
@@ -7,9 +6,7 @@ import { V2RiskBreakDownTable } from '../V2ModalDetails';
 import s from './styles.module.less';
 import { RiskFactorScoreDetails } from '@/apis/models/RiskFactorScoreDetails';
 import Table from '@/components/library/Table';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
+import { useAllRiskFactorsMap } from '@/hooks/api';
 import { RiskScoreComponent } from '@/apis';
 import { H4 } from '@/components/ui/Typography';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
@@ -40,11 +37,7 @@ function V8ModalDetails(props: Props) {
     isExternalSource,
     components,
   } = props;
-  const api = useApi();
-  const factorMap = useQuery(RISK_FACTORS_V8('ALL'), async () => {
-    const data = await api.getAllRiskFactors({ includeV2: true });
-    return keyBy(data, 'id');
-  });
+  const factorMap = useAllRiskFactorsMap();
   const explanationText = riskScoreName || 'TRS';
   const v8FactorScoreDetails = factorScoreDetails.filter((val) =>
     val.riskFactorId.startsWith('RF'),

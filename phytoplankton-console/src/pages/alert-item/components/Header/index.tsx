@@ -7,11 +7,11 @@ import AiForensicsPdfDownloadButton from './AiForensicsPdfDownloadButton';
 import s from './index.module.less';
 import Dropdown from '@/components/library/Dropdown';
 import { Alert, Case, Comment } from '@/apis';
-import { useApi } from '@/api';
+import { useCreateAlertComment } from '@/hooks/api/alerts';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
-import { ALERT_ITEM, ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_LIST } from '@/utils/queries/keys';
 import { getAlertUrl, getCaseUrl } from '@/utils/routing';
-import { useQuery } from '@/utils/queries/hooks';
+import { useCase } from '@/hooks/api/cases';
 import CommentButton from '@/components/CommentButton';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
@@ -55,19 +55,8 @@ export default function Header(props: Props) {
   );
   const { alertId, caseId } = alertItem ?? {};
   const isLoading = isAsyncResourceLoading(alertItemRes);
-  const caseQueryResults = useQuery(
-    CASES_ITEM(caseId ?? ''),
-    (): Promise<Case> => {
-      if (caseId == null) {
-        throw new Error(`Alert case id could not be empty`);
-      }
-      return api.getCase({ caseId });
-    },
-    {
-      enabled: !isLoading,
-    },
-  );
-  const api = useApi();
+  const caseQueryResults = useCase(caseId ?? '', { enabled: !isLoading && !!caseId });
+  const createAlertComment = useCreateAlertComment();
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
@@ -129,7 +118,7 @@ export default function Header(props: Props) {
             if (alertId == null) {
               throw new Error(`Alert ID is not defined`);
             }
-            return await api.createAlertsComment({
+            return await createAlertComment({
               alertId: alertId ?? '',
               CommentRequest: {
                 body: sanitizeComment(commentFormValues.comment),

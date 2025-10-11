@@ -9,15 +9,15 @@ import Header from './Header';
 import { useHasResources } from '@/utils/user-utils';
 import { RiskClassificationConfig } from '@/apis';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
-import { useNewVersionId } from '@/utils/version';
+import { useNewVersionId } from '@/hooks/api/version-history';
 import VersionHistoryFooter from '@/components/VersionHistory/Footer';
-import { useApi } from '@/api';
 import { getOr } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { RISK_CLASSIFICATION_WORKFLOW_PROPOSAL } from '@/utils/queries/keys';
-import { usePendingProposal } from '@/pages/risk-levels/configure/utils';
-import { useRiskLevelsChangesStrategy } from '@/utils/api/workflows';
+import { usePendingProposal } from '@/hooks/api/risk-factors';
+import { usePostRiskClassification } from '@/hooks/api/risk-classification';
+import { useRiskLevelsChangesStrategy } from '@/hooks/api/workflows';
 
 type Props = {
   riskValues: RiskClassificationConfig;
@@ -34,8 +34,8 @@ export default function RiskQualification(props: Props) {
     id: '',
   });
   const [isUpdateEnabled, setIsUpdateEnabled] = useState(false);
-  const api = useApi();
   const queryClient = useQueryClient();
+  const postRiskClassification = usePostRiskClassification();
 
   const [showProposal, setShowProposal] = useState<boolean>(true);
   const pendingProposalQueryResult = usePendingProposal();
@@ -47,9 +47,11 @@ export default function RiskQualification(props: Props) {
       if (!state) {
         throw new Error('No state available');
       }
-      return api.postPulseRiskClassification({
-        RiskClassificationRequest: { scores: prepareApiState(state), comment: comment },
+      const res = await postRiskClassification.mutateAsync({
+        scores: prepareApiState(state),
+        comment,
       });
+      return res;
     },
     {
       onSuccess: () => {

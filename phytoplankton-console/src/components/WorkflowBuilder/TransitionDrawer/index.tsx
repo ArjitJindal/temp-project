@@ -15,7 +15,7 @@ import FormValidationErrors from '@/components/library/Form/utils/validation/For
 import { Validator } from '@/components/library/Form/utils/validation/types';
 import { useIsChanged } from '@/utils/hooks';
 import { useRoles } from '@/utils/user-utils';
-import { WorkflowType } from '@/utils/api/workflows';
+import { WorkflowType } from '@/hooks/api/workflows';
 
 export type FormValues = {
   condition: {

@@ -2,12 +2,10 @@ import React, { useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { keyBy } from 'lodash';
 import { hasResources, Resource } from '@flagright/lib/utils';
-import { useQuery } from './queries/hooks';
-import { ACCOUNT_LIST, ROLES_LIST, TENANT } from './queries/keys';
+import { ACCOUNT_LIST } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
 import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
-import { useApi } from '@/api';
 import { Account, AccountRole, Permission, PermissionStatements, Tenant } from '@/apis';
 import { useSettings, useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -232,15 +230,11 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
+import { useAccountsList, useRolesList } from '@/hooks/api/users';
+import { useTenant as useTenantHook } from '@/hooks/api/tenants';
+
 export function useRolesQueryResult() {
-  const api = useApi();
-  return useQuery(ROLES_LIST(), async () => {
-    const roles = await api.getRoles();
-    return {
-      items: roles,
-      total: roles.length,
-    };
-  });
+  return useRolesList();
 }
 
 export function useRoles(): [AccountRole[], boolean, () => void] {
@@ -253,34 +247,11 @@ export function useRoles(): [AccountRole[], boolean, () => void] {
 }
 
 export function useAccountsQueryResult(): QueryResult<Account[]> {
-  const api = useApi();
-  return useQuery(
-    ACCOUNT_LIST(),
-    async () => {
-      try {
-        return await api.getAccounts();
-      } catch (e) {
-        console.error(e);
-        return [];
-      }
-    },
-    {
-      staleTime: Infinity,
-    },
-  );
+  return useAccountsList();
 }
 
-export function useAccountTenantInfoQueryResult(): QueryResult<Tenant> {
-  const api = useApi();
-  const { tenantId: currentUserTenantId } = useAuth0User();
-  return useQuery(TENANT(currentUserTenantId), async () => {
-    try {
-      return await api.getTenant();
-    } catch (e) {
-      console.error(e);
-      return undefined;
-    }
-  });
+export function useAccountTenantInfoQueryResult(): QueryResult<Tenant | null> {
+  return useTenantHook();
 }
 
 export function useAccounts(): Account[] {

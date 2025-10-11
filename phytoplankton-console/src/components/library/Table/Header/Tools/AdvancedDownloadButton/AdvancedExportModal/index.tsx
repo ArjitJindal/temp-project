@@ -12,7 +12,7 @@ import RadioGroup from '@/components/ui/RadioGroup';
 import { downloadAsCSV } from '@/utils/csv';
 import { ExportData, MAXIMUM_EXPORT_ITEMS } from '@/utils/data-export';
 import { getErrorMessage, iterateChunks } from '@/utils/lang';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import { downloadAsXLSX } from '@/utils/xlsx';
 import Checkbox from '@/components/library/Checkbox';
 import { DEFAULT_EXPORT_PAGE_SIZE } from '@/components/library/Table/consts';

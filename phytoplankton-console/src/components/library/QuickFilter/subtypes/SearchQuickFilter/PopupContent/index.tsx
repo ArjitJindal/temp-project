@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'ahooks';
-import { ItemType } from '../types';
+import type { ItemType } from '../types';
 import s from './style.module.less';
 import SearchResultList, { MessageRenderers } from './SearchResultList';
 import LastSearchList from './LastSearchList';
 import { useLastSearches } from './helpers';
 import { getOr, isSuccess } from '@/utils/asyncResource';
-import { QueryResult } from '@/utils/queries/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { QueryResult } from '@/utils/queries/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import Select from '@/components/library/Select';
 
 interface Props<T> {

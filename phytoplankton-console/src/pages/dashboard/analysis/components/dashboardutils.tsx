@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import style from '../style.module.less';
 import { Value as WidgetRangePickerValue } from '../components/widgets/WidgetRangePicker';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_INSTANCES, USERS } from '@/utils/queries/keys';
 import { AsyncResource, map } from '@/utils/asyncResource';
-import { useApi } from '@/api';
 import { AllUsersOffsetPaginateListResponse, RuleInstance } from '@/apis';
+import { useRuleInstances } from '@/hooks/api/rules';
+import { useUsersByTimeRange } from '@/hooks/api/users';
 
 export function header(input: string): React.ReactNode {
   return (
@@ -26,10 +25,7 @@ export function smallHeader(input: string): React.ReactNode {
 export function useFilteredRuleInstances(
   dateRange: WidgetRangePickerValue | undefined,
 ): AsyncResource<RuleInstance[]> {
-  const api = useApi();
-  const ruleInstanceResults = useQuery(RULE_INSTANCES('ALL'), async () => {
-    return await api.getRuleInstances({});
-  });
+  const ruleInstanceResults = useRuleInstances();
   const filteredResult = useMemo(() => {
     return map(ruleInstanceResults.data, (value) => {
       return value.filter((x) => {
@@ -62,31 +58,14 @@ export function useUsersQuery(
   data: AsyncResource<AllUsersOffsetPaginateListResponse>;
   refetch: () => void;
 } {
-  const api = useApi();
-  let start = dateRange?.startTimestamp;
-  let end = dateRange?.endTimestamp;
-
-  const userStatusResults = useQuery(USERS(userType, { start, end }), async () => {
-    if (start === undefined) {
-      start = 0;
-    }
-    if (end === undefined) {
-      end = Date.now();
-    }
-    if (userType === 'CONSUMER') {
-      return await api.getConsumerUsersList({ afterTimestamp: start, beforeTimestamp: end });
-    } else {
-      return await api.getBusinessUsersList({ afterTimestamp: start, beforeTimestamp: end });
-    }
-  });
-  const refetchQuery = () => {
-    userStatusResults.refetch();
+  const result = useUsersByTimeRange(
+    userType,
+    dateRange
+      ? { startTimestamp: dateRange.startTimestamp, endTimestamp: dateRange.endTimestamp }
+      : undefined,
+  );
+  return {
+    data: result.data as AsyncResource<AllUsersOffsetPaginateListResponse>,
+    refetch: result.refetch,
   };
-
-  const filteredResult = useMemo(() => {
-    return map(userStatusResults.data, (value) => {
-      return value;
-    });
-  }, [userStatusResults.data]);
-  return { data: filteredResult, refetch: refetchQuery };
 }

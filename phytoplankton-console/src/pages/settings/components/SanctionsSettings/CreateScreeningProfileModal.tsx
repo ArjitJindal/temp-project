@@ -23,14 +23,15 @@ import {
   ScreeningProfileResponse,
 } from '@/apis';
 import Button from '@/components/library/Button';
-import { SCREENING_PROFILES, SANCTIONS_SOURCES } from '@/utils/queries/keys';
+import { SCREENING_PROFILES } from '@/utils/queries/keys';
 import Checkbox from '@/components/library/Checkbox';
 import Tabs from '@/components/library/Tabs';
 import { SANCTIONS_SOURCE_RELEVANCES } from '@/apis/models-custom/SanctionsSourceRelevance';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import Select from '@/components/library/Select';
-import { useQuery } from '@/utils/queries/hooks';
+import { useSanctionsSources } from '@/hooks/api';
+import { map } from '@/utils/queries/types';
 import { PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/PEPSourceRelevance';
 import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/apis/models-custom/AdverseMediaSourceRelevance';
 import { REL_SOURCE_RELEVANCES } from '@/apis/models-custom/RELSourceRelevance';
@@ -563,7 +564,6 @@ const SanctionsSourceTypeTab = ({
   config: SourceConfiguration;
   onChange: (update: Partial<SourceConfiguration>) => void;
 }) => {
-  const api = useApi();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, { wait: 200 });
   const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
@@ -577,12 +577,11 @@ const SanctionsSourceTypeTab = ({
     REGULATORY_ENFORCEMENT_LIST: REL_SOURCE_RELEVANCES,
   };
 
-  const queryResults = useQuery(SANCTIONS_SOURCES(type, debouncedSearch), () =>
-    api.getSanctionsSources({
-      filterSourceType: type,
-      searchTerm: debouncedSearch,
-    }),
-  );
+  const queryResults = useSanctionsSources(type, debouncedSearch);
+  const tableQueryResults = map(queryResults as any, (res: any) => ({
+    items: res?.items ?? [],
+    total: (res?.items ?? []).length,
+  }));
 
   const handleRelevanceChange = (
     value:
@@ -610,14 +609,11 @@ const SanctionsSourceTypeTab = ({
     } else if (wasEmpty && value.length > 0) {
       let sourceIds: string[] = [];
 
-      if (
-        queryResults.data &&
-        queryResults.data.kind === 'SUCCESS' &&
-        queryResults.data.value?.items
-      ) {
-        sourceIds = queryResults.data.value.items
-          .map((source) => source.id)
-          .filter(Boolean) as string[];
+      if (queryResults.data && queryResults.data.kind === 'SUCCESS') {
+        const value: any = (queryResults.data as any).value;
+        if (value?.items) {
+          sourceIds = value.items.map((source: any) => source.id).filter(Boolean) as string[];
+        }
       }
 
       onChange({
@@ -687,7 +683,7 @@ const SanctionsSourceTypeTab = ({
         ) : (
           <QueryResultsTable
             rowKey="id"
-            queryResults={queryResults}
+            queryResults={tableQueryResults as any}
             columns={getColumns(isDowJonesEnabled)}
             toolsOptions={false}
             selection={true}

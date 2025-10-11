@@ -1,5 +1,5 @@
 import { SetStateAction, useCallback, useContext, useMemo, Dispatch } from 'react';
-import { FormState } from '../types';
+import type { FormState } from '../types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
 import {
   validateField,
@@ -11,7 +11,7 @@ import {
   NestedValidationResult,
   isResultValid,
 } from '@/components/library/Form/utils/validation/types';
-import { Updater, applyUpdater } from '@/utils/state';
+import { type Updater, applyUpdater } from '@/utils/state';
 
 export function useFormContext<FormValues>(): FormContextValue<FormValues> {
   const context = useContext(FormContext);

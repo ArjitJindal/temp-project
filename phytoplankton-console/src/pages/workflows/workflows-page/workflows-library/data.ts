@@ -1,4 +1,4 @@
-import { CaseAlertWorkflowItem, WorkflowType } from '@/utils/api/workflows';
+import { CaseAlertWorkflowItem, WorkflowType } from '@/hooks/api/workflows';
 
 export type Template = {
   id: string;

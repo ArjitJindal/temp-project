@@ -12,13 +12,11 @@ import GranularDatePicker, {
 import { exportDataForBarGraphs } from '../../utils/export-data-build-util';
 import s from './index.module.less';
 import { dayjs, Dayjs, SHORT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { useApi } from '@/api';
+import { useDashboardTransactionsStats } from '@/hooks/api';
 import { map, isSuccess, getOr } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -37,7 +35,6 @@ export default function TransactionTRSChartCard(props: Partial<WidgetProps>) {
   );
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
-  const api = useApi();
   const [start, end] = dateRange ?? [];
   const startTimestamp = start ? dayjs(start).utc().startOf('day').valueOf() : undefined;
   const endTimestamp = end ? dayjs(end).utc().endOf('day').valueOf() : undefined;
@@ -48,9 +45,7 @@ export default function TransactionTRSChartCard(props: Partial<WidgetProps>) {
     granularity,
   };
 
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_STATS(params), async () => {
-    return await api.getDashboardStatsTransactions(params);
-  });
+  const queryResult = useDashboardTransactionsStats(params);
 
   const preparedDataRes = map(queryResult.data, (value): BarChartData<string, RiskLevel> => {
     const result: BarChartData<string, RiskLevel> = [];

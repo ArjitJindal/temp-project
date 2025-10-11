@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import cn from 'clsx';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useDebounce } from 'ahooks';
@@ -13,14 +13,12 @@ import { dayjs, Dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { applyUpdater, StatePair, Updater } from '@/utils/state';
-import { useApi } from '@/api';
 import Checkbox from '@/components/library/Checkbox';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Select, { Option } from '@/components/library/Select';
+import Select from '@/components/library/Select';
 import PopoverV2 from '@/components/ui/PopoverV2';
-import { useQuery } from '@/utils/queries/hooks';
 import { getOr, isLoading } from '@/utils/asyncResource';
-import { AIF_SEARCH_KEY } from '@/utils/queries/keys';
+import { useQuestionVariableAutocomplete } from '@/hooks/api/alerts';
 
 export type VariablesValues = Record<string, any>;
 
@@ -226,22 +224,11 @@ const Search = ({
   variable: QuestionVariableOption;
   inputProps: InputProps<any>;
 }) => {
-  const api = useApi();
   const variableKey = variable.name || '';
 
   const [search, setSearch] = useState<string>('');
   const debouncedSearch = useDebounce(search, { wait: 300 });
-  const queryResult = useQuery(
-    AIF_SEARCH_KEY(questionId, variableKey, debouncedSearch),
-    async (): Promise<Option<string>[]> => {
-      const results = await api.getQuestionVariableAutocomplete({
-        questionId,
-        variableKey,
-        search: debouncedSearch,
-      });
-      return (results.suggestions ?? []).map((s) => ({ value: s, label: s }));
-    },
-  );
+  const queryResult = useQuestionVariableAutocomplete(questionId, variableKey, debouncedSearch);
 
   return (
     <div className={s.autocomplete}>

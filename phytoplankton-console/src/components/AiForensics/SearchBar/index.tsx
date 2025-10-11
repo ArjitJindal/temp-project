@@ -13,14 +13,12 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import TextInput from '@/components/library/TextInput';
 import BrainIconWhite from '@/components/ui/icons/brain-icon.react.svg';
 import ShineIcon from '@/components/ui/icons/shining-stars.react.svg';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
+import { useCopilotSuggestions, useAlert } from '@/hooks/api';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import {
   QuestionResponse,
   QuestionResponseSkeleton,
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
-import { ALERT_ITEM, COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 
@@ -56,22 +54,9 @@ export const SearchBar = (props: Props) => {
     COPILOT_QUESTIONS.ALERTS_THAT_RESULTED_IN_SAR,
   ];
 
-  const api = useApi();
-  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
-    const response = await api.getAlert({ alertId });
-    return response;
-  });
+  const alertQueryResult = useAlert(alertId);
   const alert = getOr(alertQueryResult.data, undefined);
-  const suggestionsQueryResult = useQuery<string[]>(
-    COPILOT_SUGGESTIONS(debouncedSearch, alertId),
-    async () => {
-      const response = await api.getQuestionAutocomplete({
-        question: debouncedSearch,
-        alertId,
-      });
-      return response.suggestions ?? [];
-    },
-  );
+  const suggestionsQueryResult = useCopilotSuggestions(debouncedSearch, alertId);
 
   const handleSuggestionClick = (suggestion: string) => {
     setClickedSuggestions((prev) => new Set(prev).add(suggestion));

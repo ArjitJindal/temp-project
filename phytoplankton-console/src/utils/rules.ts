@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 import { keyBy } from 'lodash';
-import { useQuery } from './queries/hooks';
-import { RULE_INSTANCES, RULES, RULES_WITH_ALERTS } from './queries/keys';
 import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import COLORS, {
@@ -13,8 +11,8 @@ import COLORS, {
   COLORS_V2_ANALYTICS_CHARTS_04,
   COLORS_V2_RISK_LEVEL_BASE_HIGH,
 } from '@/components/ui/colors';
-import { useApi } from '@/api';
 import { isLoading } from '@/utils/asyncResource';
+import { useRulesList, useRuleInstances, useRulesWithAlerts } from '@/hooks/api/rules';
 
 export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'FLAG', 'BLOCK', 'SUSPEND'];
 
@@ -91,24 +89,20 @@ export function useRules(): {
   ruleInstances: RuleInstanceMap;
   isLoading: boolean;
 } {
-  const api = useApi();
-  const rulesResults = useQuery(RULES(), (): Promise<Rule[]> => api.getRules({}));
-  const ruleInstanceResults = useQuery(
-    RULE_INSTANCES(),
-    (): Promise<RuleInstance[]> => api.getRuleInstances({}),
-  );
+  const rulesResults = useRulesList();
+  const ruleInstanceResults = useRuleInstances();
   const rulesMap = useMemo(() => {
     if (rulesResults.data.kind === 'SUCCESS') {
       return keyBy(rulesResults.data.value, 'id');
     } else {
-      return {};
+      return {} as RulesMap;
     }
   }, [rulesResults.data]);
   const ruleInstancesMap = useMemo(() => {
     if (ruleInstanceResults.data.kind === 'SUCCESS') {
       return keyBy(ruleInstanceResults.data.value, 'id');
     } else {
-      return {};
+      return {} as RuleInstanceMap;
     }
   }, [ruleInstanceResults.data]);
 
@@ -120,21 +114,13 @@ export function useRules(): {
 }
 
 export function useRuleOptions({ onlyWithAlerts = false }: UseRuleOptionsParams = {}) {
-  const api = useApi();
   const rules = useRules();
-
-  const { data: rulesWithAlertsData } = useQuery<string[]>(
-    RULES_WITH_ALERTS(),
-    () => api.getRulesWithAlerts({}),
-    {
-      enabled: onlyWithAlerts,
-    },
-  );
+  const rulesWithAlertsData = useRulesWithAlerts({ enabled: onlyWithAlerts });
   return useMemo(() => {
     let relevantRuleInstances: RuleInstance[] = Object.values(rules.ruleInstances);
 
-    if (onlyWithAlerts && rulesWithAlertsData.kind === 'SUCCESS') {
-      const rulesWithAlertsSet = new Set<string>(rulesWithAlertsData.value);
+    if (onlyWithAlerts && rulesWithAlertsData.data.kind === 'SUCCESS') {
+      const rulesWithAlertsSet = new Set<string>(rulesWithAlertsData.data.value);
       relevantRuleInstances = relevantRuleInstances.filter((instance) =>
         rulesWithAlertsSet.has(instance.id as string),
       );
@@ -145,7 +131,6 @@ export function useRuleOptions({ onlyWithAlerts = false }: UseRuleOptionsParams 
           rulesInstance.ruleNameAlias ||
           (rulesInstance.ruleId && rules.rules[rulesInstance.ruleId]?.name);
 
-        // Only return an option if ruleName exists; added to fix the issue of rule instances without ruleNameAlias
         if (!ruleName) {
           return null;
         }
@@ -158,5 +143,5 @@ export function useRuleOptions({ onlyWithAlerts = false }: UseRuleOptionsParams 
         };
       })
       .filter(Boolean);
-  }, [rules.ruleInstances, rules.rules, onlyWithAlerts, rulesWithAlertsData]);
+  }, [rules.ruleInstances, rules.rules, onlyWithAlerts, rulesWithAlertsData.data]);
 }

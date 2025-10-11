@@ -8,8 +8,7 @@ import { Graph, GraphEdges, GraphNodes } from '@/apis';
 import Spinner from '@/components/library/Spinner';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { isSuccess } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
+import { useUserEntity as useUserEntityApi, useTxnEntity as useTxnEntityApi } from '@/hooks/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type GraphParams = (
@@ -134,33 +133,17 @@ export type ScopeSelectorValue = 'ENTITY' | 'TXN';
 export const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
 export function useUserEntity(
   userId: string,
-  filters?: {
-    afterTimestamp: number | undefined;
-    beforeTimestamp: number | undefined;
-  },
+  filters?: { afterTimestamp: number | undefined; beforeTimestamp: number | undefined },
 ) {
-  const api = useApi();
   const hasFeatureEnabled = useFeatureEnabled('ENTITY_LINKING');
-  const queryResult = useQuery(
-    ['user-entity', userId, filters],
-    () => api.getUserEntity({ userId, ...(filters || {}) }),
-    { enabled: hasFeatureEnabled && !!userId },
-  );
-
-  return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
+  return useUserEntityApi(userId, filters, { enabled: hasFeatureEnabled && !!userId });
 }
 
 export function useTxnEntity(
   userId: string,
   filters?: { afterTimestamp: number | undefined; beforeTimestamp: number | undefined },
 ) {
-  const api = useApi();
-  const queryResult = useQuery(
-    ['txn-entity', userId, filters],
-    () => api.getTxnLinking({ userId, ...filters }),
-    { enabled: !!userId },
-  );
-  return isSuccess(queryResult.data) ? queryResult.data.value : undefined;
+  return useTxnEntityApi(userId, filters, { enabled: !!userId });
 }
 export function useLinkingState(userId: string, initialScope: ScopeSelectorValue = 'ENTITY') {
   const [scope, setScope] = useState<ScopeSelectorValue>(initialScope);

@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useAuth0 } from '@auth0/auth0-react';
 import { isEmpty, toLower } from 'lodash';
 import { capitalizeWords, humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
@@ -8,18 +7,16 @@ import {
   PermissionStatements,
   Feature as FeatureName,
   TenantSettings,
-  ApiException,
   ManagedRoleName,
   RuleAction,
   RiskLevel,
   TransactionState,
   CountryCode,
 } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PageLoading } from '@/components/PageLoading';
-import { PERMISSIONS_STATEMENTS, SETTINGS } from '@/utils/queries/keys';
+import { usePermissionsStatements, useTenantSettings } from '@/hooks/api';
 import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { usePrevious } from '@/utils/hooks';
 import { all, isFailed, isSuccess } from '@/utils/asyncResource';
@@ -54,24 +51,11 @@ export const StatementsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }): JSX.Element => {
   const globalFeatures = FEATURES_ENABLED as FeatureName[];
-  const api = useApi();
   const role = useAccountRole();
-  const { logout } = useAuth0();
 
-  const queryResult = useQuery(PERMISSIONS_STATEMENTS(), () => api.getRolesByNameStatements());
+  const queryResult = usePermissionsStatements();
 
-  const settingsResults = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
-    try {
-      return await api.getTenantsSettings();
-    } catch (e) {
-      if ((e as ApiException<unknown>).httpMessage === 'Unauthorized') {
-        logout({
-          returnTo: window.location.origin,
-        });
-      }
-      throw e;
-    }
-  });
+  const settingsResults = useTenantSettings();
 
   const previousSettingsResults = usePrevious(settingsResults);
 

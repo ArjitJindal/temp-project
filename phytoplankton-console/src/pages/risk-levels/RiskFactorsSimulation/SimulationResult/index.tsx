@@ -11,7 +11,7 @@ import { drawSimulationGraphs } from './report-utils';
 import styles from './styles.module.less';
 import { useTempRiskFactors } from '@/store/risk-factors';
 import { Progress } from '@/components/Simulation/Progress';
-import {
+import type {
   RiskEntityType,
   RiskFactorParameter,
   RiskLevel,
@@ -19,7 +19,6 @@ import {
   SimulationV8RiskFactorsIteration,
   SimulationV8RiskFactorsParameters,
   SimulationV8RiskFactorsStatisticsRiskTypeEnum,
-  V8RiskSimulationJob,
 } from '@/apis';
 import {
   AsyncResource,
@@ -34,10 +33,9 @@ import * as Card from '@/components/ui/Card';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import GroupedColumn from '@/pages/risk-levels/configure/components/Charts';
 import { ParameterSettings } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/types';
-import { SIMULATION_JOB_ITERATION_RESULT, SIMULATION_RISK_FACTOR } from '@/utils/queries/keys';
-import { useQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useApi } from '@/api';
+import { useRiskFactorsSimulationResults } from '@/hooks/api/risk-factors';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -55,6 +53,7 @@ import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
 import RiskFactorsTable from '@/pages/risk-levels/risk-factors/RiskFactorsTable';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import { useSimulationJob } from '@/hooks/api/simulation';
 
 interface Props {
   jobId: string;
@@ -88,36 +87,17 @@ export const SimulationResult = (props: Props) => {
     }
   }, [isGeneratingPdf]);
 
-  function isAllIterationsCompleted(iterations: SimulationV8RiskFactorsIteration[]): boolean {
-    return iterations.every(
-      (iteration) =>
-        iteration.latestStatus.status === 'SUCCESS' || iteration.latestStatus.status === 'FAILED',
-    );
-  }
   const api = useApi();
-  const jobResult = useQuery(
-    SIMULATION_RISK_FACTOR(jobId ?? ''),
-    () =>
-      api.getSimulationTestId({
-        jobId: jobId ?? '',
-      }) as Promise<V8RiskSimulationJob>,
-    {
-      refetchInterval: (data) =>
-        isAllIterationsCompleted(data?.iterations || [])
-          ? false
-          : SIMULATION_REFETCH_INTERVAL * 1000,
-      enabled: Boolean(jobId),
-    },
-  );
+  const jobResult = useSimulationJob(jobId, SIMULATION_REFETCH_INTERVAL * 1000);
   const [activeIterationIndex, setActiveIterationIndex] = useState<number>(1);
   const [updateResouce, setUpdateResource] = useState<AsyncResource>(init());
   const iterations = useMemo(() => {
     if (isSuccess(jobResult.data)) {
-      return jobResult.data.value.iterations ?? [];
+      return (jobResult.data.value.iterations ?? []) as any[];
     } else if (isLoading(jobResult.data)) {
-      return jobResult.data.lastValue?.iterations ?? [];
+      return (jobResult.data.lastValue?.iterations ?? []) as any[];
     }
-    return [];
+    return [] as any[];
   }, [jobResult.data]);
 
   const updateParametersMutation = useMutation<void, unknown, void>(
@@ -187,7 +167,7 @@ export const SimulationResult = (props: Props) => {
             children: (
               <SimulationResultWidgets
                 jobId={jobId}
-                iteration={iteration}
+                iteration={iteration as SimulationV8RiskFactorsIteration}
                 activeIterationIndex={index + 1}
                 showDemoProgress={showDemoProgress}
               />
@@ -267,40 +247,8 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   const isDemoMode = getOr(demoMode, false);
 
   const showResults = iteration.progress > 0.1 && (!isDemoMode || !showDemoProgress);
-  const api = useApi();
 
-  const iterationQueryResults = usePaginatedQuery(
-    SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', {
-      ...params,
-      progress: iteration.progress,
-    }),
-    async (paginationParams) => {
-      if (iteration?.taskId) {
-        const response = await api.getSimulationTaskIdResult({
-          taskId: iteration.taskId,
-          page: paginationParams.page ?? params.page,
-          pageSize: paginationParams.pageSize ?? params.pageSize,
-          sortField: params.sort?.[0]?.[0] ?? 'userId',
-          sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
-          filterCurrentKrsLevel: params['current.krs.riskLevel'],
-          filterSimulationKrsLevel: params['simulated.krs.riskLevel'],
-          filterCurrentDrsLevel: params['current.drs.riskLevel'],
-          filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
-          filterUserId: params.userId,
-        });
-
-        return {
-          items: response.items as SimulationRiskLevelsAndRiskFactorsResult[],
-          total: response.total,
-        };
-      } else {
-        return {
-          items: [] as SimulationRiskLevelsAndRiskFactorsResult[],
-          total: 0,
-        };
-      }
-    },
-  );
+  const iterationQueryResults = useRiskFactorsSimulationResults(iteration, params);
   const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
   const userAlias = firstLetterUpper(settings.userAlias);
   const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([

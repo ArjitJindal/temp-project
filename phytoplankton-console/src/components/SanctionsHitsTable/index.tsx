@@ -19,7 +19,7 @@ import {
 import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { Cursor, QueryResult } from '@/utils/queries/types';
+import type { Cursor, QueryResult } from '@/utils/queries/types';
 import Tag from '@/components/library/Tag';
 import {
   ID,

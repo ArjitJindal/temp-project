@@ -1,11 +1,6 @@
 import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
 import Select from '../library/Select';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { NARRATIVE_TEMPLATE_LIST } from '@/utils/queries/keys';
-
-const NARRATIVE_PAGE = 1;
-const NARRATIVE_PAGE_SIZE = 1000;
+import { useNarrativeTemplates } from '@/hooks/api';
 
 type Props = {
   mode?: 'DEFAULT' | 'TEXT';
@@ -14,14 +9,8 @@ type Props = {
 };
 
 const NarrativeTemplateSelect = (props: Props) => {
-  const api = useApi();
   const { mode = 'DEFAULT', templateValue, setTemplateValue } = props;
-  const narrativeQueryResponse = useQuery(
-    NARRATIVE_TEMPLATE_LIST({ page: NARRATIVE_PAGE, pageSize: NARRATIVE_PAGE_SIZE }),
-    async () => {
-      return await api.getNarratives({ page: NARRATIVE_PAGE, pageSize: NARRATIVE_PAGE_SIZE });
-    },
-  );
+  const narrativeQueryResponse = useNarrativeTemplates();
 
   return (
     <AsyncResourceRenderer resource={narrativeQueryResponse.data} renderLoading={() => null}>

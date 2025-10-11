@@ -15,7 +15,7 @@ import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import DatePicker from '@/components/ui/DatePicker';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import BarChart, { BarChartData, GroupBy } from '@/components/charts/BarChart';
 import { useSafeLocalStorageState } from '@/utils/hooks';

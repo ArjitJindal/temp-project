@@ -9,11 +9,8 @@ import InsightCard from './components/InsightCard';
 import * as Card from '@/components/ui/Card';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TransactionsList from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsList';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
-import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import { useTransactionsStatsByType } from '@/hooks/api/transactions';
+import { SortOrder } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { dayjs } from '@/utils/dayjs';
 
@@ -41,7 +38,11 @@ export default function InsightsCard(props: Props) {
     aggregateBy: 'status' as AggregateByField,
     timeRange: [dayjs().subtract(3, 'month'), dayjs()],
   });
-  const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
+  const statsQueryResult = useTransactionsStatsByType({
+    selectorParams,
+    userId,
+    referenceCurrency: selectorParams.currency,
+  });
 
   return (
     <Card.Root>
@@ -81,26 +82,4 @@ export default function InsightsCard(props: Props) {
   );
 }
 
-function useStatsQuery(
-  selectorParams: Params,
-  userId: string,
-  referenceCurrency: Currency,
-): QueryResult<TransactionsStatsByTypesResponseData[]> {
-  const api = useApi();
-  return useQuery(
-    TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
-    async (): Promise<TransactionsStatsByTypesResponseData[]> => {
-      const response = await api.getTransactionsStatsByType({
-        ...FIXED_API_PARAMS,
-        pageSize: selectorParams.transactionsCount,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        filterTransactionState: selectorParams.selectedTransactionStates,
-        referenceCurrency,
-        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
-        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
-      });
-      return response.data;
-    },
-  );
-}
+// moved to hooks/api/transactions.ts

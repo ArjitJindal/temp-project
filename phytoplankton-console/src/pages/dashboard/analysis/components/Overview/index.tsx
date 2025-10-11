@@ -1,8 +1,6 @@
 import { OverviewCard } from '../widgets/OverviewCard';
 import s from './index.module.less';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_OVERVIEW_TOTAL } from '@/utils/queries/keys';
+import { useDashboardOverview } from '@/hooks/api/dashboard';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { WidgetProps } from '@/components/library/Widget/types';
 import WidgetBase from '@/components/library/Widget/WidgetBase';
@@ -12,10 +10,7 @@ import { map } from '@/utils/asyncResource';
 interface Props extends WidgetProps {}
 
 export default function Overview(props: Props) {
-  const api = useApi();
-  const queryResult = useQuery(DASHBOARD_OVERVIEW_TOTAL(), async () => {
-    return await api.getDashboardStatsOverview({});
-  });
+  const queryResult = useDashboardOverview();
   const isSarEnabled = useFeatureEnabled('SAR');
   const dataRes = queryResult.data;
   return (

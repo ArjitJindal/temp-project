@@ -12,15 +12,13 @@ import { formatDate } from '../../utils/date-utils';
 import { exportDataForBarGraphs } from '../../utils/export-data-build-util';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
 import { dayjs, Dayjs, SHORT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { useApi } from '@/api';
+import { useDashboardTransactionsStats } from '@/hooks/api';
 import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { RuleAction } from '@/apis';
 import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
@@ -39,8 +37,6 @@ export default function TransactionsChartWidget(props: WidgetProps) {
     granularityValues.MONTH as GranularityValuesType,
   );
 
-  const api = useApi();
-
   const [start, end] = dateRange ?? [];
   const startTimestamp = start?.startOf('day').valueOf();
   const endTimestamp = end?.endOf('day').valueOf();
@@ -51,9 +47,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
     granularity: granularity,
   };
 
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_STATS(params), async () => {
-    return await api.getDashboardStatsTransactions(params);
-  });
+  const queryResult = useDashboardTransactionsStats(params);
 
   const dataResource = map(
     queryResult.data,

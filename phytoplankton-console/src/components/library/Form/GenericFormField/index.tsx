@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { NestedValidationResult } from '../utils/validation/types';
+import type { NestedValidationResult } from '../utils/validation/types';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 import { FieldContext } from '@/components/library/Form/context';

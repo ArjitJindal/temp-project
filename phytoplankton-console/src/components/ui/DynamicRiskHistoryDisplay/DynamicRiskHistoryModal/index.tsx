@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { isManualDrsTxId, isNotArsChangeTxId } from '@flagright/lib/utils/risk';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { v4 as uuidv4 } from 'uuid';
 import { ValueItem } from '../../RiskScoreDisplay/types';
 import MainPanel from '../../RiskScoreDisplay/MainPanel';
 import Id from '../../Id';
 import styles from './index.module.less';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import Modal from '@/components/library/Modal';
-import { useApi } from '@/api';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { RISK_FACTORS_V8, USER_DRS_VALUES } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
 import { DefaultApiGetDrsValuesRequest } from '@/apis/types/ObjectParamAPI';
@@ -38,6 +34,7 @@ import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
 import { isSuccess } from '@/utils/asyncResource';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { useAllRiskFactorsMap, useUserDrsValuesPaginated } from '@/hooks/api';
 
 interface Props {
   userId: string;
@@ -69,7 +66,6 @@ export function isLatestDrs(item: ExtendedDrsScoreWithRowId, value: ValueItem) {
 
 function DynamicRiskHistoryModal(props: Props) {
   const { isOpen, userId, onCancel, icon, title, value, riskScoreAlgo } = props;
-  const api = useApi();
   const [params, setParams] = useState<AllParams<Partial<DefaultApiGetDrsValuesRequest>>>({
     ...DEFAULT_PARAMS_STATE,
     pageSize: 10,
@@ -77,27 +73,8 @@ function DynamicRiskHistoryModal(props: Props) {
   const settings = useSettings();
   const consoleUser = useConsoleUser(userId);
   const riskClassificationValues = useRiskClassificationScores();
-  const queryResult = usePaginatedQuery<ExtendedDrsScoreWithRowId>(
-    USER_DRS_VALUES(userId, params),
-    async (paginationParams) => {
-      const result = await api.getDrsValues({
-        userId,
-        ...params,
-        ...paginationParams,
-      });
-      return {
-        ...result,
-        items: result.items.map((item) => ({ ...item, rowId: uuidv4() })),
-      };
-    },
-  );
-  const factorMapResult = useQuery(RISK_FACTORS_V8('ALL'), async () => {
-    const data = await api.getAllRiskFactors({ includeV2: true });
-    return data.reduce((acc, item) => {
-      acc[item.id] = item;
-      return acc;
-    }, {} as Record<string, RiskFactor>);
-  });
+  const queryResult = useUserDrsValuesPaginated(userId, params as any);
+  const factorMapResult = useAllRiskFactorsMap();
 
   const handleDrsReportDownload = async (
     user: InternalBusinessUser | InternalConsumerUser,
@@ -275,7 +252,7 @@ function DynamicRiskHistoryModal(props: Props) {
                 params={params}
                 pagination
                 onChangeParams={setParams}
-                queryResults={queryResult}
+                queryResults={queryResult as any}
                 isExpandable={(item) => {
                   return (
                     ((item.content.factorScoreDetails &&

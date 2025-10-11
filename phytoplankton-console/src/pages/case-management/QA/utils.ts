@@ -1,25 +1,22 @@
-import { useApi } from '@/api';
-import { AlertsQaSampling, AlertsQaSamplingRequest, AlertsQaSamplingUpdateRequest } from '@/apis';
+import { AlertsQaSampling } from '@/apis';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { QueryResult } from '@/utils/queries/types';
+import { useCreateQaSample, useUpdateQaSample } from '@/hooks/api/alerts';
+import type { QueryResult } from '@/utils/queries/types';
+import { useApi } from '@/api';
 
 export const useAlertsSamplingCreateMutation = (setIsModalOpen: (isOpen: boolean) => void) => {
-  const api = useApi();
-
-  return useMutation<AlertsQaSampling, unknown, AlertsQaSamplingRequest>(
-    async (data) => await api.createAlertsQaSampling({ AlertsQaSamplingRequest: data }),
-    {
-      onSuccess: (data) => {
-        setIsModalOpen(false);
-        message.success('Sample created successfully with id: ' + data.samplingId);
-      },
-      onError: () => {
-        setIsModalOpen(false);
-        message.fatal('Failed to create sample');
-      },
+  return useCreateQaSample({
+    onSuccess: (data) => {
+      const sampling = data as AlertsQaSampling;
+      setIsModalOpen(false);
+      message.success('Sample created successfully with id: ' + sampling.samplingId);
     },
-  );
+    onError: () => {
+      setIsModalOpen(false);
+      message.fatal('Failed to create sample');
+    },
+  }) as any;
 };
 
 export const useAlertsSamplingUpdateMutation = (
@@ -27,28 +24,16 @@ export const useAlertsSamplingUpdateMutation = (
   messages: { success: string; error: string },
   queryResult: QueryResult<unknown>,
 ) => {
-  const api = useApi();
-
-  const mutation = useMutation<
-    AlertsQaSampling,
-    unknown,
-    { sampleId: string; body: AlertsQaSamplingUpdateRequest }
-  >(
-    async ({ sampleId, body }) =>
-      await api.patchAlertsQaSample({ sampleId, AlertsQaSamplingUpdateRequest: body }),
-    {
-      onSuccess: () => {
-        message.success(messages.success);
-        queryResult?.refetch();
-        setIsModalOpen(false);
-      },
-      onError: (error) => {
-        message.fatal(messages.error, error);
-      },
+  return useUpdateQaSample({
+    onSuccess: () => {
+      message.success(messages.success);
+      queryResult?.refetch();
+      setIsModalOpen(false);
     },
-  );
-
-  return mutation;
+    onError: (error: any) => {
+      message.fatal(messages.error, error);
+    },
+  }) as any;
 };
 
 export const useDeleteAlertsSamplingMutation = (

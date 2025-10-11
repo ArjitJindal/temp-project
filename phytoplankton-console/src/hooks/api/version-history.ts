@@ -1,13 +1,11 @@
 import { useNavigate } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { NEW_VERSION_ID, VERSION_HISTORY_ITEM } from './queries/keys';
-import { getOr } from './asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
+import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
+import { NEW_VERSION_ID, VERSION_HISTORY, VERSION_HISTORY_ITEM } from '@/utils/queries/keys';
 import { VersionHistory, VersionHistoryRestorePayload, VersionHistoryType } from '@/apis';
+import { getOr } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
-import { useRiskFactors } from '@/pages/risk-levels/risk-factors/utils';
 
 export function useNewVersionId(type: VersionHistoryType) {
   const api = useApi();
@@ -19,7 +17,7 @@ export function useVersionHistoryItem(type: VersionHistoryType, versionId: strin
   const api = useApi();
   const navigate = useNavigate();
   const queryResult = useQuery<VersionHistory>(
-    VERSION_HISTORY_ITEM('RiskClassification', versionId ?? ''),
+    VERSION_HISTORY_ITEM(type, versionId ?? ''),
     () =>
       api.getVersionHistoryByVersionId({
         versionId: versionId ?? '',
@@ -34,8 +32,30 @@ export function useVersionHistoryItem(type: VersionHistoryType, versionId: strin
       },
     },
   );
-
   return queryResult;
+}
+
+export function useMaxVersionIdRiskFactors() {
+  const result = useNewVersionId('RiskFactors');
+  return getOr(result.data, { id: '' }).id;
+}
+
+export function useVersionHistory(type: VersionHistoryType, params: any) {
+  const api = useApi();
+  return usePaginatedQuery(VERSION_HISTORY(type, params), async (pageParams) => {
+    return await api.getVersionHistory({
+      ...pageParams,
+      page: pageParams.page || params.page,
+      pageSize: pageParams.pageSize || params.pageSize,
+      filterVersionId: params.id,
+      filterCreatedBy: params.createdBy,
+      filterAfterTimestamp: params.createdAt?.[0] ?? undefined,
+      filterBeforeTimestamp: params.createdAt?.[1] ?? undefined,
+      sortField: params?.sort?.[0]?.[0] ?? 'createdAt',
+      sortOrder: params?.sort?.[0]?.[1] ?? 'descend',
+      type,
+    });
+  });
 }
 
 export function useVersionHistoryRestore(onSuccess: () => void) {
@@ -50,18 +70,4 @@ export function useVersionHistoryRestore(onSuccess: () => void) {
     },
   );
   return queryResult;
-}
-
-export function useMaxVersionIdRiskFactors() {
-  const riskFactorsQueryResult = useRiskFactors();
-  const riskFactors = getOr(riskFactorsQueryResult.data, []);
-  const maxVersionId = useMemo(() => {
-    const id = riskFactors.reduce(
-      (max, rf) => Math.max(max, Number(rf.versionId?.split('-')[1] ?? 0)),
-      0,
-    );
-    return id.toString().padStart(3, '0');
-  }, [riskFactors]);
-
-  return maxVersionId;
 }

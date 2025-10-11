@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router';
 import s from './index.module.less';
 import NotificationMessage from './NotificationMessage';
 import Avatar from '@/components/library/Avatar';
-import { Account, Notification as NotificationBase } from '@/apis';
+import { Account, type Notification as NotificationBase } from '@/apis';
 import { dayjs, TIME_FORMAT_WITHOUT_SECONDS, duration } from '@/utils/dayjs';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 
 export type Notification = NotificationBase;
 

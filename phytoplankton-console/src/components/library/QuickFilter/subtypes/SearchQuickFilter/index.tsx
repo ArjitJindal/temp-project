@@ -1,10 +1,10 @@
 import React from 'react';
 import PopupContent from './PopupContent';
 import { MessageRenderers } from './PopupContent/SearchResultList';
-import { ItemType } from './types';
+import type { ItemType } from './types';
 import QuickFilter from '@/components/library/QuickFilter';
-import { QueryResult } from '@/utils/queries/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { QueryResult } from '@/utils/queries/types';
+import type { PaginatedData } from '@/utils/queries/hooks';
 
 interface Props<T> {
   title: string;

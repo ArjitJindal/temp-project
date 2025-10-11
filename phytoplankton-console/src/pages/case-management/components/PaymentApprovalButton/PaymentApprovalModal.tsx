@@ -8,8 +8,7 @@ import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
 import Narrative, { FormValues, NarrativeFormValues, OTHER_REASON } from '@/components/Narrative';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import { useQuery } from '@/utils/queries/hooks';
-import { ACTION_REASONS } from '@/utils/queries/keys';
+import { useActionReasons } from '@/hooks/api/settings';
 import { getOr } from '@/utils/asyncResource';
 
 interface Props {
@@ -41,12 +40,8 @@ const commentFormat = (props: CommentFormatProps) => {
 export default function PaymentApprovalModal(props: Props) {
   const { visible, action, transactionIds, hide, onSuccess } = props;
   const formRef = useRef<FormRef<FormValues<string>>>(null);
-  const reasonsResult = useQuery(ACTION_REASONS('CLOSURE'), async () => {
-    return await api.getActionReasons({
-      type: 'CLOSURE',
-    });
-  });
-  const reasons = getOr(reasonsResult.data, []).map((reason) => reason.reason);
+  const reasonsResult = useActionReasons('CLOSURE');
+  const reasons = getOr(reasonsResult.data, []).map((reason: any) => reason.reason);
   const [narrativeValues, setNarrativeValues] = useState<NarrativeFormValues<string>>({
     isValid: false,
     values: { reasons: [], comment: '', files: [], reasonOther: '' },

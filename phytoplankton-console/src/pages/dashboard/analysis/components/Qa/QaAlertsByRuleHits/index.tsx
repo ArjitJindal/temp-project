@@ -4,9 +4,7 @@ import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-u
 import Widget from '@/components/library/Widget';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_STATS_QA_ALERTS_BY_RULE_HIT } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useQaAlertsByRuleHits } from '@/hooks/api/dashboard';
 import { isSuccess } from '@/utils/asyncResource';
 import { useRules } from '@/utils/rules';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -29,8 +27,6 @@ const QaAlertsByRuleHits = (props: Props) => {
     dayjs(),
   ]);
 
-  const api = useApi();
-
   const getStartAndEndTimestamp = (dateRange: RangeValue<Dayjs>) => {
     const [start, end] = dateRange ?? [];
     const startTimestamp = start?.startOf('day').valueOf();
@@ -41,22 +37,7 @@ const QaAlertsByRuleHits = (props: Props) => {
     };
   };
 
-  const qaAlertsByRuleHits = useQuery(
-    DASHBOARD_STATS_QA_ALERTS_BY_RULE_HIT(dateRange),
-    async () => {
-      const { startTimestamp, endTimestamp } = getStartAndEndTimestamp(dateRange);
-
-      const result = await api.getDashboardStatsQaAlertsByRuleHit({
-        startTimestamp,
-        endTimestamp,
-      });
-
-      return {
-        total: result.data.length,
-        items: result.data,
-      };
-    },
-  );
+  const qaAlertsByRuleHits = useQaAlertsByRuleHits(dateRange);
 
   const { ruleInstances, rules } = useRules();
   const dataToExport = useMemo(() => {

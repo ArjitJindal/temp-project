@@ -1,6 +1,6 @@
 import React from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useRuleQueue } from '../../../rules/util';
+import { useRuleQueue } from '@/hooks/api';
 import Tooltip from '@/components/library/Tooltip';
 import Tag from '@/components/library/Tag';
 

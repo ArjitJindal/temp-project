@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { ExtendedSchema } from './types';
+import type { ExtendedSchema } from './types';
 
 export interface JsonSchemaEditorContextValue {
   rootSchema: ExtendedSchema;

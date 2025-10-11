@@ -21,8 +21,7 @@ import Tooltip from '@/components/library/Tooltip';
 import * as Card from '@/components/ui/Card';
 import { getOr } from '@/utils/asyncResource';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { SIMULATION_COUNT } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { useSimulationCount } from '@/hooks/api/simulation';
 
 const MAX_ITERATIONS = 3;
 const DEFAULT_USERS_SAMPLING = 10000;
@@ -64,7 +63,7 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
     RiskClassificationScore[] | null
   >(null);
 
-  const simulationCountResults = useQuery(SIMULATION_COUNT(), () => api.getSimulationJobsCount());
+  const simulationCountResults = useSimulationCount();
 
   const simulationCount = getOr<SimulationStats>(simulationCountResults.data, {
     runJobsCount: 0,

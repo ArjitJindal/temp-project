@@ -1,7 +1,5 @@
 import React from 'react';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { LISTS } from '@/utils/queries/keys';
+import { useLists } from '@/hooks/api';
 import { isFailed, getOr, isSuccess } from '@/utils/asyncResource';
 import Select, { MultipleProps as SelectProps } from '@/components/library/Select';
 import Alert from '@/components/library/Alert';
@@ -12,16 +10,7 @@ interface Props extends Pick<SelectProps<string>, 'value' | 'onChange'> {
 
 export default function ListSelect(props: Props) {
   const { listType } = props;
-  const api = useApi();
-  const queryResults = useQuery(LISTS(), () => {
-    if (listType === 'WHITELIST') {
-      return api.getWhitelist();
-    }
-    if (listType === 'BLACKLIST') {
-      return api.getBlacklist();
-    }
-    return api.getLists();
-  });
+  const queryResults = useLists(listType as any);
   const res = queryResults.data;
   if (isFailed(res)) {
     return <Alert type="ERROR">{res.message}</Alert>;

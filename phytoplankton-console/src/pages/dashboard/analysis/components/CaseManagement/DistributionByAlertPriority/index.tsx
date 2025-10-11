@@ -9,9 +9,7 @@ import {
   COLORS_V2_PRIMARY_TINTS_BLUE_900,
 } from '@/components/ui/colors';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_PRIORITY_DISTRIBUTION } from '@/utils/queries/keys';
+import { useAlertPriorityDistribution } from '@/hooks/api/dashboard';
 import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
@@ -30,18 +28,14 @@ interface Props extends WidgetProps {}
 
 const DistributionByAlertPriority = (props: Props) => {
   const [dateRange, setDateRange] = useState<WidgetRangePickerValue>();
-  const api = useApi();
   const params = {
     startTimestamp: dateRange?.startTimestamp,
     endTimestamp: dateRange?.endTimestamp,
   };
-  const queryResult = useQuery(ALERT_PRIORITY_DISTRIBUTION(params), async () => {
-    const response = await api.getDashboardStatsAlertPriorityDistributionStats(params);
-    return response;
-  });
-  const data = queryResult.data;
+  const queryResult = useAlertPriorityDistribution(params) as any;
+  const data = queryResult.data as any;
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
-  const dataResource = map(data, ({ alertPriorityData }) => {
+  const dataResource = map(data, ({ alertPriorityData }: { alertPriorityData: any[] }) => {
     return alertPriorityData.map(
       (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
         return { name: item.priority ?? 'N/A', value: item.value ?? 0 };
@@ -60,7 +54,7 @@ const DistributionByAlertPriority = (props: Props) => {
             const fileData = {
               fileName: `distribution-by-open-alert-priority-${dayjs().format('YYYY_MM_DD')}.pdf`,
               pdfRef: pdfRef,
-              data: exportDataForDonuts('alertPriority', getOr(dataResource, [])),
+              data: exportDataForDonuts('alertPriority', getOr(dataResource as any, [])),
               tableTitle: `Distribution by open alert priority`,
             };
             resolve(fileData);

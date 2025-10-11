@@ -24,7 +24,7 @@ import {
 import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID } from '@/components/library/Table/standardDataTypes';
@@ -33,13 +33,11 @@ import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
-import { useQuery } from '@/utils/queries/hooks';
 import {
-  DEFAULT_MANUAL_SCREENING_FILTERS,
-  SEARCH_PROFILES,
-  SCREENING_PROFILES,
-} from '@/utils/queries/keys';
-import { useApi } from '@/api';
+  useSearchProfiles,
+  useScreeningProfiles,
+  useDefaultManualScreeningFilters,
+} from '@/hooks/api';
 import { getOr, match } from '@/utils/asyncResource';
 import { useHasResources } from '@/utils/user-utils';
 import { getErrorMessage } from '@/utils/lang';
@@ -94,7 +92,6 @@ export default function SanctionsSearchTable(props: Props) {
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
   const settings = useSettings();
-  const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
   const canEditManualScreeningFilters = useHasResources([
     'write:::screening/manual-screening/manual-screening-filters/*',
@@ -105,52 +102,14 @@ export default function SanctionsSearchTable(props: Props) {
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
 
-  const searchProfileResult = useQuery(
-    SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getSearchProfiles({
-          filterSearchProfileStatus: 'ENABLED',
-        });
-        return {
-          items: response.items || [],
-          total: response.items?.length || 0,
-        };
-      } catch (error) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-    {
-      enabled: !isScreeningProfileEnabled,
-      staleTime: 300000, // 5 minutes
-    },
+  const searchProfileResult = useSearchProfiles(
+    { filterSearchProfileStatus: 'ENABLED' },
+    { enabled: !isScreeningProfileEnabled, staleTime: 300000 },
   );
 
-  const screeningProfilesResult = useQuery(
-    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getScreeningProfiles({
-          filterScreeningProfileStatus: 'ENABLED',
-        });
-        return {
-          items: response.items || [],
-          total: response.items?.length || 0,
-        };
-      } catch (error) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-    {
-      enabled: isScreeningProfileEnabled,
-      staleTime: 300000, // 5 minutes
-    },
+  const screeningProfilesResult = useScreeningProfiles(
+    { filterScreeningProfileStatus: 'ENABLED' },
+    { enabled: isScreeningProfileEnabled, staleTime: 300000 },
   );
   const helper = new ColumnHelper<SanctionsEntity>();
   const columns: TableColumn<SanctionsEntity>[] = helper.list([
@@ -484,11 +443,9 @@ export default function SanctionsSearchTable(props: Props) {
     'registrationId',
   ]);
 
-  const defaultManualScreeningFilters = useQuery(
-    DEFAULT_MANUAL_SCREENING_FILTERS(),
-    async () => api.getDefaultManualScreeningFilters(),
-    { enabled: isScreeningProfileEnabled, refetchOnMount: true, refetchOnWindowFocus: true },
-  );
+  const defaultManualScreeningFilters = useDefaultManualScreeningFilters({
+    enabled: isScreeningProfileEnabled,
+  });
 
   const isFilterLockedByPermission = (key: string): boolean => {
     // Never lock gender filter

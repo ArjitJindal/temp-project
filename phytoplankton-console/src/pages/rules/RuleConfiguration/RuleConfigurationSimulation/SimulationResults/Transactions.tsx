@@ -3,8 +3,8 @@ import { startCase } from 'lodash';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import s from './index.module.less';
-import { useApi } from '@/api';
 import { SimulationBeaconHit, SimulationBeaconTransactionResult } from '@/apis';
+import { useSimulationTransactionResults } from '@/hooks/api/simulation';
 import * as Card from '@/components/ui/Card';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -22,10 +22,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Link from '@/components/ui/Link';
 import { H4 } from '@/components/ui/Typography';
 import { getUserLink } from '@/utils/api/users';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
 import { CommonParams } from '@/components/library/Table/types';
-import { dayjs } from '@/utils/dayjs';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
@@ -51,32 +48,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
   });
-  const api = useApi();
-  const transactionResults = usePaginatedQuery(
-    SIMULATION_JOB_ITERATION_RESULT(taskId, params),
-    async (paginationParams) => {
-      const { timestamp, ...restParams } = params;
-      const response = await api.getSimulationTaskIdResult({
-        taskId,
-        ...restParams,
-        page: paginationParams.page || params.page,
-        pageSize: params.pageSize,
-        filterType: 'BEACON_TRANSACTION',
-        filterTransactionId: params.transactionId,
-        filterHitStatus: params.hit,
-        filterStartTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : undefined,
-        filterEndTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
-        filterOriginPaymentMethod: params.originPaymentMethod,
-        filterDestinationPaymentMethod: params.destinationPaymentMethod,
-        filterTransactionTypes: params.transactionTypes,
-        filterUserId: params.userId,
-      });
-      return {
-        items: response.items as SimulationBeaconTransactionResult[],
-        total: response.total,
-      };
-    },
-  );
+  const transactionResults = useSimulationTransactionResults(taskId, params);
 
   // Define extraFilters with useMemo to prevent recreation on every render
   const extraFilters = useMemo(

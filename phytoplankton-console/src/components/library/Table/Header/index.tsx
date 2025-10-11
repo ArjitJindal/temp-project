@@ -13,7 +13,7 @@ import { useAutoFilters } from '../internal/filters';
 import s from './index.module.less';
 import Filters from './Filters';
 import Tools, { ToolsOptions } from './Tools';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { pickPaginatedParams } from '@/components/library/Table/paramsHelpers';
 

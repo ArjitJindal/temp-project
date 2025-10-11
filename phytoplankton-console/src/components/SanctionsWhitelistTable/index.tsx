@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { SanctionsWhitelistEntity } from '@/apis';
 import { useApi } from '@/api';
-import { SANCTIONS_WHITELIST_SEARCH } from '@/utils/queries/keys';
-import { useCursorQuery } from '@/utils/queries/hooks';
+import { useSanctionsWhitelistSearch } from '@/hooks/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
@@ -28,16 +27,7 @@ export default function SanctionsWhitelistTable(props: Props) {
   const hasSanctionsWhitelistWritePermission = useHasResources(['write:::screening/whitelist/*']);
 
   const api = useApi();
-
-  const queryResult = useCursorQuery(SANCTIONS_WHITELIST_SEARCH(params), async ({ from }) => {
-    return api.searchSanctionsWhitelist({
-      start: from || params.from,
-      pageSize: params.pageSize,
-      filterUserId: params.userId ? [params.userId] : undefined,
-      filterEntity: params.entity ? [params.entity] : undefined,
-      filterEntityType: params.entityType ? [params.entityType] : undefined,
-    });
-  });
+  const queryResult = useSanctionsWhitelistSearch(params);
 
   const deleteMutation = useMutation<unknown, unknown, { ids: string[] }>(
     async (variables) => {

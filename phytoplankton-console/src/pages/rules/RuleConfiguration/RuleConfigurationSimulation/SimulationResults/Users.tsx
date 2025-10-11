@@ -13,9 +13,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
 import Tag from '@/components/library/Tag';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useSimulationUserResults } from '@/hooks/api/simulation';
 import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -37,7 +35,6 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
     ...DEFAULT_PARAMS_STATE,
   });
   const helper = new ColumnHelper<SimulationBeaconResultUser>();
-  const api = useApi();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const userAlias = firstLetterUpper(settings.userAlias);
@@ -126,28 +123,7 @@ export const SimulationUsersHit = (props: SimulationUsersHitProps) => {
       },
     }),
   ]);
-  const userResults = usePaginatedQuery<SimulationBeaconResultUser>(
-    SIMULATION_JOB_ITERATION_RESULT(taskId, {
-      ...params,
-      filterType: 'BEACON_USER',
-    }),
-    async (paginationParams) => {
-      const response = await api.getSimulationTaskIdResult({
-        taskId,
-        ...params,
-        page: paginationParams.page || params.page,
-        pageSize: params.pageSize,
-        filterType: 'BEACON_USER',
-        filterUserId: params.userId,
-        filterHitStatus: params.hit,
-      });
-
-      return {
-        items: response.items as SimulationBeaconResultUser[],
-        total: response.total,
-      };
-    },
-  );
+  const userResults = useSimulationUserResults(taskId, params);
 
   // Define extraFilters with useMemo to prevent recreation on every render
   const extraFilters = useMemo(

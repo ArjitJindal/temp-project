@@ -9,9 +9,7 @@ import {
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 
 import { Recommendation } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemEmbedded/Recommendation';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { ALERT_ITEM } from '@/utils/queries/keys';
+import { useAlert } from '@/hooks/api';
 import { getOr } from '@/utils/asyncResource';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
@@ -28,13 +26,7 @@ const PdfSanctionsHitsTable: React.FC<{ alertId: string; type: 'OPEN' | 'CLEARED
   alertId,
   type,
 }) => {
-  const api = useApi();
-  const alertResponse = useQuery(ALERT_ITEM(alertId), async () => {
-    if (!alertId) {
-      throw new Error(`Unable to fetch alert, id is empty`);
-    }
-    return api.getAlert({ alertId });
-  });
+  const alertResponse = useAlert(alertId);
   const alertData = getOr(alertResponse.data, null);
 
   const [params] = useState<AllParams<SanctionsHitsTableParams>>({

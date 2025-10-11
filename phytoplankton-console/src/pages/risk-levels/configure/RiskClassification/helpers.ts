@@ -7,7 +7,7 @@ import {
 } from '@/utils/queries/keys';
 import { RiskClassificationApprovalRequestActionEnum } from '@/apis';
 import { useApi } from '@/api';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 
 export function useSendProposalActionMutation(): Mutation<
   unknown,

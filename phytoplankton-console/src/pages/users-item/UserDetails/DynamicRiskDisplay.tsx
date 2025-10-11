@@ -1,8 +1,6 @@
 import React from 'react';
-import { useApi } from '@/api';
+import { useUserDrs } from '@/hooks/api';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
-import { USERS_ITEM_RISKS_DRS } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useHasResources } from '@/utils/user-utils';
 import DynamicRiskHistoryDisplay from '@/components/ui/DynamicRiskHistoryDisplay';
@@ -12,26 +10,26 @@ interface Props {
 }
 
 export default function DynamicRiskDisplay({ userId }: Props) {
-  const api = useApi();
-
-  const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const queryResult = useUserDrs(userId);
   const isDrsPermissionEnabled = useHasResources(['read:::risk-scoring/risk-score-details/*']);
 
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>
-      {(result) =>
-        result?.length > 0 ? (
+      {(result) => {
+        if (!Array.isArray(result) || result.length === 0) {
+          return null;
+        }
+        const value = {
+          score: result[0].drsScore,
+          manualRiskLevel: result[0]?.manualRiskLevel,
+          createdAt: result[0].createdAt,
+          components: result[0].components,
+          factorScoreDetails: result[0].factorScoreDetails,
+          transactionId: result[0].transactionId,
+        };
+        return (
           <DynamicRiskHistoryDisplay
-            value={
-              result?.map((x) => ({
-                score: x.drsScore,
-                manualRiskLevel: x?.manualRiskLevel,
-                createdAt: x.createdAt,
-                components: x.components,
-                factorScoreDetails: x.factorScoreDetails,
-                transactionId: x.transactionId,
-              }))[0]
-            }
+            value={value}
             icon={<User3LineIcon />}
             title="CRA score"
             showFormulaBackLink
@@ -39,8 +37,8 @@ export default function DynamicRiskDisplay({ userId }: Props) {
             hideInfo={!isDrsPermissionEnabled}
             userId={userId}
           />
-        ) : null
-      }
+        );
+      }}
     </AsyncResourceRenderer>
   );
 }

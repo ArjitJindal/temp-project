@@ -6,8 +6,7 @@ import {
   useAlertTabs,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import Tabs from '@/components/library/Tabs';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM } from '@/utils/queries/keys';
+import { useAlertPrimed } from '@/hooks/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
@@ -60,9 +59,7 @@ function ExpandedRowRenderer(props: Props) {
 // Wrap alert item into Query to make cache invalidation by alert id works
 export default function (props: Props) {
   const { alert, ...rest } = props;
-  const alertQueryResult = useQuery(ALERT_ITEM(alert?.alertId ?? ''), () => {
-    return Promise.resolve(alert);
-  });
+  const alertQueryResult = useAlertPrimed(alert?.alertId, alert);
 
   return (
     <AsyncResourceRenderer resource={alertQueryResult.data}>

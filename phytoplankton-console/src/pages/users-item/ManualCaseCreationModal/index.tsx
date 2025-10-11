@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
-import { Case, CasesUsersUserIdResponse, FileInfo, Priority } from '@/apis';
+import { Case, FileInfo, Priority } from '@/apis';
 import Form, { FormRef } from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -13,9 +13,8 @@ import TextInput from '@/components/library/TextInput';
 import { OTHER_REASON } from '@/components/Narrative';
 import { useApi } from '@/api';
 import { CloseMessage, message } from '@/components/library/Message';
-import { CASES_USERS_CASEIDS } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
+import { useCaseIds } from '@/hooks/api/cases';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import Label from '@/components/library/Label';
@@ -71,10 +70,7 @@ export const MannualCaseCreationModal = (props: Props) => {
 
   let messageLoading: CloseMessage | undefined;
 
-  const existingCaseIds = useQuery<CasesUsersUserIdResponse>(
-    CASES_USERS_CASEIDS({ userId: props.userId, caseType: 'MANUAL' }),
-    async () => await api.getCaseIds({ userId: props.userId, filterCaseTypes: 'MANUAL' }),
-  );
+  const existingCaseIds = useCaseIds({ userId: props.userId, caseType: 'MANUAL' });
 
   const createMutation = useMutation(
     async (values: FormValues) => {

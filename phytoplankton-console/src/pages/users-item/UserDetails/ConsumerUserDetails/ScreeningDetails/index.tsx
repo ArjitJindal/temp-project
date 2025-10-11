@@ -5,7 +5,11 @@ import s from './index.module.less';
 import { consolidatePEPStatus, expandPEPStatus } from './PepStatus/utils';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
-import { useQuery } from '@/utils/queries/hooks';
+import {
+  useUserScreeningStatus,
+  usePostUserApprovalProposalMutation,
+  useUpdateConsumerUserMutation,
+} from '@/hooks/api/users';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import {
   PepFormValues,
@@ -17,7 +21,6 @@ import Modal from '@/components/library/Modal';
 import EditIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import Form from '@/components/library/Form';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Confirm from '@/components/utils/Confirm';
@@ -26,7 +29,7 @@ import {
   WorkflowChangesStrategy,
   useUserFieldChangesPendingApprovals,
   useUserFieldChangesStrategy,
-} from '@/utils/api/workflows';
+} from '@/hooks/api/workflows';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 
@@ -86,14 +89,9 @@ export default function ScreeningDetails(props: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const proposalChangesStrategyRes = useUserFieldChangesStrategy('PepStatus');
 
-  const api = useApi();
   const formRef = useRef(null);
 
-  const ongoingSanctionsScreeningQueryResult = useQuery(['user-status', user.userId], async () => {
-    return await api.getUserScreeningStatus({
-      userId: user.userId,
-    });
-  });
+  const ongoingSanctionsScreeningQueryResult = useUserScreeningStatus(user.userId);
 
   // reading data from local storage, adhock fix as screening detail updates go through CDC,
   // there is delay in updating the console, so we are optimistically updating the ui state
@@ -118,6 +116,9 @@ export default function ScreeningDetails(props: Props) {
   };
 
   const queryClient = useQueryClient();
+  const postApprovalProposal = usePostUserApprovalProposalMutation();
+  const updateConsumerUser = useUpdateConsumerUserMutation();
+
   const userUpdateMutation = useMutation<
     FormValues,
     unknown,
@@ -144,9 +145,9 @@ export default function ScreeningDetails(props: Props) {
         if (changesStrategy === 'APPROVE' && !comment) {
           throw new Error(`Comment is required here`);
         }
-        await api.postUserApprovalProposal({
+        await postApprovalProposal.mutateAsync({
           userId: user.userId,
-          UserApprovalUpdateRequest: {
+          changes: {
             proposedChanges: [
               {
                 field: 'PepStatus',
@@ -159,10 +160,7 @@ export default function ScreeningDetails(props: Props) {
         await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
         await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));
       } else {
-        await api.postConsumerUsersUserId({
-          userId: user.userId,
-          UserUpdateRequest: updates,
-        });
+        await updateConsumerUser.mutateAsync({ userId: user.userId, updates });
       }
       return formValues;
     },

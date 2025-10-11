@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
 import { DashboardTeamStatsItem } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 
 const helper = new ColumnHelper<DashboardTeamStatsItem>();

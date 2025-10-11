@@ -8,16 +8,16 @@ import { COLORS_V2_ALERT_CRITICAL } from '../../../../ui/colors';
 import Checkbox from '../../../../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
-import { useQuery } from '@/utils/queries/hooks';
-import {
-  TENANT_SETTINGS_UNMASK,
-  TENANTS_LIST,
-  TENANTS_DELETION_DATA,
-  SECONDARY_QUEUE_TENANTS,
-} from '@/utils/queries/keys';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
+import {
+  useSecondaryQueueTenants,
+  useTenantsList,
+  useTenantsDeletionData,
+} from '@/hooks/api/tenants';
+import { useSARReportCountries } from '@/hooks/api/reports';
+import { useTenantSettingsUnmask } from '@/hooks/api/settings';
 import Button from '@/components/library/Button';
 import EyeOutlined from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import Tooltip from '@/components/library/Tooltip';
@@ -46,7 +46,6 @@ import { isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { CRM_INTEGRATION_NAMESS } from '@/apis/models-custom/CrmIntegrationNames';
-import { useSARReportCountries } from '@/components/Sar/utils';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CHATBOT_NAMESS } from '@/apis/models-custom/ChatbotNames';
 
@@ -307,10 +306,7 @@ export default function SuperAdminPanel() {
     failedToDeleteContainer: true,
   });
   const [downloadFeatureLoading, setDownloadFeatureState] = useState(false);
-  const secondaryQueueTenants = useQuery(SECONDARY_QUEUE_TENANTS(), async () => {
-    const tenants = await api.getTenantsSecondaryQueueTenants();
-    return tenants;
-  });
+  const secondaryQueueTenants = useSecondaryQueueTenants();
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
   const hasExternalSanctionsProvider =
     features?.includes('ACURIS') ||
@@ -335,19 +331,10 @@ export default function SuperAdminPanel() {
 
   const user = useAuth0User();
   const api = useApi();
-  const queryResult = useQuery(TENANTS_LIST(), () => api.getTenantsList(), {
-    enabled: isModalVisible,
-  });
+  const queryResult = useTenantsList({ enabled: isModalVisible });
 
   // Query to fetch settings with unmasked Dow Jones password when needed
-  const settingsWithUnmaskQuery = useQuery(
-    TENANT_SETTINGS_UNMASK(unmaskDowJonesPassword),
-    async () => await api.getTenantsSettings({ unmaskDowJonesPassword }),
-    {
-      enabled: unmaskDowJonesPassword,
-      retry: false,
-    },
-  );
+  const settingsWithUnmaskQuery = useTenantSettingsUnmask(unmaskDowJonesPassword);
   const tenants: Array<Tenant & { whitelabel?: { host: string; name: string } }> = useMemo(() => {
     if (isSuccess(queryResult.data)) {
       return (
@@ -469,9 +456,7 @@ export default function SuperAdminPanel() {
     document.body.removeChild(link);
   };
 
-  const tenantsDeletionQueryResult = useQuery(TENANTS_DELETION_DATA(), async () => {
-    return await api.getTenantsDeletionData();
-  });
+  const tenantsDeletionQueryResult = useTenantsDeletionData();
 
   const { tenantsDeletedRecently, tenantsFailedToDelete, tenantsMarkedForDelete } = useMemo(() => {
     if (isSuccess(tenantsDeletionQueryResult.data)) {

@@ -1,62 +1,98 @@
-import { useState } from 'react';
-import { uniq } from 'lodash';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useDebounce } from 'ahooks';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Value } from '../types';
 import s from './style.module.less';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
-import { getOr, isLoading } from '@/utils/asyncResource';
-import Button from '@/components/library/Button';
+import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Select from '@/components/library/Select';
+import { useTransactionsUniques } from '@/hooks/api/transactions';
 import { TransactionsUniquesField } from '@/apis';
 
 interface Props {
   initialState: Value;
-  onCancel: () => void;
-  onConfirm: (value: Value) => void;
   uniqueType: TransactionsUniquesField;
+  onConfirm: (newState: Value) => void;
   defaults?: string[];
+  onCancel: () => void;
 }
 
 export default function PopupContent(props: Props) {
-  const { initialState, onCancel, onConfirm, uniqueType, defaults = [] } = props;
+  const { initialState, uniqueType, onConfirm, defaults, onCancel } = props;
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, { wait: 500 });
 
-  const api = useApi();
-  const result = useQuery(TRANSACTIONS_UNIQUES(uniqueType), async () => {
-    return await api.getTransactionsUniques({
-      field: uniqueType,
-    });
+  const keysRes = useTransactionsUniques('TAGS_KEY', undefined, {
+    enabled: uniqueType === 'TAGS_VALUE',
   });
+  const valuesRes = useTransactionsUniques(
+    uniqueType === 'TAGS_VALUE' ? 'TAGS_VALUE' : (uniqueType as TransactionsUniquesField),
+    { filter: uniqueType === 'TAGS_VALUE' ? debouncedSearchTerm : undefined },
+    {
+      enabled: uniqueType !== 'TAGS_VALUE' || !!debouncedSearchTerm,
+    },
+  );
 
-  const [value, setValue] = useState(initialState.uniques);
+  const [selectedKey, setSelectedKey] = useState<string | undefined>(undefined);
+  const [selectedValues, setSelectedValues] = useState<string[] | undefined>(
+    initialState.uniques ?? defaults,
+  );
+
+  useEffect(() => {
+    if (isSuccess(valuesRes.data) && !selectedValues?.length && defaults?.length) {
+      setSelectedValues(defaults);
+    }
+  }, [valuesRes.data, defaults, selectedValues]);
+
+  const keyOptions = useMemo(() => {
+    const data = getOr<string[]>(keysRes.data, []);
+    return data.map((v) => ({ label: humanizeAuto(v), value: v }));
+  }, [keysRes.data]);
+
+  const valueOptions = useMemo(() => {
+    const data = getOr<string[]>(valuesRes.data, []);
+    const merged = Array.from(
+      new Set([...(data ?? []), ...((defaults as string[] | undefined) ?? [])]),
+    );
+    return merged.map((v) => ({ label: humanizeAuto(v), value: v }));
+  }, [valuesRes.data, defaults]);
 
   return (
     <div className={s.root}>
-      <Select
-        allowClear={true}
-        isLoading={isLoading(result.data)}
-        options={uniq(getOr(result.data, []).concat(defaults))
-          .filter((key) => key?.length > 0)
-          .map((key) => ({ label: humanizeAuto(key), value: key }))}
-        mode="MULTIPLE_DYNAMIC"
-        value={value}
-        onChange={(value) => {
-          setValue(value);
-        }}
-      />
-      <div className={s.footer}>
-        <Button
-          type="PRIMARY"
-          onClick={() => {
-            onConfirm({ uniques: value });
-          }}
-        >
-          Confirm
-        </Button>
-        <Button onClick={onCancel} type={'SECONDARY'}>
+      {uniqueType === 'TAGS_VALUE' && (
+        <div className={s.contentItem}>
+          <div className={s.label}>Tag key</div>
+          <Select<string>
+            mode="SINGLE"
+            placeholder="Select tag key"
+            options={keyOptions}
+            value={selectedKey}
+            onChange={(val) => setSelectedKey(val ?? undefined)}
+          />
+        </div>
+      )}
+      <div className={s.contentItem}>
+        <div className={s.label}>Value</div>
+        <Select<string>
+          mode="MULTIPLE_DYNAMIC"
+          placeholder="Search value"
+          options={valueOptions}
+          value={selectedValues}
+          onChange={(vals) => setSelectedValues(vals ?? undefined)}
+          onSearch={setSearchTerm}
+          isLoading={isLoading(valuesRes.data)}
+        />
+      </div>
+      <div className={s.actions}>
+        <button className={s.cancel} onClick={onCancel}>
           Cancel
-        </Button>
+        </button>
+        <button
+          className={s.confirm}
+          onClick={() => onConfirm({ uniques: selectedValues })}
+          disabled={!selectedValues || selectedValues.length === 0}
+        >
+          Apply
+        </button>
       </div>
     </div>
   );

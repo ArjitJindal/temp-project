@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import SanctionDetailSelect from '../SanctionDetailSelect';
 import TransactionsTable, {
@@ -6,21 +6,12 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
-import { DEFAULT_PAGINATION_VIEW, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useCursorQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { useAlertTransactionList } from '@/hooks/api/alerts';
+import type { TransactionTableItem } from '@/apis';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
-import { dayjs } from '@/utils/dayjs';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
-import {
-  Alert,
-  CurrencyCode,
-  PaymentMethod,
-  SanctionsDetails,
-  SanctionsDetailsEntityType,
-  TransactionTableItem,
-} from '@/apis';
+import { Alert, PaymentMethod, SanctionsDetails, SanctionsDetailsEntityType } from '@/apis';
 import { SelectionAction } from '@/components/library/Table/types';
 
 interface Props {
@@ -65,8 +56,6 @@ export default function TransactionsTab(props: Props) {
     PAYMENT_BENEFICIARY_NAME: ['ACH'],
   };
 
-  const api = useApi();
-
   const filterSanctionsHitIds = sanctionsDetailsFilter
     ? sanctionsDetailsFilter.sanctionHitIds
     : undefined;
@@ -87,57 +76,10 @@ export default function TransactionsTab(props: Props) {
       originMethodFilter.push(...methods);
     }
   }
-  const transactionsResponse = useCursorQuery(
-    ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', {
-      ...params,
-      filterSanctionsHitId,
-      filterPaymentMethodId,
-    }),
-    async ({ from, view }) => {
-      if (alert.alertId == null) {
-        throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
-      }
-      const [sortField, sortOrder] = params.sort[0] ?? [];
-
-      return await api.getAlertTransactionList({
-        ...FIXED_API_PARAMS,
-        ...params,
-        alertId: alert.alertId,
-        start: from || params.from,
-        page: params.page,
-        pageSize: params.pageSize,
-        view: view ?? DEFAULT_PAGINATION_VIEW,
-        userId: params.userId,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        filterOriginPaymentMethodId: params.originPaymentMethodId,
-        filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
-        filterTransactionId: params.transactionId,
-        filterOriginCurrencies: params.originCurrenciesFilter as CurrencyCode[],
-        filterDestinationCurrencies: params.destinationCurrenciesFilter as CurrencyCode[],
-        filterOriginPaymentMethods:
-          alert.ruleId === 'R-169' && originMethodFilter.length > 0
-            ? originMethodFilter
-            : params.originMethodFilter
-            ? [params.originMethodFilter]
-            : undefined,
-        filterDestinationPaymentMethods:
-          alert.ruleId === 'R-169' && destinationMethodFilter.length > 0
-            ? destinationMethodFilter
-            : params.destinationMethodFilter
-            ? [params.destinationMethodFilter]
-            : undefined,
-        filterTransactionTypes: params.transactionTypes,
-        beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
-        afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
-        filterDestinationCountries: params['destinationAmountDetails.country'],
-        filterOriginCountries: params['originAmountDetails.country'],
-        filterSanctionsHitId: filterSanctionsHitId,
-        filterPaymentDetailName: params.filterPaymentDetailName,
-        filterPaymentMethodId: filterPaymentMethodId,
-        filterReference: params.reference,
-      });
-    },
+  const transactionsResponse = useAlertTransactionList(
+    alert.alertId,
+    { ...params, filterSanctionsHitId, filterPaymentMethodId },
+    { fixedParams: FIXED_API_PARAMS, enabled: !!alert.alertId },
   );
 
   return (

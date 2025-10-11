@@ -16,7 +16,6 @@ import {
   RuleInstance,
   RuleLabels,
   RuleNature,
-  RuleRunMode,
   RuleType,
   TenantSettings,
   TriggersOnHit,
@@ -30,8 +29,6 @@ import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { GET_RULE_INSTANCE, GET_RULE_INSTANCES, RULES } from '@/utils/queries/keys';
 import { makeUrl } from '@/utils/routing';
-import { CommonParams } from '@/components/library/Table/types';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -686,69 +683,4 @@ export const getRuleInstanceDescription = (
 
 export function isShadowRule(ruleInstance: RuleInstance) {
   return ruleInstance.ruleRunMode === 'SHADOW';
-}
-
-type RulesResultInput = {
-  params: CommonParams;
-  ruleMode?: RuleRunMode;
-  focusId?: string;
-  onViewRule?: (ruleInstance: RuleInstance) => void;
-};
-
-export function useRulesResults({ params, ruleMode, focusId, onViewRule }: RulesResultInput) {
-  const api = useApi();
-  const rulesResult = usePaginatedQuery(
-    GET_RULE_INSTANCES({ ruleMode, params }),
-    async (paginationParams) => {
-      const ruleInstances = await api.getRuleInstances({ ...paginationParams, mode: ruleMode });
-      if (focusId) {
-        const ruleInstance = ruleInstances.find((r) => r.id === focusId);
-        if (ruleInstance) {
-          onViewRule?.(ruleInstance);
-        }
-      }
-
-      // TODO: To be refactored by FR-2677
-      const result = [...ruleInstances];
-      if (params.sort.length > 0) {
-        const [key, order] = params.sort[0];
-        result.sort((a, b) => {
-          let result = 0;
-          if (key === 'ruleId') {
-            result =
-              (a.ruleId ? parseInt(a.ruleId.split('-')[1]) : 0) -
-              (b.ruleId ? parseInt(b.ruleId.split('-')[1]) : 0);
-          } else if (key === 'hitCount') {
-            result =
-              (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
-              (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0);
-          } else if (key === 'createdAt') {
-            result =
-              a.createdAt !== undefined && b.createdAt !== undefined
-                ? a.createdAt - b.createdAt
-                : -1;
-          } else if (key === 'updatedAt') {
-            result =
-              a.updatedAt !== undefined && b.updatedAt !== undefined
-                ? a.updatedAt - b.updatedAt
-                : -1;
-          } else if (key === 'queueId') {
-            result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
-          } else {
-            result = a[key] > b[key] ? 1 : -1;
-          }
-
-          result *= order === 'descend' ? -1 : 1;
-          return result;
-        });
-      }
-
-      return {
-        items: result,
-        total: result.length,
-      };
-    },
-  );
-
-  return rulesResult;
 }

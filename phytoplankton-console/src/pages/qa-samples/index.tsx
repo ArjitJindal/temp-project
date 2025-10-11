@@ -5,7 +5,6 @@ import {
 } from '../case-management/QA/utils';
 import { QAModal } from '../case-management/QA/Modal';
 import s from './index.module.less';
-import { useApi } from '@/api';
 import { AlertsQaSampling, Priority } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME, PRIORITY, QA_SAMPLE_ID } from '@/components/library/Table/standardDataTypes';
@@ -13,8 +12,7 @@ import { AllParams, TableColumn } from '@/components/library/Table/types';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { Authorized } from '@/components/utils/Authorized';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { ALERT_QA_SAMPLING } from '@/utils/queries/keys';
+import { useQaSamples } from '@/hooks/api/alerts';
 import { useUsers } from '@/utils/user-utils';
 import AccountTag from '@/components/AccountTag';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
@@ -36,7 +34,6 @@ interface TableParams {
 }
 
 const QASamplesTable = () => {
-  const api = useApi();
   const [users] = useUsers();
   const [params, onChangeParams] = useState<AllParams<TableParams>>({
     pageSize: 20,
@@ -44,27 +41,7 @@ const QASamplesTable = () => {
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const queryResults = usePaginatedQuery(
-    ALERT_QA_SAMPLING({ ...params }),
-    async (paginationParams) => {
-      const data = await api.getAlertsQaSampling({
-        ...paginationParams,
-        sortField: params.sort?.[0]?.[0],
-        sortOrder: params.sort?.[0]?.[1] ?? 'descend',
-        filterSampleName: params.samplingName,
-        filterSampleId: params.samplingId,
-        filterPriority: params.priority,
-        filterCreatedById: params.createdBy,
-        filterCreatedBeforeTimestamp: params.createdAt?.[1],
-        filterCreatedAfterTimestamp: params.createdAt?.[0],
-      });
-
-      return {
-        items: data.data,
-        total: data.total,
-      };
-    },
-  );
+  const queryResults = useQaSamples(params);
 
   const deleteMutation = useDeleteAlertsSamplingMutation(
     () => {},

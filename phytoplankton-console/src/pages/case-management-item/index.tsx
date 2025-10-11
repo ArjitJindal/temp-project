@@ -3,20 +3,20 @@ import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from './components/Header';
 import { Authorized } from '@/components/utils/Authorized';
-import { Case, Comment } from '@/apis';
+import { Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
-import { useNewUpdatesMessage, useQuery } from '@/utils/queries/hooks';
-import { ALERT_LIST, CASE_AUDIT_LOGS_LIST, CASES_ITEM } from '@/utils/queries/keys';
+import { useNewUpdatesMessage } from '@/utils/queries/hooks';
+import { ALERT_LIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
+import { useCase } from '@/hooks/api/cases';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { isSuccess } from '@/utils/asyncResource';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
-import { notFound } from '@/utils/errors';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -32,16 +32,7 @@ function CaseManagementItemPage() {
   const updateAlertQueryData = useUpdateAlertQueryData();
   const updateCaseQueryData = useUpdateCaseQueryData();
   const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
-  const queryResults = useQuery(CASES_ITEM(caseId), async (): Promise<Case> => {
-    try {
-      return await api.getCase({ caseId });
-    } catch (error: any) {
-      if (error?.code === 404) {
-        notFound(`Case with ID "${caseId}" not found`);
-      }
-      throw error;
-    }
-  });
+  const queryResults = useCase(caseId);
 
   const caseItemRes = queryResults.data;
 

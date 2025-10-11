@@ -8,24 +8,19 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
+import { useTenantSettings } from '@/hooks/api/tenant-settings';
+import { useUserApprovalWorkflows } from '@/hooks/api/workflows';
 import { message } from '@/components/library/Message';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import Button from '@/components/library/Button';
 import {
   CreateWorkflowType,
-  TenantSettings,
   UserUpdateApprovalWorkflow,
   WorkflowSettingsUserApprovalWorkflows,
 } from '@/apis';
 import { formatRoleName } from '@/pages/accounts/utils';
-import { useQuery } from '@/utils/queries/hooks';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import {
-  SETTINGS,
-  USER_CHANGES_PROPOSALS,
-  WORKFLOWS_ITEMS,
-  WORKFLOWS_ITEMS_ALL,
-} from '@/utils/queries/keys';
+import { SETTINGS, USER_CHANGES_PROPOSALS, WORKFLOWS_ITEMS_ALL } from '@/utils/queries/keys';
 import { all, AsyncResource, getOr, isLoading, loading, map, success } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
@@ -383,11 +378,7 @@ function SelectWrapper(props: { children: React.ReactNode }) {
 }
 
 export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
-  const api = useApi();
-
-  const { data: tenantSettingsRes } = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
-    return await api.getTenantsSettings();
-  });
+  const { data: tenantSettingsRes } = useTenantSettings();
 
   const fieldsToWorkflowIdRes = map(
     tenantSettingsRes,
@@ -407,23 +398,7 @@ export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
 
   const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
 
-  const { data: workflowsRes } = useQuery(
-    WORKFLOWS_ITEMS('user-update-approval', workflowIds),
-    async (): Promise<UserUpdateApprovalWorkflow[]> => {
-      return await Promise.all(
-        workflowIds.map(async (workflowId) => {
-          const workflow = await api.getWorkflowById({
-            workflowType: 'user-update-approval',
-            workflowId: workflowId,
-          });
-          return workflow as unknown as UserUpdateApprovalWorkflow;
-        }),
-      );
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
+  const { data: workflowsRes } = useUserApprovalWorkflows(workflowIds, isApprovalWorkflowsEnabled);
 
   return useMemo(() => {
     if (!isApprovalWorkflowsEnabled) {

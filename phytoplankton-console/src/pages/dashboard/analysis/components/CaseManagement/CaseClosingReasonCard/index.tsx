@@ -26,10 +26,8 @@ import {
 import ScopeSelector from '@/pages/dashboard/analysis/components/CaseManagement/CaseClosingReasonCard/ScopeSelector';
 import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/apis';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import Widget from '@/components/library/Widget';
-import { CLOSING_REASON_DISTRIBUTION } from '@/utils/queries/keys';
+import { useClosingReasonDistribution } from '@/hooks/api/dashboard';
 import TreemapChart, { TreemapData } from '@/components/charts/TreemapChart';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
@@ -92,7 +90,6 @@ const CaseClosingReasonCard = (props: Props) => {
     'dashboard-closing-reason-active-tab',
     'CASE',
   );
-  const api = useApi();
   const settings = useSettings();
 
   const selectedSection = useMemo(() => {
@@ -110,31 +107,26 @@ const CaseClosingReasonCard = (props: Props) => {
     startTimestamp: dateRange?.startTimestamp,
     endTimestamp: dateRange?.endTimestamp,
   };
-  const queryResult = useQuery(CLOSING_REASON_DISTRIBUTION(selectedSection, params), async () => {
-    const response = await api.getDashboardStatsClosingReasonDistributionStats(params);
-    return response;
-  });
+  const queryResult = useClosingReasonDistribution(selectedSection as any, params);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
-  const dataResource = map(
-    queryResult.data,
-    ({ closingReasonsData }): TreemapData<ClosingReasons> => {
-      const data = closingReasonsData
-        ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
-          if (child.reason) {
-            return {
-              name: child.reason,
-              value: child.value ?? 0,
-            };
-          }
-          return null;
-        })
-        .filter(
-          (child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData | null) =>
-            child != null,
-        ) as TreemapData<ClosingReasons>;
-      return data;
-    },
-  );
+  const dataResource = map(queryResult.data as any, (value: any): TreemapData<ClosingReasons> => {
+    const closingReasonsData = value?.closingReasonsData ?? [];
+    const data = closingReasonsData
+      ?.map((child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData) => {
+        if (child.reason) {
+          return {
+            name: child.reason,
+            value: child.value ?? 0,
+          };
+        }
+        return null;
+      })
+      .filter(
+        (child: DashboardStatsClosingReasonDistributionStatsClosingReasonsData | null) =>
+          child != null,
+      ) as TreemapData<ClosingReasons>;
+    return data;
+  });
 
   return (
     <div ref={pdfRef}>
@@ -151,7 +143,7 @@ const CaseClosingReasonCard = (props: Props) => {
               )}`,
               data: exportDataForTreemaps(
                 `${selectedSection.toLowerCase()}ClosingReason`,
-                getOr(dataResource, []),
+                getOr(dataResource, []) as any as { name: string | null; value: number }[],
               ),
               pdfRef: pdfRef,
               tableTitle: `Distribution by ${selectedSection.toLowerCase()} closing reason`,

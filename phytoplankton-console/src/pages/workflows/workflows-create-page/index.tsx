@@ -9,7 +9,6 @@ import Breadcrumbs from '@/components/library/Breadcrumbs';
 import Button from '@/components/library/Button';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
-import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { isLoading, isSuccess, success } from '@/utils/asyncResource';
 import { Template, TEMPLATE_GROUPS } from '@/pages/workflows/workflows-page/workflows-library/data';
@@ -17,7 +16,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { parseWorkflowType } from '@/utils/api/workflows';
+import { parseWorkflowType, useCreateWorkflow } from '@/hooks/api/workflows';
 
 export default function WorkflowsCreatePage() {
   const { type, templateId } = useParams<'type' | 'templateId'>() as {
@@ -44,7 +43,7 @@ export default function WorkflowsCreatePage() {
 
   const navigate = useNavigate();
 
-  const api = useApi();
+  const createWorkflow = useCreateWorkflow(workflowType);
 
   // Keep state wrapped in an AsyncResource
   const [state, dispatch] = useReducerWrapper(
@@ -55,37 +54,10 @@ export default function WorkflowsCreatePage() {
     ),
   );
 
-  const saveWorkflowMutation = useMutation<
-    unknown,
-    unknown,
-    {
-      state: WorkflowBuilderState;
-    }
-  >(
+  const saveWorkflowMutation = useMutation<unknown, unknown, { state: WorkflowBuilderState }>(
     async ({ state }) => {
       const serialized = serialize(state);
-      await api.createWorkflow({
-        workflowType: workflowType,
-        CreateWorkflowType:
-          workflowType === 'alert'
-            ? {
-                alertWorkflow: {
-                  ...serialized,
-                  name: 'not_required_for_creation',
-                  description: 'not_required_for_creation',
-                  enabled: true,
-                },
-              }
-            : {
-                caseWorkflow: {
-                  ...serialized,
-                  name: 'not_required_for_creation',
-                  description: 'not_required_for_creation',
-                  enabled: true,
-                  autoClose: false, // todo: fill
-                },
-              },
-      });
+      await createWorkflow.mutateAsync(serialized);
     },
     {
       onError: (error) => {

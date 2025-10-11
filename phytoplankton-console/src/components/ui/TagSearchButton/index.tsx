@@ -3,7 +3,7 @@ import PopupContent from './PopupContent';
 import { Value } from './types';
 import PriceTagIcon from '@/components/ui/icons/Remix/finance/price-tag-line.react.svg';
 import QuickFilter from '@/components/library/QuickFilter';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 
 export { Value };
 

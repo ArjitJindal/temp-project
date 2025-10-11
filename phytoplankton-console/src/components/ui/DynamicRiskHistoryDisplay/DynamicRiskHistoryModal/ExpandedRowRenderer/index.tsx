@@ -4,16 +4,13 @@ import {
   USER_RISK_PARAMETERS,
 } from '@flagright/lib/utils/risk-parameters';
 import { isNotArsChangeTxId } from '@flagright/lib/utils/risk';
-import { keyBy } from 'lodash';
 import s from './index.module.less';
-import { useApi } from '@/api';
 import { ExtendedDrsScore, RiskLevel } from '@/apis';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { NUMBER, RISK_LEVEL, STRING } from '@/components/library/Table/standardDataTypes';
 import { H4 } from '@/components/ui/Typography';
-import { useQuery } from '@/utils/queries/hooks';
-import { RISK_FACTOR_LOGIC, RISK_FACTORS_V8 } from '@/utils/queries/keys';
+import { useAllRiskFactorsMap, useRiskFactorLogic } from '@/hooks/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import LogicDisplay from '@/components/ui/LogicDisplay';
@@ -39,19 +36,7 @@ export type CoustomRiskFactorLogicProps = {
 };
 
 function CustomRiskFactorLogic(props: CoustomRiskFactorLogicProps) {
-  const api = useApi();
-
-  const riskFactorLogic = useQuery(
-    RISK_FACTOR_LOGIC(props.riskFactorId, props.versionId, props.riskLevel),
-    async () => {
-      const data = await api.riskFactorLogic({
-        riskFactorId: props.riskFactorId,
-        versionId: props.versionId,
-        riskLevel: props.riskLevel,
-      });
-      return data;
-    },
-  );
+  const riskFactorLogic = useRiskFactorLogic(props.riskFactorId, props.versionId, props.riskLevel);
 
   return (
     <Tooltip
@@ -92,7 +77,6 @@ function CustomRiskFactorLogic(props: CoustomRiskFactorLogicProps) {
 
 function ExpandedRowRenderer(props: ExtendedDrsScore) {
   const label = isNotArsChangeTxId(props.transactionId) ? 'KRS' : 'TRS';
-  const api = useApi();
   const columnHelper = new ColumnHelper<TableItem>();
   const columns = columnHelper.list([
     columnHelper.display({
@@ -139,10 +123,7 @@ function ExpandedRowRenderer(props: ExtendedDrsScore) {
       defaultWidth: 200,
     }),
   ]);
-  const factorMapResult = useQuery(RISK_FACTORS_V8('ALL'), async () => {
-    const data = await api.getAllRiskFactors({ includeV2: true });
-    return keyBy(data, 'id');
-  });
+  const factorMapResult = useAllRiskFactorsMap();
   const defaultFactorsDataComponents =
     props.components?.map((val): TableItem => {
       const dataSource =

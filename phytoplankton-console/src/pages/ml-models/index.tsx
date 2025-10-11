@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useMachineLearningModelsPaginated } from '@/hooks/api/rules';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { CommonParams, TableColumn, TableRefType } from '@/components/library/Table/types';
@@ -13,7 +13,6 @@ import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import Tag from '@/components/library/Tag';
 import Tooltip from '@/components/library/Tooltip';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
 import { useAuth0User, useHasMinimumPermission } from '@/utils/user-utils';
@@ -31,20 +30,7 @@ export const MlModelsPage = () => {
   });
   const auth0User = useAuth0User();
 
-  const queryResult = usePaginatedQuery(
-    MACHINE_LEARNING_MODELS(params),
-    async (_paginationParams) => {
-      const result = await api.getRuleMlModels({
-        modelId: params.modelId,
-        modelType: params.modelType,
-        modelName: params.modelName,
-      });
-      return {
-        items: result,
-        total: result.length,
-      };
-    },
-  );
+  const queryResult = useMachineLearningModelsPaginated(params);
 
   const updateModelMutation = useMutation(
     async (mlModel: RuleMLModel) => {

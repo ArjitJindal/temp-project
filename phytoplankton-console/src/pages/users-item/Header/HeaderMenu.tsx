@@ -15,14 +15,14 @@ import {
   RiskLevel,
   RiskScoreComponent,
   UserTag,
+  DrsScore,
+  KrsScore,
 } from '@/apis';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { USERS_ITEM_RISKS_DRS, USERS_ITEM_RISKS_KRS } from '@/utils/queries/keys';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { AsyncResource, all, map } from '@/utils/asyncResource';
+import { useUserDrs, useUserKrs } from '@/hooks/api';
+import { all, getOr, map } from '@/utils/asyncResource';
 import { sortByDate } from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CommentType } from '@/utils/user-utils';
@@ -53,24 +53,23 @@ export const HeaderMenu = (props: Props) => {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskLevelEnabled = useFeatureEnabled('RISK_LEVELS');
   const riskClassificationValues = useRiskClassificationScores();
-  const api = useApi();
   const settings = useSettings();
-  const drsQueryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => {
-    return isRiskScoringEnabled ? api.getDrsValue({ userId }) : null;
-  });
-  const kycQueryResult = useQuery(USERS_ITEM_RISKS_KRS(userId), () => {
-    return isRiskScoringEnabled ? api.getKrsValue({ userId }) : null;
-  });
-  const drsRiskScore: AsyncResource<RiskScore | null> = useMemo(
+  const drsQueryResult = useUserDrs(userId, { enabled: isRiskScoringEnabled });
+  const kycQueryResult = useUserKrs(userId, { enabled: isRiskScoringEnabled });
+
+  const drsRiskScore = useMemo(
     () =>
       map(drsQueryResult.data, (v) => {
-        const values = v
-          ? v.map((x) => ({
+        const list: DrsScore[] = Array.isArray(v)
+          ? v
+          : getOr(drsQueryResult.data as any, [] as DrsScore[]);
+        const values = list.length
+          ? list.map((x) => ({
               score: x.drsScore,
-              manualRiskLevel: x?.manualRiskLevel,
+              manualRiskLevel: (x as any)?.manualRiskLevel,
               createdAt: x.createdAt,
               components: x.components,
-              riskLevel: x.derivedRiskLevel,
+              riskLevel: (x as any).derivedRiskLevel,
             }))
           : null;
         return values ? sortByDate(values)[values.length - 1] : null;
@@ -78,18 +77,19 @@ export const HeaderMenu = (props: Props) => {
     [drsQueryResult.data],
   );
 
-  const kycRiskScore: AsyncResource<RiskScore | null> = useMemo(
+  const kycRiskScore = useMemo(
     () =>
-      map(kycQueryResult.data, (v) =>
-        v
+      map(kycQueryResult.data, (v) => {
+        const k: KrsScore | null = v as any;
+        return k
           ? {
-              score: v.krsScore,
-              riskLevel: v.riskLevel,
-              components: v.components,
-              createdAt: v.createdAt,
+              score: k.krsScore,
+              riskLevel: k.riskLevel,
+              components: k.components,
+              createdAt: k.createdAt,
             }
-          : null,
-      ),
+          : null;
+      }),
     [kycQueryResult.data],
   );
 

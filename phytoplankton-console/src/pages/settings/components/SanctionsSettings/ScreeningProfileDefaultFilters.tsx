@@ -4,8 +4,7 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import s from './styles.module.less';
 import { getSanctionsSearchTypeOptions } from './utils';
 import SettingsCard from '@/components/library/SettingsCard';
-import { useQuery } from '@/utils/queries/hooks';
-import { DEFAULT_MANUAL_SCREENING_FILTERS, SCREENING_PROFILES } from '@/utils/queries/keys';
+import { useDefaultManualScreeningFilters, useScreeningProfiles } from '@/hooks/api';
 import { useApi } from '@/api';
 import Filter from '@/components/library/Filter';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -40,53 +39,9 @@ const ScreeningProfileDefaultFilters = () => {
     );
   }, [settings]);
 
-  const screeningProfileResult = useQuery(
-    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getScreeningProfiles({
-          filterScreeningProfileStatus: 'ENABLED',
-        });
-        const searchProfiles = response && response.items ? response.items : [];
-        return {
-          items: searchProfiles,
-          total: searchProfiles.length,
-        };
-      } catch (error) {
-        console.error(error);
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-  );
+  const screeningProfileResult = useScreeningProfiles({ filterScreeningProfileStatus: 'ENABLED' });
 
-  const defaultManualScreeningFilters = useQuery(
-    DEFAULT_MANUAL_SCREENING_FILTERS(),
-    async () => {
-      try {
-        const response = await api.getDefaultManualScreeningFilters();
-        if (response) {
-          const updatedParams: ScreeningProfileDefaultFiltersParams = {
-            yearOfBirth: response.yearOfBirth,
-            fuzziness: response.fuzziness,
-            nationality: response.nationality,
-            documentId: response.documentId,
-            types: response.types,
-          };
-          setParams(updatedParams);
-        }
-        return response;
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    {
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
-    },
-  );
+  const defaultManualScreeningFilters = useDefaultManualScreeningFilters({ enabled: true });
 
   const handleSave = () => {
     setIsSaving(true);

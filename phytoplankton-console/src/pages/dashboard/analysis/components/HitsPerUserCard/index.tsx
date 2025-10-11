@@ -10,12 +10,12 @@ import { Dayjs } from '@/utils/dayjs';
 import UserLink from '@/components/UserLink';
 import { getUserLink } from '@/utils/api/users';
 import { TableColumn } from '@/components/library/Table/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getCurrentDomain } from '@/utils/routing';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsHitsPerUserData } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {

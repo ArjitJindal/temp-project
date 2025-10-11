@@ -5,7 +5,6 @@ import { useLocation } from 'react-router';
 import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
-import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import SlaStatus from '../components/SlaStatus';
@@ -28,7 +27,11 @@ import {
   Account,
   Alert,
 } from '@/apis';
-import { useApi } from '@/api';
+import {
+  useAlertsAssignmentUpdate,
+  useAlertsReviewAssignmentUpdate,
+  useAlertQuery,
+} from '@/hooks/api/alerts';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
@@ -41,7 +44,7 @@ import {
 } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, makeUrl } from '@/utils/routing';
@@ -92,12 +95,10 @@ import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/Invest
 import { getOr, map } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { denseArray, neverReturn } from '@/utils/lang';
-import { useRuleQueues } from '@/components/rules/util';
+import { useRuleQueues } from '@/hooks/api';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
-import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import {
@@ -106,6 +107,7 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
+import { useSlaPoliciesPaginated } from '@/hooks/api/sla';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -285,7 +287,8 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const clickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const [qaMode] = useQaMode();
   const qaEnabled = useQaEnabled();
-  const api = useApi();
+  const alertsAssignmentUpdate = useAlertsAssignmentUpdate();
+  const alertsReviewAssignmentUpdate = useAlertsReviewAssignmentUpdate();
   const user = useAuth0User();
   const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const userAccount = users[user.userId];
@@ -329,12 +332,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
-      await api.alertsAssignment({
-        AlertsAssignmentsUpdateRequest: {
-          alertIds,
-          assignments,
-        },
-      });
+      await alertsAssignmentUpdate.mutateAsync({ alertIds, assignments });
     },
     {
       onSuccess: () => {
@@ -353,12 +351,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     AlertsReviewAssignmentsUpdateRequest
   >(
     async ({ alertIds, reviewAssignments }) => {
-      await api.alertsReviewAssignment({
-        AlertsReviewAssignmentsUpdateRequest: {
-          alertIds,
-          reviewAssignments,
-        },
-      });
+      await alertsReviewAssignmentUpdate.mutateAsync({ alertIds, reviewAssignments });
     },
     {
       onSuccess: () => {
@@ -384,11 +377,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     actionRef.current?.reload();
   }, []);
 
-  const slaPoliciesQueryResult = useQuery(SLA_POLICY_LIST(), async () => {
-    return await api.getSlaPolicies({
-      pageSize: 100,
-    });
-  });
+  const slaPoliciesQueryResult = useSlaPoliciesPaginated({ pageSize: 100 }, {});
   const slaPolicies = getOr(slaPoliciesQueryResult.data, {
     items: [],
     total: 0,

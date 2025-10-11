@@ -3,9 +3,7 @@ import Breadcrumbs, { BreadcrumbItem } from 'src/components/library/Breadcrumbs'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import s from './styles.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { SIMULATION_COUNT } from '@/utils/queries/keys';
+import { useSimulationCount } from '@/hooks/api';
 import {
   ImportExportType,
   TopRightSection,
@@ -38,14 +36,8 @@ export type PageWrapperProps = {
 };
 
 export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProps>((props, ref) => {
-  const api = useApi();
   const isSimulationFeatureEnabled = useFeatureEnabled('SIMULATOR');
-  const simulationCountResults = useQuery(SIMULATION_COUNT(), async () => {
-    if (!isSimulationFeatureEnabled) {
-      return { runJobsCount: 0 };
-    }
-    return api.getSimulationJobsCount();
-  });
+  const simulationCountResults = useSimulationCount(isSimulationFeatureEnabled);
   useImperativeHandle(ref, () => ({
     refetchSimulationCount: () => {
       simulationCountResults.refetch();

@@ -8,9 +8,9 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import Button from '@/components/library/Button';
-import { ApiException, RiskFactorsApprovalWorkflow } from '@/apis';
+import { RiskFactorsApprovalWorkflow } from '@/apis';
 import { formatRoleName } from '@/pages/accounts/utils';
-import { useQuery } from '@/utils/queries/hooks';
+import { useWorkflowById } from '@/hooks/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { RISK_FACTOR_WORKFLOW_PROPOSAL, WORKFLOWS_ITEM } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
@@ -35,33 +35,18 @@ export const RiskFactorApprovalSettings: React.FC = () => {
   }, [roles]);
 
   // Fetch current workflow configuration
-  const currentWorkflowQueryResult = useQuery(
-    WORKFLOWS_ITEM('risk-factors-approval', '_default'),
-    async (): Promise<RiskFactorsApprovalWorkflow | null> => {
-      try {
-        const workflow = await api.getWorkflowById({
-          workflowType: 'risk-factors-approval',
-          workflowId: '_default',
-        });
-        return workflow as unknown as RiskFactorsApprovalWorkflow;
-      } catch (error) {
-        if (error instanceof ApiException && error.code === 404) {
-          return null;
-        }
-        throw error;
-      }
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-      onSuccess: (data) => {
-        if (data != null && data.approvalChain.length > 0) {
-          setSelectedRole(data.approvalChain[0]);
-        }
-      },
-    },
-  );
+  const currentWorkflowQueryResult = useWorkflowById('risk-factors-approval', '_default');
+  React.useEffect(() => {
+    const data = getOr(currentWorkflowQueryResult.data, null) as RiskFactorsApprovalWorkflow | null;
+    if (data != null && data.approvalChain.length > 0) {
+      setSelectedRole(data.approvalChain[0]);
+    }
+  }, [currentWorkflowQueryResult.data]);
 
-  const currentWorkflow = getOr(currentWorkflowQueryResult.data, null);
+  const currentWorkflow = getOr(
+    currentWorkflowQueryResult.data,
+    null,
+  ) as RiskFactorsApprovalWorkflow | null;
 
   // Update workflow mutation
   const updateWorkflowMutation = useMutation<unknown, unknown, { role: string }>(

@@ -16,7 +16,7 @@ import {
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 import { CRMModelType } from '@/apis/models/CRMModelType';
-import { WorkflowType } from '@/utils/api/workflows';
+import { WorkflowType } from '@/hooks/api/workflows';
 
 type AnyParameters = unknown;
 
@@ -362,6 +362,13 @@ export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
   'dashboard',
   'team',
   'performance',
+  params,
+];
+
+export const DASHBOARD_TEAM_STATS_LATEST = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'team',
+  'latest',
   params,
 ];
 

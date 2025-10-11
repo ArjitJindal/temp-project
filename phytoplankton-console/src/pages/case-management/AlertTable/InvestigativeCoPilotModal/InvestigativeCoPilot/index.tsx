@@ -11,8 +11,7 @@ import { calcIsScrollVisible, calcScrollPosition, itemId } from './helpers';
 import { calcVisibleElements } from './History/helpers';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePostQuestion, useCopilotQuestions } from '@/hooks/api/alerts';
 import { COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -31,7 +30,6 @@ interface Props {
 
 export default function InvestigativeCoPilot(props: Props) {
   const { alertId, preloadedHistory } = props;
-  const api = useApi();
   const queryClient = useQueryClient();
 
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
@@ -39,23 +37,14 @@ export default function InvestigativeCoPilot(props: Props) {
 
   const [isScrollEventDisabled, setScrollEventDisabled] = useState(false);
 
-  const historyQuery = useQuery(
-    COPILOT_ALERT_QUESTIONS(alertId),
-    async (): Promise<HistoryItem[]> => {
-      return parseQuestionResponse(
-        await api.getQuestions({
-          alertId: alertId,
-        }),
-      );
-    },
-  );
+  const historyQuery = useCopilotQuestions(alertId);
 
   const [isScrollVisible, setScrollVisible] = useState(false);
   const [sizes, setSizes] = useState<{ [key: string]: number }>({});
   const [isBottom, setIsBottom] = useState(true);
   const historyRes = historyQuery.data;
 
-  const history = getOr(historyRes, []);
+  const history = getOr(historyRes, []) as HistoryItem[];
   const setHistory = useCallback(
     (cb: (items: HistoryItem[]) => HistoryItem[]) => {
       queryClient.setQueryData<HistoryItem[]>(
@@ -156,6 +145,7 @@ export default function InvestigativeCoPilot(props: Props) {
     }
   }, [isBottom, handleScrollTo, isHeightChanged]);
 
+  const postQuestion = usePostQuestion();
   const postQuestionMutation = useMutation<unknown, unknown, FormValues[]>(
     async (requests) => {
       for (const request of requests) {
@@ -168,16 +158,15 @@ export default function InvestigativeCoPilot(props: Props) {
             requestString: request.searchString,
           },
         ]);
-        api
-          .postQuestion({
-            QuestionRequest: {
-              question: request.searchString,
-              variables: Object.entries(DEFAULT_PARAMS_STATE)
-                .filter(([_, value]) => value != null)
-                .map(([name, value]) => ({ name, value })),
-            },
-            alertId,
-          })
+        postQuestion({
+          QuestionRequest: {
+            question: request.searchString,
+            variables: Object.entries(DEFAULT_PARAMS_STATE)
+              .filter(([_, value]) => value != null)
+              .map(([name, value]) => ({ name, value })),
+          },
+          alertId,
+        })
           .then((response) => {
             const parsedResponses = parseQuestionResponse(response);
             setHistory((items) => {

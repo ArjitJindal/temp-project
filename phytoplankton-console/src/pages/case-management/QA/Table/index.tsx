@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { UserOutlined } from '@ant-design/icons';
@@ -9,7 +8,7 @@ import { AddToSampleModal } from '../AddToSampleModal';
 import { QAFormValues } from '../types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -21,12 +20,10 @@ import {
   PRIORITY,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
-import { useAlertQuery } from '@/pages/case-management/common';
+import { useAlertQuery, usePatchAlertQaAssignments } from '@/hooks/api/alerts';
 import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
-import { useApi } from '@/api';
-import { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
@@ -37,7 +34,7 @@ import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
-import { useReasons } from '@/utils/reasons';
+import { useReasons } from '@/hooks/api/settings';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -420,24 +417,13 @@ const reloadTable = (ref: React.RefObject<TableRefType>) => {
   }
 };
 export const useAlertQaAssignmentUpdateMutation = (ref: React.RefObject<TableRefType>) => {
-  const api = useApi();
-
-  return useMutation<unknown, Error, DefaultApiPatchAlertsQaAssignmentsRequest>(
-    async ({ alertId, AlertQaAssignmentsUpdateRequest: { assignments } }) =>
-      await api.patchAlertsQaAssignments({
-        alertId,
-        AlertQaAssignmentsUpdateRequest: {
-          assignments,
-        },
-      }),
-    {
-      onSuccess: () => {
-        reloadTable(ref);
-        message.success('Assignees updated successfully');
-      },
-      onError: () => {
-        message.fatal('Failed to update assignees');
-      },
+  return usePatchAlertQaAssignments({
+    onSuccess: () => {
+      reloadTable(ref);
+      message.success('Assignees updated successfully');
     },
-  );
+    onError: () => {
+      message.fatal('Failed to update assignees');
+    },
+  }) as any;
 };

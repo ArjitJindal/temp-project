@@ -1,9 +1,9 @@
-import { usePendingProposal } from '../../utils';
 import DefaultActions from './DefaultActions';
 import HeaderLayout from './HeaderLayout';
 import { Props } from '.';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useWorkflow } from '@/utils/api/workflows';
+import { usePendingProposal } from '@/hooks/api/risk-factors';
+import { useWorkflow } from '@/hooks/api/workflows';
 import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';
 import Button from '@/components/library/Button';

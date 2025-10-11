@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import Modal from '@/components/library/Modal';
 import Form from '@/components/library/Form';
-import { useApi } from '@/api';
-import { message } from '@/components/library/Message';
 import InputField from '@/components/library/Form/InputField';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs } from '@/utils/dayjs';
-import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { InternalConsumerUser, InternalBusinessUser } from '@/apis';
-import {
-  USER_AUDIT_LOGS_LIST,
-  USER_CHANGES_PROPOSALS,
-  USER_CHANGES_PROPOSALS_BY_ID,
-  USERS_ITEM,
-} from '@/utils/queries/keys';
-import { useMutation } from '@/utils/queries/mutations/hooks';
-import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
-import { WorkflowChangesStrategy } from '@/utils/api/workflows';
+
+import { AsyncResource, isLoading } from '@/utils/asyncResource';
 
 interface Props {
   res: AsyncResource;
@@ -94,93 +83,5 @@ export default function EODDChangeModal(props: Props) {
         </InputField>
       </Form>
     </Modal>
-  );
-}
-
-export function useEODDChangeMutation(
-  user: InternalConsumerUser | InternalBusinessUser,
-  changeStrategyRes: AsyncResource<WorkflowChangesStrategy>,
-) {
-  const api = useApi();
-  const queryClient = useQueryClient();
-
-  const changeStrategy = getOr(changeStrategyRes, 'DIRECT');
-
-  return useMutation(
-    async (vars: { formValues: FormValues; comment?: string }) => {
-      const { formValues: values, comment } = vars;
-
-      // Convert the date string to timestamp (number) for the API
-      const dateTimestamp = values.eoddDate ? new Date(values.eoddDate).getTime() : 0;
-
-      if (changeStrategy !== 'DIRECT') {
-        const dismissLoading = message.loading(
-          changeStrategy === 'AUTO_APPROVE' ? 'Updating EODD...' : 'Creating a proposal...',
-        );
-        try {
-          if (changeStrategy === 'APPROVE' && !comment) {
-            throw new Error(`Comment is required here`);
-          }
-          await api.postUserApprovalProposal({
-            userId: user.userId,
-            UserApprovalUpdateRequest: {
-              proposedChanges: [
-                {
-                  field: 'eoddDate',
-                  value: dateTimestamp,
-                },
-              ],
-              comment: comment ?? '',
-            },
-          });
-          if (changeStrategy === 'APPROVE') {
-            await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
-            await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));
-          }
-        } finally {
-          dismissLoading();
-        }
-      } else {
-        const messageLoading = message.loading('Updating EODD...');
-        try {
-          // Call API to update EODD
-          const payload: UserUpdateRequest = {
-            eoddDate: dateTimestamp,
-          };
-
-          let updatedComment;
-          if (user.type === 'CONSUMER') {
-            updatedComment = await api.postConsumerUsersUserId({
-              userId: user.userId,
-              UserUpdateRequest: payload,
-            });
-          } else {
-            updatedComment = await api.postBusinessUsersUserId({
-              userId: user.userId,
-              UserUpdateRequest: payload,
-            });
-          }
-          return { eoddDate: values.eoddDate, updatedComment };
-        } finally {
-          messageLoading();
-        }
-      }
-    },
-    {
-      onSuccess: async () => {
-        if (changeStrategy === 'APPROVE') {
-          message.success('Change proposal created successfully');
-          await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS());
-          await queryClient.invalidateQueries(USER_CHANGES_PROPOSALS_BY_ID(user.userId));
-        } else {
-          message.success('EODD date updated successfully');
-          await queryClient.invalidateQueries(USERS_ITEM(user.userId));
-          await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
-        }
-      },
-      onError: (error: Error) => {
-        message.fatal(`Error updating EODD: ${error.message}`);
-      },
-    },
   );
 }

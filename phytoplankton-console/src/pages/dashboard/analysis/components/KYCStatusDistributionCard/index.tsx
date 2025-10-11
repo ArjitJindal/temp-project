@@ -10,9 +10,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_05,
 } from '@/components/ui/colors';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useQuery } from '@/utils/queries/hooks';
-import { USERS_STATS } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useDashboardUsersStats } from '@/hooks/api/dashboard';
 import { DashboardStatsUsersStats, KYCStatus } from '@/apis';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
@@ -47,10 +45,7 @@ export default function KYCStatusDistributionCard(props: Props) {
     startTimestamp,
     endTimestamp,
   };
-  const api = useApi();
-  const queryResult = useQuery(USERS_STATS(params), async () => {
-    return await api.getDashboardStatsUsersByTime(params);
-  });
+  const queryResult = useDashboardUsersStats(params);
   return (
     <DistributionChartWidget<DashboardStatsUsersStats, KYCStatus>
       groups={[

@@ -16,13 +16,11 @@ import { BOOLEAN, COUNTRY, DATE, PEP_RANK } from '@/components/library/Table/sta
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
-import { map, QueryResult } from '@/utils/queries/types';
+import { map, type QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { USER_CHANGES_PROPOSALS } from '@/utils/queries/keys';
+import { useAllUserApprovalProposals } from '@/hooks/api/workflows';
 import {
   failed,
   init,
@@ -251,17 +249,9 @@ export const UsersTable = (props: Props) => {
 
   const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
 
-  const api = useApi();
-  const { data: pendingProposalRes } = useQuery(
-    USER_CHANGES_PROPOSALS(),
-    async () => {
-      const proposals = await api.getAllUserApprovalProposals();
-      return proposals;
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
+  const { data: pendingProposalRes } = useAllUserApprovalProposals({
+    enabled: isApprovalWorkflowsEnabled,
+  });
 
   // Merging query results with pending proposals
   const queryResultsWithProposals: QueryResult<TableData<AllUserTableItem>> = useMemo(() => {

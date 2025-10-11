@@ -1,19 +1,15 @@
 import React from 'react';
-import { useApi } from '@/api';
+import { useUserTrsScores } from '@/hooks/api/users';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useQuery } from '@/utils/queries/hooks';
-import { USER_TRS_RISK_SCORES } from '@/utils/queries/keys';
 
 type Props = {
   userId: string;
 };
 
 export const UserTrsRiskDisplay: React.FC<Props> = ({ userId }) => {
-  const api = useApi();
-
-  const queryResult = useQuery(USER_TRS_RISK_SCORES(userId), () => api.getTrsScores({ userId }));
+  const queryResult = useUserTrsScores(userId);
 
   return (
     <AsyncResourceRenderer resource={queryResult.data} renderLoading={() => <></>}>

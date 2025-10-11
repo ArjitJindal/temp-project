@@ -14,7 +14,7 @@ import MoreLineIcon from '@/components/ui/icons/Remix/system/more-line.react.svg
 import Select from '@/components/library/Select';
 import Label from '@/components/library/Label';
 import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
-import { Cursor } from '@/utils/queries/types';
+import type { Cursor } from '@/utils/queries/types';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const COUNT_QUERY_LIMIT = 100000;

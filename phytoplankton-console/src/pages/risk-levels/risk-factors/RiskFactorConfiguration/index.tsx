@@ -11,15 +11,14 @@ import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import { RiskFactor } from '@/apis';
 import { makeUrl } from '@/utils/routing';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { NEW_RISK_FACTOR_ID, RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
 import Tooltip from '@/components/library/Tooltip';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ApprovalHeader from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/ApprovalHeader';
 import SpecialAttributesChanges from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/SpecialAttributesChanges';
+import { useNewRuleId } from '@/hooks/api/rules';
+import { useRiskFactorPendingProposal } from '@/hooks/api/risk-factors';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
@@ -63,27 +62,13 @@ export const RiskFactorConfiguration = (props: Props) => {
       });
     }
   };
-  const api = useApi();
-  const queryResult = useQuery<string | undefined>(NEW_RISK_FACTOR_ID(id), async () => {
-    const newRiskId = await api.getNewRiskFactorId({ riskId: id });
-    return newRiskId.riskFactorId;
-  });
-
-  const riskScoringRerun = useBulkRerunUsersStatus();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
-
-  const { data: pendingProposalRes } = useQuery(
-    RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM(id ?? 'NEW'),
-    async () => {
-      if (id == null || !isApprovalWorkflowsEnabled) {
-        return null;
-      }
-      const proposals = await api.getPulseRiskFactorsWorkflowProposal({
-        riskFactorId: id,
-      });
-      return proposals.find((x) => x.riskFactor.id === id) ?? null;
-    },
-  );
+  const queryResult = useNewRuleId(id);
+  const pendingProposalQuery = useRiskFactorPendingProposal(id ?? '', {
+    enabled: isApprovalWorkflowsEnabled,
+  });
+  const pendingProposalRes = pendingProposalQuery.data;
+  const riskScoringRerun = useBulkRerunUsersStatus();
   const [showProposalFlag, setShowProposalFlag] = useState(true);
 
   return (

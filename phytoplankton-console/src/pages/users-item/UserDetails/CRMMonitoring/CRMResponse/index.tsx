@@ -4,9 +4,7 @@ import { Props } from '../CRMRecords/index';
 import ScopeSelector from '../ScopeSelector';
 import s from '../index.module.less';
 import * as Card from '@/components/ui/Card';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { CRM_ACCOUNT } from '@/utils/queries/keys';
+import { useCrmAccount } from '@/hooks/api/crm';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CrmAccountResponse, CrmAccountResponseEngagements } from '@/apis';
 import { makeAsyncComponent } from '@/utils/imports';
@@ -50,15 +48,7 @@ const CRMData = (props: Props) => {
 
   const [selectedSection, setSelectedSection] = useState('SUMMARY');
 
-  const api = useApi();
-
-  const { data: crmResponse } = useQuery<CrmAccountResponse>(
-    CRM_ACCOUNT(userId),
-
-    async () => {
-      return api.getCrmAccount({ userId });
-    },
-  );
+  const { data: crmResponse } = useCrmAccount(userId);
 
   const [emailsInitialized, setEmailsInitialized] = useState(false);
   const [emails, setEmails] = useState<CrmAccountResponseEngagements[]>([]);

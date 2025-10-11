@@ -1,7 +1,7 @@
-import { UseMutationOptions } from '@tanstack/react-query/src/types';
-import { MutationFunction } from '@tanstack/query-core';
+import type { UseMutationOptions } from '@tanstack/react-query/src/types';
+import type { MutationFunction } from '@tanstack/query-core';
 import { useMutation as useMutationRQ } from '@tanstack/react-query';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 
 export function useMutation<

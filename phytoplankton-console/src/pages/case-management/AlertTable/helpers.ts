@@ -5,7 +5,7 @@ import { Case } from '@/apis';
 import { useApi } from '@/api';
 import { CASES_ITEM_ALERT_LIST, CASES_LIST } from '@/utils/queries/keys';
 import { getErrorMessage } from '@/utils/lang';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useAuth0User } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';

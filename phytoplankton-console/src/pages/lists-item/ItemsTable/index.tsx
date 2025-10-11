@@ -1,19 +1,16 @@
 import { COUNTRIES } from '@flagright/lib/constants';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { UseMutationResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Resource } from '@flagright/lib/utils';
 import ImportCsvModal from '../ImportCsvModal';
 import { queryAdapter } from './helpers';
 import s from './index.module.less';
-import { TableParams } from './types';
+import type { TableParams } from './types';
+import type { Mutation } from '@/utils/queries/types';
 import { useApi } from '@/api';
 import { ColumnType, ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
-import {
-  DefaultApiGetWhiteListItemsRequest,
-  DefaultApiPostWhiteListItemRequest,
-} from '@/apis/types/ObjectParamAPI';
+import { DefaultApiPostWhiteListItemRequest } from '@/apis/types/ObjectParamAPI';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
@@ -34,8 +31,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { notEmpty } from '@/utils/array';
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
-import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
-import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
+import { type CursorPaginatedData } from '@/utils/queries/hooks';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { StatePair } from '@/utils/state';
@@ -44,6 +40,7 @@ import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import DatePicker from '@/components/ui/DatePicker';
 import { download } from '@/utils/browser';
+import { useListItemsCursor } from '@/hooks/api/lists';
 
 interface ExistedTableItemData {
   value: string;
@@ -58,16 +55,16 @@ interface NewTableItemData {
 }
 
 interface ExistedTableItem extends ExistedTableItemData {
-  type: 'EXISTED';
   rowKey: string;
+  type: 'EXISTED';
 }
 
 interface NewTableItem extends NewTableItemData {
+  rowKey: 'NEW';
   type: 'NEW';
-  rowKey: string;
 }
 
-type TableItem = ExistedTableItem | NewTableItem;
+export type TableItem = ExistedTableItem | NewTableItem;
 
 export type UserListTableRef = React.Ref<{
   reload: () => void;
@@ -77,7 +74,7 @@ interface Props {
   listId: string;
   listType: ListType;
   listHeaderRes: AsyncResource<ListHeaderInternal>;
-  clearListMutation: UseMutationResult<unknown, unknown, void, unknown>;
+  clearListMutation: Mutation<unknown, unknown, void> & { isLoading: boolean };
   isCustomList: boolean;
   setIsFlatFileProgressLoading: (isLoading: boolean) => void;
 }
@@ -327,50 +324,11 @@ export default function ItemsTable(props: Props) {
     return undefined;
   }, [listSubtype, params.userId, params.country, params.search]);
 
-  const listResult: QueryResult<CursorPaginatedData<TableItem>> = useCursorQuery(
-    LISTS_ITEM_TYPE(listId, listType, listSubtype, { ...params, filterKeys }),
-    async ({ from }) => {
-      const payload: DefaultApiGetWhiteListItemsRequest = {
-        listId,
-        start: params.from || from,
-        pageSize: params.pageSize,
-        filterKeys,
-      };
-
-      const response =
-        listType === 'WHITELIST'
-          ? await api.getWhiteListItems(payload)
-          : await api.getBlacklistItems(payload);
-
-      const data: TableItem[] = [
-        ...response.items.map(
-          ({ key, metadata }): TableItem => ({
-            rowKey: key,
-            type: 'EXISTED',
-            value: key,
-            reason: metadata?.reason ?? '',
-            meta: metadata ?? {},
-          }),
-        ),
-        ...(filterKeys == null
-          ? [
-              {
-                rowKey: 'NEW',
-                type: 'NEW' as const,
-                value: [],
-                reason: '',
-                meta: {},
-              },
-            ]
-          : []),
-      ];
-      return {
-        ...response,
-        items: data,
-        total: response.count,
-      };
-    },
-  );
+  const listResult = useListItemsCursor(listId, listType, listSubtype, {
+    from: params.from ? Number(params.from) : undefined,
+    pageSize: params.pageSize,
+    filterKeys,
+  }) as QueryResult<CursorPaginatedData<TableItem>>;
 
   const externalState: ExternalState = {
     editUserData: [editUserData, setEditUserData],

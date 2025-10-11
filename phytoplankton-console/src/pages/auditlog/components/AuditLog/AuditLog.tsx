@@ -11,12 +11,9 @@ import { auditLogQueryAdapter, useTableData } from './helpers';
 import s from './index.module.less';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 import DatePicker from '@/components/ui/DatePicker';
-import { useApi } from '@/api';
 import { AllParams, TableColumn, TableRefType } from '@/components/library/Table/types';
-import { AuditLog } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { useAuditLogsList } from '@/hooks/api/audit-logs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import EntityFilterButton from '@/pages/auditlog/components/EntityFilterButton';
@@ -31,8 +28,6 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { P } from '@/components/ui/Typography';
 
 export default function AuditLogTable() {
-  const api = useApi({ debounce: 500 });
-
   const [params, setParams] = useNavigationParams<AllParams<TableSearchParams>>({
     queryAdapter: {
       serializer: auditLogQueryAdapter.serializer,
@@ -65,44 +60,7 @@ export default function AuditLogTable() {
   const endTime = dayjs().endOf('day');
 
   const defaultDateRange: RangeValue<Dayjs> = [startTime, endTime];
-  const queryResults = usePaginatedQuery<AuditLog>(
-    AUDIT_LOGS_LIST(finalParams),
-    async (paginationParams) => {
-      const {
-        sort,
-        page,
-        pageSize,
-        filterTypes,
-        createdTimestamp,
-        filterActionTakenBy,
-        filterActions,
-        searchEntityId,
-        includeRootUserRecords,
-      } = finalParams;
-      const [sortField, sortOrder] = sort[0] ?? [];
-      const [start, end] = createdTimestamp ?? [];
-
-      const response = await api.getAuditlog({
-        page,
-        pageSize,
-        ...paginationParams,
-        afterTimestamp: start ? start.startOf('day').valueOf() : 0,
-        beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        filterTypes,
-        filterActionTakenBy,
-        includeRootUserRecords,
-        searchEntityId: searchEntityId ? [searchEntityId] : [],
-        filterActions,
-      });
-
-      return {
-        total: response.total,
-        items: response.data,
-      };
-    },
-  );
+  const queryResults = useAuditLogsList(finalParams);
 
   const getDateRangeToShow = (createdTimeStamp: RangeValue<Dayjs> | undefined) => {
     return isDatePickerOpen ? createdTimeStamp ?? defaultDateRange : createdTimeStamp;

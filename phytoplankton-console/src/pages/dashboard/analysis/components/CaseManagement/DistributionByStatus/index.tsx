@@ -14,12 +14,10 @@ import GranularDatePicker, {
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
 import s from './index.module.less';
 import { dayjs, Dayjs, SHORT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { useApi } from '@/api';
 import { map, isSuccess, getOr } from '@/utils/asyncResource';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useQuery } from '@/utils/queries/hooks';
-import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
+import { useCaseAlertStatusDistribution } from '@/hooks/api/dashboard';
 import BarChart, { BarChartData } from '@/components/charts/BarChart';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -69,7 +67,6 @@ export default function DistributionByStatus(props: WidgetProps) {
   const [selectedRules, setSelectedRules] = useState<string[]>([]);
 
   const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>(DEFAULT_DATE_RANGE);
-  const api = useApi();
   const ruleOptions = useRuleOptions();
 
   const [start, end] = dateRange ?? [];
@@ -84,9 +81,7 @@ export default function DistributionByStatus(props: WidgetProps) {
     ruleInstanceIds: selectedRules.length > 0 ? selectedRules : undefined,
   };
 
-  const queryResult = useQuery(DASHBOARD_TRANSACTIONS_STATS(params), async () => {
-    return await api.getDashboardStatsAlertAndCaseStatusDistributionStats(params);
-  });
+  const queryResult = useCaseAlertStatusDistribution(params);
 
   const preparedDataRes = map(queryResult.data, (value): BarChartData<string, StatusType> => {
     const result: BarChartData<string, StatusType> = [];

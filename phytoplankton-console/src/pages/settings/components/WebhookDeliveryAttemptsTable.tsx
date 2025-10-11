@@ -8,17 +8,15 @@ import { WebhookDeliveryAttempt, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors, { COLORS_V2_GRAY_1 } from '@/components/ui/colors';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { WEBHOOKS } from '@/utils/queries/keys';
+import { useWebhookDeliveryAttempts } from '@/hooks/api/webhooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import Modal from '@/components/library/Modal';
 import Tag from '@/components/library/Tag';
 import Label from '@/components/library/Label';
-import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
-import { dayjs } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
 import { CloseMessage, message } from '@/components/library/Message';
 import Table from '@/components/library/Table';
@@ -80,37 +78,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
     ...DEFAULT_PARAMS_STATE,
   });
 
-  const webhookResults = usePaginatedQuery(
-    WEBHOOKS(webhookId, params),
-    async (paginationParams) => {
-      const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = params;
-      const attempts = await api.getWebhooksWebhookIdDeliveries({
-        webhookId,
-        page,
-        pageSize,
-        ...paginationParams,
-        ...(params.success != null && {
-          filterStatus: params.success === 'Success' ? 'true' : 'false',
-        }),
-        filterEventType: params.event,
-        filterEventCreatedAtAfterTimestamp: params.eventCreatedAt?.[0]
-          ? dayjs(params.eventCreatedAt[0]).valueOf()
-          : undefined,
-        filterEventCreatedAtBeforeTimestamp: params.eventCreatedAt?.[1]
-          ? dayjs(params.eventCreatedAt[1]).valueOf()
-          : undefined,
-        filterEventDeliveredAtAfterTimestamp: params.requestStartedAt?.[0]
-          ? dayjs(params.requestStartedAt[0]).valueOf()
-          : undefined,
-        filterEventDeliveredAtBeforeTimestamp: params.requestStartedAt?.[1]
-          ? dayjs(params.requestStartedAt[1]).valueOf()
-          : undefined,
-        searchEntityId: params.searchEntityId ? [params.searchEntityId] : [],
-      });
-
-      return attempts;
-    },
-  );
+  const webhookResults = useWebhookDeliveryAttempts(webhookId, params);
   const handleReplayWebhook = useCallback(
     (event: WebhookDeliveryAttempt) => {
       if (!event.deliveryTaskId) {

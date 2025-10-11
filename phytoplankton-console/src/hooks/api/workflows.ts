@@ -1,4 +1,18 @@
 import { useMemo } from 'react';
+import { useApi } from '@/api';
+import { useQueries, useQuery } from '@/utils/queries/hooks';
+import {
+  RISK_CLASSIFICATION_WORKFLOW_PROPOSAL,
+  WORKFLOWS_ITEM,
+  WORKFLOWS_LIST,
+  WORKFLOWS_ITEM_BY_REF,
+  USER_CHANGES_PROPOSALS,
+  USER_CHANGES_PROPOSALS_BY_ID,
+  USER_FIELDS_CHANGES_PROPOSALS,
+  RISK_FACTOR_WORKFLOW_PROPOSAL_LIST,
+  SETTINGS,
+  WORKFLOWS_ITEMS,
+} from '@/utils/queries/keys';
 import {
   AlertWorkflow,
   AlertWorkflowWorkflowTypeEnum,
@@ -17,19 +31,13 @@ import {
   WorkflowRef,
   WorkflowSettingsUserApprovalWorkflows,
 } from '@/apis';
-import { useApi } from '@/api';
-import { useQueries, useQuery } from '@/utils/queries/hooks';
-import {
-  USER_CHANGES_PROPOSALS_BY_ID,
-  USER_FIELDS_CHANGES_PROPOSALS,
-  WORKFLOWS_ITEM,
-  WORKFLOWS_ITEM_BY_REF,
-} from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { AsyncResource, map, success } from '@/utils/asyncResource';
-import { useUserApprovalSettings } from '@/pages/settings/components/UserUpdateApprovalSettings';
+import { AsyncResource, all, getOr, isLoading, loading, map, success } from '@/utils/asyncResource';
 import { useAccountRawRole } from '@/utils/user-utils';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { notEmpty } from '@/utils/array';
+import type { TenantSettings } from '@/apis';
 
 export type CaseAlertWorkflowItem = CaseWorkflow | AlertWorkflow;
 
@@ -48,7 +56,7 @@ export type WorkflowType =
   | UserUpdateApprovalWorkflowWorkflowTypeEnum
   | RiskFactorsApprovalWorkflowWorkflowTypeEnum;
 
-export function parseWorkflowType(type: unknown): WorkflowType {
+export function parseWorkflowType(type: string): WorkflowType {
   if (type === 'alert') {
     return 'alert';
   } else if (type === 'case') {
@@ -58,16 +66,8 @@ export function parseWorkflowType(type: unknown): WorkflowType {
   }
 }
 
-/*
-  'DIRECT' - changes should be made directly, through classic API
-  'APPROVE' - changes should be send via Approval-API
-  'AUTO_APPROVE' - user changes will be approved automatically, but need to be send via Approval-API
- */
 export type WorkflowChangesStrategy = 'DIRECT' | 'AUTO_APPROVE' | 'APPROVE';
 
-/*
-    Helpers
-*/
 export function useWorkflow(
   workflowType: RiskLevelApprovalWorkflowWorkflowTypeEnum,
   workflowRef: WorkflowRef,
@@ -103,9 +103,6 @@ export function useWorkflow(workflowType: WorkflowType, workflowRef: WorkflowRef
   return workflowsQueryResult;
 }
 
-/*
-  Retrieves latest version by id
- */
 export function useWorkflowById(
   workflowType: RiskLevelApprovalWorkflowWorkflowTypeEnum,
   id: string,
@@ -174,9 +171,6 @@ export function useWorkflows(
   });
 }
 
-/*
-  User approvals
- */
 export function useUserChangesPendingApprovals(userId: string): QueryResult<UserApproval[]> {
   const api = useApi();
   return useQuery(USER_CHANGES_PROPOSALS_BY_ID(userId), async () => {
@@ -184,6 +178,35 @@ export function useUserChangesPendingApprovals(userId: string): QueryResult<User
       userId,
     });
   });
+}
+
+export function useAllUserChangesProposals(): QueryResult<UserApproval[]> {
+  const api = useApi();
+  return useQuery(USER_CHANGES_PROPOSALS(), async () => {
+    return await api.getAllUserApprovalProposals();
+  });
+}
+
+export function useAllUserApprovalProposals(options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery(
+    USER_CHANGES_PROPOSALS(),
+    async () => {
+      return await api.getAllUserApprovalProposals();
+    },
+    { enabled: options?.enabled },
+  );
+}
+
+export function usePendingProposalsUserIds(params: { pendingApproval?: 'true' | 'false' }) {
+  const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const { data: pendingProposalRes } = useAllUserChangesProposals();
+  return useMemo(() => {
+    if (isUserChangesApprovalEnabled && params.pendingApproval === 'true') {
+      return map(pendingProposalRes, (approvals) => approvals.map((x) => x.userId));
+    }
+    return success(undefined);
+  }, [pendingProposalRes, params.pendingApproval, isUserChangesApprovalEnabled]);
 }
 
 export function useUserFieldChangesPendingApprovals(
@@ -229,7 +252,6 @@ export function useUserFieldChangesStrategy(
   }
 
   return map(chainRes, (chain) => {
-    // If no approval chain is configured, apply changes directly
     if (chain.length === 0) {
       return 'DIRECT';
     }
@@ -237,7 +259,6 @@ export function useUserFieldChangesStrategy(
     if (currentRole == null) {
       return 'APPROVE';
     }
-    // Auto-approve would happen if chain's length is 1 and the role matches current role
     const isAutoApprove = chain.length === 1 && chain[0] === currentRole;
     return isAutoApprove ? 'AUTO_APPROVE' : 'APPROVE';
   });
@@ -257,7 +278,6 @@ export function useRiskLevelsChangesStrategy(): AsyncResource<WorkflowChangesStr
       return 'APPROVE';
     }
     const chain = workflow?.approvalChain ?? [];
-    // Auto-approve would happen if chain's length is 1 and the role matches current role
     const isAutoApprove = chain.length === 1 && chain[0] === currentRole;
     return isAutoApprove ? 'AUTO_APPROVE' : 'APPROVE';
   });
@@ -277,7 +297,6 @@ export function useRiskFactorsChangesStrategy(): AsyncResource<WorkflowChangesSt
       return 'APPROVE';
     }
     const chain = workflow?.approvalChain ?? [];
-    // Auto-approve would happen if chain's length is 1 and the role matches current role
     const isAutoApprove = chain.length === 1 && chain[0] === currentRole;
     return isAutoApprove ? 'AUTO_APPROVE' : 'APPROVE';
   });
@@ -287,15 +306,192 @@ export function useUserFieldChain(
   field: keyof WorkflowSettingsUserApprovalWorkflows,
 ): AsyncResource<string[]> {
   const approvalSettingsRes = useUserApprovalSettings();
-  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
   return useMemo(
     () =>
       map(approvalSettingsRes, (approvalSettings): string[] => {
-        if (!isApprovalWorkflowsEnabled) {
+        if (!isUserChangesApprovalEnabled) {
           return [];
         }
         return approvalSettings[field]?.approvalChain ?? [];
       }),
-    [approvalSettingsRes, isApprovalWorkflowsEnabled, field],
+    [approvalSettingsRes, isUserChangesApprovalEnabled, field],
   );
+}
+
+export function useRiskClassificationWorkflowProposal(options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery(
+    RISK_CLASSIFICATION_WORKFLOW_PROPOSAL(),
+    async () => api.getPulseRiskClassificationWorkflowProposal(),
+    { enabled: options?.enabled },
+  );
+}
+
+export function useRiskFactorsWorkflowProposals(options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery(
+    RISK_FACTOR_WORKFLOW_PROPOSAL_LIST(),
+    async () => api.getPulseRiskFactorsWorkflowProposal(),
+    { enabled: options?.enabled },
+  );
+}
+
+export function useWorkflowsList() {
+  const api = useApi();
+  return useQuery(WORKFLOWS_LIST(), async (): Promise<WorkflowItem[]> => {
+    const workflowResponse = await api.getAllWorkflowTypes();
+    return workflowResponse.workflows ?? [];
+  });
+}
+
+export function useWorkflowItem(workflowType: WorkflowType, id: string) {
+  const api = useApi();
+  return useQuery(WORKFLOWS_ITEM(workflowType, id), async (): Promise<WorkflowItem> => {
+    return await api.getWorkflowById({
+      workflowType: workflowType,
+      workflowId: id,
+    });
+  });
+}
+
+export function useCreateWorkflow(workflowType: WorkflowType) {
+  const api = useApi();
+  return useMutation((serialized: Record<string, any>) =>
+    api.createWorkflow({
+      workflowType,
+      CreateWorkflowType: {
+        ...(workflowType === 'alert'
+          ? {
+              alertWorkflow: {
+                ...serialized,
+                name: 'not_required_for_creation',
+                description: 'not_required_for_creation',
+                enabled: true,
+              },
+            }
+          : {
+              caseWorkflow: {
+                ...serialized,
+                name: 'not_required_for_creation',
+                description: 'not_required_for_creation',
+                enabled: true,
+                autoClose: false,
+              },
+            }),
+      } as any,
+    }),
+  );
+}
+
+export function useCreateWorkflowVersion(workflowType: WorkflowType, workflowId: string) {
+  const api = useApi();
+  return useMutation((payload: { item: Record<string, any>; serialized: Record<string, any> }) =>
+    api.postWorkflowVersion({
+      workflowType,
+      workflowId,
+      CreateWorkflowType: {
+        ...(payload.item.workflowType === 'alert'
+          ? { alertWorkflow: { ...payload.item, ...payload.serialized } }
+          : { caseWorkflow: { ...payload.item, ...payload.serialized } }),
+      } as any,
+    }),
+  );
+}
+
+export type UserWorkflowSettings = {
+  [key in keyof WorkflowSettingsUserApprovalWorkflows]: UserUpdateApprovalWorkflow | null;
+};
+
+export function useUserApprovalWorkflows(
+  workflowIds: string[],
+  isApprovalWorkflowsEnabled: boolean,
+) {
+  const api = useApi();
+  return useQuery(
+    WORKFLOWS_ITEMS('user-update-approval', workflowIds),
+    async (): Promise<UserUpdateApprovalWorkflow[]> => {
+      return await Promise.all(
+        workflowIds.map(async (workflowId) => {
+          const workflow = await api.getWorkflowById({
+            workflowType: 'user-update-approval',
+            workflowId: workflowId,
+          });
+          return workflow as unknown as UserUpdateApprovalWorkflow;
+        }),
+      );
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+}
+
+export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
+  const api = useApi();
+
+  const { data: tenantSettingsRes } = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
+    return await api.getTenantsSettings();
+  });
+
+  const fieldsToWorkflowIdRes = map(
+    tenantSettingsRes,
+    (tenantSettings): WorkflowSettingsUserApprovalWorkflows => {
+      const userApprovalWorkflows = tenantSettings.workflowSettings?.userApprovalWorkflows;
+      if (userApprovalWorkflows == null) {
+        return {} as WorkflowSettingsUserApprovalWorkflows;
+      }
+      return userApprovalWorkflows as WorkflowSettingsUserApprovalWorkflows;
+    },
+  );
+
+  const workflowIdsRes = map(fieldsToWorkflowIdRes, (fieldToWorkflowIds): string[] =>
+    Object.values(fieldToWorkflowIds).filter(notEmpty),
+  );
+  const workflowIds = getOr(workflowIdsRes, []);
+
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+
+  const { data: workflowsRes } = useQuery(
+    WORKFLOWS_ITEMS('user-update-approval', workflowIds),
+    async (): Promise<UserUpdateApprovalWorkflow[]> => {
+      return await Promise.all(
+        workflowIds.map(async (workflowId) => {
+          const workflow = await api.getWorkflowById({
+            workflowType: 'user-update-approval',
+            workflowId: workflowId,
+          });
+          return workflow as unknown as UserUpdateApprovalWorkflow;
+        }),
+      );
+    },
+    {
+      enabled: isApprovalWorkflowsEnabled,
+    },
+  );
+
+  return useMemo(() => {
+    if (!isApprovalWorkflowsEnabled) {
+      return success({} as UserWorkflowSettings);
+    }
+    if (isLoading(workflowIdsRes) || isLoading(workflowsRes)) {
+      return loading();
+    }
+    return map(
+      all([fieldsToWorkflowIdRes, workflowsRes]),
+      ([fieldsToWorkflowId, workflows]): UserWorkflowSettings => {
+        const allWorkflows: UserWorkflowSettings = {} as UserWorkflowSettings;
+        for (const [field, workflowId] of Object.entries(fieldsToWorkflowId)) {
+          if (workflowId != null) {
+            const workflow = workflows.find((workflow) => workflow.id === workflowId);
+            if (workflow == null) {
+              throw new Error(`Workflow ${workflowId} not found`);
+            }
+            (allWorkflows as Record<string, UserUpdateApprovalWorkflow>)[field] = workflow;
+          }
+        }
+        return allWorkflows;
+      },
+    );
+  }, [workflowIdsRes, workflowsRes, isApprovalWorkflowsEnabled, fieldsToWorkflowIdRes]);
 }

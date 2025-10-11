@@ -4,9 +4,7 @@ import { useAtom } from 'jotai';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { CUSTOM_RISK_FACTORS_ITEM, RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM } from '@/utils/queries/keys';
+import { useRiskFactor, useRiskFactorPendingProposal } from '@/hooks/api/risk-factors';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
@@ -301,15 +299,10 @@ interface RiskItemFormProps {
 
 function RiskItemForm(props: RiskItemFormProps) {
   const { type, id, mode } = props;
-  const api = useApi();
+  // api not needed here after hooks refactor
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
 
-  const itemQueryResult = useQuery(CUSTOM_RISK_FACTORS_ITEM(type, id), async () => {
-    if (id) {
-      return await api.getRiskFactor({ riskFactorId: id });
-    }
-    return null;
-  });
+  const itemQueryResult = useRiskFactor(type, id);
   const [isRiskFactorsEditEnabled, setRiskFactorsEditEnabled] = useAtom(riskFactorsEditEnabled);
   const [riskFactors, setRiskFactors] = useAtom(riskFactorsAtom);
   const itemRes = useMemo((): AsyncResource<RiskFactor | null> => {
@@ -330,21 +323,9 @@ function RiskItemForm(props: RiskItemFormProps) {
     );
   };
 
-  const pendingProposalsQueryResult = useQuery(
-    RISK_FACTOR_WORKFLOW_PROPOSAL_ITEM(id ?? 'NEW'),
-    async () => {
-      if (id == null) {
-        return null;
-      }
-      const proposals = await api.getPulseRiskFactorsWorkflowProposal({
-        riskFactorId: id,
-      });
-      return proposals.find((x) => x.riskFactor.id === id) ?? null;
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
+  const pendingProposalsQueryResult = useRiskFactorPendingProposal(id ?? '', {
+    enabled: isApprovalWorkflowsEnabled,
+  });
 
   const itemOrProposalRes: AsyncResource<RiskFactor | null> = useMemo(() => {
     if (id == null) {

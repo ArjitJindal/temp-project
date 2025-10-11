@@ -2,11 +2,11 @@ import { groupBy } from 'lodash';
 import AccountsStatisticsTable from '../AccountsStatisticsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardTeamStatsItem } from '@/apis';
-import { map, QueryResult } from '@/utils/queries/types';
+import { map, type QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
-import { PaginatedData } from '@/utils/queries/hooks';
+import type { PaginatedData } from '@/utils/queries/hooks';
 
 type AggregatedDashboardTeamStats = {
   role: string;

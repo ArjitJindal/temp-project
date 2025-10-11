@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import s from './index.module.less';
-import EODDChangeModal, {
-  FormValues as EoodFormValues,
-  useEODDChangeMutation,
-} from './EODDChangeModal';
+import EODDChangeModal, { FormValues as EoodFormValues } from './EODDChangeModal';
+import { useEODDChangeMutation } from '@/hooks/api';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useHasResources } from '@/utils/user-utils';
@@ -14,7 +12,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import {
   useUserFieldChangesPendingApprovals,
   useUserFieldChangesStrategy,
-} from '@/utils/api/workflows';
+} from '@/hooks/api/workflows';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import Confirm from '@/components/utils/Confirm';

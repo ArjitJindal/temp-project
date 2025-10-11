@@ -8,11 +8,9 @@ import { AllUsersTableItemPreview, ListSubtypeInternal, TransactionsUniquesField
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { QueryResult } from '@/utils/queries/types';
+import type { QueryResult } from '@/utils/queries/types';
 import { getOr, isLoading } from '@/utils/asyncResource';
-import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
+import { useTransactionsUniques } from '@/hooks/api/transactions';
 import { neverThrow } from '@/utils/lang';
 import { InputProps } from '@/components/library/Form';
 import Spinner from '@/components/library/Spinner';
@@ -101,7 +99,6 @@ function SearchInput(
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, { wait: 500 });
-  const api = useApi();
   const field: TransactionsUniquesField = useMemo((): TransactionsUniquesField => {
     switch (listSubtype) {
       case 'CARD_FINGERPRINT_NUMBER':
@@ -137,19 +134,11 @@ function SearchInput(
     }
   }, [listSubtype]);
 
-  const queryResult: QueryResult<DefaultOptionType[]> = useQuery(
-    [TRANSACTIONS_UNIQUES(field, { filter: debouncedSearch }), debouncedSearch],
-    async (): Promise<DefaultOptionType[]> => {
-      if (debouncedSearch.length < 3) {
-        return [];
-      }
-      const uniques = await api.getTransactionsUniques({
-        field,
-        filter: debouncedSearch,
-      });
-      return uniques.map((value) => ({ value: value, label: value }));
-    },
-  );
+  const uniquesRes = useTransactionsUniques(field, { filter: debouncedSearch });
+  const queryResult: QueryResult<DefaultOptionType[]> = {
+    data: uniquesRes.data as any,
+    refetch: uniquesRes.refetch,
+  } as any;
   return (
     <Select
       onSearch={setSearch}

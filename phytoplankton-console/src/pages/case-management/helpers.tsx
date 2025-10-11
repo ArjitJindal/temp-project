@@ -36,7 +36,7 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
+import { useBusinessIndustries, useRuleQueues } from '@/hooks/api';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
@@ -46,7 +46,7 @@ import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
-import { useReasons } from '@/utils/reasons';
+import { useReasons } from '@/hooks/api/settings';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -136,25 +136,19 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       caseStatus:
         raw.caseStatus === null ? raw.caseStatus : (raw.caseStatus?.split(',') as DerivedStatus[]),
       alertStatus: raw.alertStatus?.split(',') as DerivedStatus[],
-      filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
+      filterTypes: raw.filterTypes?.split(',') as TableSearchParams['filterTypes'],
       businessIndustryFilter: raw.businessIndustryFilter?.split(','),
-      caseTypesFilter: raw.caseTypesFilter?.split(
-        ',',
-      ) as unknown as TableSearchParams['caseTypesFilter'],
-      userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
-      riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
+      caseTypesFilter: raw.caseTypesFilter?.split(',') as TableSearchParams['caseTypesFilter'],
+      userStates: raw.userStates?.split(',') as TableSearchParams['userStates'],
+      riskLevels: raw.riskLevels?.split(',') as TableSearchParams['riskLevels'],
       showCases: (showCases as ScopeSelectorValue | undefined) ?? 'ALL',
-      assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
-      roleAssignedTo: raw.roleAssignedTo?.split(
-        ',',
-      ) as unknown as TableSearchParams['roleAssignedTo'],
-      qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
+      assignedTo: raw.assignedTo?.split(',') as TableSearchParams['assignedTo'],
+      roleAssignedTo: raw.roleAssignedTo?.split(',') as TableSearchParams['roleAssignedTo'],
+      qaAssignment: raw.qaAssignment?.split(',') as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
       filterQaStatus: raw?.['filterQaStatus'] as ChecklistStatus | undefined | "NOT_QA'd",
       filterClosingReason: raw?.['filterClosingReason']?.split(',') as string[],
-      alertPriority: raw?.alertPriority?.split(
-        ',',
-      ) as unknown as TableSearchParams['alertPriority'],
+      alertPriority: raw?.alertPriority?.split(',') as TableSearchParams['alertPriority'],
       ruleQueueIds: raw.ruleQueueIds?.split(','),
       ruleNature: raw.ruleNature?.split(','),
       forensicsFor: raw.forensicsFor ? JSON.parse(raw.forensicsFor) : undefined,

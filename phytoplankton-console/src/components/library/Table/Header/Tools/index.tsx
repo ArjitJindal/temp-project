@@ -6,7 +6,7 @@ import SettingsButton from './SettingsButton';
 import DownloadButton from './DownloadButton';
 import AdvancedDownloadButton from './AdvancedDownloadButton';
 import ReloadButton from './ReloadButton';
-import { PaginationParams } from '@/utils/queries/hooks';
+import type { PaginationParams } from '@/utils/queries/hooks';
 
 export type ExportConfig = {
   pageSize: number;

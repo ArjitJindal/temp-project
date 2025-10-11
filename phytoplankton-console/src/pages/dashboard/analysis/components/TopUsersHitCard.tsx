@@ -8,9 +8,7 @@ import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { HITS_PER_USER } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { useTopUsersByRuleHit } from '@/hooks/api/dashboard';
 import { isSuccess } from '@/utils/asyncResource';
 import { getUserLink } from '@/utils/api/users';
 import { getCurrentDomain } from '@/utils/routing';
@@ -35,30 +33,8 @@ const TopUsersHitCard = (props: Props) => {
     'ALL',
   );
 
-  const api = useApi();
   const direction = selectedSection !== 'ALL' ? selectedSection : undefined;
-
-  const hitsPerUserResult = usePaginatedQuery(
-    HITS_PER_USER(dateRange, userType, direction),
-    async (paginationParams) => {
-      const [start, end] = dateRange ?? [];
-      const startTimestamp = start?.startOf('day').valueOf();
-      const endTimestamp = end?.endOf('day').valueOf();
-
-      const result = await api.getDashboardStatsHitsPerUser({
-        ...paginationParams,
-        startTimestamp,
-        endTimestamp,
-        direction,
-        userType,
-      });
-
-      return {
-        total: result.data.length,
-        items: result.data,
-      };
-    },
-  );
+  const hitsPerUserResult = useTopUsersByRuleHit(dateRange, userType, direction);
   const dataToExport = useMemo(() => {
     if (isSuccess(hitsPerUserResult.data)) {
       const data = hitsPerUserResult.data.value.items.map((item) => {

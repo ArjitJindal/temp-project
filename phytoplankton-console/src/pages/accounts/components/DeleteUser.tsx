@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Account, AccountDeletePayload } from '@/apis';
+import { useDeleteAccount } from '@/hooks/api/users';
+import { Account } from '@/apis';
 import { FlagrightAuth0User, UserRole } from '@/utils/user-utils';
-import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import Modal from '@/components/library/Modal';
 import Select from '@/components/library/Select';
@@ -23,39 +22,26 @@ export function DeleteUser(props: DeleteUserProps) {
   const { item, user, accounts, onSuccess, setDeletedUserId } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [reassignTo, setReassignTo] = useState<string | null>(null);
-  const api = useApi();
 
   let messageVar: CloseMessage | null = null;
 
-  const deactiveUserMutation = useMutation<
-    unknown,
-    unknown,
-    AccountDeletePayload & { userId: string }
-  >(
-    async (payload: AccountDeletePayload & { userId: string }) => {
+  const deactiveUserMutation = useDeleteAccount({
+    onMutate: () => {
       messageVar = message.loading(`Please wait while we are deleting the user`);
-      return await api.accountsDelete({
-        AccountDeletePayload: {
-          reassignTo: payload.reassignTo,
-        },
-        accountId: payload.userId,
-      });
     },
-    {
-      onSuccess: (_, { userId }) => {
-        messageVar?.();
-        message.success(`User deleted successfully`);
-        setIsModalVisible(false);
-        setReassignTo(null);
-        onSuccess();
-        setDeletedUserId(userId);
-      },
-      onError: (error) => {
-        messageVar?.();
-        message.error(`Error while deleting the user: ${(error as Error)?.message}`);
-      },
+    onSuccess: (_: any, { userId }: any) => {
+      messageVar?.();
+      message.success(`User deleted successfully`);
+      setIsModalVisible(false);
+      setReassignTo(null);
+      onSuccess();
+      setDeletedUserId(userId);
     },
-  );
+    onError: (error: any) => {
+      messageVar?.();
+      message.error(`Error while deleting the user: ${error?.message}`);
+    },
+  }) as any;
 
   const handleDelete = () => {
     if (accounts.length === 1) {

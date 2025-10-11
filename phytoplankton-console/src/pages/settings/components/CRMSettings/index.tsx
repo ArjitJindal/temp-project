@@ -3,16 +3,19 @@ import { startCase } from 'lodash';
 import s from './styles.module.less';
 import FreshdeskIcon from './freshdesk_logo.png';
 import SettingsCard from '@/components/library/SettingsCard';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import {
+  useDeleteNangoConnection,
+  useNangoConnections,
+  useCreateNangoConnection,
+} from '@/hooks/api/settings';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Button from '@/components/library/Button';
 import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
-import { NANGO_CONNECTIONS } from '@/utils/queries/keys';
 
 export const CRMSettings = () => {
-  const api = useApi();
-  const queryResults = useQuery(NANGO_CONNECTIONS(), () => api.getTenantsNangoConnections());
+  const queryResults = useNangoConnections();
+  const deleteConnection = useDeleteNangoConnection();
+  const createConnection = useCreateNangoConnection();
   const nango = new Nango({});
 
   const getIcon = (integration: string) => {
@@ -50,11 +53,9 @@ export const CRMSettings = () => {
                     size="SMALL"
                     requiredResources={['write:::settings/add-ons/crm-integrations/*']}
                     onClick={async () => {
-                      await api.deleteTenantsNangoConnections({
-                        NangoPostConnect: {
-                          providerConfigKey: integration.providerConfigKey,
-                          connectionId: integration.connectionId,
-                        },
+                      await deleteConnection.mutateAsync({
+                        providerConfigKey: integration.providerConfigKey,
+                        connectionId: integration.connectionId,
                       });
                       queryResults.refetch();
                     }}
@@ -72,11 +73,9 @@ export const CRMSettings = () => {
 
                     onEvent: async (event) => {
                       if (event.type === 'connect') {
-                        await api.postTenantsNangoConnections({
-                          NangoPostConnect: {
-                            connectionId: event.payload.connectionId,
-                            providerConfigKey: event.payload.providerConfigKey,
-                          },
+                        await createConnection.mutateAsync({
+                          connectionId: event.payload.connectionId,
+                          providerConfigKey: event.payload.providerConfigKey,
                         });
                         queryResults.refetch();
                       }

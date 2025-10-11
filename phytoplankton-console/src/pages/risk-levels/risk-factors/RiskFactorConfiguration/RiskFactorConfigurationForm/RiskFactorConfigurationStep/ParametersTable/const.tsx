@@ -29,8 +29,6 @@ import Select, { Option } from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
-import { SETTINGS, TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
-import { useApi } from '@/api';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { BUSINESS_USER_SEGMENTS } from '@/apis/models-custom/BusinessUserSegment';
 import { CONSUMER_USER_SEGMENTS } from '@/apis/models-custom/ConsumerUserSegment';
@@ -50,7 +48,9 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { hasOverlaps } from '@/utils/math';
 import { convertToDays } from '@/utils/dayjs';
 import { getOr } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
+import { useTransactionsUniques } from '@/hooks/api/transactions';
+import { useUsersUniques } from '@/hooks/api/users';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -397,12 +397,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
     );
   }) as InputRenderer<'MULTIPLE'>,
   BUSINESS_INDUSTRY: ((props) => {
-    const api = useApi();
-    const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
-      api.getUsersUniques({
-        field: 'BUSINESS_INDUSTRY',
-      }),
-    );
+    const result = useUsersUniques('BUSINESS_INDUSTRY');
     return (
       <MultipleSelect
         options={getOr(result.data, []).map((entry) => ({
@@ -415,12 +410,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
     );
   }) as InputRenderer<'MULTIPLE'>,
   BANK_NAMES: ((props) => {
-    const api = useApi();
-    const result = useQuery(TRANSACTIONS_UNIQUES('BANK_NAMES'), () =>
-      api.getTransactionsUniques({
-        field: 'BANK_NAMES',
-      }),
-    );
+    const result = useTransactionsUniques('BANK_NAMES');
     return (
       <MultipleSelect
         options={getOr(result.data, []).map((entry) => ({
@@ -660,12 +650,9 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
     return <MultipleSelect options={SOURCE_OF_FUNDS_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
   AMOUNT_RANGE: ((props) => {
-    const api = useApi();
-    const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
+    const settings = useSettings();
     const defaultCurrency =
-      props.existedValues?.at(-1)?.currency ??
-      getOr(queryData.data, {}).defaultValues?.currency ??
-      'USD';
+      props.existedValues?.at(-1)?.currency ?? settings?.defaultValues?.currency ?? 'USD';
     return (
       <>
         <div className={style.amount_container}>

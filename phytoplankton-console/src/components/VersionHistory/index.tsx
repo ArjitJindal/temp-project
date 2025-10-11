@@ -7,10 +7,8 @@ import RiskClassificationLink from './LinkComponents/RiskClassificationLink';
 import RiskFactorLink from './LinkComponents/RiskFactorLink';
 import { BreadCrumbsWrapper, SimulationStorageKey } from '@/components/BreadCrumbsWrapper';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
+import { useVersionHistory } from '@/hooks/api/version-history';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
-import { VERSION_HISTORY } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { VersionHistory, VersionHistoryType } from '@/apis';
@@ -71,7 +69,6 @@ const getMetaData = (type: VersionHistoryType): MetaData => {
 
 export default function RiskLevelsVersionHistoryPage() {
   const pathname = useLocation().pathname;
-  const api = useApi();
 
   const type: VersionHistoryType = useMemo(() => {
     if (pathname === '/risk-levels/version-history') {
@@ -85,20 +82,7 @@ export default function RiskLevelsVersionHistoryPage() {
   const metaData = useMemo(() => getMetaData(type), [type]);
 
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
-  const queryResults = usePaginatedQuery(VERSION_HISTORY(type, params), async (pageParams) => {
-    return await api.getVersionHistory({
-      ...pageParams,
-      page: pageParams.page || params.page,
-      pageSize: pageParams.pageSize || params.pageSize,
-      filterVersionId: params.id,
-      filterCreatedBy: params.createdBy,
-      filterAfterTimestamp: params.createdAt?.[0] ?? undefined,
-      filterBeforeTimestamp: params.createdAt?.[1] ?? undefined,
-      sortField: params?.sort?.[0]?.[0] ?? 'createdAt',
-      sortOrder: params?.sort?.[0]?.[1] ?? 'descend',
-      type,
-    });
-  });
+  const queryResults = useVersionHistory(type, params);
 
   const [users] = useUsers();
   const helper = new ColumnHelper<VersionHistory>();

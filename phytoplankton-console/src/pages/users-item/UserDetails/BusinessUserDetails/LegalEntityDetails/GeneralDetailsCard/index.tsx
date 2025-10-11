@@ -4,8 +4,7 @@ import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { useUserScreeningStatus } from '@/hooks/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Tag from '@/components/library/Tag';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
@@ -19,12 +18,7 @@ interface Props {
 export default function GeneralDetailsCard(props: Props) {
   const { user } = props;
 
-  const api = useApi();
-  const ongoingSanctionsScreeningQueryResult = useQuery(['user-status', user.userId], async () => {
-    return await api.getUserScreeningStatus({
-      userId: user.userId,
-    });
-  });
+  const ongoingSanctionsScreeningQueryResult = useUserScreeningStatus(user.userId);
 
   return (
     <EntityPropertiesCard

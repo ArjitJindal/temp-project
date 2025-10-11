@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { QAFormValues } from '../types';
 import { TableSearchParams } from '../../types';
-import { useAlertQuery } from '../../common';
 import { ChecklistStatus } from '../../../../apis/models/ChecklistStatus';
+import { useAlertQuery } from '@/hooks/api/alerts';
 import Modal from '@/components/library/Modal';
 import Form from '@/components/library/Form';
 import { AlertsQaSampling } from '@/apis';

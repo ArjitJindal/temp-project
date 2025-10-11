@@ -23,7 +23,7 @@ import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Provider
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
-import { useReasons } from '@/utils/reasons';
+import { useReasons } from '@/hooks/api/settings';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 
 export interface FormValues {

@@ -1,18 +1,18 @@
 import { useMemo } from 'react';
 import { maxBy, orderBy } from 'lodash';
-import { Resource } from '@flagright/lib/utils';
+import type { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import Comment from './Comment';
 import { getCommentsWithReplies } from './utils';
 import * as Card from '@/components/ui/Card';
 import { CommentType, useAuth0User, useHasResources } from '@/utils/user-utils';
-import { Comment as ApiComment } from '@/apis';
+import type { Comment as ApiComment } from '@/apis';
 import { P } from '@/components/ui/Typography';
-import { Mutation } from '@/utils/queries/types';
+import type { Mutation } from '@/utils/queries/types';
 import { map, getOr, AsyncResource } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
-import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
+import type { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 
 export interface CommentWithReplies extends ApiComment {
   replies?: ApiComment[];

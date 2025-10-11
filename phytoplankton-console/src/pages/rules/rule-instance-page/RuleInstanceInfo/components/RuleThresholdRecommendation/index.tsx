@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import ExtendedRowRenderer from '../ExtendedRowRenderer';
 import s from './index.module.less';
-import { useApi } from '@/api';
 import {
   LogicAggregationVariable,
   LogicEntityVariableInUse,
@@ -18,8 +17,7 @@ import { NUMBER } from '@/components/library/Table/standardDataTypes';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useLogicEntityVariablesList } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import { getOr, isFailed, isLoading, map } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
-import { THRESHOLD_RECOMMENDATIONS } from '@/utils/queries/keys';
+import { useRuleThresholdRecommendations } from '@/hooks/api/rules';
 import Icon from '@/components/ui/icons/Remix/system/arrow-down-line.react.svg';
 import Tag from '@/components/library/Tag';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
@@ -31,8 +29,6 @@ import {
   UPDATED_VAR_DATA_KEY,
 } from '@/utils/ruleThreshold';
 import { useSafeLocalStorageState } from '@/utils/hooks';
-import { message } from '@/components/library/Message';
-import { getErrorMessage } from '@/utils/lang';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -52,22 +48,8 @@ export default function RuleThresholdRecommendation(props: Props) {
   const [_simulationVarUpdatedData, setSimulationVarUpdatedData] =
     useSafeLocalStorageState<VarThresholdData>(UPDATED_VAR_DATA_KEY, EMPTY_THRESHOLD_DATA);
   const helper = new ColumnHelper<VarThresholdData>();
-  const api = useApi();
   const navigate = useNavigate();
-  const recommendationResult = useQuery(
-    THRESHOLD_RECOMMENDATIONS(ruleInstance.id ?? ''),
-    async () => {
-      const result = await api.getRuleInstanceRuleInstanceIdRecommendation({
-        ruleInstanceId: ruleInstance.id ?? '',
-      });
-      return result;
-    },
-    {
-      onError: (e) => {
-        message.fatal(`Failed to calculate recommendations for the rule. ${getErrorMessage(e)}`, e);
-      },
-    },
-  );
+  const recommendationResult = useRuleThresholdRecommendations(ruleInstance.id ?? '');
   const data = getOr(recommendationResult.data, {
     ruleInstanceId: ruleInstance.id ?? '',
     varsThresholdData: [],

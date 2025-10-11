@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import s from './styles.module.less';
-import { useApi } from '@/api';
 import Label from '@/components/library/Label';
 import { message } from '@/components/library/Message';
 import Modal from '@/components/library/Modal';
 import Select from '@/components/library/Select';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_QA_SAMPLE, QA_SAMPLE_IDS } from '@/utils/queries/keys';
+import { useQaSample, useQaSampleIds } from '@/hooks/api/alerts';
 import { P } from '@/components/ui/Typography';
 import TextInput from '@/components/library/TextInput';
 import TextArea from '@/components/library/TextArea';
@@ -21,13 +19,8 @@ type Props = {
 
 const SampleDetails = (props: { sampleId: string }) => {
   const { sampleId } = props;
-  const api = useApi();
 
-  const queryResult = useQuery(
-    ALERT_QA_SAMPLE(sampleId),
-    async () => await api.getAlertsQaSample({ sampleId }),
-    { enabled: !!sampleId },
-  );
+  const queryResult = useQaSample(sampleId, { enabled: !!sampleId });
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
@@ -54,8 +47,7 @@ const SampleDetails = (props: { sampleId: string }) => {
 
 export const AddToSampleModal = (props: Props) => {
   const { isModalOpen, setIsModalOpen, onAddToSample } = props;
-  const api = useApi();
-  const queryResults = useQuery(QA_SAMPLE_IDS(), async () => await api.getAlertsQaSampleIds());
+  const queryResults = useQaSampleIds();
   const [selectedSampleId, setSelectedSampleId] = useState<string>();
 
   return (
