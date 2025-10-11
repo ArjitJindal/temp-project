@@ -148,7 +148,7 @@ const ROLES: PermissionStatements[] = [
 const SANCTIONS: PermissionStatements[] = [
   {
     actions: ['read'],
-    resources: ['frn:console:cypress-tenant:::sanctions/search/*'],
+    resources: ['frn:console:cypress-tenant:::screening/manual-screening/*'],
   },
 ];
 const SIMULATION: PermissionStatements[] = [

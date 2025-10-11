@@ -915,16 +915,18 @@ export const PERMISSIONS_LIBRARY: Permissions = [
         type: 'STATIC',
       },
       {
-        id: 'manual-screening-filters',
-        name: 'Manual screening filters',
-        actions: ['write'],
-        type: 'STATIC',
-      },
-      {
         id: 'manual-screening',
         name: 'Manual screening',
         actions: ['read', 'write'],
         type: 'STATIC',
+        children: [
+          {
+            id: 'manual-screening-filters',
+            name: 'Manual screening filters',
+            actions: ['write'],
+            type: 'STATIC',
+          },
+        ],
       },
       {
         id: 'activity',
@@ -935,20 +937,6 @@ export const PERMISSIONS_LIBRARY: Permissions = [
       {
         id: 'whitelist',
         name: 'Screening whitelist',
-        actions: ['read', 'write'],
-        type: 'STATIC',
-      },
-    ],
-  },
-  {
-    id: 'sanctions',
-    name: 'Sanctions',
-    actions: ['read', 'write'],
-    type: 'STATIC',
-    children: [
-      {
-        id: 'search',
-        name: 'Search',
         actions: ['read', 'write'],
         type: 'STATIC',
       },
