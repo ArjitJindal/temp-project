@@ -267,7 +267,7 @@ export function SearchResultTable(props: Props) {
               onClick={() => {
                 newSearchMutation.mutate(params);
               }}
-              requiredResources={['read:::sanctions/search/*']}
+              requiredResources={['read:::screening/manual-screening/*']}
             >
               Search
             </Button>
@@ -280,7 +280,7 @@ export function SearchResultTable(props: Props) {
                 hasSetDefaultProfile.current = false;
                 navigate(makeUrl(`/screening/manual-screening`, {}, {}));
               }}
-              requiredResources={['read:::sanctions/search/*']}
+              requiredResources={['read:::screening/manual-screening/*']}
             >
               New search
             </Button>
