@@ -9,6 +9,7 @@ import {
   getClickhouseDataOnly,
   getClickhouseCountOnly,
 } from '../../../utils/pagination'
+import { TimeRange } from './transaction-repository-interface'
 import {
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsStatsByTimeRequest,
@@ -36,6 +37,7 @@ import { CurrencyService } from '@/services/currency'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 
 type StatsByType = {
   transactionType: string
@@ -934,5 +936,103 @@ export class ClickhouseTransactionsRepository {
       }
     }
     return result
+  }
+  public async *getUniquePaymentDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ) {
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+    const paymentDetailMethodField =
+      direction === 'ORIGIN'
+        ? 'originPaymentMethod'
+        : 'destinationPaymentMethod'
+    const nativeFieldToCh = (field: string) => `${paymentDetailsField}_${field}`
+    const globalBatch: PaymentDetails[] = []
+    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
+      const paymentIdentifiers =
+        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
+      const identifierColumns = paymentIdentifiers.map(
+        (identifier) => `${nativeFieldToCh(identifier)}`
+      )
+
+      const query = `
+    SELECT ${identifierColumns.join(', ')}
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+    WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
+        timeRange.beforeTimestamp
+      }
+      AND ${paymentDetailMethodField} = '${paymentMethod}'
+    LIMIT 1 BY ${identifierColumns.join(', ')}
+  `
+      const resultSet = await this.clickhouseClient.query({
+        query,
+        format: 'JSONEachRow',
+      })
+      for await (const rows of resultSet.stream()) {
+        for (const row of rows) {
+          const data = row.json()
+          const details: PaymentDetails = {
+            method: paymentMethod,
+            ...Object.fromEntries(
+              paymentIdentifiers.map((field) => [
+                field,
+                data?.[nativeFieldToCh(field)],
+              ])
+            ),
+          }
+          globalBatch.push(details)
+
+          if (globalBatch.length >= chunkSize) {
+            yield globalBatch.splice(0)
+          }
+        }
+      }
+    }
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
+  }
+
+  public async *getUniqueUserIdGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
+    const userField =
+      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const query = `
+SELECT ${userField} 
+FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp} 
+AND ${userField} != ''
+LIMIT 1 BY ${userField}`
+
+    // Execute query as a stream
+    const resultSet = await this.clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    let batch: string[] = []
+    for await (const rows of resultSet.stream<Record<string, string>>()) {
+      for (const row of rows) {
+        const userId = row.json()[userField]
+        if (userId) {
+          batch.push(userId)
+          if (batch.length >= chunkSize) {
+            yield batch
+            batch = []
+          }
+        }
+      }
+    }
+
+    if (batch.length > 0) {
+      yield batch
+    }
   }
 }

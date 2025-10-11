@@ -6968,7 +6968,7 @@ paths:
       operationId: get-sanctions-sources
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/manual-screening
       parameters:
         - schema:
             $ref: '#/components/schemas/SanctionsSourceType'
@@ -7179,7 +7179,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/manual-screening
       responses:
         '200':
           description: OK

@@ -97,7 +97,7 @@ import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import dayjs from '@/utils/dayjs'
-import { EntityData, TimestampRange } from '@/@types/tranasction/aggregation'
+import { EntityData, TimestampSlice } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
   getPaymentDetailsNameString,
@@ -750,7 +750,7 @@ export class LogicEvaluator {
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     entityData: EntityData | undefined,
-    timeRange?: TimestampRange,
+    timeRange?: TimestampSlice,
     totalTimeSlices?: number
   ): Promise<boolean> {
     let userKeyId: string | undefined
@@ -872,7 +872,8 @@ export class LogicEvaluator {
       userKeyId,
       lastTransactionTimestamp,
       totalTimeSlices,
-      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices
+      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices,
+      timeRange?.sliceNumber
     )
     logger.debug('Rebuilt aggregation for time window', timeRange)
     return true

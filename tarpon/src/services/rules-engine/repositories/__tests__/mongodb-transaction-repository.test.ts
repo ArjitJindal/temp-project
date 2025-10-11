@@ -6,6 +6,8 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
+import { Address } from '@/@types/openapi-public/Address'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 
 describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
   let repository: MongoDbTransactionRepository
@@ -76,11 +78,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
       ]
 
       await collection.insertMany(transactions)
-
-      const result = await repository.getUniqueAddressDetails(
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'ORIGIN',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(2)
       expect(result).toContainEqual({
@@ -120,10 +126,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertOne(transaction)
 
-      const result = await repository.getUniqueAddressDetails(
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'ORIGIN',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
@@ -182,10 +193,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertMany(transactions)
 
-      const result = await repository.getUniqueAddressDetails(
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'ORIGIN',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
@@ -199,10 +215,16 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
     it('should handle empty results', async () => {
       // No test data inserted, so should return empty results
-      const result = await repository.getUniqueAddressDetails(
+
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'ORIGIN',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(0)
     })
@@ -250,10 +272,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertMany(transactions)
 
-      const result = await repository.getUniqueAddressDetails(
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'ORIGIN',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(3)
       expect(
@@ -286,10 +313,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertOne(transaction)
 
-      const result = await repository.getUniqueAddressDetails(
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'DESTINATION',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
@@ -320,10 +352,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertOne(transaction)
 
-      const result = await repository.getUniqueAddressDetails(
+      const generator = repository.getUniqueAddressDetailsGenerator(
         'ORIGIN',
-        timeRange
+        timeRange,
+        50
       )
+      const result: Address[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
@@ -363,7 +400,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertMany(transactions)
 
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(2)
       expect(result).toContain('John Doe')
@@ -401,7 +446,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertMany(transactions)
 
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(2)
       expect(
@@ -450,7 +503,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertMany(transactions)
 
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(2)
       expect(result).toContain('String Name')
@@ -482,7 +543,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertOne(transaction)
 
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(0)
     })
@@ -502,10 +571,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertOne(transaction)
 
-      const result = await repository.getUniqueNameDetails(
+      const generator = repository.getUniqueNameDetailsGenerator(
         'DESTINATION',
-        timeRange
+        timeRange,
+        50
       )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(1)
       expect(result).toContain('Destination Name')
@@ -545,7 +619,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertMany(transactions)
 
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(3)
       expect(result).toContain('Cash Name')
@@ -562,7 +644,16 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
     it('should handle empty results', async () => {
       // No test data inserted, so should return empty results
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(0)
     })
@@ -582,7 +673,15 @@ describe('MongoDbTransactionRepository - getUniqueAddressDetails', () => {
 
       await collection.insertOne(transaction)
 
-      const result = await repository.getUniqueNameDetails('ORIGIN', timeRange)
+      const generator = repository.getUniqueNameDetailsGenerator(
+        'ORIGIN',
+        timeRange,
+        50
+      )
+      const result: (ConsumerName | string)[] = []
+      for await (const data of generator) {
+        result.push(...data)
+      }
 
       expect(result).toHaveLength(0)
     })
