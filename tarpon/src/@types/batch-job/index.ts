@@ -629,8 +629,15 @@ export type BatchJob =
   | BatchRerunUsers
   | ScreeningProfileDataFetchBatchJob
   | EddReviewBatchJob
+  | CraLockUntimerBatchJob
   | ScreeningAlertsExportBatchJob
   | UpdateTransactionStatusBatchJob
+
+/* CRA Lock Timer */
+export type CraLockUntimerBatchJob = {
+  type: 'CRA_LOCK_UNTIMER'
+  tenantId: string
+}
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

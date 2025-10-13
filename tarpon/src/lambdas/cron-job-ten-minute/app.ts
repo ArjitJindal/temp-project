@@ -89,6 +89,52 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   }
 }
 
+async function handleCraLockUntimerBatchJob(tenantIds: string[]) {
+  try {
+    // Filter tenant IDs to only include those with CRA_LOCK_TIMER feature enabled
+    const tenantsWithCraLockTimer: string[] = []
+
+    for (const tenantId of tenantIds) {
+      if (isDemoTenant(tenantId)) {
+        continue // Skip demo tenants for batch jobs
+      }
+
+      const hasCraLockTimerFeature = await tenantHasFeature(
+        tenantId,
+        'CRA_LOCK_TIMER'
+      )
+      if (hasCraLockTimerFeature) {
+        tenantsWithCraLockTimer.push(tenantId)
+      }
+    }
+
+    if (tenantsWithCraLockTimer.length === 0) {
+      logger.info(
+        'No tenants have CRA_LOCK_TIMER feature enabled, skipping all CRA lock untimer batch jobs'
+      )
+      return
+    }
+
+    logger.info(
+      `Scheduling CRA lock untimer batch jobs for ${tenantsWithCraLockTimer.length} tenants with CRA_LOCK_TIMER feature`
+    )
+
+    await Promise.all(
+      tenantsWithCraLockTimer.map(async (tenantId) => {
+        return sendBatchJobCommand({
+          type: 'CRA_LOCK_UNTIMER',
+          tenantId,
+        })
+      })
+    )
+  } catch (e) {
+    logger.error(
+      `Failed to send CRA lock untimer batch jobs: ${(e as Error)?.message}`,
+      e
+    )
+  }
+}
+
 async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
@@ -178,6 +224,7 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       'RISK_SCORING_RECALCULATION',
       'USER_RULE_RE_RUN',
     ])
+    await handleCraLockUntimerBatchJob(tenantIds)
     await deleteOldWebhookRetryEvents(tenantIds)
     await dispatchScreeningDataFetchJob(dynamoDb)
 

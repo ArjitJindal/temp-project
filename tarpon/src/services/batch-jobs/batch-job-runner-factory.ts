@@ -42,6 +42,7 @@ import { SanctionsScreeningDetailsMigrationBatchJobRunner } from './sanctions-sc
 import { GoCardlessBackfillBatchJobRunner } from './go-cardless-backfill'
 import { ScreeningProfileDataFetcherBatchJobRunner } from './screening-profile-data-fetcher'
 import { EddReviewBatchJobRunner } from './edd-review-batch-job-runner'
+import { CraLockUntimerBatchJobRunner } from './cra-lock-untimer-batch-job-runner'
 import { ScreeningAlertsExportBatchJobRunner } from './screening-alerts-export-batch-job-runner'
 import { UpdateTransactionStatusBatchJobRunner } from './update-transaction-status'
 import { BatchJobType } from '@/@types/batch-job'
@@ -155,6 +156,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     SCREENING_PROFILE_DATA_FETCH: (jobId) =>
       new ScreeningProfileDataFetcherBatchJobRunner(jobId),
     EDD_REVIEW: (jobId) => new EddReviewBatchJobRunner(jobId),
+    CRA_LOCK_UNTIMER: (jobId) => new CraLockUntimerBatchJobRunner(jobId),
     UPDATE_TRANSACTION_STATUS: (jobId) =>
       new UpdateTransactionStatusBatchJobRunner(jobId),
   }

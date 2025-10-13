@@ -66,6 +66,7 @@ export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
 export const AVG_ARS_KEY_IDENTIFIER = '#avg-ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
+export const DRS_LOCK_KEY_IDENTIFIER = '#drs-lock'
 export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
 export const SHARED_PARTITION_KEY_PREFIX = 'shared'
 export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
@@ -612,6 +613,10 @@ export const DynamoDbKeys = {
   DRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${DRS_KEY_IDENTIFIER}`,
     SortKeyID: version,
+  }),
+  DRS_LOCK_ITEM: (tenantId: string, userId: string, releaseAt: string) => ({
+    PartitionKeyID: `${tenantId}#${DRS_LOCK_KEY_IDENTIFIER}`,
+    SortKeyID: `${userId}#${releaseAt}`, // userId first for efficient user-specific queries
   }),
   ARS_VALUE_ITEM: (
     tenantId: string,

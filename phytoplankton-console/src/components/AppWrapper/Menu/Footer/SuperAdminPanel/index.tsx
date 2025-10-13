@@ -278,6 +278,10 @@ export const featureDescriptions: Record<
     description: 'Generate Enhanced Due Diligence reports (WIP).',
     tag: FeatureTag.WIP,
   },
+  CRA_LOCK_TIMER: {
+    title: 'CRA Lock Timer',
+    description: 'Enables automatic CRA lock expiration with user-specified durations',
+  },
   CHATBOT: {
     title: 'Chatbot',
     description: 'Enable the embedded chatbot assistant (engineering only).',

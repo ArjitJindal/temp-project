@@ -1974,7 +1974,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (isDevUserStack) {
       return Table.fromTableName(this, tableName, tableName)
     }
-    const table = new Table(this, tableName, {
+    const tableProps: any = {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
       sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
@@ -1990,7 +1990,9 @@ export class CdkTarponStack extends cdk.Stack {
           : RemovalPolicy.RETAIN,
       timeToLiveAttribute: enableTimeToLive ? 'ttl' : undefined,
       contributorInsightsEnabled,
-    })
+    }
+
+    const table = new Table(this, tableName, tableProps)
     return table
   }
 

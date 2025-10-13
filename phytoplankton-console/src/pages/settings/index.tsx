@@ -27,6 +27,7 @@ import SlaPolicySettings from './components/SlaPolicySettings';
 import { SecuritySettings } from './components/SecuritySettings';
 import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
 import CraToggleSettings from './components/CraToggleSettings';
+import CraLockTimerSettings from './components/CraLockTimerSettings';
 import { PepStatusConfigSettings } from './components/PepStatusConfigSettings';
 import TagSettings from './components/TagSettings';
 import ReRunTriggerSettings from './components/ReRunTriggerSettings';
@@ -162,6 +163,9 @@ export default function SettingsPage() {
                 </Feature>
                 <Feature name="RISK_SCORING">
                   <CraToggleSettings />
+                  <Feature name={'CRA_LOCK_TIMER'}>
+                    <CraLockTimerSettings />
+                  </Feature>
                   <RiskAlgorithmsCra />
                   <ReRunTriggerSettings />
                   <BatchRerunRiskScoringSettings />

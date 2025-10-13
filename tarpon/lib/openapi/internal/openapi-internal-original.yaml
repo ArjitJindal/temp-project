@@ -4440,13 +4440,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              title: ManualRiskAssignmentPayload
-              properties:
-                riskLevel:
-                  $ref: '#/components/schemas/RiskLevel'
-                isUpdatable:
-                  type: boolean
+              $ref: '#/components/schemas/ManualRiskAssignmentPayload'
         required: true
         description: ''
       responses:
@@ -8766,6 +8760,19 @@ components:
       required:
         - listId
         - items
+    ManualRiskAssignmentPayload:
+      title: ManualRiskAssignmentPayload
+      type: object
+      properties:
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        isUpdatable:
+          type: boolean
+        releaseAt:
+          type: number
+          description:
+            Timestamp (Unix epoch ms) when CRA lock should expire (only used
+            when isUpdatable is false)
     DynamoDbClickhouseBackfillBatchJobEntity:
       title: DynamoDbClickhouseBackfillBatchJobEntity
       type: string
@@ -9241,6 +9248,12 @@ components:
           type: number
         updateCount:
           type: number
+        lockedAt:
+          type: number
+          description: Timestamp when CRA was locked
+        lockExpiresAt:
+          type: number
+          description: Timestamp when CRA lock will automatically expire
       required:
         - createdAt
         - drsScore
@@ -11997,6 +12010,14 @@ components:
             - DAILY
             - WEEKLY
             - MONTHLY
+        craLockTimerHours:
+          type: number
+          minimum: 1
+          maximum: 8760
+          description:
+            Default duration in hours for CRA locks. Used as the default value
+            when users lock CRAs. When undefined/omitted, no default is provided
+            and users must specify duration.
         narrativeMode:
           $ref: '#/components/schemas/NarrativeMode'
         allowManualNarrativeModeUpdates:
@@ -13127,6 +13148,7 @@ components:
         - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
+        - CRA_LOCK_TIMER
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD

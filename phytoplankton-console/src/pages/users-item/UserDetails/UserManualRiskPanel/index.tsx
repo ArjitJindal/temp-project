@@ -3,6 +3,7 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import cn from 'clsx';
 import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
+import CraLockModal, { CraLockModalData } from './CraLockModal';
 import Tooltip from '@/components/library/Tooltip';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useApi } from '@/api';
@@ -32,7 +33,7 @@ import {
 } from '@/utils/queries/keys';
 import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/const';
 import { useHasResources } from '@/utils/user-utils';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useSettings, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import {
   useUserFieldChangesPendingApprovals,
@@ -52,6 +53,10 @@ export default function UserManualRiskPanel(props: Props) {
   const { userId } = props;
   const api = useApi();
   const [isLocked, setIsLocked] = useState(false);
+  const [isCraLockModalOpen, setIsCraLockModalOpen] = useState(false);
+
+  // Feature flags
+  const hasTimerFeature = useFeatureEnabled('CRA_LOCK_TIMER');
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
   const settings = useSettings();
   const canUpdateManualRiskLevel = useHasResources(['write:::users/user-manual-risk-levels/*']);
@@ -74,6 +79,7 @@ export default function UserManualRiskPanel(props: Props) {
         if (isCanceled) {
           return;
         }
+
         setSyncState(success(result));
         setIsLocked(result ? !result.isUpdatable : false);
       })
@@ -109,6 +115,7 @@ export default function UserManualRiskPanel(props: Props) {
       changesStrategy: WorkflowChangesStrategy;
       isUpdatable: boolean;
       comment?: string;
+      releaseAt?: number;
     }
   >(async (vars) => {
     const { changesStrategy } = vars;
@@ -123,15 +130,26 @@ export default function UserManualRiskPanel(props: Props) {
       if (changesStrategy === 'APPROVE' && !vars.comment) {
         throw new Error(`Comment is required`);
       }
+
+      const proposedChanges = [
+        {
+          field: 'CraLock',
+          value: vars.isUpdatable,
+        },
+      ];
+
+      // Add releaseAt field if provided (for timer feature support)
+      if (vars.releaseAt) {
+        proposedChanges.push({
+          field: 'CraLockReleaseAt',
+          value: vars.releaseAt as any,
+        });
+      }
+
       const approvalResponse = await api.postUserApprovalProposal({
         userId: userId,
         UserApprovalUpdateRequest: {
-          proposedChanges: [
-            {
-              field: 'CraLock',
-              value: vars.isUpdatable,
-            },
-          ],
+          proposedChanges,
           comment: vars.comment ?? '',
         },
       });
@@ -156,9 +174,12 @@ export default function UserManualRiskPanel(props: Props) {
               defaultRiskLevel,
             ),
             isUpdatable: vars.isUpdatable,
+            releaseAt: vars.releaseAt,
           },
         });
         setSyncState(success(response));
+        const newIsLocked = !vars.isUpdatable; // Convert isUpdatable to isLocked state
+        setIsLocked(newIsLocked);
       } catch (e) {
         console.error(e);
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
@@ -166,14 +187,18 @@ export default function UserManualRiskPanel(props: Props) {
       }
     }
 
-    const userAlias = firstLetterUpper(settings.userAlias);
-    if (isLocked) {
-      message.success(`${userAlias} risk level unlocked successfully!`);
-    } else {
-      message.success(`${userAlias} risk level locked successfully!`);
+    // Handle success messages and state updates for direct operations only
+    if (changesStrategy !== 'APPROVE') {
+      const userAlias = firstLetterUpper(settings.userAlias);
+      const newIsLocked = !vars.isUpdatable; // Convert isUpdatable to isLocked state
+
+      if (newIsLocked) {
+        message.success(`${userAlias} risk level locked successfully!`);
+      } else {
+        message.success(`${userAlias} risk level unlocked successfully!`);
+      }
+      await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
     }
-    setIsLocked(!isLocked);
-    await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
   });
 
   const changeRiskLevelMutation = useMutation<
@@ -243,6 +268,35 @@ export default function UserManualRiskPanel(props: Props) {
 
   const lockedByPendingProposals =
     !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+
+  // Extract lock data for the modal
+  const lockData: CraLockModalData | undefined = useMemo(() => {
+    if (!isSuccess(syncState)) {
+      return undefined;
+    }
+    const drsData = syncState.value;
+
+    return {
+      lockedAt: drsData.lockedAt,
+      lockExpiresAt: drsData.lockExpiresAt,
+    };
+  }, [syncState]);
+
+  // Handle modal confirmation for timer feature
+  const handleCraLockModalConfirm = async (data: {
+    isUpdatable: boolean;
+    comment: string;
+    releaseAt?: number;
+  }) => {
+    const craLockStrategy = getOr(craLockChangesStrategyRes, 'DIRECT');
+
+    // Use the mutation with the appropriate strategy
+    lockingAndUnlockingMutation.mutate({
+      changesStrategy: craLockStrategy,
+      ...data,
+    });
+    setIsCraLockModalOpen(false);
+  };
 
   return (
     <div className={s.root}>
@@ -334,10 +388,27 @@ export default function UserManualRiskPanel(props: Props) {
                 [s.isDisabled]: lockedByPendingProposals,
                 [CY_LOADING_FLAG_CLASS]: isLockBuzy,
               });
+              const handleIconClick = () => {
+                if (lockedByPendingProposals) {
+                  return;
+                }
+
+                if (hasTimerFeature) {
+                  // Scenario 3 or 4: Timer feature enabled - show modal
+                  setIsCraLockModalOpen(true);
+                } else {
+                  // Scenario 1 or 2: No timer feature - use original confirm dialog
+                  // The original confirm dialog already handles approval vs direct call
+                  // When locked → user wants to unlock → send isUpdatable: true
+                  // When unlocked → user wants to lock → send isUpdatable: false
+                  onClick(isLocked);
+                }
+              };
+
               return isLocked ? (
-                <LockLineIcon className={classNames} onClick={() => onClick(true)} />
+                <LockLineIcon className={classNames} onClick={handleIconClick} />
               ) : (
-                <UnlockIcon className={classNames} onClick={() => onClick(false)} />
+                <UnlockIcon className={classNames} onClick={handleIconClick} />
               );
             }}
           </Confirm>
@@ -360,6 +431,18 @@ export default function UserManualRiskPanel(props: Props) {
               }}
             />
           )}
+        />
+      )}
+
+      {/* CRA Lock Modal - Only when timer feature is enabled */}
+      {hasTimerFeature && (
+        <CraLockModal
+          isOpen={isCraLockModalOpen}
+          onClose={() => setIsCraLockModalOpen(false)}
+          onConfirm={handleCraLockModalConfirm}
+          isLocked={isLocked}
+          lockData={lockData}
+          isLoading={isLoading(lockingAndUnlockingMutation.dataResource)}
         />
       )}
     </div>

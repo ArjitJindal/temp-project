@@ -411,11 +411,15 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
       WEBHOOK_CONFIGURATION: {
         method: this.deleteWebhooks.bind(this),
-        order: 27,
+        order: 28,
       },
       USERS_PROPOSAL: {
         method: this.deleteUsersProposal.bind(this),
         order: 26,
+      },
+      DRS_LOCK_ITEM: {
+        method: this.deleteDrsLockItems.bind(this),
+        order: 27,
       },
     }
 
@@ -965,6 +969,23 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Users Proposal'
+    )
+  }
+
+  private async deleteDrsLockItems(tenantId: string) {
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.DRS_LOCK_ITEM(
+      tenantId,
+      '',
+      ''
+    ).PartitionKeyID
+
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'DRS Lock Items'
     )
   }
 
