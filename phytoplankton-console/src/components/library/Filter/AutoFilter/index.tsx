@@ -148,6 +148,7 @@ export function AutoFilter(props: Props): JSX.Element {
             max: filter.dataType.max,
             step: filter.dataType.step,
             defaultValue: filter.dataType.defaultValue,
+            displayFunction: filter.dataType.displayFunction,
           }}
           debounce={true}
           inputComponent={SliderWithInput}
@@ -164,6 +165,7 @@ export function AutoFilter(props: Props): JSX.Element {
             min: filter.dataType.min,
             max: filter.dataType.max,
             step: filter.dataType.step,
+            displayFunction: filter.dataType.displayFunction,
           }}
         />
       );

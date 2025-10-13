@@ -48,9 +48,18 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
 
   let buttonText: any = undefined;
   if (Array.isArray(value)) {
-    buttonText = joinReactNodes(value);
+    if (extraInputProps?.displayFunction && typeof extraInputProps.displayFunction === 'function') {
+      const displayFunction = extraInputProps.displayFunction;
+      buttonText = joinReactNodes(value.map((item) => displayFunction(item)));
+    } else {
+      buttonText = joinReactNodes(value);
+    }
   } else if (value != null) {
-    buttonText = value;
+    if (extraInputProps?.displayFunction && typeof extraInputProps.displayFunction === 'function') {
+      buttonText = extraInputProps.displayFunction(value);
+    } else {
+      buttonText = value;
+    }
   }
   return (
     <QuickFilter

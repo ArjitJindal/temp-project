@@ -63,6 +63,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   disableSorting?: boolean;
   readOnlyFilters?: boolean;
   extraFilters?: ExtraFilterProps<Params>[];
+  topTools?: React.ReactNode;
   leftTools?: React.ReactNode;
   extraTools?: ToolRenderer[];
   extraHeaderInfo?: React.ReactNode;
@@ -128,6 +129,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     expandedRowId,
     leftTools,
     emptyText,
+    topTools,
   } = props;
   const persistedSettingsContextValue = usePersistedSettingsContext();
   const [persistedSorting] = persistedSettingsContextValue.sort;
@@ -283,6 +285,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         totalPages={getPageCount(params, data)}
         leftTools={leftTools}
         readOnlyFilters={readOnlyFilters}
+        topTools={topTools}
       />
       <ScrollContainer
         maxHeight={typeof fitHeight === 'number' ? fitHeight : undefined}

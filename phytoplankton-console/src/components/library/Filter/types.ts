@@ -30,6 +30,7 @@ type WithSharedAutoFilterProps<T> = T & {
   allowClear?: boolean;
   clearNotAllowedReason?: string;
   readOnly?: boolean;
+  displayFunction?: (value: unknown) => React.ReactNode;
 };
 
 export type AutoFilterDataType =
