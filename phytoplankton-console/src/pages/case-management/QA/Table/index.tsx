@@ -35,7 +35,6 @@ import { getAlertUrl } from '@/utils/routing';
 import Tag from '@/components/library/Tag';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import { useReasons } from '@/utils/reasons';
 
@@ -54,7 +53,6 @@ export default function QaTable(props: Props) {
   const tableRef = useRef<TableRefType>(null);
   const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
-  const alertDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
   const closingResons = useReasons('CLOSURE');
 
   const helper = new ColumnHelper<TableAlertItem>();
@@ -80,12 +78,7 @@ export default function QaTable(props: Props) {
           return (
             <>
               {entity?.caseId && alertId && (
-                <Id
-                  to={addBackUrlToRoute(
-                    getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
-                  )}
-                  testName="alert-id"
-                >
+                <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))} testName="alert-id">
                   {alertId}
                 </Id>
               )}
@@ -99,9 +92,7 @@ export default function QaTable(props: Props) {
           return `${item?.caseId ?? ''}`;
         },
         link(value, item) {
-          return item?.caseId && value
-            ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
-            : '';
+          return item?.caseId && value ? getAlertUrl(item.caseId, value) : '';
         },
       },
     }),
@@ -250,7 +241,7 @@ export default function QaTable(props: Props) {
                 return null;
               }
               return (
-                <Link to={getAlertUrl(caseId, alertId, alertDetailsPageEnabled)}>
+                <Link to={getAlertUrl(caseId, alertId)}>
                   <>
                     <Button type="PRIMARY">View</Button>
                   </>

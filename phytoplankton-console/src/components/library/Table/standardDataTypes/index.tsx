@@ -47,7 +47,6 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/
 import TransactionStateDisplay from '@/components/ui/TransactionStateDisplay';
 import {
   useTransactionStateLabel,
-  FeatureEnabled,
   useRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -911,18 +910,9 @@ export const getForneticsEntityId = (tenantSettings?: TenantSettings) => {
           );
         case 'Alert ID':
           return (
-            <FeatureEnabled name={'ALERT_DETAILS_PAGE'}>
-              {(alertPageEnabled) => (
-                <Id
-                  to={addBackUrlToRoute(
-                    getAlertUrl(entity?.['Case ID'], value ?? '#', alertPageEnabled),
-                  )}
-                  toNewTab
-                >
-                  {value}
-                </Id>
-              )}
-            </FeatureEnabled>
+            <Id to={addBackUrlToRoute(getAlertUrl(entity?.['Case ID'], value ?? '#'))} toNewTab>
+              {value}
+            </Id>
           );
         case 'caseId':
           return (

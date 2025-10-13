@@ -418,7 +418,6 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   );
 
   const icpFeatureEnabled = useFeatureEnabled('AI_FORENSICS');
-  const alertDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
   const icpEnabled = icpFeatureEnabled || user.role === 'root'; // TODO remove this after testing
 
   const ruleQueues = useRuleQueues();
@@ -477,17 +476,13 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             type: {
               render: (alertId, { item: entity }) => {
                 const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
-                if (caseId !== undefined && !alertDetailsPageEnabled) {
-                  return <div>{alertId}</div>;
-                }
+                // Always show alert details page
                 return (
                   <div className={s.alert}>
                     <Id
                       to={
                         entity?.caseId != null && alertId != null
-                          ? addBackUrlToRoute(
-                              getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
-                            )
+                          ? addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))
                           : '#'
                       }
                       testName="alert-id"
@@ -514,9 +509,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                 return item.alertId ?? '';
               },
               link: (value, item) => {
-                return item?.caseId && value
-                  ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
-                  : undefined;
+                return item?.caseId && value ? getAlertUrl(item.caseId, value) : undefined;
               },
             },
             sorting: true,
@@ -1168,7 +1161,6 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     caseId,
     isInReview,
     showReason,
-    alertDetailsPageEnabled,
     users,
     qaAssigneesUpdateMutation,
     ruleQueues,

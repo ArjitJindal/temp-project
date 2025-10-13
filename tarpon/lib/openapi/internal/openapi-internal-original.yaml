@@ -13104,7 +13104,6 @@ components:
       type: string
       title: Feature
       enum:
-        - ALERT_DETAILS_PAGE
         - RISK_LEVELS
         - RISK_SCORING
         - SLACK_ALERTS
