@@ -139,7 +139,7 @@ export const config: Config = {
   opensearch: {
     deploy: true,
     dataNodes: 7,
-    dataNodeInstanceType: 'm7g.xlarge.search',
+    dataNodeInstanceType: 'm7g.4xlarge.search',
     volumeSize: 25,
   },
 }
