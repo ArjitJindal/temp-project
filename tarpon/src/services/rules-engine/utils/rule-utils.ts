@@ -17,9 +17,13 @@ import { SanctionsDataProviders } from '@/services/sanctions/types'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
-  filterTag: { [key: string]: string[] } | undefined,
-  useAndLogic?: boolean
+  filterTag: {
+    tags: { [key: string]: string[] }
+    useAndLogic?: boolean
+  }
 ): boolean => {
+  const useAndLogic = filterTag?.useAndLogic ?? false
+
   if (isEmpty(filterTag) || !filterTag) {
     return true
   }
@@ -28,26 +32,21 @@ export const tagsRuleFilter = (
     return false
   }
 
+  const filterKeys = Object.keys(filterTag.tags)
   if (useAndLogic) {
-    // For AND logic, every key in filterTag must be present in incomingTags with at least one matching value
-    return Object.entries(filterTag).every(([key, values]) =>
+    const result = filterKeys.every((tagKey) =>
       incomingTags.some(
-        (incomingTag) =>
-          incomingTag.key === key && values.includes(incomingTag.value)
+        (t) => t.key === tagKey && filterTag.tags[tagKey].includes(t.value)
       )
     )
-  } else {
-    // OR logic (default): at least one tag matches
-    let isTagMatched = false
-    incomingTags.forEach((incomingTag) => {
-      if (!filterTag[incomingTag.key]) {
-        return
-      }
 
-      if (filterTag[incomingTag.key].includes(incomingTag.value)) {
-        isTagMatched = true
-      }
-    })
+    return result
+  } else {
+    const isTagMatched = filterKeys.some((tagKey) =>
+      incomingTags.some(
+        (t) => t.key === tagKey && filterTag.tags[tagKey].includes(t.value)
+      )
+    )
 
     return isTagMatched
   }
