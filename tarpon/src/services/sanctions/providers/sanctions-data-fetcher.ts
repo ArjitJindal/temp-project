@@ -1114,7 +1114,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ),
       request
     )
-
     return this.searchRepository.saveSearch(filteredResults, requestOriginal)
   }
 
@@ -1420,10 +1419,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       (request.manualSearch || !containAllSources) &&
       !aggregateScreeningProfileData
     ) {
-      const typesCondition = [
+      const typesCondition: QueryContainer[] = [
         { terms: { sanctionSearchTypes: request.types } },
         { terms: { 'associates.sanctionsSearchTypes': request.types } },
       ]
+
       mustConditions.push({
         bool: {
           should: typesCondition,
@@ -1669,6 +1669,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
     const hits = await this.getOpensearchQueryResults(props)
+
     const fuzzinessSettings = request?.fuzzinessSettings
     const filterResultsTime = Date.now()
     const filteredResults = this.filterResults(

@@ -33,6 +33,7 @@ import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
+import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/LSEGSanctionsSearchType';
 import { useQuery } from '@/utils/queries/hooks';
 import {
   DEFAULT_MANUAL_SCREENING_FILTERS,
@@ -103,6 +104,7 @@ export default function SanctionsSearchTable(props: Props) {
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+  const hasFeatureLSEG = useFeatureEnabled('LSEG');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
 
   const searchProfileResult = useQuery(
@@ -256,12 +258,25 @@ export default function SanctionsSearchTable(props: Props) {
     );
   }, [settings, hasFeatureDowJones]);
 
-  const options = uniq([...openSanctionsOptions, ...acurisOptions, ...dowJonesOptions]).map(
-    (option) => ({
-      label: humanizeAuto(option),
-      value: option,
-    }),
-  );
+  const lsegOptions = useMemo(() => {
+    if (!hasFeatureLSEG) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'lseg')
+        ?.screeningTypes ?? LSEG_SANCTIONS_SEARCH_TYPES
+    );
+  }, [settings, hasFeatureLSEG]);
+
+  const options = uniq([
+    ...openSanctionsOptions,
+    ...acurisOptions,
+    ...dowJonesOptions,
+    ...lsegOptions,
+  ]).map((option) => ({
+    label: humanizeAuto(option),
+    value: option,
+  }));
 
   const searchProfiles = getOr(searchProfileResult.data, { items: [], total: 0 }).items;
   const selectedProfile = searchProfiles.find(

@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AcurisProvider } from './providers/acuris-provider'
 import { SanctionsDataProviders } from './types'
+import { LSEGProvider } from './providers/lseg-provider'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
@@ -19,6 +20,9 @@ export async function sanctionsDataFetcher(
 ): Promise<SanctionsDataFetcher | undefined> {
   if (provider === SanctionsDataProviders.DOW_JONES) {
     return await DowJonesProvider.build(tenantId, connections)
+  }
+  if (provider === SanctionsDataProviders.LSEG) {
+    return await LSEGProvider.build(tenantId, connections)
   }
   if (provider === SanctionsDataProviders.OPEN_SANCTIONS) {
     return await OpenSanctionsProvider.build(

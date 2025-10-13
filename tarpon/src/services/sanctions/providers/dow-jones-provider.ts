@@ -38,7 +38,7 @@ import {
   RELATIONSHIP_CODE_TO_NAME,
   SANCTIONS_CATEGORY_MAP,
   PERSON_SANCTIONS_DESCRIPTION2_VALUES,
-} from '../dow-jones-constants'
+} from '../constants/dow-jones-constants'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {

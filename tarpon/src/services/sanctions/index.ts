@@ -30,6 +30,7 @@ import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whi
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { AcurisProvider } from './providers/acuris-provider'
 import { MongoSanctionSourcesRepository } from './repositories/sanction-source-repository'
+import { LSEGProvider } from './providers/lseg-provider'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
@@ -178,6 +179,8 @@ export class SanctionsService {
         return OpenSanctionsProvider.build(this.tenantId, connections)
       case 'acuris':
         return AcurisProvider.build(this.tenantId, connections)
+      case 'lseg':
+        return LSEGProvider.build(this.tenantId, connections)
       case 'list':
         if (!providerConfig?.listId) {
           throw new Error(`No list ID given for list sanctions provider`)

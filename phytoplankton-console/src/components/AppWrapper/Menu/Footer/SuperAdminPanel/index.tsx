@@ -164,6 +164,10 @@ export const featureDescriptions: Record<
     title: 'Dow Jones',
     description: 'Use Dow Jones as the sanctions data provider.',
   },
+  LSEG: {
+    title: 'LSEG',
+    description: 'Enables using LSEG for sanctions',
+  },
   OPEN_SANCTIONS: {
     title: 'Open sanctions',
     description: 'Use OpenSanctions as the sanctions data provider.',
@@ -312,10 +316,12 @@ export default function SuperAdminPanel() {
     return tenants;
   });
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
+  const isLSEGToBeEnabled = features?.includes('LSEG');
   const hasExternalSanctionsProvider =
     features?.includes('ACURIS') ||
     features?.includes('OPEN_SANCTIONS') ||
-    features?.includes('DOW_JONES');
+    features?.includes('DOW_JONES') ||
+    features?.includes('LSEG');
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
   const isCrmToBeEnabled = features?.includes('CRM');
   const isSARToBeEnabled = features?.includes('SAR');
@@ -687,6 +693,37 @@ export default function SuperAdminPanel() {
 
             {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
               <></>
+            ) : isLSEGToBeEnabled ? (
+              <Label label="LSEG settings">
+                <Label level={2} label="Username" required={{ value: true, showHint: true }}>
+                  <TextInput
+                    value={sanctionsSettings?.lsegCreds?.username}
+                    onChange={(value) => {
+                      setSanctionsSettings({
+                        ...sanctionsSettings,
+                        lsegCreds: {
+                          ...sanctionsSettings?.lsegCreds,
+                          username: value || '',
+                        },
+                      });
+                    }}
+                  />
+                </Label>
+                <Label level={2} label="Password" required={{ value: true, showHint: true }}>
+                  <TextInput
+                    value={sanctionsSettings?.lsegCreds?.password}
+                    onChange={(value) => {
+                      setSanctionsSettings({
+                        ...sanctionsSettings,
+                        lsegCreds: {
+                          ...sanctionsSettings?.lsegCreds,
+                          password: value || '',
+                        },
+                      });
+                    }}
+                  />
+                </Label>
+              </Label>
             ) : isDowJonesToBeEnabled ? (
               <Label label="Dow Jones settings">
                 <Label level={2} label="Username" required={{ value: true, showHint: true }}>

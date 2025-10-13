@@ -13115,6 +13115,7 @@ components:
         - MANUAL_PRE_AGGREGATION
         - MANUAL_DASHBOARD_REFRESH
         - ACURIS
+        - LSEG
         - 314A
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
@@ -14487,6 +14488,7 @@ components:
         - list
         - open-sanctions
         - acuris
+        - lseg
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
@@ -15139,6 +15141,14 @@ components:
         - PEP
         - ADVERSE_MEDIA
         - REGULATORY_ENFORCEMENT_LIST
+    LSEGSanctionsSearchType:
+      title: LSEGSanctionsSearchType
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
+        - REGULATORY_ENFORCEMENT_LIST
     DowJonesSanctionsSearchType:
       title: DowJonesSanctionsSearchType
       type: string
@@ -15611,6 +15621,8 @@ components:
       title: SanctionsAssociate
       type: object
       properties:
+        id:
+          type: string
         name:
           type: string
         association:
@@ -18471,6 +18483,13 @@ components:
       type: object
       properties:
         dowjonesCreds:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+        lsegCreds:
           type: object
           properties:
             username:

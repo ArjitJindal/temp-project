@@ -25,6 +25,7 @@ import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/Op
 import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
 import { envIs } from '@/utils/env'
+import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/LSEGSanctionsSearchType'
 
 export const COLLECTIONS_MAP: {
   [key: string]: SanctionsEntityType[]
@@ -39,6 +40,7 @@ export const DEFAULT_PROVIDER_TYEPS_MAP: {
   [SanctionsDataProviders.ACURIS]: ACURIS_SANCTIONS_SEARCH_TYPES,
   [SanctionsDataProviders.OPEN_SANCTIONS]: OPEN_SANCTIONS_SEARCH_TYPES,
   [SanctionsDataProviders.DOW_JONES]: DOW_JONES_SANCTIONS_SEARCH_TYPES,
+  [SanctionsDataProviders.LSEG]: LSEG_SANCTIONS_SEARCH_TYPES,
 }
 
 export const FEATURE_FLAG_PROVIDER_MAP: Record<
@@ -48,6 +50,7 @@ export const FEATURE_FLAG_PROVIDER_MAP: Record<
   DOW_JONES: SanctionsDataProviders.DOW_JONES,
   OPEN_SANCTIONS: SanctionsDataProviders.OPEN_SANCTIONS,
   ACURIS: SanctionsDataProviders.ACURIS,
+  LSEG: SanctionsDataProviders.LSEG,
 }
 
 export function normalizeSource(source?: string) {
@@ -67,6 +70,9 @@ export function getDefaultProviders(): SanctionsDataProviderName[] {
   }
   if (hasFeature('ACURIS')) {
     providers.push(SanctionsDataProviders.ACURIS)
+  }
+  if (hasFeature('LSEG')) {
+    providers.push(SanctionsDataProviders.LSEG)
   }
   return providers
 }
@@ -130,11 +136,20 @@ export function getSanctionsCollectionName(
   return SANCTIONS_COLLECTION(tenantId)
 }
 
+export function hasTenantSpecificProviders(
+  providers: SanctionsDataProviderName[]
+): boolean {
+  return (
+    providers.includes(SanctionsDataProviders.DOW_JONES) ||
+    providers.includes(SanctionsDataProviders.LSEG)
+  )
+}
+
 export function getSanctionsSourceDocumentsCollectionName(
   providers: SanctionsDataProviderName[],
   tenantId?: string
 ): string {
-  if (providers.includes(SanctionsDataProviders.DOW_JONES) && tenantId) {
+  if (hasTenantSpecificProviders(providers) && tenantId) {
     return SANCTIONS_SOURCE_DOCUMENTS_COLLECTION(tenantId)
   }
   return SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION()
