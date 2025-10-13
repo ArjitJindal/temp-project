@@ -730,6 +730,12 @@ export class MongoDbTransactionRepository
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
+    const uiToMongoSortField: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+    }
+    const effectiveSortField = uiToMongoSortField[sortField] ?? sortField
+
     const pipeline: Document[] = [{ $match: query }]
 
     if (sortField === 'ruleHitCount') {
@@ -742,7 +748,7 @@ export class MongoDbTransactionRepository
         { $sort: { Hit: sortOrder } }
       )
     } else {
-      pipeline.push({ $sort: { [sortField]: sortOrder } })
+      pipeline.push({ $sort: { [effectiveSortField]: sortOrder } })
     }
     pipeline.push(...paginatePipeline(params))
     if (params?.includeUsers) {

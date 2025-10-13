@@ -406,6 +406,15 @@ export class TransactionService {
       params.filterUserIds = userIds
     }
 
+    // setting the mapping for sortfield
+    const uiToMongoSortField: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+    }
+    params.sortField = params.sortField
+      ? uiToMongoSortField[params.sortField] ?? params.sortField
+      : 'timestamp'
+
     let response =
       type === 'offset'
         ? await this.getTransactionsOffsetPaginated(params, alert)

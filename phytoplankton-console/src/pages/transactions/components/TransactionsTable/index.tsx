@@ -284,9 +284,11 @@ const createAmountColumns = (
 ) => {
   return [
     helper.derived({
-      id: `${prefix}Amount`,
+      id: `${prefix}Payment.amount`,
       title: `${prefix === 'origin' ? 'Origin' : 'Destination'} amount`,
+      tooltip: 'Sorting is based on the original transaction value',
       value: (entity) => getAmountFromPayment(entity[`${prefix}Payment`]),
+      sorting: true,
       type: {
         ...MONEY,
         stringify: (val) => {
