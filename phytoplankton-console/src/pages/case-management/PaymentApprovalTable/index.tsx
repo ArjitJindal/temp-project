@@ -9,6 +9,7 @@ import { TransactionsResponse } from '@/apis';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { useReasons } from '@/utils/reasons';
 
 interface Props {
   params: TransactionsTableParams;
@@ -21,6 +22,7 @@ export default function PaymentApprovalsTable(props: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const filterStatus = params.status ?? 'SUSPEND';
+  const closureReasons = useReasons('CLOSURE'); // Only CLOSURE reasons for payment approvals
 
   const { queryResult, countQueryResult, cacheKey } = useTransactionsQuery(
     { ...params, status: filterStatus, isPaymentApprovals: true },
@@ -55,6 +57,17 @@ export default function PaymentApprovalsTable(props: Props) {
       isExpandable
       hideStatusFilter={true}
       extraFilters={[
+        {
+          title: 'Reason',
+          key: 'filterActionReasons',
+          renderer: {
+            kind: 'select',
+            mode: 'MULTIPLE',
+            displayMode: 'list',
+            options: closureReasons.map((reason) => ({ value: reason, label: reason })),
+          },
+          showFilterByDefault: true,
+        },
         {
           key: 'userId',
           title: `${firstLetterUpper(settings.userAlias)} ID`,

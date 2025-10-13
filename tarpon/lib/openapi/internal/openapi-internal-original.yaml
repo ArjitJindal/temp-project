@@ -10712,6 +10712,9 @@ components:
             type: string
         paymentApprovalTimestamp:
           type: number
+        reason:
+          type: string
+          description: The last reason chosen for payment approval or block action
       required:
         - transactionId
         - timestamp

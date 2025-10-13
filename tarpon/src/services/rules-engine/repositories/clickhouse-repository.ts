@@ -321,6 +321,22 @@ export class ClickhouseTransactionsRepository {
       whereConditions.push(`reference = '${params.filterReference}'`)
     }
 
+    // Filter by action reasons from transaction events using subquery
+    if (params.filterActionReasons?.length) {
+      const reasonConditions = params.filterActionReasons
+        .map((reason) => `arrayExists(x -> x LIKE '%${reason}%', reasons)`)
+        .join(' OR ')
+
+      whereConditions.push(`
+        id IN (
+          SELECT DISTINCT transactionId 
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} 
+          WHERE (${reasonConditions})
+          AND length(reasons) > 0
+        )
+      `)
+    }
+
     const queryWhereConditions = [...whereConditions]
     if (
       queryWhereConditions.length === timestampFilterCount &&

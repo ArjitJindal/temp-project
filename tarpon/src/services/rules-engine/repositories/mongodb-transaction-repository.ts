@@ -639,6 +639,9 @@ export class MongoDbTransactionRepository
       })
     }
 
+    // Note: filterActionReasons is handled at a higher level in MongoDB
+    // due to the need for a separate query to transaction_events collection
+
     if (conditions.length === 0) {
       return {}
     }
