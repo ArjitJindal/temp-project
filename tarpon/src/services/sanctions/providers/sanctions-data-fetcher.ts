@@ -1504,6 +1504,31 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      const yearOfBirthRangeCondition = [
+        {
+          range: {
+            yearOfBirth: {
+              ...(minYear ? { gte: minYear } : {}),
+              ...(maxYear ? { lte: maxYear } : {}),
+            },
+          },
+        },
+        { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
+      ]
+      if (request.orFilters?.includes('yearOfBirth')) {
+        shouldConditions.push(...yearOfBirthRangeCondition)
+      } else {
+        mustConditions.push({
+          bool: {
+            should: yearOfBirthRangeCondition,
+            minimum_should_match: 1,
+          },
+        })
+      }
+    }
+
     if (request.gender) {
       const genderCondition = [
         { terms: { gender: [humanizeAuto(request.gender), 'Unknown'] } },

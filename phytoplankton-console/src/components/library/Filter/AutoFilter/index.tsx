@@ -49,6 +49,7 @@ export function AutoFilter(props: Props): JSX.Element {
         {...sharedProps}
         key={filter.key}
         inputComponent={DateRangeInput}
+        extraInputProps={{ picker: filter.dataType.picker }}
       />
     );
   }
@@ -201,10 +202,13 @@ export function AutoFilter(props: Props): JSX.Element {
   );
 }
 
-function DateRangeInput(props: InputProps<[string | undefined, string | undefined]>) {
-  const { value } = props;
+function DateRangeInput(
+  props: InputProps<[string | undefined, string | undefined]> & { picker?: 'date' | 'year' },
+) {
+  const { value, picker } = props;
   return (
     <DatePicker.RangePicker
+      picker={picker}
       value={value ? [dayjs(value[0]), dayjs(value[1])] : undefined}
       onChange={(newValue) => {
         props.onChange?.(newValue ? [newValue[0]?.format(), newValue[1]?.format()] : undefined);

@@ -8,6 +8,8 @@ import { useQuery } from '@/utils/queries/hooks';
 import { DEFAULT_MANUAL_SCREENING_FILTERS, SCREENING_PROFILES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import Filter from '@/components/library/Filter';
+import { ExtraFilterRendererProps } from '@/components/library/Filter/types';
+import { AutoFilter } from '@/components/library/Filter/AutoFilter';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 import { GenericSanctionsSearchType } from '@/apis/models/GenericSanctionsSearchType';
@@ -19,7 +21,7 @@ import { sanitizeFuzziness } from '@/components/ScreeningHitTable/utils';
 
 type ScreeningProfileDefaultFiltersParams = {
   screeningProfileId?: string;
-  yearOfBirth?: number;
+  yearOfBirthRange?: { minYear?: number; maxYear?: number };
   fuzziness?: number;
   nationality?: string[];
   documentId?: string[];
@@ -70,7 +72,7 @@ const ScreeningProfileDefaultFilters = () => {
         const response = await api.getDefaultManualScreeningFilters();
         if (response) {
           const updatedParams: ScreeningProfileDefaultFiltersParams = {
-            yearOfBirth: response.yearOfBirth,
+            yearOfBirthRange: response.yearOfBirthRange,
             fuzziness: sanitizeFuzziness(response.fuzziness, 'hundred'),
             nationality: response.nationality,
             documentId: response.documentId,
@@ -122,7 +124,7 @@ const ScreeningProfileDefaultFilters = () => {
       const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, {});
       if (defaultScreeningFilters) {
         const updatedParams: ScreeningProfileDefaultFiltersParams = {
-          yearOfBirth: defaultScreeningFilters.yearOfBirth,
+          yearOfBirthRange: defaultScreeningFilters.yearOfBirthRange,
           fuzziness: sanitizeFuzziness(defaultScreeningFilters.fuzziness, 'hundred'),
           nationality: defaultScreeningFilters.nationality,
           documentId: defaultScreeningFilters.documentId,
@@ -177,10 +179,41 @@ const ScreeningProfileDefaultFilters = () => {
       : []),
     {
       title: 'Year of birth',
-      key: 'yearOfBirth',
+      key: 'yearOfBirthRange',
       readOnly: false,
-      renderer: {
-        kind: 'year',
+      renderer: (rendererProps: ExtraFilterRendererProps<ScreeningProfileDefaultFiltersParams>) => {
+        const { params: filterParams, setParams: setFilterParams } = rendererProps;
+        const value: [string | undefined, string | undefined] | undefined =
+          filterParams.yearOfBirthRange
+            ? [
+                filterParams.yearOfBirthRange.minYear?.toString(),
+                filterParams.yearOfBirthRange.maxYear?.toString(),
+              ]
+            : undefined;
+
+        return (
+          <AutoFilter
+            filter={{
+              key: 'yearOfBirthRange',
+              title: 'Year of birth',
+              kind: 'AUTO',
+              dataType: { kind: 'dateRange', picker: 'year' },
+            }}
+            value={value}
+            onChange={(newValue) => {
+              const rangeValue = newValue as [string | undefined, string | undefined] | undefined;
+              setFilterParams((prev) => ({
+                ...prev,
+                yearOfBirthRange: rangeValue
+                  ? {
+                      minYear: rangeValue[0] ? parseInt(rangeValue[0]) : undefined,
+                      maxYear: rangeValue[1] ? parseInt(rangeValue[1]) : undefined,
+                    }
+                  : undefined,
+              }));
+            }}
+          />
+        );
       },
     },
     {

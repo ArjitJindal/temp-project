@@ -26,7 +26,8 @@ import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { QueryResult } from '@/utils/queries/types';
-import { ExtraFilterProps } from '@/components/library/Filter/types';
+import { ExtraFilterProps, ExtraFilterRendererProps } from '@/components/library/Filter/types';
+import { AutoFilter } from '@/components/library/Filter/AutoFilter';
 import Tag from '@/components/library/Tag';
 import { ID } from '@/components/library/Table/standardDataTypes';
 import { SanctionsEntity, SanctionsSearchRequestEntityType } from '@/apis';
@@ -51,7 +52,7 @@ export interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirth?: number;
+  yearOfBirthRange?: { minYear?: number; maxYear?: number };
   entityType?: SanctionsSearchRequestEntityType;
   gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
   countryOfResidence?: Array<string>;
@@ -333,13 +334,54 @@ export default function SanctionsSearchTable(props: Props) {
     : [];
 
   const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
+    {
+      title: 'Search term',
+      key: 'searchTerm',
+      renderer: {
+        kind: 'string',
+      },
+    },
     ...(params?.entityType === 'PERSON' || !params?.entityType
       ? [
           {
             title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
-            key: 'yearOfBirth',
-            renderer: {
-              kind: 'year',
+            key: 'yearOfBirthRange',
+            renderer: (rendererProps: ExtraFilterRendererProps<TableSearchParams>) => {
+              const { params, setParams } = rendererProps;
+              const value: [string | undefined, string | undefined] | undefined =
+                params.yearOfBirthRange
+                  ? [
+                      params.yearOfBirthRange.minYear?.toString(),
+                      params.yearOfBirthRange.maxYear?.toString(),
+                    ]
+                  : undefined;
+
+              return (
+                <AutoFilter
+                  filter={{
+                    key: 'yearOfBirthRange',
+                    title:
+                      params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
+                    kind: 'AUTO',
+                    dataType: { kind: 'dateRange', picker: 'year' },
+                  }}
+                  value={value}
+                  onChange={(newValue) => {
+                    const rangeValue = newValue as
+                      | [string | undefined, string | undefined]
+                      | undefined;
+                    setParams((prev) => ({
+                      ...prev,
+                      yearOfBirthRange: rangeValue
+                        ? {
+                            minYear: rangeValue[0] ? parseInt(rangeValue[0]) : undefined,
+                            maxYear: rangeValue[1] ? parseInt(rangeValue[1]) : undefined,
+                          }
+                        : undefined,
+                    }));
+                  }}
+                />
+              );
             },
             showFilterByDefault:
               params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',

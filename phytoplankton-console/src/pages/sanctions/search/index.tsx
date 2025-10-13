@@ -31,7 +31,7 @@ interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirth?: number;
+  yearOfBirthRange?: { minYear?: number; maxYear?: number };
   types?: Array<GenericSanctionsSearchType>;
   nationality?: Array<string>;
   occupationCode?: Array<OccupationCode>;
@@ -137,7 +137,7 @@ export function SearchResultTable(props: Props) {
         fuzziness: sanitizeFuzziness(response?.fuzziness ?? prevState?.fuzziness, 'hundred'),
         types: (response?.types ?? prevState?.types) as GenericSanctionsSearchType[],
         nationality: response?.nationality ?? prevState?.nationality,
-        yearOfBirth: response?.yearOfBirth ?? prevState?.yearOfBirth,
+        yearOfBirthRange: response?.yearOfBirthRange ?? prevState?.yearOfBirthRange,
         documentId: response?.documentId?.[0] ?? prevState?.documentId,
         searchTerm: undefined,
         entityType: response?.entityType ?? prevState?.entityType,
@@ -226,7 +226,7 @@ export function SearchResultTable(props: Props) {
       setParams((params) => ({
         ...params,
         searchTerm: historyItem.request?.searchTerm,
-        yearOfBirth: historyItem.request?.yearOfBirth,
+        yearOfBirthRange: historyItem.request?.yearOfBirthRange,
         countryCodes: historyItem.request?.countryCodes,
         fuzziness: sanitizeFuzziness(historyItem.request?.fuzziness, 'hundred'),
         nationality: historyItem.request?.nationality,
@@ -277,7 +277,7 @@ export function SearchResultTable(props: Props) {
             'one',
           ),
           countryCodes: searchParams.countryCodes,
-          yearOfBirth: searchParams.yearOfBirth ? searchParams.yearOfBirth : undefined,
+          yearOfBirthRange: searchParams.yearOfBirthRange,
           types: selectedSearchProfile?.types ?? searchParams.types,
           nationality: selectedSearchProfile?.nationality ?? searchParams.nationality,
           occupationCode: searchParams.occupationCode,
