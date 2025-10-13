@@ -31,7 +31,7 @@ interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirthRange?: { minYear?: number; maxYear?: number };
+  yearOfBirthRange?: [string | undefined, string | undefined];
   types?: Array<GenericSanctionsSearchType>;
   nationality?: Array<string>;
   occupationCode?: Array<OccupationCode>;
@@ -137,7 +137,12 @@ export function SearchResultTable(props: Props) {
         fuzziness: sanitizeFuzziness(response?.fuzziness ?? prevState?.fuzziness, 'hundred'),
         types: (response?.types ?? prevState?.types) as GenericSanctionsSearchType[],
         nationality: response?.nationality ?? prevState?.nationality,
-        yearOfBirthRange: response?.yearOfBirthRange ?? prevState?.yearOfBirthRange,
+        yearOfBirthRange: response?.yearOfBirthRange
+          ? [
+              response.yearOfBirthRange.minYear?.toString(),
+              response.yearOfBirthRange.maxYear?.toString(),
+            ]
+          : prevState?.yearOfBirthRange,
         documentId: response?.documentId?.[0] ?? prevState?.documentId,
         searchTerm: undefined,
         entityType: response?.entityType ?? prevState?.entityType,
@@ -226,7 +231,12 @@ export function SearchResultTable(props: Props) {
       setParams((params) => ({
         ...params,
         searchTerm: historyItem.request?.searchTerm,
-        yearOfBirthRange: historyItem.request?.yearOfBirthRange,
+        yearOfBirthRange: historyItem.request?.yearOfBirthRange
+          ? [
+              historyItem.request.yearOfBirthRange.minYear?.toString(),
+              historyItem.request.yearOfBirthRange.maxYear?.toString(),
+            ]
+          : undefined,
         countryCodes: historyItem.request?.countryCodes,
         fuzziness: sanitizeFuzziness(historyItem.request?.fuzziness, 'hundred'),
         nationality: historyItem.request?.nationality,
@@ -277,7 +287,16 @@ export function SearchResultTable(props: Props) {
             'one',
           ),
           countryCodes: searchParams.countryCodes,
-          yearOfBirthRange: searchParams.yearOfBirthRange,
+          yearOfBirthRange: searchParams.yearOfBirthRange
+            ? {
+                minYear: searchParams.yearOfBirthRange[0]
+                  ? parseInt(searchParams.yearOfBirthRange[0])
+                  : undefined,
+                maxYear: searchParams.yearOfBirthRange[1]
+                  ? parseInt(searchParams.yearOfBirthRange[1])
+                  : undefined,
+              }
+            : undefined,
           types: selectedSearchProfile?.types ?? searchParams.types,
           nationality: selectedSearchProfile?.nationality ?? searchParams.nationality,
           occupationCode: searchParams.occupationCode,
