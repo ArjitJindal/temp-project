@@ -54,9 +54,12 @@ export default function UserManualRiskPanel(props: Props) {
   const api = useApi();
   const [isLocked, setIsLocked] = useState(false);
   const [isCraLockModalOpen, setIsCraLockModalOpen] = useState(false);
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | undefined>();
+  const [isUnifiedMode, setIsUnifiedMode] = useState(false); // Track modal mode
 
   // Feature flags
   const hasTimerFeature = useFeatureEnabled('CRA_LOCK_TIMER');
+  const hasApprovalFeature = useFeatureEnabled('USER_CHANGES_APPROVAL');
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
   const settings = useSettings();
   const canUpdateManualRiskLevel = useHasResources(['write:::users/user-manual-risk-levels/*']);
@@ -208,9 +211,10 @@ export default function UserManualRiskPanel(props: Props) {
       changesStrategy: WorkflowChangesStrategy;
       newRiskLevel: RiskLevel | undefined;
       comment?: string;
+      releaseAt?: number; // For unified CRA + Lock behavior
     }
   >(async (vars) => {
-    const { changesStrategy, newRiskLevel, comment } = vars;
+    const { changesStrategy, newRiskLevel, comment, releaseAt } = vars;
     if (!canUpdateManualRiskLevel) {
       message.warn('You are not authorized to update the manual risk level');
       return;
@@ -224,15 +228,35 @@ export default function UserManualRiskPanel(props: Props) {
         if (changesStrategy !== 'AUTO_APPROVE' && !comment) {
           throw new Error('Comment is required');
         }
+
+        // Create proposals with both CRA risk level and lock changes
+        const proposedChanges = [
+          {
+            field: 'Cra',
+            value: newRiskLevel,
+          },
+        ];
+
+        // Add CRA lock change for unified behavior (Scenarios 2 & 4)
+        if (hasTimerFeature || hasApprovalFeature) {
+          proposedChanges.push({
+            field: 'CraLock',
+            value: false as any, // Lock the CRA (isUpdatable: false)
+          });
+
+          // Add release time if provided (timer feature)
+          if (releaseAt) {
+            proposedChanges.push({
+              field: 'CraLockReleaseAt',
+              value: releaseAt as any,
+            });
+          }
+        }
+
         const approvalResponse = await api.postUserApprovalProposal({
           userId: userId,
           UserApprovalUpdateRequest: {
-            proposedChanges: [
-              {
-                field: 'Cra',
-                value: newRiskLevel,
-              },
-            ],
+            proposedChanges,
             comment: comment ?? '',
           },
         });
@@ -243,16 +267,23 @@ export default function UserManualRiskPanel(props: Props) {
           setSyncTrigger((x) => x + 1);
         }
       } else {
+        // Direct execution: Scenario 1 & 3
         const response = await api.pulseManualRiskAssignment({
           userId: userId,
           ManualRiskAssignmentPayload: {
             riskLevel: newRiskLevel,
+            isUpdatable: false, // Always lock when setting CRA level
+            releaseAt: releaseAt, // Include timer if provided
           },
         });
         setSyncState(success(response));
+        const newIsLocked = true; // Always locked when setting risk level
+        setIsLocked(newIsLocked);
       }
       if (changesStrategy !== 'APPROVE') {
-        message.success(`${firstLetterUpper(settings.userAlias)} risk updated successfully`);
+        message.success(
+          `${firstLetterUpper(settings.userAlias)} risk updated and locked successfully`,
+        );
         await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
       }
     } catch (e) {
@@ -279,22 +310,36 @@ export default function UserManualRiskPanel(props: Props) {
     return {
       lockedAt: drsData.lockedAt,
       lockExpiresAt: drsData.lockExpiresAt,
+      currentRiskLevel: drsData.manualRiskLevel || drsData.derivedRiskLevel, // For unified mode
     };
   }, [syncState]);
 
-  // Handle modal confirmation for timer feature
+  // Handle modal confirmation for timer feature (lock-only or unified)
   const handleCraLockModalConfirm = async (data: {
     isUpdatable: boolean;
     comment: string;
     releaseAt?: number;
+    riskLevel?: RiskLevel; // For unified mode
   }) => {
-    const craLockStrategy = getOr(craLockChangesStrategyRes, 'DIRECT');
-
-    // Use the mutation with the appropriate strategy
-    lockingAndUnlockingMutation.mutate({
-      changesStrategy: craLockStrategy,
-      ...data,
-    });
+    if (isUnifiedMode) {
+      // Unified mode: Change risk level + lock
+      const craStrategy = getOr(craChangesStrategyRes, 'DIRECT');
+      changeRiskLevelMutation.mutate({
+        changesStrategy: craStrategy,
+        newRiskLevel: data.riskLevel,
+        comment: data.comment,
+        releaseAt: data.releaseAt,
+      });
+    } else {
+      // Lock-only mode
+      const craLockStrategy = getOr(craLockChangesStrategyRes, 'DIRECT');
+      lockingAndUnlockingMutation.mutate({
+        changesStrategy: craLockStrategy,
+        isUpdatable: data.isUpdatable,
+        comment: data.comment,
+        releaseAt: data.releaseAt,
+      });
+    }
     setIsCraLockModalOpen(false);
   };
 
@@ -306,17 +351,30 @@ export default function UserManualRiskPanel(props: Props) {
           'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
         }
         res={changeRiskLevelMutation.dataResource}
-        skipConfirm={getOr(craChangesStrategyRes, 'DIRECT') !== 'APPROVE'}
+        skipConfirm={hasTimerFeature || getOr(craChangesStrategyRes, 'DIRECT') !== 'APPROVE'}
         commentRequired={true}
         requiredResources={[
           'write:::users/user-overview/*',
           'write:::users/user-manual-risk-levels/*',
         ]}
         onConfirm={({ comment, args }) => {
+          // Route to different behaviors based on feature flags
+          const selectedRiskLevel = args;
+
+          // Scenario 3 & 4: Timer feature enabled -> Show unified modal
+          if (hasTimerFeature) {
+            setSelectedRiskLevel(selectedRiskLevel);
+            setIsUnifiedMode(true); // Enable unified mode
+            setIsCraLockModalOpen(true);
+            return;
+          }
+
+          // Scenario 1 & 2: No timer feature -> Direct execution with auto-lock
           changeRiskLevelMutation.mutate({
             changesStrategy: getOr(craChangesStrategyRes, 'DIRECT'),
-            newRiskLevel: args,
+            newRiskLevel: selectedRiskLevel,
             comment,
+            releaseAt: undefined, // No timer for scenarios 1 & 2
           });
         }}
       >
@@ -395,6 +453,7 @@ export default function UserManualRiskPanel(props: Props) {
 
                 if (hasTimerFeature) {
                   // Scenario 3 or 4: Timer feature enabled - show modal
+                  setIsUnifiedMode(false); // Lock-only mode
                   setIsCraLockModalOpen(true);
                 } else {
                   // Scenario 1 or 2: No timer feature - use original confirm dialog
@@ -434,7 +493,7 @@ export default function UserManualRiskPanel(props: Props) {
         />
       )}
 
-      {/* CRA Lock Modal - Only when timer feature is enabled */}
+      {/* CRA Lock Modal - Supports both lock-only and unified mode */}
       {hasTimerFeature && (
         <CraLockModal
           isOpen={isCraLockModalOpen}
@@ -442,7 +501,13 @@ export default function UserManualRiskPanel(props: Props) {
           onConfirm={handleCraLockModalConfirm}
           isLocked={isLocked}
           lockData={lockData}
-          isLoading={isLoading(lockingAndUnlockingMutation.dataResource)}
+          isLoading={isLoading(
+            isUnifiedMode
+              ? changeRiskLevelMutation.dataResource
+              : lockingAndUnlockingMutation.dataResource,
+          )}
+          isUnifiedMode={isUnifiedMode}
+          selectedRiskLevel={selectedRiskLevel}
         />
       )}
     </div>

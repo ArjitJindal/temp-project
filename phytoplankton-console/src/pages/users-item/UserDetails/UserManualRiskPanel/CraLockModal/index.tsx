@@ -7,29 +7,51 @@ import TextArea from '@/components/library/TextArea';
 import NumberInput from '@/components/library/NumberInput';
 import Select from '@/components/library/Select';
 import Alert from '@/components/library/Alert';
+import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { RiskLevel } from '@/utils/risk-levels';
 import { MAX_CRA_LOCK_DURATION_DAYS } from '@/constants/cra-lock-timer';
 
 export interface CraLockModalData {
   lockedAt?: number;
   lockExpiresAt?: number;
+  currentRiskLevel?: RiskLevel; // For unified mode
 }
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: { isUpdatable: boolean; comment: string; releaseAt?: number }) => void;
+  onConfirm: (data: {
+    isUpdatable: boolean;
+    comment: string;
+    releaseAt?: number;
+    riskLevel?: RiskLevel; // For unified mode
+  }) => void;
   isLocked: boolean;
   lockData?: CraLockModalData;
   isLoading?: boolean;
+  // New props for unified mode
+  isUnifiedMode?: boolean; // When true, shows risk level selection
+  selectedRiskLevel?: RiskLevel; // Pre-selected risk level for unified mode
 }
 
 type ModalMode = 'lock' | 'unlock' | 'edit';
 
 export default function CraLockModal(props: Props) {
-  const { isOpen, onClose, onConfirm, isLocked, lockData, isLoading } = props;
+  const {
+    isOpen,
+    onClose,
+    onConfirm,
+    isLocked,
+    lockData,
+    isLoading,
+    isUnifiedMode = false,
+    selectedRiskLevel,
+  } = props;
   const settings = useSettings();
 
+  // Risk level state for unified mode
+  const [riskLevel, setRiskLevel] = useState<RiskLevel | undefined>(selectedRiskLevel);
   // Determine modal mode
   const mode: ModalMode = useMemo(() => {
     if (!isLocked) {
@@ -76,8 +98,9 @@ export default function CraLockModal(props: Props) {
       const display = getDisplayValue(initialDuration);
       setDurationValue(initialDuration); // Always store as hours internally
       setDurationUnit(display.unit); // Set appropriate unit for display
+      setRiskLevel(selectedRiskLevel); // Reset risk level for unified mode
     }
-  }, [isOpen, mode, initialDuration]);
+  }, [isOpen, mode, initialDuration, selectedRiskLevel]);
 
   // Convert hours to display value based on unit
   const displayDuration = useMemo(() => {
@@ -98,6 +121,10 @@ export default function CraLockModal(props: Props) {
   };
 
   const getTitle = () => {
+    if (isUnifiedMode) {
+      return 'Update CRA risk level';
+    }
+
     switch (editMode) {
       case 'lock':
         return 'Lock CRA risk level';
@@ -109,6 +136,10 @@ export default function CraLockModal(props: Props) {
   };
 
   const getButtonText = () => {
+    if (isUnifiedMode) {
+      return 'Update and Lock';
+    }
+
     switch (editMode) {
       case 'lock':
       case 'edit':
@@ -143,6 +174,7 @@ export default function CraLockModal(props: Props) {
       isUpdatable: editMode === 'unlock',
       comment: reason,
       releaseAt,
+      riskLevel: isUnifiedMode ? riskLevel : undefined, // Pass risk level only in unified mode
     });
   };
 
@@ -166,10 +198,30 @@ export default function CraLockModal(props: Props) {
       onOk={handleConfirm}
       okProps={{
         isLoading: isLoading,
-        isDisabled: !reason.trim(),
+        isDisabled: !reason.trim() || (isUnifiedMode && !riskLevel),
       }}
     >
       <div className={s.container}>
+        {/* Risk Level Selection - Only in unified mode */}
+        {isUnifiedMode && (
+          <div>
+            <label className={s.fieldLabel}>
+              CRA risk level <span className={s.requiredAsterisk}>*</span>
+            </label>
+            <RiskLevelSwitch value={riskLevel} onChange={setRiskLevel} />
+            {lockData?.currentRiskLevel && (
+              <div style={{ marginTop: '8px' }}>
+                <Alert type="INFO">
+                  Current risk level: <strong>{lockData.currentRiskLevel}</strong>
+                  {hasExpirationData && (
+                    <span> • Locked until: {formatDate(lockData.lockExpiresAt)}</span>
+                  )}
+                </Alert>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* From Field */}
         <div className={s.fieldRow}>
           <div className={s.fieldColumn}>
