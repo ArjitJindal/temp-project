@@ -48,13 +48,13 @@ export class ScreeningProfileService {
     screeningProfileId: string
   ): Promise<ScreeningProfileResponse> {
     const screeningProfile =
-      await this.screeningProfileRepository.getScreeningProfiles([
-        screeningProfileId,
-      ])
-    if (!screeningProfile.items.length) {
+      await this.screeningProfileRepository.getScreeningProfileById(
+        screeningProfileId
+      )
+    if (!screeningProfile) {
       throw new BadRequest('Screening profile not found')
     }
-    return screeningProfile.items[0]
+    return screeningProfile
   }
 
   public async createScreeningProfile(
