@@ -351,9 +351,8 @@ export default function SanctionsSearchTable(props: Props) {
       renderer: {
         kind: 'select',
         options: [
-          { value: 'MALE', label: 'Male' },
-          { value: 'FEMALE', label: 'Female' },
-          { value: 'UNKNOWN', label: 'Unknown' },
+          { value: 'Male', label: 'Male' },
+          { value: 'Female', label: 'Female' },
         ],
         mode: 'SINGLE',
         displayMode: 'select',

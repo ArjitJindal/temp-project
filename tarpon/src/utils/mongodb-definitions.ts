@@ -75,6 +75,17 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
           },
         },
       },
+      addresses: {
+        type: 'document',
+        fields: {
+          addressType: {
+            type: 'string',
+          },
+          country: {
+            type: 'string',
+          },
+        },
+      },
       gender: {
         type: 'string',
       },

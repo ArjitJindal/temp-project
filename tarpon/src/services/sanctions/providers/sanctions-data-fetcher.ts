@@ -351,6 +351,38 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchDocumentCondition)
       }
     }
+    if (request.countryOfResidence) {
+      andConditions.push({
+        $and: [
+          {
+            'addresses.country': {
+              $in: request.countryOfResidence,
+            },
+          },
+          {
+            'addresses.addressType': {
+              $eq: 'Residential',
+            },
+          },
+        ],
+      })
+    }
+    if (request.registrationId) {
+      andConditions.push({
+        $or: [
+          {
+            'documents.formattedId': {
+              $eq: request.registrationId,
+            },
+          },
+          {
+            'documents.id': {
+              $eq: request.registrationId,
+            },
+          },
+        ],
+      })
+    }
     if (!request.allowDocumentMatches && request.documentId?.length) {
       andConditions.push({
         $and: [
@@ -459,7 +491,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     if (request.gender) {
       const matchGenderCondition = {
         gender: {
-          $in: [request.gender, 'Unknown', null],
+          $in: [humanizeAuto(request.gender), 'Unknown', null],
         },
       }
       if (request.orFilters?.includes('gender')) {
@@ -654,9 +686,21 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.registrationId) {
       andFilters.push({
-        text: {
-          query: request.registrationId,
-          path: 'documents.id',
+        bool: {
+          should: [
+            {
+              text: {
+                query: request.registrationId,
+                path: 'documents.formattedId',
+              },
+            },
+            {
+              text: {
+                query: request.registrationId,
+                path: 'documents.id',
+              },
+            },
+          ],
         },
       })
     }
@@ -943,6 +987,18 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           text: {
             query: humanizeAuto(request.gender),
+            path: 'gender',
+          },
+        },
+        {
+          equals: {
+            value: 'Unknown',
+            path: 'gender',
+          },
+        },
+        {
+          equals: {
+            value: null,
             path: 'gender',
           },
         },
@@ -1450,7 +1506,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     if (request.gender) {
       const genderCondition = [
-        { terms: { gender: [request.gender, 'Unknown'] } },
+        { terms: { gender: [humanizeAuto(request.gender), 'Unknown'] } },
         { bool: { must_not: { exists: { field: 'gender' } } } },
       ]
       if (request.orFilters?.includes('gender')) {
@@ -1572,6 +1628,45 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       mustConditions.push({
         bool: {
           should: PEPRankCondition,
+          minimum_should_match: 1,
+        },
+      })
+    }
+
+    if (request.countryOfResidence) {
+      mustConditions.push({
+        bool: {
+          must: [
+            {
+              terms: {
+                'addresses.country': request.countryOfResidence,
+              },
+            },
+            {
+              term: {
+                'addresses.addressType': 'Residential',
+              },
+            },
+          ],
+        },
+      })
+    }
+
+    if (request.registrationId) {
+      mustConditions.push({
+        bool: {
+          should: [
+            {
+              term: {
+                'documents.formattedId': request.registrationId,
+              },
+            },
+            {
+              term: {
+                'documents.id': request.registrationId,
+              },
+            },
+          ],
           minimum_should_match: 1,
         },
       })
