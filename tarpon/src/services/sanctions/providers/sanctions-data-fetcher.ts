@@ -476,38 +476,29 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    // if (request.yearOfBirth) {
-    //   const matchYearOfBirthCondition = {
-    //     yearOfBirth: {
-    //       $in: [`${request.yearOfBirth}`, null],
-    //     },
-    //   }
-    //   if (request.orFilters?.includes('yearOfBirth')) {
-    //     orConditions.push(matchYearOfBirthCondition)
-    //   } else {
-    //     andConditions.push(matchYearOfBirthCondition)
-    //   }
-    // }
+    if (request.yearOfBirth) {
+      const matchYearOfBirthCondition = {
+        yearOfBirth: {
+          $in: [`${request.yearOfBirth}`, null],
+        },
+      }
+      if (request.orFilters?.includes('yearOfBirth')) {
+        orConditions.push(matchYearOfBirthCondition)
+      } else {
+        andConditions.push(matchYearOfBirthCondition)
+      }
+    }
     if (request.yearOfBirthRange) {
-      const { minYear, maxYear } = request.yearOfBirthRange
-      // Only create a range query if at least one of minYear or maxYear is provided
-      if (minYear || maxYear) {
-        const yearOfBirthRangeMatch = [
-          {
-            range: {
-              yearOfBirth: {
-                ...(minYear ? { gte: minYear } : {}),
-                ...(maxYear ? { lte: maxYear } : {}),
-              },
-            },
-          },
-        ]
-        andConditions.push({
-          compound: {
-            should: yearOfBirthRangeMatch,
-            minimumShouldMatch: 1,
-          },
-        })
+      const matchYearOfBirthRangeCondition = {
+        yearOfBirth: {
+          $gte: `${request.yearOfBirthRange.minYear}`,
+          $lte: `${request.yearOfBirthRange.maxYear}`,
+        },
+      }
+      if (request.orFilters?.includes('yearOfBirthRange')) {
+        orConditions.push(matchYearOfBirthRangeCondition)
+      } else {
+        andConditions.push(matchYearOfBirthRangeCondition)
       }
     }
     if (request.gender) {
@@ -643,46 +634,43 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const providers = getDefaultProviders()
     const andFilters: any[] = []
     const orFilters: any[] = []
-    // if (request.yearOfBirth) {
-    //   const yearOfBirthMatch = [
-    //     {
-    //       text: {
-    //         query: `${request.yearOfBirth}`,
-    //         path: 'yearOfBirth',
-    //       },
-    //     },
-    //     {
-    //       equals: {
-    //         value: null,
-    //         path: 'yearOfBirth',
-    //       },
-    //     },
-    //   ]
-    //   if (request.orFilters?.includes('yearOfBirth')) {
-    //     orFilters.push(...yearOfBirthMatch)
-    //   } else {
-    //     andFilters.push({
-    //       compound: {
-    //         should: yearOfBirthMatch,
-    //         minimumShouldMatch: 1,
-    //       },
-    //     })
-    //   }
-    // }
-    if (request.yearOfBirthRange) {
-      const { minYear, maxYear } = request.yearOfBirthRange
-      // Only create a range query if at least one of minYear or maxYear is provided
-      if (minYear || maxYear) {
-        const yearOfBirthRangeMatch = [
-          {
-            range: {
-              yearOfBirth: {
-                ...(minYear ? { gte: minYear } : {}),
-                ...(maxYear ? { lte: maxYear } : {}),
-              },
-            },
+    if (request.yearOfBirth) {
+      const yearOfBirthMatch = [
+        {
+          text: {
+            query: `${request.yearOfBirth}`,
+            path: 'yearOfBirth',
           },
-        ]
+        },
+        {
+          equals: {
+            value: null,
+            path: 'yearOfBirth',
+          },
+        },
+      ]
+      if (request.orFilters?.includes('yearOfBirth')) {
+        orFilters.push(...yearOfBirthMatch)
+      } else {
+        andFilters.push({
+          compound: {
+            should: yearOfBirthMatch,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+    if (request.yearOfBirthRange) {
+      const yearOfBirthRangeMatch = {
+        range: {
+          path: 'yearOfBirth',
+          gte: `${request.yearOfBirthRange.minYear}`,
+          lte: `${request.yearOfBirthRange.maxYear}`,
+        },
+      }
+      if (request.orFilters?.includes('yearOfBirthRange')) {
+        orFilters.push(yearOfBirthRangeMatch)
+      } else {
         andFilters.push({
           compound: {
             should: yearOfBirthRangeMatch,
@@ -1531,9 +1519,24 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         },
       })
     }
+    if (request.yearOfBirth) {
+      const yearOfBirthCondition = [
+        { term: { yearOfBirth: request.yearOfBirth } },
+        { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
+      ]
+      if (request.orFilters?.includes('yearOfBirth')) {
+        shouldConditions.push(...yearOfBirthCondition)
+      } else {
+        mustConditions.push({
+          bool: {
+            should: yearOfBirthCondition,
+            minimum_should_match: 1,
+          },
+        })
+      }
+    }
     if (request.yearOfBirthRange) {
       const { minYear, maxYear } = request.yearOfBirthRange
-      // Only create a range query if at least one of minYear or maxYear is provided
       if (minYear || maxYear) {
         const yearOfBirthRangeCondition = [
           {
@@ -1547,12 +1550,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
         ]
 
-      mustConditions.push({
-        bool: {
-          should: yearOfBirthRangeCondition,
-          minimum_should_match: 1,
-        },
-      })
+        mustConditions.push({
+          bool: {
+            should: yearOfBirthRangeCondition,
+            minimum_should_match: 1,
+          },
+        })
+      }
     }
 
     if (request.gender) {

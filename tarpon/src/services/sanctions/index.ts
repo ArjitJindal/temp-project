@@ -283,6 +283,10 @@ export class SanctionsService {
     return false
   }
 
+  private isYearOfBirthInvalid(yearOfBirth: number | undefined): boolean {
+    return !!yearOfBirth && (yearOfBirth < 1900 || yearOfBirth > dayjs().year())
+  }
+
   private isYearOfBirthRangeInvalid(
     yearOfBirthRange: { minYear?: number; maxYear?: number } | undefined
   ): boolean {
@@ -333,6 +337,7 @@ export class SanctionsService {
     if (
       this.isSearchTermInvalid(request.searchTerm) ||
       !providerName ||
+      this.isYearOfBirthInvalid(request.yearOfBirth) ||
       this.isYearOfBirthRangeInvalid(request.yearOfBirthRange)
     ) {
       return {
