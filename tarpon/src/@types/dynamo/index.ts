@@ -14,8 +14,17 @@ export type dynamoKeyListOptions = {
   tableName: ClickhouseTableNames
 }
 
-export interface DynamoConsumerMessage {
+export type DynamoConsumerMessage = {
   tenantId: string
   tableName: ClickhouseTableNames
   items: dynamoKeyList
-}
+} & (
+  | {
+      deleteFromClickHouse?: false | undefined
+      whereClause?: string
+    }
+  | {
+      deleteFromClickHouse: true
+      whereClause: string
+    }
+)

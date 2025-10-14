@@ -24,6 +24,8 @@ import { allUsersViewHandler } from '@/lambdas/console-api-user/app'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import * as webhookUtils from '@/services/webhook/utils'
+import { prepareClickhouseInsert } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 
 dynamoDbSetupHook()
 
@@ -417,6 +419,11 @@ withFeaturesToggled(
           mongoDb,
           dynamoDb,
         })
+
+        await prepareClickhouseInsert(
+          CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+          tenantId
+        )
 
         const case_ = await caseRepository.addCaseMongo(
           getTestCase({

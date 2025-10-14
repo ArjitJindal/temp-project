@@ -1196,6 +1196,12 @@ export class CaseCreationService {
 
     const now = Date.now()
 
+    // Delete alert data from parent case
+    await this.dynamoCaseRepository.deleteCaseAlertData(
+      sourceCase.caseId ?? '',
+      newCaseAlerts.map((alert) => alert.alertId ?? '')
+    )
+
     // Create new case
     const newCase = await this.addOrUpdateCase({
       alerts: newCaseAlerts,
