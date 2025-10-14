@@ -120,6 +120,7 @@ export const transactionsViewHandler = lambdaApi()(
           PAYMENT_APPROVAL_START_TIMESTAMP
         )
       }
+
       if (isClickhouseEnabled()) {
         if (request.view === 'DOWNLOAD') {
           const result = await transactionService.getTransactionsListV2(request)

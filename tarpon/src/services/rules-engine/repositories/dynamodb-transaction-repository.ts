@@ -151,9 +151,12 @@ export class DynamoDbTransactionRepository
           transaction.timestamp
         )
         primaryKeys.push(primaryKey)
-
+        const auxiliaryTransaction = omit(transaction, [
+          'hitRules',
+          'executedRules',
+        ]) as Transaction
         const auxiliaryIndexes =
-          this.getTransactionAuxiliaryIndexes(transaction)
+          this.getTransactionAuxiliaryIndexes(auxiliaryTransaction)
 
         await upsertSaveDynamo(
           this.dynamoDb,

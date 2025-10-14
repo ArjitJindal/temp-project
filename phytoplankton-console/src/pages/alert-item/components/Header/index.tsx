@@ -103,7 +103,7 @@ export default function Header(props: Props) {
           title: alertItem.alertId ?? 'Unknown alert',
           to:
             alertItem.caseId && alertItem.alertId
-              ? getAlertUrl(alertItem.caseId, alertItem.alertId, true)
+              ? getAlertUrl(alertItem.caseId, alertItem.alertId)
               : undefined,
         })),
       ]}

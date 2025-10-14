@@ -83,16 +83,8 @@ export const getCurrentDomain = () => {
   return window.location.origin;
 };
 
-export const getAlertUrl = (caseId: string, alertId: string, alertPageEnabled: boolean) => {
-  if (alertPageEnabled) {
-    return makeUrl(`/case-management/alerts/:alertId`, { alertId });
-  }
-
-  return makeUrl(
-    `/case-management/case/:caseId/:tab`,
-    { caseId, tab: 'alerts' },
-    { expandedAlertId: alertId },
-  );
+export const getAlertUrl = (caseId: string, alertId: string) => {
+  return makeUrl(`/case-management/alerts/:alertId`, { alertId });
 };
 
 export const getCaseUrl = (caseId: string, tab?: string) => {

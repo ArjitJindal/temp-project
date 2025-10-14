@@ -59,11 +59,6 @@ export const featureDescriptions: Record<
   Feature,
   { title: string; description: string; tag?: FeatureTag }
 > = {
-  ALERT_DETAILS_PAGE: {
-    title: 'Alert details page',
-    description: 'Show dedicated alert details page when clicked on Alert ID.',
-  },
-
   RISK_LEVELS: {
     title: 'Risk levels',
     description:

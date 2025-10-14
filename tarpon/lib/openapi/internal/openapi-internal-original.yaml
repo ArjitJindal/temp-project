@@ -10712,6 +10712,9 @@ components:
             type: string
         paymentApprovalTimestamp:
           type: number
+        reason:
+          type: string
+          description: The last reason chosen for payment approval or block action
       required:
         - transactionId
         - timestamp
@@ -13101,7 +13104,6 @@ components:
       type: string
       title: Feature
       enum:
-        - ALERT_DETAILS_PAGE
         - RISK_LEVELS
         - RISK_SCORING
         - SLACK_ALERTS

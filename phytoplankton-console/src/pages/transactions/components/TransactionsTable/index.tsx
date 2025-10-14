@@ -453,6 +453,12 @@ export default function TransactionsTable(props: Props) {
               sorting: true,
               filtering: true,
             }),
+            helper.simple<'reason'>({
+              title: 'Reason',
+              key: 'reason',
+              type: STRING,
+              filtering: false, // Already handled by extraFilters
+            }),
           ]
         : []),
       helper.simple<'transactionState'>({

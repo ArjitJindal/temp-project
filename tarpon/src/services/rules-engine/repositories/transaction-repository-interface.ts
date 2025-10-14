@@ -15,7 +15,10 @@ export type TransactionWithRiskDetails = Omit<
   'executedRules' | 'hitRules' | 'status'
 >
 
-export type AuxiliaryIndexTransaction = Partial<TransactionWithRiskDetails> & {
+export type AuxiliaryIndexTransaction = Omit<
+  Partial<TransactionWithRiskDetails>,
+  'hitRules' | 'executedRules'
+> & {
   senderKeyId?: string
   receiverKeyId?: string
 }

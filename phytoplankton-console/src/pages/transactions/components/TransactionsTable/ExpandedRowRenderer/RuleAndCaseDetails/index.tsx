@@ -15,7 +15,6 @@ import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useRuleOptions } from '@/utils/rules';
 import { PRIORITY } from '@/components/library/Table/standardDataTypes';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
 interface Props {
@@ -83,7 +82,6 @@ export default function RuleAndCaseDetails(props: Props) {
 const columnHelper = new ColumnHelper<Alert>();
 
 const useColumns = () => {
-  const isAlerDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
   return columnHelper.list([
     columnHelper.simple({ title: '', key: 'priority', defaultWidth: 40, type: PRIORITY }),
     columnHelper.simple({ key: 'ruleName', title: 'Rule name', defaultWidth: 300 }),
@@ -130,15 +128,8 @@ const useColumns = () => {
       showFilterByDefault: true,
       defaultWidth: 150,
       type: {
-        render: (alertId: string | undefined, { item: alert }) => {
-          const url = isAlerDetailsPageEnabled
-            ? makeUrl('case-management/alerts/:id', { id: alertId })
-            : alert.caseId
-            ? makeUrl('/case-management/case/:id/:tab', {
-                id: alert.caseId,
-                tab: 'alerts',
-              })
-            : undefined;
+        render: (alertId: string | undefined, { item: _alert }) => {
+          const url = makeUrl('case-management/alerts/:id', { id: alertId });
           return <Id to={url}>{alertId}</Id>;
         },
       },
