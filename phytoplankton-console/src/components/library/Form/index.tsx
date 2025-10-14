@@ -26,6 +26,7 @@ interface ChildrenProps<FormValues> {
 interface Props<FormValues> {
   id?: string;
   initialValues: FormValues;
+  initialMeta?: InternalFieldsMeta;
   children: React.ReactNode | ((props: ChildrenProps<FormValues>) => React.ReactNode);
   formValidators?:
     | Validator<FormValues>[]
@@ -52,11 +53,12 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     onSubmit,
     onChange,
     isDisabled = false,
+    initialMeta,
   } = props;
 
   const [formValues, setFormValues] = useState<FormValues>(initialValues ?? ({} as FormValues));
   const [isFormValid, setFormValid] = useState<boolean>(false);
-  const [fieldMeta, setFieldsMeta] = useState<InternalFieldsMeta>({});
+  const [fieldMeta, setFieldsMeta] = useState<InternalFieldsMeta>(initialMeta ?? {});
 
   const handleSetFormValues = useCallback(
     (updater: Updater<FormValues>) => {

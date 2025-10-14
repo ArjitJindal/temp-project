@@ -2,9 +2,11 @@ import cn from 'clsx';
 import React from 'react';
 import { toString } from 'lodash';
 import s from './index.module.less';
+import WarningIcon from './warning-icon.react.svg';
 import Label, { Props as LabelProps } from '@/components/library/Label';
 import { InputProps } from '@/components/library/Form';
 import GenericFormField from '@/components/library/Form/GenericFormField';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props<FormValues, Key extends keyof FormValues> {
   name: Key;
@@ -22,8 +24,18 @@ export default function InputField<FormValues, Key extends keyof FormValues = ke
   return (
     <GenericFormField<FormValues, Key> name={name}>
       {(childrenProps) => {
-        const { value, onChange, isValid, isDisabled, showError, errorMessage, onFocus, onBlur } =
-          childrenProps;
+        const {
+          value,
+          onChange,
+          isValid,
+          isDisabled,
+          isHighlighted,
+          highlightMessage,
+          showError,
+          errorMessage,
+          onFocus,
+          onBlur,
+        } = childrenProps;
         return hideLabel ? (
           <label htmlFor={toString(name)}>
             {children({
@@ -37,7 +49,22 @@ export default function InputField<FormValues, Key extends keyof FormValues = ke
             {showError && <Hint isError={!isValid}>{errorMessage ?? 'Invalid field'}</Hint>}
           </label>
         ) : (
-          <Label label={label} description={description} {...labelProps}>
+          <Label
+            label={label}
+            description={description}
+            iconLeft={
+              isHighlighted && (
+                <Tooltip title={highlightMessage}>
+                  {({ ref }) => (
+                    <WarningIcon ref={ref} className={s.warningIcon}>
+                      {'This field has changes'}
+                    </WarningIcon>
+                  )}
+                </Tooltip>
+              )
+            }
+            {...labelProps}
+          >
             {children({
               name: String(name),
               value,

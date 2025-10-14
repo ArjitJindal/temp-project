@@ -7,6 +7,7 @@ export interface FieldMeta {
   isTouched?: boolean;
   isVisited?: boolean;
   children?: MetaMap;
+  highlight?: string | null | undefined;
 }
 
 interface MetaMap {

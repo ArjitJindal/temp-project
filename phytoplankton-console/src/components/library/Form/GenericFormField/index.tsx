@@ -8,6 +8,8 @@ export interface FormFieldRenderProps<Value> extends InputProps<Value> {
   isValid: boolean;
   isTouched: boolean;
   isVisited: boolean;
+  isHighlighted: boolean;
+  highlightMessage: string | null;
   showError: boolean;
   onFocus: () => void;
   onBlur: () => void;
@@ -60,6 +62,8 @@ export default function GenericFormField<
         },
         isTouched: meta.isTouched === true,
         isVisited: meta.isVisited === true,
+        isHighlighted: meta.highlight != null && meta.highlight !== '',
+        highlightMessage: meta.highlight != null && meta.highlight !== '' ? meta.highlight : null,
         isValid,
         showError,
         validationResult,

@@ -255,6 +255,76 @@ export default function (): JSX.Element {
           </Container>
         </Form>
       </UseCase>
+      <UseCase
+        title="Pre-defined meta"
+        description="It is possible to pre-define meta for fields to add required meta properties"
+      >
+        <Form<NestedFormValues>
+          initialValues={{
+            age: 35,
+            personal: {
+              nickname: '',
+              name: {
+                firstName: '',
+                lastName: '',
+              },
+            },
+          }}
+          initialMeta={{
+            age: {
+              highlight: 'Sample highlight text for "age"',
+            },
+            personal: {
+              children: {
+                nickname: {
+                  highlight: 'Sample highlight text for "nickname"',
+                },
+                name: {
+                  children: {
+                    firstName: {
+                      highlight: 'Sample highlight text for "firstName"',
+                    },
+                    lastName: {
+                      highlight: 'Sample highlight text for "lastName"',
+                    },
+                  },
+                },
+              },
+            },
+          }}
+          onSubmit={(values) => {
+            alert(`Result values: ${JSON.stringify(values)}`);
+          }}
+        >
+          <Container>
+            <BasicInputField<NestedFormValues, 'age'>
+              name={'age'}
+              label={'Age'}
+              input={NumberInput}
+            />
+            <NestedForm name={'personal'}>
+              <BasicInputField<NestedFormValues['personal'], 'nickname'>
+                name="nickname"
+                label="Nickname"
+                input={TextInput}
+              />
+              <NestedForm name={'name'}>
+                <BasicInputField<NestedFormValues['personal']['name']>
+                  name="firstName"
+                  label="First name"
+                  input={TextInput}
+                />
+                <BasicInputField<NestedFormValues['personal']['name']>
+                  name="lastName"
+                  label="Last name"
+                  input={TextInput}
+                />
+              </NestedForm>
+            </NestedForm>
+            <Button htmlType="submit">Submit</Button>
+          </Container>
+        </Form>
+      </UseCase>
     </>
   );
 }
