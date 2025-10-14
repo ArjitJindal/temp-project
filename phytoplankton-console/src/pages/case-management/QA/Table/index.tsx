@@ -31,7 +31,7 @@ import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
-import { getAlertUrl } from '@/utils/routing';
+import { getAlertUrl, getCaseUrl } from '@/utils/routing';
 import Tag from '@/components/library/Tag';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
@@ -78,7 +78,7 @@ export default function QaTable(props: Props) {
           return (
             <>
               {entity?.caseId && alertId && (
-                <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))} testName="alert-id">
+                <Id to={addBackUrlToRoute(getCaseUrl(entity.caseId, 'alerts'))} testName="alert-id">
                   {alertId}
                 </Id>
               )}
