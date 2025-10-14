@@ -31,7 +31,7 @@ interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirthRange?: [string | undefined, string | undefined];
+  yearOfBirthRange?: [string, string];
   types?: Array<GenericSanctionsSearchType>;
   nationality?: Array<string>;
   occupationCode?: Array<OccupationCode>;
@@ -137,12 +137,13 @@ export function SearchResultTable(props: Props) {
         fuzziness: sanitizeFuzziness(response?.fuzziness ?? prevState?.fuzziness, 'hundred'),
         types: (response?.types ?? prevState?.types) as GenericSanctionsSearchType[],
         nationality: response?.nationality ?? prevState?.nationality,
-        yearOfBirthRange: response?.yearOfBirthRange
-          ? [
-              response.yearOfBirthRange.minYear?.toString(),
-              response.yearOfBirthRange.maxYear?.toString(),
-            ]
-          : prevState?.yearOfBirthRange,
+        yearOfBirthRange:
+          response?.yearOfBirthRange?.minYear && response.yearOfBirthRange.maxYear
+            ? [
+                response.yearOfBirthRange.minYear.toString(),
+                response.yearOfBirthRange.maxYear.toString(),
+              ]
+            : prevState?.yearOfBirthRange,
         documentId: response?.documentId?.[0] ?? prevState?.documentId,
         searchTerm: undefined,
         entityType: response?.entityType ?? prevState?.entityType,
@@ -231,12 +232,14 @@ export function SearchResultTable(props: Props) {
       setParams((params) => ({
         ...params,
         searchTerm: historyItem.request?.searchTerm,
-        yearOfBirthRange: historyItem.request?.yearOfBirthRange
-          ? [
-              historyItem.request.yearOfBirthRange.minYear?.toString(),
-              historyItem.request.yearOfBirthRange.maxYear?.toString(),
-            ]
-          : undefined,
+        yearOfBirthRange:
+          historyItem.request?.yearOfBirthRange?.minYear &&
+          historyItem.request.yearOfBirthRange.maxYear
+            ? [
+                historyItem.request.yearOfBirthRange.minYear.toString(),
+                historyItem.request.yearOfBirthRange.maxYear.toString(),
+              ]
+            : undefined,
         countryCodes: historyItem.request?.countryCodes,
         fuzziness: sanitizeFuzziness(historyItem.request?.fuzziness, 'hundred'),
         nationality: historyItem.request?.nationality,

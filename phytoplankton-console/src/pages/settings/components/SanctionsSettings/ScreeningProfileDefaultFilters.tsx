@@ -19,7 +19,7 @@ import { sanitizeFuzziness } from '@/components/ScreeningHitTable/utils';
 
 type ScreeningProfileDefaultFiltersParams = {
   screeningProfileId?: string;
-  yearOfBirthRange?: [string | undefined, string | undefined];
+  yearOfBirthRange?: [string, string];
   fuzziness?: number;
   nationality?: string[];
   documentId?: string[];
@@ -70,12 +70,13 @@ const ScreeningProfileDefaultFilters = () => {
         const response = await api.getDefaultManualScreeningFilters();
         if (response) {
           const updatedParams: ScreeningProfileDefaultFiltersParams = {
-            yearOfBirthRange: response.yearOfBirthRange
-              ? [
-                  response.yearOfBirthRange.minYear?.toString(),
-                  response.yearOfBirthRange.maxYear?.toString(),
-                ]
-              : undefined,
+            yearOfBirthRange:
+              response.yearOfBirthRange?.minYear && response.yearOfBirthRange.maxYear
+                ? [
+                    response.yearOfBirthRange.minYear.toString(),
+                    response.yearOfBirthRange.maxYear.toString(),
+                  ]
+                : undefined,
             fuzziness: sanitizeFuzziness(response.fuzziness, 'hundred'),
             nationality: response.nationality,
             documentId: response.documentId,
@@ -137,12 +138,14 @@ const ScreeningProfileDefaultFilters = () => {
       const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, {});
       if (defaultScreeningFilters) {
         const updatedParams: ScreeningProfileDefaultFiltersParams = {
-          yearOfBirthRange: defaultScreeningFilters.yearOfBirthRange
-            ? ([
-                defaultScreeningFilters.yearOfBirthRange.minYear?.toString(),
-                defaultScreeningFilters.yearOfBirthRange.maxYear?.toString(),
-              ] as [string | undefined, string | undefined])
-            : undefined,
+          yearOfBirthRange:
+            defaultScreeningFilters.yearOfBirthRange?.minYear &&
+            defaultScreeningFilters.yearOfBirthRange.maxYear
+              ? [
+                  defaultScreeningFilters.yearOfBirthRange.minYear.toString(),
+                  defaultScreeningFilters.yearOfBirthRange.maxYear.toString(),
+                ]
+              : undefined,
           fuzziness: sanitizeFuzziness(defaultScreeningFilters.fuzziness, 'hundred'),
           nationality: defaultScreeningFilters.nationality,
           documentId: defaultScreeningFilters.documentId,

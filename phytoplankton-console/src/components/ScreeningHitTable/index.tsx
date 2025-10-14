@@ -51,7 +51,7 @@ export interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirthRange?: [string | undefined, string | undefined];
+  yearOfBirthRange?: [string, string];
   entityType?: SanctionsSearchRequestEntityType;
   gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
   countryOfResidence?: Array<string>;
