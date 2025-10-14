@@ -476,16 +476,38 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    if (request.yearOfBirth) {
-      const matchYearOfBirthCondition = {
-        yearOfBirth: {
-          $in: [`${request.yearOfBirth}`, null],
-        },
-      }
-      if (request.orFilters?.includes('yearOfBirth')) {
-        orConditions.push(matchYearOfBirthCondition)
-      } else {
-        andConditions.push(matchYearOfBirthCondition)
+    // if (request.yearOfBirth) {
+    //   const matchYearOfBirthCondition = {
+    //     yearOfBirth: {
+    //       $in: [`${request.yearOfBirth}`, null],
+    //     },
+    //   }
+    //   if (request.orFilters?.includes('yearOfBirth')) {
+    //     orConditions.push(matchYearOfBirthCondition)
+    //   } else {
+    //     andConditions.push(matchYearOfBirthCondition)
+    //   }
+    // }
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      // Only create a range query if at least one of minYear or maxYear is provided
+      if (minYear || maxYear) {
+        const yearOfBirthRangeMatch = [
+          {
+            range: {
+              yearOfBirth: {
+                ...(minYear ? { gte: minYear } : {}),
+                ...(maxYear ? { lte: maxYear } : {}),
+              },
+            },
+          },
+        ]
+        andConditions.push({
+          compound: {
+            should: yearOfBirthRangeMatch,
+            minimumShouldMatch: 1,
+          },
+        })
       }
     }
     if (request.gender) {
@@ -621,27 +643,49 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const providers = getDefaultProviders()
     const andFilters: any[] = []
     const orFilters: any[] = []
-    if (request.yearOfBirth) {
-      const yearOfBirthMatch = [
-        {
-          text: {
-            query: `${request.yearOfBirth}`,
-            path: 'yearOfBirth',
+    // if (request.yearOfBirth) {
+    //   const yearOfBirthMatch = [
+    //     {
+    //       text: {
+    //         query: `${request.yearOfBirth}`,
+    //         path: 'yearOfBirth',
+    //       },
+    //     },
+    //     {
+    //       equals: {
+    //         value: null,
+    //         path: 'yearOfBirth',
+    //       },
+    //     },
+    //   ]
+    //   if (request.orFilters?.includes('yearOfBirth')) {
+    //     orFilters.push(...yearOfBirthMatch)
+    //   } else {
+    //     andFilters.push({
+    //       compound: {
+    //         should: yearOfBirthMatch,
+    //         minimumShouldMatch: 1,
+    //       },
+    //     })
+    //   }
+    // }
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      // Only create a range query if at least one of minYear or maxYear is provided
+      if (minYear || maxYear) {
+        const yearOfBirthRangeMatch = [
+          {
+            range: {
+              yearOfBirth: {
+                ...(minYear ? { gte: minYear } : {}),
+                ...(maxYear ? { lte: maxYear } : {}),
+              },
+            },
           },
-        },
-        {
-          equals: {
-            value: null,
-            path: 'yearOfBirth',
-          },
-        },
-      ]
-      if (request.orFilters?.includes('yearOfBirth')) {
-        orFilters.push(...yearOfBirthMatch)
-      } else {
+        ]
         andFilters.push({
           compound: {
-            should: yearOfBirthMatch,
+            should: yearOfBirthRangeMatch,
             minimumShouldMatch: 1,
           },
         })
@@ -1489,17 +1533,19 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.yearOfBirthRange) {
       const { minYear, maxYear } = request.yearOfBirthRange
-      const yearOfBirthRangeCondition = [
-        {
-          range: {
-            yearOfBirth: {
-              ...(minYear ? { gte: minYear } : {}),
-              ...(maxYear ? { lte: maxYear } : {}),
+      // Only create a range query if at least one of minYear or maxYear is provided
+      if (minYear || maxYear) {
+        const yearOfBirthRangeCondition = [
+          {
+            range: {
+              yearOfBirth: {
+                ...(minYear ? { gte: minYear } : {}),
+                ...(maxYear ? { lte: maxYear } : {}),
+              },
             },
           },
-        },
-        { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
-      ]
+          { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
+        ]
 
       mustConditions.push({
         bool: {
