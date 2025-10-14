@@ -4,7 +4,11 @@ import s from './index.module.less';
 import { Comparable, compare, key } from '@/utils/comparable';
 import { Option, TagRenderer } from '@/components/library/Select';
 import { useElementSize } from '@/utils/browser';
-import { DEFAULT_TAG_RENDERER, getOptionLabelNode } from '@/components/library/Select/helpers';
+import {
+  DEFAULT_TAG_RENDERER,
+  getOptionLabelNode,
+  InternalOption,
+} from '@/components/library/Select/helpers';
 
 const HIDDEN_TAGS_INFO_PADDING = 50;
 
@@ -25,13 +29,13 @@ export type TagsStackParams<Value extends Comparable> = {
 type Props<Value extends Comparable> = {
   params: TagsStackParams<Value>;
   isDisabled: boolean;
-  selectedOptions: Option<Value>[];
+  selectedOptions: InternalOption<Value>[];
   onRemove: (value: Value | string) => void;
   tagRenderer?: TagRenderer<Value>;
 };
 
 export default function TagsStack<Value extends Comparable>(props: Props<Value>) {
-  const { params } = props;
+  const { isDisabled, params } = props;
   const [tagsStackContainerEl, setTagsStackContainerEl] = useState<HTMLDivElement | null>(null);
   const [tagsFit, setTagsFit] = useState(0);
   const [minWidth, setMinWidth] = useState(undefined);
@@ -124,6 +128,8 @@ export default function TagsStack<Value extends Comparable>(props: Props<Value>)
                 isOnTop: i === tagsFit - 1,
                 isHovered: hoverOption != null && compare(option.value, hoverOption),
                 isShadowed: hoverOption != null && !compare(option.value, hoverOption),
+                isDisabled: isDisabled || (option.isDisabled ?? false),
+                isOptionFound: !(option.isNotFoundOption ?? false),
               })}
             </div>
           );

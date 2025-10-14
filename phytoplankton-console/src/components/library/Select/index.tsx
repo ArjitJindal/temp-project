@@ -13,13 +13,19 @@ import {
 import { uniq } from 'lodash';
 import s from './style.module.less';
 import SelectMenu from './SelectMenu';
-import { DEFAULT_TAG_RENDERER, filterOption, parseSearchString, SEPARATOR } from './helpers';
+import {
+  DEFAULT_TAG_RENDERER,
+  filterOption,
+  InternalOption,
+  parseSearchString,
+  SEPARATOR,
+} from './helpers';
 import TagsStack, { TagsStackParams } from './TagsStack';
 import Tags from './Tags';
 import { useId } from '@/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 import { Comparable, compare, key } from '@/utils/comparable';
-import { getErrorMessage, isEqual } from '@/utils/lang';
+import { getErrorMessage, isEqual, neverReturn } from '@/utils/lang';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
 import ArrowDownIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import LoaderIcon from '@/components/ui/icons/Remix/system/loader-4-line.react.svg';
@@ -44,6 +50,8 @@ export type TagRenderer<Value extends Comparable> = (props: {
   isHovered: boolean;
   isShadowed: boolean;
   isOnTop: boolean;
+  isDisabled: boolean;
+  isOptionFound: boolean;
   option: Option<Value>;
   onRemove: () => void;
 }) => React.ReactNode;
@@ -142,7 +150,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const keepUnusedOptionsAvailable =
     props.mode === 'DYNAMIC' && props.keepUnusedOptionsAvailable !== false;
 
-  const allowNewOptions = mode === 'MULTIPLE_DYNAMIC';
+  const allowNewOptions = mode === 'MULTIPLE_DYNAMIC' || mode === 'DYNAMIC';
 
   const availableOptions = useMemo(() => {
     const result: Option<Value>[] = [];
@@ -269,14 +277,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const [isFocused, setIsFocused] = useState(false);
   const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
 
-  const isEmpty = selectedOptions.length === 0;
-  const showClearIcon = allowClear && !isEmpty;
-  const showCopyIcon = isCopyable && props.value != null;
-
-  const rightIconsCount = useMemo(() => {
-    return 1 + (showClearIcon ? 1 : 0) + (isLoading ? 1 : 0) + (showCopyIcon ? 1 : 0);
-  }, [showClearIcon, isLoading, showCopyIcon]);
-
   const handleCopy = useCallback(
     async (e: React.MouseEvent<ReactSVGElement>) => {
       e.stopPropagation();
@@ -303,7 +303,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     if (searchText) {
       result = result.filter((x) => filterOption(searchText ?? '', x));
     }
-    if (props.mode === 'DYNAMIC' || allowNewOptions) {
+    if (allowNewOptions) {
       const values = props.mode === 'DYNAMIC' ? [props.value] : props.value ?? [];
       if (searchText) {
         const isOptionExists = values.some((value) =>
@@ -323,6 +323,33 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     }
     return result;
   }, [props.value, searchText, availableOptions, allowNewOptions, props.mode]);
+
+  const notFoundOptions = useMemo((): Option<Value>[] => {
+    let values: (string | Value)[];
+    if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
+      values = props.value != null ? [props.value] : [];
+    } else if (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') {
+      values = props.value ?? [];
+    } else {
+      values = neverReturn(props.mode, []);
+    }
+
+    return values
+      .filter((x) => !availableOptions.some((option) => compare(x, option.value)))
+      .map((x) => ({
+        value: x,
+        label: x,
+      })) as Option<Value>[];
+  }, [props.mode, props.value, availableOptions]);
+
+  const isEmpty = selectedOptions.length === 0 && notFoundOptions.length === 0;
+
+  const showClearIcon = allowClear && !isEmpty;
+  const showCopyIcon = isCopyable && props.value != null;
+
+  const rightIconsCount = useMemo(() => {
+    return 1 + (showClearIcon ? 1 : 0) + (isLoading ? 1 : 0) + (showCopyIcon ? 1 : 0);
+  }, [showClearIcon, isLoading, showCopyIcon]);
 
   const portalId = useMemo(() => {
     return `select-portal-${props.testId ?? id}`;
@@ -441,7 +468,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             {placeholderIcon && <div className={s.placeholderIcon}>{placeholderIcon}</div>}
             {placeholder}
           </div>
-          <RenderValue<Value> {...props} selectedOptions={selectedOptions} />
+          <RenderValue<Value>
+            {...props}
+            notFoundOptions={notFoundOptions}
+            selectedOptions={selectedOptions}
+          />
           <input
             type="text"
             onFocus={() => {
@@ -511,9 +542,18 @@ export default function Select<Value extends Comparable = string>(props: Props<V
 function RenderValue<Value extends Comparable>(
   props: Props<Value> & {
     selectedOptions: Option<Value>[];
+    notFoundOptions: Option<Value>[];
   },
 ) {
-  const { selectedOptions, isDisabled = false } = props;
+  const { selectedOptions, notFoundOptions, isDisabled = false } = props;
+
+  const allOptions: InternalOption<Value>[] = useMemo(
+    () => [
+      ...selectedOptions.map((x) => ({ ...x, isNotFoundOption: false })),
+      ...notFoundOptions.map((x) => ({ ...x, isNotFoundOption: true })),
+    ],
+    [selectedOptions, notFoundOptions],
+  );
 
   if ((props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') && props.tagsStack != null) {
     const tagsStackParams: TagsStackParams<Value> =
@@ -523,7 +563,7 @@ function RenderValue<Value extends Comparable>(
         <TagsStack
           params={tagsStackParams}
           isDisabled={isDisabled}
-          selectedOptions={selectedOptions}
+          selectedOptions={allOptions}
           tagRenderer={props.tagRenderer}
           onRemove={(value) => {
             props.onChange?.(props.value?.filter((v) => v !== value) as Value[]);
@@ -535,19 +575,19 @@ function RenderValue<Value extends Comparable>(
 
   return (
     <>
-      {selectedOptions.length > 0 &&
+      {allOptions.length > 0 &&
         (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC' ? (
           <Tags
             isDisabled={isDisabled}
-            selectedOptions={selectedOptions}
+            selectedOptions={allOptions}
             onRemove={(value) => {
               props.onChange?.(props.value?.filter((v) => v !== value) as Value[]);
             }}
             tagRenderer={props.tagRenderer ?? DEFAULT_TAG_RENDERER}
           />
         ) : (
-          <span className={s.selectedOption} key={key(selectedOptions[0].value)}>
-            <span className={s.selectedOptionLabel}>{selectedOptions[0].label}</span>
+          <span className={s.selectedOption} key={key(allOptions[0].value)}>
+            <span className={s.selectedOptionLabel}>{allOptions[0].label}</span>
           </span>
         ))}
     </>

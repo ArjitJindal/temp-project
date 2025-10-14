@@ -555,12 +555,7 @@ export default function (): JSX.Element {
                 />
               </Label>
             </div>
-            <PropertyMatrix
-              xLabel="size"
-              yLabel="mode"
-              x={['DEFAULT', 'LARGE'] as const}
-              y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
-            >
+            <PropertyMatrix xLabel="size" yLabel="mode" x={SIZES} y={MODES}>
               {(size, mode) => (
                 <Component
                   allowClear={state.allowClear}

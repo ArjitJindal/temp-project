@@ -6,6 +6,11 @@ import { notEmpty } from '@/utils/array';
 import Tag from '@/components/library/Tag';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 
+export type InternalOption<Value extends Comparable> = Option<Value> & {
+  isVirtual?: boolean;
+  isNotFoundOption?: boolean;
+};
+
 export const SEPARATOR = ';';
 
 export function parseSearchString<Value extends Comparable>(
@@ -91,19 +96,24 @@ export function getOptionLabelNode(option: Option<Comparable>): string | React.R
 
 export function DEFAULT_TAG_RENDERER<Value extends Comparable>(props: {
   option: Option<Value>;
+  isDisabled: boolean;
   onRemove: () => void;
 }) {
-  const { option, onRemove } = props;
+  const { option, isDisabled, onRemove } = props;
   return (
     <Tag
       key={key(option.value)}
-      actions={[
-        {
-          icon: <CloseLineIcon className={s.tagRemoveIcon} />,
-          key: 'remove',
-          action: onRemove,
-        },
-      ]}
+      actions={
+        isDisabled
+          ? []
+          : [
+              {
+                icon: <CloseLineIcon className={s.tagRemoveIcon} />,
+                key: 'remove',
+                action: onRemove,
+              },
+            ]
+      }
     >
       {option.label}
     </Tag>
