@@ -102,6 +102,13 @@ export const config: Config = {
       MEMORY_SIZE: 2048,
       PROVISIONED_CONCURRENCY: 1000, // TEMPORARY 100 -> 1000
     },
+    CLOUDWATCH_LOGS_INGESTION: {
+      ENABLED: true,
+      FIREHOSE_BUFFER_INTERVAL_SECONDS: 300,
+      FIREHOSE_BUFFER_SIZE_MB: 5,
+      LOG_GROUP_NAME: '/aws/lambda/tarponPublicApiTransactionFunction',
+      FILTER_PATTERN: '[REPORT, RequestId, ..., duration=Duration*, ...]',
+    },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: true,
     DYNAMO_WRITE_CAPACITY_THRESHOLD: 450,

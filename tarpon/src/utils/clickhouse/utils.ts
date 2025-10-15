@@ -72,6 +72,8 @@ const getAllColumns = (table: ClickhouseTableDefinition) => {
         error
       )
     }
+  } else if (table.columns) {
+    return table.columns
   }
   return [
     'id String',
@@ -666,11 +668,11 @@ function getIndexDefinition(
     case 'inverted':
       return `(${columnName}) TYPE ${options.type}(${options.config.granularity})`
     case 'bloom_filter':
-      return `(${columnName}) TYPE bloom_filter(${options.config.granularity})`
+      return `(${columnName}) TYPE bloom_filter(${options.config.bloomFilterIndex}) GRANULARITY ${options.config.granularity})`
     case 'minmax':
       return `(${columnName}) TYPE minmax GRANULARITY ${options.config.granularity}`
     case 'set':
-      return `(${columnName}) TYPE set(${options.config.granularity})`
+      return `(${columnName}) TYPE set(${options.config.setSize}) GRANULARITY ${options.config.granularity}`
     case 'tokenbf_v1':
       return `(${columnName}) TYPE tokenbf_v1(${options.config.bloomFilterSize}, ${options.config.numHashFunctions}, ${options.config.randomSeed}) GRANULARITY ${options.config.granularity}`
     default:

@@ -18,6 +18,8 @@ type BaseTableDefinition = {
   table: ClickhouseTableNames
   idColumn: string
   timestampColumn: string
+  columns?: string[]
+  database?: string
   materializedColumns?: string[]
   indexes?: {
     column: string
@@ -27,11 +29,17 @@ type BaseTableDefinition = {
       granularity: number
       ngramSize?: number
       bloomFilterSize?: number
+      bloomFilterIndex?: number
       numHashFunctions?: number
       randomSeed?: number
+      setSize?: number
     }
   }[]
-  engine: 'ReplacingMergeTree' | 'AggregatingMergeTree' | 'SummingMergeTree'
+  engine:
+    | 'ReplacingMergeTree'
+    | 'AggregatingMergeTree'
+    | 'SummingMergeTree'
+    | 'MergeTree'
   versionColumn?: string
   primaryKey: string
   orderBy: string
