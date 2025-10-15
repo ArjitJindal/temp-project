@@ -18,7 +18,7 @@ export default function WorkflowsLibrary() {
                 </div>
                 <Button
                   asLink={true}
-                  type="TEXT"
+                  type="SECONDARY"
                   to={makeUrl('/workflows/:type/create/:templateId', {
                     type: group.type.toLowerCase(),
                     templateId: 'custom',
