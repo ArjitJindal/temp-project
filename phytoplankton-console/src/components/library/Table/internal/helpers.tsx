@@ -3,6 +3,7 @@ import {
   RowSelectionState,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import { ExpandedState } from '@tanstack/table-core';
 import { sortBy } from 'lodash';
@@ -128,6 +129,7 @@ export function useTanstackTable<
   isSortable: boolean;
   defaultSorting?: SortingParamsItem;
   onExpandedMetaChange?: (meta: { isAllExpanded: boolean }) => void;
+  clientSideSorting?: boolean;
 }): TanTable.Table<TableRow<Item>> {
   const {
     dataRes,
@@ -143,12 +145,14 @@ export function useTanstackTable<
     isSortable,
     defaultSorting,
     onExpandedMetaChange,
+    clientSideSorting = false,
   } = options;
   const extraTableContext = usePersistedSettingsContext();
   const [columnOrder] = extraTableContext.columnOrder;
   const [__, setSortingPersisted] = extraTableContext.sort;
   const [expanded, setExpanded] = useState<TanTable.ExpandedState>({});
   const [rowSelection, setRowSelection] = useState<TanTable.RowSelectionState>({});
+  const [localSorting, setLocalSorting] = useState<TanTable.SortingState>([]);
   const [columnPinning, setColumnPinning] = extraTableContext.columnPinning;
   const [columnSizing, setColumnSizing] = extraTableContext.columnSizing;
   const [columnVisibility, setColumnVisibility] = extraTableContext.columnVisibility;
@@ -324,6 +328,21 @@ export function useTanstackTable<
 
   const handleChangeSorting = useCallback(
     (changes: Updater<TanTable.SortingState>) => {
+      if (clientSideSorting) {
+        // For client-side sorting, update local sorting state
+        const newState: TanTable.SortingState = applyUpdater(localSorting, changes);
+        setLocalSorting(newState);
+
+        // Also persist the sorting state
+        const newSort: SortingParamsItem[] =
+          newState.length === 0 && defaultSorting != null
+            ? [defaultSorting]
+            : newState.map(({ id, desc }) => [id, desc ? 'descend' : 'ascend']);
+        setSortingPersisted(newSort);
+        return;
+      }
+
+      // For server-side sorting, call onChangeParams
       const newState: TanTable.SortingState = applyUpdater(sorting, changes);
       const newSort: SortingParamsItem[] =
         newState.length === 0 && defaultSorting != null
@@ -335,7 +354,15 @@ export function useTanstackTable<
       });
       setSortingPersisted(newSort);
     },
-    [sorting, onChangeParams, params, defaultSorting, setSortingPersisted],
+    [
+      sorting,
+      localSorting,
+      onChangeParams,
+      params,
+      defaultSorting,
+      setSortingPersisted,
+      clientSideSorting,
+    ],
   );
 
   const columnOrderAdapted: ColumnOrder = useMemo(() => {
@@ -393,10 +420,11 @@ export function useTanstackTable<
     },
 
     getCoreRowModel: TanTable.getCoreRowModel(),
+    getSortedRowModel: clientSideSorting ? getSortedRowModel() : undefined,
     getRowCanExpand: (row: TanTable.Row<TableRow<Item>>) => {
       return typeof isExpandable === 'boolean' ? isExpandable : isExpandable(row.original);
     },
-    manualSorting: isSortable,
+    manualSorting: clientSideSorting ? false : isSortable,
     enableSorting: isSortable,
     manualPagination: true,
     enableColumnResizing: true,
@@ -409,7 +437,7 @@ export function useTanstackTable<
         : (row) => isRowSelectionEnabled(row.original),
     enableExpanding: isAnythingExpandable,
     state: {
-      sorting: sorting,
+      sorting: clientSideSorting ? localSorting : sorting,
       expanded: expanded,
       pagination: paginationState,
       rowSelection: rowSelection,

@@ -229,6 +229,7 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
         title: 'Last screened at',
         key: 'lastScreenedAt',
         defaultWidth: 100,
+        sorting: true,
         type: {
           render: (lastScreenedAt) =>
             lastScreenedAt ? <TimestampDisplay timestamp={lastScreenedAt} /> : <>-</>,
@@ -287,6 +288,7 @@ export const SanctionsScreeningActivity = ({ params, setParams }) => {
           setParams(params);
         }}
         rowHeightMode={'AUTO'}
+        clientSideSorting={true}
         toolsOptions={{
           reload: true,
           download: true,

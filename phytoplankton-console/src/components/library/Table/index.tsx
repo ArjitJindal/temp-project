@@ -61,6 +61,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   hideFilters?: boolean;
   rowHeightMode?: RowHeightMode;
   disableSorting?: boolean;
+  clientSideSorting?: boolean;
   readOnlyFilters?: boolean;
   extraFilters?: ExtraFilterProps<Params>[];
   topTools?: React.ReactNode;
@@ -111,6 +112,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     fitHeight = false,
     hideFilters = false,
     disableSorting = false,
+    clientSideSorting = false,
     fixedExpandedContainer = false,
     externalHeader = false,
     readOnlyFilters = false,
@@ -184,6 +186,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     isSortable: !disableSorting,
     defaultSorting: defaultSorting,
     onExpandedMetaChange: onExpandedMetaChange,
+    clientSideSorting: clientSideSorting,
   });
 
   const handleResetSelection = useCallback(() => {
