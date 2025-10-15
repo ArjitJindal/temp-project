@@ -8,7 +8,7 @@ export const EntityLinking: EmbeddedQuestion<{ userId: string }> = {
   questionId: COPILOT_QUESTIONS.ONTOLOGY,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, { userId }) => {
-    return `Entity linking for ${await queryUsername(userId)}`
+    return `Ontology for ${await queryUsername(userId)}`
   },
   variableOptions: {
     userId: { type: 'SEARCH', search: searchUser },
