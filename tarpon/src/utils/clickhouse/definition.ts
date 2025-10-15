@@ -1199,7 +1199,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         engine: 'ReplacingMergeTree',
         primaryKey: '(requestId)',
         orderBy: '(requestId)',
-        partitionBy: 'toDate(timestamp)',
+        partitionBy: 'toDate(requestStartTimestamp)',
         query: `
           SELECT
             requestId,
@@ -1237,7 +1237,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     database: CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS.database,
     columns: [
       'requestId String CODEC(ZSTD(1))',
-      'timestamp DateTime64(3) CODEC(DoubleDelta, LZ4)',
+      'requestStartTimestamp DateTime64(3) CODEC(DoubleDelta, LZ4)',
       'requestEndTimestamp DateTime64(3) CODEC(DoubleDelta, LZ4)',
       'tenantId String CODEC(ZSTD(1))',
       'duration Float64 CODEC(ZSTD(1))',
