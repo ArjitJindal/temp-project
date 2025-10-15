@@ -429,6 +429,15 @@ export class CdkTarponStack extends cdk.Stack {
       true,
       true
     )
+    // Currently only creating for eu-2
+    if (config.region === 'eu-2' && envIs('prod')) {
+      this.createDynamodbTable(
+        DYNAMODB_TABLE_NAMES.AGGREGATION,
+        undefined,
+        true,
+        true
+      )
+    }
 
     const siloTables: ITable[] = []
 

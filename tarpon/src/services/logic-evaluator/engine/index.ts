@@ -204,6 +204,7 @@ export class LogicEvaluator {
   private mode: Mode
   private transactionEventRepository?: TransactionEventRepository
   private backfillNamespace: string | undefined
+  private aggregationDynamoTable: string
 
   constructor(
     tenantId: string,
@@ -221,6 +222,10 @@ export class LogicEvaluator {
       dynamoDb: this.dynamoDb,
     })
     this.mode = mode
+    this.aggregationDynamoTable =
+      tenantId === '4c9cdf0251'
+        ? StackConstants.AGGREGATION_DYNAMODB_TABLE_NAME
+        : StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
   }
 
   public setBackfillNamespace(backfillNamespace: string | undefined) {
@@ -853,7 +858,7 @@ export class LogicEvaluator {
       await batchWrite(
         this.dynamoDb,
         writeRequests,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+        this.aggregationDynamoTable
       )
     } else {
       await this.aggregationRepository.rebuildUserTimeAggregations(
