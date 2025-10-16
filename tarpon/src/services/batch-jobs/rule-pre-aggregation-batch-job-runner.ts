@@ -6,6 +6,8 @@ import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
+import chunk from 'lodash/chunk'
+import pMap from 'p-map'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -103,6 +105,8 @@ type PreAggregationTask =
   | { type: 'PAYMENT_DETAILS_ADDRESS'; ids: PaymentDetailsAddressUserInfo[] }
   | { type: 'PAYMENT_DETAILS_EMAIL'; ids: PaymentDetailsEmailUserInfo[] }
   | { type: 'PAYMENT_DETAILS_NAME'; ids: PaymentDetailsNameUserInfo[] }
+
+const MAX_CONCURRENCY = 20
 
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
@@ -392,19 +396,27 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           messagesNotSentYet.push(message)
         }
       }
-      await bulkSendMessages(
-        sqs,
-        process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
-        messagesNotSentYet,
-        async (batch) => {
-          // Mark the messages as sent to avoid being sent again on retries
-          await transientRepository.batchAddKey(
-            batch.map((message) => ({
-              partitionKeyId: this.jobId,
-              sortKeyId: (message.MessageDeduplicationId ?? '') as string,
-            }))
+      const chunkSize = 10
+      const messagesToSendChunks = chunk(messagesNotSentYet, chunkSize)
+      await pMap(
+        messagesToSendChunks,
+        async (chunk) => {
+          await bulkSendMessages(
+            sqs,
+            process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
+            chunk,
+            async (batch) => {
+              // Mark the messages as sent to avoid being sent again on retries
+              await transientRepository.batchAddKey(
+                batch.map((message) => ({
+                  partitionKeyId: this.jobId,
+                  sortKeyId: (message.MessageDeduplicationId ?? '') as string,
+                }))
+              )
+            }
           )
-        }
+        },
+        { concurrency: MAX_CONCURRENCY }
       )
     }
   }
