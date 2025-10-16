@@ -1899,7 +1899,6 @@ ${financialInformationText}
         .map((r) => `- [${r.title}](${r.url})`)
         .join('\n')}
       `
-
       const html = await marked.parse(finalText)
 
       this.executionLogs.push(

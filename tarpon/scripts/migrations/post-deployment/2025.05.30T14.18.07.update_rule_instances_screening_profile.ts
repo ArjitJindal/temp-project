@@ -27,7 +27,6 @@ async function migrateTenant(tenant: Tenant) {
     return
   }
   const screeningProfileService = new ScreeningProfileService(tenant.id, {
-    mongoDb,
     dynamoDb,
   })
   const screeningProfiles = await screeningProfileService.getScreeningProfiles()

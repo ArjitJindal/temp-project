@@ -47,7 +47,7 @@ export class LSEGProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     let types: LSEGSanctionsSearchType[] | undefined
     let entityTypes: SanctionsEntityType[] | undefined
@@ -79,7 +79,7 @@ export class LSEGProvider extends SanctionsDataFetcher {
     tenantId: string,
     screeningTypes: LSEGSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.LSEG, tenantId, connections)
     this.authHeader =
@@ -311,7 +311,7 @@ export class LSEGProvider extends SanctionsDataFetcher {
     logger.info(
       `Starting LSEG associate direct hydration for version ${version}.`
     )
-    const sanctionsCollection = this.mongoDb
+    const sanctionsCollection = (await this.getMongoDbClient())
       .db()
       .collection<SanctionsEntity>(SANCTIONS_COLLECTION(this.tenantId))
 

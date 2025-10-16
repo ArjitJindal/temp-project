@@ -118,7 +118,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   user: User | Business
   parameters: P
   filters: T
-  mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   ongoingScreeningMode: boolean
   ruleInstance: RuleInstance
@@ -156,7 +155,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     this.ruleInstance = context.ruleInstance
     this.rule = context.rule
     this.sanctionsService = services.sanctionsService
-    this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
   }
 

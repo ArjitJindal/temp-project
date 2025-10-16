@@ -163,7 +163,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient },
     settings?: SanctionsSettingsProviderScreeningTypes
   ) {
     let types: OpenSanctionsSearchType[] | undefined
@@ -194,7 +194,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     tenantId: string,
     types: OpenSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.OPEN_SANCTIONS, tenantId, connections)
     this.types = types

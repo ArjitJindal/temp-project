@@ -227,7 +227,6 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
           dynamoDb,
         })
         const screeningProfileService = new ScreeningProfileService(tenantId, {
-          mongoDb,
           dynamoDb,
         })
         return await screeningProfileService.createScreeningProfile(
@@ -240,9 +239,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerGetScreeningProfiles(
       async (_ctx, request: DefaultApiGetScreeningProfilesRequest) => {
         const dynamoDb = getDynamoDbClientByEvent(event)
-        const mongoDb = await getMongoDbClient()
         const screeningProfileService = new ScreeningProfileService(tenantId, {
-          mongoDb,
           dynamoDb,
         })
         return await screeningProfileService.getScreeningProfiles(
@@ -256,9 +253,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerUpdateScreeningProfile(
       async (_ctx, request: DefaultApiUpdateScreeningProfileRequest) => {
         const dynamoDb = getDynamoDbClientByEvent(event)
-        const mongoDb = await getMongoDbClient()
         const screeningProfileService = new ScreeningProfileService(tenantId, {
-          mongoDb,
           dynamoDb,
         })
         return await screeningProfileService.updateScreeningProfile(
@@ -271,9 +266,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerDeleteScreeningProfile(
       async (_ctx, request: DefaultApiDeleteScreeningProfileRequest) => {
         const dynamoDb = getDynamoDbClientByEvent(event)
-        const mongoDb = await getMongoDbClient()
         const screeningProfileService = new ScreeningProfileService(tenantId, {
-          mongoDb,
           dynamoDb,
         })
         return await screeningProfileService.deleteScreeningProfile(

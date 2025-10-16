@@ -110,7 +110,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     const settings = await tenantSettings(tenantId)
     const dowJonesSettings = settings?.sanctions?.providerScreeningTypes?.find(
@@ -145,7 +145,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     tenantId: string,
     screeningTypes: DowJonesSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.DOW_JONES, tenantId, connections)
     this.authHeader =
@@ -250,7 +250,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       .filter((fp) => fp.includes('_f_splits.zip') || fp.includes('_d.zip'))
 
     const sourceDocumentsRepo = new MongoSanctionSourcesRepository(
-      this.mongoDb,
+      await this.getMongoDbClient(),
       getSanctionsSourceDocumentsCollectionName(
         [SanctionsDataProviders.DOW_JONES],
         this.tenantId
@@ -291,7 +291,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     })
 
     const sourceDocumentsRepo = new MongoSanctionSourcesRepository(
-      this.mongoDb,
+      await this.getMongoDbClient(),
       getSanctionsSourceDocumentsCollectionName(
         [SanctionsDataProviders.DOW_JONES],
         this.tenantId

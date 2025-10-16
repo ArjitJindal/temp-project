@@ -2,7 +2,6 @@ import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/@types/tenant'
 import { ScreeningProfileService } from '@/services/screening-profile'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDefaultProviders } from '@/services/sanctions/utils'
 import { hasFeature } from '@/core/utils/context'
 
@@ -10,10 +9,8 @@ async function migrateTenant(tenant: Tenant) {
   if (!hasFeature('SANCTIONS')) {
     return
   }
-  const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const screeningProfileService = new ScreeningProfileService(tenant.id, {
-    mongoDb,
     dynamoDb,
   })
   const defaultScreeningProviders = getDefaultProviders().filter(

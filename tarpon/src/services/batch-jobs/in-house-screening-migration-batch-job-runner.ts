@@ -298,10 +298,9 @@ export class InHouseScreeningMigrationBatchJobRunner extends BatchJobRunner {
     const ruleInstanceId = await this.ruleInstanceService?.getNewRuleInstanceId(
       'R-17'
     )
-    const screeningProfileService = new ScreeningProfileService(
-      this.tenantId,
-      connections
-    )
+    const screeningProfileService = new ScreeningProfileService(this.tenantId, {
+      dynamoDb: connections.dynamoDb,
+    })
     const screeningProfiles =
       await screeningProfileService.getScreeningProfiles()
     const defaultScreeningProfileId = screeningProfiles.items.find(

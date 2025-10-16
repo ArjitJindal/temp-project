@@ -49,20 +49,19 @@ import {
   ID_NOT_FOUND,
 } from '@/constants/lists'
 import { traceable } from '@/core/xray'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 @traceable
 export class BatchImportService {
   private readonly transactionRepository: DynamoDbTransactionRepository
   private readonly userRepository: UserRepository
   private readonly batchRepository: BatchRepository
-  private readonly userEventRepository: UserEventRepository
-  private readonly transactionEventRepository: TransactionEventRepository
 
   constructor(
     private readonly tenantId: string,
     readonly connections: {
       dynamoDb: DynamoDBDocumentClient
-      mongoDb: MongoClient
+      mongoDb?: MongoClient
     }
   ) {
     this.transactionRepository = new DynamoDbTransactionRepository(
@@ -76,17 +75,13 @@ export class BatchImportService {
       this.tenantId,
       connections.dynamoDb
     )
-    this.userEventRepository = new UserEventRepository(this.tenantId, {
-      dynamoDb: connections.dynamoDb,
-      mongoDb: connections.mongoDb,
-    })
-    this.transactionEventRepository = new TransactionEventRepository(
-      this.tenantId,
-      {
-        dynamoDb: connections.dynamoDb,
-        mongoDb: connections.mongoDb,
-      }
-    )
+  }
+
+  private async getMongo() {
+    if (!this.connections.mongoDb) {
+      this.connections.mongoDb = await getMongoDbClient()
+    }
+    return this.connections.mongoDb
   }
 
   public async importTransactions(
@@ -525,8 +520,14 @@ export class BatchImportService {
       paginationParams,
       'CONSUMER'
     )
+    const mongoDb = await this.getMongo()
+    const dynamoDb = this.connections.dynamoDb
+    const userEventRepository = new UserEventRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     const userEvents =
-      await this.userEventRepository.getMongoUserEventsByIds<ConsumerUserEvent>(
+      await userEventRepository.getMongoUserEventsByIds<ConsumerUserEvent>(
         entityIds
       )
     const formattedEvents = userEvents.map((event) =>
@@ -548,8 +549,14 @@ export class BatchImportService {
       paginationParams,
       'BUSINESS'
     )
+    const mongoDb = await this.getMongo()
+    const dynamoDb = this.connections.dynamoDb
+    const userEventRepository = new UserEventRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     const userEvents =
-      await this.userEventRepository.getMongoUserEventsByIds<BusinessUserEvent>(
+      await userEventRepository.getMongoUserEventsByIds<BusinessUserEvent>(
         entityIds
       )
     const formattedEvents = userEvents.map((event) =>
@@ -632,8 +639,17 @@ export class BatchImportService {
       'TRANSACTION_EVENT_BATCH',
       paginationParams
     )
+    const mongoDb = await this.getMongo()
+    const dynamoDb = this.connections.dynamoDb
+    const transactionEventsRepository = new TransactionEventRepository(
+      this.tenantId,
+      {
+        mongoDb,
+        dynamoDb,
+      }
+    )
     const transactionEvents =
-      await this.transactionEventRepository.getMongoTransactionEventsByIds(
+      await transactionEventsRepository.getMongoTransactionEventsByIds(
         entityIds
       )
     const formattedEvents = transactionEvents?.map((event) =>

@@ -171,7 +171,7 @@ export function getExecutedAndHitRulesResult(
 export class RulesEngineService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
-  mongoDb: MongoClient
+  mongoDb?: MongoClient
   transactionRepository: DynamoDbTransactionRepository
   transactionEventRepository: TransactionEventRepository
   ruleRepository: RuleRepository
@@ -189,7 +189,7 @@ export class RulesEngineService {
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     logicEvaluator: LogicEvaluator,
-    mongoDb: MongoClient,
+    mongoDb?: MongoClient,
     opensearchClient?: Client
   ) {
     // this need to be changed
