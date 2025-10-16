@@ -495,11 +495,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           $lte: `${request.yearOfBirthRange.maxYear}`,
         },
       }
-      if (request.orFilters?.includes('yearOfBirthRange')) {
-        orConditions.push(matchYearOfBirthRangeCondition)
-      } else {
-        andConditions.push(matchYearOfBirthRangeCondition)
-      }
+      andConditions.push(matchYearOfBirthRangeCondition)
     }
     if (request.gender) {
       const matchGenderCondition = {
@@ -667,16 +663,35 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
     if (request.yearOfBirthRange) {
-      const yearOfBirthRangeMatch = {
-        range: {
-          path: 'yearOfBirth',
-          gte: `${request.yearOfBirthRange.minYear}`,
-          lte: `${request.yearOfBirthRange.maxYear}`,
-        },
-      }
-      if (request.orFilters?.includes('yearOfBirthRange')) {
-        orFilters.push(yearOfBirthRangeMatch)
-      } else {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      if (minYear && maxYear) {
+        const years = Array.from(
+          { length: maxYear - minYear + 1 },
+          (_, i) => `${minYear + i}`
+        )
+        const yearOfBirthRangeMatch = [
+          ...years.map((year) => ({
+            term: {
+              query: year,
+              path: 'yearOfBirth',
+            },
+          })),
+          {
+            equals: {
+              value: null,
+              path: 'yearOfBirth',
+            },
+          },
+          {
+            compound: {
+              mustNot: {
+                exists: {
+                  path: 'yearOfBirth',
+                },
+              },
+            },
+          },
+        ]
         andFilters.push({
           compound: {
             should: yearOfBirthRangeMatch,
@@ -1543,22 +1558,37 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.yearOfBirthRange) {
       const { minYear, maxYear } = request.yearOfBirthRange
-      if (minYear || maxYear) {
-        const yearOfBirthRangeCondition = [
+      if (minYear && maxYear) {
+        const years = Array.from(
+          { length: maxYear - minYear + 1 },
+          (_, i) => `${minYear + i}`
+        )
+        const yearOfBirthRangeMatch = [
+          ...years.map((year) => ({
+            term: {
+              query: year,
+              path: 'yearOfBirth',
+            },
+          })),
           {
-            range: {
-              yearOfBirth: {
-                ...(minYear ? { gte: minYear } : {}),
-                ...(maxYear ? { lte: maxYear } : {}),
+            equals: {
+              value: null,
+              path: 'yearOfBirth',
+            },
+          },
+          {
+            compound: {
+              mustNot: {
+                exists: {
+                  path: 'yearOfBirth',
+                },
               },
             },
           },
-          { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
         ]
-
         mustConditions.push({
           bool: {
-            should: yearOfBirthRangeCondition,
+            should: yearOfBirthRangeMatch as QueryContainer[],
             minimum_should_match: 1,
           },
         })
