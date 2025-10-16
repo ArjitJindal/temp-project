@@ -2,7 +2,7 @@ import cn from 'clsx';
 import React from 'react';
 import { toString } from 'lodash';
 import s from './index.module.less';
-import WarningIcon from './warning-icon.react.svg';
+import WarningIconSvg from './warning-icon.react.svg';
 import Label, { Props as LabelProps } from '@/components/library/Label';
 import { InputProps } from '@/components/library/Form';
 import GenericFormField from '@/components/library/Form/GenericFormField';
@@ -55,11 +55,7 @@ export default function InputField<FormValues, Key extends keyof FormValues = ke
             iconLeft={
               isHighlighted && (
                 <Tooltip title={highlightMessage}>
-                  {({ ref }) => (
-                    <WarningIcon ref={ref} className={s.warningIcon}>
-                      {'This field has changes'}
-                    </WarningIcon>
-                  )}
+                  {({ ref }) => <WarningIcon rootRef={ref} />}
                 </Tooltip>
               )
             }
@@ -84,4 +80,9 @@ export default function InputField<FormValues, Key extends keyof FormValues = ke
 
 export function Hint(props: { isError: boolean; children: string }) {
   return <div className={cn(s.hint, props.isError && s.isError)}>{props.children}</div>;
+}
+
+export function WarningIcon(props: { rootRef: React.LegacyRef<unknown> | undefined }) {
+  const { rootRef } = props;
+  return <WarningIconSvg ref={rootRef} className={s.warningIcon} />;
 }

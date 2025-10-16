@@ -28,6 +28,8 @@ import Dropdown from '@/components/library/Dropdown';
 import Tooltip from '@/components/library/Tooltip';
 import { LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 import { useAuth0User } from '@/utils/user-utils';
+import { CHANGED_FIELD_MESSAGE } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/helpers';
+import { WarningIcon } from '@/components/library/Form/InputField';
 
 function getNewAggregationVariableKey() {
   return `agg:${shortId()}`;
@@ -259,6 +261,7 @@ interface RuleAggregationVariablesEditorProps {
     mlVariables?: RuleMachineLearningVariable[];
   }) => void;
   entity?: LogicEntityVariableEntityEnum;
+  hasChanges?: boolean;
 }
 
 export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
@@ -270,6 +273,7 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
   mlVariables,
   onChange,
   entity,
+  hasChanges,
 }) => {
   const [editingVariable, setEditingVariable] = useState<
     EditingAggVariable | EditingEntityVariable | EditingMLVariable | undefined
@@ -451,6 +455,13 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
             label="Variable definition"
             description="Add all entity and aggregate variables that are required for the rule to check"
             required={true}
+            iconLeft={
+              hasChanges && (
+                <Tooltip title={CHANGED_FIELD_MESSAGE}>
+                  {({ ref }) => <WarningIcon rootRef={ref} />}
+                </Tooltip>
+              )
+            }
           />
           {!readOnly && (
             <Dropdown<VariableType>

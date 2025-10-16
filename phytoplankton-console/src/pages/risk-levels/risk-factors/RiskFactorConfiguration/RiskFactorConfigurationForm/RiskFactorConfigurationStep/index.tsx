@@ -40,6 +40,9 @@ const RiskFactorConfigurationStep = forwardRef((props: Props) => {
       <VariableDefinitionCard
         ruleType={props.ruleType}
         readOnly={props.readOnly}
+        hasChanges={
+          !!aggVariablesFieldState.meta.highlight || !!entityVariablesFieldState.meta.highlight
+        }
         entityVariables={entityVariablesFieldState.value}
         aggregationVariables={aggVariablesFieldState.value}
         onChange={(v) => {
@@ -55,6 +58,7 @@ const RiskFactorConfigurationStep = forwardRef((props: Props) => {
       <LogicDefinitionCard
         ruleType={props.ruleType}
         readOnly={props.readOnly}
+        hasChanges={!!riskLevelLogic.meta.highlight || !!baseCurrencyFieldState.meta.highlight}
         entityVariablesFieldState={entityVariablesFieldState}
         aggVariablesFieldState={aggVariablesFieldState}
         riskLevelLogic={riskLevelLogic}

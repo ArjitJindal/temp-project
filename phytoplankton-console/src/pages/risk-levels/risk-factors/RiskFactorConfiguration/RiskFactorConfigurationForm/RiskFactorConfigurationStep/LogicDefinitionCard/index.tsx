@@ -30,10 +30,13 @@ import InformationLineIcon from '@/components/ui/icons/Remix/system/information-
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import Checkbox from '@/components/library/Checkbox';
 import { P } from '@/components/ui/Typography';
+import { WarningIcon } from '@/components/library/Form/InputField';
+import { CHANGED_FIELD_MESSAGE } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/helpers';
 
 interface Props {
   ruleType: RuleType;
   readOnly?: boolean;
+  hasChanges?: boolean;
   entityVariablesFieldState: FieldState<RiskFactorConfigurationStepFormValues['entityVariables']>;
   aggVariablesFieldState: FieldState<RiskFactorConfigurationStepFormValues['aggregationVariables']>;
   riskLevelLogic: FieldState<RiskFactorConfigurationStepFormValues['riskLevelLogic']>;
@@ -85,6 +88,7 @@ export const LogicDefinitionCard = (props: Props) => {
     baseCurrencyFieldState,
     ruleType,
     readOnly = false,
+    hasChanges = false,
   } = props;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -191,6 +195,13 @@ export const LogicDefinitionCard = (props: Props) => {
               label="Logic definition"
               description="Using the above defined variables configure a risk factor logic mapped to one or more risk levels"
               required={true}
+              iconLeft={
+                hasChanges && (
+                  <Tooltip title={CHANGED_FIELD_MESSAGE}>
+                    {({ ref }) => <WarningIcon rootRef={ref} />}
+                  </Tooltip>
+                )
+              }
             />
             {!readOnly && (
               <Button
@@ -275,6 +286,7 @@ export const LogicDefinitionCard = (props: Props) => {
                   placeholder="Select base currency"
                   mode="SINGLE"
                   options={CURRENCIES_SELECT_OPTIONS}
+                  isDisabled={readOnly}
                 />
               </Label>
             </div>

@@ -20,6 +20,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ApprovalHeader from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/ApprovalHeader';
 import SpecialAttributesChanges from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/SpecialAttributesChanges';
+import { findDiff } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/diff';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
@@ -145,6 +146,9 @@ export const RiskFactorConfiguration = (props: Props) => {
                     id={id}
                     type={riskItemType}
                     formInitialValues={showProposal ? proposalFormValues : formInitialValues}
+                    changedFields={
+                      showProposal ? findDiff(formInitialValues, proposalFormValues) : []
+                    }
                     newRiskId={mode === 'EDIT' || mode === 'READ' ? id : riskFactorId}
                   />
                 </div>
