@@ -21,6 +21,7 @@ import {
   canAggregate,
   getAggregationGranularity,
 } from '../logic-evaluator/engine/utils'
+import { ClickhouseTransactionsRepository } from '../rules-engine/repositories/clickhouse-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import {
   TimestampSlice,
@@ -52,6 +53,8 @@ import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { getAddressString } from '@/utils/helpers'
 import { staticValueGenerator, zipGenerators } from '@/utils/generator'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 const sqs = getSQSClient()
 
@@ -115,10 +118,21 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private mongoDb!: MongoClient
   private mongoTransactionsRepo!: MongoDbTransactionRepository
   private totalMessagesLength: number = 0
+  private clickhouseTransactionsRepo?: ClickhouseTransactionsRepository
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
     const tenantId = job.tenantId
+    if (isClickhouseEnabled()) {
+      const clickhouseClient = await getClickhouseClient(tenantId, {
+        requestTimeout: 0,
+      })
+      this.clickhouseTransactionsRepo = new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        this.dynamoDb,
+        tenantId
+      )
+    }
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -481,7 +495,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       timeWindow.end
     )
     if (aggregationVariable.type === 'USER_TRANSACTIONS') {
-      const transactionsRepo = this.mongoTransactionsRepo
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<string[]>([])
@@ -510,7 +526,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
-      const transactionsRepo = this.mongoTransactionsRepo
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<PaymentDetails[]>([])

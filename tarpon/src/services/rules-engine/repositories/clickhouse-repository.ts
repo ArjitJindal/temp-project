@@ -1,3 +1,7 @@
+import { Transform } from 'stream'
+import { pipeline } from 'stream/promises'
+import { createInterface } from 'readline'
+import * as fs from 'fs'
 import { ClickHouseClient } from '@clickhouse/client'
 import compact from 'lodash/compact'
 import round from 'lodash/round'
@@ -38,6 +42,7 @@ import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/Trans
 import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { logger } from '@/core/logger'
 
 type StatsByType = {
   transactionType: string
@@ -61,6 +66,7 @@ type StatsByTime = {
   aggregateBy: string
   timestamp: number
 }
+const CLICKHOUSE_DATA_FILE = 'clickhouse_results.json'
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -953,6 +959,21 @@ export class ClickhouseTransactionsRepository {
     }
     return result
   }
+  private getTranformStream() {
+    return new Transform({
+      objectMode: true,
+      transform(chunk, _enc, cb) {
+        try {
+          // ClickHouse stream emits an array of rows per chunk
+          const out = chunk.map((row) => row.text).join(`\n`) + '\n'
+          cb(null, out)
+        } catch (err) {
+          cb(err as Error)
+        }
+      },
+    })
+  }
+
   public async *getUniquePaymentDetailsGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange: TimeRange,
@@ -988,31 +1009,54 @@ export class ClickhouseTransactionsRepository {
         query,
         format: 'JSONEachRow',
       })
-      for await (const rows of resultSet.stream()) {
-        for (const row of rows) {
-          const data = row.json()
-          const details: PaymentDetails = {
-            method: paymentMethod,
-            ...Object.fromEntries(
-              paymentIdentifiers.map((field) => [
-                field,
-                data?.[nativeFieldToCh(field)],
-              ])
-            ),
+      const transformStream = this.getTranformStream()
+      const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+      await pipeline(resultSet.stream(), transformStream, writeStream)
+      const rl = createInterface({
+        input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+        crlfDelay: Infinity,
+      })
+      try {
+        for await (const line of rl) {
+          if (!line) {
+            continue
           }
-          globalBatch.push(details)
+          try {
+            const data = JSON.parse(line)
+            const details: PaymentDetails = {
+              method: paymentMethod,
+              ...Object.fromEntries(
+                paymentIdentifiers.map((field) => [
+                  field,
+                  data?.[nativeFieldToCh(field)],
+                ])
+              ),
+            }
+            globalBatch.push(details)
 
-          if (globalBatch.length >= chunkSize) {
-            yield globalBatch.splice(0)
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          } catch (e) {
+            logger.error(e)
+            throw e
           }
         }
+      } catch (e) {
+        logger.error(e)
+        throw e
+      } finally {
+        fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+          if (err) {
+            logger.error('error deleting file', err)
+          }
+        })
       }
     }
     if (globalBatch.length > 0) {
       yield globalBatch
     }
   }
-
   public async *getUniqueUserIdGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange: TimeRange,
@@ -1033,18 +1077,42 @@ LIMIT 1 BY ${userField}`
       format: 'JSONEachRow',
     })
 
+    const transformStream = this.getTranformStream()
+    const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+    await pipeline(resultSet.stream(), transformStream, writeStream)
+    const rl = createInterface({
+      input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+      crlfDelay: Infinity,
+    })
     let batch: string[] = []
-    for await (const rows of resultSet.stream<Record<string, string>>()) {
-      for (const row of rows) {
-        const userId = row.json()[userField]
-        if (userId) {
-          batch.push(userId)
-          if (batch.length >= chunkSize) {
-            yield batch
-            batch = []
+    try {
+      for await (const line of rl) {
+        if (!line) {
+          continue
+        }
+        const data = JSON.parse(line)
+        try {
+          const userId = data[userField]
+          if (userId) {
+            batch.push(userId)
+            if (batch.length >= chunkSize) {
+              yield batch
+              batch = []
+            }
           }
+        } catch (e) {
+          logger.error('Got from .json', e)
         }
       }
+    } catch (e) {
+      logger.error('Got error while reading file ', e)
+      throw e
+    } finally {
+      fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+        if (err) {
+          logger.error('Error deleting file', err)
+        }
+      })
     }
 
     if (batch.length > 0) {
