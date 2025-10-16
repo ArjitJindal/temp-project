@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { EditOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
-import CreateScreeningProfileModal from './CreateScreeningProfileModal';
+import CreateScreeningProfileDrawer from './CreateScreeningProfileDrawer';
 import Tooltip from '@/components/library/Tooltip';
 import Toggle from '@/components/library/Toggle';
 import { useQuery } from '@/utils/queries/hooks';
@@ -245,7 +245,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
           queryResults={queryResult}
           rowKey="screeningProfileId"
           externalHeader
-          extraTools={[() => <CreateScreeningProfileModal />]}
+          extraTools={[() => <CreateScreeningProfileDrawer />]}
           toolsOptions={{
             reload: false,
             setting: false,
@@ -254,7 +254,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
           columns={columns}
         />
         {editingProfile && (
-          <CreateScreeningProfileModal
+          <CreateScreeningProfileDrawer
             isOpen={true}
             onClose={() => setEditingProfile(undefined)}
             initialValues={editingProfile}

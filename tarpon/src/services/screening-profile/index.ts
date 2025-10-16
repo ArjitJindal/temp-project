@@ -184,7 +184,10 @@ export class ScreeningProfileService {
     const sources = await mongoSanctionSourcesRepository.getSanctionsSources(
       undefined,
       [],
-      true
+      true,
+      undefined,
+      undefined,
+      SanctionsDataProviders.ACURIS
     )
 
     const sanctionSourceIds = sources

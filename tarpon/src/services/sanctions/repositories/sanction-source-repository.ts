@@ -12,8 +12,8 @@ import {
 } from '@/services/sanctions/providers/types'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
-import { SanctionsSourceType } from '@/@types/openapi-internal/SanctionsSourceType'
 import { traceable } from '@/core/xray'
+import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 
 interface SourceDocumentWithEntityIds extends Document {
   entityIds?: string[]
@@ -128,11 +128,12 @@ export class MongoSanctionSourcesRepository
   }
 
   async getSanctionsSources(
-    filterSourceType?: SanctionsSourceType,
+    filterSourceType?: GenericSanctionsSearchType,
     filterSourceIds?: string[],
     unique?: boolean,
     searchTerm?: string,
-    projection?: Document
+    projection?: Document,
+    provider?: SanctionsDataProviderName
   ): Promise<(SourceDocument & { entityCount: number })[]> {
     const collection = this.mongoClient
       .db()
@@ -153,6 +154,9 @@ export class MongoSanctionSourcesRepository
         { sourceName: { $regex: sanitizedSearchTerm, $options: 'i' } },
         { sourceCountry: { $regex: sanitizedSearchTerm, $options: 'i' } },
       ]
+    }
+    if (provider) {
+      matchStage.provider = provider
     }
 
     const pipeline: any[] =

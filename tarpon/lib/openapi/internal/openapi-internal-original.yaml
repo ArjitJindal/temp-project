@@ -6965,13 +6965,17 @@ paths:
           - read:::screening/manual-screening
       parameters:
         - schema:
-            $ref: '#/components/schemas/SanctionsSourceType'
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
           in: query
           name: filterSourceType
         - schema:
             type: string
           in: query
           name: searchTerm
+        - schema:
+            $ref: '#/components/schemas/SanctionsDataProviderName'
+          in: query
+          name: provider
       responses:
         '200':
           description: OK
@@ -14513,6 +14517,16 @@ components:
         - open-sanctions
         - acuris
         - lseg
+    SanctionsDataProviderScreeningInfo:
+      title: SanctionsDataProviderScreeningInfo
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
@@ -15010,6 +15024,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AdverseMediaRelevanceInternal'
+        crime:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                type: string
         screeningProfileStatus:
           type: string
           enum:
@@ -15017,6 +15038,8 @@ components:
             - DISABLED
         containAllSources:
           type: boolean
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
       required:
         - screeningProfileName
     ScreeningProfileResponse:
@@ -15071,6 +15094,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AdverseMediaSourceRelevance'
+        crime:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                type: string
         createdAt:
           type: number
         updatedAt:
@@ -15083,6 +15113,8 @@ components:
           $ref: '#/components/schemas/StatusEnum'
         containAllSources:
           type: boolean
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
       required:
         - screeningProfileId
         - screeningProfileName
@@ -15107,10 +15139,8 @@ components:
       properties:
         id:
           type: string
-        sourceName:
-          type: string
         sourceType:
-          $ref: '#/components/schemas/SanctionsSourceType'
+          $ref: '#/components/schemas/GenericSanctionsSearchType'
         sourceCountry:
           type: string
         displayName:
@@ -15121,12 +15151,16 @@ components:
       title: SanctionsSourceListResponse
       type: object
       properties:
-        items:
+        relevance:
+          type: array
+          items:
+            type: string
+        sources:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsSourceResponse'
       required:
-        - items
+        - sources
     PepRank:
       title: PepRank
       type: string
@@ -15134,14 +15168,6 @@ components:
         - LEVEL_1
         - LEVEL_2
         - LEVEL_3
-    SanctionsSourceType:
-      title: SanctionsSourceType
-      type: string
-      enum:
-        - SANCTIONS
-        - PEP
-        - ADVERSE_MEDIA
-        - REGULATORY_ENFORCEMENT_LIST
     StatusEnum:
       title: StatusEnum
       type: string
@@ -15199,6 +15225,13 @@ components:
       enum:
         - POI
         - PEP
+    OpenSanctionsPEPSourceRelevance:
+      title: OpenSanctionsPEPSourceRelevance
+      type: string
+      enum:
+        - PEP
+        - PEP_BY_ASSOCIATION
+        - POI
     RELSourceRelevance:
       title: RELSourceRelevance
       type: string
@@ -15717,7 +15750,7 @@ components:
           items:
             type: string
         sourceType:
-          $ref: '#/components/schemas/SanctionsSourceType'
+          $ref: '#/components/schemas/GenericSanctionsSearchType'
         entityType:
           type: string
         refId:
