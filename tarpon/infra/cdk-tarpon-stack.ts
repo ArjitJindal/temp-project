@@ -2265,12 +2265,6 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     if (this.config.clickhouse?.awsPrivateLinkEndpointName && vpc) {
-      const privateSubnets = vpc.selectSubnets({
-        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-      })
-
-      const selectedSubnets = privateSubnets.subnets.slice(0, 3)
-
       const vpcEndpoint = new InterfaceVpcEndpoint(
         this,
         'clickhouse-endpoint',
@@ -2280,7 +2274,7 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.clickhouse.awsPrivateLinkEndpointName
           ),
           privateDnsEnabled: true,
-          subnets: { subnets: selectedSubnets },
+
           securityGroups: [clickhouseSecurityGroup, securityGroup],
         }
       )
@@ -2437,7 +2431,6 @@ export class CdkTarponStack extends cdk.Stack {
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
     })
-    const selectedSubnets = privateSubnets.subnets.slice(0, 3)
 
     const sqsEndpointSecurityGroup = new SecurityGroup(
       this,
@@ -2461,7 +2454,7 @@ export class CdkTarponStack extends cdk.Stack {
       getResourceNameForTarpon('SqsInterfaceEndpoint'),
       {
         service: InterfaceVpcEndpointAwsService.SQS,
-        subnets: { subnets: selectedSubnets },
+        subnets: { subnets: privateSubnets.subnets },
         securityGroups: [sqsEndpointSecurityGroup],
         privateDnsEnabled: false,
       }
@@ -2502,17 +2495,21 @@ export class CdkTarponStack extends cdk.Stack {
     const vpc = new Vpc(this, 'vpc', {
       vpcName: StackConstants.VPC_NAME,
       ipAddresses,
-      maxAzs: 3,
       subnetConfiguration: [
         {
           subnetType: SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
-          name: 'PrivateSubnet',
+          name: 'PrivateSubnet1',
+        },
+        {
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+          cidrMask: 24,
+          name: 'PrivateSubnet2',
         },
         {
           subnetType: SubnetType.PUBLIC,
           cidrMask: 28,
-          name: 'PublicSubnet',
+          name: 'PublicSubnet1',
         },
       ],
     })
