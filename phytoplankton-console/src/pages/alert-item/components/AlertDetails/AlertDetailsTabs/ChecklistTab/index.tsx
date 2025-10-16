@@ -1,4 +1,4 @@
-import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import EditableComment from './EditableComment';
@@ -118,9 +118,7 @@ export default function ChecklistTab(props: Props) {
     {
       onSuccess: (_, { item, changes }) => {
         if (changes.done != null && changes.done != item.done) {
-          message.success(
-            `Checklist item marked as ${changes.done ? 'done' : 'not done'} successfully`,
-          );
+          message.success(`Checklist item marked as ${humanizeAuto(changes.done)} successfully`);
         } else if (changes.comment != null && changes.comment != item.comment) {
           message.success('Checklist item comment updated successfully');
         }

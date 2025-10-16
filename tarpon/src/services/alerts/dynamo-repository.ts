@@ -1769,7 +1769,9 @@ export class DynamoAlertRepository {
    * @param alertIds - Array of alert IDs to update
    * @returns Promise that resolves when the update is complete
    */
-  public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
+  public async markUnMarkedChecklistItemsDone(
+    alertIds: string[]
+  ): Promise<void> {
     const now = Date.now()
     const operations: TransactWriteOperation[] = []
     const alertKeyLists: dynamoKeyList = []
@@ -1794,7 +1796,7 @@ export class DynamoAlertRepository {
       }
 
       const hasItemsToUpdate = alert.ruleChecklist.some(
-        (item) => item.done !== 'DONE'
+        (item) => item.done === 'NOT_STARTED'
       )
 
       if (!hasItemsToUpdate) {
@@ -1803,7 +1805,7 @@ export class DynamoAlertRepository {
 
       const updatedChecklist = alert.ruleChecklist.map((item) => ({
         ...item,
-        done: 'DONE',
+        ...(item.done === 'NOT_STARTED' ? { done: 'DONE' } : {}),
       }))
 
       const { operations: alertOperations, keyLists } =

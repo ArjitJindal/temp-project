@@ -1739,9 +1739,9 @@ export class CaseRepository {
   }
 
   // todo this needs to be implemented in the alerts side.
-  public async markAllChecklistItemsAsDone(caseIds: string[]) {
+  public async markUnMarkedChecklistItemsDone(caseIds: string[]) {
     if (await this.isTenantMigratedToDynamo) {
-      await this.dynamoCaseRepository.markAllChecklistItemsAsDone(caseIds)
+      await this.dynamoCaseRepository.markUnMarkedChecklistItemsDone(caseIds)
     }
     await this.updateManyCases(
       { caseId: { $in: caseIds } },

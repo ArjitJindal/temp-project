@@ -1752,7 +1752,7 @@ export class AlertsService extends CaseAlertsCommonService {
         ...(statusUpdateRequest?.alertStatus === 'CLOSED' &&
         updateChecklistStatus &&
         hasFeature('QA')
-          ? [this.alertsRepository.markAllChecklistItemsAsDone(alertIds)]
+          ? [this.alertsRepository.markUnMarkedChecklistItemsDone(alertIds)]
           : []),
         ...(this.hasFeatureSla
           ? alerts.map((alert) => {

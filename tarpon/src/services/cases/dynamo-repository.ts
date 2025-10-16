@@ -1924,11 +1924,13 @@ export class DynamoCaseRepository {
    * Marks all checklist items as done for a given case
    * @param caseIds - The list of case IDs to mark the checklist items for
    */
-  public async markAllChecklistItemsAsDone(caseIds: string[]): Promise<void> {
+  public async markUnMarkedChecklistItemsDone(
+    caseIds: string[]
+  ): Promise<void> {
     const alertIds = await this.dynamoAlertRepository.getAlertIdsByCaseIds(
       caseIds
     )
-    await this.dynamoAlertRepository.markAllChecklistItemsAsDone(alertIds)
+    await this.dynamoAlertRepository.markUnMarkedChecklistItemsDone(alertIds)
   }
 
   public async deleteCasesData(tenantId: string) {
