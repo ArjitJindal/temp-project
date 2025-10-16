@@ -63,7 +63,7 @@ import {
   SanctionsHit,
   SanctionsSearchResponse,
   SanctionsSourceListResponse,
-  SanctionsSourceType,
+  SourceDocument,
 } from '@/@types/openapi-internal/all'
 import { SanctionsDataProvider } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
@@ -79,6 +79,12 @@ import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
 import { CaseConfig } from '@/@types/cases/case-config'
 import { getSecretByName } from '@/utils/secrets-manager'
+import { DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/DowJonesAdverseMediaSourceRelevance'
+import { DOW_JONES_PEP_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/DowJonesPEPSourceRelevance'
+import { PEP_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/PEPSourceRelevance'
+import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/AdverseMediaSourceRelevance'
+import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/SanctionsSourceRelevance'
+import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
 import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const DEFAULT_FUZZINESS = 0.5
@@ -551,22 +557,98 @@ export class SanctionsService {
     )
   }
 
+  private async getRelevance(
+    provider?: SanctionsDataProviderName,
+    sourceType?: GenericSanctionsSearchType
+  ) {
+    switch (provider) {
+      case 'dowjones': {
+        switch (sourceType) {
+          case 'SANCTIONS':
+            return SANCTIONS_SOURCE_RELEVANCES
+          case 'PEP':
+            return DOW_JONES_PEP_SOURCE_RELEVANCES
+          case 'ADVERSE_MEDIA':
+            return DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES
+          default:
+            return []
+        }
+      }
+      case 'acuris': {
+        switch (sourceType) {
+          case 'SANCTIONS':
+            return SANCTIONS_SOURCE_RELEVANCES
+          case 'PEP':
+            return PEP_SOURCE_RELEVANCES
+          case 'ADVERSE_MEDIA':
+            return ADVERSE_MEDIA_SOURCE_RELEVANCES
+          case 'REGULATORY_ENFORCEMENT_LIST':
+            return REL_SOURCE_RELEVANCES
+          default:
+            return []
+        }
+      }
+      case 'open-sanctions': {
+        const collectionName = getSanctionsSourceDocumentsCollectionName([
+          provider,
+        ])
+        const collection = this.mongoDb
+          .db()
+          .collection<SourceDocument>(collectionName)
+        const pepRelevance = await collection
+          .find({
+            sourceType: 'PEP',
+            provider: provider,
+          })
+          .project({
+            id: 1,
+          })
+          .toArray()
+        const crimeRelevance = await collection
+          .find({
+            sourceType: 'CRIME',
+            provider: provider,
+          })
+          .project({
+            id: 1,
+          })
+          .toArray()
+        switch (sourceType) {
+          case 'SANCTIONS':
+            return []
+          case 'PEP':
+            return uniq(pepRelevance.map((relevance) => relevance.id))
+          case 'CRIME':
+            return uniq(crimeRelevance.map((relevance) => relevance.id))
+          default:
+            return []
+        }
+      }
+      default:
+        return []
+    }
+  }
+
   public async getSanctionsSources(
-    filterSourceType?: SanctionsSourceType,
-    searchTerm?: string
+    filterSourceType?: GenericSanctionsSearchType,
+    searchTerm?: string,
+    provider?: SanctionsDataProviderName
   ): Promise<SanctionsSourceListResponse> {
     const sources = await this.sanctionsSourcesRepository.getSanctionsSources(
       filterSourceType,
       [],
       true,
-      searchTerm
+      searchTerm,
+      undefined,
+      provider
     )
+
     return {
-      items:
+      relevance: await this.getRelevance(provider, filterSourceType),
+      sources:
         sources?.map((source) => {
           const picked = pick(source, [
             'id',
-            'sourceName',
             'sourceType',
             'sourceCountry',
             'displayName',

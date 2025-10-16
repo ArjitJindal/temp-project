@@ -53,7 +53,8 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
     handlers.registerGetSanctionsSources(async (ctx, request) => {
       const sources = await sanctionsService.getSanctionsSources(
         request.filterSourceType,
-        request.searchTerm
+        request.searchTerm,
+        request.provider
       )
       return sources
     })

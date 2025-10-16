@@ -19,7 +19,6 @@ import {
   canAggregate,
   getAggregationGranularity,
 } from '../logic-evaluator/engine/utils'
-import { ClickhouseTransactionsRepository } from '../rules-engine/repositories/clickhouse-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import {
   TimestampSlice,
@@ -51,8 +50,6 @@ import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { getAddressString } from '@/utils/helpers'
 import { staticValueGenerator, zipGenerators } from '@/utils/generator'
-import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
-import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 const sqs = getSQSClient()
 
@@ -64,10 +61,13 @@ function getAggregationTaskMessage(
 ): FifoSqsMessage {
   const payload = task.payload as V8LogicAggregationRebuildTask
   const deduplicationId = generateChecksum(
-    `${task.userKeyId}${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
+    `${task.payload?.['jobId'] ? `${task.payload['jobId']}:` : ''}${
+      task.userKeyId
+    }${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
       payload.aggregationVariable
     )}`
   )
+
   return {
     MessageBody: JSON.stringify(payload),
     MessageGroupId: generateChecksum(
@@ -111,23 +111,14 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private mongoDb!: MongoClient
   private mongoTransactionsRepo!: MongoDbTransactionRepository
   private totalMessagesLength: number = 0
-  private clickhouseTransactionsRepo!: ClickhouseTransactionsRepository
-  private tenantId!: string
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
     const tenantId = job.tenantId
-    this.tenantId = tenantId
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const clickhouseClient = await getClickhouseClient(this.tenantId)
-    this.clickhouseTransactionsRepo = new ClickhouseTransactionsRepository(
-      clickhouseClient,
-      this.dynamoDb,
-      this.tenantId
-    )
     this.mongoTransactionsRepo = new MongoDbTransactionRepository(
       tenantId,
       this.mongoDb,
@@ -478,9 +469,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       timeWindow.end
     )
     if (aggregationVariable.type === 'USER_TRANSACTIONS') {
-      const transactionsRepo = isClickhouseEnabled()
-        ? this.clickhouseTransactionsRepo
-        : this.mongoTransactionsRepo
+      const transactionsRepo = this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<string[]>([])
@@ -509,9 +498,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
-      const transactionsRepo = isClickhouseEnabled()
-        ? this.clickhouseTransactionsRepo
-        : this.mongoTransactionsRepo
+      const transactionsRepo = this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<PaymentDetails[]>([])

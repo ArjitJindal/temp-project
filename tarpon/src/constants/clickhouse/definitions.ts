@@ -167,4 +167,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   WEBHOOK_DELIVERIES: {
     tableName: ClickhouseTableNames.WebhookDelivery,
   },
+  CLOUDWATCH_LOGS: {
+    tableName: ClickhouseTableNames.CloudwatchLogs,
+    database: 'default',
+  },
+  CLOUDWATCH_LOGS_CORRELATED: {
+    tableName: ClickhouseTableNames.CloudwatchLogsCorrelated,
+    database: 'default',
+  },
 } as const

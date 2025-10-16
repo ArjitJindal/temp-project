@@ -16,7 +16,7 @@ export default function Address({ address }: Props) {
   return (
     <>
       <div className={s.details}>
-        <div className={s.type}>Address type: {type}</div>
+        <div className={s.type}>{type}</div>
         <div className={s.items}>{addressLines?.join(', ')}</div>
         <div>
           {city} {postcode}

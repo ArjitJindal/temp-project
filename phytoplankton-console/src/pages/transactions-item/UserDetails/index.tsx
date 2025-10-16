@@ -80,7 +80,7 @@ export default function UserDetails(props: Props) {
               </>
             )}
           </span>
-          {user && (
+          {user && user.type ? (
             <Id
               to={makeUrl('/users/list/:list/:id', {
                 list: user.type === 'BUSINESS' ? 'business' : 'consumer',
@@ -89,6 +89,8 @@ export default function UserDetails(props: Props) {
             >
               {user.userId}
             </Id>
+          ) : (
+            <Id>{userId}</Id>
           )}
         </div>
         <div className={s.mainInfo}>

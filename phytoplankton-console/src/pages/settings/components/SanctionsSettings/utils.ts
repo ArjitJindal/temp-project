@@ -2,6 +2,7 @@ import { intersection, uniq } from 'lodash';
 import {
   Feature,
   SanctionsDataProviderName,
+  SanctionsSettings,
   SanctionsSettingsProviderScreeningTypes,
 } from '@/apis';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
@@ -46,4 +47,47 @@ const getProviders = (features: Feature[]) => {
     }
   });
   return providers;
+};
+
+export const getProvidersOptions = (
+  features: Feature[],
+): { label: string; value: SanctionsDataProviderName }[] => {
+  const providers = getProviders(features);
+  return providers.map((provider) => ({
+    label: getProviderLabel(provider),
+    value: provider,
+  }));
+};
+
+function getProviderLabel(provider: SanctionsDataProviderName): string {
+  switch (provider) {
+    case 'acuris':
+      return 'KYC6';
+    case 'open-sanctions':
+      return 'Open Sanctions';
+    case 'dowjones':
+      return 'Dow Jones';
+    default:
+      return provider;
+  }
+}
+
+export const getProviderScreeningInfo = (
+  sanctions: SanctionsSettings | undefined,
+  provider?: SanctionsDataProviderName,
+): {
+  screeningTypes: GenericSanctionsSearchType[];
+} => {
+  if (!provider) {
+    return {
+      screeningTypes: [],
+    };
+  }
+  const providerScreeningTypes = sanctions?.providerScreeningTypes?.find(
+    (type) => type.provider === provider,
+  );
+  return {
+    screeningTypes: (providerScreeningTypes?.screeningTypes ??
+      DEFAULT_PROVIDER_TYEPS_MAP[provider]) as GenericSanctionsSearchType[],
+  };
 };

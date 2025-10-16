@@ -545,21 +545,27 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     mediaSources?: 0
     sanctionsSources?: 0
     pepSources?: 0
+    otherSources?: 0
   } {
     const projection: {
       rawResponse: 0
       mediaSources?: 0
       sanctionsSources?: 0
       pepSources?: 0
+      otherSources?: 0
     } = {
       rawResponse: 0,
     }
 
     // If Dow Jones is enabled, exclude additional fields
-    if (providers.includes(SanctionsDataProviders.DOW_JONES)) {
+    if (
+      providers.includes(SanctionsDataProviders.DOW_JONES) ||
+      providers.includes(SanctionsDataProviders.OPEN_SANCTIONS)
+    ) {
       projection.mediaSources = 0
       projection.sanctionsSources = 0
       projection.pepSources = 0
+      projection.otherSources = 0
     }
 
     return projection

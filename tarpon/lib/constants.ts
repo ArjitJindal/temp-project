@@ -51,6 +51,7 @@ export const DYNAMODB_TABLE_NAMES = {
   TARPON_RULE: 'TarponRule',
   TRANSIENT: 'Transient',
   HAMMERHEAD: 'Hammerhead',
+  AGGREGATION: 'Aggregation',
 }
 
 export const StackConstants = {
@@ -76,6 +77,7 @@ export const StackConstants = {
   },
   TARPON_RULE_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.TARPON_RULE,
   TRANSIENT_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.TRANSIENT,
+  AGGREGATION_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.AGGREGATION,
   DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
@@ -346,6 +348,30 @@ export const StackConstants = {
   SECONDARY_ASYNC_RULE_RUNNER_FUNCTION_NAME: getResourceName(
     'SecondaryAsyncRuleRunner'
   ),
+
+  // CloudWatch Logs Ingestion
+  CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME: getResourceNameForTarpon(
+    'CloudwatchLogsIngestionFunction'
+  ),
+  CLOUDWATCH_LOGS_FIREHOSE_STREAM_NAME: getResourceName(
+    'CloudwatchLogsFirehoseStream'
+  ),
+  CLOUDWATCH_LOGS_S3_BUCKET_PREFIX: getResourceNameForTarpon(
+    'cloudwatch-logs',
+    true,
+    true
+  ),
+
+  CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX: getResourceNameForTarpon(
+    'cloudwatch-logs-parquet',
+    true,
+    true
+  ),
+  CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME: getResourceNameForTarpon(
+    'CloudwatchLogsS3ExporterFunction'
+  ),
+  POSTHOG_S3_ACCESS_KEY_SECRET_NAME: `posthog-user-s3-access-key-id`,
+  POSTHOG_S3_SECRET_KEY_SECRET_NAME: `posthog-user-s3-secret-access-key`,
 }
 
 export const SQSQueues: {

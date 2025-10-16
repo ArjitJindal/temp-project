@@ -792,6 +792,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER}`,
     SortKeyID: tenantId,
   }),
+  CLOUDWATCH_LOGS_SYNC_STATE: () => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#cloudwatch_logs_sync`,
+    SortKeyID: 'last_synced_timestamp',
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys

@@ -2,7 +2,7 @@ export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
   if (tenantId.endsWith('-test')) {
     return tenantId
   }
-  return tenantId + (demoMode ? `-test` : '')
+  return tenantId + (demoMode && tenantId !== 'default' ? `-test` : '')
 }
 
 export const isDemoTenant = (tenantId: string) => {

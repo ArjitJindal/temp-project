@@ -108,7 +108,15 @@ const AssigneesDropdownContent: React.FC<Props> = ({
       value={localValue}
       options={options}
       isLoading={loadingUsers || isBusy || (mutationRes != null && isLoading(mutationRes))}
-      tagRenderer={({ option, isHovered, isShadowed, isOnTop, onRemove }) => {
+      tagRenderer={({
+        option,
+        isHovered,
+        isShadowed,
+        isOptionFound,
+        isOnTop,
+        isDisabled,
+        onRemove,
+      }) => {
         const user = users.find((x) => x.id === option.value);
 
         const assignment = assignments.find((x) => x.assigneeUserId === option.value);
@@ -124,13 +132,15 @@ const AssigneesDropdownContent: React.FC<Props> = ({
             {!assignment && user && (
               <AccountTag accountId={user.id} hideUserName={!isOnTop && !isHovered} />
             )}
-            <CloseLineIcon
-              className={s.removeIcon}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-            />
+            {isOptionFound && !isDisabled && (
+              <CloseLineIcon
+                className={s.removeIcon}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+              />
+            )}
           </div>
         );
       }}
