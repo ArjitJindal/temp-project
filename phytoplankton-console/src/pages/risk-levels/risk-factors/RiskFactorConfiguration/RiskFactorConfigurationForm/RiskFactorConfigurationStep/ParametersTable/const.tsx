@@ -8,21 +8,21 @@ import { RiskLevelTableItem, RiskValueContentByType, RiskValueType } from './typ
 import SliderWithInputs from './SliderWithInputs';
 import { notEmpty } from '@/utils/array';
 import {
-  RiskScoreValueLevel,
+  CurrencyCode,
   RiskFactorDataType,
+  RiskFactorParameter,
+  RiskParameterLevelKeyValue,
+  RiskParameterValue,
+  RiskParameterValueAmountRange,
+  RiskParameterValueDayRange,
+  RiskParameterValueDayRangeEndGranularityEnum,
+  RiskParameterValueDayRangeStartGranularityEnum,
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
-  RiskParameterValueAmountRange,
-  CurrencyCode,
   RiskParameterValueTimeRange,
-  RiskParameterValueDayRangeEndGranularityEnum,
-  RiskParameterValueDayRangeStartGranularityEnum,
-  RiskParameterValueDayRange,
+  RiskScoreValueLevel,
   RiskScoreValueScore,
-  RiskParameterLevelKeyValue,
-  RiskFactorParameter,
-  RiskParameterValue,
 } from '@/apis';
 import { businessType, consumerType } from '@/utils/customer-type';
 import Select, { Option } from '@/components/library/Select';
@@ -53,7 +53,7 @@ import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 
 type InputRendererProps<T extends RiskValueType> = {
-  disabled?: boolean;
+  isDisabled?: boolean;
   value?: RiskValueContentByType<T> | null;
   existedValues?: RiskValueContentByType<T>[];
   onChange: (values: RiskValueContentByType<T>) => void;
@@ -74,7 +74,7 @@ type InputRenderer<T extends RiskValueType> = (props: InputRendererProps<T>) => 
 
 type ValueRenderer<T extends RiskValueType> = (props: {
   value?: RiskValueContentByType<T>;
-  onChange: (newValue?: RiskValueContentByType<T>) => void;
+  onChange?: (newValue?: RiskValueContentByType<T>) => void;
   handleRemoveValue?: (value: string) => void;
 }) => React.ReactNode;
 
@@ -205,7 +205,7 @@ const MultipleSelect: React.FC<
     mode?: 'MULTIPLE' | 'MULTIPLE_DYNAMIC';
   }
 > = (props) => {
-  const { value, disabled, onChange, options, existedValues = [], mode = 'MULTIPLE' } = props;
+  const { value, isDisabled, onChange, options, existedValues = [], mode = 'MULTIPLE' } = props;
   const disabledOptions: string[] = existedValues.flatMap((x) =>
     x.values.map((y) => `${y.content}`),
   );
@@ -219,7 +219,7 @@ const MultipleSelect: React.FC<
       onChange={(value) => {
         onChange(riskValueMultiple((value ?? []).map((x) => riskValueLiteral(x))));
       }}
-      isDisabled={disabled}
+      isDisabled={isDisabled}
       options={optionsFixed}
       mode={mode}
     />
@@ -231,7 +231,7 @@ const SingleSelect: React.FC<
     options: Array<{ value: RiskParameterValueLiteral['content']; label: string }>;
   }
 > = (props) => {
-  const { value, disabled, onChange, options, existedValues = [] } = props;
+  const { value, isDisabled, onChange, options, existedValues = [] } = props;
   const disabledOptions: RiskParameterValueLiteral['content'][] = existedValues.map(
     (x) => x.content,
   );
@@ -242,7 +242,7 @@ const SingleSelect: React.FC<
       onChange={(value) => {
         onChange(riskValueLiteral(value));
       }}
-      isDisabled={disabled}
+      isDisabled={isDisabled}
       mode="SINGLE"
       options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
     />
@@ -284,13 +284,17 @@ const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value, onChange }) => 
         start: value.start ?? 0,
         end: value.end ?? 0,
       }}
-      onChange={(newValue) => {
-        const newRangeValue: RiskParameterValueRange = {
-          kind: 'RANGE',
-          ...newValue,
-        };
-        onChange(newRangeValue);
-      }}
+      onChange={
+        onChange
+          ? (newValue) => {
+              const newRangeValue: RiskParameterValueRange = {
+                kind: 'RANGE',
+                ...newValue,
+              };
+              onChange(newRangeValue);
+            }
+          : undefined
+      }
     />
   );
 };
@@ -377,9 +381,9 @@ const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value, onChang
 };
 
 export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> } = {
-  STRING: (({ disabled, value, onChange }) => (
+  STRING: (({ isDisabled, value, onChange }) => (
     <TextInput
-      isDisabled={disabled}
+      isDisabled={isDisabled}
       value={`${value?.content ?? ''}`}
       onChange={(val) => onChange(riskValueLiteral(val))}
     />
@@ -481,7 +485,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
       />
     );
   }) as InputRenderer<'MULTIPLE'>,
-  RANGE: (({ disabled, value, onChange }) => {
+  RANGE: (({ isDisabled, value, onChange }) => {
     return (
       <SliderWithInputs
         value={
@@ -492,7 +496,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
               }
             : undefined
         }
-        isDisabled={disabled}
+        isDisabled={isDisabled}
         onChange={(value) => {
           if (value != null) {
             onChange(riskValueRange(value.start, value.end));
@@ -502,7 +506,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
     );
   }) as InputRenderer<'RANGE'>,
   DAY_RANGE: (({
-    disabled,
+    isDisabled,
     onChange,
     shouldShowNewValueInput,
     setShouldShowNewValueInput,
@@ -552,7 +556,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
           <Label label="To">
             <div className={style.dayRangeInputContainer}>
               <NumberInput
-                isDisabled={disabled || value?.endGranularity === 'INFINITE'}
+                isDisabled={isDisabled || value?.endGranularity === 'INFINITE'}
                 htmlAttrs={{ type: 'number', style: { width: 100 } }}
                 value={value?.endGranularity === 'INFINITE' ? undefined : value?.end}
                 onChange={(val) => {
@@ -568,7 +572,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
               />
               <div style={{ width: 150 }}>
                 <Select
-                  isDisabled={disabled}
+                  isDisabled={isDisabled}
                   onChange={(val) => {
                     onChange(
                       riskValueDayRange(
@@ -590,13 +594,13 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
       </div>
     ) : null;
   }) as InputRenderer<'DAY_RANGE'>,
-  TIME_RANGE: (({ disabled, value, onChange }) => {
+  TIME_RANGE: (({ isDisabled, value, onChange }) => {
     return (
       <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
           <Label label="Start Time">
             <Select
-              isDisabled={disabled}
+              isDisabled={isDisabled}
               onChange={(val) =>
                 onChange(
                   riskValueTimeRange(
@@ -614,7 +618,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
           <Label label="End Time">
             <Select<number>
-              isDisabled={disabled}
+              isDisabled={isDisabled}
               onChange={(val) =>
                 onChange(
                   riskValueTimeRange(
@@ -632,7 +636,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
           <Label label="Time Zone">
             <Select
-              isDisabled={disabled}
+              isDisabled={isDisabled}
               onChange={(val) =>
                 onChange(
                   riskValueTimeRange(
@@ -672,7 +676,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
           <div className={style.amountCurrencyContainer}>
             <Label label={<div className={style.currencyLabel}>Currency</div>}>
               <Select
-                isDisabled={props.disabled}
+                isDisabled={props.isDisabled}
                 value={props.value?.currency ?? defaultCurrency}
                 options={CURRENCIES_SELECT_OPTIONS}
                 onChange={(newValue) => {
@@ -690,7 +694,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
           <div className={style.amountRangeLabel}>
             <Label label="From">
               <NumberInput
-                isDisabled={props.disabled}
+                isDisabled={props.isDisabled}
                 min={0}
                 value={props.value?.start ?? 0}
                 htmlAttrs={{ type: 'number', style: { width: 100 } }}
@@ -709,7 +713,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
           <div className={style.amountRangeLabel}>
             <Label label="To">
               <NumberInput
-                isDisabled={props.disabled}
+                isDisabled={props.isDisabled}
                 min={0}
                 value={props.value?.end ?? 0}
                 htmlAttrs={{ type: 'number', style: { width: 100 } }}
@@ -757,18 +761,22 @@ export const VALUE_RENDERERS: { [key in RiskFactorDataType]: ValueRenderer<any> 
       <TagList>
         {value.values.map((item, index) => (
           <Tag
-            actions={[
-              {
-                key: 'delete',
-                icon: <CloseLineIcon />,
-                action: () => {
-                  const content = item.content;
-                  if (handleRemoveValue && typeof content === 'string') {
-                    handleRemoveValue(content);
-                  }
-                },
-              },
-            ]}
+            actions={
+              handleRemoveValue
+                ? [
+                    {
+                      key: 'delete',
+                      icon: <CloseLineIcon />,
+                      action: () => {
+                        const content = item.content;
+                        if (handleRemoveValue && typeof content === 'string') {
+                          handleRemoveValue(content);
+                        }
+                      },
+                    },
+                  ]
+                : []
+            }
             key={index}
           >
             <CountryDisplay key={`${item.content}`} isoCode={`${item.content}`} />
