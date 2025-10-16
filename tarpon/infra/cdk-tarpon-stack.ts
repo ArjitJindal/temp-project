@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
-import { CfnOutput, Duration, RemovalPolicy, Fn } from 'aws-cdk-lib'
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
 import {
   AttributeType,
   BillingMode,
@@ -175,6 +175,7 @@ export class CdkTarponStack extends cdk.Stack {
   config: Config
   zendutyCloudWatchTopic: Topic
   functionProps: Partial<FunctionProps>
+  sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
 
   private addTagsToResource(
     resource: IConstruct,
@@ -828,42 +829,11 @@ export class CdkTarponStack extends cdk.Stack {
     ecsTaskExecutionRole.attachInlinePolicy(policy)
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
-    const dynamoDbVpcEndpoint = this.createDynamoDbVpcEndpoint(vpc)
-    const sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
+    this.createDynamoDbVpcEndpoint(vpc)
+    this.sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
       vpc,
       vpcCidr
     )
-    const sqsInterfaceVpcEndpointDnsEntries =
-      sqsInterfaceVpcEndpoint?.vpcEndpointDnsEntries?.map((entry) =>
-        Fn.select(1, Fn.split(':', entry))
-      )
-
-    if (dynamoDbVpcEndpoint || sqsInterfaceVpcEndpoint) {
-      this.functionProps = {
-        ...this.functionProps,
-        environment: {
-          ...this.functionProps.environment,
-          ...(dynamoDbVpcEndpoint
-            ? { DYNAMODB_VPC_ENDPOINT_ID: dynamoDbVpcEndpoint.vpcEndpointId }
-            : {}),
-          ...(sqsInterfaceVpcEndpoint
-            ? {
-                SQS_VPC_ENDPOINT_ID: sqsInterfaceVpcEndpoint.vpcEndpointId,
-                ...(sqsInterfaceVpcEndpointDnsEntries?.length
-                  ? {
-                      SQS_VPC_ENDPOINT_URL: `https://${Fn.select(
-                        0,
-                        sqsInterfaceVpcEndpointDnsEntries
-                      )}`,
-                      SQS_VPC_ENDPOINT_DNS_ENTRIES:
-                        sqsInterfaceVpcEndpointDnsEntries.join(','),
-                    }
-                  : {}),
-              }
-            : {}),
-        },
-      }
-    }
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
@@ -2389,6 +2359,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
     })
 
     // Create DynamoDB Gateway VPC endpoint with explicit route table association
@@ -2430,6 +2401,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
     })
 
     const sqsEndpointSecurityGroup = new SecurityGroup(
