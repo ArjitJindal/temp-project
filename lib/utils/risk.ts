@@ -40,7 +40,7 @@ export function isManualDrsTxId(transactionId: string) {
 export const getRiskLevelFromScore = (
   riskClassificationValues: Array<RiskClassificationScore>,
   riskScore: number | null,
-  riskSettings: Array<RiskLevelAlias>
+  riskSettings?: Array<RiskLevelAlias>
 ): RiskLevel => {
   if (riskScore === null) {
     return DEFAULT_RISK_LEVEL
@@ -49,7 +49,7 @@ export const getRiskLevelFromScore = (
   let riskLevel: RiskLevel | undefined
 
   const isLevelActive = (level: RiskLevel): boolean => {
-    const setting = riskSettings.find((s) => s.level === level)
+    const setting = riskSettings?.find((s) => s.level === level)
     return setting?.isActive ?? true
   }
 

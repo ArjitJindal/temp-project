@@ -47,6 +47,7 @@ const getUserWidgetsProps = (
 ): ReportItem[] => {
   const drsRiskScore = riskScores?.drsRiskScore;
   const kycRiskScore = riskScores?.kycRiskScore;
+  const configRiskLevelAliasArray = tenantSettings?.riskLevelAlias || [];
   const userType = user.type;
   const companyDetails =
     user.type === 'BUSINESS' ? user.legalEntity.companyGeneralDetails : undefined;
@@ -55,12 +56,12 @@ const getUserWidgetsProps = (
   const craRiskLevel = drsRiskScore?.riskLevel
     ? drsRiskScore.riskLevel
     : drsRiskScore?.score
-    ? getRiskLevelFromScore(riskClassificationValues, drsRiskScore.score)
+    ? getRiskLevelFromScore(riskClassificationValues, drsRiskScore.score, configRiskLevelAliasArray)
     : drsRiskScore?.manualRiskLevel;
   const krsRiskLevel = user.krsScore?.riskLevel
     ? user.krsScore?.riskLevel
     : krsRiskScore
-    ? getRiskLevelFromScore(riskClassificationValues, krsRiskScore)
+    ? getRiskLevelFromScore(riskClassificationValues, krsRiskScore, configRiskLevelAliasArray)
     : user.krsScore?.manualRiskLevel;
 
   const krsLabel = krsRiskLevel

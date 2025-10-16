@@ -18,7 +18,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { CASES_LIST } from '@/utils/queries/keys';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   COUNTRY,
@@ -76,6 +76,7 @@ type TableParams = TransactionsTableParams;
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
+  const settings = useSettings();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const riskClassificationValues = useRiskClassificationScores();
 
@@ -113,6 +114,7 @@ export function Content(props: { userId: string }) {
 
   const columns = useMemo(() => {
     const helper = new ColumnHelper<DataItem>();
+    const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
 
     return helper.list([
       helper.simple<'transactionId'>({
@@ -151,7 +153,11 @@ export function Content(props: { userId: string }) {
               title: 'TRS level',
               id: 'arsRiskLevel',
               value: (entity) =>
-                getRiskLevelFromScore(riskClassificationValues, entity.arsScore ?? null),
+                getRiskLevelFromScore(
+                  riskClassificationValues,
+                  entity.arsScore ?? null,
+                  configRiskLevelAliasArray,
+                ),
               type: RISK_LEVEL,
               tooltip: 'Transaction Risk Score level',
             }),
@@ -273,7 +279,7 @@ export function Content(props: { userId: string }) {
         ]),
       }),
     ]);
-  }, [isRiskScoringEnabled, showDetailsView, riskClassificationValues]);
+  }, [isRiskScoringEnabled, showDetailsView, riskClassificationValues, settings?.riskLevelAlias]);
 
   const ruleOptions = useRuleOptions();
 

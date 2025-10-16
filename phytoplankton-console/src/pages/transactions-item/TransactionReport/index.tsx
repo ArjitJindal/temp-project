@@ -17,7 +17,7 @@ const getTransactionWidgetsProps = (
   const riskScore = transaction.riskScoreDetails?.trsScore ?? transaction.arsScore?.arsScore ?? 0;
   const riskLevel =
     transaction.riskScoreDetails?.trsRiskLevel ??
-    getRiskLevelFromScore(riskClassificationValues, riskScore) ??
+    getRiskLevelFromScore(riskClassificationValues, riskScore, tenantSettings.riskLevelAlias) ??
     DEFAULT_RISK_LEVEL;
 
   const hitDirections =

@@ -59,6 +59,8 @@ export const UserEvents = (props: Props) => {
   const { userId } = props;
   const helper = new ColumnHelper<InternalUserEvent>();
   const api = useApi();
+  const settings = useSettings();
+  const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -114,6 +116,7 @@ export const UserEvents = (props: Props) => {
         return getRiskLevelFromScore(
           riskClassificationValues,
           entity.riskScoreDetails?.kycRiskScore || null,
+          configRiskLevelAliasArray,
         );
       },
     }),
@@ -129,6 +132,7 @@ export const UserEvents = (props: Props) => {
         return getRiskLevelFromScore(
           riskClassificationValues,
           entity.riskScoreDetails?.craRiskScore || null,
+          configRiskLevelAliasArray,
         );
       },
     }),
