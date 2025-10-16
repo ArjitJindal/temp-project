@@ -3,7 +3,7 @@ import { RuleActionSettings } from './components/RuleActionSettings';
 import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
 import { WebhookConfigurations } from './components/WebhookConfigurations';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
-import { RiskLevelSettings } from './components/RiskLevelSettings';
+import { RiskLevelSettings } from './components/RiskLevelSettings/RiskLevelSettings';
 import { RiskLevelApprovalSettings } from './components/RiskLevelApprovalSettings';
 import { RiskFactorApprovalSettings } from './components/RiskFactorApprovalSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';

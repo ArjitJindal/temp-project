@@ -107,7 +107,11 @@ function ValuesTable(props: Props) {
       defaultRiskLevel:
         defaultRiskValue.type === 'RISK_LEVEL'
           ? defaultRiskValue.value
-          : getRiskLevelFromScore(riskClassificationValues, defaultRiskValue.value),
+          : getRiskLevelFromScore(
+              riskClassificationValues,
+              defaultRiskValue.value,
+              configSetting?.riskLevelAlias ?? [],
+            ),
       defaultRiskScore:
         defaultRiskValue.type === 'RISK_SCORE'
           ? defaultRiskValue.value
@@ -115,7 +119,15 @@ function ValuesTable(props: Props) {
       defaultWeight: weight,
     };
     onSave(updatedEntity);
-  }, [entity, values, defaultRiskValue, weight, onSave, riskClassificationValues]);
+  }, [
+    entity,
+    values,
+    defaultRiskValue,
+    weight,
+    onSave,
+    riskClassificationValues,
+    configSetting?.riskLevelAlias,
+  ]);
 
   const handleCancel = useCallback(() => {
     setValues(entity.riskLevelAssignmentValues || []);
@@ -290,7 +302,11 @@ function ValuesTable(props: Props) {
             value={
               defaultRiskValue.type === 'RISK_LEVEL'
                 ? defaultRiskValue.value
-                : getRiskLevelFromScore(riskClassificationValues, defaultRiskValue.value)
+                : getRiskLevelFromScore(
+                    riskClassificationValues,
+                    defaultRiskValue.value,
+                    configSetting?.riskLevelAlias ?? [],
+                  )
             }
             onChange={(newRiskLevel) => {
               if (newRiskLevel != null) {
@@ -399,7 +415,11 @@ function ValuesTable(props: Props) {
                 value={
                   riskValue.type === 'RISK_LEVEL'
                     ? riskValue.value
-                    : getRiskLevelFromScore(riskClassificationValues, riskValue.value)
+                    : getRiskLevelFromScore(
+                        riskClassificationValues,
+                        riskValue.value,
+                        configSetting?.riskLevelAlias ?? [],
+                      )
                 }
                 onChange={handleChangeRiskLevel}
               />
@@ -446,7 +466,11 @@ function ValuesTable(props: Props) {
                   newRiskValue?.type === 'RISK_LEVEL'
                     ? newRiskValue.value
                     : newRiskValue?.value != null
-                    ? getRiskLevelFromScore(riskClassificationValues, newRiskValue.value)
+                    ? getRiskLevelFromScore(
+                        riskClassificationValues,
+                        newRiskValue.value,
+                        configSetting?.riskLevelAlias ?? [],
+                      )
                     : undefined
                 }
                 onChange={(newRiskLevel) => {

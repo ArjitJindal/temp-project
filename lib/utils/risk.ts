@@ -8,6 +8,12 @@ type RiskClassificationScore = {
   upperBoundRiskScore: number
 }
 
+type RiskLevelAlias = {
+  level: RiskLevel
+  alias: string
+  isActive: boolean
+}
+
 export const DEFAULT_RISK_LEVEL: RiskLevel = 'VERY_HIGH'
 
 export const DEFAULT_RISK_VALUE = {
@@ -33,22 +39,51 @@ export function isManualDrsTxId(transactionId: string) {
 
 export const getRiskLevelFromScore = (
   riskClassificationValues: Array<RiskClassificationScore>,
-  riskScore: number | null
+  riskScore: number | null,
+  riskSettings: Array<RiskLevelAlias>
 ): RiskLevel => {
   if (riskScore === null) {
     return DEFAULT_RISK_LEVEL
   }
 
   let riskLevel: RiskLevel | undefined
-  riskClassificationValues.map((value) => {
-    if (
+
+  const isLevelActive = (level: RiskLevel): boolean => {
+    const setting = riskSettings.find((s) => s.level === level)
+    return setting?.isActive ?? true
+  }
+
+  const activeLevels = riskClassificationValues.filter((v) =>
+    isLevelActive(v.riskLevel)
+  )
+
+  for (let i = 0; i < riskClassificationValues.length; i++) {
+    const value = riskClassificationValues[i]
+    const active = isLevelActive(value.riskLevel)
+
+    const isLastActive =
+      activeLevels[activeLevels.length - 1]?.riskLevel === value.riskLevel
+
+    const withinRange =
       riskScore >= value.lowerBoundRiskScore &&
-      riskScore < value.upperBoundRiskScore
-    ) {
+      (isLastActive
+        ? riskScore <= value.upperBoundRiskScore
+        : riskScore < value.upperBoundRiskScore)
+
+    if (active && withinRange) {
       riskLevel = value.riskLevel
+      break
     }
-  })
-  return riskLevel ? riskLevel : DEFAULT_RISK_LEVEL
+  }
+
+  if (!riskLevel) {
+    const lastActive = activeLevels[activeLevels.length - 1]
+    if (lastActive && riskScore >= lastActive.upperBoundRiskScore) {
+      riskLevel = lastActive.riskLevel
+    }
+  }
+
+  return riskLevel ?? DEFAULT_RISK_LEVEL
 }
 
 export const getRiskScoreFromLevel = (

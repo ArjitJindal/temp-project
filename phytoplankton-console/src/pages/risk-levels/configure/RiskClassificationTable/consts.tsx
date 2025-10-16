@@ -50,7 +50,9 @@ export const columns: TableColumn<TableItem>[] = helper.list([
       const sStart = Number.isFinite(start) ? start : 0;
       const sEnd = Number.isFinite(end) ? end : 100;
 
-      return `≥ ${sStart} to < ${sEnd}`;
+      const isLastActive = idxInActive === activeGlobals.length - 1;
+
+      return isLastActive ? `≥ ${sStart} to ≤ ${sEnd}` : `≥ ${sStart} to < ${sEnd}`;
     },
   }),
   helper.display({
@@ -103,12 +105,12 @@ export const columns: TableColumn<TableItem>[] = helper.list([
               const updated = [...prev];
 
               const m = activeGlobals.length;
-              const gPrev = startGlobalIndex; // may be null
+              const gPrev = startGlobalIndex;
               const gCurr = endGlobalIndex;
               const gPrevPrev = idxInActive >= 2 ? activeGlobals[idxInActive - 2] : null;
               const gNext = idxInActive + 1 < m ? activeGlobals[idxInActive + 1] : null;
 
-              // Determine lower/upper clamps from neighboring active boundaries
+              // Determine limits for this slider
               const lowerLimitForStart = gPrevPrev !== null ? updated[gPrevPrev] ?? 0 : 0;
               const upperLimitForStart =
                 (rawEnd === undefined ? (gCurr !== null ? updated[gCurr] : 100) : rawEnd) - 1;
@@ -121,29 +123,25 @@ export const columns: TableColumn<TableItem>[] = helper.list([
 
               const lowerLimitForEnd = clampedStart + 1;
               const upperLimitForEnd = gNext !== null ? updated[gNext] ?? 100 : 100;
-
               const clampedEnd = clamp(Math.round(rawEnd), lowerLimitForEnd, upperLimitForEnd);
 
-              // Write to global indices:
-              // - set previous active's global index (if exists) to clampedStart
-              // - set this active's global index to clampedEnd
               if (gPrev !== null) {
                 updated[gPrev] = clampedStart;
               }
               updated[gCurr] = clampedEnd;
 
-              // Enforce monotonic non-decreasing across all active globals
-              for (let i = 1; i < m; i++) {
-                const leftIdx = activeGlobals[i - 1];
-                const rightIdx = activeGlobals[i];
-                if (updated[rightIdx] < updated[leftIdx]) {
-                  updated[rightIdx] = updated[leftIdx];
+              for (let i = 0; i < updated.length; i++) {
+                if (!activeGlobals.includes(i)) {
+                  const prevActive = [...activeGlobals].filter((a) => a < i).pop();
+                  updated[i] = prevActive !== undefined ? updated[prevActive] : 0;
                 }
               }
 
-              // Ensure bounds 0..100
-              updated[0] = clamp(updated[0] ?? 0, 0, 100);
-              updated[updated.length - 1] = clamp(updated[updated.length - 1] ?? 100, 0, 100);
+              updated[0] = 0;
+              for (let i = 1; i < updated.length; i++) {
+                updated[i] = Math.max(updated[i], updated[i - 1]);
+              }
+              updated[updated.length - 1] = 100;
 
               return updated as State;
             });
