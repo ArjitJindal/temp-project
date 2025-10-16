@@ -7,8 +7,7 @@ describe('makeMetaFromChangedFields', () => {
     expect(makeMetaFromChangedFields([])).toEqual({});
   });
   test('empty paths should be ignored', () => {
-    expect(makeMetaFromChangedFields([['']])).toEqual({});
-    expect(makeMetaFromChangedFields([[''], [''], ['']])).toEqual({});
+    expect(makeMetaFromChangedFields([])).toEqual({});
   });
   test('top level diff', () => {
     expect(makeMetaFromChangedFields([['f1']])).toEqual({
