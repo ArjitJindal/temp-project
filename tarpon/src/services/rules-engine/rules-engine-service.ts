@@ -534,6 +534,10 @@ export class RulesEngineService {
 
     saveTransactionSegment?.close()
 
+    const aggregationSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Send Transaction Aggregation Tasks'
+    )
     try {
       await Promise.all([
         sendTransactionAggregationTasks(
@@ -562,6 +566,7 @@ export class RulesEngineService {
             },
           ]),
       ])
+      aggregationSegment?.close()
     } catch (e) {
       logger.error(e)
     }
