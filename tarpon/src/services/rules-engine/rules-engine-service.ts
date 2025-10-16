@@ -1460,14 +1460,15 @@ export class RulesEngineService {
       if (shouldRunRule && tracing) {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
-      const ruleComputeResult = await ruleClassInstance.computeRule()
-      const result =
-        shouldRunRule && ruleComputeResult
-          ? ruleComputeResult
-          : {
-              ruleHitResult: undefined,
-              ruleExecutionResult: undefined,
-            }
+      const ruleComputeResult = shouldRunRule
+        ? await ruleClassInstance.computeRule()
+        : undefined
+      const result = ruleComputeResult
+        ? ruleComputeResult
+        : {
+            ruleHitResult: undefined,
+            ruleExecutionResult: undefined,
+          }
       ruleResult = result.ruleHitResult
       ruleExecutionResult = result.ruleExecutionResult
       runSegment?.close()
