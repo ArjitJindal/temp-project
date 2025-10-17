@@ -250,6 +250,9 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
 
     if (now.minute() % 20 < 10) {
       try {
+        logger.info(
+          'Triggering GoCardless backfill batch job at 20 minute interval'
+        )
         await triggerGoCardlessBackfillBatchJob(mongoDbClient)
       } catch (e) {
         logger.error(
@@ -451,9 +454,14 @@ type TempGoCardlessBackfillDocument = {
 }
 
 export async function triggerGoCardlessBackfillBatchJob(mongoDb: MongoClient) {
-  if (envIsNot('prod:eu-2')) {
+  if (envIsNot('prod') && process.env.REGION !== 'eu-2') {
+    logger.info(
+      'Skipping GoCardless backfill batch job in non-production environment'
+    )
     return
   }
+
+  logger.info('Triggered GoCardless backfill batch job')
 
   const MAX_FILES_PER_RUN = 2
   const slack = await getSecret<{ token: string }>('slackCreds')
