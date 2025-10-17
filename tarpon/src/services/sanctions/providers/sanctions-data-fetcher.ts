@@ -550,10 +550,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     // If Dow Jones is enabled, exclude additional fields
-    if (
-      providers.includes(SanctionsDataProviders.DOW_JONES) ||
-      providers.includes(SanctionsDataProviders.OPEN_SANCTIONS)
-    ) {
+    if (providers.includes(SanctionsDataProviders.DOW_JONES)) {
       projection.mediaSources = 0
       projection.sanctionsSources = 0
       projection.pepSources = 0
