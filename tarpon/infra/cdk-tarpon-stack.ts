@@ -2193,7 +2193,8 @@ export class CdkTarponStack extends cdk.Stack {
       // Construct centralized S3 bucket name (always in eu-central-1)
       const centralizedParquetBucketName = getNameForGlobalResource(
         StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
-        config
+        config,
+        'eu-central-1'
       )
 
       s3ExporterFunc.addToRolePolicy(

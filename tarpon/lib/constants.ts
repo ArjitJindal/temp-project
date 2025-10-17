@@ -34,10 +34,15 @@ export function getResourceNameForHammerhead(
   return `hammerhead${dash ? '-' : ''}${resourceName}${suffix}`
 }
 
-export function getNameForGlobalResource(name: string, config: Config) {
-  return `${name + (config.stage === 'local' ? '-dev' : `-${config.stage}`)}-${
-    config.env.region ? config.env.region : 'eu-central-1'
-  }`
+export function getNameForGlobalResource(
+  name: string,
+  config: Config,
+  region?: string
+) {
+  const regionToUse = region ? region : config.env.region || 'eu-central-1'
+  return `${
+    name + (config.stage === 'local' ? '-dev' : `-${config.stage}`)
+  }-${regionToUse}`
 }
 
 export const DEMO_DATA_PREFIX = 'users-attachment-demo'
