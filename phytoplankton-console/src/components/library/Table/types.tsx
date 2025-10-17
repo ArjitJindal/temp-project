@@ -21,17 +21,29 @@ export interface EditContext<T> {
 export interface ItemContext<Item> {
   item: Item;
   edit: EditContext<Item>;
-  external: unknown;
+  rowApi?: PublicRowEditApi;
 }
 
 export interface CellContext<Value, Item> {
   value: Value;
   item: Item;
-  external?: unknown;
+  rowApi?: PublicRowEditApi;
 }
 
 export interface CellEditContext<Value, Item> extends CellContext<Value, Item> {
   edit: EditContext<Value | undefined>;
+}
+
+export interface PublicRowEditApi {
+  isEditing: boolean;
+  isCreateRow?: boolean;
+  isBusy?: boolean;
+  getDraft: () => unknown;
+  setDraft: (newValue: unknown | ((prev: unknown) => unknown)) => void;
+  startEdit: () => void;
+  cancelEdit: () => void;
+  save: () => void | Promise<void>;
+  delete?: () => void | Promise<void>;
 }
 
 /*
@@ -123,7 +135,7 @@ export interface FullColumnDataType<Value, Item = unknown> {
 }
 
 // Simplified variant of a data type which doesn't use parent item
-export type ColumnDataType<Value, Item = unknown> = FullColumnDataType<Value, Item | null>;
+export type ColumnDataType<Value, Item = unknown> = FullColumnDataType<Value, Item>;
 
 export type FieldAccessor<Item> = DeepKeys<Item>;
 export type ValueOf<Accessor> = Accessor extends FieldAccessor<infer Item>
