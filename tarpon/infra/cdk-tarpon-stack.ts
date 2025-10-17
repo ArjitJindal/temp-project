@@ -127,7 +127,11 @@ import {
   ContainerImage,
   FargatePlatformVersion,
 } from 'aws-cdk-lib/aws-ecs'
-import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import {
+  DeployStage,
+  FlagrightRegion,
+  getSecretsManagerReplicaRegions,
+} from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
@@ -2127,6 +2131,14 @@ export class CdkTarponStack extends cdk.Stack {
           }
         )
 
+        // Create secrets with automatic replication to regions based on stage
+        // dev: no replicas (only eu-central-1)
+        // sandbox: replicate to ap-southeast-1
+        // prod: replicate to all regions except eu-central-1 (primary)
+        const replicaRegions = getSecretsManagerReplicaRegions(
+          config.stage as DeployStage
+        )
+
         new secretsmanager.Secret(this, 'PostHogAccessKeySecret', {
           secretName: StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME,
           secretStringValue: cdk.SecretValue.unsafePlainText(
@@ -2134,6 +2146,9 @@ export class CdkTarponStack extends cdk.Stack {
           ),
           description:
             'PostHog S3 Access Key ID for CloudWatch logs data warehouse',
+          ...(replicaRegions.length > 0
+            ? { replicaRegions: replicaRegions.map((region) => ({ region })) }
+            : {}),
         })
 
         new secretsmanager.Secret(this, 'PostHogSecretKeySecret', {
@@ -2143,6 +2158,9 @@ export class CdkTarponStack extends cdk.Stack {
           ),
           description:
             'PostHog S3 Secret Access Key for CloudWatch logs data warehouse',
+          ...(replicaRegions.length > 0
+            ? { replicaRegions: replicaRegions.map((region) => ({ region })) }
+            : {}),
         })
 
         new CfnOutput(this, 'CloudWatch Logs Parquet S3 Bucket', {
@@ -2157,6 +2175,12 @@ export class CdkTarponStack extends cdk.Stack {
         })
       }
 
+      // Reference the replicated secrets in the current region
+      // NOTE: Deploy to eu-central-1 FIRST to create primary secrets with replicas
+      // Then deploy to other regions which will reference the replica secrets
+      const accessKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
+      const secretKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
+
       const { alias: s3ExporterAlias, func: s3ExporterFunc } = createFunction(
         this,
         lambdaExecutionRole,
@@ -2166,21 +2190,19 @@ export class CdkTarponStack extends cdk.Stack {
         heavyLibLayer
       )
 
-      // Construct centralized S3 bucket name and secret ARNs (always in eu-central-1)
+      // Construct centralized S3 bucket name (always in eu-central-1)
       const centralizedParquetBucketName = getNameForGlobalResource(
         StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
         config
       )
-      const centralizedAccessKeySecretArn = `arn:aws:secretsmanager:eu-central-1:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
-      const centralizedSecretKeySecretArn = `arn:aws:secretsmanager:eu-central-1:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
 
       s3ExporterFunc.addToRolePolicy(
         new PolicyStatement({
           effect: Effect.ALLOW,
           actions: ['secretsmanager:GetSecretValue'],
           resources: [
-            `${centralizedAccessKeySecretArn}*`, // Add * for versioning
-            `${centralizedSecretKeySecretArn}*`,
+            `${accessKeySecretArn}*`, // Add * for versioning
+            `${secretKeySecretArn}*`,
           ],
         })
       )
@@ -2200,18 +2222,18 @@ export class CdkTarponStack extends cdk.Stack {
         })
       )
 
-      // Add environment variables (pointing to eu-central-1 resources)
+      // Add environment variables
       s3ExporterFunc.addEnvironment(
         'PARQUET_S3_BUCKET_NAME',
-        centralizedParquetBucketName
+        centralizedParquetBucketName // S3 bucket in eu-central-1
       )
       s3ExporterFunc.addEnvironment(
         'POSTHOG_ACCESS_KEY_SECRET_ARN',
-        centralizedAccessKeySecretArn
+        accessKeySecretArn // Secret in the current region
       )
       s3ExporterFunc.addEnvironment(
         'POSTHOG_SECRET_KEY_SECRET_ARN',
-        centralizedSecretKeySecretArn
+        secretKeySecretArn // Secret in the current region
       )
 
       // Cron job to trigger the Lambda every 10 minutes
