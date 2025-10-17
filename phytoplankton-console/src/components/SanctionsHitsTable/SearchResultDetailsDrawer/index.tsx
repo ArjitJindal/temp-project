@@ -13,6 +13,7 @@ import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
+import { chunkedJoin } from '@/utils/chunkedJoin';
 import {
   CountryCode,
   GenericSanctionsSearchType,
@@ -483,11 +484,11 @@ export function CAEntityDetails(props: {
             </Form.Layout.Label>
           )}
           {pepRanks.length > 0 && (
-            <Form.Layout.Label title={'PEP Level'}>{pepRanks.join(', ')}</Form.Layout.Label>
+            <Form.Layout.Label title={'PEP Level'}>{chunkedJoin(pepRanks, ', ')}</Form.Layout.Label>
           )}
           {occupationCodes.length > 0 && (
             <Form.Layout.Label title={'Occupation categories'}>
-              {occupationCodes.join(', ')}
+              {chunkedJoin(occupationCodes, ', ')}
             </Form.Layout.Label>
           )}
           {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep != null && (
@@ -517,7 +518,12 @@ export function CAEntityDetails(props: {
                 ).map(([name, docs], i) => (
                   <div key={i}>
                     <span>{`${name}: `}</span>
-                    <span>{docs.map((doc) => doc.id).join(', ')}</span>
+                    <span>
+                      {chunkedJoin(
+                        docs.map((doc) => doc.id),
+                        ', ',
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>

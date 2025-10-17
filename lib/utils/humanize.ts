@@ -177,6 +177,9 @@ export function capitalizeNameFromEmail(email: string): string {
 
 // startCase from loadsh removes accents and symbols
 export function capitalizeWordsInternal(text: string): string {
+  if (!text) {
+    return ''
+  }
   return text
     .split(' ')
     .map((term) => {

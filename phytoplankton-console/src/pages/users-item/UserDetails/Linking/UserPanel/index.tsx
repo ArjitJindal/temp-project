@@ -42,7 +42,7 @@ export const UserPanel = (props: UserPanelProps) => {
             <Button
               onClick={() =>
                 window.open(
-                  makeUrl(`/users/list/${user.type.toLowerCase()}/${user.userId}`),
+                  makeUrl(`/users/list/${user.type?.toLowerCase() || 'all'}/${user.userId}`),
                   '_blank',
                 )
               }
