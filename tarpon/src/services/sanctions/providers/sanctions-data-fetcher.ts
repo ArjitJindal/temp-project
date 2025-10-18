@@ -64,6 +64,7 @@ import { ModelTier } from '@/utils/llms/base-service'
 import { generateHashFromString } from '@/utils/object'
 import { getContext } from '@/core/utils/context-storage'
 import { formatAddress } from '@/utils/address-formatter'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const OPENSEARCH_NON_PROJECTED_FIELDS = [
   'rawResponse',
@@ -75,14 +76,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly searchRepository: SanctionsProviderSearchRepository
 
   protected readonly tenantId: string
-  protected readonly mongoDb: MongoClient
+  protected readonly mongoDb: MongoClient | undefined
   private readonly dynamoDb: DynamoDBDocumentClient
   private readonly opensearchClient?: Client
   constructor(
     provider: SanctionsDataProviderName,
     tenantId: string,
     connections: {
-      mongoDb: MongoClient
+      mongoDb?: MongoClient
       dynamoDb: DynamoDBDocumentClient
       opensearchClient?: Client
     }
@@ -93,6 +94,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
     this.opensearchClient = connections.opensearchClient
+  }
+
+  protected async getMongoDbClient() {
+    return this.mongoDb ?? (await getMongoDbClient())
   }
 
   abstract fullLoad(
@@ -532,12 +537,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     mediaSources?: 0
     sanctionsSources?: 0
     pepSources?: 0
+    otherSources?: 0
   } {
     const projection: {
       rawResponse: 0
       mediaSources?: 0
       sanctionsSources?: 0
       pepSources?: 0
+      otherSources?: 0
     } = {
       rawResponse: 0,
     }
@@ -547,6 +554,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       projection.mediaSources = 0
       projection.sanctionsSources = 0
       projection.pepSources = 0
+      projection.otherSources = 0
     }
 
     return projection
@@ -598,7 +606,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async searchWithMatchingNames(
     props: SanctionsSearchPropsWithRequest
   ): Promise<SanctionsProviderResponse> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const {
       request: requestOriginal,
       limit = 200,
@@ -1430,7 +1438,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
   async getSanctionSourceDetailsInternal(request: SanctionsSearchRequest) {
     const screeningProfileService = new ScreeningProfileService(this.tenantId, {
-      mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
     return getSanctionSourceDetails(request, screeningProfileService)
@@ -1903,7 +1910,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       (request.fuzzinessRange?.upperBound === 100 ||
         (request.fuzziness ?? 0) * 100 === 100)
     ) {
-      result = await this.searchWithoutMatchingNames(request, this.mongoDb.db())
+      result = await this.searchWithoutMatchingNames(
+        request,
+        (await this.getMongoDbClient()).db()
+      )
     } else {
       result = await this.searchWithMatchingNames({
         request,

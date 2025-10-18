@@ -719,7 +719,7 @@ export class CaseService extends CaseAlertsCommonService {
         ...(updateChecklistStatus &&
         hasFeature('QA') &&
         updates.caseStatus === 'CLOSED'
-          ? [this.caseRepository.markAllChecklistItemsAsDone(caseIds)]
+          ? [this.caseRepository.markUnMarkedChecklistItemsDone(caseIds)]
           : []),
         ...(this.hasFeatureSla
           ? cases.map(async (c) =>

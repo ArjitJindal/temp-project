@@ -4,12 +4,13 @@ import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
 import {
   CrmName,
+  GenericSanctionsSearchType,
   ListSubtype,
   ListSubtypeInternal,
   ListType,
   ReasonType,
   RiskLevel,
-  SanctionsSourceType,
+  SanctionsDataProviderName,
   VersionHistoryType,
   WorkflowRef,
 } from '@/apis';
@@ -531,11 +532,11 @@ export const DEFAULT_MANUAL_SCREENING_FILTERS = (): QueryKey => [
   'default-manual-screening-filters',
 ];
 
-export const SANCTIONS_SOURCES = (type: SanctionsSourceType, searchQuery?: string): QueryKey => [
-  'sanctions-sources',
-  type,
-  searchQuery,
-];
+export const SANCTIONS_SOURCES = (
+  provider: SanctionsDataProviderName | undefined,
+  type: GenericSanctionsSearchType,
+  searchQuery?: string,
+): QueryKey => ['sanctions-sources', provider, type, searchQuery];
 
 export const PERMISSIONS_STATEMENTS = (): QueryKey => ['permissions-statements'];
 

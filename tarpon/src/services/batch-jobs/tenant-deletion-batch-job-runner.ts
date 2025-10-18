@@ -124,6 +124,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'MIGRATION_POST_DEPLOYMENT'
   | 'SECONDARY_QUEUE_TENANTS'
   | 'CLICKHOUSE_SYNC_CHECKSUM'
+  | 'CLOUDWATCH_LOGS_SYNC_STATE'
 
   // TEMPORARY
   | 'ADDRESS_TRANSACTION'
@@ -415,7 +416,23 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
       USERS_PROPOSAL: {
         method: this.deleteUsersProposal.bind(this),
-        order: 26,
+        order: 28,
+      },
+      SANCTIONS_SEARCH_BATCH_JOB_STATUS: {
+        method: this.deleteSanctionsSearchBatchJobStatus.bind(this),
+        order: 29,
+      },
+      SANCTIONS_WHITELIST_BATCH_JOB_STATUS: {
+        method: this.deleteSanctionsWhitelistBatchJobStatus.bind(this),
+        order: 30,
+      },
+      SANCTION_SEARCHES: {
+        method: this.deleteSanctionSearches.bind(this),
+        order: 31,
+      },
+      SANCTIONS_WHITELIST_ENTITIES: {
+        method: this.deleteSanctionsWhitelistEntities.bind(this),
+        order: 32,
       },
       DRS_LOCK_ITEM: {
         method: this.deleteDrsLockItems.bind(this),
@@ -1197,6 +1214,60 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Webhook'
+    )
+  }
+
+  private async deleteSanctionsSearchBatchJobStatus(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const key = DynamoDbKeys.SANCTIONS_SEARCH_BATCH_JOB_STATUS(tenantId)
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      key.PartitionKeyID,
+      tableName,
+      'Sanctions Search Batch Job Status'
+    )
+  }
+
+  private async deleteSanctionsWhitelistBatchJobStatus(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const key = DynamoDbKeys.SANCTIONS_WHITELIST_BATCH_JOB_STATUS(tenantId)
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      key.PartitionKeyID,
+      tableName,
+      'Sanctions Whitelist Batch Job Status'
+    )
+  }
+
+  private async deleteSanctionSearches(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SANCTION_SEARCHES(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Sanction Searches'
+    )
+  }
+
+  private async deleteSanctionsWhitelistEntities(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SANCTIONS_WHITELIST_ENTITIES(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Sanctions Whitelist Entities'
     )
   }
 }

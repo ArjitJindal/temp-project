@@ -39,4 +39,6 @@ export enum ClickhouseTableNames {
   CasesInvestigationTimesHourly = 'cases_investigation_times_hourly',
   SanctionsScreeningDetailsById = 'sanctions_screening_details_by_id',
   SanctionsScreeningDetailsV2ById = 'sanctions_screening_details_v2_by_id',
+  CloudwatchLogs = 'cloudwatch_logs',
+  CloudwatchLogsCorrelated = 'cloudwatch_logs_correlated',
 }

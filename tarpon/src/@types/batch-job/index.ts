@@ -220,6 +220,16 @@ export type DeltaSanctionsDataFetchBatchJob = {
   }
 }
 
+export type BackfillSearchHitsBatchJob = {
+  type: 'BACKFILL_SEARCH_HITS'
+  tenantId: string
+}
+
+export type BackfillWhitelistEntitiesBatchJob = {
+  type: 'BACKFILL_WHITELIST_ENTITIES'
+  tenantId: string
+}
+
 export type ScreeningProfileDataFetchBatchJob = {
   type: 'SCREENING_PROFILE_DATA_FETCH'
   tenantId: string
@@ -632,6 +642,8 @@ export type BatchJob =
   | CraLockUntimerBatchJob
   | ScreeningAlertsExportBatchJob
   | UpdateTransactionStatusBatchJob
+  | BackfillSearchHitsBatchJob
+  | BackfillWhitelistEntitiesBatchJob
 
 /* CRA Lock Timer */
 export type CraLockUntimerBatchJob = {

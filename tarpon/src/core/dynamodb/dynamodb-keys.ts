@@ -138,6 +138,22 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#screening-profile`,
     SortKeyID: screeningProfileId,
   }),
+  SANCTIONS_SEARCH_BATCH_JOB_STATUS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#sanctions-search-batch-job-status`,
+    SortKeyID: tenantId,
+  }),
+  SANCTIONS_WHITELIST_BATCH_JOB_STATUS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#sanctions-whitelist-batch-job-status`,
+    SortKeyID: tenantId,
+  }),
+  SANCTION_SEARCHES: (tenantId: string, id?: string) => ({
+    PartitionKeyID: `${tenantId}#sanction-searches`,
+    SortKeyID: id,
+  }),
+  SANCTIONS_WHITELIST_ENTITIES: (tenantId: string, id?: string) => ({
+    PartitionKeyID: `${tenantId}#sanctions-whitelist-entities`,
+    SortKeyID: id,
+  }),
   CRM_RECORD: (tenantId: string, modelName: CRMModelType, id: string) => ({
     PartitionKeyID: `${tenantId}${CRM_RECORD_KEY_IDENTIFIER}#${CRM_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
     SortKeyID: id,
@@ -791,6 +807,10 @@ export const DynamoDbKeys = {
   CLICKHOUSE_SYNC_CHECKSUM: (tenantId: string) => ({
     PartitionKeyID: `${CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER}`,
     SortKeyID: tenantId,
+  }),
+  CLOUDWATCH_LOGS_SYNC_STATE: () => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#cloudwatch_logs_sync`,
+    SortKeyID: 'last_synced_timestamp',
   }),
 }
 

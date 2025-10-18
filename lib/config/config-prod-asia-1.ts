@@ -101,6 +101,13 @@ export const config: Config = {
     DYNAMO_DB_TRIGGER_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
+    CLOUDWATCH_LOGS_INGESTION: {
+      ENABLED: true,
+      FIREHOSE_BUFFER_INTERVAL_SECONDS: 300,
+      FIREHOSE_BUFFER_SIZE_MB: 5,
+      LOG_GROUP_NAME: '/aws/lambda/tarponPublicApiTransactionFunction',
+      FILTER_PATTERN: '[REPORT, RequestId, ..., duration=Duration*, ...]',
+    },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
     ATLAS_SEARCH_ENABLED: true,

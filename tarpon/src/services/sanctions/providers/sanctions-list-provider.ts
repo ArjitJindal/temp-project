@@ -26,7 +26,7 @@ export class SanctionsListProvider implements SanctionsDataProvider {
   static async build(
     tenantId: string,
     listId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     const listRepository = new ListRepository(tenantId, connections.dynamoDb)
     return new SanctionsListProvider('list', listId, tenantId, listRepository)

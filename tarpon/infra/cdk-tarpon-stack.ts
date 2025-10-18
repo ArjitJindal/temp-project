@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
-import { CfnOutput, Duration, RemovalPolicy, Fn } from 'aws-cdk-lib'
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
 import {
   AttributeType,
   BillingMode,
@@ -12,9 +12,11 @@ import {
   Bucket,
   BucketEncryption,
   HttpMethods,
+  EventType,
 } from 'aws-cdk-lib/aws-s3'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import { CfnMalwareProtectionPlan } from 'aws-cdk-lib/aws-guardduty'
+import * as iam from 'aws-cdk-lib/aws-iam'
 import {
   ArnPrincipal,
   CompositePrincipal,
@@ -26,6 +28,9 @@ import {
   Role,
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam'
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'
+import * as events from 'aws-cdk-lib/aws-events'
+import * as targets from 'aws-cdk-lib/aws-events-targets'
 import {
   ApiKey,
   DomainName,
@@ -52,8 +57,11 @@ import { IStream, Stream, StreamMode } from 'aws-cdk-lib/aws-kinesis'
 import {
   KinesisEventSource,
   KinesisEventSourceProps,
+  S3EventSource,
   SqsEventSource,
 } from 'aws-cdk-lib/aws-lambda-event-sources'
+import { CfnDeliveryStream } from 'aws-cdk-lib/aws-kinesisfirehose'
+import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
   EbsDeviceVolumeType,
@@ -85,7 +93,6 @@ import {
   DEFAULT_LAMBDA_TIMEOUT_SECONDS,
 } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
   getQaApiKeyId,
@@ -120,7 +127,11 @@ import {
   ContainerImage,
   FargatePlatformVersion,
 } from 'aws-cdk-lib/aws-ecs'
-import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import {
+  DeployStage,
+  FlagrightRegion,
+  getSecretsManagerReplicaRegions,
+} from '@flagright/lib/constants/deploy'
 import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
@@ -168,6 +179,7 @@ export class CdkTarponStack extends cdk.Stack {
   config: Config
   zendutyCloudWatchTopic: Topic
   functionProps: Partial<FunctionProps>
+  sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
 
   private addTagsToResource(
     resource: IConstruct,
@@ -422,6 +434,15 @@ export class CdkTarponStack extends cdk.Stack {
       true,
       true
     )
+    // Currently only creating for eu-2
+    if (config.region === 'eu-2' && envIs('prod')) {
+      this.createDynamodbTable(
+        DYNAMODB_TABLE_NAMES.AGGREGATION,
+        undefined,
+        true,
+        true
+      )
+    }
 
     const siloTables: ITable[] = []
 
@@ -812,42 +833,11 @@ export class CdkTarponStack extends cdk.Stack {
     ecsTaskExecutionRole.attachInlinePolicy(policy)
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
-    const dynamoDbVpcEndpoint = this.createDynamoDbVpcEndpoint(vpc)
-    const sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
+    this.createDynamoDbVpcEndpoint(vpc)
+    this.sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
       vpc,
       vpcCidr
     )
-    const sqsInterfaceVpcEndpointDnsEntries =
-      sqsInterfaceVpcEndpoint?.vpcEndpointDnsEntries?.map((entry) =>
-        Fn.select(1, Fn.split(':', entry))
-      )
-
-    if (dynamoDbVpcEndpoint || sqsInterfaceVpcEndpoint) {
-      this.functionProps = {
-        ...this.functionProps,
-        environment: {
-          ...this.functionProps.environment,
-          ...(dynamoDbVpcEndpoint
-            ? { DYNAMODB_VPC_ENDPOINT_ID: dynamoDbVpcEndpoint.vpcEndpointId }
-            : {}),
-          ...(sqsInterfaceVpcEndpoint
-            ? {
-                SQS_VPC_ENDPOINT_ID: sqsInterfaceVpcEndpoint.vpcEndpointId,
-                ...(sqsInterfaceVpcEndpointDnsEntries?.length
-                  ? {
-                      SQS_VPC_ENDPOINT_URL: `https://${Fn.select(
-                        0,
-                        sqsInterfaceVpcEndpointDnsEntries
-                      )}`,
-                      SQS_VPC_ENDPOINT_DNS_ENTRIES:
-                        sqsInterfaceVpcEndpointDnsEntries.join(','),
-                    }
-                  : {}),
-              }
-            : {}),
-        },
-      }
-    }
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
@@ -1915,13 +1905,359 @@ export class CdkTarponStack extends cdk.Stack {
       })
     )
 
-    if (this.config.clickhouse?.awsPrivateLinkEndpointName && vpc) {
-      const privateSubnets = vpc.selectSubnets({
-        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+    /**
+     * CloudWatch Logs Ingestion Pipeline (CloudWatch Logs → Firehose → S3 → Lambda → ClickHouse)
+     */
+    if (
+      !isDevUserStack &&
+      this.config.resource.CLOUDWATCH_LOGS_INGESTION?.ENABLED
+    ) {
+      const logsS3BucketName = getNameForGlobalResource(
+        StackConstants.CLOUDWATCH_LOGS_S3_BUCKET_PREFIX,
+        config
+      )
+      const logsS3Bucket = new Bucket(this, logsS3BucketName, {
+        bucketName: logsS3BucketName,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        encryption: BucketEncryption.S3_MANAGED,
+        lifecycleRules: [
+          {
+            expiration: Duration.days(7),
+          },
+        ],
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        autoDeleteObjects: config.stage === 'dev',
       })
 
-      const selectedSubnets = privateSubnets.subnets.slice(0, 3)
+      const firehoseRole = new Role(this, 'FirehoseLogsRole', {
+        assumedBy: new ServicePrincipal('firehose.amazonaws.com'),
+      })
 
+      logsS3Bucket.grantWrite(firehoseRole)
+
+      firehoseRole.addToPolicy(
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
+            'logs:PutLogEvents',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+          ],
+          resources: ['*'],
+        })
+      )
+
+      const firehoseStream = new CfnDeliveryStream(
+        this,
+        'CloudwatchLogsFirehoseStream',
+        {
+          deliveryStreamName:
+            StackConstants.CLOUDWATCH_LOGS_FIREHOSE_STREAM_NAME,
+          deliveryStreamType: 'DirectPut',
+          s3DestinationConfiguration: {
+            bucketArn: logsS3Bucket.bucketArn,
+            roleArn: firehoseRole.roleArn,
+            prefix: 'logs/',
+            errorOutputPrefix: 'errors/',
+            bufferingHints: {
+              intervalInSeconds:
+                this.config.resource.CLOUDWATCH_LOGS_INGESTION
+                  ?.FIREHOSE_BUFFER_INTERVAL_SECONDS || 300, // 5 minutes
+              sizeInMBs:
+                this.config.resource.CLOUDWATCH_LOGS_INGESTION
+                  ?.FIREHOSE_BUFFER_SIZE_MB || 5, // 5 MB
+            },
+            compressionFormat: 'GZIP',
+          },
+        }
+      )
+
+      const logsToFirehoseRole = new Role(this, 'LogsToFirehoseRole', {
+        assumedBy: new ServicePrincipal('logs.amazonaws.com', {
+          conditions: {
+            StringEquals: {
+              'aws:SourceAccount': config.env.account,
+            },
+            ArnLike: {
+              'aws:SourceArn': `arn:aws:logs:${config.env.region}:${config.env.account}:*`,
+            },
+          },
+        }),
+        inlinePolicies: {
+          FirehosePublishPolicy: new PolicyDocument({
+            statements: [
+              new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: ['firehose:PutRecord', 'firehose:PutRecordBatch'],
+                resources: [firehoseStream.attrArn],
+              }),
+            ],
+          }),
+        },
+      })
+
+      const logGroupName =
+        //  TODO: uncomment this and remove the qa group name before merge
+        // this.config.resource.CLOUDWATCH_LOGS_INGESTION?.LOG_GROUP_NAME ||
+        '/aws/lambda/tarponPublicApiTransactionFunction'
+
+      // Get or reference the log group
+      const transactionLogGroup = LogGroup.fromLogGroupName(
+        this,
+        'TransactionLogGroup',
+        logGroupName
+      )
+
+      // Create subscription filter to send logs to Firehose
+      const subscriptionFilter = new cdk.aws_logs.CfnSubscriptionFilter(
+        this,
+        'TransactionLogsSubscription',
+        {
+          logGroupName: transactionLogGroup.logGroupName,
+          destinationArn: firehoseStream.attrArn,
+          roleArn: logsToFirehoseRole.roleArn,
+          // filterPattern: '[r=REPORT, ...]', // Only send REPORT lines
+          filterPattern: '', // Empty pattern = send all logs
+        }
+      )
+
+      subscriptionFilter.node.addDependency(logsToFirehoseRole)
+      subscriptionFilter.node.addDependency(firehoseStream)
+
+      // Create Lambda for log ingestion from S3
+      const { alias: logsIngestionAlias, func: logsIngestionFunc } =
+        createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME,
+          },
+          heavyLibLayer
+        )
+
+      // Grant Lambda permission to read from S3
+      logsS3Bucket.grantRead(logsIngestionAlias)
+
+      // Add S3 event source to trigger Lambda when new files arrive
+      logsIngestionAlias.addEventSource(
+        new S3EventSource(logsS3Bucket, {
+          events: [EventType.OBJECT_CREATED],
+          filters: [{ prefix: 'logs/' }],
+        })
+      )
+
+      new CfnOutput(this, 'CloudWatch Logs S3 Bucket', {
+        value: logsS3Bucket.bucketName,
+      })
+      new CfnOutput(this, 'Firehose Delivery Stream', {
+        value: firehoseStream.deliveryStreamName || '',
+      })
+      new CfnOutput(this, 'CloudWatch Logs Ingestion Lambda', {
+        value: logsIngestionFunc.functionName,
+      })
+
+      /**
+       * CloudWatch Logs S3 Parquet Export Pipeline (ClickHouse → S3 Parquet → PostHog)
+       * S3 bucket, IAM user, Secrets: Only in eu-central-1 (PostHog suggests eu-central-1)
+       * Export Lambda: In every region (queries local ClickHouse, writes to eu-central-1 S3)
+       */
+
+      // Create S3 bucket and IAM resources only in eu-central-1
+      if (config.env.region === 'eu-central-1') {
+        const parquetBucketName = getNameForGlobalResource(
+          StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
+          config
+        )
+
+        const parquetS3Bucket = new Bucket(
+          this,
+          'CloudWatchLogsParquetBucket',
+          {
+            bucketName: parquetBucketName,
+            encryption: BucketEncryption.S3_MANAGED,
+            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+            removalPolicy:
+              config.stage === 'dev'
+                ? cdk.RemovalPolicy.DESTROY
+                : cdk.RemovalPolicy.RETAIN,
+            autoDeleteObjects: config.stage === 'dev',
+            versioned: false,
+            lifecycleRules: [
+              {
+                // Log retention: 2 weeks for dev/sandbox, 3 months for prod
+                expiration: cdk.Duration.days(
+                  config.stage === 'dev' || config.stage === 'sandbox' ? 14 : 90
+                ),
+              },
+            ],
+          }
+        )
+
+        const posthogS3Policy = new Policy(this, 'PostHogS3ReadPolicy', {
+          policyName: `${config.stage}-posthog-s3-read-policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: [
+                's3:PutObject',
+                's3:GetObject',
+                's3:PutObjectAcl',
+                's3:ListBucket',
+                's3:ListBucketMultipartUploads',
+                's3:AbortMultipartUpload',
+                's3:GetBucketLocation',
+              ],
+              resources: [
+                parquetS3Bucket.bucketArn,
+                `${parquetS3Bucket.bucketArn}/*`,
+              ],
+            }),
+          ],
+        })
+
+        // PostHog S3 user
+        const posthogUser = new iam.User(this, 'PostHogS3User', {
+          userName: `posthog-s3-reader`,
+        })
+
+        posthogUser.attachInlinePolicy(posthogS3Policy)
+
+        const posthogAccessKey = new iam.CfnAccessKey(
+          this,
+          'PostHogAccessKey',
+          {
+            userName: posthogUser.userName,
+          }
+        )
+
+        // Create secrets with automatic replication to regions based on stage
+        // dev: no replicas (only eu-central-1)
+        // sandbox: replicate to ap-southeast-1
+        // prod: replicate to all regions except eu-central-1 (primary)
+        const replicaRegions = getSecretsManagerReplicaRegions(
+          config.stage as DeployStage
+        )
+
+        new secretsmanager.Secret(this, 'PostHogAccessKeySecret', {
+          secretName: StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME,
+          secretStringValue: cdk.SecretValue.unsafePlainText(
+            posthogAccessKey.ref
+          ),
+          description:
+            'PostHog S3 Access Key ID for CloudWatch logs data warehouse',
+          ...(replicaRegions.length > 0
+            ? { replicaRegions: replicaRegions.map((region) => ({ region })) }
+            : {}),
+        })
+
+        new secretsmanager.Secret(this, 'PostHogSecretKeySecret', {
+          secretName: StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME,
+          secretStringValue: cdk.SecretValue.unsafePlainText(
+            posthogAccessKey.attrSecretAccessKey
+          ),
+          description:
+            'PostHog S3 Secret Access Key for CloudWatch logs data warehouse',
+          ...(replicaRegions.length > 0
+            ? { replicaRegions: replicaRegions.map((region) => ({ region })) }
+            : {}),
+        })
+
+        new CfnOutput(this, 'CloudWatch Logs Parquet S3 Bucket', {
+          value: parquetS3Bucket.bucketName,
+        })
+        new CfnOutput(this, 'PostHog S3 User', {
+          value: posthogUser.userName,
+        })
+        new CfnOutput(this, 'PostHog S3 URL Pattern', {
+          value: `https://${parquetS3Bucket.bucketName}.s3.eu-central-1.amazonaws.com/*`,
+          description: 'Use this URL pattern when creating PostHog data source',
+        })
+      }
+
+      // Reference the replicated secrets in the current region
+      // NOTE: Deploy to eu-central-1 FIRST to create primary secrets with replicas
+      // Then deploy to other regions which will reference the replica secrets
+      const accessKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
+      const secretKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
+
+      const { alias: s3ExporterAlias, func: s3ExporterFunc } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME,
+        },
+        heavyLibLayer
+      )
+
+      // Construct centralized S3 bucket name (always in eu-central-1)
+      const centralizedParquetBucketName = getNameForGlobalResource(
+        StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
+        config,
+        'eu-central-1'
+      )
+
+      s3ExporterFunc.addToRolePolicy(
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['secretsmanager:GetSecretValue'],
+          resources: [
+            `${accessKeySecretArn}*`, // Add * for versioning
+            `${secretKeySecretArn}*`,
+          ],
+        })
+      )
+
+      // Local DynamoDB read/write for sync state tracking
+      s3ExporterFunc.addToRolePolicy(
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: [
+            'dynamodb:GetItem',
+            'dynamodb:PutItem',
+            'dynamodb:UpdateItem',
+          ],
+          resources: [
+            `arn:aws:dynamodb:${config.env.region}:${config.env.account}:table/${DYNAMODB_TABLE_NAMES.TARPON}`,
+          ],
+        })
+      )
+
+      // Add environment variables
+      s3ExporterFunc.addEnvironment(
+        'PARQUET_S3_BUCKET_NAME',
+        centralizedParquetBucketName // S3 bucket in eu-central-1
+      )
+      s3ExporterFunc.addEnvironment(
+        'POSTHOG_ACCESS_KEY_SECRET_ARN',
+        accessKeySecretArn // Secret in the current region
+      )
+      s3ExporterFunc.addEnvironment(
+        'POSTHOG_SECRET_KEY_SECRET_ARN',
+        secretKeySecretArn // Secret in the current region
+      )
+
+      // Cron job to trigger the Lambda every 10 minutes
+      const cloudwatchLogsExportRule = new events.Rule(
+        this,
+        'CloudWatchLogsS3ExportRule',
+        {
+          schedule: Schedule.cron({ minute: '*/10' }),
+          description:
+            'Trigger Lambda to export CloudWatch logs from ClickHouse to S3 Parquet every 10 minutes',
+        }
+      )
+
+      cloudwatchLogsExportRule.addTarget(
+        new targets.LambdaFunction(s3ExporterAlias)
+      )
+
+      new CfnOutput(this, 'CloudWatch Logs S3 Exporter Lambda', {
+        value: s3ExporterFunc.functionName,
+      })
+    }
+
+    if (this.config.clickhouse?.awsPrivateLinkEndpointName && vpc) {
       const vpcEndpoint = new InterfaceVpcEndpoint(
         this,
         'clickhouse-endpoint',
@@ -1931,7 +2267,7 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.clickhouse.awsPrivateLinkEndpointName
           ),
           privateDnsEnabled: true,
-          subnets: { subnets: selectedSubnets },
+
           securityGroups: [clickhouseSecurityGroup, securityGroup],
         }
       )
@@ -1958,7 +2294,6 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    // Create performance dashboards
     if (!isQaEnv()) {
       createTransactionFunctionPerformanceDashboard(this, this.config.region)
     }
@@ -2047,6 +2382,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
     })
 
     // Create DynamoDB Gateway VPC endpoint with explicit route table association
@@ -2088,8 +2424,8 @@ export class CdkTarponStack extends cdk.Stack {
 
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
     })
-    const selectedSubnets = privateSubnets.subnets.slice(0, 3)
 
     const sqsEndpointSecurityGroup = new SecurityGroup(
       this,
@@ -2113,7 +2449,7 @@ export class CdkTarponStack extends cdk.Stack {
       getResourceNameForTarpon('SqsInterfaceEndpoint'),
       {
         service: InterfaceVpcEndpointAwsService.SQS,
-        subnets: { subnets: selectedSubnets },
+        subnets: { subnets: privateSubnets.subnets },
         securityGroups: [sqsEndpointSecurityGroup],
         privateDnsEnabled: false,
       }
@@ -2154,17 +2490,21 @@ export class CdkTarponStack extends cdk.Stack {
     const vpc = new Vpc(this, 'vpc', {
       vpcName: StackConstants.VPC_NAME,
       ipAddresses,
-      maxAzs: 3,
       subnetConfiguration: [
         {
           subnetType: SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
-          name: 'PrivateSubnet',
+          name: 'PrivateSubnet1',
+        },
+        {
+          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+          cidrMask: 24,
+          name: 'PrivateSubnet2',
         },
         {
           subnetType: SubnetType.PUBLIC,
           cidrMask: 28,
-          name: 'PublicSubnet',
+          name: 'PublicSubnet1',
         },
       ],
     })

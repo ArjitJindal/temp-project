@@ -1280,42 +1280,24 @@ export class AlertsRepository {
     return commentToSave
   }
 
-  public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
+  public async markUnMarkedChecklistItemsDone(
+    alertIds: string[]
+  ): Promise<void> {
     if (await this.isTenantMigratedToDynamo) {
-      await this.dynamoAlertRepository.markAllChecklistItemsAsDone(alertIds)
+      await this.dynamoAlertRepository.markUnMarkedChecklistItemsDone(alertIds)
     }
+
     await this.updateManyAlerts(
       {
-        'alerts.alertId': {
-          $in: alertIds,
-        },
-        'alerts.ruleChecklist': {
-          $ne: null,
-        },
+        'alerts.alertId': { $in: alertIds },
       },
       {
-        $set: {
-          'alerts.$[alert].ruleChecklist.$[item].done': 'DONE',
-        },
+        $set: { 'alerts.$.ruleChecklist.$[item].done': 'DONE' },
       },
       {
         arrayFilters: [
           {
-            'alert.alertId': {
-              $in: alertIds,
-            },
-            'alert.ruleChecklist': {
-              $exists: true,
-              $ne: null,
-            },
-          },
-          {
-            'item.done': {
-              $ne: 'DONE',
-            },
-            item: {
-              $exists: true,
-            },
+            'item.done': 'NOT_STARTED',
           },
         ],
       }

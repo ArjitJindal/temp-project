@@ -67,6 +67,7 @@ export class ClickHouseChecksumService {
       tenantId
     )
     const updatedChecksums = this.checksumUtil.updateTableChecksums(
+      tenantId,
       storedChecksums,
       tableChecksums
     )
@@ -119,11 +120,6 @@ export class ClickHouseChecksumService {
     )
 
     return analysis
-  }
-
-  // Utility methods that don't require database access
-  generateClickHouseTableChecksums(): ClickHouseTableChecksum[] {
-    return this.checksumUtil.generateClickHouseTableChecksums()
   }
 
   generateSingleTableChecksum(

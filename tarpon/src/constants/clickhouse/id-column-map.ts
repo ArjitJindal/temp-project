@@ -41,4 +41,6 @@ export const CLICKHOUSE_ID_COLUMN_MAP: Record<ClickhouseTableNames, string> = {
   cases_investigation_times_hourly: 'id',
   sanctions_screening_details_by_id: 'id',
   sanctions_screening_details_v2_by_id: 'id',
+  cloudwatch_logs: 'requestId',
+  cloudwatch_logs_correlated: 'requestId',
 }

@@ -878,6 +878,7 @@ export class UserService {
   private async sendUserAndKycWebhook(
     oldUser: User | Business,
     newUser: User | Business,
+    comment: string,
     isManual: boolean
   ): Promise<void> {
     const webhookTasks: ThinWebhookDeliveryTask<
@@ -887,9 +888,12 @@ export class UserService {
       newUser.userStateDetails &&
       diff(oldUser.userStateDetails ?? {}, newUser.userStateDetails ?? {})
     ) {
-      const webhookUserStateDetails: WebhookUserStateDetails = {
+      const webhookUserStateDetails: WebhookUserStateDetails & {
+        description?: string
+      } = {
         ...newUser.userStateDetails,
         userId: newUser.userId,
+        description: comment,
       }
 
       webhookTasks.push({
@@ -904,9 +908,12 @@ export class UserService {
       newUser.kycStatusDetails &&
       diff(oldUser.kycStatusDetails ?? {}, newUser.kycStatusDetails ?? {})
     ) {
-      const webhookKYCStatusDetails: WebhookKYCStatusDetails = {
+      const webhookKYCStatusDetails: WebhookKYCStatusDetails & {
+        description?: string
+      } = {
         ...newUser.kycStatusDetails,
         userId: newUser.userId,
+        description: comment,
       }
 
       webhookTasks.push({
@@ -1912,7 +1919,12 @@ export class UserService {
         files: updateRequest.comment?.files ?? [],
         updatedAt: Date.now(),
       }),
-      this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
+      this.sendUserAndKycWebhook(
+        user,
+        updatedUser,
+        updateRequest.comment?.body ?? '',
+        options?.bySystem ?? false
+      ),
     ])
     return savedComment
   }

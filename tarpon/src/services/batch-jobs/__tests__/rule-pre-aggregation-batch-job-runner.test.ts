@@ -404,8 +404,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
     const messages = sortBy(
       map(
         groupBy(
-          bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-            JSON.parse(v.MessageBody as string)
+          bulkSendMessagesMock.mock.calls.flatMap((call) =>
+            call[2].map((v) => JSON.parse(v.MessageBody as string))
           ),
           (val) => generateChecksum(val.paymentDetails)
         ),
@@ -537,8 +537,8 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
     const messages = sortBy(
       map(
         groupBy(
-          bulkSendMessagesMock.mock.calls[0][2].map((v) =>
-            JSON.parse(v.MessageBody as string)
+          bulkSendMessagesMock.mock.calls.flatMap((call) =>
+            call[2].map((v) => JSON.parse(v.MessageBody as string))
           ),
           (val) => generateChecksum(val.paymentDetails)
         ),
@@ -769,6 +769,6 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
     await jobRunnerHandler(testJob)
     expect(bulkSendMessagesMock.mock.calls[0][2]).toHaveLength(1)
     await jobRunnerHandler(testJob)
-    expect(bulkSendMessagesMock.mock.calls[1][2]).toHaveLength(0)
+    expect(bulkSendMessagesMock.mock.calls[1]).toBeUndefined()
   })
 })

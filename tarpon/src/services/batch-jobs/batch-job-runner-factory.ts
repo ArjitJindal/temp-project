@@ -45,6 +45,8 @@ import { EddReviewBatchJobRunner } from './edd-review-batch-job-runner'
 import { CraLockUntimerBatchJobRunner } from './cra-lock-untimer-batch-job-runner'
 import { ScreeningAlertsExportBatchJobRunner } from './screening-alerts-export-batch-job-runner'
 import { UpdateTransactionStatusBatchJobRunner } from './update-transaction-status'
+import { BackfillSearchHitsBatchJobRunner } from './backfill-search-hits-batch-job-runner'
+import { BackfillWhitelistEntitiesBatchJobRunner } from './backfill-whitelist-entities-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -140,6 +142,10 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     FIX_LOCKS_FOR_KRS: (jobId) => new FixLocksForKrsBatchJobRunner(jobId),
     DELTA_SANCTIONS_DATA_FETCH: (jobId) =>
       new DeltaSanctionsDataFetchBatchJobRunner(jobId),
+    BACKFILL_SEARCH_HITS: (jobId) =>
+      new BackfillSearchHitsBatchJobRunner(jobId),
+    BACKFILL_WHITELIST_ENTITIES: (jobId) =>
+      new BackfillWhitelistEntitiesBatchJobRunner(jobId),
     BACKFILL_ACTION_PROCESSING: (jobId) =>
       new BackfillAsyncRuleRunsBatchJobRunner(jobId),
     CASES_DYNAMO_BACKFILL: (jobId) =>

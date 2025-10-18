@@ -29,10 +29,7 @@ import {
   getMongoDbIndexDefinitions,
   getSearchIndexName,
 } from './mongodb-definitions'
-import {
-  DELTA_SANCTIONS_COLLECTION,
-  SANCTIONS_COLLECTION,
-} from './mongo-table-names'
+
 import {
   sendBulkMessagesToMongoConsumer,
   sendMessageToMongoConsumer,
@@ -41,6 +38,7 @@ import { envIs, envIsNot } from './env'
 import { isDemoTenant } from './tenant-id'
 import { getSQSClient } from './sns-sqs-client'
 import { generateChecksum } from './object'
+import { USERS_COLLECTION } from './mongo-table-names'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import { getPageSizeNumber } from '@/utils/pagination'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/constants/pagination'
@@ -338,17 +336,24 @@ export const createGlobalMongoDBCollections = async (
   await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
 }
 
-const isNotSanctionsCollection = (
+const isSanctionsOrUsersCollection = (
   collectionName?: string,
   tenantId?: string
 ) => {
-  if (!tenantId || !collectionName) {
+  if (!collectionName) {
     return false
   }
-  return (
-    collectionName !== SANCTIONS_COLLECTION(tenantId) &&
-    collectionName !== DELTA_SANCTIONS_COLLECTION(tenantId)
-  )
+  if (tenantId && USERS_COLLECTION(tenantId) === collectionName) {
+    return true
+  }
+
+  if (
+    collectionName.startsWith('sanctions-') ||
+    collectionName.startsWith('delta-sanctions-')
+  ) {
+    return true
+  }
+  return false
 }
 
 const shouldBuildSearchIndex = (tenantId?: string, collectionName?: string) => {
@@ -356,7 +361,8 @@ const shouldBuildSearchIndex = (tenantId?: string, collectionName?: string) => {
     envIsNot('test') &&
     (!tenantId || !isDemoTenant(tenantId)) &&
     (hasFeature('DOW_JONES') ||
-      isNotSanctionsCollection(collectionName, tenantId))
+      hasFeature('LSEG') ||
+      isSanctionsOrUsersCollection(collectionName, tenantId))
   )
 }
 

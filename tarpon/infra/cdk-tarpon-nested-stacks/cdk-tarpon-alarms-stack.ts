@@ -68,7 +68,11 @@ const dynamoTables = (config: Config) => {
       ])
     )
   }
-  return tables
+  return tables.filter(
+    (val) =>
+      val !== DYNAMODB_TABLE_NAMES.AGGREGATION ||
+      (config.region === 'eu-2' && config.stage === 'prod') // Currently only for eu-2
+  )
 }
 
 const KINESIS_STREAM_NAMES = [

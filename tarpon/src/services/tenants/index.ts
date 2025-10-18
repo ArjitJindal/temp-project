@@ -318,7 +318,6 @@ export class TenantService {
       dynamoDb,
     })
     const screeningProfileService = new ScreeningProfileService(tenantId, {
-      mongoDb,
       dynamoDb,
     })
     await screeningProfileService.createDefaultScreeningProfile(
@@ -810,7 +809,6 @@ export class TenantService {
       const screeningProfileService = new ScreeningProfileService(
         this.tenantId,
         {
-          mongoDb: this.mongoDb,
           dynamoDb: this.dynamoDb,
         }
       )

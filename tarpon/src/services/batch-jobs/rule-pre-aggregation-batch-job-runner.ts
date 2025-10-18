@@ -6,6 +6,8 @@ import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
+import chunk from 'lodash/chunk'
+import pMap from 'p-map'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -64,10 +66,13 @@ function getAggregationTaskMessage(
 ): FifoSqsMessage {
   const payload = task.payload as V8LogicAggregationRebuildTask
   const deduplicationId = generateChecksum(
-    `${task.userKeyId}${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
+    `${task.payload?.['jobId'] ? `${task.payload['jobId']}:` : ''}${
+      task.userKeyId
+    }${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
       payload.aggregationVariable
     )}`
   )
+
   return {
     MessageBody: JSON.stringify(payload),
     MessageGroupId: generateChecksum(
@@ -104,30 +109,34 @@ type PreAggregationTask =
   | { type: 'PAYMENT_DETAILS_EMAIL'; ids: PaymentDetailsEmailUserInfo[] }
   | { type: 'PAYMENT_DETAILS_NAME'; ids: PaymentDetailsNameUserInfo[] }
 
+const MAX_CONCURRENCY = 20
+
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
-  private setDeduplicationIds = new Set<string>()
   private dynamoDb!: DynamoDBDocumentClient
   private mongoDb!: MongoClient
   private mongoTransactionsRepo!: MongoDbTransactionRepository
+  private clickhouseTransactionsRepo?: ClickhouseTransactionsRepository
   private totalMessagesLength: number = 0
-  private clickhouseTransactionsRepo!: ClickhouseTransactionsRepository
-  private tenantId!: string
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
+    this.totalMessagesLength = 0
     const tenantId = job.tenantId
-    this.tenantId = tenantId
+    if (isClickhouseEnabled()) {
+      const clickhouseClient = await getClickhouseClient(tenantId, {
+        requestTimeout: 0,
+      })
+      this.clickhouseTransactionsRepo = new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        this.dynamoDb,
+        tenantId
+      )
+    }
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const clickhouseClient = await getClickhouseClient(this.tenantId)
-    this.clickhouseTransactionsRepo = new ClickhouseTransactionsRepository(
-      clickhouseClient,
-      this.dynamoDb,
-      this.tenantId
-    )
     this.mongoTransactionsRepo = new MongoDbTransactionRepository(
       tenantId,
       this.mongoDb,
@@ -186,7 +195,6 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     )
     for (const aggregationVariable of dedupedAggregationVariables) {
       // flush the set for each aggregation var to avoid bloating memory used
-      this.setDeduplicationIds = new Set<string>()
       const preAggBuilder = this.preAggregateVariable(
         aggregationVariable,
         currentTimestamp
@@ -327,7 +335,6 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
         await this.internalBulkSendMesasges(this.dynamoDb, messages)
       }
-      this.totalMessagesLength += this.setDeduplicationIds.size
     }
 
     if (this.totalMessagesLength === 0 && entity?.type === 'RULE') {
@@ -351,29 +358,14 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     dynamoDb: DynamoDBDocumentClient,
     messages: FifoSqsMessage[]
   ) {
-    const messagesToSend: FifoSqsMessage[] = []
-
-    messagesToSend.push(
-      ...messages.filter(
-        (m) => !this.setDeduplicationIds.has(m.MessageDeduplicationId)
-      )
-    )
-
-    messages.forEach((m) =>
-      this.setDeduplicationIds.add(m.MessageDeduplicationId)
-    )
-
-    const dedupMessages = uniqBy(
-      messagesToSend,
-      (m) => m.MessageDeduplicationId
-    )
-
-    await this.jobRepository.incrementMetadataTasksCount(
-      this.jobId,
-      dedupMessages.length
-    )
+    const dedupMessages = uniqBy(messages, (m) => m.MessageDeduplicationId)
 
     if (envIs('local')) {
+      this.totalMessagesLength += dedupMessages.length
+      await this.jobRepository.incrementMetadataTasksCount(
+        this.jobId,
+        dedupMessages.length
+      )
       const { handleV8PreAggregationTasks } = await import(
         '@/core/local-handlers/v8-pre-aggregation'
       )
@@ -401,19 +393,33 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           messagesNotSentYet.push(message)
         }
       }
-      await bulkSendMessages(
-        sqs,
-        process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
-        messagesNotSentYet,
-        async (batch) => {
-          // Mark the messages as sent to avoid being sent again on retries
-          await transientRepository.batchAddKey(
-            batch.map((message) => ({
-              partitionKeyId: this.jobId,
-              sortKeyId: (message.MessageDeduplicationId ?? '') as string,
-            }))
+      this.totalMessagesLength += messagesNotSentYet.length
+
+      await this.jobRepository.incrementMetadataTasksCount(
+        this.jobId,
+        messagesNotSentYet.length
+      )
+      const chunkSize = 10
+      const messagesToSendChunks = chunk(messagesNotSentYet, chunkSize)
+      await pMap(
+        messagesToSendChunks,
+        async (chunk) => {
+          await bulkSendMessages(
+            sqs,
+            process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
+            chunk,
+            async (batch) => {
+              // Mark the messages as sent to avoid being sent again on retries
+              await transientRepository.batchAddKey(
+                batch.map((message) => ({
+                  partitionKeyId: this.jobId,
+                  sortKeyId: (message.MessageDeduplicationId ?? '') as string,
+                }))
+              )
+            }
           )
-        }
+        },
+        { concurrency: MAX_CONCURRENCY }
       )
     }
   }
@@ -478,7 +484,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       timeWindow.end
     )
     if (aggregationVariable.type === 'USER_TRANSACTIONS') {
-      const transactionsRepo = isClickhouseEnabled()
+      const transactionsRepo = this.clickhouseTransactionsRepo
         ? this.clickhouseTransactionsRepo
         : this.mongoTransactionsRepo
       const originGenerator =
@@ -509,7 +515,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
-      const transactionsRepo = isClickhouseEnabled()
+      const transactionsRepo = this.clickhouseTransactionsRepo
         ? this.clickhouseTransactionsRepo
         : this.mongoTransactionsRepo
       const originGenerator =

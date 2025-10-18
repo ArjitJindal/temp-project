@@ -4,6 +4,7 @@ export const ENGINEERING_ON_CALL_GROUP_ID = 'S063WMNMSCD'
 export const INCIDENTS_BUGS_CHANNEL_ID = 'C03AE1RQM88'
 export const CUSTOMER_ON_CALL_GROUP_ID = 'S08J78SSR2Q'
 export const QA_GROUP_ID = 'C063WQ5Q50K'
+export const TEST_SLACK_CHANNEL_ID = 'C08GFV27YR0'
 
 export const splitSlackMessage = (
   message: string,
