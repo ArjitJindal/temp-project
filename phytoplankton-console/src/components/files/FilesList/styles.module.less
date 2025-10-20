@@ -92,8 +92,12 @@
 }
 
 .downloadLink {
-  &.isDisabled {
+  &:not(.isClickable) {
+    cursor: default;
     pointer-events: none;
+  }
+
+  &.isDisabled {
     opacity: 0.5;
   }
 }

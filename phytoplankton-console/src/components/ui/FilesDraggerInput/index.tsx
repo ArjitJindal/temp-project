@@ -140,6 +140,7 @@ export default function FilesDraggerInput(props: Props) {
       </Upload.Dragger>
 
       <FilesList
+        disableMissingLinks={false}
         files={state ?? []}
         onDeleteFile={
           onChange

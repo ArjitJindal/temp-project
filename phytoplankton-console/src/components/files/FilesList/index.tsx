@@ -15,10 +15,11 @@ interface Props {
   files: FileInfo[];
   onDeleteFile?: (s3Key: string) => void;
   fixedHeight?: boolean;
+  disableMissingLinks?: boolean;
 }
 
 export default function FilesList(props: Props) {
-  const { files, onDeleteFile, fixedHeight = false } = props;
+  const { files, onDeleteFile, fixedHeight = false, disableMissingLinks = true } = props;
   const summarizationEnabled = useFeatureEnabled('FILES_AI_SUMMARY');
   const isSomeFilesWithSummary = files.some((file) => file.aiSummary != null);
   const [showSummary, setShowSummary] = useState(true);
@@ -55,7 +56,10 @@ export default function FilesList(props: Props) {
               <PaperClipOutlined style={{ color: COLORS.purpleGray.base }} />
               <a
                 href={file.downloadLink}
-                className={cn(s.downloadLink, !file.downloadLink && s.isDisabled)}
+                className={cn(s.downloadLink, {
+                  [s.isClickable]: !!file.downloadLink,
+                  [s.isDisabled]: disableMissingLinks && !file.downloadLink,
+                })}
               >
                 {file.filename}
               </a>
