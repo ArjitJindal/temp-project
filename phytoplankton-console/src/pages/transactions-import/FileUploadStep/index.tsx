@@ -8,25 +8,25 @@ import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import * as Card from '@/components/ui/Card';
 import Alert from '@/components/library/Alert';
 import { useApi } from '@/api';
-import { FileInfo, FlatFileProgressResponse } from '@/apis';
+import { FileInfo } from '@/apis';
 import { download } from '@/utils/browser';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { AsyncResource, isSuccess } from '@/utils/asyncResource';
-import { isOngoingImport } from '@/pages/transactions-import/helpers';
+import { AsyncResource } from '@/utils/asyncResource';
+import { FlatImportProgress } from '@/pages/transactions-import/helpers';
 
 const TMP_IS_COMMENT_SUPPORTED = false;
 
 type TemplateOptionValue = 'FLAGRIGHT_TEMPLATE' | 'SAVED_TEMPLATE' | 'CUSTOM_CSV';
 
 interface Props {
-  progressRes: AsyncResource<FlatFileProgressResponse>;
+  progressRes: AsyncResource<FlatImportProgress>;
   selectedFile: FileInfo | undefined;
   onFileUpload: (file: FileInfo | undefined) => void;
 }
 
 export default function FileUploadStep(props: Props) {
-  const { selectedFile, progressRes } = props;
+  const { selectedFile } = props;
   const [template, setTemplate] = useState<TemplateOptionValue | undefined>('FLAGRIGHT_TEMPLATE');
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -136,12 +136,6 @@ export default function FileUploadStep(props: Props) {
             </Label>
           )}
         </div>
-        {isSuccess(progressRes) && isOngoingImport(progressRes.value) && (
-          <Alert type={'WARNING'}>
-            There is an ongoing import job. Please wait until it is completed before uploading a new
-            file.
-          </Alert>
-        )}
       </Card.Section>
     </Card.Root>
   );

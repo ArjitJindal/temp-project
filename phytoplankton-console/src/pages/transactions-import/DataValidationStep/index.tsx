@@ -1,18 +1,17 @@
 import cn from 'clsx';
 import s from './index.module.less';
 import Label from '@/components/library/Label';
-import { AsyncResource, isSuccess } from '@/utils/asyncResource';
+import { AsyncResource } from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
 import { P } from '@/components/ui/Typography';
-import { FlatFileProgressResponse } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import ValidationStats from '@/pages/transactions-import/DataValidationStep/ValidationStats';
-import { isOngoingImport } from '@/pages/transactions-import/helpers';
+import { FlatImportProgress, isOngoingImport } from '@/pages/transactions-import/helpers';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { downloadUrl } from '@/utils/browser';
 
 type Props = {
-  progressRes: AsyncResource<FlatFileProgressResponse>;
+  progressRes: AsyncResource<FlatImportProgress>;
 };
 
 export default function DataValidationStep(props: Props) {
@@ -21,7 +20,28 @@ export default function DataValidationStep(props: Props) {
     <div className={cn(s.root)}>
       <AsyncResourceRenderer resource={progressRes}>
         {(progress) => {
-          if (progress.isValidationJobFound === false) {
+          if (progress.kind === 'UPLOADING') {
+            return (
+              <Card.Root>
+                <Card.Section>
+                  <P bold={true}>{'Data validation'}</P>
+                  <P>File pre-processing is in progress...</P>
+                </Card.Section>
+              </Card.Root>
+            );
+          }
+          if (progress.kind === 'WAITING_FOR_JOB_START') {
+            return (
+              <Card.Root>
+                <Card.Section>
+                  <P bold={true}>{'Data validation'}</P>
+                  <P>Waiting for import to start...</P>
+                </Card.Section>
+              </Card.Root>
+            );
+          }
+          const { value: apiProgress } = progress;
+          if (apiProgress.isValidationJobFound === false) {
             return (
               <Card.Root>
                 <Card.Section>
@@ -31,7 +51,7 @@ export default function DataValidationStep(props: Props) {
               </Card.Root>
             );
           }
-          if (progress.isValidationJobRunning) {
+          if (apiProgress.isValidationJobRunning) {
             return (
               <Label
                 label="Data validation"
@@ -52,8 +72,8 @@ export default function DataValidationStep(props: Props) {
                 }
               >
                 <ProgressBar
-                  value={progress.processed ?? 0}
-                  maxValue={progress.total}
+                  value={Math.min(apiProgress.processed ?? 0, 99)}
+                  maxValue={apiProgress.total}
                   showPercentage={true}
                 />
               </Label>
@@ -63,21 +83,21 @@ export default function DataValidationStep(props: Props) {
             <Label
               label="Data validation"
               description={
-                isSuccess(progressRes) && progressRes.value.erroredRecordsFileUrl
+                apiProgress.erroredRecordsFileUrl
                   ? 'Valid rows are imported; a downloadable CSV is generated for rows with errors to enable quick correction and re-upload.'
                   : 'Valid rows are imported'
               }
             >
               <ValidationStats progressRes={progressRes} />
-              {isSuccess(progressRes) && progressRes.value.erroredRecordsFileUrl != null && (
+              {apiProgress.erroredRecordsFileUrl != null && (
                 <a
                   href={'#'}
                   onClick={(e) => {
                     e.preventDefault();
-                    if (progressRes.value.erroredRecordsFileUrl) {
+                    if (apiProgress.erroredRecordsFileUrl) {
                       downloadUrl(
                         'transactions_import_errors.csv',
-                        progressRes.value.erroredRecordsFileUrl,
+                        apiProgress.erroredRecordsFileUrl,
                       );
                     }
                   }}

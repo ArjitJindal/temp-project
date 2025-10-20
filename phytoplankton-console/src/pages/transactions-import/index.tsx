@@ -13,34 +13,38 @@ import { FileInfo, FlatFileProgressResponse } from '@/apis';
 import { message } from '@/components/library/Message';
 import { useQuery } from '@/utils/queries/hooks';
 import DataValidationStep from '@/pages/transactions-import/DataValidationStep';
-import { AsyncResource, isLoading, isSuccess } from '@/utils/asyncResource';
+import { AsyncResource, getOr, isLoading, map, success } from '@/utils/asyncResource';
 import { FLAT_FILE_PROGRESS } from '@/utils/queries/keys';
-import { isOngoingImport } from '@/pages/transactions-import/helpers';
+import {
+  FlatImportProgress,
+  isOngoingImport,
+  isValidationJobFound,
+} from '@/pages/transactions-import/helpers';
 
 type StepKey = 'UPLOAD_FILE' | 'DATA_MAPPING' | 'DATA_VALIDATION';
 
 export default function TransactionsImport() {
-  const [activeStep, setActiveStep] = useState<StepKey>('UPLOAD_FILE');
+  const [selectedStep, setSelectedStep] = useState<StepKey>('UPLOAD_FILE');
   const [file, setFile] = useState<FileInfo>();
 
   const queryClient = useQueryClient();
   const api = useApi();
 
-  const progressRes = useProgressResource();
+  const _progressRes = useProgressResource();
 
   const fileUploadMutation = useMutation<unknown, unknown, { file: FileInfo }>(
     async (variables) => {
-      const dismissLoading = message.loading('Uploading file for import...');
+      // const dismissLoading = message.loading('Uploading file for import...');
       try {
+        setSelectedStep('DATA_VALIDATION');
         return await api.postTransactionFlatFileUpload({
           TransactionFlatFileUploadRequest: {
             file: variables.file,
           },
         });
       } finally {
-        dismissLoading();
+        // dismissLoading();
         setFile(undefined);
-        setActiveStep('DATA_VALIDATION');
       }
     },
     {
@@ -54,20 +58,38 @@ export default function TransactionsImport() {
     },
   );
 
+  let progressRes: AsyncResource<FlatImportProgress>;
+  if (isLoading(fileUploadMutation.dataResource)) {
+    progressRes = success({ kind: 'UPLOADING' });
+  } else {
+    if (isValidationJobFound(getOr(_progressRes, null))) {
+      progressRes = _progressRes;
+    } else {
+      progressRes = map(fileUploadMutation.dataResource, () => ({ kind: 'WAITING_FOR_JOB_START' }));
+    }
+  }
+
+  const isInProgress = isOngoingImport(getOr(progressRes, null));
+  const isJobFound = isValidationJobFound(getOr(progressRes, null));
+
+  const activeStep = isInProgress ? 'DATA_VALIDATION' : selectedStep;
+
   const steps = useMemo(() => {
     const steps: Step<StepKey>[] = [];
     steps.push({
       key: 'UPLOAD_FILE',
       title: 'Upload file',
+      isDisabled: isInProgress,
     });
     // not supported yet
     // steps.push({ key: 'DATA_MAPPING', title: 'Data mapping', isDisabled: file == null })
     steps.push({
       key: 'DATA_VALIDATION',
       title: 'Data validation',
+      isDisabled: !isInProgress && !isJobFound,
     });
     return steps;
-  }, []);
+  }, [isInProgress, isJobFound]);
 
   return (
     <PageWrapper
@@ -79,20 +101,15 @@ export default function TransactionsImport() {
               { title: 'Import CSV', to: '/transactions/import/csv' },
             ]}
           />
-          <Stepper<StepKey> active={activeStep} onChange={setActiveStep} steps={steps} />
+          <Stepper<StepKey> active={activeStep} onChange={setSelectedStep} steps={steps} />
         </div>
       }
       footer={
         <div className={s.footer}>
           <Button
-            type={'TETRIARY'}
+            type={'PRIMARY'}
             isLoading={isLoading(fileUploadMutation.dataResource)}
-            isDisabled={
-              activeStep !== 'UPLOAD_FILE' ||
-              file == null ||
-              isLoading(progressRes) ||
-              (isSuccess(progressRes) && isOngoingImport(progressRes.value))
-            }
+            isDisabled={activeStep !== 'UPLOAD_FILE' || file == null || isInProgress}
             onClick={() => {
               if (activeStep === 'UPLOAD_FILE') {
                 if (file == null) {
@@ -104,7 +121,9 @@ export default function TransactionsImport() {
           >
             Continue
           </Button>
-          <Button type={'TETRIARY'}>Cancel</Button>
+          <Button type={'TETRIARY'} isDisabled={isInProgress}>
+            Cancel
+          </Button>
         </div>
       }
       enableTopPadding={true}
@@ -126,28 +145,27 @@ export default function TransactionsImport() {
   );
 }
 
-/*
-  Helpers
- */
-function useProgressResource(): AsyncResource<FlatFileProgressResponse> {
+function useProgressResource(): AsyncResource<FlatImportProgress> {
   const api = useApi();
   const ongoingImportsProgressQueryResult = useQuery(
     FLAT_FILE_PROGRESS('TRANSACTIONS'),
-    async () => {
-      return await api.getFlatFilesProgress({
+    async (): Promise<{ kind: 'API_DATA'; value: FlatFileProgressResponse }> => {
+      const response = await api.getFlatFilesProgress({
         schema: 'TRANSACTIONS_UPLOAD',
         entityId: 'TRANSACTIONS',
       });
+      return { kind: 'API_DATA', value: response };
     },
     {
-      refetchInterval: (progress) => {
-        if (
-          progress != null &&
-          (progress.status === 'PENDING' || progress.status === 'IN_PROGRESS')
-        ) {
-          return 5000;
-        }
-        return 60000;
+      refetchInterval: (_progress) => {
+        return 5000;
+        // if (
+        //   progress != null &&
+        //   (progress.value.status === 'PENDING' || progress.value.status === 'IN_PROGRESS')
+        // ) {
+        //   return 5000;
+        // }
+        // return 60000;
       },
       backgroundFetch: true,
     },
