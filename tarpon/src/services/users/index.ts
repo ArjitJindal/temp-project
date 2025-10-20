@@ -19,6 +19,8 @@ import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
 import { UserUpdateApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
 import { UserUpdateApprovalWorkflow } from '@flagright/lib/@types/workflow'
+import has from 'lodash/has'
+import pickBy from 'lodash/pickBy'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
@@ -67,21 +69,14 @@ import { UserState } from '@/@types/openapi-internal/UserState'
 import { UserStateDetailsInternal } from '@/@types/openapi-internal/UserStateDetailsInternal'
 import { KYCStatusDetailsInternal } from '@/@types/openapi-internal/KYCStatusDetailsInternal'
 import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
-import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-audit-log-service'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { CaseRepository } from '@/services/cases/repository'
-import {
-  formatConsumerName,
-  getParsedCommentBody,
-  getUserName,
-} from '@/utils/helpers'
+import { formatConsumerName, getUserName } from '@/utils/helpers'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
 import { pickKnownEntityFields } from '@/utils/object'
@@ -172,7 +167,6 @@ export class UserService {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   awsCredentials?: LambdaCredentials
-  userAuditLogService: UserAuditLogService
   userClickhouseRepository: UserClickhouseRepository
   userManagementService: UserManagementService
   riskScoringV8Service: RiskScoringV8Service
@@ -205,7 +199,6 @@ export class UserService {
       mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
     })
-    this.userAuditLogService = new UserAuditLogService(tenantId)
     this.s3 = s3 as S3
     this.tmpBucketName = tmpBucketName as string
     this.documentBucketName = documentBucketName as string
@@ -885,6 +878,7 @@ export class UserService {
   private async sendUserAndKycWebhook(
     oldUser: User | Business,
     newUser: User | Business,
+    comment: string,
     isManual: boolean
   ): Promise<void> {
     const webhookTasks: ThinWebhookDeliveryTask<
@@ -894,9 +888,12 @@ export class UserService {
       newUser.userStateDetails &&
       diff(oldUser.userStateDetails ?? {}, newUser.userStateDetails ?? {})
     ) {
-      const webhookUserStateDetails: WebhookUserStateDetails = {
+      const webhookUserStateDetails: WebhookUserStateDetails & {
+        description?: string
+      } = {
         ...newUser.userStateDetails,
         userId: newUser.userId,
+        description: comment,
       }
 
       webhookTasks.push({
@@ -911,9 +908,12 @@ export class UserService {
       newUser.kycStatusDetails &&
       diff(oldUser.kycStatusDetails ?? {}, newUser.kycStatusDetails ?? {})
     ) {
-      const webhookKYCStatusDetails: WebhookKYCStatusDetails = {
+      const webhookKYCStatusDetails: WebhookKYCStatusDetails & {
+        description?: string
+      } = {
         ...newUser.kycStatusDetails,
         userId: newUser.userId,
+        description: comment,
       }
 
       webhookTasks.push({
@@ -1490,19 +1490,27 @@ export class UserService {
     }
   }
 
+  @auditLog('USER', 'USER_VIEW', 'VIEW')
   public async getBusinessUser(
     userId: string
-  ): Promise<InternalBusinessUser | null> {
+  ): Promise<AuditLogReturnData<InternalBusinessUser | null>> {
     const user = await this.getUser(userId, true)
 
-    return user && (await this.getAugmentedUser<InternalBusinessUser>(user))
+    return {
+      entities: [{ entityId: userId, entityAction: 'VIEW' }],
+      result: user,
+    }
   }
 
+  @auditLog('USER', 'USER_VIEW', 'VIEW')
   public async getConsumerUser(
     userId: string
-  ): Promise<InternalConsumerUser | null> {
+  ): Promise<AuditLogReturnData<InternalConsumerUser | null>> {
     const user = await this.getUser(userId, true)
-    return user && (await this.getAugmentedUser<InternalConsumerUser>(user))
+    return {
+      entities: [{ entityId: userId, entityAction: 'VIEW' }],
+      result: user && (await this.getAugmentedUser<InternalConsumerUser>(user)),
+    }
   }
 
   private async getUpdatedFiles(files: FileInfo[] | undefined) {
@@ -1528,12 +1536,15 @@ export class UserService {
     return { ...user, comments } as T
   }
 
+  @auditLog('USER', 'USER_STATUS_CHANGE', 'UPDATE')
   public async updateUser(
     user: User | Business,
     updateRequest: UserUpdateRequest,
     ruleInstances?: UserUpdateRuleInstances,
     options?: { bySystem?: boolean; caseId?: string }
-  ): Promise<Comment | null> {
+  ): Promise<
+    AuditLogReturnData<Comment | null, UserUpdateRequest, UserUpdateRequest>
+  > {
     if (!user) {
       throw new NotFound('User not found')
     }
@@ -1548,7 +1559,11 @@ export class UserService {
     )
 
     if (!shouldSaveUser) {
-      return null
+      return {
+        entities: [],
+        result: null,
+        publishAuditLog: () => false,
+      }
     }
 
     const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
@@ -1592,20 +1607,52 @@ export class UserService {
       this.handlePepStatusUpdate(user, updateRequest, ruleInstances, options),
       this.handleSanctionsStatusUpdate(user, updateRequest, options),
       this.handleAdverseMediaStatusUpdate(user, updateRequest, options),
-      this.handleAuditLog(updateRequest, oldImage, user.userId),
     ])
 
-    return comment || null
+    return {
+      entities: [
+        {
+          entityId: user.userId,
+          entityAction: 'UPDATE',
+          newImage: pickBy(updateRequest, (value) => !isEmpty(value)),
+          oldImage: pickBy(oldImage, (value) => !isEmpty(value)),
+          entitySubtype: has(updateRequest, 'userStateDetails')
+            ? 'USER_STATUS_CHANGE'
+            : 'USER_KYC_STATUS_CHANGE',
+        },
+      ],
+      result: comment,
+      publishAuditLog: () => true,
+    }
   }
 
   private createOldImage(
     user: User | Business,
     updateRequest: UserUpdateRequest
   ): UserUpdateRequest {
-    return Object.keys(updateRequest).reduce((acc, key) => {
-      acc[key] = key === 'pepStatus' ? (user as User).pepStatus : user[key]
-      return acc
-    }, {} as UserUpdateRequest)
+    const oldImage: UserUpdateRequest = {}
+    const isBusiness = isBusinessUser(user)
+
+    for (const key of Object.keys(updateRequest)) {
+      // Consumer-only fields
+      if (
+        !isBusiness &&
+        [
+          'pepStatus',
+          'sanctionsStatus',
+          'adverseMediaStatus',
+          'eoddDate',
+        ].includes(key)
+      ) {
+        oldImage[key] = user[key]
+      }
+      // All user fields
+      else if (['tags', 'userStateDetails', 'kycStatusDetails'].includes(key)) {
+        oldImage[key] = user[key]
+      }
+    }
+
+    return oldImage
   }
 
   private createUpdatedUser(
@@ -1722,22 +1769,7 @@ export class UserService {
       : null
   }
 
-  private handleAuditLog(
-    updateRequest: UserUpdateRequest,
-    oldImage: UserUpdateRequest,
-    userId: string
-  ) {
-    return updateRequest.kycStatusDetails ||
-      updateRequest.userStateDetails ||
-      updateRequest.pepStatus
-      ? this.userAuditLogService.handleAuditLogForUserUpdate(
-          updateRequest,
-          oldImage,
-          userId
-        )
-      : null
-  }
-
+  @auditLog('USER', 'TAGS_UPDATE', 'UPDATE')
   private async handlePostActionForTagsUpdate(
     user: User | Business,
     updateRequest: UserUpdateRequest,
@@ -1745,10 +1777,15 @@ export class UserService {
       bySystem?: boolean
       tagDetailsRuleInstance?: RuleInstance
     }
-  ) {
+  ): Promise<AuditLogReturnData<Comment | null, UserTag[], UserTag[]>> {
     if (!updateRequest.tags) {
-      return
+      return {
+        entities: [],
+        result: null,
+        publishAuditLog: () => false,
+      }
     }
+
     const webhookTasks: ThinWebhookDeliveryTask<UserTagsUpdate>[] = []
 
     // tags that are in updateRequest.tags but not in user.tags or whose values are updated from user.tags to updateRequest.tags
@@ -1800,22 +1837,28 @@ export class UserService {
       isPnbInternalTagUpdate &&
       newOrUpdatedTags.find((tag) => tag.key === 'RISK_LEVEL_STATUS')
     ) {
-      await Promise.all([
-        this.userAuditLogService.handleAuditLogForTagsUpdate(
-          user.userId,
-          updateRequest.tags
-        ),
-        handleInternalTagUpdateForPNB({
-          user,
-          updateRequest,
-          userRepository: this.userRepository,
-          riskScoringV8Service: this.riskScoringV8Service,
-          mongoDb: this.mongoDb,
-          dynamoDb: this.dynamoDb,
-        }),
-      ])
-      return
+      await handleInternalTagUpdateForPNB({
+        user,
+        updateRequest,
+        userRepository: this.userRepository,
+        riskScoringV8Service: this.riskScoringV8Service,
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      })
+
+      return {
+        entities: [
+          {
+            entityId: user.userId,
+            entityAction: 'UPDATE',
+            newImage: updateRequest.tags,
+            oldImage: user.tags,
+          },
+        ],
+        result: null,
+      }
     }
+
     const [savedComment] = await Promise.all([
       this.userRepository.saveUserComment(user.userId, {
         body: commentBody,
@@ -1825,13 +1868,25 @@ export class UserService {
           : (getContext()?.user?.id as string),
         updatedAt: Date.now(),
       }),
-      this.userAuditLogService.handleAuditLogForTagsUpdate(
-        user.userId,
-        updateRequest.tags
-      ),
       sendWebhookTasks(this.userRepository.tenantId, webhookTasks),
     ])
-    return savedComment || null
+
+    const updatedFiles = await this.getUpdatedFiles(savedComment.files)
+    return {
+      entities: [
+        {
+          entityId: user.userId,
+          entityAction: 'UPDATE',
+          newImage: updateRequest.tags,
+          oldImage: user.tags,
+        },
+      ],
+      result: {
+        ...savedComment,
+        files: updatedFiles,
+      },
+      publishAuditLog: () => true,
+    }
   }
 
   private async handlePostActionForKycAndUserUpdate(
@@ -1864,7 +1919,12 @@ export class UserService {
         files: updateRequest.comment?.files ?? [],
         updatedAt: Date.now(),
       }),
-      this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
+      this.sendUserAndKycWebhook(
+        user,
+        updatedUser,
+        updateRequest.comment?.body ?? '',
+        options?.bySystem ?? false
+      ),
     ])
     return savedComment
   }
@@ -1997,7 +2057,12 @@ export class UserService {
   }): Promise<string[]> {
     return await this.userRepository.getUniques(params)
   }
-  public async saveUserComment(userId: string, comment: Comment) {
+
+  @auditLog('USER', 'COMMENT', 'CREATE')
+  public async saveUserComment(
+    userId: string,
+    comment: Comment
+  ): Promise<AuditLogReturnData<Comment, Comment, Comment>> {
     const files = await this.s3Service.copyFilesToPermanentBucket(
       comment.files ?? []
     )
@@ -2023,14 +2088,22 @@ export class UserService {
         awsCredentials: this.awsCredentials,
       })
     }
-    await this.userAuditLogService.handleAuditLogForAddComment(userId, {
-      ...comment,
-      body: getParsedCommentBody(comment.body),
-      files: comment.files,
-    })
+
+    const updatedFiles = await this.getUpdatedFiles(savedComment.files)
+
     return {
-      ...savedComment,
-      files: await this.getUpdatedFiles(savedComment.files),
+      entities: [
+        {
+          entityId: userId,
+          entityAction: 'CREATE',
+          newImage: { ...savedComment, files: updatedFiles },
+        },
+      ],
+      result: {
+        ...savedComment,
+        files: updatedFiles,
+      },
+      publishAuditLog: () => true,
     }
   }
 
@@ -2085,7 +2158,7 @@ export class UserService {
       updatedAt: comment.createdTimestamp ?? Date.now(),
       userId: API_USER,
     })
-    return getExternalComment(savedComment)
+    return getExternalComment(savedComment.result)
   }
 
   public async getUserCommentsExternal(userId: string) {
@@ -2119,11 +2192,12 @@ export class UserService {
     return getExternalComment(commentUpdated)
   }
 
+  @auditLog('USER', 'COMMENT', 'CREATE')
   public async saveUserCommentReply(
     userId: string,
     commentId: string,
     reply: Comment
-  ) {
+  ): Promise<AuditLogReturnData<Comment, Comment, Comment>> {
     const user = await this.getUser(userId, true)
 
     if (!user) {
@@ -2136,18 +2210,22 @@ export class UserService {
       throw new NotFound(`Comment ${commentId} not found`)
     }
 
+    const updatedFiles = await this.getUpdatedFiles(comment.files)
+
     const savedReply = await this.userRepository.saveUserComment(userId, {
       ...reply,
       parentId: commentId,
     })
 
-    await this.userAuditLogService.handleAuditLogForAddComment(userId, {
-      ...reply,
-      body: getParsedCommentBody(reply.body),
-    })
     return {
-      ...savedReply,
-      files: await this.getUpdatedFiles(savedReply.files),
+      entities: [
+        {
+          entityId: userId,
+          entityAction: 'CREATE',
+          newImage: { ...savedReply, files: updatedFiles },
+        },
+      ],
+      result: { ...savedReply, files: updatedFiles },
     }
   }
 
@@ -2367,19 +2445,27 @@ export class UserService {
     userId: string,
     proposedChange: UserProposedChange,
     comment: string,
-    createdBy: string
+    createdBy: string,
+    additionalChanges?: UserProposedChange[]
   ): Promise<AuditLogReturnData<UserApproval>> {
+    // Combine primary change with additional changes
+    const allChanges = [proposedChange, ...(additionalChanges || [])]
+
+    // Primary change determines the workflow
+    const primaryChange = proposedChange
+
     // Fetch tenant settings to get workflow mapping
     const settings: TenantSettings = await tenantSettings(this.tenantId)
     const workflowId =
-      settings.workflowSettings?.userApprovalWorkflows?.[proposedChange.field]
+      settings.workflowSettings?.userApprovalWorkflows?.[primaryChange.field]
 
     if (!workflowId) {
-      // No workflow configured - automatically apply the change
+      // No workflow configured - automatically apply all changes
       console.log(
-        `No workflow configured for field: ${proposedChange.field}. Auto-approving change for user: ${userId}`
+        `No workflow configured for primary field: ${primaryChange.field}. Auto-approving ${allChanges.length} change(s) for user: ${userId}`
       )
 
+      // Get user data before applying changes
       const oldUser = await this.userRepository.getUser<
         UserWithRulesResult | BusinessWithRulesResult
       >(userId)
@@ -2387,23 +2473,17 @@ export class UserService {
         throw new NotFound('User not found')
       }
 
-      // Create update request from the proposed change
-      const updateRequest: UserUpdateRequest = {} as UserUpdateRequest
-      ;(updateRequest as any)[proposedChange.field] = proposedChange.value
+      // Apply all changes using the existing applyUserApprovalChanges method
+      // This method already handles CRA lock changes, risk assignments, and other field types properly
+      await this.applyUserApprovalChanges(userId, oldUser, allChanges)
 
-      // Use the existing updateUser method to apply the change
-      // This ensures all the proper validation, audit logging, and side effects are handled
-      await this.updateUser(oldUser, updateRequest, undefined, {
-        bySystem: true,
-      })
-
-      // Return a mock approval object indicating the change was auto-approved
-      // This allows the frontend to know that the change was processed successfully
+      // Return a mock approval object indicating the changes were auto-approved
+      // This allows the frontend to know that the changes were processed successfully
       const timestamp = Date.now()
       const autoApproval = new UserApproval()
       autoApproval.id = timestamp
       autoApproval.userId = userId
-      autoApproval.proposedChanges = [proposedChange]
+      autoApproval.proposedChanges = allChanges
       autoApproval.comment = comment
       autoApproval.workflowRef = { id: 'auto-approved', version: 1 }
       autoApproval.approvalStatus = 'APPROVED'
@@ -2457,13 +2537,13 @@ export class UserService {
       }
 
       // Apply all the proposed changes using the same method used in normal approvals
-      await this.applyUserApprovalChanges(userId, oldUser, [proposedChange])
+      await this.applyUserApprovalChanges(userId, oldUser, allChanges)
 
       // Return a mock approval object indicating the change was auto-approved
       const autoApproval = new UserApproval()
       autoApproval.id = timestamp
       autoApproval.userId = userId
-      autoApproval.proposedChanges = [proposedChange]
+      autoApproval.proposedChanges = allChanges
       autoApproval.comment = comment
       autoApproval.workflowRef = { id: workflow.id, version: workflow.version }
       autoApproval.approvalStatus = 'APPROVED'
@@ -2491,7 +2571,7 @@ export class UserService {
     const approval: UserApproval = {
       id: timestamp,
       userId,
-      proposedChanges: [proposedChange],
+      proposedChanges: allChanges,
       comment,
       workflowRef: { id: workflow.id, version: workflow.version },
       approvalStatus: 'PENDING',
@@ -2611,15 +2691,29 @@ export class UserService {
       })
 
       const newIsUpdatable = craLockChange.value as boolean
-      await riskService.updateRiskAssignmentLock(userId, newIsUpdatable)
+
+      // Check for releaseAt timestamp in proposed changes (for approval workflow)
+      const releaseAtChange = proposedChanges.find(
+        (change) => change.field === 'CraLockReleaseAt'
+      )
+      const releaseAt = releaseAtChange?.value as number | undefined
+
+      await riskService.updateRiskAssignmentLock(
+        userId,
+        newIsUpdatable,
+        releaseAt
+      )
       console.log(
-        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}`
+        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
       )
     }
 
     // Handle other fields through the standard updateUser method
     const otherFields = proposedChanges.filter(
-      (change) => change.field !== 'Cra' && change.field !== 'CraLock'
+      (change) =>
+        change.field !== 'Cra' &&
+        change.field !== 'CraLock' &&
+        change.field !== 'CraLockReleaseAt'
     )
 
     if (otherFields.length > 0) {

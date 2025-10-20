@@ -9,7 +9,7 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'

@@ -5,6 +5,8 @@ import {
   DeleteCommand,
   UpdateCommand,
   DynamoDBDocumentClient,
+  GetCommandInput,
+  GetCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { BadRequest } from 'http-errors'
@@ -14,6 +16,14 @@ import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getContext } from '@/core/utils/context-storage'
 import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
+import { createNonConsoleApiInMemoryCache } from '@/utils/memory-cache'
+import { generateHashFromString } from '@/utils/object'
+
+const screeningProfilesCache =
+  createNonConsoleApiInMemoryCache<ScreeningProfileResponse>({
+    max: 10,
+    ttlMinutes: 100,
+  })
 
 @traceable
 export class ScreeningProfileRepository {
@@ -131,7 +141,7 @@ export class ScreeningProfileRepository {
       ...existingScreeningProfile,
       ...screeningProfile,
       updatedAt: timestamp,
-      updatedBy: getContext()?.user?.id,
+      updatedBy: getContext()?.user?.id as string,
     }
 
     const command = new PutCommand({
@@ -170,6 +180,41 @@ export class ScreeningProfileRepository {
       })
     }
     await batchWrite(this.dynamoDb, batchUpdateList, this.tableName)
+  }
+
+  private getScreeningProfileCacheKey(screeningProfileId: string): string {
+    const keys = DynamoDbKeys.SCREENING_PROFILE(
+      this.tenantId,
+      screeningProfileId
+    )
+    return generateHashFromString(`${keys.PartitionKeyID}#${keys.SortKeyID}`)
+  }
+
+  public async getScreeningProfileById(
+    screeningProfileId: string
+  ): Promise<ScreeningProfileResponse | null> {
+    const keys = DynamoDbKeys.SCREENING_PROFILE(
+      this.tenantId,
+      screeningProfileId
+    )
+    const cacheKey = this.getScreeningProfileCacheKey(screeningProfileId)
+    const cachedProfile = screeningProfilesCache?.get(cacheKey)
+    if (cachedProfile) {
+      return cachedProfile
+    }
+    const getItemInput: GetCommandInput = {
+      TableName: this.tableName,
+      Key: keys,
+      ConsistentRead: true,
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    const item = result.Item
+      ? this.mapDynamoItemToScreeningProfile(result.Item)
+      : null
+    if (item) {
+      screeningProfilesCache?.set(cacheKey, item)
+    }
+    return item
   }
 
   public async getScreeningProfiles(

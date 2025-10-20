@@ -4,10 +4,10 @@ import { BackfillTransactionsDescBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
-import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { logger } from '@/core/logger'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 
 export class BackfillTransactionsDescBatchJobRunner extends BatchJobRunner {
   protected async run(job: BackfillTransactionsDescBatchJob): Promise<void> {

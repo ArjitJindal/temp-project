@@ -77,7 +77,6 @@ import {
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import {
   getTransactionsGenerator,
-  getTransactionsGeneratorByEntity,
   getTransactionStatsTimeGroupLabel,
   groupTransactionsByGranularity,
   hydrateTransactionEvents,
@@ -86,7 +85,7 @@ import {
   getTimeRangeByTimeWindows,
   subtractTime,
 } from '@/services/rules-engine/utils/time-utils'
-import { TimeWindow } from '@/services/rules-engine/utils/rule-parameter-schemas'
+import { TimeWindow } from '@/@types/rule/params'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { LogicEntityVariableEntityEnum } from '@/@types/openapi-internal/LogicEntityVariable'
@@ -98,18 +97,15 @@ import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import dayjs from '@/utils/dayjs'
-import { TimestampRange } from '@/@types/tranasction/aggregation'
+import { EntityData, TimestampSlice } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
+  getPaymentDetailsNameString,
   getPaymentEmailId,
+  getPaymentMethodAddress,
   getPaymentMethodAddressString,
 } from '@/utils/payment-details'
-import { UserInfoTypes } from '@/services/batch-jobs/rule-pre-aggregation-batch-job-runner'
-import {
-  parseAddressStringForAggregation,
-  parseNameStringForAggregation,
-} from '@/utils/helpers'
-
+import { formatConsumerName, getAddressString } from '@/utils/helpers'
 class RebuildSyncRetryError extends Error {
   constructor() {
     super()
@@ -130,13 +126,11 @@ export type UserLogicData = {
   user: User | Business
 }
 export type LogicData = TransactionLogicData | UserLogicData
+
 type UserIdentifier = {
   userId?: string
   paymentDetails?: PaymentDetails
-  aggregationPaymentIdentifier?: {
-    type: UserInfoTypes
-    value: string | undefined
-  }
+  entityData?: EntityData
 }
 
 type EntityVariableWithoutName = Omit<LogicEntityVariableInUse, 'name'>
@@ -206,9 +200,11 @@ export class LogicEvaluator {
   private tenantId: string
   private dynamoDb: DynamoDBDocumentClient
   private aggregationRepository: AggregationRepository
+  private userRepository: UserRepository
   private mode: Mode
   private transactionEventRepository?: TransactionEventRepository
   private backfillNamespace: string | undefined
+  private aggregationDynamoTable: string
 
   constructor(
     tenantId: string,
@@ -221,7 +217,15 @@ export class LogicEvaluator {
       this.tenantId,
       this.dynamoDb
     )
+    // Warning: we are need dynamo db connection here because getUser function fetches user from dynamo
+    this.userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
     this.mode = mode
+    this.aggregationDynamoTable =
+      tenantId === '4c9cdf0251'
+        ? StackConstants.AGGREGATION_DYNAMODB_TABLE_NAME
+        : StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
   }
 
   public setBackfillNamespace(backfillNamespace: string | undefined) {
@@ -490,15 +494,30 @@ export class LogicEvaluator {
             )
           }
 
-          const user =
+          let user =
             data.type === 'TRANSACTION'
               ? isSenderUserVariable(variable.key)
                 ? data.senderUser
                 : data.receiverUser
               : data.user
 
+          // if the user is null we can try fetching this user from db, because we don't send sender and receiver user
+          // while evalutating aggregation/entity filters
+          const userId =
+            data.type === 'TRANSACTION'
+              ? isSenderUserVariable(variable.key)
+                ? data.transaction.originUserId
+                : data.transaction.destinationUserId
+              : undefined
+
           if (!user) {
-            return null
+            if (!userId) {
+              return null
+            }
+            user = await this.userRepository.getUser<User | Business>(userId)
+            if (!user) {
+              return null
+            }
           }
           if (variable.entity === 'CONSUMER_USER') {
             return (variable as ConsumerUserLogicVariable<any>).load(
@@ -622,30 +641,40 @@ export class LogicEvaluator {
           return getPaymentDetailsIdentifiersKey(paymentDetails)
         }
 
-        break
+        return undefined
       }
-      case 'PAYMENT_DETAILS_ADDRESS':
-      case 'PAYMENT_DETAILS_EMAIL':
       case 'PAYMENT_DETAILS_NAME': {
         const paymentDetails =
           direction === 'origin'
             ? transaction.originPaymentDetails
             : transaction.destinationPaymentDetails
-
-        if (paymentDetails) {
-          switch (type) {
-            case 'PAYMENT_DETAILS_ADDRESS': {
-              const address = getPaymentMethodAddressString(paymentDetails)
-              return address
-            }
-            case 'PAYMENT_DETAILS_EMAIL':
-              return getPaymentEmailId(paymentDetails)
-            case 'PAYMENT_DETAILS_NAME':
-              return getPaymentDetailsName(paymentDetails)
-          }
+        if (!paymentDetails) {
+          return undefined
         }
-
-        break
+        const name = getPaymentDetailsNameString(paymentDetails)
+        return name
+      }
+      case 'PAYMENT_DETAILS_EMAIL': {
+        const paymentDetails =
+          direction === 'origin'
+            ? transaction.originPaymentDetails
+            : transaction.destinationPaymentDetails
+        if (!paymentDetails) {
+          return undefined
+        }
+        const email = getPaymentEmailId(paymentDetails)
+        return email
+      }
+      case 'PAYMENT_DETAILS_ADDRESS': {
+        const paymentDetails =
+          direction === 'origin'
+            ? transaction.originPaymentDetails
+            : transaction.destinationPaymentDetails
+        if (!paymentDetails) {
+          return undefined
+        }
+        const address = getPaymentMethodAddressString(paymentDetails)
+        return address
       }
     }
   }
@@ -682,7 +711,12 @@ export class LogicEvaluator {
       direction === 'origin'
         ? transaction.originPaymentDetails
         : transaction.destinationPaymentDetails,
-      undefined // WE WILL AGGREGATE BASED ON PAYMENT DETAILS
+      this.getEntityData(
+        aggregationVariable,
+        direction === 'origin'
+          ? transaction.originPaymentDetails
+          : transaction.destinationPaymentDetails
+      )
     )
 
     await this.updateAggregationVariableInternalIfNeeded(
@@ -693,15 +727,35 @@ export class LogicEvaluator {
     )
   }
 
+  private getEntityData(
+    aggregationVariable: LogicAggregationVariable,
+    paymentDetails: PaymentDetails | undefined
+  ): EntityData | undefined {
+    switch (aggregationVariable.type) {
+      case 'PAYMENT_DETAILS_NAME': {
+        const name = getPaymentDetailsName(paymentDetails)
+        return name ? { type: 'NAME', name } : undefined
+      }
+      case 'PAYMENT_DETAILS_EMAIL': {
+        const email = getPaymentEmailId(paymentDetails)
+        return email ? { type: 'EMAIL', email } : undefined
+      }
+      case 'PAYMENT_DETAILS_ADDRESS': {
+        const address = getPaymentMethodAddress(paymentDetails)
+        return address ? { type: 'ADDRESS', address } : undefined
+      }
+      default:
+        return undefined
+    }
+  }
+
   public async rebuildAggregationVariable(
     aggregationVariable: LogicAggregationVariable,
     currentTimestamp: number,
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
-    aggregationPaymentIdentifier:
-      | { type: UserInfoTypes; value: string | undefined }
-      | undefined,
-    timeRange?: TimestampRange,
+    entityData: EntityData | undefined,
+    timeRange?: TimestampSlice,
     totalTimeSlices?: number
   ): Promise<boolean> {
     let userKeyId: string | undefined
@@ -714,20 +768,22 @@ export class LogicEvaluator {
           paymentDetails && getPaymentDetailsIdentifiersKey(paymentDetails)
         break
       case 'PAYMENT_DETAILS_ADDRESS': {
-        userKeyId = aggregationPaymentIdentifier?.value
-          ? aggregationPaymentIdentifier.value
-          : paymentDetails && getPaymentMethodAddressString(paymentDetails)
+        userKeyId =
+          entityData?.type === 'ADDRESS'
+            ? getAddressString(entityData.address)
+            : undefined
         break
       }
       case 'PAYMENT_DETAILS_EMAIL':
-        userKeyId = aggregationPaymentIdentifier?.value
-          ? aggregationPaymentIdentifier.value
-          : paymentDetails && getPaymentEmailId(paymentDetails)
+        userKeyId = entityData?.type === 'EMAIL' ? entityData.email : undefined
         break
       case 'PAYMENT_DETAILS_NAME':
-        userKeyId = aggregationPaymentIdentifier?.value
-          ? aggregationPaymentIdentifier.value
-          : paymentDetails && getPaymentDetailsName(paymentDetails)
+        userKeyId =
+          entityData?.type === 'NAME'
+            ? typeof entityData.name === 'string'
+              ? entityData.name
+              : formatConsumerName(entityData.name)
+            : undefined
         break
     }
 
@@ -763,7 +819,7 @@ export class LogicEvaluator {
       applyMarkerTransactionData,
     } = await this.getRebuiltAggregationVariableResult(
       aggregationVariable,
-      { userId, paymentDetails, aggregationPaymentIdentifier },
+      { userId, paymentDetails, entityData },
       aggregationTimeRange,
       currentTimestamp
     )
@@ -802,7 +858,7 @@ export class LogicEvaluator {
       await batchWrite(
         this.dynamoDb,
         writeRequests,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+        this.aggregationDynamoTable
       )
     } else {
       await this.aggregationRepository.rebuildUserTimeAggregations(
@@ -821,7 +877,8 @@ export class LogicEvaluator {
       userKeyId,
       lastTransactionTimestamp,
       totalTimeSlices,
-      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices
+      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices,
+      timeRange?.sliceNumber
     )
     logger.debug('Rebuilt aggregation for time window', timeRange)
     return true
@@ -859,92 +916,26 @@ export class LogicEvaluator {
             this.dynamoDb
           )
 
-    let generator:
-      | AsyncGenerator<{
-          sendingTransactions: AuxiliaryIndexTransaction[]
-          receivingTransactions: AuxiliaryIndexTransaction[]
-        }>
-      | undefined
-
-    if (
-      aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS' ||
-      aggregationVariable.type === 'USER_TRANSACTIONS'
-    ) {
-      generator = getTransactionsGenerator(
-        userIdentifier.userId,
-        userIdentifier.paymentDetails,
-        transactionRepository,
-        {
-          afterTimestamp: timeRange.afterTimestamp,
-          beforeTimestamp: timeRange.beforeTimestamp,
-          checkType:
-            aggregationVariable.transactionDirection === 'SENDING'
-              ? 'sending'
-              : aggregationVariable.transactionDirection === 'RECEIVING'
-              ? 'receiving'
-              : 'all',
-          matchPaymentMethodDetails:
-            aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS',
-          filters: {},
-        },
-        fieldsToFetch as Array<keyof Transaction>
-      )
-    } else if (
-      aggregationVariable.type === 'PAYMENT_DETAILS_ADDRESS' ||
-      aggregationVariable.type === 'PAYMENT_DETAILS_EMAIL' ||
-      aggregationVariable.type === 'PAYMENT_DETAILS_NAME'
-    ) {
-      if (userIdentifier.aggregationPaymentIdentifier?.value) {
-        if (userIdentifier.aggregationPaymentIdentifier.type === 'ADDRESS') {
-          generator = getTransactionsGeneratorByEntity(
-            {
-              type: 'ADDRESS',
-              address: parseAddressStringForAggregation(
-                userIdentifier.aggregationPaymentIdentifier.value
-              ),
-            },
-            transactionRepository,
-            {
-              afterTimestamp: timeRange.afterTimestamp,
-              beforeTimestamp: timeRange.beforeTimestamp,
-            },
-            fieldsToFetch as Array<keyof Transaction>
-          )
-        } else if (
-          userIdentifier.aggregationPaymentIdentifier.type === 'EMAIL'
-        ) {
-          generator = getTransactionsGeneratorByEntity(
-            {
-              type: 'EMAIL',
-              email: userIdentifier.aggregationPaymentIdentifier.value,
-            },
-            transactionRepository,
-            {
-              afterTimestamp: timeRange.afterTimestamp,
-              beforeTimestamp: timeRange.beforeTimestamp,
-            },
-            fieldsToFetch as Array<keyof Transaction>
-          )
-        } else if (
-          userIdentifier.aggregationPaymentIdentifier.type === 'NAME'
-        ) {
-          generator = getTransactionsGeneratorByEntity(
-            {
-              type: 'NAME',
-              name: parseNameStringForAggregation(
-                userIdentifier.aggregationPaymentIdentifier.value
-              ),
-            },
-            transactionRepository,
-            {
-              afterTimestamp: timeRange.afterTimestamp,
-              beforeTimestamp: timeRange.beforeTimestamp,
-            },
-            fieldsToFetch as Array<keyof Transaction>
-          )
-        }
-      }
-    }
+    const generator = getTransactionsGenerator(
+      userIdentifier.userId,
+      userIdentifier.paymentDetails,
+      userIdentifier.entityData,
+      transactionRepository,
+      {
+        afterTimestamp: timeRange.afterTimestamp,
+        beforeTimestamp: timeRange.beforeTimestamp,
+        checkType:
+          aggregationVariable.transactionDirection === 'SENDING'
+            ? 'sending'
+            : aggregationVariable.transactionDirection === 'RECEIVING'
+            ? 'receiving'
+            : 'all',
+        matchPaymentMethodDetails:
+          aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS',
+        filters: {},
+      },
+      fieldsToFetch as Array<keyof Transaction>
+    )
 
     const threeDaysBeforeTimestamp = subtractTime(
       dayjs(currentTimestamp ?? timeRange.beforeTimestamp),
@@ -1617,57 +1608,6 @@ export class LogicEvaluator {
       this.tenantId
     )
 
-    let aggregationPaymentIdentifier: UserIdentifier['aggregationPaymentIdentifier'] =
-      undefined
-
-    if (data.type === 'TRANSACTION') {
-      if (aggregationVariable.type === 'PAYMENT_DETAILS_ADDRESS') {
-        if (direction === 'origin') {
-          aggregationPaymentIdentifier = {
-            type: 'ADDRESS',
-            value: getPaymentMethodAddressString(
-              data.transaction.originPaymentDetails
-            ),
-          }
-        } else {
-          aggregationPaymentIdentifier = {
-            type: 'ADDRESS',
-            value: getPaymentMethodAddressString(
-              data.transaction.destinationPaymentDetails
-            ),
-          }
-        }
-      } else if (aggregationVariable.type === 'PAYMENT_DETAILS_EMAIL') {
-        if (direction === 'origin') {
-          aggregationPaymentIdentifier = {
-            type: 'EMAIL',
-            value: getPaymentEmailId(data.transaction.originPaymentDetails),
-          }
-        } else {
-          aggregationPaymentIdentifier = {
-            type: 'EMAIL',
-            value: getPaymentEmailId(
-              data.transaction.destinationPaymentDetails
-            ),
-          }
-        }
-      } else if (aggregationVariable.type === 'PAYMENT_DETAILS_NAME') {
-        if (direction === 'origin') {
-          aggregationPaymentIdentifier = {
-            type: 'NAME',
-            value: getPaymentDetailsName(data.transaction.originPaymentDetails),
-          }
-        } else {
-          aggregationPaymentIdentifier = {
-            type: 'NAME',
-            value: getPaymentDetailsName(
-              data.transaction.destinationPaymentDetails
-            ),
-          }
-        }
-      }
-    }
-
     const userIdentifier: UserIdentifier =
       data.type === 'TRANSACTION'
         ? {
@@ -1679,7 +1619,12 @@ export class LogicEvaluator {
               direction === 'origin'
                 ? data.transaction.originPaymentDetails
                 : data.transaction.destinationPaymentDetails,
-            aggregationPaymentIdentifier,
+            entityData: this.getEntityData(
+              aggregationVariable,
+              direction === 'origin'
+                ? data.transaction.originPaymentDetails
+                : data.transaction.destinationPaymentDetails
+            ),
           }
         : { userId: data.user.userId }
 
@@ -1742,7 +1687,12 @@ export class LogicEvaluator {
                   direction === 'origin'
                     ? data.transaction.originPaymentDetails
                     : data.transaction.destinationPaymentDetails,
-                  undefined
+                  this.getEntityData(
+                    aggregationVariable,
+                    direction === 'origin'
+                      ? data.transaction.originPaymentDetails
+                      : data.transaction.destinationPaymentDetails
+                  )
                 )
               : await this.rebuildAggregationVariable(
                   aggregationVariable,
@@ -1844,6 +1794,7 @@ export class LogicEvaluator {
     userIdentifier: {
       userId?: string
       paymentDetails?: PaymentDetails
+      entityData?: EntityData
     },
     afterTimestamp: number,
     beforeTimestamp: number,
@@ -1855,6 +1806,7 @@ export class LogicEvaluator {
         {
           userId: userIdentifier.userId,
           paymentDetails: userIdentifier.paymentDetails,
+          entityData: userIdentifier.entityData,
         },
         {
           afterTimestamp,

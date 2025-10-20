@@ -2,7 +2,6 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleFilter } from '../filter'
 import { LegacyFilters } from '../filters'
 import { getMigratedV8Config } from '../v8-migrations'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
@@ -33,7 +32,7 @@ export abstract class TransactionRuleFilter<P> extends RuleFilter {
       this.parameters as LegacyFilters
     )
     return (
-      await new LogicEvaluator('', getDynamoDbClient()).evaluate(
+      await new LogicEvaluator('', this.dynamoDb).evaluate(
         migratedFilter?.logic ?? { and: [true] },
         {},
         {

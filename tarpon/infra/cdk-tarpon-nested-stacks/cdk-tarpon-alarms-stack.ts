@@ -15,7 +15,7 @@ import { LAMBDAS } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
 
 import { CANARIES } from '@lib/canaries'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import {
   createAPIGatewayAlarm,
   createDynamoDBAlarm,
@@ -68,7 +68,11 @@ const dynamoTables = (config: Config) => {
       ])
     )
   }
-  return tables
+  return tables.filter(
+    (val) =>
+      val !== DYNAMODB_TABLE_NAMES.AGGREGATION ||
+      (config.region === 'eu-2' && config.stage === 'prod') // Currently only for eu-2
+  )
 }
 
 const KINESIS_STREAM_NAMES = [
@@ -196,7 +200,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
                 period: Duration.minutes(1),
               }
             : {
-                threshold: 30,
+                threshold: 50,
                 statistic: 'Average',
                 period: Duration.minutes(5),
               }

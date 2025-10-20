@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { WebhookRetryTask } from '@/@types/webhook'
-import { WEBHOOK_RETRY_COLLECTION } from '@/utils/mongodb-definitions'
+import { WEBHOOK_RETRY_COLLECTION } from '@/utils/mongo-table-names'
 
 export class WebhookRetryRepository {
   mongoDb: MongoClient

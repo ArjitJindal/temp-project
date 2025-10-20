@@ -1,4 +1,5 @@
 import omit from 'lodash/omit'
+import { backOff } from 'exponential-backoff'
 import pMap from 'p-map'
 import { logger } from '../logger'
 import { VersionHistoryTable } from '../../models/version-history'
@@ -14,25 +15,22 @@ import { users } from './data/users'
 import { getUserEvents } from './data/user_events'
 import { getArsScores } from './data/ars_scores'
 import { getTransactions } from './data/transactions'
-import {
-  CLICKHOUSE_DEFINITIONS,
-  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
-import {
-  batchInsertToClickhouse,
-  createTenantDatabase,
-  isClickhouseEnabledInRegion,
-  getClickhouseClient,
-  syncThunderSchemaTables,
-} from '@/utils/clickhouse/utils'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO } from '@/constants/clickhouse/clickhouse-mongo-map'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { syncThunderSchemaTables } from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { createTenantDatabase } from '@/utils/clickhouse/database'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 import { data as transactionEvents } from '@/core/seed/data/transaction_events'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 
-const collections: [string, () => unknown[]][] = [
+const collections: [ClickhouseTableNames, () => unknown[]][] = [
   [CLICKHOUSE_DEFINITIONS.ALERTS_QA_SAMPLING.tableName, () => getQASamples()],
   [
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
@@ -89,53 +87,117 @@ export const seedClickhouse = async (tenantId: string) => {
   let now = Date.now()
 
   if (isClickhouseEnabledInRegion()) {
-    const clickhouseClient = await getClickhouseClient(tenantId)
+    const clickhouseClient = await getClickhouseClient(tenantId, {
+      requestTimeout: 300_000,
+      keepAlive: true,
+    })
     const versionHistoryTableName =
       VersionHistoryTable.tableDefinition.tableName
 
-    now = Date.now()
-    await clickhouseClient.exec({
-      query: `DELETE FROM ${versionHistoryTableName} WHERE 1=1`,
-    })
-    logger.info(
-      `TIME: Clickhouse: Version history table deletion took ~ ${
-        Date.now() - now
-      }`
-    )
+    const tablesToDelete = [
+      versionHistoryTableName,
+      ...ClickHouseTables.map((table) => table.table),
+    ]
 
-    const promises = ClickHouseTables.map(async (table) => {
-      try {
+    now = Date.now()
+    await pMap(
+      tablesToDelete,
+      async (table) => {
         const now = Date.now()
-        await clickhouseClient.command({
-          query: `TRUNCATE TABLE ${table.table}`,
-        })
-        logger.info(
-          `TIME: Clickhouse: ${table.table} deletion took ~ ${Date.now() - now}`
+        await backOff(
+          async () => {
+            try {
+              await clickhouseClient.exec({
+                query: `TRUNCATE TABLE IF EXISTS ${table}`,
+                clickhouse_settings: {
+                  max_execution_time: 120,
+                  send_timeout: 60,
+                  receive_timeout: 60,
+                },
+              })
+            } catch (error) {
+              // error code 60 is returned when the table does not exist
+              // error code 81 is returned when the database does not exist
+              if (
+                error instanceof Error &&
+                'code' in error &&
+                (error.code == 60 || error.code == 81)
+              ) {
+                logger.warn(`Table ${table} does not exist`)
+                return // Don't throw for non-existent tables
+              } else {
+                // Enhanced timeout error detection
+                const isTimeoutError =
+                  error instanceof Error &&
+                  (error.message.includes('Timeout') ||
+                    error.message.includes('timeout') ||
+                    error.message.includes('TIMEOUT') ||
+                    error.message.includes('Connection timeout') ||
+                    error.message.includes('Request timeout') ||
+                    error.message.includes('Socket timeout') ||
+                    (error as any).code === 'ETIMEDOUT' ||
+                    (error as any).code === 'ECONNRESET' ||
+                    (error as any).code === 'ENOTFOUND')
+
+                if (isTimeoutError) {
+                  logger.warn(
+                    `Timeout error occurred for table ${table}, retrying: ${error.message}`
+                  )
+                } else {
+                  logger.warn(`Non-timeout error for table ${table}: ${error}`)
+                }
+
+                throw error
+              }
+            }
+          },
+          {
+            numOfAttempts: 5, // Increased from 3
+            delayFirstAttempt: true, // Add initial delay
+            startingDelay: 1000, // 1 second initial delay
+            timeMultiple: 2, // Exponential backoff
+            maxDelay: 30000, // Max 30 seconds between retries
+            retry: (e, attemptNumber) => {
+              const isTimeoutError =
+                e instanceof Error &&
+                (e.message.includes('Timeout') ||
+                  e.message.includes('timeout') ||
+                  (e as any).code === 'ETIMEDOUT')
+
+              logger.warn(
+                `Clickhouse: retrying deletion of ${table}, attempt ${attemptNumber}/5`,
+                {
+                  error: e.message,
+                  isTimeoutError,
+                  table,
+                  attemptNumber,
+                }
+              )
+
+              return true
+            },
+          }
         )
-      } catch (error) {
-        // error code 60 is returned when the table does not exist
-        // error code 81 is returned when the database does not exist
-        if (
-          error instanceof Error &&
-          'code' in error &&
-          (error.code == 60 || error.code == 81)
-        ) {
-          logger.warn(`Table ${table.table} does not exist`)
-        } else {
-          logger.warn(`Failed to delete from table ${table.table}: ${error}`)
-          throw error
-        }
-      }
-    })
-    await pMap(promises, async (promise) => await promise, { concurrency: 10 })
+
+        logger.info(
+          `TIME: Clickhouse: ${table} deletion took ~ ${Date.now() - now}ms`
+        )
+      },
+      { concurrency: 5 }
+    )
+    logger.info(`TIME: Clickhouse: table deletion took ~ ${Date.now() - now}`)
+
     const mongoConsumerService = new MongoDbConsumer(client, dynamoDb)
     now = Date.now()
     await createTenantDatabase(tenantId)
     logger.info(
       `TIME: Clickhouse: Tenant database creation took ~ ${Date.now() - now}`
     )
-    await Promise.all(
-      collections.map(async ([clickhouseTable, dataFn]) => {
+    await pMap(
+      collections,
+      async (collection) => {
+        const [clickhouseTable, dataFn] = collection
+
         const data = dataFn()
 
         const mongoTable =
@@ -168,7 +230,11 @@ export const seedClickhouse = async (tenantId: string) => {
         logger.info(
           `TIME: Clickhouse: ${clickhouseTable} sync took ~ ${Date.now() - now}`
         )
-      })
+      },
+      {
+        concurrency: 5,
+      }
     )
+    logger.info(`TIME: Clickhouse: data sync took ~ ${Date.now() - now}`)
   }
 }

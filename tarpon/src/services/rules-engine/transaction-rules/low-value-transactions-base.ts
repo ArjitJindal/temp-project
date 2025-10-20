@@ -4,14 +4,11 @@ import {
   checkTransactionAmountBetweenThreshold,
   getTransactionStatsTimeGroupLabelV2,
 } from '../utils/transaction-rule-utils'
-import {
-  TimeWindow,
-  TRANSACTION_AMOUNT_RANGE_SCHEMA,
-  TransactionAmountRange,
-} from '../utils/rule-parameter-schemas'
+import { TRANSACTION_AMOUNT_RANGE_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResultItem } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow, TransactionAmountRange } from '@/@types/rule/params'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'

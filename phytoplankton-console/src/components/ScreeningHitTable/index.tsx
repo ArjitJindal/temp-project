@@ -12,6 +12,7 @@ import {
   useSettings,
 } from '../AppWrapper/Providers/SettingsProvider';
 import ScreeningHitDetailsDrawer from './ScreeningHitDetailsDrawer';
+import { sanitizeFuzziness } from './utils';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
@@ -33,6 +34,7 @@ import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
+import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/LSEGSanctionsSearchType';
 import { useQuery } from '@/utils/queries/hooks';
 import {
   DEFAULT_MANUAL_SCREENING_FILTERS,
@@ -43,6 +45,7 @@ import { useApi } from '@/api';
 import { getOr, match } from '@/utils/asyncResource';
 import { useHasResources } from '@/utils/user-utils';
 import { getErrorMessage } from '@/utils/lang';
+
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
   searchTerm?: string;
@@ -50,6 +53,9 @@ export interface TableSearchParams {
   countryCodes?: Array<string>;
   yearOfBirth?: number;
   entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -66,7 +72,13 @@ interface Props {
   searchedAt?: number;
   selectionActions?: SelectionAction<SanctionsEntity, TableSearchParams>[];
   readOnly?: boolean;
+  topTools?: React.ReactNode;
 }
+
+export const ENTITY_TYPE_OPTIONS = [
+  { label: 'Person', value: 'PERSON' },
+  { label: 'Business', value: 'BUSINESS' },
+];
 
 export default function SanctionsSearchTable(props: Props) {
   const {
@@ -82,6 +94,7 @@ export default function SanctionsSearchTable(props: Props) {
     selectedIds,
     onSelect,
     readOnly = false,
+    topTools,
   } = props;
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
@@ -89,12 +102,13 @@ export default function SanctionsSearchTable(props: Props) {
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
   const canEditManualScreeningFilters = useHasResources([
-    'write:::screening/manual-screening-filters/*',
+    'write:::screening/manual-screening/manual-screening-filters/*',
   ]);
 
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+  const hasFeatureLSEG = useFeatureEnabled('LSEG');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
 
   const searchProfileResult = useQuery(
@@ -248,17 +262,25 @@ export default function SanctionsSearchTable(props: Props) {
     );
   }, [settings, hasFeatureDowJones]);
 
-  const options = uniq([...openSanctionsOptions, ...acurisOptions, ...dowJonesOptions]).map(
-    (option) => ({
-      label: humanizeAuto(option),
-      value: option,
-    }),
-  );
+  const lsegOptions = useMemo(() => {
+    if (!hasFeatureLSEG) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'lseg')
+        ?.screeningTypes ?? LSEG_SANCTIONS_SEARCH_TYPES
+    );
+  }, [settings, hasFeatureLSEG]);
 
-  const ENTITY_TYPE_OPTIONS = [
-    { label: 'Person', value: 'PERSON' },
-    { label: 'Business', value: 'BUSINESS' },
-  ];
+  const options = uniq([
+    ...openSanctionsOptions,
+    ...acurisOptions,
+    ...dowJonesOptions,
+    ...lsegOptions,
+  ]).map((option) => ({
+    label: humanizeAuto(option),
+    value: option,
+  }));
 
   const searchProfiles = getOr(searchProfileResult.data, { items: [], total: 0 }).items;
   const selectedProfile = searchProfiles.find(
@@ -282,7 +304,7 @@ export default function SanctionsSearchTable(props: Props) {
       const searchParams = updatedParams as any;
       let hasChanges = false;
       if (selectedProfile.fuzziness !== undefined) {
-        searchParams.fuzziness = selectedProfile.fuzziness;
+        searchParams.fuzziness = sanitizeFuzziness(selectedProfile.fuzziness, 'hundred');
         hasChanges = true;
       }
       if (selectedProfile.types && selectedProfile.types.length > 0) {
@@ -311,45 +333,51 @@ export default function SanctionsSearchTable(props: Props) {
     : [];
 
   const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
-    {
-      title: 'Search term',
-      key: 'searchTerm',
-      renderer: {
-        kind: 'string',
-      },
-    },
     ...(params?.entityType === 'PERSON' || !params?.entityType
       ? [
           {
-            title: 'Year of birth',
+            title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
             key: 'yearOfBirth',
             renderer: {
               kind: 'year',
             },
+            showFilterByDefault:
+              params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',
+          } as ExtraFilterProps<TableSearchParams>,
+          {
+            title: 'Gender',
+            key: 'gender',
+            description: 'Select gender',
+            renderer: {
+              kind: 'select',
+              options: [
+                { value: 'MALE', label: 'Male' },
+                { value: 'FEMALE', label: 'Female' },
+                { value: 'UNKNOWN', label: 'Unknown' },
+              ],
+              mode: 'SINGLE',
+              displayMode: 'select',
+            },
+            showFilterByDefault: true,
           } as ExtraFilterProps<TableSearchParams>,
         ]
       : []),
     {
       title: 'Fuzziness',
-      description: '(The default value is 0.5)',
+      description: '(The default value is 20%)',
       key: 'fuzziness',
+
       renderer: {
         kind: 'number',
+        displayFunction: (value) => {
+          return `${value}%`;
+        },
         displayAs: 'slider',
         min: 0,
-        max: 1,
-        step: 0.1,
-        defaultValue: 0.5,
-      },
-    },
-    {
-      title: 'User type',
-      key: 'entityType',
-      renderer: {
-        kind: 'select',
-        options: ENTITY_TYPE_OPTIONS,
-        mode: 'SINGLE',
-        displayMode: 'select',
+        max: 100,
+        allowClear: false,
+        step: 1,
+        defaultValue: 20,
       },
     },
   ];
@@ -414,6 +442,32 @@ export default function SanctionsSearchTable(props: Props) {
         displayMode: 'select',
       },
     });
+
+    // Add Country of residence filter only for Acuris provider
+    if (hasFeatureAcuris && params?.entityType === 'PERSON') {
+      extraFilters.push({
+        title: 'Country of residence',
+        key: 'countryOfResidence',
+        renderer: {
+          kind: 'select',
+          options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
+          mode: 'MULTIPLE',
+          displayMode: 'select',
+        },
+      });
+    }
+
+    // Add Registration ID filter for business entities
+    if (params?.entityType === 'BUSINESS') {
+      extraFilters.push({
+        title: 'Registration ID',
+        key: 'registrationId',
+        renderer: {
+          kind: 'string',
+        },
+      });
+    }
+
     extraFilters.push({
       title: 'Document ID',
       key: 'documentId',
@@ -433,7 +487,14 @@ export default function SanctionsSearchTable(props: Props) {
     },
   });
 
-  const restrictedByPermission = new Set(['fuzziness', 'nationality', 'types']);
+  const restrictedByPermission = new Set([
+    'fuzziness',
+    'nationality',
+    'types',
+    'entityType',
+    'countryOfResidence',
+    'registrationId',
+  ]);
 
   const defaultManualScreeningFilters = useQuery(
     DEFAULT_MANUAL_SCREENING_FILTERS(),
@@ -441,27 +502,72 @@ export default function SanctionsSearchTable(props: Props) {
     { enabled: isScreeningProfileEnabled, refetchOnMount: true, refetchOnWindowFocus: true },
   );
 
+  const isFilterLockedByPermission = (key: string): boolean => {
+    // Never lock gender filter
+    if (key === 'gender') {
+      return false;
+    }
+
+    if (canEditManualScreeningFilters) {
+      return false;
+    }
+
+    if (isScreeningProfileEnabled) {
+      if (restrictedByPermission.has(key)) {
+        const defaults = getOr(defaultManualScreeningFilters.data, null) as any;
+        const value = defaults?.[key];
+        const isSet = value != null && (!Array.isArray(value) || value.length > 0);
+        if (isSet) {
+          return true;
+        }
+      }
+      if (key === 'screeningProfileId') {
+        const screeningProfiles = getOr(screeningProfilesResult.data, { items: [], total: 0 });
+        const profiles = (screeningProfiles.items ?? []) as any[];
+        const hasDefault = Array.isArray(profiles) && profiles.some((p) => p?.isDefault);
+        if (hasDefault) {
+          return true;
+        }
+      }
+    } else {
+      if (key === 'searchProfileId') {
+        const searchProfilesRes = getOr(searchProfileResult.data, { items: [], total: 0 });
+        const profiles = (searchProfilesRes.items ?? []) as any[];
+        const hasDefault = Array.isArray(profiles) && profiles.some((p) => p?.isDefault);
+        if (hasDefault) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
   extraFilters.forEach((filter) => {
     const renderer = filter.renderer as any;
 
     let isReadOnly = readOnly || readOnlyFilterKeys.includes(filter.key);
 
-    if (
-      isScreeningProfileEnabled &&
-      restrictedByPermission.has(filter.key) &&
-      !canEditManualScreeningFilters
-    ) {
-      const defaults = getOr(defaultManualScreeningFilters.data, null) as any;
-      const value = defaults?.[filter.key];
-      const isSet = value != null && (!Array.isArray(value) || value.length > 0);
-
-      if (isSet) {
-        isReadOnly = true;
-      }
+    if (isFilterLockedByPermission(filter.key)) {
+      isReadOnly = true;
     }
 
     renderer.readOnly = isReadOnly;
     renderer.filterKey = filter.key;
+  });
+
+  extraFilters.unshift({
+    title: 'User type',
+    key: 'entityType',
+    pinFilterToLeft: true,
+    showFilterByDefault: true,
+    renderer: {
+      kind: 'select',
+      options: ENTITY_TYPE_OPTIONS,
+      mode: 'SINGLE',
+      displayMode: 'select',
+      allowClear: false,
+    },
   });
 
   return (
@@ -490,6 +596,7 @@ export default function SanctionsSearchTable(props: Props) {
         toolsOptions={{
           reload: false,
         }}
+        topTools={topTools}
         fitHeight
         cursor={queryResult.cursor}
         readOnlyFilters={readOnly}

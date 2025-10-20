@@ -74,6 +74,7 @@ import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard/story';
 import RiskSimulationChart from '@/pages/risk-levels/configure/components/Charts/story';
 import DeltaChart from '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation/SimulationStatistics/DeltaChart/story';
 import WorkflowBuilder from '@/components/WorkflowBuilder/story';
+import AssigneesDropdown from '@/components/AssigneesDropdown/story';
 
 const config: Config = [
   {
@@ -355,6 +356,10 @@ const config: Config = [
     key: 'misc',
     title: 'Miscellaneous',
     components: [
+      {
+        key: '@/components/AssigneesDropdown',
+        story: AssigneesDropdown,
+      },
       {
         key: '@/components/WorkflowBuilder',
         story: WorkflowBuilder,

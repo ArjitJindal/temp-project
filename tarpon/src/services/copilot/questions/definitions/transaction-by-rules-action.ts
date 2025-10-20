@@ -1,7 +1,7 @@
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { StackedBarchartQuestion } from '@/services/copilot/questions/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import {

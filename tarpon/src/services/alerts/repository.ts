@@ -27,12 +27,9 @@ import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
   ALERTS_QA_SAMPLING_COLLECTION,
   CASES_COLLECTION,
-} from '@/utils/mongodb-definitions'
-import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
-import {
-  DefaultApiGetAlertListRequest,
-  DefaultApiGetAlertsQaSamplingRequest,
-} from '@/@types/openapi-internal/RequestParameters'
+} from '@/utils/mongo-table-names'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
+import { DefaultApiGetAlertsQaSamplingRequest } from '@/@types/openapi-internal/RequestParameters'
 import { Case } from '@/@types/openapi-internal/Case'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
@@ -53,30 +50,21 @@ import { CounterRepository } from '@/services/counter/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
 import { AccountsService } from '@/services/accounts'
-import {
-  batchInsertToClickhouse,
-  getClickhouseClient,
-  isConsoleMigrationEnabled,
-} from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import {
   isTenantMigratedToDynamo,
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
-
-export interface AlertParams
-  extends OptionalPagination<
-    Omit<DefaultApiGetAlertListRequest, 'filterQaStatus'>
-  > {
-  filterQaStatus?: ChecklistStatus | "NOT_QA'd"
-  excludeAlertIds?: string[]
-}
+import { AlertParams } from '@/@types/alert/alert-params'
 
 @traceable
 export class AlertsRepository {
@@ -1292,42 +1280,24 @@ export class AlertsRepository {
     return commentToSave
   }
 
-  public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
+  public async markUnMarkedChecklistItemsDone(
+    alertIds: string[]
+  ): Promise<void> {
     if (await this.isTenantMigratedToDynamo) {
-      await this.dynamoAlertRepository.markAllChecklistItemsAsDone(alertIds)
+      await this.dynamoAlertRepository.markUnMarkedChecklistItemsDone(alertIds)
     }
+
     await this.updateManyAlerts(
       {
-        'alerts.alertId': {
-          $in: alertIds,
-        },
-        'alerts.ruleChecklist': {
-          $ne: null,
-        },
+        'alerts.alertId': { $in: alertIds },
       },
       {
-        $set: {
-          'alerts.$[alert].ruleChecklist.$[item].done': 'DONE',
-        },
+        $set: { 'alerts.$.ruleChecklist.$[item].done': 'DONE' },
       },
       {
         arrayFilters: [
           {
-            'alert.alertId': {
-              $in: alertIds,
-            },
-            'alert.ruleChecklist': {
-              $exists: true,
-              $ne: null,
-            },
-          },
-          {
-            'item.done': {
-              $ne: 'DONE',
-            },
-            item: {
-              $exists: true,
-            },
+            'item.done': 'NOT_STARTED',
           },
         ],
       }

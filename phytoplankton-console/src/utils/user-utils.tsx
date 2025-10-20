@@ -254,14 +254,20 @@ export function useRoles(): [AccountRole[], boolean, () => void] {
 
 export function useAccountsQueryResult(): QueryResult<Account[]> {
   const api = useApi();
-  return useQuery(ACCOUNT_LIST(), async () => {
-    try {
-      return await api.getAccounts();
-    } catch (e) {
-      console.error(e);
-      return [];
-    }
-  });
+  return useQuery(
+    ACCOUNT_LIST(),
+    async () => {
+      try {
+        return await api.getAccounts();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
 }
 
 export function useAccountTenantInfoQueryResult(): QueryResult<Tenant> {

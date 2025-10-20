@@ -52,7 +52,7 @@ export const calcAxisPaddings = (
   return {
     top: labelHeight / 2,
     left: maxYlength,
-    bottom: Math.max(0, maxXlength * -1 * Math.sin(xAngle)),
+    bottom: Math.max(labelHeight * 3, Math.max(0, maxXlength * -1 * Math.sin(xAngle))),
   };
 };
 

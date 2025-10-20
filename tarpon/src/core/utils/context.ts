@@ -28,7 +28,7 @@ import {
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { Metric } from '@/core/cloudwatch/metrics'
+import { Metric } from '@/@types/cloudwatch'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { envIs } from '@/utils/env'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
@@ -106,6 +106,13 @@ export async function getInitialContext(
       )
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       const allSettings = await tenantRepository.getTenantSettings()
+
+      if (allSettings?.sanctions?.dowjonesCreds?.password) {
+        allSettings.sanctions.dowjonesCreds.password = '*'.repeat(
+          allSettings.sanctions.dowjonesCreds.password.length
+        )
+      }
+
       features = allSettings?.features
       settings = allSettings
     }
@@ -179,6 +186,13 @@ export async function initializeTenantContext(tenantId: string) {
   const dynamoDb = getDynamoDbClient()
   const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
   const tenantSettings = await tenantRepository.getTenantSettings()
+
+  if (tenantSettings?.sanctions?.dowjonesCreds?.password) {
+    tenantSettings.sanctions.dowjonesCreds.password = '*'.repeat(
+      tenantSettings.sanctions.dowjonesCreds.password.length
+    )
+  }
+
   context.tenantId = tenantId
   if (!context.logMetadata) {
     context.logMetadata = {}
@@ -480,7 +494,8 @@ export async function userStatements(
 }
 
 export async function tenantSettings(
-  tenantId: string
+  tenantId: string,
+  unmaskDowJonesPassword?: boolean
 ): Promise<TenantSettings> {
   const contextSettings = getContext()?.settings
   if (contextSettings && !isEmpty(contextSettings)) {
@@ -491,6 +506,12 @@ export async function tenantSettings(
     dynamoDb: getDynamoDbClient(),
   })
   const settings = await tenantRepository.getTenantSettings()
+
+  if (settings?.sanctions?.dowjonesCreds?.password && !unmaskDowJonesPassword) {
+    settings.sanctions.dowjonesCreds.password = '*'.repeat(
+      settings.sanctions.dowjonesCreds.password.length
+    )
+  }
 
   if (isEmpty(contextSettings) && settings) {
     updateTenantSettings(settings)

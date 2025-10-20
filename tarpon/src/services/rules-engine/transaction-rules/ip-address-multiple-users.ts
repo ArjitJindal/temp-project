@@ -1,11 +1,12 @@
 import { JSONSchemaType } from 'ajv'
 import isEmpty from 'lodash/isEmpty'
-import { getSenderKeys } from '../utils'
+import { getSenderKeyId } from '../utils'
 import { RuleHitResult } from '../rule'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { traceable } from '@/core/xray'
 
 export type IpAddressMultipleUsersRuleParameters = {
@@ -36,10 +37,7 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
       throw new MissingRuleParameter()
     }
 
-    const senderKeyId = getSenderKeys(
-      this.tenantId,
-      this.transaction
-    )?.PartitionKeyID
+    const senderKeyId = getSenderKeyId(this.tenantId, this.transaction)
 
     const originIpAddress = this.transaction.originDeviceData?.ipAddress
 

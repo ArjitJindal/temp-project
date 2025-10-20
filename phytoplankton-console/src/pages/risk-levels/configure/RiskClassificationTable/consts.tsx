@@ -5,88 +5,85 @@ import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 import Slider from '@/components/library/Slider';
 import { State, TableItem } from '@/pages/risk-levels/configure/RiskClassificationTable/index';
 
-export interface ExternalState {
+const helper = new ColumnHelper<TableItem>();
+export function makeColumns(options: {
   state: State | null;
   setState?: React.Dispatch<React.SetStateAction<State | null>>;
   isDisabled: boolean;
-}
+}): TableColumn<TableItem>[] {
+  const { state, setState, isDisabled } = options;
+  return helper.list([
+    helper.simple({
+      title: 'Level',
+      defaultWidth: 100,
+      key: 'key',
+      type: RISK_LEVEL,
+    }),
+    helper.display({
+      title: 'Score',
+      defaultWidth: 100,
+      render: (item) => {
+        const start = state?.[item.index - 1] ?? 0;
+        const end = state?.[item.index] ?? 100;
 
-const helper = new ColumnHelper<TableItem>();
-export const columns: TableColumn<TableItem>[] = helper.list([
-  helper.simple({
-    title: 'Level',
-    defaultWidth: 100,
-    key: 'key',
-    type: RISK_LEVEL,
-  }),
-  helper.display({
-    title: 'Score',
-    defaultWidth: 100,
-    render: (item, context) => {
-      const externalState: ExternalState = context.external as ExternalState;
-      const { state } = externalState;
-      const start = state?.[item.index - 1] ?? 0;
-      const end = state?.[item.index] ?? 100;
-
-      const startOperator = start === 0 && start !== end ? '>=' : start !== end ? '>=' : '';
-      const endOperator = end === 100 && start !== end ? '<=' : start !== end ? '<' : '';
-      return `${startOperator} ${start} to ${endOperator} ${end}`;
-    },
-  }),
-  helper.display({
-    id: 'score_edit',
-    title: 'Range',
-    defaultWidth: 300,
-    render: (item, context) => {
-      const externalState: ExternalState = context.external as ExternalState;
-      const { state, setState, isDisabled } = externalState;
-      const { index } = item;
-      if (state == null) {
-        return <></>;
-      }
-      const start = state[index - 1] ?? 0;
-      const end = state[index] ?? 100;
-      let lastEndInclusiveIndex = state.findIndex((element) => element === 100);
-      if (lastEndInclusiveIndex === -1) {
-        lastEndInclusiveIndex = state.length;
-      }
-      return (
-        <Slider
-          className={s.slider}
-          mode="RANGE"
-          isDisabled={isDisabled}
-          min={0}
-          max={100}
-          value={[start, end]}
-          endExclusive={index !== lastEndInclusiveIndex}
-          onChange={(newValue) => {
-            if (!setState || newValue == null) {
-              return;
-            }
-            const [newStart, newEnd] = newValue;
-            setState((state) => {
-              if (state == null) {
-                return state;
+        const startOperator = start === 0 && start !== end ? '>=' : start !== end ? '>=' : '';
+        const endOperator = end === 100 && start !== end ? '<=' : start !== end ? '<' : '';
+        return `${startOperator} ${start} to ${endOperator} ${end}`;
+      },
+    }),
+    helper.display({
+      id: 'score_edit',
+      title: 'Range',
+      defaultWidth: 300,
+      render: (item) => {
+        const { index } = item;
+        if (state == null) {
+          return <></>;
+        }
+        const start = state[index - 1] ?? 0;
+        const end = state[index] ?? 100;
+        let lastEndInclusiveIndex = state.findIndex((element) => element === 100);
+        if (lastEndInclusiveIndex === -1) {
+          lastEndInclusiveIndex = state.length;
+        }
+        return (
+          <Slider
+            className={s.slider}
+            mode="RANGE"
+            isDisabled={isDisabled}
+            min={0}
+            max={100}
+            value={[start, end]}
+            endExclusive={index !== lastEndInclusiveIndex}
+            onChange={(newValue) => {
+              if (!setState || newValue == null) {
+                return;
               }
-              return state.map((x, i) => {
-                if (i === index - 1) {
-                  return newStart;
+              const [newStart, newEnd] = newValue;
+              setState((state) => {
+                if (state == null) {
+                  return state;
                 }
-                if (i < index - 1 && x > newStart) {
-                  return newStart;
-                }
-                if (i === index) {
-                  return newEnd;
-                }
-                if (i > index && x < newEnd) {
-                  return newEnd;
-                }
-                return x;
-              }) as State;
-            });
-          }}
-        />
-      );
-    },
-  }),
-]);
+                return state.map((x, i) => {
+                  if (i === index - 1) {
+                    return newStart;
+                  }
+                  if (i < index - 1 && x > newStart) {
+                    return newStart;
+                  }
+                  if (i === index) {
+                    return newEnd;
+                  }
+                  if (i > index && x < newEnd) {
+                    return newEnd;
+                  }
+                  return x;
+                }) as State;
+              });
+            }}
+          />
+        );
+      },
+    }),
+  ]);
+}

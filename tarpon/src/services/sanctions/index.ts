@@ -15,7 +15,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import {
   GetObjectCommand,
@@ -24,11 +24,14 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Upload } from '@aws-sdk/lib-storage'
+import { Client } from '@opensearch-project/opensearch/.'
+import { StackConstants } from '@lib/constants'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { AcurisProvider } from './providers/acuris-provider'
 import { MongoSanctionSourcesRepository } from './repositories/sanction-source-repository'
+import { LSEGProvider } from './providers/lseg-provider'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
@@ -48,12 +51,11 @@ import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
-import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import {
   GenericSanctionsSearchType,
   UserRuleStage,
@@ -61,7 +63,7 @@ import {
   SanctionsHit,
   SanctionsSearchResponse,
   SanctionsSourceListResponse,
-  SanctionsSourceType,
+  SourceDocument,
 } from '@/@types/openapi-internal/all'
 import { SanctionsDataProvider } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
@@ -77,6 +79,14 @@ import { generateChecksum, getSortedObject } from '@/utils/object'
 import { logger } from '@/core/logger'
 import { CaseConfig } from '@/@types/cases/case-config'
 import { getSecretByName } from '@/utils/secrets-manager'
+import { DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/DowJonesAdverseMediaSourceRelevance'
+import { DOW_JONES_PEP_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/DowJonesPEPSourceRelevance'
+import { PEP_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/PEPSourceRelevance'
+import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/AdverseMediaSourceRelevance'
+import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/SanctionsSourceRelevance'
+import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -88,24 +98,27 @@ export type ProviderConfig = {
 
 @traceable
 export class SanctionsService {
-  sanctionsSearchRepository: SanctionsSearchRepository
-  sanctionsHitsRepository: SanctionsHitsRepository
-  sanctionsSourcesRepository: MongoSanctionSourcesRepository
-  sanctionsWhitelistEntityRepository: SanctionsWhitelistEntityRepository
-  sanctionsScreeningDetailsRepository: SanctionsScreeningDetailsRepository
-  counterRepository: CounterRepository
+  sanctionsSearchRepository!: SanctionsSearchRepository
+  sanctionsHitsRepository!: SanctionsHitsRepository
+  sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   tenantId: string
   initializationPromise: Promise<void> | null = null
-  mongoDb: MongoClient
+  mongoDb?: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  opensearchClient?: Client
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: {
+      mongoDb?: MongoClient
+      dynamoDb: DynamoDBDocumentClient
+      opensearchClient?: Client
+    }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
+    this.opensearchClient = connections.opensearchClient
     this.sanctionsSearchRepository = new SanctionsSearchRepository(
       this.tenantId,
       { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
@@ -115,21 +128,14 @@ export class SanctionsService {
         mongoDb: this.mongoDb,
         dynamoDb: this.dynamoDb,
       })
-    this.sanctionsScreeningDetailsRepository =
-      new SanctionsScreeningDetailsRepository(this.tenantId, this.mongoDb)
-    this.counterRepository = new CounterRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: this.dynamoDb,
-    })
     this.sanctionsHitsRepository = new SanctionsHitsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
-    const provider = getDefaultProviders()
-    this.sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
-      this.mongoDb,
-      getSanctionsSourceDocumentsCollectionName(provider, this.tenantId)
-    )
+  }
+
+  private async getMongoDbClient() {
+    return this.mongoDb ?? (await getMongoDbClient())
   }
 
   public static async fromEvent(
@@ -140,16 +146,23 @@ export class SanctionsService {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const sanctionsService = new SanctionsService(tenantId, {
       mongoDb,
       dynamoDb,
+      opensearchClient,
     })
     return sanctionsService
   }
 
   private async getProvider(
     provider: SanctionsDataProviderName,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    connections: {
+      dynamoDb: DynamoDBDocumentClient
+      opensearchClient?: Client
+    },
     providerConfig?: ProviderConfig
   ): Promise<SanctionsDataProvider> {
     switch (provider) {
@@ -159,13 +172,16 @@ export class SanctionsService {
         return OpenSanctionsProvider.build(this.tenantId, connections)
       case 'acuris':
         return AcurisProvider.build(this.tenantId, connections)
+      case 'lseg':
+        return LSEGProvider.build(this.tenantId, connections)
       case 'list':
         if (!providerConfig?.listId) {
           throw new Error(`No list ID given for list sanctions provider`)
         }
         return await SanctionsListProvider.build(
           this.tenantId,
-          providerConfig.listId
+          providerConfig.listId,
+          connections
         )
     }
   }
@@ -174,6 +190,9 @@ export class SanctionsService {
     providerSearchId: string,
     providerName: SanctionsDataProviderName
   ): Promise<boolean> {
+    if (!this.opensearchClient && hasFeature('OPEN_SEARCH')) {
+      this.opensearchClient = await getSharedOpensearchClient()
+    }
     const result =
       await this.sanctionsSearchRepository.getSearchResultByProviderSearchId(
         providerName,
@@ -183,8 +202,8 @@ export class SanctionsService {
       return false
     }
     const provider = await this.getProvider(providerName, {
-      mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
+      opensearchClient: this.opensearchClient,
     })
     const response = await provider.getSearch(providerSearchId)
 
@@ -260,6 +279,16 @@ export class SanctionsService {
     return !!yearOfBirth && (yearOfBirth < 1900 || yearOfBirth > dayjs().year())
   }
 
+  private async getBackfillStatus(): Promise<boolean> {
+    const key = DynamoDbKeys.SANCTIONS_SEARCH_BATCH_JOB_STATUS(this.tenantId)
+    const command = new GetCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: key,
+    })
+    const result = await this.dynamoDb.send(command)
+    return result.Item?.isBackfillDone === true
+  }
+
   public async search(
     request: SanctionsSearchRequest,
     context?: SanctionsHitContext & {
@@ -268,6 +297,9 @@ export class SanctionsService {
     providerOverrides?: ProviderConfig,
     screeningEntity: 'USER' | 'TRANSACTION' = 'USER'
   ): Promise<SanctionsSearchResponse> {
+    if (!this.opensearchClient && hasFeature('OPEN_SEARCH')) {
+      this.opensearchClient = await getSharedOpensearchClient()
+    }
     const page = request.page ?? 1
     const pageSize = request.pageSize ?? 20
 
@@ -305,18 +337,29 @@ export class SanctionsService {
 
     const provider = await this.getProvider(
       providerName,
-      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb },
+      {
+        dynamoDb: this.dynamoDb,
+        opensearchClient: this.opensearchClient,
+      },
       providerOverrides
     )
-    const [sanctionsSearchResponse, existedSearch] = await Promise.all([
+    const mongoHash = generateChecksum(
+      getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+    )
+    const isBackfillDone = await this.getBackfillStatus()
+    const dynamoHash = generateChecksum(getSortedObject(request))
+    const [sanctionsSearchResponse, existingSearchId] = await Promise.all([
       provider.search(request),
       this.sanctionsSearchRepository.getSearchResultByParams(
         providerName,
         request,
+        mongoHash,
+        dynamoHash,
+        isBackfillDone,
         providerOverrides
       ),
     ])
-    searchId = existedSearch?.response?.searchId ?? searchId
+    searchId = existingSearchId ?? searchId
     const providerSearchId = sanctionsSearchResponse.providerSearchId
     const filteredHits =
       await this.sanctionsHitsRepository.filterWhitelistedHits(
@@ -333,34 +376,31 @@ export class SanctionsService {
       createdAt: createdAt ?? Date.now(),
     }
 
-    if (!hasFeature('DOW_JONES') || response.hitsCount > 0) {
-      await this.sanctionsSearchRepository.saveSearchResult({
-        provider: providerName,
-        createdAt: createdAt,
-        request,
-        requestHash: generateChecksum(
-          getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
-        ),
-        response,
-        searchedBy: !context ? getContext()?.user?.id : undefined,
-        hitContext: context,
-        providerConfigHash:
-          providerOverrides &&
-          providerOverrides.stage &&
-          !hasFeature('DOW_JONES')
-            ? generateChecksum({
-                ...providerOverrides,
-                stage:
-                  providerOverrides.stage === 'INITIAL' ? 'INITIAL' : 'ONGOING',
-              })
-            : undefined,
-        ...(context?.ruleInstanceId
-          ? {
-              screeningEntity,
-            }
-          : {}),
-      })
-    }
+    await this.sanctionsSearchRepository.saveSearchResult({
+      provider: providerName,
+      createdAt: createdAt,
+      request,
+      requestHash: generateChecksum(
+        getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+      ),
+      dynamoHash,
+      response,
+      searchedBy: !context ? getContext()?.user?.id : undefined,
+      hitContext: context,
+      providerConfigHash:
+        providerOverrides && providerOverrides.stage && !hasFeature('DOW_JONES')
+          ? generateChecksum({
+              ...providerOverrides,
+              stage:
+                providerOverrides.stage === 'INITIAL' ? 'INITIAL' : 'ONGOING',
+            })
+          : undefined,
+      ...(context?.ruleInstanceId
+        ? {
+            screeningEntity,
+          }
+        : {}),
+    })
 
     if (context && context.ruleInstanceId && context.isOngoingScreening) {
       // Save the screening details check when running a rule
@@ -376,12 +416,17 @@ export class SanctionsService {
         isHit: response.hitsCount > 0,
         searchId: response.searchId,
       }
+      const sanctionsScreeningDetailsRepository =
+        new SanctionsScreeningDetailsRepository(this.tenantId, {
+          mongoDb: await this.getMongoDbClient(),
+          dynamoDb: this.dynamoDb,
+        })
       const [firstResult, secondResult] = await Promise.allSettled([
-        this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
+        sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
           details,
           Date.now()
         ),
-        this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetailsV2(
+        sanctionsScreeningDetailsRepository.addSanctionsScreeningDetailsV2(
           details,
           Date.now()
         ),
@@ -463,7 +508,12 @@ export class SanctionsService {
     from: number
     to: number
   }): Promise<SanctionsScreeningStats> {
-    return await this.sanctionsScreeningDetailsRepository.getSanctionsScreeningStats(
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(this.tenantId, {
+        mongoDb: await this.getMongoDbClient(),
+        dynamoDb: this.dynamoDb,
+      })
+    return await sanctionsScreeningDetailsRepository.getSanctionsScreeningStats(
       timeRange
     )
   }
@@ -471,7 +521,12 @@ export class SanctionsService {
   public async getSanctionsScreeningDetails(
     params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
   ): Promise<SanctionsScreeningDetailsResponse> {
-    return this.sanctionsScreeningDetailsRepository.getSanctionsScreeningDetails(
+    const sanctionsScreeningDetailsRepository =
+      new SanctionsScreeningDetailsRepository(this.tenantId, {
+        mongoDb: await this.getMongoDbClient(),
+        dynamoDb: this.dynamoDb,
+      })
+    return await sanctionsScreeningDetailsRepository.getSanctionsScreeningDetails(
       params
     )
   }
@@ -496,22 +551,105 @@ export class SanctionsService {
     )
   }
 
+  private async getRelevance(
+    provider?: SanctionsDataProviderName,
+    sourceType?: GenericSanctionsSearchType
+  ) {
+    switch (provider) {
+      case 'dowjones': {
+        switch (sourceType) {
+          case 'SANCTIONS':
+            return SANCTIONS_SOURCE_RELEVANCES
+          case 'PEP':
+            return DOW_JONES_PEP_SOURCE_RELEVANCES
+          case 'ADVERSE_MEDIA':
+            return DOW_JONES_ADVERSE_MEDIA_SOURCE_RELEVANCES
+          default:
+            return []
+        }
+      }
+      case 'acuris': {
+        switch (sourceType) {
+          case 'SANCTIONS':
+            return SANCTIONS_SOURCE_RELEVANCES
+          case 'PEP':
+            return PEP_SOURCE_RELEVANCES
+          case 'ADVERSE_MEDIA':
+            return ADVERSE_MEDIA_SOURCE_RELEVANCES
+          case 'REGULATORY_ENFORCEMENT_LIST':
+            return REL_SOURCE_RELEVANCES
+          default:
+            return []
+        }
+      }
+      case 'open-sanctions': {
+        const collectionName = getSanctionsSourceDocumentsCollectionName([
+          provider,
+        ])
+        const collection = (await this.getMongoDbClient())
+          .db()
+          .collection<SourceDocument>(collectionName)
+        const pepRelevance = await collection
+          .find({
+            sourceType: 'PEP',
+            provider: provider,
+          })
+          .project({
+            id: 1,
+          })
+          .toArray()
+        const crimeRelevance = await collection
+          .find({
+            sourceType: 'CRIME',
+            provider: provider,
+          })
+          .project({
+            id: 1,
+          })
+          .toArray()
+        switch (sourceType) {
+          case 'SANCTIONS':
+            return []
+          case 'PEP':
+            return uniq(pepRelevance.map((relevance) => relevance.id))
+          case 'CRIME':
+            return uniq(crimeRelevance.map((relevance) => relevance.id))
+          default:
+            return []
+        }
+      }
+      default:
+        return []
+    }
+  }
+
   public async getSanctionsSources(
-    filterSourceType?: SanctionsSourceType,
-    searchTerm?: string
+    filterSourceType?: GenericSanctionsSearchType,
+    searchTerm?: string,
+    provider?: SanctionsDataProviderName
   ): Promise<SanctionsSourceListResponse> {
-    const sources = await this.sanctionsSourcesRepository.getSanctionsSources(
+    const sanctionsSourcesRepository = new MongoSanctionSourcesRepository(
+      await this.getMongoDbClient(),
+      getSanctionsSourceDocumentsCollectionName(
+        getDefaultProviders(),
+        this.tenantId
+      )
+    )
+    const sources = await sanctionsSourcesRepository.getSanctionsSources(
       filterSourceType,
       [],
       true,
-      searchTerm
+      searchTerm,
+      undefined,
+      provider
     )
+
     return {
-      items:
+      relevance: await this.getRelevance(provider, filterSourceType),
+      sources:
         sources?.map((source) => {
           const picked = pick(source, [
             'id',
-            'sourceName',
             'sourceType',
             'sourceCountry',
             'displayName',

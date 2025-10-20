@@ -170,7 +170,7 @@ export async function handleV8PreAggregationTask(
         task.currentTimestamp,
         task.userId,
         task.paymentDetails,
-        task.aggregationData,
+        task.entityData,
         task.timeWindow,
         task.totalSliceCount
       )
@@ -183,6 +183,10 @@ export async function handleV8PreAggregationTask(
       newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
       ruleInstance?.status === 'DEPLOYING'
     ) {
+      const currentJob = await jobRepository.getJobById(task.jobId)
+      if (currentJob?.latestStatus.status !== 'SUCCESS') {
+        return
+      }
       logger.info(
         `Pre-aggregation complete (job: ${task.jobId}). Switching rule instance ${ruleInstanceId} to ACTIVE.`
       )
@@ -214,7 +218,7 @@ export async function handleV8PreAggregationTask(
         task.currentTimestamp,
         task.userId,
         task.paymentDetails,
-        task.aggregationData,
+        task.entityData,
         task.timeWindow,
         task.totalSliceCount
       )
@@ -226,6 +230,10 @@ export async function handleV8PreAggregationTask(
       newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
       riskFactor?.status === 'DEPLOYING'
     ) {
+      const currentJob = await jobRepository.getJobById(task.jobId)
+      if (currentJob?.latestStatus.status !== 'SUCCESS') {
+        return
+      }
       logger.info(
         `Pre-aggregation complete (job: ${task.jobId}). Switching rule instance ${riskFactor.id} to ACTIVE.`
       )
@@ -237,7 +245,7 @@ export async function handleV8PreAggregationTask(
       task.currentTimestamp,
       task.userId,
       task.paymentDetails,
-      task.aggregationData,
+      task.entityData,
       task.timeWindow,
       task.totalSliceCount
     )

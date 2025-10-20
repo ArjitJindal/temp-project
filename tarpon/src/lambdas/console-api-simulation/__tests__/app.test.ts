@@ -7,7 +7,7 @@ import {
   getApiGatewayPostEvent,
 } from '@/test-utils/apigateway-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import * as jwt from '@/@types/jwt'

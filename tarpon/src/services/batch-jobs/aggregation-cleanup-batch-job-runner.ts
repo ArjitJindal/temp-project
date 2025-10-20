@@ -16,7 +16,7 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 

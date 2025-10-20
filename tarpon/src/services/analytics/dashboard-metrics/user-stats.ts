@@ -26,7 +26,7 @@ import {
   DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_HOURLY,
   DASHBOARD_BUSINESS_USERS_STATS_COLLECTION_MONTHLY,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardStatsUsersStats'
@@ -34,7 +34,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
 import { USER_TYPES, UserType } from '@/@types/user/user-type'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 

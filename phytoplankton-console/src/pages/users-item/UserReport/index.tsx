@@ -3,6 +3,7 @@ import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { CellInput, Styles } from 'jspdf-autotable';
 import { getRiskLevelFromScore, isNotArsChangeTxId } from '@flagright/lib/utils';
 import { RiskScores } from '../Header/HeaderMenu';
+import { chunkedJoin } from '@/utils/chunkedJoin';
 import {
   ExtendedDrsScore,
   InternalBusinessUser,
@@ -308,28 +309,31 @@ const getDrsSupportTables = (
       drsScores
         .map((drsScore) => {
           // combining the default and custom risk factors
-          const defaultRiskFactors = drsScore.components
-            ?.map((component) => {
+          const defaultRiskFactors = chunkedJoin(
+            drsScore.components?.map((component) => {
               const parameterName =
                 findParameter(component.entityType, component.parameter as RiskFactorParameter)
                   ?.title ?? component.parameter;
               const parameterValue = getValue(component);
               return `${parameterName} (${parameterValue}) - ${component.score}`;
-            })
-            .join('\n');
+            }),
+            '\n',
+          );
 
-          const customRiskFactors = drsScore.factorScoreDetails
-            ?.map((factor) => {
-              const isDefault = !!factorMap[factor.riskFactorId]?.parameter;
-              if (!isDefault) {
-                const rf = factorMap[factor.riskFactorId];
-                const parameterName = rf.name;
-                const parameterValue = rf.description;
-                return `${parameterName} (${parameterValue}) - ${factor.score}`;
-              }
-            })
-            .filter(Boolean)
-            .join('\n');
+          const customRiskFactors = chunkedJoin(
+            drsScore.factorScoreDetails
+              ?.map((factor) => {
+                const isDefault = !!factorMap[factor.riskFactorId]?.parameter;
+                if (!isDefault) {
+                  const rf = factorMap[factor.riskFactorId];
+                  const parameterName = rf.name;
+                  const parameterValue = rf.description;
+                  return `${parameterName} (${parameterValue}) - ${factor.score}`;
+                }
+              })
+              .filter(Boolean),
+            '\n',
+          );
 
           const riskFactors = [defaultRiskFactors, customRiskFactors].join('');
 

@@ -6,14 +6,14 @@ import memoize from 'lodash/memoize'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
+import { DynamoAccountsRepository } from './repository/dynamo'
+import { Auth0AccountsRepository } from './repository/auth0'
 import {
   Auth0TenantMetadata,
   InternalUserCreate,
   MicroTenantInfo,
   Tenant,
-} from './repository'
-import { DynamoAccountsRepository } from './repository/dynamo'
-import { Auth0AccountsRepository } from './repository/auth0'
+} from '@/@types/tenant'
 import { Account } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -41,12 +41,6 @@ import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
 import { getNonDemoTenantId } from '@/utils/tenant-id'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
-
-export type TenantBasic = {
-  id: string
-  name: string
-  auth0Domain?: string
-}
 
 @traceable
 export class AccountsService {
@@ -461,6 +455,12 @@ export class AccountsService {
     if (!user) {
       throw new BadRequest(`Unable to find user by id: ${userId}`)
     }
+    const currentReviewPermissions = {
+      escalationLevel: user.escalationLevel,
+      escalationReviewerId: user.escalationReviewerId,
+      reviewerId: user.reviewerId,
+      isReviewer: user.isReviewer,
+    }
 
     const updatedUser: Account = {
       ...user,
@@ -470,7 +470,9 @@ export class AccountsService {
 
     await this.addAccountToOrganization(newTenant, updatedUser)
     try {
-      await this.patchUser(newTenant, userId, {})
+      // while switching between tenants we need to make sure that we drop old review permisssion.
+      // there could be a edge case where one tenant supports multi level escalation while other not
+      await this.patchUser(newTenant, userId, {}, true)
     } catch (e) {
       // If the user was not deleted from the old tenant, we need to remove it from the new tenant
       const updatedUser: Account = {
@@ -479,7 +481,9 @@ export class AccountsService {
         orgName: oldTenant.orgName,
       }
       await Promise.all([
-        this.patchUser(oldTenant, userId, {}),
+        // while switching back to old tenants we need to make sure that we don't drop old review permisssion.
+        // we stored the current review permissions, if while changing the tenant there was some error we can use that to restore the review permission in old tenant.
+        this.patchUser(oldTenant, userId, { ...currentReviewPermissions }),
         this.deleteAccountFromOrganization(newTenant, updatedUser),
       ])
       throw e
@@ -632,10 +636,22 @@ export class AccountsService {
     ) {
       throw new Forbidden(`It's not possible to set a root role`)
     }
+    // frontend send us new review permission we need to manually figure out if the current payload has review permission changes
+    const reviewPermissionKeys = [
+      'isReviewer',
+      'reviewerId',
+      'escalationReviewerId',
+      'escalationLevel',
+    ]
+    const isReviewPermissionUpdate = reviewPermissionKeys.some(
+      (key) => key in request.AccountPatchPayload
+    )
+
     const response = await this.patchUser(
       tenant,
       request.accountId,
-      request.AccountPatchPayload
+      request.AccountPatchPayload,
+      isReviewPermissionUpdate // when there is review permission update we need to reset the older permission
     )
     return response.result
   }
@@ -644,7 +660,8 @@ export class AccountsService {
   async patchUser(
     tenant: Tenant,
     accountId: string,
-    patch: AccountPatchPayload
+    patch: AccountPatchPayload,
+    overwriteReviewPermissions: boolean = false
   ): Promise<AuditLogReturnData<Account, Account, Account>> {
     const oldAccount = await this.getAccount(accountId)
     if (!oldAccount) {
@@ -659,23 +676,34 @@ export class AccountsService {
       )
     }
 
-    // This is done to reset old saved state and would only apply the new review permission by resetting all permission to undefined
+    // This is done to reset old saved state and would only apply the new review permission by resetting all permission to null
+    // auth0 will only reset the permission when we send null to it.
     const defaultPermission = {
       escalationLevel: undefined,
       escalationReviewerId: undefined,
       reviewerId: undefined,
-      isReviewer: false,
+      isReviewer: undefined,
     }
 
+    const existingPermission = {
+      escalationLevel: oldAccount.escalationLevel,
+      escalationReviewerId: oldAccount.escalationReviewerId,
+      reviewerId: oldAccount.reviewerId,
+      isReviewer: oldAccount.isReviewer,
+    }
+
+    // if we want to overwrite the review permission we apply default permission patch, as this will reset the permission from auth0
+    // else we will use the current review permission for the patch
     const patchedData = {
-      ...defaultPermission,
+      ...(overwriteReviewPermissions ? defaultPermission : existingPermission),
       ...patch,
     }
 
     const patchedUser = await this.auth0.patchAccount(
       { tenantId: tenant.id, orgName: tenant.orgName },
       accountId,
-      { app_metadata: patchedData, role: patchedData.role }
+      { app_metadata: patchedData, role: patchedData.role },
+      overwriteReviewPermissions
     )
 
     await this.updateUserCache(

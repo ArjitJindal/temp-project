@@ -1,7 +1,7 @@
 import { getSanctionsCollectionName } from '../../utils'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
-import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -81,6 +81,7 @@ describe('OpenSanctionsProvider', () => {
 
     expect(result).toEqual({
       id: 'entity123',
+      aggregatedSourceIds: ['crime'],
       aka: ['john doe', 'jd'],
       countries: ['United States of America'],
       countryCodes: ['US'],
@@ -103,6 +104,19 @@ describe('OpenSanctionsProvider', () => {
       isActiveSanctioned: undefined,
       isDeseased: false,
       occupations: [],
+      otherSources: [
+        {
+          type: 'CRIME',
+          value: [
+            {
+              internalId: 'crime',
+              sourceName: 'crime',
+            },
+          ],
+        },
+      ],
+      pepSources: [],
+      sanctionsSources: [],
       dateOfBirths: ['1980-05-12'],
     })
   })

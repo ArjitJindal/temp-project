@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { hasFeature } from '@/core/utils/context'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { CounterRepository } from '@/services/counter/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -19,7 +19,6 @@ async function migrateTenant(tenant: Tenant) {
     dynamoDb,
   })
   const screeningProfileService = new ScreeningProfileService(tenant.id, {
-    mongoDb,
     dynamoDb,
   })
   const tenantService = new TenantService(tenant.id, {

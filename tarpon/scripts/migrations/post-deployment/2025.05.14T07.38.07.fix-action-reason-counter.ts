@@ -1,8 +1,8 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { ReasonsService } from '@/services/tenants/reasons-service'
-import { COUNTER_COLLECTION } from '@/utils/mongodb-definitions'
+import { COUNTER_COLLECTION } from '@/utils/mongo-table-names'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {

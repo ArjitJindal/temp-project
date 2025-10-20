@@ -1,3 +1,5 @@
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -5,7 +7,6 @@ import {
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { ListRepository } from '@/services/list/repositories/list-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -22,8 +23,12 @@ export class SanctionsListProvider implements SanctionsDataProvider {
   private readonly tenantId: string
   private readonly listRepository: ListRepository
 
-  static async build(tenantId: string, listId: string) {
-    const listRepository = new ListRepository(tenantId, getDynamoDbClient())
+  static async build(
+    tenantId: string,
+    listId: string,
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
+    const listRepository = new ListRepository(tenantId, connections.dynamoDb)
     return new SanctionsListProvider('list', listId, tenantId, listRepository)
   }
 

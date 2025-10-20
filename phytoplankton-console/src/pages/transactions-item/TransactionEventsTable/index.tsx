@@ -19,12 +19,40 @@ import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
+import { processTagsRecursively } from '@/utils/object';
 
 interface Props {
   transactionId: string;
 }
 
 interface Params extends CommonParams {}
+
+const TransactionEventActions = ({ item }: { item: InternalTransactionEvent | undefined }) => {
+  const updatedTransactionAttributes = processTagsRecursively({
+    ...(item?.updatedTransactionAttributes || {}),
+  });
+
+  if (!(item?.updatedTransactionAttributes || item?.metaData)) {
+    return (
+      <Tooltip title="No changes were made to the transaction details.">
+        <span className={styles.secondaryText}>View changes</span>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <AuditLogModal
+      data={{
+        type: 'Transaction',
+        oldImage: {},
+        newImage: updatedTransactionAttributes,
+        showNotChanged: false,
+        showOldImage: false,
+        metaData: item.metaData,
+      }}
+    />
+  );
+};
 
 export default function TransactionEventsTable(props: Props) {
   const { transactionId } = props;
@@ -96,27 +124,7 @@ export default function TransactionEventsTable(props: Props) {
         value: (item) => item,
         exporting: false,
         type: {
-          render: (item) => {
-            if (!(item?.updatedTransactionAttributes || item?.metaData)) {
-              return (
-                <Tooltip title="No changes were made to the transaction details.">
-                  <span className={styles.secondaryText}>View changes</span>
-                </Tooltip>
-              );
-            }
-            return (
-              <AuditLogModal
-                data={{
-                  type: 'Transaction',
-                  oldImage: {},
-                  newImage: item.updatedTransactionAttributes || {},
-                  showNotChanged: false,
-                  showOldImage: false,
-                  metaData: item.metaData,
-                }}
-              />
-            );
-          },
+          render: (item) => <TransactionEventActions item={item} />,
         },
       }),
     ]);

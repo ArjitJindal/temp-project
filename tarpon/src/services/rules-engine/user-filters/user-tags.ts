@@ -6,7 +6,8 @@ import { traceable } from '@/core/xray'
 
 export type UserTagsRuleFilterParameter = {
   userTags?: {
-    [key: string]: string[]
+    tags: Record<string, string[]>
+    useAndLogic?: boolean
   }
 }
 
@@ -28,9 +29,9 @@ export class UserTagsRuleFilter extends UserRuleFilter<UserTagsRuleFilterParamet
   }
 
   public async predicate(): Promise<boolean> {
-    const userTags = this.user.tags
-    const filterTags = this.parameters.userTags
-
-    return tagsRuleFilter(userTags, filterTags)
+    return tagsRuleFilter(this.user.tags, {
+      tags: this.parameters.userTags?.tags ?? {},
+      useAndLogic: this.parameters.userTags?.useAndLogic ?? false,
+    })
   }
 }

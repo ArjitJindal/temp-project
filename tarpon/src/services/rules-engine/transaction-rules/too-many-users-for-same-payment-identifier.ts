@@ -3,7 +3,7 @@ import mergeWith from 'lodash/mergeWith'
 import uniq from 'lodash/uniq'
 import startCase from 'lodash/startCase'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
-import { getNonUserReceiverKeys, getNonUserSenderKeys } from '../utils'
+import { getNonUserReceiverKeyId, getNonUserSenderKeyId } from '../utils'
 import { RuleHitResult } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
@@ -11,8 +11,9 @@ import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
-import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
+import { TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { traceable } from '@/core/xray'
@@ -229,10 +230,13 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
 
   override getUserKeyId(direction: 'origin' | 'destination') {
     return direction === 'origin'
-      ? getNonUserSenderKeys(this.tenantId, this.transaction, undefined, true)
-          ?.PartitionKeyID
-      : getNonUserReceiverKeys(this.tenantId, this.transaction, undefined, true)
-          ?.PartitionKeyID
+      ? getNonUserSenderKeyId(this.tenantId, this.transaction, undefined, true)
+      : getNonUserReceiverKeyId(
+          this.tenantId,
+          this.transaction,
+          undefined,
+          true
+        )
   }
 
   override getMaxTimeWindow(): TimeWindow {

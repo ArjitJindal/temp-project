@@ -1,5 +1,4 @@
 import { BadRequest } from 'http-errors'
-import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { CounterRepository } from '../counter/repository'
 import { MongoSanctionSourcesRepository } from '../sanctions/repositories/sanction-source-repository'
@@ -14,22 +13,21 @@ import { PEPSourceRelevance } from '@/@types/openapi-internal/PEPSourceRelevance
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
 import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/AdverseMediaSourceRelevance'
 import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 @traceable
 export class ScreeningProfileService {
   private screeningProfileRepository: ScreeningProfileRepository
-  private mongoDb: MongoClient
   private dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { dynamoDb: DynamoDBDocumentClient }
   ) {
     this.screeningProfileRepository = new ScreeningProfileRepository(
       tenantId,
       connections.dynamoDb
     )
-    this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
   }
 
@@ -48,13 +46,13 @@ export class ScreeningProfileService {
     screeningProfileId: string
   ): Promise<ScreeningProfileResponse> {
     const screeningProfile =
-      await this.screeningProfileRepository.getScreeningProfiles([
-        screeningProfileId,
-      ])
-    if (!screeningProfile.items.length) {
+      await this.screeningProfileRepository.getScreeningProfileById(
+        screeningProfileId
+      )
+    if (!screeningProfile) {
       throw new BadRequest('Screening profile not found')
     }
-    return screeningProfile.items[0]
+    return screeningProfile
   }
 
   public async createScreeningProfile(
@@ -178,13 +176,16 @@ export class ScreeningProfileService {
     acurisSanctionsSearchType?: AcurisSanctionsSearchType[]
   ) {
     const mongoSanctionSourcesRepository = new MongoSanctionSourcesRepository(
-      this.mongoDb,
+      await getMongoDbClient(),
       getSanctionsSourceDocumentsCollectionName([SanctionsDataProviders.ACURIS])
     )
     const sources = await mongoSanctionSourcesRepository.getSanctionsSources(
       undefined,
       [],
-      true
+      true,
+      undefined,
+      undefined,
+      SanctionsDataProviders.ACURIS
     )
 
     const sanctionSourceIds = sources

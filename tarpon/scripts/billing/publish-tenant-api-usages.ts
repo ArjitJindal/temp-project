@@ -8,7 +8,7 @@ import { loadConfigEnv } from '../migrations/utils/config'
 import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-service'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { TenantBasic } from '@/services/accounts'
+import { TenantBasic } from '@/@types/tenant'
 import { TenantService } from '@/services/tenants'
 
 const optionDefinitions = [

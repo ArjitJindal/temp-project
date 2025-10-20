@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { tenantHasFeature } from '@/core/utils/context'
-import { Tenant } from '@/services/accounts/repository'
-import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongodb-definitions'
+import { Tenant } from '@/@types/tenant'
+import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongo-table-names'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 
 async function migrateTenant(tenant: Tenant) {

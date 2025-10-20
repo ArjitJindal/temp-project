@@ -24,6 +24,8 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
+import { hasFeature } from '@/core/utils/context'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
   ? parseInt(process.env.SCREENING_CONCURRENT_BATCH_SIZE)
@@ -64,12 +66,16 @@ export abstract class ScreeningUserRuleBatchJobRunnerBase extends BatchJobRunner
     this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
+    const opensearchClient = hasFeature('OPEN_SEARCH')
+      ? await getSharedOpensearchClient()
+      : undefined
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     this.rulesEngineService = new RulesEngineService(
       tenantId,
       dynamoDb,
       logicEvaluator,
-      mongoDb
+      mongoDb,
+      opensearchClient
     )
     this.caseCreationService = new CaseCreationService(tenantId, {
       dynamoDb,

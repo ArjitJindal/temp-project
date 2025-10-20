@@ -43,15 +43,16 @@ import {
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
-import { SQS, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { StackConstants } from '@lib/constants'
+import { getSQSClient } from './sns-sqs-client'
 import { getCredentialsFromEvent } from './credentials'
 import { generateChecksum, removeUndefinedFields } from './object'
 import { addNewSubsegment } from '@/core/xray'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
   DYNAMODB_WRITE_CAPACITY_METRIC,
-} from '@/core/cloudwatch/metrics'
+} from '@/constants/cloudwatch/metrics'
 import { logger } from '@/core/logger'
 import { publishMetric, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
@@ -431,6 +432,27 @@ export async function* paginateQueryGenerator(
   }
 }
 
+export async function* itemLevelQueryGenerator(
+  dynamoDb: DynamoDBDocumentClient,
+  query: QueryCommandInput
+): AsyncGenerator<any> {
+  let lastEvaluatedKey: any = undefined
+
+  do {
+    const paginatedQuery: QueryCommandInput = {
+      ...query,
+      ExclusiveStartKey: lastEvaluatedKey,
+    }
+    const result = await dynamoDb.send(new QueryCommand(paginatedQuery))
+
+    for (const item of result.Items ?? []) {
+      yield item
+    }
+
+    lastEvaluatedKey = result.LastEvaluatedKey || null
+  } while (lastEvaluatedKey !== null)
+}
+
 const MAX_BATCH_WRITE_RETRY_COUNT = 20
 const MAX_BATCH_WRITE_RETRY_DELAY = 10 * 1000
 export async function batchWrite(
@@ -764,25 +786,22 @@ export async function transactWrite(
 ): Promise<void> {
   // Clean up ExpressionAttributeValues by removing undefined fields for all operation types
   const cleanedOperations = operations.map((operation) => {
-    if (operation.Put && operation.Put.ExpressionAttributeValues) {
+    if (operation.Put?.ExpressionAttributeValues) {
       operation.Put.ExpressionAttributeValues = removeUndefinedFields(
         operation.Put.ExpressionAttributeValues
       )
     }
-    if (operation.Delete && operation.Delete.ExpressionAttributeValues) {
+    if (operation.Delete?.ExpressionAttributeValues) {
       operation.Delete.ExpressionAttributeValues = removeUndefinedFields(
         operation.Delete.ExpressionAttributeValues
       )
     }
-    if (operation.Update && operation.Update.ExpressionAttributeValues) {
+    if (operation.Update?.ExpressionAttributeValues) {
       operation.Update.ExpressionAttributeValues = removeUndefinedFields(
         operation.Update.ExpressionAttributeValues
       )
     }
-    if (
-      operation.ConditionCheck &&
-      operation.ConditionCheck.ExpressionAttributeValues
-    ) {
+    if (operation.ConditionCheck?.ExpressionAttributeValues) {
       operation.ConditionCheck.ExpressionAttributeValues =
         removeUndefinedFields(
           operation.ConditionCheck.ExpressionAttributeValues
@@ -832,6 +851,36 @@ export async function transactWrite(
             )
           }
           success = true
+        } else if (
+          (e as any)?.name === 'ValidationException' &&
+          (e as any)?.message.includes(
+            'Transaction request cannot include multiple operations on one item'
+          )
+        ) {
+          // Count and log duplicates in single pass
+          const count: Record<string, number> = {}
+          for (const op of nextChunk) {
+            const key =
+              op.Put?.Item ??
+              op.Update?.Key ??
+              op.Delete?.Key ??
+              op.ConditionCheck?.Key
+
+            if (key) {
+              const pk = key.PK ?? key.pk ?? key.PartitionKeyID
+              const sk = key.SK ?? key.sk ?? key.SortKeyID
+              const hash = `PK=${pk}&SK=${sk}`
+              const newCount = (count[hash] ?? 0) + 1
+              count[hash] = newCount
+
+              if (newCount >= 2) {
+                logger.error(
+                  `Duplicate key found: ${hash} (${newCount} operations)`
+                )
+              }
+            }
+          }
+          throw e // rethrow after logging
         } else {
           throw e
         }
@@ -1075,7 +1124,7 @@ export async function sendMessageToDynamoDbConsumer(
     message,
   })
 
-  const sqs = new SQS({ region: process.env.AWS_REGION })
+  const sqs = getSQSClient()
 
   await sqs.send(
     new SendMessageCommand({

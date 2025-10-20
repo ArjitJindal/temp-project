@@ -2,6 +2,7 @@ import { FindCursor, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { InternalServerError, NotFound } from 'http-errors'
 import {
+  BatchWriteCommand,
   DeleteCommand,
   DeleteCommandInput,
   DynamoDBDocumentClient,
@@ -13,9 +14,7 @@ import {
   QueryCommandInput,
   UpdateCommand,
   UpdateCommandInput,
-  BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb'
-
 import isEmpty from 'lodash/isEmpty'
 import memoize from 'lodash/memoize'
 import omit from 'lodash/omit'
@@ -26,6 +25,7 @@ import {
 } from '@flagright/lib/utils/risk'
 import {
   hasFeature,
+  tenantHasFeature,
   updateTenantRiskClassificationValues,
 } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
@@ -47,7 +47,7 @@ import {
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
   VERSION_HISTORY_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
@@ -61,11 +61,9 @@ import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScor
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { getMongoDbClient, paginateCursor } from '@/utils/mongodb-utils'
-import {
-  getClickhouseCredentials,
-  isClickhouseEnabledInRegion,
-  sendMessageToMongoConsumer,
-} from '@/utils/clickhouse/utils'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 import { getTriggerSource } from '@/utils/lambda'
 import {
   createNonConsoleApiInMemoryCache,
@@ -84,7 +82,9 @@ import { VersionHistoryTable } from '@/models/version-history'
 import { VersionHistory } from '@/@types/openapi-internal/VersionHistory'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
-export type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
+
+type DailyStats = { [dayLabel: string]: { [dataType: string]: number } }
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -92,34 +92,6 @@ const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   max: 100,
   ttlMinutes: 10,
 })
-
-export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
-  {
-    riskLevel: 'VERY_LOW',
-    lowerBoundRiskScore: 0,
-    upperBoundRiskScore: 20,
-  },
-  {
-    riskLevel: 'LOW',
-    lowerBoundRiskScore: 20,
-    upperBoundRiskScore: 40,
-  },
-  {
-    riskLevel: 'MEDIUM',
-    lowerBoundRiskScore: 40,
-    upperBoundRiskScore: 60,
-  },
-  {
-    riskLevel: 'HIGH',
-    lowerBoundRiskScore: 60,
-    upperBoundRiskScore: 80,
-  },
-  {
-    riskLevel: 'VERY_HIGH',
-    lowerBoundRiskScore: 80,
-    upperBoundRiskScore: 100,
-  },
-]
 
 const defaultRiskClassificationItem: RiskClassificationConfig = {
   classificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
@@ -380,32 +352,122 @@ export class RiskRepository {
 
   async updateRiskAssignmentLock(
     userId: string,
-    isUpdatable: boolean
+    isUpdatable: boolean,
+    releaseAt?: number
   ): Promise<DrsScore> {
     logger.debug(
       `Updating risk assignment lock for user ${userId} to ${isUpdatable}`
     )
 
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
-    console.log(`Primary key for update:`, primaryKey)
 
-    // Atomic update - only modify the isUpdatable field
+    const now = Date.now()
+
+    // Check if CRA lock timer feature is enabled
+    const hasCraLockTimerFeature = await tenantHasFeature(
+      this.tenantId,
+      'CRA_LOCK_TIMER'
+    )
+
+    // If feature is disabled, we still allow manual lock/unlock but without expiration
+    if (!isUpdatable && releaseAt && !hasCraLockTimerFeature) {
+      logger.info(
+        `CRA lock timer feature not enabled for tenant ${this.tenantId}, ignoring releaseAt`
+      )
+      releaseAt = undefined
+    }
+
+    const lockExpiresAt =
+      !isUpdatable && releaseAt && hasCraLockTimerFeature
+        ? releaseAt
+        : undefined
+
+    // remove lock item(s) from inverse index if unlocking
+    if (isUpdatable) {
+      // Unlocking: Delete inverse index item first, then update main item
+      // With new key structure: PK = ${tenantId}#drs-lock, SK = ${userId}#${releaseAt}
+      // Very efficient query using begins_with on sort key
+      const queryInput = {
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        KeyConditionExpression:
+          'PartitionKeyID = :pk AND begins_with(SortKeyID, :userPrefix)',
+        ExpressionAttributeValues: {
+          ':pk': `${this.tenantId}#drs-lock`,
+          ':userPrefix': `${userId}#`,
+        },
+        ProjectionExpression: 'PartitionKeyID, SortKeyID',
+      }
+
+      const queryResult = await this.dynamoDb.send(new QueryCommand(queryInput))
+
+      if (queryResult.Items && queryResult.Items.length > 0) {
+        // Delete all lock items for this user (there should typically be only one)
+        const deletePromises = queryResult.Items.map((item) =>
+          this.dynamoDb.send(
+            new DeleteCommand({
+              TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(
+                this.tenantId
+              ),
+              Key: {
+                PartitionKeyID: item.PartitionKeyID,
+                SortKeyID: item.SortKeyID,
+              },
+            })
+          )
+        )
+        await Promise.all(deletePromises)
+      }
+      // add lock item to inverse index if locking
+    } else {
+      // Locking: Create inverse index item for efficient querying only if feature is enabled and expiration is set
+      if (lockExpiresAt && hasCraLockTimerFeature) {
+        const lockItemKey = DynamoDbKeys.DRS_LOCK_ITEM(
+          this.tenantId,
+          userId,
+          lockExpiresAt.toString()
+        )
+
+        const lockItem = {
+          ...lockItemKey,
+          tenantId: this.tenantId,
+          lockExpiresAt,
+          createdAt: now,
+        }
+
+        await this.dynamoDb.send(
+          new PutCommand({
+            TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(
+              this.tenantId
+            ),
+            Item: lockItem,
+          })
+        )
+      }
+    }
+
+    // update main DRS item
     const updateInput: UpdateCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
-      UpdateExpression:
-        'SET isUpdatable = :isUpdatable, updatedAt = :updatedAt',
+      UpdateExpression: isUpdatable
+        ? 'SET isUpdatable = :isUpdatable, updatedAt = :updatedAt REMOVE lockedAt, lockExpiresAt'
+        : lockExpiresAt
+        ? 'SET isUpdatable = :isUpdatable, updatedAt = :updatedAt, lockedAt = :lockedAt, lockExpiresAt = :lockExpiresAt'
+        : 'SET isUpdatable = :isUpdatable, updatedAt = :updatedAt, lockedAt = :lockedAt REMOVE lockExpiresAt',
       ExpressionAttributeValues: {
         ':isUpdatable': isUpdatable,
-        ':updatedAt': Date.now(),
+        ':updatedAt': now,
+        ...(isUpdatable
+          ? {}
+          : {
+              ':lockedAt': now,
+              ...(lockExpiresAt ? { ':lockExpiresAt': lockExpiresAt } : {}),
+            }),
       },
       ReturnValues: 'ALL_NEW',
     }
 
-    console.log(`Update input:`, JSON.stringify(updateInput, null, 2))
-
     const result = await this.dynamoDb.send(new UpdateCommand(updateInput))
-    console.log(`Update result:`, result)
 
     if (!result.Attributes) {
       throw new Error(
@@ -428,6 +490,172 @@ export class RiskRepository {
     )
 
     return updatedDrsScore
+  }
+
+  async unlockExpiredCraLocks(): Promise<string[]> {
+    logger.debug(`Checking for expired CRA locks`)
+
+    const now = Date.now()
+
+    // With new sort key structure: SK = ${userId}#${releaseAt}
+    // Query all CRA lock items for a tenant and filter by releaseAt in application code
+    // NOTE: there is no other way to do this with DynamoDB:
+    //       either you can query efficiently by user with userId#releaseAt sort key
+    //       or you can query efficiently by releaseAt with releaseAt#userId sort key
+    //       but you cannot do both efficiently at the same time
+    //       so we chose the first option to ensure manual unlocks from console are fast
+    const queryInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': `${this.tenantId}#drs-lock`,
+      },
+      ProjectionExpression: 'PartitionKeyID, SortKeyID',
+    }
+
+    const queryResult = await this.dynamoDb.send(new QueryCommand(queryInput))
+
+    if (!queryResult.Items || queryResult.Items.length === 0) {
+      logger.debug('No expired CRA locks found')
+      return []
+    }
+
+    // Parse and filter for expired locks from sort keys: ${userId}#${releaseAt}
+    const expiredLockItems = queryResult.Items.map((item) => {
+      const sortKey = item.SortKeyID as string
+      const parts = sortKey.split('#')
+      if (parts.length < 2) {
+        return null
+      }
+
+      const userId = parts[0]
+      const releaseAt = parseInt(parts[1], 10)
+
+      // Only include if releaseAt is expired
+      if (isNaN(releaseAt) || releaseAt >= now) {
+        return null
+      }
+
+      return {
+        PartitionKeyID: item.PartitionKeyID,
+        SortKeyID: item.SortKeyID,
+        userId,
+      }
+    }).filter((item): item is NonNullable<typeof item> => item !== null)
+
+    if (expiredLockItems.length === 0) {
+      logger.debug('No valid expired CRA locks found after parsing')
+      return []
+    }
+
+    logger.info(`Found ${expiredLockItems.length} expired CRA locks to unlock`)
+
+    const BATCH_SIZE = 25 // DynamoDB batch limit
+    const unlockedUserIds: string[] = []
+
+    // Process in batches of 25
+    for (let i = 0; i < expiredLockItems.length; i += BATCH_SIZE) {
+      const batchItems = expiredLockItems.slice(i, i + BATCH_SIZE)
+
+      // Step 1: Update DRS items using individual UpdateCommands (with proper SET operations)
+      const drsUpdatePromises = batchItems.map(async (lockItem) => {
+        try {
+          await this.dynamoDb.send(
+            new UpdateCommand({
+              TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(
+                this.tenantId
+              ),
+              Key: DynamoDbKeys.DRS_VALUE_ITEM(
+                this.tenantId,
+                lockItem.userId,
+                '1'
+              ),
+              UpdateExpression:
+                'SET isUpdatable = :isUpdatable, updatedAt = :updatedAt REMOVE lockedAt, lockExpiresAt',
+              ConditionExpression: 'attribute_exists(lockedAt)', // Safety check
+              ExpressionAttributeValues: {
+                ':isUpdatable': true,
+                ':updatedAt': now,
+              },
+            })
+          )
+          return lockItem // Return the lock item for cleanup
+        } catch (error: any) {
+          if (error.name === 'ConditionalCheckFailedException') {
+            logger.debug(
+              `Item ${lockItem.userId} was already unlocked, skipping`
+            )
+          } else {
+            logger.error(
+              `Failed to unlock CRA for user ${lockItem.userId}:`,
+              error
+            )
+          }
+          return null
+        }
+      })
+
+      // Execute all updates in this batch concurrently
+      const updateResults = await Promise.allSettled(drsUpdatePromises)
+      const successfulUpdates = updateResults
+        .filter(
+          (result) => result.status === 'fulfilled' && result.value !== null
+        )
+        .map((result) => (result as PromiseFulfilledResult<any>).value)
+
+      logger.debug(
+        `Batch ${Math.floor(i / BATCH_SIZE) + 1}: Updated ${
+          successfulUpdates.length
+        }/${batchItems.length} DRS items`
+      )
+
+      // Step 2: For successful DRS updates, batch delete the lock tracking items
+      if (successfulUpdates.length > 0) {
+        const lockDeleteRequests = successfulUpdates.map((lockItem) => ({
+          DeleteRequest: {
+            Key: {
+              PartitionKeyID: lockItem.PartitionKeyID,
+              SortKeyID: lockItem.SortKeyID,
+            },
+          },
+        }))
+
+        try {
+          await this.dynamoDb.send(
+            new BatchWriteCommand({
+              RequestItems: {
+                [StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId)]:
+                  lockDeleteRequests,
+              },
+            })
+          )
+
+          logger.debug(
+            `Batch ${Math.floor(i / BATCH_SIZE) + 1}: Deleted ${
+              successfulUpdates.length
+            } lock tracking items`
+          )
+        } catch (error) {
+          logger.error(
+            `Failed to delete lock tracking items for batch ${
+              Math.floor(i / BATCH_SIZE) + 1
+            }:`,
+            error
+          )
+          // Continue - DRS items are already unlocked, lock items can be cleaned up later
+        }
+
+        // Add successful userIds to result
+        successfulUpdates.forEach((lockItem) =>
+          unlockedUserIds.push(lockItem.userId)
+        )
+      }
+    }
+
+    logger.info(
+      `Automatically unlocked ${unlockedUserIds.length} expired CRA locks`
+    )
+    return unlockedUserIds
   }
 
   async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
@@ -576,7 +804,8 @@ export class RiskRepository {
   async createOrUpdateManualDRSRiskItem(
     userId: string,
     riskLevel: RiskLevel,
-    isUpdatable?: boolean
+    isUpdatable?: boolean,
+    releaseAt?: number
   ) {
     logger.debug(
       `Updating manual risk level for user ${userId} to ${riskLevel}`
@@ -587,6 +816,34 @@ export class RiskRepository {
       this.getDrsScore(userId),
     ])
 
+    // Check if CRA lock timer feature is enabled
+    const hasCraLockTimerFeature = await tenantHasFeature(
+      this.tenantId,
+      'CRA_LOCK_TIMER'
+    )
+
+    // If feature is disabled, ignore releaseAt timestamp
+    if (isUpdatable === false && releaseAt && !hasCraLockTimerFeature) {
+      logger.info(
+        `CRA lock timer feature not enabled for tenant ${this.tenantId}, ignoring releaseAt`
+      )
+      releaseAt = undefined
+    }
+
+    // Use releaseAt timestamp directly for lock expiration
+    const lockExpiresAt =
+      isUpdatable === false && releaseAt && hasCraLockTimerFeature
+        ? releaseAt
+        : undefined
+
+    const lockExpirationFields =
+      isUpdatable === false && lockExpiresAt
+        ? {
+            lockedAt: now,
+            lockExpiresAt,
+          }
+        : {}
+
     const newDrsRiskValue: DrsScore = {
       manualRiskLevel: riskLevel,
       createdAt: now,
@@ -596,7 +853,9 @@ export class RiskRepository {
       transactionId: 'MANUAL_UPDATE',
       triggeredBy: getTriggerSource(),
       prevDrsScore: previousDrsScore?.drsScore,
+      ...lockExpirationFields,
     }
+
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
     await upsertSaveDynamo(
@@ -609,6 +868,29 @@ export class RiskRepository {
       { versioned: true }
     )
 
+    // Create inverse index lock item if locking with expiration
+    if (isUpdatable === false && lockExpiresAt) {
+      const lockItemKey = DynamoDbKeys.DRS_LOCK_ITEM(
+        this.tenantId,
+        userId,
+        lockExpiresAt.toString()
+      )
+      const lockItem = {
+        ...lockItemKey,
+        tenantId: this.tenantId,
+        lockExpiresAt,
+        createdAt: now,
+      }
+      await this.dynamoDb.send(
+        new PutCommand({
+          TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(
+            this.tenantId
+          ),
+          Item: lockItem,
+        })
+      )
+    }
+
     if (process.env.NODE_ENV === 'development') {
       const { handleLocalHammerheadChangeCapture } = await import(
         '@/core/local-handlers/tarpon'
@@ -617,7 +899,13 @@ export class RiskRepository {
       await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
-    logger.debug(`Manual risk level updated for user ${userId} to ${riskLevel}`)
+    logger.debug(
+      `Manual risk level updated for user ${userId} to ${riskLevel}${
+        lockExpiresAt
+          ? ` with lock expiring at ${new Date(lockExpiresAt).toISOString()}`
+          : ''
+      }`
+    )
 
     return newDrsRiskValue
   }

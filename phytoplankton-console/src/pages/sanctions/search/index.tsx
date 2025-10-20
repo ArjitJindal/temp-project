@@ -18,14 +18,14 @@ import {
   SCREENING_PROFILES,
   SEARCH_PROFILES,
 } from '@/utils/queries/keys';
-import Button from '@/components/library/Button';
 import { isSuperAdmin, useAuth0User, useHasResources } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
-import { notEmpty } from '@/utils/array';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { getErrorMessage } from '@/utils/lang';
+import { ScreeningSearchBar } from '@/components/ScreeningHitTable/ScreeningSearchBar';
+import { sanitizeFuzziness } from '@/components/ScreeningHitTable/utils';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -39,6 +39,9 @@ interface TableSearchParams {
   searchProfileId?: string;
   screeningProfileId?: string;
   entityType?: SanctionsSearchRequestEntityType;
+  gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
+  countryOfResidence?: Array<string>;
+  registrationId?: string;
 }
 
 interface Props {
@@ -131,7 +134,7 @@ export function SearchResultTable(props: Props) {
       const response = getOr(defaultManualScreeningFilters.data, {});
       setParams((prevState) => ({
         ...prevState,
-        fuzziness: response?.fuzziness ?? prevState?.fuzziness,
+        fuzziness: sanitizeFuzziness(response?.fuzziness ?? prevState?.fuzziness, 'hundred'),
         types: (response?.types ?? prevState?.types) as GenericSanctionsSearchType[],
         nationality: response?.nationality ?? prevState?.nationality,
         yearOfBirth: response?.yearOfBirth ?? prevState?.yearOfBirth,
@@ -151,7 +154,9 @@ export function SearchResultTable(props: Props) {
         setParams((current) => ({
           ...current,
           searchProfileId: defaultProfile.searchProfileId,
-          ...(defaultProfile.fuzziness ? { fuzziness: defaultProfile.fuzziness } : {}),
+          ...(defaultProfile.fuzziness
+            ? { fuzziness: sanitizeFuzziness(defaultProfile.fuzziness, 'hundred') }
+            : {}),
           ...(defaultProfile.types?.length
             ? { types: defaultProfile.types as GenericSanctionsSearchType[] }
             : {}),
@@ -209,6 +214,13 @@ export function SearchResultTable(props: Props) {
 
   const historyItem = getOr(historyItemQueryResults.data, null);
 
+  const onChnageSearchTerm = (inputText?: string) => {
+    setParams((params) => ({
+      ...params,
+      searchTerm: inputText,
+    }));
+  };
+
   useEffect(() => {
     if (historyItem) {
       setParams((params) => ({
@@ -216,7 +228,7 @@ export function SearchResultTable(props: Props) {
         searchTerm: historyItem.request?.searchTerm,
         yearOfBirth: historyItem.request?.yearOfBirth,
         countryCodes: historyItem.request?.countryCodes,
-        fuzziness: historyItem.request?.fuzziness,
+        fuzziness: sanitizeFuzziness(historyItem.request?.fuzziness, 'hundred'),
         nationality: historyItem.request?.nationality,
         occupationCode: historyItem.request?.occupationCode,
         documentId: historyItem.request?.documentId?.[0],
@@ -260,7 +272,10 @@ export function SearchResultTable(props: Props) {
       return api.postSanctions({
         SanctionsSearchRequest: {
           searchTerm: searchParams.searchTerm ?? '',
-          fuzziness: selectedSearchProfile?.fuzziness ?? searchParams.fuzziness,
+          fuzziness: sanitizeFuzziness(
+            selectedSearchProfile?.fuzziness ?? searchParams.fuzziness,
+            'one',
+          ),
           countryCodes: searchParams.countryCodes,
           yearOfBirth: searchParams.yearOfBirth ? searchParams.yearOfBirth : undefined,
           types: selectedSearchProfile?.types ?? searchParams.types,
@@ -272,6 +287,9 @@ export function SearchResultTable(props: Props) {
             ? searchParams.screeningProfileId
             : undefined,
           entityType: searchParams.entityType,
+          gender: searchParams.gender,
+          countryOfResidence: searchParams.countryOfResidence,
+          registrationId: searchParams.registrationId,
         },
       });
     },
@@ -313,38 +331,37 @@ export function SearchResultTable(props: Props) {
     };
   }, [params, pageSize]);
 
+  const handleSearch = () => {
+    if (!searchId) {
+      newSearchMutation.mutate(params);
+    } else {
+      setParams({
+        ...DEFAULT_PARAMS_STATE,
+        searchTerm: '',
+        entityType: 'PERSON',
+      });
+      setSearchTerm('');
+      hasSetDefaultProfile.current = false;
+      hasSetDefaultManualFilters.current = false;
+      navigate(makeUrl(`/screening/manual-screening`, {}, {}));
+    }
+  };
+
   return (
     <ScreeningHitTable
       readOnly={searchId != null || !hasManualScreeningWritePermission}
       params={allParams}
       onChangeParams={setParams}
-      extraTools={[
-        searchId == null &&
-          (() => (
-            <Button
-              isDisabled={searchDisabled || isLoading(newSearchMutation.dataResource)}
-              onClick={() => {
-                newSearchMutation.mutate(params);
-              }}
-              requiredResources={['read:::sanctions/search/*']}
-            >
-              Search
-            </Button>
-          )),
-        searchId != null &&
-          (() => (
-            <Button
-              onClick={() => {
-                setSearchTerm('');
-                hasSetDefaultProfile.current = false;
-                navigate(makeUrl(`/screening/manual-screening`, {}, {}));
-              }}
-              requiredResources={['read:::sanctions/search/*']}
-            >
-              New search
-            </Button>
-          )),
-      ].filter(notEmpty)}
+      topTools={
+        <ScreeningSearchBar
+          onChange={onChnageSearchTerm}
+          value={params.searchTerm ?? historyItem?.request.searchTerm}
+          isSearchDisbled={searchDisabled || isLoading(newSearchMutation.dataResource)}
+          searchId={searchId}
+          searchFunction={handleSearch}
+          requiredResources={['read:::screening/manual-screening/*']}
+        />
+      }
       queryResult={mapQuery(historyItemQueryResults, (x) => ({
         items: x?.response?.data ?? [],
         total: x?.response?.hitsCount ?? 0,

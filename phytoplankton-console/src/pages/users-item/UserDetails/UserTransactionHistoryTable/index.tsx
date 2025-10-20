@@ -214,8 +214,10 @@ export function Content(props: { userId: string }) {
         tooltip: 'Origin is the Sender in a transaction',
         children: helper.list([
           helper.derived<Amount>({
-            id: 'originAmount',
+            id: 'originPayment.amount',
             title: 'Origin amount',
+            tooltip: 'Sorting is based on the original transaction value',
+            sorting: true,
             value: (entity): Amount | undefined => {
               if (entity.originAmountDetails == null) {
                 return;
@@ -246,8 +248,10 @@ export function Content(props: { userId: string }) {
         tooltip: 'Destination is the Receiver in a transaction',
         children: helper.list([
           helper.derived({
-            id: 'destinationAmount',
+            id: 'destinationPayment.amount',
             title: 'Destination amount',
+            tooltip: 'Sorting is based on the original transaction value',
+            sorting: true,
             value: (entity): Amount | undefined => {
               if (entity.destinationAmountDetails == null) {
                 return undefined;

@@ -5,14 +5,12 @@ import isNil from 'lodash/isNil'
 import omitBy from 'lodash/omitBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { traceable } from '@/core/xray'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { Case } from '@/@types/openapi-internal/Case'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
-import {
-  DEFAULT_PAGE_SIZE,
-  offsetPaginateClickhouseWithoutDataTable,
-} from '@/utils/pagination'
+import { offsetPaginateClickhouseWithoutDataTable } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { AccountsService } from '@/services/accounts'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseType } from '@/@types/openapi-internal/CaseType'

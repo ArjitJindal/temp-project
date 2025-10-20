@@ -13,7 +13,7 @@ import { traceable } from '@/core/xray'
 import { BackFillActionProcessing } from '@/@types/batch-job'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Alert } from '@/@types/openapi-internal/Alert'
 
 const CHUNK_SIZE = 20

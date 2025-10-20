@@ -1,7 +1,7 @@
 import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
 import cloneDeep from 'lodash/cloneDeep'
 import { getConfig } from './config'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -40,14 +40,46 @@ export async function migrateAllTenants(
           auth0TenantConfig: Auth0DevTenantConfig,
           auth0Domain: 'dev-flagright.eu.auth0.com',
         },
+        {
+          tenant: {
+            id: 'default',
+            name: 'default',
+            orgId: 'org_default',
+            apiAudience: '',
+            region: 'local',
+            isProductionAccessDisabled: false,
+            tenantCreatedAt: new Date().toISOString(),
+            consoleApiUrl: 'https://console.flagright.com',
+            auth0Domain: 'dev-default.eu.auth0.com',
+            orgName: 'flagright',
+          },
+          auth0TenantConfig: Auth0DevTenantConfig,
+          auth0Domain: 'dev-default.eu.auth0.com',
+        },
       ]
     } else {
       tenantInfos = await TenantService.getAllTenants(
         config.stage,
         config.region
       )
+      // attaching default tenant for non local environments
+      tenantInfos.push({
+        tenant: {
+          id: 'default',
+          name: 'default',
+          orgId: 'org_default',
+          apiAudience: '',
+          region: 'local',
+          isProductionAccessDisabled: false,
+          tenantCreatedAt: new Date().toISOString(),
+          consoleApiUrl: 'https://console.flagright.com',
+          auth0Domain: 'dev-default.eu.auth0.com',
+          orgName: 'flagright',
+        },
+        auth0TenantConfig: Auth0DevTenantConfig,
+        auth0Domain: 'dev-flagright.eu.auth0.com',
+      })
     }
-
     if (tenantInfos.length === 0) {
       throw new Error(
         'No tenants found for running the migration! Fix it ASAP!'

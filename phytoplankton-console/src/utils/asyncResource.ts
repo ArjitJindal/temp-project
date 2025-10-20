@@ -178,11 +178,11 @@ export function all<T>(asyncResourceList: AR<T>[]): AR<T[]> {
   if (hasErrors) {
     return failed(errors.join('; '));
   }
-  if (hasInit) {
-    return init();
-  }
   if (hasLoading) {
     return loading(hasMissingResults ? null : result);
+  }
+  if (hasInit) {
+    return init();
   }
   return success(result);
 }

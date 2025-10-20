@@ -1,12 +1,12 @@
 import { AggregationCursor, AnyBulkWriteOperation, Db } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { isDemoTenant } from '@/utils/tenant-id'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   API_REQUEST_LOGS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 
 async function migrateTenant(tenant: Tenant) {
   if (isDemoTenant(tenant.id)) {

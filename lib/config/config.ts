@@ -394,6 +394,13 @@ export type Config = {
     DYNAMO_DB_TRIGGER_LAMBDA?: {
       MEMORY_SIZE?: number
     }
+    CLOUDWATCH_LOGS_INGESTION?: {
+      ENABLED?: boolean
+      FIREHOSE_BUFFER_INTERVAL_SECONDS?: number
+      FIREHOSE_BUFFER_SIZE_MB?: number
+      LOG_GROUP_NAME?: string
+      FILTER_PATTERN?: string
+    }
   }
   viper?: {
     ADMIN_EMAILS: string[]

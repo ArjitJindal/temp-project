@@ -14,7 +14,7 @@ import {
   FlatFilesErrorStage,
 } from '@/@types/flat-files'
 import { FlatFilesRecords } from '@/models/flat-files-records'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 import { asyncIterableBatchProcess } from '@/utils/batch-processor'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'

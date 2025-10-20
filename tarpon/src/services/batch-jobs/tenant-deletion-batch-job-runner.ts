@@ -16,12 +16,9 @@ import {
   getUserReceiverKeys,
   getUserSenderKeys,
 } from '../rules-engine/utils'
-import {
-  executeClickhouseDefaultClientQuery,
-  getClickhouseClient,
-  getClickhouseDbName,
-} from '../../utils/clickhouse/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
+import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/execute'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { allCollections, getMongoDbClient } from '@/utils/mongodb-utils'
@@ -41,7 +38,7 @@ import { getContext } from '@/core/utils/context-storage'
 import {
   TENANT_DELETION_COLLECTION,
   DYNAMODB_PARTITIONKEYS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { envIsNot } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
@@ -50,6 +47,7 @@ import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { CRM_MODEL_TYPES } from '@/@types/openapi-internal-custom/CRMModelType'
 import { toggleApiKeys } from '@/utils/api-usage'
+import { getClickhouseDbName } from '@/utils/clickhouse/database-utils'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -93,6 +91,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ACTIVE_SESSIONS'
   | 'ALERT_COMMENT'
   | 'ALERT_COMMENT_FILE'
+  | 'ALERT_SANCTIONS_DETAILS'
   // TODO to implement
   | 'ORGANIZATION'
   | 'ORGANIZATION_ACCOUNTS'
@@ -125,6 +124,12 @@ type ExcludedDynamoDbKey = Exclude<
   | 'MIGRATION_POST_DEPLOYMENT'
   | 'SECONDARY_QUEUE_TENANTS'
   | 'CLICKHOUSE_SYNC_CHECKSUM'
+  | 'CLOUDWATCH_LOGS_SYNC_STATE'
+
+  // TEMPORARY
+  | 'ADDRESS_TRANSACTION'
+  | 'EMAIL_TRANSACTION'
+  | 'NAME_TRANSACTION'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
@@ -407,11 +412,31 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
       WEBHOOK_CONFIGURATION: {
         method: this.deleteWebhooks.bind(this),
-        order: 27,
+        order: 28,
       },
       USERS_PROPOSAL: {
         method: this.deleteUsersProposal.bind(this),
-        order: 26,
+        order: 28,
+      },
+      SANCTIONS_SEARCH_BATCH_JOB_STATUS: {
+        method: this.deleteSanctionsSearchBatchJobStatus.bind(this),
+        order: 29,
+      },
+      SANCTIONS_WHITELIST_BATCH_JOB_STATUS: {
+        method: this.deleteSanctionsWhitelistBatchJobStatus.bind(this),
+        order: 30,
+      },
+      SANCTION_SEARCHES: {
+        method: this.deleteSanctionSearches.bind(this),
+        order: 31,
+      },
+      SANCTIONS_WHITELIST_ENTITIES: {
+        method: this.deleteSanctionsWhitelistEntities.bind(this),
+        order: 32,
+      },
+      DRS_LOCK_ITEM: {
+        method: this.deleteDrsLockItems.bind(this),
+        order: 27,
       },
     }
 
@@ -508,6 +533,16 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       dangerouslyDeletePartitionKey(
         this.dynamoDb(),
         DynamoDbKeys.ALERT(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT_TRANSACTION_IDS(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT_SANCTIONS_DETAILS(tenantId, alertId, ''),
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       ),
     ])
@@ -954,6 +989,23 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     )
   }
 
+  private async deleteDrsLockItems(tenantId: string) {
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.DRS_LOCK_ITEM(
+      tenantId,
+      '',
+      ''
+    ).PartitionKeyID
+
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'DRS Lock Items'
+    )
+  }
+
   private async deleteSearchProfiles(tenantId: string) {
     const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId = DynamoDbKeys.SEARCH_PROFILE(tenantId).PartitionKeyID
@@ -1162,6 +1214,60 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       partitionKeyId,
       tableName,
       'Webhook'
+    )
+  }
+
+  private async deleteSanctionsSearchBatchJobStatus(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const key = DynamoDbKeys.SANCTIONS_SEARCH_BATCH_JOB_STATUS(tenantId)
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      key.PartitionKeyID,
+      tableName,
+      'Sanctions Search Batch Job Status'
+    )
+  }
+
+  private async deleteSanctionsWhitelistBatchJobStatus(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const key = DynamoDbKeys.SANCTIONS_WHITELIST_BATCH_JOB_STATUS(tenantId)
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      key.PartitionKeyID,
+      tableName,
+      'Sanctions Whitelist Batch Job Status'
+    )
+  }
+
+  private async deleteSanctionSearches(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SANCTION_SEARCHES(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Sanction Searches'
+    )
+  }
+
+  private async deleteSanctionsWhitelistEntities(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    const partitionKeyId = DynamoDbKeys.SANCTIONS_WHITELIST_ENTITIES(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Sanctions Whitelist Entities'
     )
   }
 }

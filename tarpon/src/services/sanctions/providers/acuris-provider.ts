@@ -5,7 +5,7 @@ import capitalize from 'lodash/capitalize'
 import compact from 'lodash/compact'
 import concat from 'lodash/concat'
 import uniq from 'lodash/uniq'
-import { COUNTRIES } from '@flagright/lib/constants'
+import { COUNTRIES } from '@flagright/lib/constants/countries'
 import { MongoClient } from 'mongodb'
 import { Client } from '@opensearch-project/opensearch/.'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -37,7 +37,6 @@ import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityTy
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { generateHashFromString } from '@/utils/object'
 import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { getOpensearchClient } from '@/utils/opensearch-utils'
@@ -313,7 +312,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient },
     settings?: SanctionsSettingsProviderScreeningTypes
   ) {
     let types: AcurisSanctionsSearchType[] | undefined
@@ -350,7 +349,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
     apiKey: string,
     screeningTypes: AcurisSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.ACURIS, tenantId, connections)
     this.apiKey = apiKey
@@ -466,7 +465,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
     }
 
     // save to collection acuris_source_documents
-    const mongoDb = await getMongoDbClient()
+    const mongoDb = await this.getMongoDbClient()
     const repo = this.getSourceDocumentsRepo(mongoDb)
     await repo.save(SanctionsDataProviders.ACURIS, sourceDocuments, version)
     this.SanctionsSourceToEntityIdMapPerson.clear()

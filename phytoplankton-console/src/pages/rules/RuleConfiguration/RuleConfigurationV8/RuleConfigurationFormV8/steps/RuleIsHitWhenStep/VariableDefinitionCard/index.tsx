@@ -69,6 +69,7 @@ function augmentAggregationVariables(
 }
 
 interface VariableTagsProps {
+  usedVariables?: string[];
   entityVariables?: LogicEntityVariableInUse[];
   aggregationVariables?: LogicAggregationVariable[];
   mlVariables?: RuleMachineLearningVariable[];
@@ -81,6 +82,7 @@ interface VariableTagsProps {
 }
 
 export const VariableTags: React.FC<VariableTagsProps> = ({
+  usedVariables,
   entityVariables,
   aggregationVariables,
   mlVariables,
@@ -109,43 +111,43 @@ export const VariableTags: React.FC<VariableTagsProps> = ({
         const name = entityVar.name || entityVarDefinition?.uiDefinition.label || 'Unknown';
 
         return (
-          <Tooltip key={index} title={name}>
-            <div>
-              <Tag
-                key={index}
-                color="action"
-                actions={
-                  readOnly
-                    ? [
-                        {
-                          key: 'view',
-                          icon: <EyeLineIcon className={s.editVariableIcon} />,
-                          action: () => onEdit?.(entityVar.key, index),
-                        },
-                      ]
-                    : [
-                        {
-                          key: 'edit',
-                          icon: <PencilLineIcon className={s.editVariableIcon} />,
-                          action: () => onEdit?.(entityVar.key, index),
-                        },
-                        {
-                          key: 'copy',
-                          icon: <FileCopyLineIcon />,
-                          action: () => onDuplicateEntity?.(entityVar.key, index),
-                        },
-                        {
-                          key: 'delete',
-                          icon: <DeleteBinLineIcon />,
-                          action: () => onDelete?.(entityVar.key),
-                        },
-                      ]
-                }
-              >
-                {name}
-              </Tag>
-            </div>
-          </Tooltip>
+          <Tag
+            key={entityVar.key}
+            color="action"
+            actions={
+              readOnly
+                ? [
+                    {
+                      key: 'view',
+                      icon: <EyeLineIcon className={s.editVariableIcon} />,
+                      action: () => onEdit?.(entityVar.key, index),
+                    },
+                  ]
+                : [
+                    {
+                      key: 'edit',
+                      icon: <PencilLineIcon className={s.editVariableIcon} />,
+                      action: () => onEdit?.(entityVar.key, index),
+                    },
+                    {
+                      key: 'copy',
+                      icon: <FileCopyLineIcon />,
+                      action: () => onDuplicateEntity?.(entityVar.key, index),
+                    },
+                    {
+                      key: 'delete',
+                      icon: <DeleteBinLineIcon />,
+                      action: () => onDelete?.(entityVar.key),
+                      disabled:
+                        usedVariables != null && usedVariables?.includes(entityVar.key)
+                          ? 'The variable is currently in use within the rule. To proceed with deletion, please remove its usage first.'
+                          : undefined,
+                    },
+                  ]
+            }
+          >
+            {name}
+          </Tag>
         );
       })}
       {aggregationVariables
@@ -155,42 +157,42 @@ export const VariableTags: React.FC<VariableTagsProps> = ({
           const name = aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown';
 
           return (
-            <Tooltip key={aggVar.key} title={name}>
-              <div className={s.tagsTooltipContainer}>
-                <Tag
-                  key={aggVar.key}
-                  actions={
-                    readOnly
-                      ? [
-                          {
-                            key: 'view',
-                            icon: <EyeLineIcon className={s.editVariableIcon} />,
-                            action: () => onEdit?.(aggVar.key),
-                          },
-                        ]
-                      : [
-                          {
-                            key: 'edit',
-                            icon: <PencilLineIcon className={s.editVariableIcon} />,
-                            action: () => onEdit?.(aggVar.key),
-                          },
-                          {
-                            key: 'copy',
-                            icon: <FileCopyLineIcon />,
-                            action: () => onDuplicateAgg?.(aggVar.key, index),
-                          },
-                          {
-                            key: 'delete',
-                            icon: <DeleteBinLineIcon />,
-                            action: () => onDelete?.(aggVar.key),
-                          },
-                        ]
-                  }
-                >
-                  {name}
-                </Tag>
-              </div>
-            </Tooltip>
+            <Tag
+              key={aggVar.key}
+              actions={
+                readOnly
+                  ? [
+                      {
+                        key: 'view',
+                        icon: <EyeLineIcon className={s.editVariableIcon} />,
+                        action: () => onEdit?.(aggVar.key),
+                      },
+                    ]
+                  : [
+                      {
+                        key: 'edit',
+                        icon: <PencilLineIcon className={s.editVariableIcon} />,
+                        action: () => onEdit?.(aggVar.key),
+                      },
+                      {
+                        key: 'copy',
+                        icon: <FileCopyLineIcon />,
+                        action: () => onDuplicateAgg?.(aggVar.key, index),
+                      },
+                      {
+                        key: 'delete',
+                        icon: <DeleteBinLineIcon />,
+                        action: () => onDelete?.(aggVar.key),
+                        disabled:
+                          usedVariables != null && usedVariables?.includes(aggVar.key)
+                            ? 'The variable is currently in use within the rule. To proceed with deletion, please remove its usage first.'
+                            : undefined,
+                      },
+                    ]
+              }
+            >
+              {name}
+            </Tag>
           );
         })}
       {mlVariables?.map((mlVar, index) => {
@@ -245,6 +247,7 @@ type EditingEntityVariable = {
 type EditingMLVariable = { type: 'ml'; variable?: RuleMachineLearningVariable };
 
 interface RuleAggregationVariablesEditorProps {
+  usedVariables?: string[];
   ruleType: RuleType;
   readOnly?: boolean;
   entityVariables: LogicEntityVariableInUse[] | undefined;
@@ -259,6 +262,7 @@ interface RuleAggregationVariablesEditorProps {
 }
 
 export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
+  usedVariables,
   ruleType,
   readOnly,
   entityVariables,
@@ -467,6 +471,7 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
           </Dropdown>
         </div>
         <VariableTags
+          usedVariables={usedVariables}
           entityVariables={entityVariables}
           aggregationVariables={aggregationVariables}
           mlVariables={mlVariables}

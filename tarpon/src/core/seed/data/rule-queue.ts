@@ -35,11 +35,25 @@ const ruleQueueInstance = (): RuleQueue[] => {
     description: 'A queue for handling Chainalysis alerts',
     createdAt: Date.now(),
   }
+  const eddReviewQueue: RuleQueue = {
+    id: 'b553ec3b',
+    name: 'EDD Review alerts',
+    description: 'A queue for reviewing EDDs alerts',
+    createdAt: Date.now(),
+  }
+  const eddPreodicQueue: RuleQueue = {
+    id: '377aaf64',
+    name: 'EDD Preodic alerts',
+    description: 'A queue for preodic EDDs alerts',
+    createdAt: Date.now(),
+  }
   const queues = [
     highVelocityAlertQueue,
     sanctionQueue,
     deviationAlertQueue,
     pofQueue,
+    eddReviewQueue,
+    eddPreodicQueue,
   ]
   return hasFeature('CHAINALYSIS') ? [...queues, chainalysisQueue] : queues
 }

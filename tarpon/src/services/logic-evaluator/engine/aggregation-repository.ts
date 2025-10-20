@@ -79,10 +79,14 @@ export class AggregationRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
   backfillNamespace: string | undefined
-
+  aggregationDynamoTable: string
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
+    this.aggregationDynamoTable =
+      tenantId === '4c9cdf0251'
+        ? StackConstants.AGGREGATION_DYNAMODB_TABLE_NAME
+        : StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
   }
 
   public setBackfillNamespace(backfillNamespace: string | undefined) {
@@ -165,11 +169,7 @@ export class AggregationRepository {
       aggregationData,
       groupValue
     )
-    await batchWrite(
-      this.dynamoDb,
-      writeRequests,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
-    )
+    await batchWrite(this.dynamoDb, writeRequests, this.aggregationDynamoTable)
   }
 
   public async getUserLogicTimeAggregations<T>(
@@ -186,7 +186,7 @@ export class AggregationRepository {
       return []
     }
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
-      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      tableName: this.aggregationDynamoTable,
       sortKey: {
         from: getTransactionStatsTimeGroupLabel(afterTimestamp, granularity),
         to: getTransactionStatsTimeGroupLabel(beforeTimestamp - 1, granularity),
@@ -257,11 +257,7 @@ export class AggregationRepository {
         }
         return request
       })
-    await batchWrite(
-      this.dynamoDb,
-      writeRequests,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
-    )
+    await batchWrite(this.dynamoDb, writeRequests, this.aggregationDynamoTable)
   }
 
   public async setTransactionApplied(
@@ -270,7 +266,7 @@ export class AggregationRepository {
     transactionId: string
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Item: {
         ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
           this.tenantId,
@@ -290,7 +286,7 @@ export class AggregationRepository {
     transactionId: string
   ): Promise<boolean> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
         this.tenantId,
         direction,
@@ -317,15 +313,16 @@ export class AggregationRepository {
     userKeyId: string,
     lastTransactionTimestamp: number,
     totalTimeSlices?: number,
-    isSyncRebuild?: boolean
+    isSyncRebuild?: boolean,
+    sliceNumber?: number
   ): Promise<void> {
     const ttl = this.backfillNamespace
       ? this.getBackfillTTL()
       : Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds()
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       UpdateExpression:
-        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, sliceCount = if_not_exists(sliceCount,:zero) +  :one, #ttl = :ttl, isSyncRebuild=:isSyncRebuild',
+        'SET lastTransactionTimestamp = :lastTransactionTimestamp, totalTimeSlices = :totalTimeSlices, #ttl = :ttl, isSyncRebuild=:isSyncRebuild ADD timeSlices :sliceNumber ',
       ExpressionAttributeNames: {
         '#ttl': 'ttl',
       },
@@ -333,9 +330,8 @@ export class AggregationRepository {
         ':lastTransactionTimestamp': lastTransactionTimestamp,
         ':totalTimeSlices': totalTimeSlices ?? 1,
         ':ttl': ttl,
-        ':zero': 0,
-        ':one': 1,
         ':isSyncRebuild': isSyncRebuild ?? false,
+        ':sliceNumber': new Set<number>([sliceNumber ?? 1]),
       },
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
         this.tenantId,
@@ -351,7 +347,7 @@ export class AggregationRepository {
     userKeyId: string
   ): Promise<{ ready: boolean; lastTransactionTimestamp: number }> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
         this.tenantId,
         userKeyId,
@@ -360,14 +356,18 @@ export class AggregationRepository {
       ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
-    const noOfReadySlices = result.Item?.sliceCount ?? 1
+    const noOfReadySlices = result.Item?.sliceCount ?? 1 // Keeping to avoid breaking existing rebuilds
     const totalTimeSlices = result.Item?.totalTimeSlices ?? 1
     const lastTransactionTimestamp = result.Item?.lastTransactionTimestamp ?? 0
     const isSyncRebuild = result.Item?.isSyncRebuild ?? false
+    const timeSlices = (result.Item?.timeSlices ??
+      new Set<number>([1])) as Set<number>
     return {
       ready:
         Boolean(result.Item) &&
-        (noOfReadySlices == totalTimeSlices || isSyncRebuild),
+        (noOfReadySlices == totalTimeSlices ||
+          isSyncRebuild ||
+          Array.from(timeSlices).length === totalTimeSlices),
       lastTransactionTimestamp,
     }
   }
@@ -467,7 +467,7 @@ export class AggregationRepository {
   ): Promise<void> {
     const oldAggVarHash = getAggVarHash(oldAggVar, false)
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, oldAggVarHash),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
@@ -487,7 +487,7 @@ export class AggregationRepository {
     usedAggVar: UsedAggregationVariable
   ): Promise<void> {
     const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(
         this.tenantId,
         usedAggVar.aggVarHash
@@ -502,7 +502,7 @@ export class AggregationRepository {
   ): Promise<UsedAggregationVariable> {
     const aggVarHash = getAggVarHash(aggregationVariable, false)
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, aggVarHash),
       ConsistentRead: true,
     }
@@ -521,7 +521,7 @@ export class AggregationRepository {
     updatedIds: string[]
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      TableName: this.aggregationDynamoTable,
       Item: {
         ...DynamoDbKeys.AGGREGATION_VARIABLE(
           this.tenantId,

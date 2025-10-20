@@ -84,7 +84,7 @@ import { LinkerService } from '@/services/linker'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import {
   auditLog,
   AuditLogEntity,
@@ -719,7 +719,7 @@ export class CaseService extends CaseAlertsCommonService {
         ...(updateChecklistStatus &&
         hasFeature('QA') &&
         updates.caseStatus === 'CLOSED'
-          ? [this.caseRepository.markAllChecklistItemsAsDone(caseIds)]
+          ? [this.caseRepository.markUnMarkedChecklistItemsDone(caseIds)]
           : []),
         ...(this.hasFeatureSla
           ? cases.map(async (c) =>

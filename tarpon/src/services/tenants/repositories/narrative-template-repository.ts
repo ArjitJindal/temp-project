@@ -2,15 +2,15 @@ import { Collection, Filter, MongoClient } from 'mongodb'
 import { ConnectionCredentials } from 'thunder-schema'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 import { paginateCursor } from '@/utils/mongodb-utils'
-import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
+import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongo-table-names'
 import { NarrativeTemplateRequest } from '@/@types/openapi-internal/NarrativeTemplateRequest'
 import { DefaultApiGetNarrativesRequest } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { Narratives } from '@/models/narrative-template'
 import {
-  isClickhouseEnabled,
   isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/checks'
 
 @traceable
 export class NarrativeRepository {

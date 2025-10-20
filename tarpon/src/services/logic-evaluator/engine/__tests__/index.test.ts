@@ -18,7 +18,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Address } from '@/@types/openapi-public/Address'
-import { getAddressStringForAggregation } from '@/utils/helpers'
+import { getAddressString } from '@/utils/helpers'
 
 jest.mock('../../operators/starts-ends-with', () => {
   const actualModule = jest.requireActual('../../operators/starts-ends-with')
@@ -2673,7 +2673,7 @@ describe('V8 aggregator', () => {
           transactionCurrency: 'EUR',
         },
         destinationUserId: 'D-1',
-        destinationPaymentDetails: {
+        originPaymentDetails: {
           method: 'CARD',
           cardFingerprint: 'D-1',
           address: getAddress(),
@@ -2687,7 +2687,7 @@ describe('V8 aggregator', () => {
           transactionCurrency: 'EUR',
         },
         destinationUserId: 'D-2',
-        destinationPaymentDetails: {
+        originPaymentDetails: {
           method: 'CARD',
           cardFingerprint: 'D-2',
           address: getAddress(),
@@ -2702,14 +2702,16 @@ describe('V8 aggregator', () => {
       dayjs('2023-01-01T11:01:00.000Z').valueOf(),
       undefined,
       undefined,
+      { type: 'ADDRESS', address: getAddress() },
       {
-        type: 'ADDRESS',
-        value: getAddressStringForAggregation(getAddress()),
+        startTimestamp: dayjs('2023-01-01T11:00:00.000Z').valueOf(),
+        endTimestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
       }
     )
     const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const addressString = getAddressString(getAddress()) || ''
     const aggData = await aggregationRepository.getUserLogicTimeAggregations(
-      getAddressStringForAggregation(getAddress()) || '',
+      addressString,
       AGG_VARIABLE,
       dayjs('2023-01-01T11:00:00.000Z').valueOf(),
       dayjs('2023-01-01T12:00:00.000Z').valueOf(),

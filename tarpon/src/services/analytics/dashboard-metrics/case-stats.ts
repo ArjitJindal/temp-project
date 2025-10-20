@@ -12,7 +12,7 @@ import {
   MONTH_DATE_FORMAT,
   MONTH_DATE_FORMAT_JS,
 } from '@/core/constants'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStats'
 import { DashboardStatsClosingReasonDistributionStatsClosingReasonsData } from '@/@types/openapi-internal/DashboardStatsClosingReasonDistributionStatsClosingReasonsData'
@@ -21,12 +21,10 @@ import { notEmpty, notNullish } from '@/utils/array'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStatsData } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStatsData'
 import { traceable } from '@/core/xray'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { DashboardStatsAlertPriorityDistributionStatsAlertPriorityData } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStatsAlertPriorityData'
 import { tenantTimezone } from '@/core/utils/context'
 

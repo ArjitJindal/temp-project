@@ -289,11 +289,17 @@ export const manualRiskAssignmentHandler = lambdaApi({
     )
 
     handlers.registerPulseManualRiskAssignment(async (ctx, request) => {
+      const { riskLevel, isUpdatable, releaseAt } =
+        request.ManualRiskAssignmentPayload
+
+      // Create or update the risk assignment (handles risk level, lock status, and lock expiration)
       const response = await riskService.createOrUpdateRiskAssignment(
         request.userId,
-        request.ManualRiskAssignmentPayload.riskLevel,
-        request.ManualRiskAssignmentPayload.isUpdatable
+        riskLevel,
+        isUpdatable,
+        releaseAt
       )
+
       return response.result
     })
 

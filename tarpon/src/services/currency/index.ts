@@ -69,6 +69,15 @@ export const CURRENCY_CODES_WITH_NO_EXCHANGE_RATE: CurrencyCode[] = [
   'NPC',
   'EURA',
   'ISLM',
+  'KLAY',
+  'ZIL',
+  'DYDX',
+  'IOTA',
+  'TON',
+  'WAVES',
+  'LUNA2',
+  'NEO',
+  'UDI',
 ] as const
 
 // Currencies to take exchange rate from other currency for Example SLE should take exchange rate of SLL

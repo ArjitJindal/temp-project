@@ -1,11 +1,12 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
 import { traceable } from '@/core/xray'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { DefaultApiGetWebhooksWebhookIdDeliveriesRequest } from '@/@types/openapi-internal/RequestParameters'
-import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
+import { offsetPaginateClickhouse } from '@/utils/pagination'
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 
 @traceable
 export class ClickhouseWebhookDeliveryRepository {

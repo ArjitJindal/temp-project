@@ -11,16 +11,22 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { uniq } from 'lodash';
-import Tag from '../Tag';
 import s from './style.module.less';
 import SelectMenu from './SelectMenu';
-import { filterOption, parseSearchString, SEPARATOR } from './helpers';
+import {
+  DEFAULT_TAG_RENDERER,
+  filterOption,
+  InternalOption,
+  parseSearchString,
+  SEPARATOR,
+} from './helpers';
+import TagsStack, { TagsStackParams } from './TagsStack';
+import Tags from './Tags';
 import { useId } from '@/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 import { Comparable, compare, key } from '@/utils/comparable';
-import { getErrorMessage, isEqual } from '@/utils/lang';
+import { getErrorMessage, isEqual, neverReturn } from '@/utils/lang';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
-import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 import ArrowDownIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import LoaderIcon from '@/components/ui/icons/Remix/system/loader-4-line.react.svg';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -39,6 +45,16 @@ export interface Option<Value extends Comparable> {
   isVirtual?: boolean;
   icon?: React.ReactNode;
 }
+
+export type TagRenderer<Value extends Comparable> = (props: {
+  isHovered: boolean;
+  isShadowed: boolean;
+  isOnTop: boolean;
+  isDisabled: boolean;
+  isOptionFound: boolean;
+  option: Option<Value>;
+  onRemove: () => void;
+}) => React.ReactNode;
 
 interface CommonProps {
   size?: 'DEFAULT' | 'LARGE';
@@ -61,25 +77,35 @@ export interface SingleProps<Value extends Comparable> extends CommonProps, Inpu
   options: Option<Value>[];
 }
 
+export interface DynamicProps<Value extends Comparable>
+  extends CommonProps,
+    InputProps<Value | string> {
+  mode: 'DYNAMIC';
+  options: Option<Value>[];
+  keepUnusedOptionsAvailable?: boolean;
+}
+
 export interface MultipleProps<Value extends Comparable> extends CommonProps, InputProps<Value[]> {
   mode: 'MULTIPLE';
   options: Option<Value>[];
-  allowNewOptions?: boolean;
+  tagsStack?: boolean | TagsStackParams<Value>;
+  tagRenderer?: TagRenderer<Value>;
 }
 
-/**
- * Dynamic mode inteded for use-cases when we want to allow users to input values that are not in the initial options.
- */
-export interface DynamicProps extends CommonProps, InputProps<string> {
-  mode: 'DYNAMIC';
-  options: Option<string>[];
-  keepUnusedOptionsAvailable?: boolean;
+export interface DynamicMultipleProps<Value extends Comparable>
+  extends CommonProps,
+    InputProps<(Value | string)[]> {
+  mode: 'MULTIPLE_DYNAMIC';
+  options: Option<Value>[];
+  tagsStack?: boolean | TagsStackParams<Value>;
+  tagRenderer?: TagRenderer<Value>;
 }
 
 export type Props<Value extends Comparable> =
   | SingleProps<Value>
   | MultipleProps<Value>
-  | DynamicProps;
+  | DynamicMultipleProps<Value>
+  | DynamicProps<Value>;
 
 const VIEWPORT_PADDING = 8;
 const MIN_HEIGHT = 100;
@@ -97,13 +123,13 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     isDisabled = false,
     isError = false,
     allowClear = true,
-    placeholderIcon,
-    placeholder,
     size = 'DEFAULT',
     hiddenDropdown = false,
     fixedHeight = false,
     hideBorders = false,
     width,
+    placeholderIcon,
+    placeholder,
     onSearch,
   } = props;
 
@@ -124,7 +150,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   const keepUnusedOptionsAvailable =
     props.mode === 'DYNAMIC' && props.keepUnusedOptionsAvailable !== false;
 
-  const allowNewOptions = mode === 'MULTIPLE' && props.allowNewOptions === true;
+  const allowNewOptions = mode === 'MULTIPLE_DYNAMIC' || mode === 'DYNAMIC';
 
   const availableOptions = useMemo(() => {
     const result: Option<Value>[] = [];
@@ -137,25 +163,28 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       if (!isOptionExists && value != null) {
         result.unshift({ label: value, value: value as Value, isVirtual: true });
       }
-    } else if (mode === 'MULTIPLE' && allowNewOptions) {
+    } else if (mode === 'MULTIPLE_DYNAMIC') {
       for (const valueItem of value ?? []) {
         const isOptionExists = result.some((x) => compare(x.value, valueItem));
         if (!isOptionExists) {
-          result.unshift({ label: valueItem, value: valueItem, isVirtual: true });
+          result.unshift({ label: valueItem, value: valueItem as Value, isVirtual: true });
         }
       }
     }
     return result;
-  }, [virtualOptions, options, mode, value, keepUnusedOptionsAvailable, allowNewOptions]);
+  }, [virtualOptions, options, mode, value, keepUnusedOptionsAvailable]);
 
   const applySearchStringValue = useCallback(
-    (searchString: string, value: Value | Value[] | undefined | string) => {
+    (
+      searchString: string,
+      value: Value | Value[] | undefined | string | string[] | (string | Value)[],
+    ) => {
       let newValue;
-      if (mode === 'MULTIPLE') {
+      if (mode === 'MULTIPLE' || mode === 'MULTIPLE_DYNAMIC') {
         const parsedValues = parseSearchString<Value>(
           availableOptions,
           searchString,
-          !allowNewOptions,
+          mode !== 'MULTIPLE_DYNAMIC',
         );
         newValue = uniq([...((value as Value[]) ?? []), ...parsedValues] as Value[]);
       } else if (mode === 'SINGLE' || mode === 'DYNAMIC' || mode == null) {
@@ -173,7 +202,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         onChange?.(newValue);
       }
     },
-    [mode, availableOptions, onChange, allowNewOptions, handleChangeSearchText],
+    [mode, availableOptions, onChange, handleChangeSearchText],
   );
 
   const [isOpen, setIsOpen] = useState(false);
@@ -237,6 +266,8 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         return option.value === value;
       } else if (mode === 'MULTIPLE') {
         return value?.includes(option.value as Value) ?? false;
+      } else if (mode === 'MULTIPLE_DYNAMIC') {
+        return value?.includes(option.value as string) ?? false;
       } else {
         return false;
       }
@@ -245,14 +276,6 @@ export default function Select<Value extends Comparable = string>(props: Props<V
 
   const [isFocused, setIsFocused] = useState(false);
   const [inputRef, setInputRef] = useState<HTMLInputElement | null>(null);
-
-  const isEmpty = selectedOptions.length === 0;
-  const showClearIcon = allowClear && !isEmpty;
-  const showCopyIcon = isCopyable && props.value != null;
-
-  const rightIconsCount = useMemo(() => {
-    return 1 + (showClearIcon ? 1 : 0) + (isLoading ? 1 : 0) + (showCopyIcon ? 1 : 0);
-  }, [showClearIcon, isLoading, showCopyIcon]);
 
   const handleCopy = useCallback(
     async (e: React.MouseEvent<ReactSVGElement>) => {
@@ -280,7 +303,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     if (searchText) {
       result = result.filter((x) => filterOption(searchText ?? '', x));
     }
-    if (props.mode === 'DYNAMIC' || allowNewOptions) {
+    if (allowNewOptions) {
       const values = props.mode === 'DYNAMIC' ? [props.value] : props.value ?? [];
       if (searchText) {
         const isOptionExists = values.some((value) =>
@@ -301,6 +324,33 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     return result;
   }, [props.value, searchText, availableOptions, allowNewOptions, props.mode]);
 
+  const notFoundOptions = useMemo((): Option<Value>[] => {
+    let values: (string | Value)[];
+    if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
+      values = props.value != null ? [props.value] : [];
+    } else if (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') {
+      values = props.value ?? [];
+    } else {
+      values = neverReturn(props.mode, []);
+    }
+
+    return values
+      .filter((x) => !availableOptions.some((option) => compare(x, option.value)))
+      .map((x) => ({
+        value: x,
+        label: x,
+      })) as Option<Value>[];
+  }, [props.mode, props.value, availableOptions]);
+
+  const isEmpty = selectedOptions.length === 0 && notFoundOptions.length === 0;
+
+  const showClearIcon = allowClear && !isEmpty;
+  const showCopyIcon = isCopyable && props.value != null;
+
+  const rightIconsCount = useMemo(() => {
+    return 1 + (showClearIcon ? 1 : 0) + (isLoading ? 1 : 0) + (showCopyIcon ? 1 : 0);
+  }, [showClearIcon, isLoading, showCopyIcon]);
+
   const portalId = useMemo(() => {
     return `select-portal-${props.testId ?? id}`;
   }, [props.testId, id]);
@@ -320,14 +370,14 @@ export default function Select<Value extends Comparable = string>(props: Props<V
               <SelectMenu<Value>
                 options={optionsToShow}
                 selectedValues={
-                  Array.isArray(props.value)
+                  (Array.isArray(props.value)
                     ? props.value
                     : props.value
-                    ? [props.value as Value]
-                    : []
+                    ? [props.value]
+                    : []) as Value[]
                 }
                 onSelectOption={(selectedValue, option) => {
-                  if (props.mode === 'SINGLE' || props.mode === undefined) {
+                  if (props.mode === 'SINGLE' || !('mode' in props) || props.mode === undefined) {
                     props.onChange?.(selectedValue);
                     setIsOpen(false);
                     handleChangeSearchText('');
@@ -336,6 +386,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                       ? props.value?.filter((v) => v !== selectedValue)
                       : [...(props.value ?? []), selectedValue];
                     props.onChange?.(newValue);
+                  } else if (props.mode === 'MULTIPLE_DYNAMIC') {
+                    const newValue = props.value?.includes(selectedValue as string)
+                      ? props.value?.filter((v) => v !== selectedValue)
+                      : [...(props.value ?? []), selectedValue];
+                    props.onChange?.(newValue as string[]);
                   } else if (props.mode === 'DYNAMIC') {
                     if (option.isVirtual) {
                       setVirtualOptions((prev) => {
@@ -354,7 +409,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                     props.onChange?.(newValue);
                   }
                 }}
-                showCheckboxes={props.mode === 'MULTIPLE'}
+                showCheckboxes={props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC'}
               />
             ) : (
               <div className={s.noOptions}>{props.notFoundContent ?? 'No options available'}</div>
@@ -397,6 +452,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
               [s.allowClear]: allowClear,
               [s.fixedHeight]: fixedHeight,
               [s.hideBorders]: hideBorders,
+              [s.tagsStack]:
+                (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') &&
+                (props.tagsStack === true ||
+                  (typeof props.tagsStack === 'object' && props.tagsStack.enabled === true)),
             },
           )}
           onClick={() => {
@@ -409,19 +468,11 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             {placeholderIcon && <div className={s.placeholderIcon}>{placeholderIcon}</div>}
             {placeholder}
           </div>
-          {selectedOptions.length > 0 &&
-            (props.mode === 'MULTIPLE' ? (
-              <RenderTags
-                options={selectedOptions}
-                onRemove={(value) => {
-                  props.onChange?.(props.value?.filter((v) => v !== value));
-                }}
-              />
-            ) : (
-              <span className={s.selectedOption} key={key(selectedOptions[0].value)}>
-                <span className={s.selectedOptionLabel}>{selectedOptions[0].label}</span>
-              </span>
-            ))}
+          <RenderValue<Value>
+            {...props}
+            notFoundOptions={notFoundOptions}
+            selectedOptions={selectedOptions}
+          />
           <input
             type="text"
             onFocus={() => {
@@ -447,6 +498,13 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             onKeyDown={(e) => {
               if (e.key === 'Tab') {
                 handleOpenChange(false);
+              } else if (e.key === 'Enter') {
+                if (isOpen && searchText != null && searchText !== '') {
+                  applySearchStringValue(searchText, props.value);
+                }
+                handleOpenChange(!isOpen);
+              } else if (e.key === 'Escape') {
+                setSearchText('');
               }
             }}
           />
@@ -459,7 +517,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                 className={cn(s.rightIcon, s.clearIcon)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (props.mode === 'MULTIPLE') {
+                  if (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') {
                     props.onChange?.([]);
                   } else {
                     props.onChange?.(undefined);
@@ -481,30 +539,57 @@ export default function Select<Value extends Comparable = string>(props: Props<V
   );
 }
 
-function RenderTags<Value extends Comparable>(props: {
-  options: Option<Value>[];
-  onRemove: (value: Value) => void;
-}) {
+function RenderValue<Value extends Comparable>(
+  props: Props<Value> & {
+    selectedOptions: Option<Value>[];
+    notFoundOptions: Option<Value>[];
+  },
+) {
+  const { selectedOptions, notFoundOptions, isDisabled = false } = props;
+
+  const allOptions: InternalOption<Value>[] = useMemo(
+    () => [
+      ...selectedOptions.map((x) => ({ ...x, isNotFoundOption: false })),
+      ...notFoundOptions.map((x) => ({ ...x, isNotFoundOption: true })),
+    ],
+    [selectedOptions, notFoundOptions],
+  );
+
+  if ((props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') && props.tagsStack != null) {
+    const tagsStackParams: TagsStackParams<Value> =
+      typeof props.tagsStack === 'boolean' ? { enabled: props.tagsStack } : props.tagsStack;
+    if (tagsStackParams.enabled) {
+      return (
+        <TagsStack
+          params={tagsStackParams}
+          isDisabled={isDisabled}
+          selectedOptions={allOptions}
+          tagRenderer={props.tagRenderer}
+          onRemove={(value) => {
+            props.onChange?.(props.value?.filter((v) => v !== value) as Value[]);
+          }}
+        />
+      );
+    }
+  }
+
   return (
     <>
-      {props.options.map((option) => (
-        <div className={s.tagWrapper} key={key(option.value)}>
-          <Tag
-            key={key(option.value)}
-            actions={[
-              {
-                icon: <CloseLineIcon className={s.tagRemoveIcon} />,
-                key: 'remove',
-                action: () => {
-                  props.onRemove(option.value);
-                },
-              },
-            ]}
-          >
-            {option.label}
-          </Tag>
-        </div>
-      ))}
+      {allOptions.length > 0 &&
+        (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC' ? (
+          <Tags
+            isDisabled={isDisabled}
+            selectedOptions={allOptions}
+            onRemove={(value) => {
+              props.onChange?.(props.value?.filter((v) => v !== value) as Value[]);
+            }}
+            tagRenderer={props.tagRenderer ?? DEFAULT_TAG_RENDERER}
+          />
+        ) : (
+          <span className={s.selectedOption} key={key(allOptions[0].value)}>
+            <span className={s.selectedOptionLabel}>{allOptions[0].label}</span>
+          </span>
+        ))}
     </>
   );
 }

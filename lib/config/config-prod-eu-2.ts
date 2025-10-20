@@ -29,8 +29,8 @@ export const config: Config = {
   },
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
-      CPU: 2048,
-      MEMORY_LIMIT: 4096,
+      CPU: 4096, // 4 vCPUs
+      MEMORY_LIMIT: 16384, // 16GB temporary increase to avoid GC rebuild OOMS
       ARCHITECTURE: 'arm64',
     },
     CLOUD_WATCH: {
@@ -102,6 +102,13 @@ export const config: Config = {
       MEMORY_SIZE: 2048,
       PROVISIONED_CONCURRENCY: 1000, // TEMPORARY 100 -> 1000
     },
+    CLOUDWATCH_LOGS_INGESTION: {
+      ENABLED: true,
+      FIREHOSE_BUFFER_INTERVAL_SECONDS: 300,
+      FIREHOSE_BUFFER_SIZE_MB: 5,
+      LOG_GROUP_NAME: '/aws/lambda/tarponPublicApiTransactionFunction',
+      FILTER_PATTERN: '[REPORT, RequestId, ..., duration=Duration*, ...]',
+    },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: true,
     DYNAMO_WRITE_CAPACITY_THRESHOLD: 450,
@@ -139,7 +146,7 @@ export const config: Config = {
   opensearch: {
     deploy: true,
     dataNodes: 7,
-    dataNodeInstanceType: 'm7g.xlarge.search',
+    dataNodeInstanceType: 'm7g.4xlarge.search',
     volumeSize: 25,
   },
 }

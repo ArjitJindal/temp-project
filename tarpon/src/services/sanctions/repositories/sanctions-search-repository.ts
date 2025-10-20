@@ -1,9 +1,13 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
 import isNil from 'lodash/isNil'
-import omit from 'lodash/omit'
 import omitBy from 'lodash/omitBy'
 import { Search_Response } from '@opensearch-project/opensearch/api'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
 import { getDefaultProviders } from '../utils'
 import {
   deriveMatchingDetails,
@@ -14,12 +18,13 @@ import {
 } from '../providers/utils'
 import { OPENSEARCH_NON_PROJECTED_FIELDS } from '../providers/sanctions-data-fetcher'
 import { SanctionsSearchProps } from '../types'
-import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
+  getMongoDbClient,
   prefixRegexMatchFilter,
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
-import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
@@ -30,7 +35,7 @@ import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { ProviderConfig } from '@/services/sanctions'
-import { generateChecksum, getSortedObject } from '@/utils/object'
+import { generateChecksum } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
@@ -38,22 +43,28 @@ import { hasFeature } from '@/core/utils/context'
 import { getOpensearchClient } from '@/utils/opensearch-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { ScreeningProfileService } from '@/services/screening-profile'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
 @traceable
 export class SanctionsSearchRepository {
   tenantId: string
-  mongoDb: MongoClient
+  mongoDb?: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  tableName: string
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
+    this.tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+  }
+  private async getMongoDbClient() {
+    return this.mongoDb ?? (await getMongoDbClient())
   }
 
   public async saveSearchResult(props: {
@@ -66,6 +77,7 @@ export class SanctionsSearchRepository {
     hitContext: SanctionsHitContext | undefined
     providerConfigHash?: string
     requestHash?: string
+    dynamoHash?: string
     screeningEntity?: 'USER' | 'TRANSACTION'
   }): Promise<void> {
     const { provider, request, response, createdAt, updatedAt } = props
@@ -93,7 +105,13 @@ export class SanctionsSearchRepository {
         'metadata.screeningEntity': props.screeningEntity,
       }
     }
-
+    if (props.dynamoHash) {
+      await this.storeSearchResultInDynamoDB(
+        props.dynamoHash,
+        updateMessage,
+        filter
+      )
+    }
     if (envIs('local', 'test') || getTriggerSource() !== 'PUBLIC_API') {
       await this.updateMessageSync(filter, updateMessage)
       return
@@ -122,18 +140,66 @@ export class SanctionsSearchRepository {
     updateMessage: UpdateFilter<SanctionsSearchHistory>
   ) {
     const collectionName = SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     await db
       .collection<SanctionsSearchHistory>(collectionName)
       .updateOne(filter, updateMessage, { upsert: true })
   }
 
+  private async storeSearchResultInDynamoDB(
+    dynamoHash: string,
+    updateMessage: UpdateFilter<SanctionsSearchHistory>,
+    filter: Filter<SanctionsSearchHistory>
+  ): Promise<void> {
+    const key = DynamoDbKeys.SANCTION_SEARCHES(this.tenantId, dynamoHash)
+
+    const response = updateMessage.$set?.response
+    const searchId = filter._id
+
+    if (response && searchId) {
+      const simplifiedResponse = {
+        ...response,
+        data: response.data?.map((entity) => ({
+          entityId: entity.id,
+          entityType: entity.entityType,
+        })),
+      }
+
+      const dynamoItem = {
+        ...key,
+        ...updateMessage.$set,
+        searchId,
+        response: simplifiedResponse,
+      }
+
+      const putCommand = new PutCommand({
+        TableName: this.tableName,
+        Item: dynamoItem,
+      })
+
+      await this.dynamoDb.send(putCommand)
+    }
+  }
+
   public async getSearchResultByParams(
     provider: SanctionsDataProviderName,
     request: SanctionsSearchRequest,
+    mongoHash: string,
+    dynamoHash: string,
+    isBackfillDone: boolean,
     providerConfig?: ProviderConfig
-  ): Promise<SanctionsSearchHistory | null> {
-    const db = this.mongoDb.db()
+  ): Promise<string | null> {
+    if (isBackfillDone) {
+      const key = DynamoDbKeys.SANCTION_SEARCHES(this.tenantId, dynamoHash)
+      const command = new GetCommand({
+        TableName: this.tableName,
+        Key: key,
+        ProjectionExpression: 'searchId',
+      })
+      const result = await this.dynamoDb.send(command)
+      return result.Item?.searchId as string | null
+    }
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
@@ -144,17 +210,13 @@ export class SanctionsSearchRepository {
       fuzziness,
     } = request
 
-    const requestHash = generateChecksum(
-      getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
-    )
-
     const filters: Filter<SanctionsSearchHistory>[] = [
       { 'request.monitoring.enabled': request.monitoring?.enabled },
       ...(!request.monitoring?.enabled
         ? [{ expiresAt: { $exists: true, $gt: Date.now() } }]
         : []),
       { 'request.fuzziness': fuzziness },
-      { requestHash: requestHash },
+      { requestHash: mongoHash },
     ]
 
     if (fuzzinessRange != null) {
@@ -183,9 +245,11 @@ export class SanctionsSearchRepository {
       provider,
     })
 
-    return await collection.findOne({
-      $and: filters,
-    })
+    const result = await collection.findOne(
+      { $and: filters },
+      { projection: { _id: 1 } }
+    )
+    return result?._id as string | null
   }
 
   private getSanctionsSearchHistoryCondition(
@@ -222,10 +286,10 @@ export class SanctionsSearchRepository {
     return { $and: conditions }
   }
 
-  private getSanctionsSearchHistoryCursorPaginate(
+  private async getSanctionsSearchHistoryCursorPaginate(
     params: DefaultApiGetSanctionsSearchRequest
   ): Promise<SanctionsSearchHistoryResponse> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
@@ -261,7 +325,7 @@ export class SanctionsSearchRepository {
     page: number,
     pageSize: number
   ): Promise<SanctionsSearchHistory | null> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
@@ -307,7 +371,6 @@ export class SanctionsSearchRepository {
     request: SanctionsSearchRequest
   ): Promise<SanctionsSearchProps> {
     const screeningProfileService = new ScreeningProfileService(this.tenantId, {
-      mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
     return getSanctionSourceDetails(request, screeningProfileService)
@@ -397,7 +460,9 @@ export class SanctionsSearchRepository {
       }),
       searchId: result._id,
     } as SanctionsSearchResponse
-    await this.mongoDb
+    await (
+      await this.getMongoDbClient()
+    )
       .db()
       .collection<SanctionsSearchHistory>(
         SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
@@ -412,7 +477,7 @@ export class SanctionsSearchRepository {
   public async getSearchResult(
     searchId: string
   ): Promise<SanctionsSearchHistory | null> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
@@ -435,7 +500,7 @@ export class SanctionsSearchRepository {
   public async getSearchResultByIds(
     searchIds: string[]
   ): Promise<SanctionsSearchHistory[]> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
@@ -446,7 +511,7 @@ export class SanctionsSearchRepository {
     provider: SanctionsDataProviderName,
     providerSearchId: string
   ): Promise<SanctionsSearchHistory | null> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )

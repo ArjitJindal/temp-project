@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {

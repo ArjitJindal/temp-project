@@ -10,8 +10,8 @@ export const handleBatchJob = async (jobWithId: BatchJobWithId) => {
   await jobRepository.insertJob(jobWithId)
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { jobRunnerHandler } = require('@/lambdas/batch-job-runner/app')
+  const { jobRunnerHandler } = await import('@/lambdas/batch-job-runner/app')
 
-  jobRunnerHandler(jobWithId)
+  await jobRunnerHandler(jobWithId)
   return
 }

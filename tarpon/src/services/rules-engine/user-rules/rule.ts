@@ -9,7 +9,7 @@ import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 import { SanctionsService } from '@/services/sanctions'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
+import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { hasFeature } from '@/core/utils/context'
 import { getUsersFilterByRiskLevel } from '@/services/users/utils/user-utils'
@@ -118,7 +118,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   user: User | Business
   parameters: P
   filters: T
-  mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   ongoingScreeningMode: boolean
   ruleInstance: RuleInstance
@@ -156,7 +155,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     this.ruleInstance = context.ruleInstance
     this.rule = context.rule
     this.sanctionsService = services.sanctionsService
-    this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
   }
 

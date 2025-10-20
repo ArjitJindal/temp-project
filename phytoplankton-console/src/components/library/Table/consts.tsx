@@ -87,16 +87,15 @@ const ExpandCheckbox = <Item extends object>({
   }, [row]);
 
   return (
-    <div className={s.selectColumn}>
-      <Checkbox
-        value={partiallySelectedIds?.includes(row.id) ? false : row.getIsSelected()}
-        isDisabled={isDisabled}
-        onChange={(newValue) => {
-          row.toggleSelected(newValue);
-        }}
-        testName="row-table"
-      />
-    </div>
+    <Checkbox
+      value={partiallySelectedIds?.includes(row.id) ? false : row.getIsSelected()}
+      isDisabled={isDisabled}
+      onChange={(newValue) => {
+        row.toggleSelected(newValue);
+      }}
+      testName="row-table"
+      className={s.selectCheckbox}
+    />
   );
 };
 
@@ -114,14 +113,13 @@ export const EXPAND_COLUMN = <Item extends object>(): TanTable.ColumnDef<TableRo
       return <></>;
     }
     return (
-      <div className={s.selectColumn}>
-        <ExpandIcon
-          isExpanded={cell.row.getIsExpanded()}
-          color="BLACK"
-          size="SMALL"
-          onClick={() => cell.row.toggleExpanded()}
-        />
-      </div>
+      <ExpandIcon
+        isExpanded={cell.row.getIsExpanded()}
+        color="BLACK"
+        size="SMALL"
+        onClick={() => cell.row.toggleExpanded()}
+        className={s.expandIcon}
+      />
     );
   },
 });

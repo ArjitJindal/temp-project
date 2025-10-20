@@ -15,14 +15,14 @@ import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { traceable } from '@/core/xray'
-import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongo-table-names'
 import { CounterRepository } from '@/services/counter/repository'
+import { cursorPaginate } from '@/utils/pagination'
 import {
-  cursorPaginate,
-  CursorPaginationResponse,
   CursorPaginationParams,
+  CursorPaginationResponse,
   PaginationParams,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -44,25 +44,26 @@ export interface HitsFilters {
 @traceable
 export class SanctionsHitsRepository {
   tenantId: string
-  mongoDb: MongoClient
-  counterRepository: CounterRepository
+  mongoDb?: MongoClient
   sanctionsWhitelistEntityRepository: SanctionsWhitelistEntityRepository
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
-    this.counterRepository = new CounterRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: connections.dynamoDb,
-    })
+    this.dynamoDb = connections.dynamoDb
     this.sanctionsWhitelistEntityRepository =
       new SanctionsWhitelistEntityRepository(this.tenantId, {
         mongoDb: this.mongoDb,
         dynamoDb: connections.dynamoDb,
       })
+  }
+
+  private async getMongoDbClient() {
+    return this.mongoDb ?? (await getMongoDbClient())
   }
 
   public static async fromEvent(
@@ -96,7 +97,7 @@ export class SanctionsHitsRepository {
   async searchHits(
     params: HitsFilters & CursorPaginationParams
   ): Promise<CursorPaginationResponse<SanctionsHit>> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
@@ -128,7 +129,7 @@ export class SanctionsHitsRepository {
     items: SanctionsHit[]
     total: number
   }> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
@@ -173,13 +174,18 @@ export class SanctionsHitsRepository {
     if (rawHits.length === 0) {
       return []
     }
-    const db = this.mongoDb.db()
+    const mongodbClient = await this.getMongoDbClient()
+    const db = mongodbClient.db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
     const filteredHits = await this.filterWhitelistedHits(rawHits, hitContext)
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: mongodbClient,
+      dynamoDb: this.dynamoDb,
+    })
 
-    const ids = await this.counterRepository.getNextCountersAndUpdate(
+    const ids = await counterRepository.getNextCountersAndUpdate(
       'SanctionsHit',
       filteredHits.length
     )
@@ -213,7 +219,7 @@ export class SanctionsHitsRepository {
     if (rawHits.length === 0) {
       return []
     }
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
@@ -258,7 +264,7 @@ export class SanctionsHitsRepository {
     newIds: string[]
   }> {
     // Update existed hits
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
@@ -332,7 +338,7 @@ export class SanctionsHitsRepository {
         modifiedCount: 0,
       }
     }
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
@@ -343,7 +349,7 @@ export class SanctionsHitsRepository {
   }
 
   public async getHitsByIds(ids: string[]): Promise<SanctionsHit[]> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
@@ -352,7 +358,7 @@ export class SanctionsHitsRepository {
   }
 
   public async getHitById(id: string): Promise<SanctionsHit | null> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsHit>(
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )

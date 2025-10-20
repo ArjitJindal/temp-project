@@ -26,14 +26,12 @@ import { traceable } from '@/core/xray'
 import {
   CursorPaginationResponse,
   OptionalPagination,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { Currency, CurrencyService } from '@/services/currency'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
@@ -144,6 +142,18 @@ export class TransactionService {
 
     const data = await clickhouseTransactionsRepository.getTransactions(params)
 
+    // Fetch reasons for all transactions in batch (similar to MongoDB approach)
+    const transactionIds = data.items.map(
+      (transaction) => transaction.transactionId
+    )
+    const reasonMap = await this.getLastReasonsForTransactions(transactionIds)
+
+    // Add reasons to the items
+    data.items = data.items.map((item) => ({
+      ...item,
+      reason: reasonMap.get(item.transactionId) || undefined,
+    }))
+
     if (params.includeUsers) {
       data.items = await this.getTransactionUsers(data.items)
     }
@@ -182,11 +192,21 @@ export class TransactionService {
     const items =
       await clickhouseTransactionsRepository.getTransactionsDataOnly(params)
 
+    // Fetch reasons for all transactions in batch (similar to MongoDB approach)
+    const transactionIds = items.map((transaction) => transaction.transactionId)
+    const reasonMap = await this.getLastReasonsForTransactions(transactionIds)
+
+    // Add reasons to the items
+    const itemsWithReasons = items.map((item) => ({
+      ...item,
+      reason: reasonMap.get(item.transactionId) || undefined,
+    }))
+
     if (params.includeUsers) {
-      return await this.getTransactionUsers(items)
+      return await this.getTransactionUsers(itemsWithReasons)
     }
 
-    return items
+    return itemsWithReasons
   }
 
   /**
@@ -230,14 +250,36 @@ export class TransactionService {
       params.filterUserIds = userIds
     }
 
+    // Handle action reasons filtering for MongoDB
+    if (params.filterActionReasons?.length) {
+      const transactionIds = await this.getTransactionIdsByActionReasons(
+        params.filterActionReasons
+      )
+      if (transactionIds.length === 0) {
+        return [] // Return empty array if no transactions match the reasons
+      }
+      params.filterTransactionIds = params.filterTransactionIds
+        ? params.filterTransactionIds.filter((id) =>
+            transactionIds.includes(id)
+          )
+        : transactionIds
+    }
+
     const items = await this.transactionRepository.getTransactionsDataOnly(
       params,
       this.getProjection(params.view as TableListViewEnum),
       undefined
     )
 
+    // Fetch reasons for all transactions in batch
+    const transactionIds = items.map((transaction) => transaction.transactionId)
+    const reasonMap = await this.getLastReasonsForTransactions(transactionIds)
+
     let mappedTransactions = items.map((transaction) =>
-      this.mongoTransactionMapper(transaction)
+      this.mongoTransactionMapper(
+        transaction,
+        reasonMap.get(transaction.transactionId)
+      )
     )
 
     if (params.includeUsers) {
@@ -259,6 +301,21 @@ export class TransactionService {
         params.filterParentUserId
       )
       params.filterUserIds = userIds
+    }
+
+    // Handle action reasons filtering for MongoDB
+    if (params.filterActionReasons?.length) {
+      const transactionIds = await this.getTransactionIdsByActionReasons(
+        params.filterActionReasons
+      )
+      if (transactionIds.length === 0) {
+        return 0 // Return 0 count if no transactions match the reasons
+      }
+      params.filterTransactionIds = params.filterTransactionIds
+        ? params.filterTransactionIds.filter((id) =>
+            transactionIds.includes(id)
+          )
+        : transactionIds
     }
 
     return await this.transactionRepository.getTransactionsCountOnly(
@@ -295,11 +352,13 @@ export class TransactionService {
   }
 
   private mongoTransactionMapper(
-    transaction: InternalTransaction
+    transaction: InternalTransaction,
+    reason?: string
   ): TransactionTableItem {
     return {
       transactionId: transaction.transactionId,
       timestamp: transaction.timestamp,
+      paymentApprovalTimestamp: transaction.paymentApprovalTimestamp,
       arsScore: {
         arsScore: transaction.arsScore?.arsScore,
       },
@@ -332,7 +391,128 @@ export class TransactionService {
       })),
       originFundsInfo: transaction.originFundsInfo,
       alertIds: transaction.alertIds,
+      reason: reason || undefined,
     }
+  }
+
+  /**
+   * Get the last reason for multiple transactions in batch (MongoDB)
+   */
+  private async getLastReasonsForTransactions(
+    transactionIds: string[]
+  ): Promise<Map<string, string>> {
+    const reasonMap = new Map<string, string>()
+
+    if (transactionIds.length === 0) {
+      return reasonMap
+    }
+
+    try {
+      const db = this.mongoDb.db()
+      const collection = db.collection(`${this.tenantId}-transaction-events`)
+
+      // Get the LAST (most recent) reason for each transaction
+      const events = await collection
+        .aggregate([
+          // Match events for the specific transaction IDs that have reasons
+          {
+            $match: {
+              transactionId: { $in: transactionIds },
+              reason: { $exists: true, $ne: '' },
+            },
+          },
+          // Sort by timestamp descending to get most recent first
+          {
+            $sort: { timestamp: -1 },
+          },
+          // Group by transactionId and take the first (most recent) event
+          {
+            $group: {
+              _id: '$transactionId',
+              latestReason: { $first: '$reason' },
+            },
+          },
+        ])
+        .toArray()
+
+      // Build the map
+      events.forEach((event: any) => {
+        reasonMap.set(event._id, event.latestReason)
+      })
+    } catch (error) {
+      console.error('Error fetching last reasons for transactions:', error)
+    }
+
+    return reasonMap
+  }
+
+  /**
+   * Get transaction IDs that have specific action reasons from transaction events (MongoDB)
+   */
+  private async getTransactionIdsByActionReasons(
+    actionReasons: string[]
+  ): Promise<string[]> {
+    const transactionIds: string[] = []
+
+    try {
+      const db = this.mongoDb.db()
+      // Use the correct collection name format
+      const collection = db.collection(`${this.tenantId}-transaction-events`)
+
+      const reasonRegexes = actionReasons.map(
+        (reason) => new RegExp(reason, 'i')
+      )
+
+      // Get the LAST (most recent) reason for each transaction
+      // This ensures we only match transactions where the LAST action had the specified reason
+      const events = await collection
+        .aggregate([
+          // Match events that have reasons
+          {
+            $match: {
+              reason: { $exists: true, $ne: '' },
+            },
+          },
+          // Sort by timestamp descending to get most recent first
+          {
+            $sort: { timestamp: -1 },
+          },
+          // Group by transactionId and take the first (most recent) event
+          {
+            $group: {
+              _id: '$transactionId',
+              latestEvent: { $first: '$$ROOT' },
+            },
+          },
+          // Filter to only include transactions where the LAST reason matches our filter
+          {
+            $match: {
+              'latestEvent.reason': { $in: reasonRegexes },
+            },
+          },
+          // Project the fields we need
+          {
+            $project: {
+              transactionId: '$_id',
+              reason: '$latestEvent.reason',
+              timestamp: '$latestEvent.timestamp',
+            },
+          },
+        ])
+        .toArray()
+
+      const uniqueTransactionIds = [
+        ...new Set(events.map((event) => event.transactionId)),
+      ]
+      transactionIds.push(...uniqueTransactionIds)
+    } catch (error) {
+      console.error(
+        'Error querying transaction events for action reasons:',
+        error
+      )
+    }
+
+    return transactionIds
   }
 
   public async getAlertsTransaction(
@@ -407,6 +587,41 @@ export class TransactionService {
       params.filterUserIds = userIds
     }
 
+    // Handle action reasons filtering for MongoDB (ClickHouse handles it in repository)
+    if (params.filterActionReasons?.length && !isClickhouseEnabled()) {
+      const transactionIds = await this.getTransactionIdsByActionReasons(
+        params.filterActionReasons
+      )
+      if (transactionIds.length === 0) {
+        return type === 'offset'
+          ? { items: [], count: 0 }
+          : {
+              items: [],
+              next: '',
+              prev: '',
+              last: '',
+              hasNext: false,
+              hasPrev: false,
+              count: 0,
+              limit: 0,
+            }
+      }
+      params.filterTransactionIds = params.filterTransactionIds
+        ? params.filterTransactionIds.filter((id) =>
+            transactionIds.includes(id)
+          )
+        : transactionIds
+    }
+
+    // setting the mapping for sortfield
+    const uiToMongoSortField: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+    }
+    params.sortField = params.sortField
+      ? uiToMongoSortField[params.sortField] ?? params.sortField
+      : 'timestamp'
+
     let response =
       type === 'offset'
         ? await this.getTransactionsOffsetPaginated(params, alert)
@@ -429,8 +644,17 @@ export class TransactionService {
       }
     }
 
+    // Fetch reasons for all transactions in batch
+    const transactionIds = response.items.map(
+      (transaction) => transaction.transactionId
+    )
+    const reasonMap = await this.getLastReasonsForTransactions(transactionIds)
+
     let mappedTransactions = response.items.map((transaction) =>
-      this.mongoTransactionMapper(transaction)
+      this.mongoTransactionMapper(
+        transaction,
+        reasonMap.get(transaction.transactionId)
+      )
     )
 
     if (includeUsers) {
@@ -483,6 +707,7 @@ export class TransactionService {
         type: 1,
         transactionId: 1,
         timestamp: 1,
+        paymentApprovalTimestamp: 1,
         originUserId: 1,
         destinationUserId: 1,
         transactionState: 1,

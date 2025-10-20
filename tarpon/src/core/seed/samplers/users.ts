@@ -62,7 +62,7 @@ import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/ConsumerUserSegment'
 import { SAMPLE_CURRENCIES } from '@/core/seed/samplers/currencies'
 import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import {
   isBusinessUser,
   isConsumerUser,
@@ -948,13 +948,19 @@ export class ConsumerUserSampler extends UserSampler<
           this.getEmail(this.rng.randomInt(1000), name),
           ...this.rng.randomSubsetOfSize(
             comapnyEmails,
-            this.rng.randomIntInclusive(0, 2)
+            this.rng.randomIntInclusive(0, 3) // More shared emails for connections
           ),
         ],
         faxNumbers: [this.randomPhoneNumber()],
         websites: [domain],
-        addresses: addressSampler.getAddress(1),
-        contactNumbers: [this.randomPhoneNumber()],
+        addresses: addressSampler.getAddress(this.rng.randomIntInclusive(1, 2)), // Sometimes 2 addresses
+        contactNumbers: [
+          this.randomPhoneNumber(),
+          // Sometimes add a shared family phone
+          ...(this.rng.randomInt(4) === 0
+            ? [`+1-555-${this.rng.randomIntInclusive(1000, 9999)}`]
+            : []),
+        ],
       },
       occupation: this.rng.r(1).pickRandom(occupation),
       employmentStatus: this.rng.r(2).pickRandom(EMPLOYMENT_STATUSS),
@@ -975,6 +981,12 @@ export class ConsumerUserSampler extends UserSampler<
         },
         tagSampler.getSample(),
       ],
+      linkedEntities: {
+        parentUserId:
+          this.rng.randomInt(5) === 0
+            ? `U-${this.rng.randomInt(200)}`
+            : undefined,
+      },
       updatedAt: timestamp + 60 * 60 * 24 * 1000,
       createdTimestamp: timestamp,
       createdAt: timestamp,

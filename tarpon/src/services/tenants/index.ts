@@ -27,7 +27,7 @@ import flatten from 'lodash/flatten'
 import isEmpty from 'lodash/isEmpty'
 import uniq from 'lodash/uniq'
 import { stageAndRegion } from '@flagright/lib/utils'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
@@ -54,14 +54,14 @@ import { assertCurrentUserRole, isFlagrightInternalUser } from '@/@types/jwt'
 import { tenantSettings, updateTenantSettings } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { isDemoTenant } from '@/utils/tenant-id'
-import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
+import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { logger } from '@/core/logger'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
 import {
@@ -89,6 +89,13 @@ const secondaryQueueTenantsCache = createNonConsoleApiInMemoryCache<string[]>({
   max: 100,
   ttlMinutes: 10,
 })
+
+export const maskPassword = (password: string): string => {
+  if (!password) {
+    return password
+  }
+  return '*'.repeat(password.length)
+}
 
 @traceable
 export class TenantService {
@@ -311,7 +318,6 @@ export class TenantService {
       dynamoDb,
     })
     const screeningProfileService = new ScreeningProfileService(tenantId, {
-      mongoDb,
       dynamoDb,
     })
     await screeningProfileService.createDefaultScreeningProfile(
@@ -627,13 +633,18 @@ export class TenantService {
       )?.count ?? 0
 
     const apiKeysProcessed = apiKeys.map((x) => {
-      let value = x.value
+      const isTargetKey = x.id === unmaskingOptions.apiKeyId
+      let value: string | undefined
 
-      if (
-        !isFlagrightInternalUser() &&
-        unmaskingOptions.unmask &&
-        apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
-      ) {
+      if (isTargetKey && unmaskingOptions.unmask) {
+        const exceededViewLimit =
+          !isFlagrightInternalUser() &&
+          apiKeyViewTimes >= (settings?.limits?.apiKeyView ?? 2)
+
+        value = exceededViewLimit
+          ? x.value?.replace(/.(?=.{4})/g, '*')
+          : x.value
+      } else {
         value = x.value?.replace(/.(?=.{4})/g, '*')
       }
 
@@ -798,7 +809,6 @@ export class TenantService {
       const screeningProfileService = new ScreeningProfileService(
         this.tenantId,
         {
-          mongoDb: this.mongoDb,
           dynamoDb: this.dynamoDb,
         }
       )
@@ -873,15 +883,31 @@ export class TenantService {
     return uniq(compact(allTenantIds))
   }
 
-  public async getTenantSettings(): Promise<TenantSettings> {
-    const contextTenantSettings = getContext()?.settings
-    if (contextTenantSettings) {
-      return contextTenantSettings
+  public async getTenantSettings(
+    unmaskDowJonesPassword?: boolean
+  ): Promise<TenantSettings> {
+    if (!unmaskDowJonesPassword) {
+      const contextTenantSettings = getContext()?.settings
+      if (contextTenantSettings) {
+        return contextTenantSettings
+      }
     }
+
     const tenantRepository = new TenantRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    return tenantRepository.getTenantSettings()
+    const settings = await tenantRepository.getTenantSettings()
+
+    if (
+      settings.sanctions?.dowjonesCreds?.password &&
+      !unmaskDowJonesPassword
+    ) {
+      settings.sanctions.dowjonesCreds.password = maskPassword(
+        settings.sanctions.dowjonesCreds.password
+      )
+    }
+
+    return settings
   }
 
   public async getTenantById(tenantId: string) {

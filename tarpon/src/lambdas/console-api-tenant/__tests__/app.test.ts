@@ -1,4 +1,6 @@
-import { tenantsHandler } from '../app'
+import { Forbidden } from 'http-errors'
+import { assertSettings, tenantsHandler } from '../app'
+import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import {
   TestApiEndpoint,
   TestApiEndpointOptions,
@@ -33,4 +35,48 @@ describe.each<TestApiEndpointOptions>([
   },
 ])('Tenants API', ({ method, path, payload }) => {
   tenantRepositoryTest.testApi({ method, path, payload })
+})
+
+describe('Assert Settings Test', () => {
+  test('Throw error if user does not have permission to change settings', () => {
+    const statements: PermissionStatements[] = [
+      {
+        actions: ['read', 'write'],
+        resources: ['frn:console:test-tenant:::settings/system-config/*'],
+      },
+    ]
+    expect(() =>
+      assertSettings(
+        {
+          aiSourcesDisabled: ['alertActionDate'],
+        },
+        statements
+      )
+    ).toThrowError(
+      new Forbidden('User does not have permission to change settings')
+    )
+  })
+
+  test('Do not throw error if user has permission to change settings', () => {
+    const statements: PermissionStatements[] = [
+      {
+        actions: ['read', 'write'],
+        resources: [
+          'frn:console:test-tenant:::settings/system-config/*',
+          'frn:console:test-tenant:::settings/add-ons/ai-features/*',
+        ],
+      },
+    ]
+
+    expect(() =>
+      assertSettings(
+        {
+          aiSourcesDisabled: ['alertActionDate'],
+        },
+        statements
+      )
+    ).not.toThrowError(
+      new Forbidden('User does not have permission to change settings')
+    )
+  })
 })

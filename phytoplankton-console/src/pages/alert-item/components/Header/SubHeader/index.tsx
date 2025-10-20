@@ -48,7 +48,7 @@ export default function SubHeader(props: Props) {
         <AsyncResourceRenderer resource={caseItemRes} renderLoading={renderLabels}>
           {renderLabels}
         </AsyncResourceRenderer>
-        <Form.Layout.Label title={'Assigned to'}>
+        <Form.Layout.Label title={'Assigned to'} className={s.assignees}>
           <Skeleton res={alertItemRes}>
             {(alertItem) => <AlertAssigneesDropdown alertItem={alertItem} />}
           </Skeleton>

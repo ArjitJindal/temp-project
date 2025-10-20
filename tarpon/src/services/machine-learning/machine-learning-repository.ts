@@ -1,7 +1,7 @@
 import { Filter } from 'mongodb'
 import { DefaultApiGetRuleMlModelsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { RuleMLModel } from '@/@types/openapi-internal/RuleMLModel'
-import { ML_MODELS_COLLECTION } from '@/utils/mongodb-definitions'
+import { ML_MODELS_COLLECTION } from '@/utils/mongo-table-names'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 
 export class MachineLearningRepository {

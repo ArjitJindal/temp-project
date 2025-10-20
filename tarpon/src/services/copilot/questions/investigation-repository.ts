@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { Investigation, Variables } from './types'
-import { INVESTIGATION_COLLECTION } from '@/utils/mongodb-definitions'
+import { INVESTIGATION_COLLECTION } from '@/utils/mongo-table-names'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
 import { traceable } from '@/core/xray'
 

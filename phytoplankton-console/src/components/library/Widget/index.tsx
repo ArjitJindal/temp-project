@@ -42,6 +42,7 @@ function Widget(props: WidgetProps, ref: React.Ref<HTMLInputElement>) {
         <div className={s.childrenWrapper}>
           <div
             className={s.children}
+            data-pdf-content="true"
             style={{ overflow: resizing === 'AUTO' ? undefined : 'auto' }}
           >
             {children}
@@ -71,11 +72,27 @@ export function DownloadButton(props: {
     try {
       const { data, fileName, pdfRef, tableTitle } = await onDownload();
       if (pdfRef?.current) {
+        // Prefer exporting only the widget content area (without header/controls)
+        let target: HTMLElement | HTMLElement[] | undefined = undefined;
+        const rootEl = pdfRef.current as unknown as HTMLElement | null;
+        if (rootEl) {
+          if (rootEl.getAttribute('data-pdf-content') === 'true') {
+            target = rootEl;
+          } else {
+            const contentEl = rootEl.querySelector('[data-pdf-content="true"]');
+            target = contentEl instanceof HTMLElement ? contentEl : rootEl;
+          }
+        }
         const tableOptions = buildDownloadableTable(data);
         await DownloadAsPDF({
           fileName,
+          pdfRef: target,
           tableOptions: tableOptions ? [tableOptions] : [],
           reportTitle: tableTitle,
+          orientation: 'portrait',
+        });
+        message.success('Data export finished', {
+          details: 'Download should start in a moment.',
         });
         message.success('Data export finished', {
           details: 'Download should start in a moment.',

@@ -1,22 +1,29 @@
 import { Filter, MongoClient, ReplaceOneModel } from 'mongodb'
 import isNil from 'lodash/isNil'
 import omitBy from 'lodash/omitBy'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
 import { getDefaultProviders } from '../utils'
-import { withTransaction } from '@/utils/mongodb-utils'
-import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
+import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
+import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { traceable } from '@/core/xray'
+import { cursorPaginate } from '@/utils/pagination'
 import {
-  cursorPaginate,
   CursorPaginationParams,
   CursorPaginationResponse,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { generateChecksum, getSortedObject } from '@/utils/object'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const SUBJECT_FIELDS = [
   'userId',
@@ -50,19 +57,77 @@ export type WhitelistSubject = Pick<
 @traceable
 export class SanctionsWhitelistEntityRepository {
   tenantId: string
-  mongoDb: MongoClient
-  counterRepository: CounterRepository
+  mongoDb?: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
-    this.counterRepository = new CounterRepository(this.tenantId, {
-      mongoDb: this.mongoDb,
-      dynamoDb: connections.dynamoDb,
+    this.dynamoDb = connections.dynamoDb
+  }
+
+  private async getMongoDbClient() {
+    return this.mongoDb ?? (await getMongoDbClient())
+  }
+
+  private async saveToDynamoDB(
+    provider: SanctionsDataProviderName,
+    subject: WhitelistSubject,
+    newRecords: SanctionsWhitelistEntity[]
+  ): Promise<void> {
+    // Choose filter fields based on entity type
+    const filterFields =
+      subject.entity === 'USER'
+        ? USER_ENTITY_FILTER_FIELDS
+        : OTHER_ENTITY_FILTER_FIELDS
+
+    const filterObject = filterFields.reduce(
+      (acc, key) => ({
+        ...acc,
+        [key]: subject[key],
+      }),
+      {}
+    )
+    const filterWithProvider = { ...filterObject, provider }
+    const dynamoHash = generateChecksum(getSortedObject(filterWithProvider))
+
+    const key = DynamoDbKeys.SANCTIONS_WHITELIST_ENTITIES(
+      this.tenantId,
+      dynamoHash
+    )
+    const command = new GetCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: key,
     })
+
+    const result = await this.dynamoDb.send(command)
+    const existingItems =
+      (result.Item?.items as SanctionsWhitelistEntity[] | undefined) ?? []
+
+    // Merge new records with existing ones, avoiding duplicates by sanctionsEntity.id
+    const mergedItems = [...existingItems]
+    for (const newRecord of newRecords) {
+      const existingIndex = mergedItems.findIndex(
+        (item) => item.sanctionsEntity.id === newRecord.sanctionsEntity.id
+      )
+      if (existingIndex !== -1) {
+        mergedItems[existingIndex] = newRecord
+      } else {
+        mergedItems.push(newRecord)
+      }
+    }
+
+    const putCommand = new PutCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...key,
+        items: mergedItems,
+      },
+    })
+    await this.dynamoDb.send(putCommand)
   }
 
   public async addWhitelistEntities(
@@ -77,12 +142,17 @@ export class SanctionsWhitelistEntityRepository {
   ): Promise<{
     newRecords: SanctionsWhitelistEntity[]
   }> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsWhitelistEntity>(
-      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
-    )
-
-    const ids = await this.counterRepository.getNextCountersAndUpdate(
+    const mongodbClient = await this.getMongoDbClient()
+    const collection = mongodbClient
+      .db()
+      .collection<SanctionsWhitelistEntity>(
+        SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
+      )
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: mongodbClient,
+      dynamoDb: this.dynamoDb,
+    })
+    const ids = await counterRepository.getNextCountersAndUpdate(
       'SanctionsWhitelist',
       entities.length
     )
@@ -115,15 +185,24 @@ export class SanctionsWhitelistEntityRepository {
       )
     })
 
+    const newRecords = replaceOneUpdates.map((update) => ({
+      ...update.replacement,
+      sanctionsEntity: {
+        entityType: update.replacement.sanctionsEntity.entityType,
+        id: update.replacement.sanctionsEntity.id,
+        name: update.replacement.sanctionsEntity.name,
+      },
+    }))
+    await this.saveToDynamoDB(provider, subject, newRecords)
     return {
-      newRecords: replaceOneUpdates.map((update) => update.replacement),
+      newRecords,
     }
   }
 
   public async removeWhitelistEntities(
     sanctionsWhitelistIds: string[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
@@ -133,11 +212,21 @@ export class SanctionsWhitelistEntityRepository {
   }
 
   public async clear(): Promise<void> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
     await collection.deleteMany({})
+  }
+
+  private async getBackfillStatus(): Promise<boolean> {
+    const key = DynamoDbKeys.SANCTIONS_WHITELIST_BATCH_JOB_STATUS(this.tenantId)
+    const command = new GetCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: key,
+    })
+    const result = await this.dynamoDb.send(command)
+    return result.Item?.isBackfillDone === true
   }
 
   public async getWhitelistEntities(
@@ -147,17 +236,43 @@ export class SanctionsWhitelistEntityRepository {
     providerOverride?: SanctionsDataProviderName
   ): Promise<SanctionsWhitelistEntity[]> {
     const provider = providerOverride ?? getDefaultProviders()?.[0]
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsWhitelistEntity>(
-      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
-    )
-
     // Choose filter fields based on entity type
     const filterFields =
       subject.entity === 'USER'
         ? USER_ENTITY_FILTER_FIELDS
         : OTHER_ENTITY_FILTER_FIELDS
 
+    const filterObject = filterFields.reduce(
+      (acc, key) => ({
+        ...acc,
+        [key]: subject[key],
+      }),
+      {}
+    )
+    const filterWithProvider = { ...filterObject, provider }
+
+    const dynamoHash = generateChecksum(getSortedObject(filterWithProvider))
+
+    if (await this.getBackfillStatus()) {
+      const key = DynamoDbKeys.SANCTIONS_WHITELIST_ENTITIES(
+        this.tenantId,
+        dynamoHash
+      )
+      const command = new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        Key: key,
+      })
+      const result = await this.dynamoDb.send(command)
+      const items =
+        (result.Item?.items as SanctionsWhitelistEntity[] | undefined) ?? []
+      return items.filter((item) =>
+        requestEntityIds.includes(item.sanctionsEntity.id)
+      )
+    }
+    const db = (await getMongoDbClient()).db()
+    const collection = db.collection<SanctionsWhitelistEntity>(
+      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
+    )
     const filters = [
       // TODO change this after release.
       // https://github.com/flagright/orca/pull/4677
@@ -189,7 +304,7 @@ export class SanctionsWhitelistEntityRepository {
       filterEntityType?: SanctionsDetailsEntityType[]
     } & CursorPaginationParams
   ): Promise<CursorPaginationResponse<SanctionsWhitelistEntity>> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )

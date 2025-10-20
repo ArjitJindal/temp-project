@@ -28,7 +28,6 @@ import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/
 import { filterOutInternalRules } from '../pnb-custom-logic'
 import {
   AuxiliaryIndexTransaction,
-  NonUserEntityData,
   RulesEngineTransactionRepositoryInterface,
   TimeRange,
   TransactionsFilterOptions,
@@ -48,10 +47,10 @@ import {
 } from '@/utils/mongodb-utils'
 import { DAY_DATE_FORMAT } from '@/core/constants'
 import {
+  UNIQUE_TAGS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  UNIQUE_TAGS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   DefaultApiGetTransactionsListRequest,
@@ -63,13 +62,13 @@ import { duration } from '@/utils/dayjs'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'
+import { cursorPaginate } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import {
-  COUNT_QUERY_LIMIT,
-  cursorPaginate,
   CursorPaginationResponse,
   OptionalPagination,
   OptionalPaginationParams,
-} from '@/utils/pagination'
+} from '@/@types/pagination'
 import {
   PaymentDetails,
   PaymentMethod,
@@ -87,6 +86,9 @@ import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Address } from '@/@types/openapi-public/Address'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
+import { EntityData } from '@/@types/tranasction/aggregation'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -368,6 +370,23 @@ export class MongoDbTransactionRepository
       })
     }
 
+    if (params.afterPaymentApprovalTimestamp) {
+      // santize the payment approval timestamps
+      conditions.push({
+        paymentApprovalTimestamp: {
+          $gte: params.afterPaymentApprovalTimestamp || 0,
+        },
+      })
+    }
+    if (params.beforePaymentApprovalTimestamp) {
+      // santize the payment approval timestamps
+      conditions.push({
+        paymentApprovalTimestamp: {
+          $lt: params.beforePaymentApprovalTimestamp || Number.MAX_SAFE_INTEGER,
+        },
+      })
+    }
+
     if (
       params.filterTransactionIds != null &&
       params.filterTransactionIds?.length > 0
@@ -620,6 +639,9 @@ export class MongoDbTransactionRepository
       })
     }
 
+    // Note: filterActionReasons is handled at a higher level in MongoDB
+    // due to the need for a separate query to transaction_events collection
+
     if (conditions.length === 0) {
       return {}
     }
@@ -711,6 +733,12 @@ export class MongoDbTransactionRepository
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
+    const uiToMongoSortField: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+    }
+    const effectiveSortField = uiToMongoSortField[sortField] ?? sortField
+
     const pipeline: Document[] = [{ $match: query }]
 
     if (sortField === 'ruleHitCount') {
@@ -723,7 +751,7 @@ export class MongoDbTransactionRepository
         { $sort: { Hit: sortOrder } }
       )
     } else {
-      pipeline.push({ $sort: { [sortField]: sortOrder } })
+      pipeline.push({ $sort: { [effectiveSortField]: sortOrder } })
     }
     pipeline.push(...paginatePipeline(params))
     if (params?.includeUsers) {
@@ -1503,11 +1531,26 @@ export class MongoDbTransactionRepository
   public async *getGenericUserSendingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (
+      entityData &&
+      (entityData.type === 'ADDRESS' ||
+        entityData.type === 'NAME' ||
+        entityData.type === 'EMAIL')
+    ) {
+      yield* this.getEntitySendingTransactionsGenerator(
+        entityData,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+
     if (userId && !matchPaymentMethodDetails) {
       yield* this.getUserSendingTransactionsGenerator(
         userId,
@@ -1527,14 +1570,154 @@ export class MongoDbTransactionRepository
     }
   }
 
+  public async *getEntitySendingTransactionsGenerator(
+    entityData: EntityData,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (entityData.type === 'ADDRESS') {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          {
+            $match: {
+              [`originPaymentDetails.address`]: { $eq: entityData.address },
+            },
+          },
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (entityData.type === 'NAME') {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          {
+            $match: {
+              $or: [
+                { [`originPaymentDetails.name`]: { $eq: entityData.name } },
+                {
+                  [`originPaymentDetails.nameOnCard`]: { $eq: entityData.name },
+                },
+              ],
+            },
+          },
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (entityData.type === 'EMAIL') {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          {
+            $match: {
+              [`originPaymentDetails.emailId`]: { $eq: entityData.email },
+            },
+          },
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+  }
+
+  public async *getEntityReceivingTransactionsGenerator(
+    entityData: EntityData,
+    timeRange: TimeRange,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (entityData.type === 'ADDRESS') {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          {
+            $match: {
+              $or: [
+                {
+                  [`destinationPaymentDetails.address`]: {
+                    $eq: entityData.address,
+                  },
+                },
+                {
+                  [`destinationPaymentDetails.shippingAddress`]: {
+                    $eq: entityData.address,
+                  },
+                },
+                {
+                  [`destinationPaymentDetails.bankAddress`]: {
+                    $eq: entityData.address,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (entityData.type === 'NAME') {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          {
+            $match: {
+              $or: [
+                {
+                  [`destinationPaymentDetails.name`]: { $eq: entityData.name },
+                },
+                {
+                  [`destinationPaymentDetails.nameOnCard`]: {
+                    $eq: entityData.name,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    } else if (entityData.type === 'EMAIL') {
+      yield* this.getRulesEngineTransactionsGenerator(
+        [
+          {
+            $match: {
+              [`destinationPaymentDetails.emailId`]: { $eq: entityData.email },
+            },
+          },
+        ],
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
+  }
+
   public async *getGenericUserReceivingTransactionsGenerator(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
+    entityData: EntityData | undefined,
     timeRange: TimeRange,
     filterOptions: TransactionsFilterOptions,
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
   ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
+    if (
+      entityData &&
+      (entityData.type === 'ADDRESS' ||
+        entityData.type === 'NAME' ||
+        entityData.type === 'EMAIL')
+    ) {
+      yield* this.getEntityReceivingTransactionsGenerator(
+        entityData,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
+    }
     if (userId && !matchPaymentMethodDetails) {
       yield* this.getUserReceivingTransactionsGenerator(
         userId,
@@ -2046,41 +2229,56 @@ export class MongoDbTransactionRepository
     )
   }
 
-  public async getUniqueUserIds(
+  public async *getUniqueUserIdGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<string[]> {
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
-
     const userField =
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
-    const result = await collection
-      .aggregate([
-        {
-          $match: {
-            timestamp: {
-              $gte: timeRange.afterTimestamp,
-              $lt: timeRange.beforeTimestamp,
+    const cursor = collection
+      .aggregate(
+        [
+          {
+            $match: {
+              timestamp: {
+                $gte: timeRange.afterTimestamp,
+                $lt: timeRange.beforeTimestamp,
+              },
+              [userField]: { $exists: true },
             },
-            [userField]: { $exists: true },
           },
-        },
-        {
-          $group: {
-            _id: `$${userField}`,
+          {
+            $group: {
+              _id: `$${userField}`,
+            },
           },
-        },
-      ])
-      .toArray()
-    return result.map((v) => v._id)
+        ],
+        { allowDiskUse: true }
+      )
+      .batchSize(chunkSize * 2)
+    let results: string[] = []
+    for await (const idData of cursor) {
+      results.push(idData._id)
+
+      if (results.length >= chunkSize) {
+        yield results
+        results = []
+      }
+    }
+    if (results.length > 0) {
+      yield results
+    }
   }
 
-  public async getUniquePaymentDetails(
+  public async *getUniqueAddressDetailsGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<PaymentDetails[]> {
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<Address[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
@@ -2090,12 +2288,251 @@ export class MongoDbTransactionRepository
         ? 'originPaymentDetails'
         : 'destinationPaymentDetails'
 
-    let allResult: PaymentDetails[] = []
-    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
-      const paymentIdentifiers =
-        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
-      const result = await collection
-        .aggregate([
+    // Address field mapping for each payment method
+    const ADDRESS_FIELD_MAPPING: Record<PaymentMethod, string | undefined> = {
+      CHECK: 'shippingAddress',
+      CASH: 'address',
+      NPP: 'address',
+      GENERIC_BANK_ACCOUNT: 'address',
+      MPESA: 'address',
+      CARD: 'address',
+      SWIFT: 'address',
+      IBAN: 'bankAddress',
+      ACH: 'bankAddress',
+      UPI: undefined,
+      WALLET: undefined,
+    }
+
+    // Address fields to extract from Address object
+    const ADDRESS_FIELDS: (keyof Address)[] = [
+      'addressLines',
+      'postcode',
+      'city',
+      'state',
+      'country',
+    ]
+
+    const globalBatch: Address[] = []
+    for (const paymentMethod of PAYMENT_METHODS) {
+      const addressField = ADDRESS_FIELD_MAPPING[paymentMethod]
+
+      // Skip payment methods that don't have address fields
+      if (addressField == null) {
+        continue
+      }
+
+      const cursor = collection
+        .aggregate(
+          [
+            {
+              $match: {
+                timestamp: {
+                  $gte: timeRange.afterTimestamp,
+                  $lt: timeRange.beforeTimestamp,
+                },
+                [paymentDetailsField]: { $exists: true },
+                [`${paymentDetailsField}.method`]: paymentMethod,
+                [`${paymentDetailsField}.${addressField}`]: {
+                  $exists: true,
+                  $ne: null,
+                },
+              },
+            },
+            {
+              $group: {
+                _id: ADDRESS_FIELDS.map(
+                  (field) => `$${paymentDetailsField}.${addressField}.${field}`
+                ),
+              },
+            },
+          ],
+          { allowDiskUse: true }
+        )
+        .batchSize(chunkSize * 2)
+      for await (const data of cursor) {
+        const addressData = Object.fromEntries(
+          ADDRESS_FIELDS.map((field, index) => [field, data._id[index]])
+        )
+
+        // Filter out null/undefined values and reconstruct the Address object
+        const filteredAddress: Partial<Address> = {}
+        Object.entries(addressData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            filteredAddress[key as keyof Address] = value
+          }
+        })
+
+        // Ensure addressLines is defined and not empty
+        if (
+          !filteredAddress ||
+          !filteredAddress.addressLines ||
+          filteredAddress.addressLines.length === 0
+        ) {
+          continue
+        }
+        globalBatch.push(filteredAddress as Address)
+        if (globalBatch.length >= chunkSize) {
+          yield globalBatch.splice(0)
+        }
+      }
+    }
+
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
+  }
+
+  public async *getUniqueNameDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<(ConsumerName | string)[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+
+    // Name field mapping for each payment method
+    const NAME_FIELD_MAPPING: Record<PaymentMethod, string> = {
+      CHECK: 'name',
+      CASH: 'name',
+      NPP: 'name',
+      GENERIC_BANK_ACCOUNT: 'name',
+      MPESA: 'name',
+      IBAN: 'name',
+      ACH: 'name',
+      SWIFT: 'name',
+      UPI: 'name',
+      WALLET: 'name',
+      CARD: 'nameOnCard',
+    }
+
+    // Name fields to extract from ConsumerName object
+    const NAME_FIELDS = ['firstName', 'middleName', 'lastName']
+
+    const globalBatch: (ConsumerName | string)[] = []
+    for (const paymentMethod of PAYMENT_METHODS) {
+      const nameField = NAME_FIELD_MAPPING[paymentMethod]
+
+      // For CARD payment method, extract individual name fields
+      if (paymentMethod === 'CARD') {
+        const cursor = collection
+          .aggregate(
+            [
+              {
+                $match: {
+                  timestamp: {
+                    $gte: timeRange.afterTimestamp,
+                    $lt: timeRange.beforeTimestamp,
+                  },
+                  [paymentDetailsField]: { $exists: true },
+                  [`${paymentDetailsField}.method`]: paymentMethod,
+                  [`${paymentDetailsField}.${nameField}`]: {
+                    $exists: true,
+                    $ne: null,
+                  },
+                },
+              },
+              {
+                $group: {
+                  _id: NAME_FIELDS.map(
+                    (field) => `$${paymentDetailsField}.${nameField}.${field}`
+                  ),
+                },
+              },
+            ],
+            { allowDiskUse: true }
+          )
+          .batchSize(chunkSize * 2)
+        for await (const data of cursor) {
+          const nameData = data._id
+
+          // Reconstruct the ConsumerName from array of fields
+          if (Array.isArray(nameData)) {
+            const filteredName: Partial<ConsumerName> = {}
+            NAME_FIELDS.forEach((field, index) => {
+              const value = nameData[index]
+              if (value !== null && value !== undefined) {
+                filteredName[field as keyof ConsumerName] = value as string
+              }
+            })
+
+            // Ensure firstName is present (required field)
+            if (!filteredName || !filteredName.firstName) {
+              continue
+            }
+            globalBatch.push(filteredName as ConsumerName)
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          }
+        }
+      } else {
+        // For other payment methods, extract the entire name field as string
+        const cursor = collection
+          .aggregate(
+            [
+              {
+                $match: {
+                  timestamp: {
+                    $gte: timeRange.afterTimestamp,
+                    $lt: timeRange.beforeTimestamp,
+                  },
+                  [paymentDetailsField]: { $exists: true },
+                  [`${paymentDetailsField}.method`]: paymentMethod,
+                  [`${paymentDetailsField}.${nameField}`]: {
+                    $exists: true,
+                    $ne: null,
+                  },
+                },
+              },
+              {
+                $group: {
+                  _id: `$${paymentDetailsField}.${nameField}`,
+                },
+              },
+            ],
+            { allowDiskUse: true }
+          )
+          .batchSize(chunkSize * 2)
+        for await (const data of cursor) {
+          const nameData = data._id
+          if (typeof nameData === 'string' && nameData) {
+            globalBatch.push(nameData)
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          }
+        }
+      }
+    }
+
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
+  }
+
+  public async *getUniqueEmailDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+
+    const cursor = collection
+      .aggregate(
+        [
           {
             $match: {
               timestamp: {
@@ -2103,36 +2540,39 @@ export class MongoDbTransactionRepository
                 $lt: timeRange.beforeTimestamp,
               },
               [paymentDetailsField]: { $exists: true },
-              [`${paymentDetailsField}.method`]: paymentMethod,
+              [`${paymentDetailsField}.emailId`]: { $exists: true, $ne: null },
             },
           },
           {
             $group: {
-              _id: paymentIdentifiers.map(
-                (field) => `$${paymentDetailsField}.${field}`
-              ),
+              _id: `$${paymentDetailsField}.emailId`,
             },
           },
-        ])
-        .toArray()
-
-      allResult = allResult.concat(
-        result.map((v) => ({
-          method: paymentMethod,
-          ...Object.fromEntries(
-            paymentIdentifiers.map((field, index) => [field, v._id[index]])
-          ),
-        }))
+        ],
+        { allowDiskUse: true }
       )
+      .batchSize(chunkSize * 2)
+    const results: string[] = []
+    for await (const data of cursor) {
+      const email = data._id
+      if (email === null || email === undefined) {
+        continue
+      }
+      results.push(email)
+      if (results.length >= chunkSize) {
+        yield results.splice(0)
+      }
     }
-    return allResult
+    if (results.length > 0) {
+      yield results
+    }
   }
 
-  public async getUniqueEntityDetails(
+  public async *getUniquePaymentDetailsGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
     timeRange: TimeRange,
-    type: 'ADDRESS' | 'EMAIL' | 'NAME'
-  ): Promise<string[]> {
+    chunkSize: number
+  ): AsyncGenerator<PaymentDetails[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
@@ -2141,246 +2581,58 @@ export class MongoDbTransactionRepository
       direction === 'ORIGIN'
         ? 'originPaymentDetails'
         : 'destinationPaymentDetails'
-
-    let projectField: Document = {}
-    const matchField = 'entity'
-
-    if (type === 'ADDRESS') {
-      projectField = {
-        entity: {
-          $let: {
-            vars: {
-              addressObj: {
-                $ifNull: [
-                  `$${paymentDetailsField}.address`,
-                  `$${paymentDetailsField}.shippingAddress`,
-                  `$${paymentDetailsField}.bankAddress`,
-                  null,
-                ],
-              },
-            },
-            in: {
-              $cond: {
-                if: { $eq: ['$$addressObj', null] },
-                then: null,
-                else: {
-                  $concat: [
-                    {
-                      $reduce: {
-                        input: {
-                          $ifNull: ['$$addressObj.addressLines', []],
-                        },
-                        initialValue: '',
-                        in: {
-                          $concat: [
-                            '$$value',
-                            { $ifNull: ['$$this', ''] },
-                            ' ',
-                          ],
-                        },
-                      },
-                    },
-                    { $ifNull: ['$$addressObj.postcode', ''] },
-                    { $ifNull: ['$$addressObj.city', ''] },
-                    { $ifNull: ['$$addressObj.state', ''] },
-                    { $ifNull: ['$$addressObj.country', ''] },
-                  ],
-                },
-              },
-            },
-          },
-        },
-      }
-    } else if (type === 'EMAIL') {
-      // Try to extract all emails from payment details
-      projectField = {
-        entity: {
-          $ifNull: [`$${paymentDetailsField}.email`, null],
-        },
-      }
-    } else if (type === 'NAME') {
-      // Try to extract name as a string, or first+middle+last
-      projectField = {
-        entity: {
-          $cond: [
-            { $ifNull: [`$${paymentDetailsField}.name`, false] },
-            `$${paymentDetailsField}.name`,
+    const globalBatch: PaymentDetails[] = []
+    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
+      const paymentIdentifiers =
+        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
+      const cursor = collection
+        .aggregate(
+          [
             {
-              $trim: {
-                input: {
-                  $concat: [
-                    { $ifNull: [`$${paymentDetailsField}.firstName`, ''] },
-                    ' ',
-                    { $ifNull: [`$${paymentDetailsField}.middleName`, ''] },
-                    ' ',
-                    { $ifNull: [`$${paymentDetailsField}.lastName`, ''] },
-                  ],
+              $match: {
+                timestamp: {
+                  $gte: timeRange.afterTimestamp,
+                  $lt: timeRange.beforeTimestamp,
                 },
+                [paymentDetailsField]: { $exists: true },
+                [`${paymentDetailsField}.method`]: paymentMethod,
+              },
+            },
+            {
+              $group: {
+                _id: paymentIdentifiers.map(
+                  (field) => `$${paymentDetailsField}.${field}`
+                ),
               },
             },
           ],
-        },
+          { allowDiskUse: true }
+        )
+
+        .batchSize(chunkSize * 2)
+      for await (const v of cursor) {
+        const details: PaymentDetails = {
+          method: paymentMethod,
+          ...Object.fromEntries(
+            paymentIdentifiers.map((field, index) => [field, v._id[index]])
+          ),
+        }
+
+        globalBatch.push(details)
+
+        if (globalBatch.length >= chunkSize) {
+          yield globalBatch.splice(0)
+        }
       }
-    } else {
-      throw new Error(`Unsupported type for getUniqueEntityDetails: ${type}`)
     }
-
-    const aggregationPipeline: Document[] = [
-      {
-        $match: {
-          timestamp: {
-            $gte: timeRange.afterTimestamp,
-            $lt: timeRange.beforeTimestamp,
-          },
-        },
-      },
-      {
-        $project: projectField,
-      },
-      {
-        $match: {
-          [matchField]: { $ne: null },
-        },
-      },
-      {
-        $group: {
-          _id: `$${matchField}`,
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          entity: '$_id',
-        },
-      },
-    ]
-
-    const result = await collection
-      .aggregate<{ entity: string }>(aggregationPipeline)
-      .toArray()
-    return result.map((v) => v.entity)
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
   }
 
   /**
    * Helper to build address filter from Address object.
    */
-  private buildAddressFilter(
-    addressValue: Address | undefined
-  ): Filter<Address> {
-    const addressFilter: Filter<Address> = {}
-    if (!addressValue) {
-      return addressFilter
-    }
-    if (addressValue.addressLines && addressValue.addressLines.length > 0) {
-      addressFilter.addressLines = addressValue.addressLines
-    }
-    if (addressValue.postcode) {
-      addressFilter.postcode = addressValue.postcode
-    }
-    if (addressValue.city) {
-      addressFilter.city = addressValue.city
-    }
-    if (addressValue.state) {
-      addressFilter.state = addressValue.state
-    }
-    if (addressValue.country) {
-      addressFilter.country = addressValue.country
-    }
-    return addressFilter
-  }
-
-  private getNonUserTransactionsGeneratorByEntity(
-    entity: NonUserEntityData | undefined,
-    timeRange: TimeRange,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
-    direction: 'origin' | 'destination'
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    if (!entity) {
-      return this.getRulesEngineTransactionsGenerator(
-        [],
-        timeRange,
-        {},
-        attributesToFetch
-      )
-    }
-
-    let filter: Filter<InternalTransaction> = {}
-
-    if (entity.type === 'EMAIL') {
-      filter = {
-        [`${direction}PaymentDetails.emailId`]: entity.email,
-      }
-    }
-
-    if (entity.type === 'NAME') {
-      if (typeof entity.name === 'string') {
-        filter = {
-          [`${direction}PaymentDetails.name`]: entity.name,
-        }
-      } else {
-        filter = {
-          [`${direction}PaymentDetails.name.firstName`]: entity.name?.firstName,
-          [`${direction}PaymentDetails.name.middleName`]:
-            entity.name?.middleName,
-          [`${direction}PaymentDetails.name.lastName`]: entity.name?.lastName,
-        }
-      }
-    }
-
-    if (entity.type === 'ADDRESS') {
-      filter = {
-        $or: [
-          {
-            [`${direction}PaymentDetails.address`]: this.buildAddressFilter(
-              entity.address
-            ),
-          },
-          {
-            [`${direction}PaymentDetails.shippingAddress`]:
-              this.buildAddressFilter(entity.address),
-          },
-          {
-            [`${direction}PaymentDetails.bankAddress`]: this.buildAddressFilter(
-              entity.address
-            ),
-          },
-        ],
-      }
-    }
-
-    return this.getRulesEngineTransactionsGenerator(
-      [filter],
-      timeRange,
-      {},
-      attributesToFetch
-    )
-  }
-
-  public getNonUserSendingTransactionsGeneratorByEntity(
-    entity: NonUserEntityData | undefined,
-    timeRange: TimeRange,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    return this.getNonUserTransactionsGeneratorByEntity(
-      entity,
-      timeRange,
-      attributesToFetch,
-      'origin'
-    )
-  }
-
-  public getNonUserReceivingTransactionsGeneratorByEntity(
-    entity: NonUserEntityData | undefined,
-    timeRange: TimeRange,
-    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-  ): AsyncGenerator<Array<AuxiliaryIndexTransaction>> {
-    return this.getNonUserTransactionsGeneratorByEntity(
-      entity,
-      timeRange,
-      attributesToFetch,
-      'destination'
-    )
-  }
 
   public async getRuleInstanceHitStats(
     ruleInstanceId: string,

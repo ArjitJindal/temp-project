@@ -161,9 +161,9 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         {(inputProps: InputProps<R[]>) => (
           <Select<R>
             {...inputProps}
-            mode={'MULTIPLE'}
-            allowNewOptions
+            mode={'MULTIPLE_DYNAMIC'}
             options={possibleReasons.map((value) => ({ value: value, label: humanizeAuto(value) }))}
+            onChange={inputProps.onChange as InputProps<string[]>['onChange']}
           />
         )}
       </InputField>

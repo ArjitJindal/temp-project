@@ -1,6 +1,7 @@
 import { Config } from '@flagright/lib/config/config'
-import { siloDataTenants } from '@flagright/lib/constants'
+import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { stageAndRegion } from '@flagright/lib/utils/env'
+import { envIs } from '@/utils/env'
 
 export function getSuffix(): string {
   let suffix = ''
@@ -33,10 +34,15 @@ export function getResourceNameForHammerhead(
   return `hammerhead${dash ? '-' : ''}${resourceName}${suffix}`
 }
 
-export function getNameForGlobalResource(name: string, config: Config) {
-  return `${name + (config.stage === 'local' ? '-dev' : `-${config.stage}`)}-${
-    config.env.region ? config.env.region : 'eu-central-1'
-  }`
+export function getNameForGlobalResource(
+  name: string,
+  config: Config,
+  region?: string
+) {
+  const regionToUse = region ? region : config.env.region || 'eu-central-1'
+  return `${
+    name + (config.stage === 'local' ? '-dev' : `-${config.stage}`)
+  }-${regionToUse}`
 }
 
 export const DEMO_DATA_PREFIX = 'users-attachment-demo'
@@ -50,6 +56,7 @@ export const DYNAMODB_TABLE_NAMES = {
   TARPON_RULE: 'TarponRule',
   TRANSIENT: 'Transient',
   HAMMERHEAD: 'Hammerhead',
+  AGGREGATION: 'Aggregation',
 }
 
 export const StackConstants = {
@@ -75,6 +82,7 @@ export const StackConstants = {
   },
   TARPON_RULE_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.TARPON_RULE,
   TRANSIENT_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.TRANSIENT,
+  AGGREGATION_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.AGGREGATION,
   DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
@@ -345,6 +353,30 @@ export const StackConstants = {
   SECONDARY_ASYNC_RULE_RUNNER_FUNCTION_NAME: getResourceName(
     'SecondaryAsyncRuleRunner'
   ),
+
+  // CloudWatch Logs Ingestion
+  CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME: getResourceNameForTarpon(
+    'CloudwatchLogsIngestionFunction'
+  ),
+  CLOUDWATCH_LOGS_FIREHOSE_STREAM_NAME: getResourceName(
+    'CloudwatchLogsFirehoseStream'
+  ),
+  CLOUDWATCH_LOGS_S3_BUCKET_PREFIX: getResourceNameForTarpon(
+    'cloudwatch-logs',
+    true,
+    true
+  ),
+
+  CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX: getResourceNameForTarpon(
+    'cloudwatch-logs-parquet',
+    true,
+    true
+  ),
+  CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME: getResourceNameForTarpon(
+    'CloudwatchLogsS3ExporterFunction'
+  ),
+  POSTHOG_S3_ACCESS_KEY_SECRET_NAME: `posthog-user-s3-access-key-id`,
+  POSTHOG_S3_SECRET_KEY_SECRET_NAME: `posthog-user-s3-secret-access-key`,
 }
 
 export const SQSQueues: {
@@ -373,7 +405,7 @@ export const SQSQueues: {
   },
   DOWNSTREAM_TARPON_QUEUE_NAME: {
     name: getResourceName('DownstreamTarponQueue'),
-    oldestMsgAgeAlarmThresholdMinutes: 45, // Lets do 45 Minutes it should not be more then that ideally
+    oldestMsgAgeAlarmThresholdMinutes: envIs('dev') ? 60 : 45,
   },
   SECONDARY_TARPON_QUEUE_NAME: {
     name: getResourceName('SecondaryTarponQueue') + '.fifo',

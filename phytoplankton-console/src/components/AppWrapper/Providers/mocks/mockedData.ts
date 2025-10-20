@@ -292,13 +292,12 @@ export const MOCKED_ACCOUNTS: Account[] = [
   {
     id: 'auth0|63f1f09b8aabe642ab49ef06',
     role: 'analyst',
-    email: 'baranozkanwork@gmail.com',
+    email: 'baranozkanworkbaranozkanwork@gmail.com',
     emailVerified: true,
-    name: 'baranozkanwork@gmail.com',
+    name: 'baranozkanworkbaranozkanwork@gmail.com',
     picture:
       'https://s.gravatar.com/avatar/afadf7a144a11c7d4756ccf276ad48a7?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fba.png',
     blocked: false,
-
     reviewerId: 'auth0|633301d843be9f5100f27cf9',
     orgName: 'flagright',
     tenantId: 'flagright',

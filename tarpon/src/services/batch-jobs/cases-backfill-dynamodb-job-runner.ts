@@ -1,7 +1,7 @@
 import { BatchJobRunner } from './batch-job-runner-base'
 import { DynamoCaseRepository } from '@/services/cases/dynamo-repository'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Case } from '@/@types/openapi-internal/Case'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'

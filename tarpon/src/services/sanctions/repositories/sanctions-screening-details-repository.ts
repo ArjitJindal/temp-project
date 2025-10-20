@@ -4,10 +4,11 @@ import omitBy from 'lodash/omitBy'
 import sum from 'lodash/sum'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SendMessageBatchRequestEntry, SQSClient } from '@aws-sdk/client-sqs'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
   SANCTIONS_SCREENING_DETAILS_V2_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { traceable } from '@/core/xray'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
 import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -18,15 +19,14 @@ import {
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
 import { MongoUpdateMessage } from '@/@types/mongo'
-import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
+import { offsetPaginateClickhouse } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
-import {
-  executeClickhouseQuery,
-  getClickhouseClient,
-  sendMessageToMongoConsumer,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
 import { envIs } from '@/utils/env'
@@ -34,8 +34,7 @@ import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
 import { SanctionsScreeningDetailsV2 } from '@/@types/openapi-internal/SanctionsScreeningDetailsV2'
 import { CounterRepository } from '@/services/counter/repository'
-import { bulkSendMessages } from '@/utils/sns-sqs-client'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleExecutionSanctionsDetails } from '@/@types/openapi-internal/RuleExecutionSanctionsDetails'
 
 @traceable
@@ -43,11 +42,16 @@ export class SanctionsScreeningDetailsRepository {
   private readonly tenantId: string
   private readonly mongoDb: MongoClient
   private readonly sqsClient: SQSClient
+  private readonly dynamoDb: DynamoDBDocumentClient
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.tenantId = tenantId
-    this.mongoDb = mongoDb
-    this.sqsClient = new SQSClient({})
+    this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
+    this.sqsClient = getSQSClient()
   }
 
   public async addSanctionsScreeningDetails(
@@ -126,7 +130,7 @@ export class SanctionsScreeningDetailsRepository {
 
     const counterRepository = new CounterRepository(this.tenantId, {
       mongoDb: this.mongoDb,
-      dynamoDb: getDynamoDbClient(),
+      dynamoDb: this.dynamoDb,
     })
 
     const commonUpdatePart: Partial<SanctionsScreeningDetailsV2> = {

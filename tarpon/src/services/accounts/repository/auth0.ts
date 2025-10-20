@@ -3,15 +3,15 @@ import {
   UserEnrollmentStatusEnum,
 } from 'auth0'
 import { BadRequest, Conflict, NotFound } from 'http-errors'
+import { BaseAccountsRepository } from '.'
 import {
   Auth0TenantMetadata,
-  BaseAccountsRepository,
   InternalAccountCreate,
   InternalOrganizationCreate,
   MicroTenantInfo,
   PatchAccountData,
   Tenant,
-} from '.'
+} from '@/@types/tenant'
 import {
   AppMetadata,
   auth0AsyncWrapper,
@@ -172,7 +172,8 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
   async patchAccount(
     tenantInfo: MicroTenantInfo,
     accountId: string,
-    patchData: PatchAccountData
+    patchData: PatchAccountData,
+    overwriteReviewPermissions: boolean = false
   ): Promise<Account> {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const userManager = managementClient.users
@@ -205,15 +206,23 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
             ...(patchData.role && {
               role: patchData.role,
             }),
-            ...(patchedAppMetadata.escalationLevel === undefined && {
-              escalationLevel: null,
-            }),
-            ...(patchedAppMetadata.escalationReviewerId === undefined && {
-              escalationReviewerId: null,
-            }),
-            ...(patchedAppMetadata.reviewerId === undefined && {
-              reviewerId: null,
-            }),
+            // we need to change undefined to null so that auth0 is updated
+            ...(overwriteReviewPermissions
+              ? {
+                  ...(patchedAppMetadata.escalationLevel === undefined && {
+                    escalationLevel: null,
+                  }),
+                  ...(patchedAppMetadata.escalationReviewerId === undefined && {
+                    escalationReviewerId: null,
+                  }),
+                  ...(patchedAppMetadata.reviewerId === undefined && {
+                    reviewerId: null,
+                  }),
+                  ...(patchedAppMetadata.isReviewer === undefined && {
+                    isReviewer: null,
+                  }),
+                }
+              : {}),
             tenantId: tenantInfo.tenantId,
             orgName: tenantInfo.orgName,
           },

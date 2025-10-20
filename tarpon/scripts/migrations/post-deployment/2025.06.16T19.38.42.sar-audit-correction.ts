@@ -1,11 +1,11 @@
 import pMap from 'p-map'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import {
   AUDITLOG_COLLECTION,
   REPORT_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { Report } from '@/@types/openapi-internal/Report'
 import { getMongoDbClientDb, processCursorInBatch } from '@/utils/mongodb-utils'
 import { getReportAuditLogMetadata } from '@/utils/audit-log'

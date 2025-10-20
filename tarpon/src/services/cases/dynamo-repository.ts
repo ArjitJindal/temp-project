@@ -29,11 +29,12 @@ import {
   dangerouslyDeletePartitionKey,
   dangerouslyQueryPaginateDelete,
   DynamoTransactionBatch,
+  sendMessageToDynamoDbConsumer,
 } from '@/utils/dynamodb'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import {
@@ -53,6 +54,8 @@ import {
 } from '@/@types/cases/CasesInternal'
 import { removeUndefinedFields } from '@/utils/object'
 import { DynamoConsumerMessage, dynamoKeyList } from '@/@types/dynamo'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
+
 type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 type SubjectCasesQueryParams = {
@@ -63,6 +66,11 @@ type SubjectCasesQueryParams = {
   filterAvailableAfterTimestamp?: (number | undefined)[]
   filterCaseType?: CaseType
 }
+
+type DynamoDbKey = {
+  PartitionKeyID: string
+  SortKeyID: string
+}
 // Note: Do not export this variables as they are not used outside this file
 const CASES_TABLE_NAME_CH = CLICKHOUSE_DEFINITIONS.CASES_V2.tableName
 
@@ -72,7 +80,7 @@ export class DynamoCaseRepository {
   private readonly dynamoDb: DynamoDBDocumentClient
   private readonly dynamoAlertRepository: DynamoAlertRepository
   private readonly tableName: string
-  private readonly alertsClickhouseTableName: string
+  private readonly alertsClickhouseTableName: ClickhouseTableNames
 
   /**
    * Initializes a new DynamoCaseRepository instance
@@ -804,11 +812,13 @@ export class DynamoCaseRepository {
       joinComments = false,
       joinFiles = false,
       joinTransactionIds = false,
+      joinSanctionsDetails = false,
     }: {
       joinAlerts?: boolean
       joinComments?: boolean
       joinFiles?: boolean
       joinTransactionIds?: boolean
+      joinSanctionsDetails?: boolean
     } = {}
   ): Promise<Case[]> {
     // Extract case IDs from the results
@@ -869,6 +879,7 @@ export class DynamoCaseRepository {
       caseIds,
       {
         getTransactionIds: joinTransactionIds,
+        getSanctionsDetails: joinSanctionsDetails,
       }
     )
 
@@ -1013,6 +1024,7 @@ export class DynamoCaseRepository {
       joinComments: true,
       joinFiles: true,
       joinTransactionIds: true,
+      joinSanctionsDetails: true,
     })
   }
 
@@ -1912,11 +1924,13 @@ export class DynamoCaseRepository {
    * Marks all checklist items as done for a given case
    * @param caseIds - The list of case IDs to mark the checklist items for
    */
-  public async markAllChecklistItemsAsDone(caseIds: string[]): Promise<void> {
+  public async markUnMarkedChecklistItemsDone(
+    caseIds: string[]
+  ): Promise<void> {
     const alertIds = await this.dynamoAlertRepository.getAlertIdsByCaseIds(
       caseIds
     )
-    await this.dynamoAlertRepository.markAllChecklistItemsAsDone(alertIds)
+    await this.dynamoAlertRepository.markUnMarkedChecklistItemsDone(alertIds)
   }
 
   public async deleteCasesData(tenantId: string) {
@@ -1934,50 +1948,115 @@ export class DynamoCaseRepository {
       tenantId,
       queryInput,
       (tenantId, caseItem) => {
-        return this.deleteCase(tenantId, caseItem)
+        return this.deleteCase(caseItem)
       }
     )
   }
 
-  private async deleteCase(tenantId: string, caseItem: Case) {
+  public async deleteCaseAlertData(caseId: string, alertIds: string[]) {
+    const alertKeyLists = alertIds.map((alertId) => ({
+      key: DynamoDbKeys.CASE_ALERT(this.tenantId, caseId, alertId),
+    }))
+
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] = [
+      {
+        tenantId: this.tenantId,
+        tableName: this.alertsClickhouseTableName,
+        items: alertKeyLists,
+        deleteFromClickHouse: true,
+        whereClause: `caseId = '${caseId}' AND id IN ('${alertIds.join(
+          "','"
+        )}')`,
+      },
+    ]
+
+    await Promise.all([
+      ...alertIds.map((alertId) => {
+        return dangerouslyDeletePartitionKey(
+          this.dynamoDb,
+          DynamoDbKeys.CASE_ALERT(
+            this.tenantId,
+            caseId,
+            alertId
+          ) as DynamoDbKey,
+          this.tableName
+        )
+      }),
+      ...dynamoDbConsumerMessage.map((message) =>
+        sendMessageToDynamoDbConsumer(message)
+      ),
+    ])
+  }
+
+  public async deleteCase(caseItem: Case) {
     const caseId = caseItem.caseId as string
     const caseSubjectIdentifiers = caseItem.caseSubjectIdentifiers || ['']
+
+    // Create CDC message for case deletion
+    const caseKeyList = [{ key: DynamoDbKeys.CASE(this.tenantId, caseId) }]
+    const dynamoDbConsumerMessage: DynamoConsumerMessage[] = [
+      {
+        tenantId: this.tenantId,
+        tableName: CASES_TABLE_NAME_CH,
+        items: caseKeyList,
+        deleteFromClickHouse: true,
+        whereClause: `id = '${caseId}'`,
+      },
+      {
+        tenantId: this.tenantId,
+        tableName: this.alertsClickhouseTableName,
+        items: [],
+        deleteFromClickHouse: true,
+        whereClause: `caseId = '${caseId}' `,
+      },
+    ]
 
     await Promise.all([
       dangerouslyDeletePartition(
         this.dynamoDb,
-        tenantId,
-        DynamoDbKeys.CASE_COMMENT(tenantId, caseId, '').PartitionKeyID,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        this.tenantId,
+        DynamoDbKeys.CASE_COMMENT(this.tenantId, caseId, '').PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         'Case Comment'
       ),
       dangerouslyDeletePartition(
         this.dynamoDb,
-        tenantId,
-        DynamoDbKeys.CASE_COMMENT_FILE(tenantId, caseId, '', '').PartitionKeyID,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        this.tenantId,
+        DynamoDbKeys.CASE_COMMENT_FILE(this.tenantId, caseId, '', '')
+          .PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         'Case Comment File'
       ),
       caseSubjectIdentifiers.map((identifier) => {
         return dangerouslyDeletePartition(
           this.dynamoDb,
-          tenantId,
-          DynamoDbKeys.CASE_SUBJECT(tenantId, identifier, '').PartitionKeyID,
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+          this.tenantId,
+          DynamoDbKeys.CASE_SUBJECT(this.tenantId, identifier, '')
+            .PartitionKeyID,
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
           'Case Subject'
         )
       }),
       dangerouslyDeletePartition(
         this.dynamoDb,
-        tenantId,
-        DynamoDbKeys.CASE_ALERT(tenantId, caseId, '').PartitionKeyID,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        this.tenantId,
+        DynamoDbKeys.CASE_ALERT(this.tenantId, caseId, '').PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         'Case Alert'
       ),
       dangerouslyDeletePartitionKey(
         this.dynamoDb,
-        DynamoDbKeys.CASE(tenantId, caseId),
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+        DynamoDbKeys.CASE(this.tenantId, caseId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb,
+        DynamoDbKeys.CASE_TRANSACTION_IDS(this.tenantId, caseId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+      ),
+      // Send to CDC instead of direct ClickHouse deletion
+      ...dynamoDbConsumerMessage.map((message) =>
+        sendMessageToDynamoDbConsumer(message)
       ),
     ])
   }

@@ -1,10 +1,7 @@
 import isEmpty from 'lodash/isEmpty'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
-import {
-  TimeWindow,
-  TransactionTimeRange,
-} from '../utils/rule-parameter-schemas'
 import { PaymentRuleFiltersChildParameters } from '../transaction-filters/payment-filters-base'
+import { TransactionTimeRange, TimeWindow } from '@/@types/rule/params'
 import { LogicAggregationFunc } from '@/@types/openapi-internal/LogicAggregationFunc'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
@@ -251,41 +248,30 @@ export function getFiltersConditions(filters: LegacyFilters): {
     })
   }
   if (filters.transactionTags) {
-    const tagFilters = Object.entries(filters.transactionTags)
-    if (tagFilters.length > 0) {
-      const tagConditions = tagFilters.map(([key, value]) => ({
-        some: [
-          {
-            var: `TRANSACTION:tags`,
-          },
-          {
-            and: [
-              {
-                '==': [
-                  {
-                    var: 'key',
-                  },
-                  key,
-                ],
-              },
-              {
-                in: [
-                  {
-                    var: 'value',
-                  },
-                  value,
-                ],
-              },
-            ],
-          },
-        ],
-      }))
+    const tagData = Object.entries(filters.transactionTags)
+    const obj = Object.fromEntries(tagData)
+    const tags = obj.tags || {}
+    const useAndLogic = 'useAndLogic' in obj ? obj.useAndLogic : false
 
-      conditions.push({
-        or: tagConditions,
-      })
-    }
+    const tagConditions = Object.entries(tags).map(([tagKey, tagValues]) => ({
+      some: [
+        { var: 'TRANSACTION:tags' },
+        {
+          and: [
+            { '==': [{ var: 'key' }, tagKey] },
+            { in: [{ var: 'value' }, tagValues] },
+          ],
+        },
+      ],
+    }))
+
+    const tagLogic = useAndLogic
+      ? { and: tagConditions }
+      : { or: tagConditions }
+
+    conditions.push(tagLogic)
   }
+
   if (filters.transactionTimeRange24hr) {
     const timeRange = filters.transactionTimeRange24hr
     conditions.push(transactionTimeRangeFilterConditions(timeRange))

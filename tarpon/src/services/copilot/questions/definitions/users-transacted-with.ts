@@ -13,10 +13,8 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { getContext } from '@/core/utils/context-storage'
-import {
-  isClickhouseEnabled,
-  executeClickhouseQuery,
-} from '@/utils/clickhouse/utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 
 type Row = {
   userId: string
@@ -116,13 +114,11 @@ export const UsersTransactedWith: TableQuestion<
       ),
     ])
 
-    const items = rows.map((r) => [
-      r.userId,
-      r.name,
-      r.userType,
-      r.count,
-      convert(r.sum, currency),
-    ])
+    const items = rows.map((r) => {
+      const convertedSum = convert(r.sum, 'USD', currency) // amount are stored in USD in CH
+      return [r.userId, r.name, r.userType, r.count, convertedSum]
+    })
+
     return {
       data: {
         items,

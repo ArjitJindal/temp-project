@@ -12,10 +12,10 @@ import {
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
   LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA,
   TIME_WINDOW_SCHEMA,
-  TimeWindow,
 } from '../utils/rule-parameter-schemas'
 import { getTimestampRange } from '../utils/time-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import { mergeObjects } from '@/utils/object'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { traceable } from '@/core/xray'

@@ -9,17 +9,17 @@ import {
   paginatePipeline,
   prefixRegexMatchFilterForArray,
 } from '@/utils/mongodb-utils'
-import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
+import { AUDITLOG_COLLECTION } from '@/utils/mongo-table-names'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
-import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import { traceable } from '@/core/xray'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import {
-  batchInsertToClickhouse,
-  getClickhouseClient,
   isClickhouseEnabledInRegion,
   isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+} from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { ClickhouseAuditLogRepository } from '@/services/audit-log/repositories/clickhouse-repository'
 import { DynamoAuditLogRepository } from '@/services/audit-log/repositories/dynamo-repository'
 import { getAllTenantIds } from '@/utils/tenant'

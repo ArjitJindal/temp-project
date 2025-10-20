@@ -5,11 +5,14 @@ import uniqBy from 'lodash/uniqBy'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
-import { AsyncBatchRecord } from '../rules-engine/utils'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { BatchRepository } from './batch-repository'
-import { BatchEntity } from './utils'
+import {
+  AsyncBatchRecord,
+  BatchEntity,
+  TransactionValidationOptions,
+} from '@/@types/batch-import'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { BatchResponse } from '@/@types/openapi-public/BatchResponse'
 import { Business } from '@/@types/openapi-public/Business'
@@ -24,7 +27,7 @@ import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRul
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { BatchTransactionMonitoringResults } from '@/@types/openapi-public/BatchTransactionMonitoringResults'
 import { UserType } from '@/@types/openapi-internal/UserType'
-import { PaginationParams } from '@/utils/pagination'
+import { PaginationParams } from '@/@types/pagination'
 import { BatchTransactionEventMonitoringResults } from '@/@types/openapi-public/BatchTransactionEventMonitoringResults'
 import { pickKnownEntityFields } from '@/utils/object'
 import { BatchTransactionMonitoringResult } from '@/@types/openapi-public/BatchTransactionMonitoringResult'
@@ -36,39 +39,29 @@ import { BatchConsumerUserEventsWithRulesResult } from '@/@types/openapi-public/
 import { BatchConsumerUserEventWithRulesResult } from '@/@types/openapi-public/BatchConsumerUserEventWithRulesResult'
 import { BatchBusinessUserEventsWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventsWithRulesResult'
 import { BatchBusinessUserEventWithRulesResult } from '@/@types/openapi-public/BatchBusinessUserEventWithRulesResult'
+import {
+  BatchImportErrorReason,
+  DUPLICATE_ID_IN_BATCH,
+  ID_ALREADY_EXISTS,
+  RELATED_ID_NOT_FOUND,
+  ORIGIN_USER_ID_NOT_FOUND,
+  DESTINATION_USER_ID_NOT_FOUND,
+  ID_NOT_FOUND,
+} from '@/constants/lists'
+import { traceable } from '@/core/xray'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
-const ID_ALREADY_EXISTS = 'ID_ALREADY_EXISTS'
-const ID_NOT_FOUND = 'ID_NOT_FOUND'
-const RELATED_ID_NOT_FOUND = 'RELATED_ID_NOT_FOUND'
-const ORIGIN_USER_ID_NOT_FOUND = 'ORIGIN_USER_ID_NOT_FOUND'
-const DESTINATION_USER_ID_NOT_FOUND = 'DESTINATION_USER_ID_NOT_FOUND'
-const DUPLICATE_ID_IN_BATCH = 'DUPLICATE_ID_IN_BATCH'
-
-type BatchImportErrorReason =
-  | typeof ID_ALREADY_EXISTS
-  | typeof DUPLICATE_ID_IN_BATCH
-  | typeof RELATED_ID_NOT_FOUND
-  | typeof ID_NOT_FOUND
-  | typeof ORIGIN_USER_ID_NOT_FOUND
-  | typeof DESTINATION_USER_ID_NOT_FOUND
-
-type TransactionValidationOptions = {
-  validateOriginUserId?: boolean
-  validateDestinationUserId?: boolean
-}
-
+@traceable
 export class BatchImportService {
   private readonly transactionRepository: DynamoDbTransactionRepository
   private readonly userRepository: UserRepository
   private readonly batchRepository: BatchRepository
-  private readonly userEventRepository: UserEventRepository
-  private readonly transactionEventRepository: TransactionEventRepository
 
   constructor(
     private readonly tenantId: string,
     readonly connections: {
       dynamoDb: DynamoDBDocumentClient
-      mongoDb: MongoClient
+      mongoDb?: MongoClient
     }
   ) {
     this.transactionRepository = new DynamoDbTransactionRepository(
@@ -82,17 +75,13 @@ export class BatchImportService {
       this.tenantId,
       connections.dynamoDb
     )
-    this.userEventRepository = new UserEventRepository(this.tenantId, {
-      dynamoDb: connections.dynamoDb,
-      mongoDb: connections.mongoDb,
-    })
-    this.transactionEventRepository = new TransactionEventRepository(
-      this.tenantId,
-      {
-        dynamoDb: connections.dynamoDb,
-        mongoDb: connections.mongoDb,
-      }
-    )
+  }
+
+  private async getMongo() {
+    if (!this.connections.mongoDb) {
+      this.connections.mongoDb = await getMongoDbClient()
+    }
+    return this.connections.mongoDb
   }
 
   public async importTransactions(
@@ -531,8 +520,14 @@ export class BatchImportService {
       paginationParams,
       'CONSUMER'
     )
+    const mongoDb = await this.getMongo()
+    const dynamoDb = this.connections.dynamoDb
+    const userEventRepository = new UserEventRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     const userEvents =
-      await this.userEventRepository.getMongoUserEventsByIds<ConsumerUserEvent>(
+      await userEventRepository.getMongoUserEventsByIds<ConsumerUserEvent>(
         entityIds
       )
     const formattedEvents = userEvents.map((event) =>
@@ -554,8 +549,14 @@ export class BatchImportService {
       paginationParams,
       'BUSINESS'
     )
+    const mongoDb = await this.getMongo()
+    const dynamoDb = this.connections.dynamoDb
+    const userEventRepository = new UserEventRepository(this.tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
     const userEvents =
-      await this.userEventRepository.getMongoUserEventsByIds<BusinessUserEvent>(
+      await userEventRepository.getMongoUserEventsByIds<BusinessUserEvent>(
         entityIds
       )
     const formattedEvents = userEvents.map((event) =>
@@ -638,8 +639,17 @@ export class BatchImportService {
       'TRANSACTION_EVENT_BATCH',
       paginationParams
     )
+    const mongoDb = await this.getMongo()
+    const dynamoDb = this.connections.dynamoDb
+    const transactionEventsRepository = new TransactionEventRepository(
+      this.tenantId,
+      {
+        mongoDb,
+        dynamoDb,
+      }
+    )
     const transactionEvents =
-      await this.transactionEventRepository.getMongoTransactionEventsByIds(
+      await transactionEventsRepository.getMongoTransactionEventsByIds(
         entityIds
       )
     const formattedEvents = transactionEvents?.map((event) =>

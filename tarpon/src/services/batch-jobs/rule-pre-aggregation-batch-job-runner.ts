@@ -1,13 +1,13 @@
-import chunk from 'lodash/chunk'
 import compact from 'lodash/compact'
 import floor from 'lodash/floor'
 import isEmpty from 'lodash/isEmpty'
-import memoize from 'lodash/memoize'
 import range from 'lodash/range'
 import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
+import chunk from 'lodash/chunk'
+import pMap from 'p-map'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -21,9 +21,10 @@ import {
   canAggregate,
   getAggregationGranularity,
 } from '../logic-evaluator/engine/utils'
+import { ClickhouseTransactionsRepository } from '../rules-engine/repositories/clickhouse-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import {
-  TimestampRange,
+  TimestampSlice,
   TransactionAggregationTaskEntry,
   V8LogicAggregationRebuildTask,
 } from '@/@types/tranasction/aggregation'
@@ -48,10 +49,16 @@ import { TransientRepository } from '@/core/repositories/transient-repository'
 import dayjs, { duration } from '@/utils/dayjs'
 import { generateChecksum } from '@/utils/object'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { Address } from '@/@types/openapi-public/Address'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { getAddressString } from '@/utils/helpers'
+import { staticValueGenerator, zipGenerators } from '@/utils/generator'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 const sqs = getSQSClient()
 
-const DEFAULT_CHUNK_SIZE = 1_000
+const DEFAULT_CHUNK_SIZE = 1000
 
 function getAggregationTaskMessage(
   task: TransactionAggregationTaskEntry,
@@ -59,10 +66,13 @@ function getAggregationTaskMessage(
 ): FifoSqsMessage {
   const payload = task.payload as V8LogicAggregationRebuildTask
   const deduplicationId = generateChecksum(
-    `${task.userKeyId}${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
+    `${task.payload?.['jobId'] ? `${task.payload['jobId']}:` : ''}${
+      task.userKeyId
+    }${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
       payload.aggregationVariable
     )}`
   )
+
   return {
     MessageBody: JSON.stringify(payload),
     MessageGroupId: generateChecksum(
@@ -77,30 +87,20 @@ type PaymentDetailsUserInfo = {
   paymentDetails: PaymentDetails
 }
 
-export type UserInfoTypes = 'ADDRESS' | 'EMAIL' | 'NAME'
-
-interface PaymentDetailsInfo {
+type PaymentDetailsAddressUserInfo = {
   userKeyId: string
-  value: string
-  type: UserInfoTypes
+  address: Address
 }
 
-interface PaymentDetailsAddressUserInfo extends PaymentDetailsInfo {
-  type: 'ADDRESS'
+type PaymentDetailsEmailUserInfo = {
+  userKeyId: string
+  email: string
 }
 
-interface PaymentDetailsNameUserInfo extends PaymentDetailsInfo {
-  type: 'NAME'
+type PaymentDetailsNameUserInfo = {
+  userKeyId: string
+  name: ConsumerName | string
 }
-
-interface PaymentDetailsEmailUserInfo extends PaymentDetailsInfo {
-  type: 'EMAIL'
-}
-
-type PaymentDetailsAggregation =
-  | PaymentDetailsAddressUserInfo
-  | PaymentDetailsEmailUserInfo
-  | PaymentDetailsNameUserInfo
 
 type PreAggregationTask =
   | { type: 'USER_TRANSACTIONS'; ids: string[] }
@@ -109,21 +109,39 @@ type PreAggregationTask =
   | { type: 'PAYMENT_DETAILS_EMAIL'; ids: PaymentDetailsEmailUserInfo[] }
   | { type: 'PAYMENT_DETAILS_NAME'; ids: PaymentDetailsNameUserInfo[] }
 
+const MAX_CONCURRENCY = 20
+
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
-  private setDeduplicationIds = new Set<string>()
   private dynamoDb!: DynamoDBDocumentClient
   private mongoDb!: MongoClient
-
+  private mongoTransactionsRepo!: MongoDbTransactionRepository
+  private clickhouseTransactionsRepo?: ClickhouseTransactionsRepository
+  private totalMessagesLength: number = 0
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
-
+    this.totalMessagesLength = 0
     const tenantId = job.tenantId
+    if (isClickhouseEnabled()) {
+      const clickhouseClient = await getClickhouseClient(tenantId, {
+        requestTimeout: 0,
+      })
+      this.clickhouseTransactionsRepo = new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        this.dynamoDb,
+        tenantId
+      )
+    }
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
     })
+    this.mongoTransactionsRepo = new MongoDbTransactionRepository(
+      tenantId,
+      this.mongoDb,
+      this.dynamoDb
+    )
     const riskRepository = new RiskRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,
@@ -171,10 +189,13 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       }
       await this.jobRepository.setMetadata(this.jobId, metadata)
     }
-
-    for (const aggregationVariable of aggregationVariables) {
-      const { ids, type } = await this.preAggregateVariable(
-        job.tenantId,
+    const dedupedAggregationVariables = uniqBy(
+      aggregationVariables,
+      getAggVarHash
+    )
+    for (const aggregationVariable of dedupedAggregationVariables) {
+      // flush the set for each aggregation var to avoid bloating memory used
+      const preAggBuilder = this.preAggregateVariable(
         aggregationVariable,
         currentTimestamp
       )
@@ -183,12 +204,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         currentTimestamp ?? Date.now(),
         tenantId
       )
-      for (const idsChunk of chunk<
-        PaymentDetailsUserInfo | string | PaymentDetailsAggregation
-      >(ids, DEFAULT_CHUNK_SIZE)) {
+      for await (const { ids, type } of preAggBuilder) {
         let messages: FifoSqsMessage[] = []
         if (type === 'USER_TRANSACTIONS') {
-          messages = (idsChunk as string[]).flatMap((userId) => {
+          messages = (ids as string[]).flatMap((userId) => {
             if (timeRanges !== null) {
               return timeRanges.map((range, index) =>
                 getAggregationTaskMessage(
@@ -224,7 +243,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             })
           })
         } else if (type === 'PAYMENT_DETAILS_TRANSACTIONS') {
-          messages = (idsChunk as PaymentDetailsUserInfo[]).flatMap(
+          messages = (ids as PaymentDetailsUserInfo[]).flatMap(
             ({ userKeyId, paymentDetails }) => {
               if (timeRanges !== null) {
                 return timeRanges.map((range, index) =>
@@ -261,26 +280,53 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
               })
             }
           )
-        } else if (
-          type === 'PAYMENT_DETAILS_ADDRESS' ||
-          type === 'PAYMENT_DETAILS_EMAIL' ||
-          type === 'PAYMENT_DETAILS_NAME'
-        ) {
-          messages = (idsChunk as PaymentDetailsAggregation[]).flatMap(
-            ({ userKeyId, value, type }) => {
+        } else if (type === 'PAYMENT_DETAILS_ADDRESS') {
+          messages = (ids as PaymentDetailsAddressUserInfo[]).flatMap(
+            ({ userKeyId, address }) => {
               return getAggregationTaskMessage({
                 userKeyId,
                 payload: {
                   type: 'PRE_AGGREGATION',
+                  entityData: { type: 'ADDRESS', address },
                   tenantId: job.tenantId,
                   currentTimestamp: currentTimestamp ?? Date.now(),
                   jobId: this.jobId,
                   entity,
                   aggregationVariable,
-                  aggregationData: {
-                    type: type,
-                    value: value,
-                  },
+                },
+              })
+            }
+          )
+        } else if (type === 'PAYMENT_DETAILS_EMAIL') {
+          messages = (ids as PaymentDetailsEmailUserInfo[]).flatMap(
+            ({ userKeyId, email }) => {
+              return getAggregationTaskMessage({
+                userKeyId,
+                payload: {
+                  type: 'PRE_AGGREGATION',
+                  entityData: { type: 'EMAIL', email },
+                  tenantId: job.tenantId,
+                  currentTimestamp: currentTimestamp ?? Date.now(),
+                  jobId: this.jobId,
+                  entity,
+                  aggregationVariable,
+                },
+              })
+            }
+          )
+        } else if (type === 'PAYMENT_DETAILS_NAME') {
+          messages = (ids as PaymentDetailsNameUserInfo[]).flatMap(
+            ({ userKeyId, name }) => {
+              return getAggregationTaskMessage({
+                userKeyId,
+                payload: {
+                  type: 'PRE_AGGREGATION',
+                  entityData: { type: 'NAME', name },
+                  tenantId: job.tenantId,
+                  currentTimestamp: currentTimestamp ?? Date.now(),
+                  jobId: this.jobId,
+                  entity,
+                  aggregationVariable,
                 },
               })
             }
@@ -291,7 +337,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       }
     }
 
-    if (this.setDeduplicationIds.size === 0 && entity?.type === 'RULE') {
+    if (this.totalMessagesLength === 0 && entity?.type === 'RULE') {
       logger.info(
         `No tasks to pre-aggregate. Switching rule instance ${entity.ruleInstanceId} to ACTIVE.`
       )
@@ -300,7 +346,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         'ACTIVE'
       )
     }
-    if (this.setDeduplicationIds.size === 0 && entity?.type === 'RISK_FACTOR') {
+    if (this.totalMessagesLength === 0 && entity?.type === 'RISK_FACTOR') {
       logger.info(
         `No tasks to pre-aggregate. Switching rule instance ${entity.riskFactorId} to ACTIVE.`
       )
@@ -308,97 +354,18 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private uniqueUserIds = memoize(
-    async (
-      tenantId: string,
-      direction: 'ORIGIN' | 'DESTINATION',
-      timeRange: {
-        afterTimestamp: number
-        beforeTimestamp: number
-      }
-    ) => {
-      const transactionsRepo = new MongoDbTransactionRepository(
-        tenantId,
-        this.mongoDb,
-        this.dynamoDb
-      )
-
-      return await transactionsRepo.getUniqueUserIds(direction, timeRange)
-    },
-    (tenantId, direction, timeRange) =>
-      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
-  )
-
-  private uniquePaymentDetails = memoize(
-    async (
-      tenantId: string,
-      direction: 'ORIGIN' | 'DESTINATION',
-      timeRange: { afterTimestamp: number; beforeTimestamp: number }
-    ) => {
-      const transactionsRepo = new MongoDbTransactionRepository(
-        tenantId,
-        this.mongoDb,
-        this.dynamoDb
-      )
-
-      return await transactionsRepo.getUniquePaymentDetails(
-        direction,
-        timeRange
-      )
-    },
-    (tenantId, direction, timeRange) =>
-      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
-  )
-
-  private uniqueEntityDetails = memoize(
-    async (
-      tenantId: string,
-      direction: 'ORIGIN' | 'DESTINATION',
-      timeRange: { afterTimestamp: number; beforeTimestamp: number },
-      type: 'ADDRESS' | 'EMAIL' | 'NAME'
-    ) => {
-      const transactionsRepo = new MongoDbTransactionRepository(
-        tenantId,
-        this.mongoDb,
-        this.dynamoDb
-      )
-      return await transactionsRepo.getUniqueEntityDetails(
-        direction,
-        timeRange,
-        type
-      )
-    },
-    (tenantId, direction, timeRange, type) =>
-      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}-${type}`
-  )
-
   private async internalBulkSendMesasges(
     dynamoDb: DynamoDBDocumentClient,
     messages: FifoSqsMessage[]
   ) {
-    const messagesToSend: FifoSqsMessage[] = []
-
-    messagesToSend.push(
-      ...messages.filter(
-        (m) => !this.setDeduplicationIds.has(m.MessageDeduplicationId)
-      )
-    )
-
-    messages.forEach((m) =>
-      this.setDeduplicationIds.add(m.MessageDeduplicationId)
-    )
-
-    const dedupMessages = uniqBy(
-      messagesToSend,
-      (m) => m.MessageDeduplicationId
-    )
-
-    await this.jobRepository.incrementMetadataTasksCount(
-      this.jobId,
-      dedupMessages.length
-    )
+    const dedupMessages = uniqBy(messages, (m) => m.MessageDeduplicationId)
 
     if (envIs('local')) {
+      this.totalMessagesLength += dedupMessages.length
+      await this.jobRepository.incrementMetadataTasksCount(
+        this.jobId,
+        dedupMessages.length
+      )
       const { handleV8PreAggregationTasks } = await import(
         '@/core/local-handlers/v8-pre-aggregation'
       )
@@ -411,30 +378,48 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       )
       // Filter the messages that have not been sent yet
       const messagesNotSentYet: FifoSqsMessage[] = []
-
+      const messageSentStatusDict = await transientRepository.bulkCheckHasKey(
+        this.jobId,
+        dedupMessages.map((message) =>
+          sanitizeDeduplicationId(message.MessageDeduplicationId)
+        )
+      )
       for (const message of dedupMessages) {
         if (
-          !(await transientRepository.hasKey(
-            this.jobId,
+          !messageSentStatusDict[
             sanitizeDeduplicationId(message.MessageDeduplicationId)
-          ))
+          ]
         ) {
           messagesNotSentYet.push(message)
         }
       }
-      await bulkSendMessages(
-        sqs,
-        process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
-        messagesNotSentYet,
-        async (batch) => {
-          // Mark the messages as sent to avoid being sent again on retries
-          for (const message of batch) {
-            await transientRepository.addKey(
-              this.jobId,
-              message.MessageDeduplicationId as string
-            )
-          }
-        }
+      this.totalMessagesLength += messagesNotSentYet.length
+
+      await this.jobRepository.incrementMetadataTasksCount(
+        this.jobId,
+        messagesNotSentYet.length
+      )
+      const chunkSize = 10
+      const messagesToSendChunks = chunk(messagesNotSentYet, chunkSize)
+      await pMap(
+        messagesToSendChunks,
+        async (chunk) => {
+          await bulkSendMessages(
+            sqs,
+            process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
+            chunk,
+            async (batch) => {
+              // Mark the messages as sent to avoid being sent again on retries
+              await transientRepository.batchAddKey(
+                batch.map((message) => ({
+                  partitionKeyId: this.jobId,
+                  sortKeyId: (message.MessageDeduplicationId ?? '') as string,
+                }))
+              )
+            }
+          )
+        },
+        { concurrency: MAX_CONCURRENCY }
       )
     }
   }
@@ -443,7 +428,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     aggregationVar: LogicAggregationVariable,
     currentTimestamp: number,
     tenantId: string
-  ): TimestampRange[] | null {
+  ): TimestampSlice[] | null {
     const timeWindow = aggregationVar.timeWindow
     const canAggregateVar = canAggregate(timeWindow)
     const aggregationGranularity = getAggregationGranularity(
@@ -483,15 +468,15 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       return {
         startTimestamp: sliceStart,
         endTimestamp: sliceEnd,
+        sliceNumber: index + 1,
       }
     })
   }
 
-  private async preAggregateVariable(
-    tenantId: string,
+  private async *preAggregateVariable(
     aggregationVariable: LogicAggregationVariable,
     currentTimestamp: number = Date.now()
-  ): Promise<PreAggregationTask> {
+  ): AsyncGenerator<PreAggregationTask> {
     const { timeWindow } = aggregationVariable
     const timeRange = getTimeRangeByTimeWindows(
       currentTimestamp,
@@ -499,115 +484,198 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       timeWindow.end
     )
     if (aggregationVariable.type === 'USER_TRANSACTIONS') {
-      const originUserIds =
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
+      const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
-          ? []
-          : await this.uniqueUserIds(tenantId, 'ORIGIN', timeRange)
-      const destinationUserIds =
+          ? staticValueGenerator<string[]>([])
+          : transactionsRepo.getUniqueUserIdGenerator(
+              'ORIGIN',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      const destinationGenerator =
         aggregationVariable.transactionDirection === 'SENDING'
-          ? []
-          : await this.uniqueUserIds(tenantId, 'DESTINATION', timeRange)
-      const allUserIds = uniq(originUserIds.concat(destinationUserIds))
-
-      return {
-        ids: allUserIds,
-        type: 'USER_TRANSACTIONS',
-      }
-    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
-      const originPaymentDetails =
-        aggregationVariable.transactionDirection === 'RECEIVING'
-          ? []
-          : await this.uniquePaymentDetails(tenantId, 'ORIGIN', timeRange)
-      const destinationPaymentDetails =
-        aggregationVariable.transactionDirection === 'SENDING'
-          ? []
-          : await this.uniquePaymentDetails(tenantId, 'DESTINATION', timeRange)
-      const userInfos = compact(
-        uniqBy(
-          originPaymentDetails.concat(destinationPaymentDetails),
-          getPaymentDetailsIdentifiersKey
-        ).map((v) => {
-          const userKeyId = getPaymentDetailsIdentifiersKey(v)
-          if (userKeyId) {
-            return { userKeyId, paymentDetails: v }
-          }
-        })
-      )
-      return {
-        ids: userInfos,
-        type: 'PAYMENT_DETAILS_TRANSACTIONS',
-      }
-    } else if (this.isPaymentDetailsEntityType(aggregationVariable.type)) {
-      const entityType = this.getEntityTypeFromAggregationType(
-        aggregationVariable.type
-      )
-
-      const [originEntities, destinationEntities] = await Promise.all([
-        aggregationVariable.transactionDirection === 'RECEIVING'
-          ? []
-          : this.uniqueEntityDetails(tenantId, 'ORIGIN', timeRange, entityType),
-        aggregationVariable.transactionDirection === 'SENDING'
-          ? []
-          : this.uniqueEntityDetails(
-              tenantId,
+          ? staticValueGenerator<string[]>([])
+          : transactionsRepo.getUniqueUserIdGenerator(
               'DESTINATION',
               timeRange,
-              entityType
-            ),
-      ])
-
-      const uniqueEntities = uniqBy(
-        [...originEntities, ...destinationEntities],
-        (entity) => entity
+              DEFAULT_CHUNK_SIZE
+            )
+      for await (const data of zipGenerators(
+        originGenerator,
+        destinationGenerator,
+        []
+      )) {
+        const allUserIds = uniq(data[0].concat(data[1]))
+        yield {
+          ids: allUserIds,
+          type: 'USER_TRANSACTIONS',
+        }
+      }
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
+      const originGenerator =
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? staticValueGenerator<PaymentDetails[]>([])
+          : transactionsRepo.getUniquePaymentDetailsGenerator(
+              'ORIGIN',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      const destinationGenerator =
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? staticValueGenerator<PaymentDetails[]>([])
+          : transactionsRepo.getUniquePaymentDetailsGenerator(
+              'DESTINATION',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      for await (const data of zipGenerators(
+        originGenerator,
+        destinationGenerator,
+        []
+      )) {
+        const userInfos = compact(
+          uniqBy(data[0].concat(data[1]), getPaymentDetailsIdentifiersKey).map(
+            (v) => {
+              const userKeyId = getPaymentDetailsIdentifiersKey(v)
+              if (userKeyId) {
+                return { userKeyId, paymentDetails: v }
+              }
+            }
+          )
+        )
+        yield {
+          ids: userInfos,
+          type: 'PAYMENT_DETAILS_TRANSACTIONS',
+        }
+      }
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_ADDRESS') {
+      const transactionsRepo = this.mongoTransactionsRepo
+      const originGenerator =
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? staticValueGenerator<Address[]>([])
+          : transactionsRepo.getUniqueAddressDetailsGenerator(
+              'ORIGIN',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      const destinationGenerator =
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? staticValueGenerator<Address[]>([])
+          : (
+              transactionsRepo as MongoDbTransactionRepository
+            ).getUniqueAddressDetailsGenerator(
+              'DESTINATION',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      for await (const data of zipGenerators(
+        originGenerator,
+        destinationGenerator,
+        []
+      )) {
+        const userInfos: PaymentDetailsAddressUserInfo[] = compact(
+          uniqBy(data[0].concat(data[1]), (v) => generateChecksum(v, 10)).map(
+            (v) => {
+              const userKeyId = getAddressString(v)
+              if (userKeyId) {
+                return { userKeyId, address: v }
+              }
+            }
+          )
+        )
+        yield {
+          ids: userInfos,
+          type: 'PAYMENT_DETAILS_ADDRESS',
+        }
+      }
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_EMAIL') {
+      const transactionsRepo = this.mongoTransactionsRepo
+      const originGenerator =
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? staticValueGenerator<string[]>([])
+          : transactionsRepo.getUniqueEmailDetailsGenerator(
+              'ORIGIN',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      const destinationGenerator =
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? staticValueGenerator<string[]>([])
+          : (
+              transactionsRepo as MongoDbTransactionRepository
+            ).getUniqueEmailDetailsGenerator(
+              'DESTINATION',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      for await (const data of zipGenerators(
+        originGenerator,
+        destinationGenerator,
+        []
+      )) {
+        const userInfos: PaymentDetailsEmailUserInfo[] = compact(
+          uniq(data[0].concat(data[1])).map((v) => {
+            const userKeyId = v
+            if (userKeyId) {
+              return { userKeyId, email: v }
+            }
+          })
+        )
+        yield {
+          ids: userInfos,
+          type: 'PAYMENT_DETAILS_EMAIL',
+        }
+      }
+    } else if (aggregationVariable.type === 'PAYMENT_DETAILS_NAME') {
+      const transactionsRepo = this.mongoTransactionsRepo
+      const originGenerator =
+        aggregationVariable.transactionDirection === 'RECEIVING'
+          ? staticValueGenerator<(ConsumerName | string)[]>([])
+          : transactionsRepo.getUniqueNameDetailsGenerator(
+              'ORIGIN',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      const destinationGenerator =
+        aggregationVariable.transactionDirection === 'SENDING'
+          ? staticValueGenerator<(ConsumerName | string)[]>([])
+          : (
+              transactionsRepo as MongoDbTransactionRepository
+            ).getUniqueNameDetailsGenerator(
+              'DESTINATION',
+              timeRange,
+              DEFAULT_CHUNK_SIZE
+            )
+      for await (const data of zipGenerators(
+        originGenerator,
+        destinationGenerator,
+        []
+      )) {
+        const userInfos = compact(
+          uniqBy(data[0].concat(data[1]), (v) =>
+            typeof v === 'string' ? v : JSON.stringify(v)
+          ).map((v) => {
+            const userKeyId = typeof v === 'string' ? v : JSON.stringify(v)
+            if (userKeyId) {
+              return { userKeyId, name: v }
+            }
+          })
+        )
+        yield {
+          ids: userInfos,
+          type: 'PAYMENT_DETAILS_NAME',
+        }
+      }
+    } else {
+      throw new Error(
+        `Unsupported aggregation variable type: ${aggregationVariable.type}`
       )
-
-      const mappedEntities = uniqueEntities.map((entity) => ({
-        userKeyId: entity,
-        value: entity,
-        type: entityType,
-      }))
-
-      return this.createPaymentDetailsTask(
-        aggregationVariable.type,
-        mappedEntities
-      )
-    }
-
-    throw new Error(
-      `Unsupported aggregation variable type: ${aggregationVariable.type}`
-    )
-  }
-
-  private isPaymentDetailsEntityType(type: string): boolean {
-    return [
-      'PAYMENT_DETAILS_ADDRESS',
-      'PAYMENT_DETAILS_EMAIL',
-      'PAYMENT_DETAILS_NAME',
-    ].includes(type)
-  }
-
-  private getEntityTypeFromAggregationType(type: string): UserInfoTypes {
-    const typeMap: Record<string, UserInfoTypes> = {
-      PAYMENT_DETAILS_ADDRESS: 'ADDRESS',
-      PAYMENT_DETAILS_EMAIL: 'EMAIL',
-      PAYMENT_DETAILS_NAME: 'NAME',
-    }
-    return typeMap[type] || 'NAME'
-  }
-
-  private createPaymentDetailsTask(
-    aggregationType: string,
-    entities: Array<{ userKeyId: string; value: string; type: UserInfoTypes }>
-  ): PreAggregationTask {
-    const typeMap: Record<string, PreAggregationTask['type']> = {
-      PAYMENT_DETAILS_ADDRESS: 'PAYMENT_DETAILS_ADDRESS',
-      PAYMENT_DETAILS_EMAIL: 'PAYMENT_DETAILS_EMAIL',
-      PAYMENT_DETAILS_NAME: 'PAYMENT_DETAILS_NAME',
-    }
-
-    return {
-      ids: entities as any,
-      type: typeMap[aggregationType] || 'PAYMENT_DETAILS_NAME',
     }
   }
 }

@@ -467,9 +467,8 @@ const customTextWidget: CoreWidgets['text'] = {
     if (isArrayType) {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
-          <Select<string>
-            mode={'MULTIPLE'}
-            allowNewOptions={true}
+          <Select
+            mode={'MULTIPLE_DYNAMIC'}
             allowClear={true}
             options={[]}
             value={(props.value as any) ?? undefined}
@@ -687,9 +686,8 @@ function MultiSelectWidget(props: any) {
 
   return (
     <WidgetWrapper widgetFactoryProps={props}>
-      <Select<string | number>
-        mode={'MULTIPLE'}
-        allowNewOptions={props.allowCustomValues}
+      <Select
+        mode={props.allowCustomValues ? 'MULTIPLE_DYNAMIC' : 'MULTIPLE'}
         allowClear={true}
         options={options}
         value={value}

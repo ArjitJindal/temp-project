@@ -27,11 +27,11 @@ import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTempla
 import { FlatFileProgressResponse } from '@/@types/openapi-internal/FlatFileProgressResponse'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import {
-  executeClickhouseQuery,
   getClickhouseClient,
   getClickhouseCredentials,
-} from '@/utils/clickhouse/utils'
+} from '@/utils/clickhouse/client'
 import { EntityModel } from '@/@types/model'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'

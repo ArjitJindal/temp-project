@@ -472,12 +472,25 @@ export function RuleConfigurationSimulation(props: Props) {
                         {iterationResults.length > 0 ? (
                           <SimulationStatistics iteration={iterationResults[i]} />
                         ) : undefined}
-                        {iterations[i].taskId && (
-                          <>
-                            <SimulationTransactionsHit taskId={iterations[i].taskId as string} />
-                            <SimulationUsersHit taskId={iterations[i].taskId as string} />
-                          </>
-                        )}
+                        {iterations[i].taskId &&
+                          (() => {
+                            const isSimulationRunning =
+                              iterationResults[i]?.latestStatus?.status !== 'SUCCESS' &&
+                              iterationResults[i]?.latestStatus?.status !== 'FAILED';
+
+                            return (
+                              <>
+                                <SimulationTransactionsHit
+                                  taskId={iterations[i].taskId as string}
+                                  isSimulationRunning={isSimulationRunning}
+                                />
+                                <SimulationUsersHit
+                                  taskId={iterations[i].taskId as string}
+                                  isSimulationRunning={isSimulationRunning}
+                                />
+                              </>
+                            );
+                          })()}
                         <H4>Changed rule parameters</H4>
                       </div>
                     </>

@@ -15,9 +15,10 @@ import { IRole, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@flagright/lib/config/config'
-import { Duration } from 'aws-cdk-lib'
+import { Duration, Fn } from 'aws-cdk-lib'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
+import { InterfaceVpcEndpoint } from 'aws-cdk-lib/aws-ec2'
 
 export type InternalFunctionProps = {
   name: string
@@ -179,6 +180,24 @@ function createLambdaFunction(
   })
   // This is needed to allow using ${Function.Arn} in openapi.yaml
   ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
+
+  // Add SQS VPC endpoint URL if it exists
+  // We do this after function creation to avoid passing tokens through nested stack parameters
+  const contextWithVpcEndpoint = context as Construct & {
+    config: Config
+    functionProps: Partial<FunctionProps>
+    sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint
+  }
+  if (contextWithVpcEndpoint.sqsInterfaceVpcEndpoint) {
+    // VPC endpoint DNS entries are in format: "hostedZoneId:dnsName"
+    // We need to extract just the DNS name (after the colon)
+    const firstDnsEntry = Fn.select(
+      0,
+      contextWithVpcEndpoint.sqsInterfaceVpcEndpoint.vpcEndpointDnsEntries
+    )
+    const dnsName = Fn.select(1, Fn.split(':', firstDnsEntry))
+    func.addEnvironment('SQS_VPC_ENDPOINT_URL', `https://${dnsName}`)
+  }
 
   let lambdaOptions: {
     aliasName: string

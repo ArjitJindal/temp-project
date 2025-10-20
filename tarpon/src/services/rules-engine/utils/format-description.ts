@@ -1,10 +1,12 @@
 import Handlebars from 'handlebars'
-import { Comparator } from './rule-parameter-schemas'
+import { formatNumber } from '@flagright/lib/utils'
+import { Comparator } from '@/@types/rule/params'
 import { formatCountry } from '@/utils/countries'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
 import { hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context-storage'
 
 Handlebars.registerHelper('possessive', function (value) {
   if (value == null || typeof value !== 'string' || value === '') {
@@ -21,7 +23,9 @@ Handlebars.registerHelper('if-sender', function (ifSender, ifReceiver) {
 
 export function formatMoney(value: any, currency?: any): string {
   if (typeof value === 'number' && !Number.isNaN(value)) {
-    return `${value.toFixed(2)} ${currency}`
+    const settings = getContext()?.settings
+    const showAllDecimals = settings?.showAllDecimalPlaces || false
+    return `${formatNumber(value, showAllDecimals)} ${currency}`
   }
   if (value != null && typeof value === 'object') {
     if (

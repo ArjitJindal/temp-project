@@ -12,7 +12,7 @@ import replace from 'lodash/replace'
 import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
 import { decode } from 'html-entities'
-import { COUNTRIES } from '@flagright/lib/constants'
+import { COUNTRIES } from '@flagright/lib/constants/countries'
 import { MongoClient } from 'mongodb'
 import { adverseMediaCategoryMap } from '@flagright/lib/utils/screening'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -38,7 +38,7 @@ import {
   RELATIONSHIP_CODE_TO_NAME,
   SANCTIONS_CATEGORY_MAP,
   PERSON_SANCTIONS_DESCRIPTION2_VALUES,
-} from '../dow-jones-constants'
+} from '../constants/dow-jones-constants'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
@@ -110,7 +110,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     const settings = await tenantSettings(tenantId)
     const dowJonesSettings = settings?.sanctions?.providerScreeningTypes?.find(
@@ -145,7 +145,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     tenantId: string,
     screeningTypes: DowJonesSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.DOW_JONES, tenantId, connections)
     this.authHeader =
@@ -250,7 +250,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       .filter((fp) => fp.includes('_f_splits.zip') || fp.includes('_d.zip'))
 
     const sourceDocumentsRepo = new MongoSanctionSourcesRepository(
-      this.mongoDb,
+      await this.getMongoDbClient(),
       getSanctionsSourceDocumentsCollectionName(
         [SanctionsDataProviders.DOW_JONES],
         this.tenantId
@@ -291,7 +291,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     })
 
     const sourceDocumentsRepo = new MongoSanctionSourcesRepository(
-      this.mongoDb,
+      await this.getMongoDbClient(),
       getSanctionsSourceDocumentsCollectionName(
         [SanctionsDataProviders.DOW_JONES],
         this.tenantId

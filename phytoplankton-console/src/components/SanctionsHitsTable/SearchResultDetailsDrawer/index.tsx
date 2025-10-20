@@ -13,6 +13,7 @@ import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
+import { chunkedJoin } from '@/utils/chunkedJoin';
 import {
   CountryCode,
   GenericSanctionsSearchType,
@@ -87,7 +88,11 @@ export default function SearchResultDetailsDrawer(props: Props) {
     async function job() {
       if (isDownloading && pdfRef) {
         try {
-          await DownloadAsPDF({ pdfRef, fileName: `${pdfName} Screening Details.pdf` });
+          await DownloadAsPDF({
+            pdfRef,
+            fileName: `${pdfName} Screening Details.pdf`,
+            addRecurringPages: true,
+          });
         } catch (err) {
           message.fatal(`Unable to complete the download!`, err);
         } finally {
@@ -438,7 +443,7 @@ export function CAEntityDetails(props: {
                 ) : (
                   <div className={s.tags}>
                     {associations.map((assoc, i) => (
-                      <Tag color="gray" key={i} wrapText={false} trimText={false}>
+                      <Tag color="gray" key={i} disableWrapText={false} trimText={false}>
                         <div className={s.associateInfo}>
                           <span>{assoc.name}</span>
                           {assoc.association ||
@@ -479,11 +484,11 @@ export function CAEntityDetails(props: {
             </Form.Layout.Label>
           )}
           {pepRanks.length > 0 && (
-            <Form.Layout.Label title={'PEP Level'}>{pepRanks.join(', ')}</Form.Layout.Label>
+            <Form.Layout.Label title={'PEP Level'}>{chunkedJoin(pepRanks, ', ')}</Form.Layout.Label>
           )}
           {occupationCodes.length > 0 && (
             <Form.Layout.Label title={'Occupation categories'}>
-              {occupationCodes.join(', ')}
+              {chunkedJoin(occupationCodes, ', ')}
             </Form.Layout.Label>
           )}
           {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep != null && (
@@ -513,7 +518,12 @@ export function CAEntityDetails(props: {
                 ).map(([name, docs], i) => (
                   <div key={i}>
                     <span>{`${name}: `}</span>
-                    <span>{docs.map((doc) => doc.id).join(', ')}</span>
+                    <span>
+                      {chunkedJoin(
+                        docs.map((doc) => doc.id),
+                        ', ',
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -573,7 +583,7 @@ function makeStubAiText(hit: SanctionsHit): string {
     ].includes(x),
   );
   const hasDateMatches = hit.entity.matchTypes?.some((x) => ['year_of_birth'].includes(x));
-  const shouldShowDateMatch = hasDateMatches || isHitEntityPerson(hit.entity.entityType);
+  const shouldShowDateMatch = hasDateMatches && isHitEntityPerson(hit.entity.entityType);
   if (hasNameMatches && shouldShowDateMatch) {
     return 'Date of birth and name match and hit requires human review';
   } else if (hasNameMatches) {

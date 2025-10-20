@@ -2,10 +2,14 @@ import compact from 'lodash/compact'
 import concat from 'lodash/concat'
 import startCase from 'lodash/startCase'
 import uniq from 'lodash/uniq'
-import { COUNTRIES } from '@flagright/lib/constants'
+import { COUNTRIES } from '@flagright/lib/constants/countries'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { COLLECTIONS_MAP } from '../utils'
+import {
+  COLLECTIONS_MAP,
+  getSanctionsSourceDocumentsCollectionName,
+} from '../utils'
+import { MongoSanctionSourcesRepository } from '../repositories/sanction-source-repository'
 import { getNameAndAka } from './utils'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import {
@@ -23,6 +27,9 @@ import { logger } from '@/core/logger'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 import { tenantSettings } from '@/core/utils/context'
+import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
+import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 type OpenSanctionsLine = {
   op: string
   entity: OpenSanctionsPersonEntity
@@ -79,6 +86,7 @@ type OpenSanctionsPersonEntity = OpenSanctionsEntity & {
     political?: string[]
     idNumber?: string[]
     innCode?: string[]
+    programId?: string[]
   }
 }
 
@@ -126,10 +134,17 @@ type OpenSanctionsOrgProperties = {
   kppCode?: string[]
   bikCode?: string[]
   ricCode?: string[]
+  programId?: string[]
 }
 
 type OpenSanctionsOrganizationEntity = OpenSanctionsEntity & {
   properties: OpenSanctionsOrgProperties
+}
+
+type Program = {
+  sourceName: string
+  displayName: string
+  sourceCountry: string
 }
 
 @traceable
@@ -137,9 +152,18 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
   private types: OpenSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
   private iteration: number = 0
+  private programs: Record<string, Program> = {}
+
+  private SanctionsSourceToEntityIdMapPerson = new Map<string, number>()
+  private SanctionsSourceToEntityIdMapBusiness = new Map<string, number>()
+  private PEPToEntityIdMapPerson = new Map<string, number>()
+  private PEPToEntityIdMapBusiness = new Map<string, number>()
+  private CrimeSourceToEntityIdMapPerson = new Map<string, number>()
+  private CrimeSourceToEntityIdMapBusiness = new Map<string, number>()
+
   static async build(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient },
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient },
     settings?: SanctionsSettingsProviderScreeningTypes
   ) {
     let types: OpenSanctionsSearchType[] | undefined
@@ -170,7 +194,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     tenantId: string,
     types: OpenSanctionsSearchType[],
     entityTypes: SanctionsEntityType[],
-    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     super(SanctionsDataProviders.OPEN_SANCTIONS, tenantId, connections)
     this.types = types
@@ -186,12 +210,36 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     if (!entityType) {
       return
     }
+    await this.loadPrograms()
     this.entityTypes = [entityType]
     return this.processUrl(
       repo,
       version,
       'https://data.opensanctions.org/datasets/latest/default/entities.ftm.json'
     )
+  }
+
+  async loadPrograms() {
+    const res = await fetch('https://data.opensanctions.org/meta/programs.json')
+    const data = (await res.json()).data
+    for (const program of data) {
+      const sourceName = program.issuer.name + ' - ' + program.title
+      const sourceCountry = program.issuer.territory
+        ? program.issuer.territory.toUpperCase()
+        : null
+      const sourceCountryName = sourceCountry
+        ? COUNTRIES[sourceCountry]
+          ? COUNTRIES[sourceCountry]
+          : sourceCountry === 'EU'
+          ? 'European Union'
+          : 'international'
+        : 'international'
+      this.programs[program.key] = {
+        sourceName: sourceName.toLowerCase(),
+        displayName: sourceName,
+        sourceCountry: sourceCountryName,
+      }
+    }
   }
 
   async delta(
@@ -204,6 +252,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     if (entityType) {
       this.entityTypes = [entityType]
     }
+    await this.loadPrograms()
     const metadata = await fetch(
       'https://data.opensanctions.org/datasets/latest/default/index.json'
     )
@@ -277,12 +326,14 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
           entities,
           version
         )
+        await this.saveSourceMapsToCollection(version)
         logger.info(`Saved ${entities.length} entities`)
         entities = []
       }
     })
     if (entities.length) {
       await repo.save(SanctionsDataProviders.OPEN_SANCTIONS, entities, version)
+      await this.saveSourceMapsToCollection(version)
       logger.info(`Saved ${entities.length} entities`)
       entities = []
     }
@@ -312,15 +363,135 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
           entities,
           version
         )
+        await this.saveSourceMapsToCollection(version)
         logger.info(`Saved ${entities.length} entities`)
         entities = []
       }
     })
     if (entities.length) {
       await repo.save(SanctionsDataProviders.OPEN_SANCTIONS, entities, version)
+      await this.saveSourceMapsToCollection(version)
       logger.info(`Saved ${entities.length} entities`)
       entities = []
     }
+  }
+
+  private async saveSourceMapsToCollection(version: string) {
+    const sourceDocuments: [Action, SourceDocument][] = []
+    // Process Sanctions Sources for Persons
+    for (const [
+      id,
+      entityCount,
+    ] of this.SanctionsSourceToEntityIdMapPerson.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          id,
+          entityType: 'PERSON',
+          sourceType: 'SANCTIONS',
+          sourceCountry: this.programs[id].sourceCountry,
+          entityCount,
+          sourceName: this.programs[id].sourceName,
+          displayName: this.programs[id].displayName,
+        },
+      ])
+    }
+
+    // Process Sanctions Sources for Businesses
+    for (const [
+      id,
+      entityCount,
+    ] of this.SanctionsSourceToEntityIdMapBusiness.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          id,
+          entityCount,
+          entityType: 'BUSINESS',
+          sourceType: 'SANCTIONS',
+          sourceCountry: this.programs[id].sourceCountry,
+          sourceName: this.programs[id].sourceName,
+          displayName: this.programs[id].displayName,
+        },
+      ])
+    }
+
+    // Process PEP Tiers for Persons
+    for (const [id, count] of this.PEPToEntityIdMapPerson.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          id,
+          entityCount: count,
+          entityType: 'PERSON',
+          sourceType: 'PEP',
+          sourceName: id,
+        },
+      ])
+    }
+
+    for (const [id, count] of this.PEPToEntityIdMapBusiness.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          id,
+          entityCount: count,
+          entityType: 'BUSINESS',
+          sourceType: 'PEP',
+          sourceName: id,
+        },
+      ])
+    }
+
+    for (const [id, count] of this.CrimeSourceToEntityIdMapPerson.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          id,
+          entityCount: count,
+          entityType: 'PERSON',
+          sourceType: 'CRIME',
+          sourceName: id,
+        },
+      ])
+    }
+
+    for (const [id, count] of this.CrimeSourceToEntityIdMapBusiness.entries()) {
+      sourceDocuments.push([
+        'add',
+        {
+          id,
+          entityCount: count,
+          entityType: 'BUSINESS',
+          sourceType: 'CRIME',
+          sourceName: id,
+        },
+      ])
+    }
+
+    // save to collection acuris_source_documents
+    const mongoDb = await getMongoDbClient()
+    const repo = this.getSourceDocumentsRepo(mongoDb)
+    await repo.save(
+      SanctionsDataProviders.OPEN_SANCTIONS,
+      sourceDocuments,
+      version
+    )
+    this.SanctionsSourceToEntityIdMapPerson.clear()
+    this.SanctionsSourceToEntityIdMapBusiness.clear()
+    this.PEPToEntityIdMapPerson.clear()
+    this.PEPToEntityIdMapBusiness.clear()
+    this.CrimeSourceToEntityIdMapPerson.clear()
+    this.CrimeSourceToEntityIdMapBusiness.clear()
+  }
+
+  private getSourceDocumentsRepo(mongoDb: MongoClient) {
+    return new MongoSanctionSourcesRepository(
+      mongoDb,
+      getSanctionsSourceDocumentsCollectionName([
+        SanctionsDataProviders.OPEN_SANCTIONS,
+      ])
+    )
   }
 
   private transformPersonEntity(
@@ -345,6 +516,18 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
           )
         )
       )
+    )
+    const pepSources = this.getPepSources(
+      entity?.properties?.topics ?? [],
+      'PERSON'
+    )
+    const crimeSources = this.getCrimeSources(
+      entity?.properties?.topics ?? [],
+      'PERSON'
+    )
+    const sanctionsSources = this.getSanctionsSources(
+      entity?.properties?.programId ?? [],
+      'PERSON'
     )
     return {
       id: entity.id,
@@ -440,8 +623,91 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         )
       ),
       isActivePep: undefined,
+      pepSources,
+      otherSources: [
+        ...(crimeSources.length
+          ? [
+              {
+                type: 'CRIME',
+                value: crimeSources,
+              },
+            ]
+          : []),
+      ],
+      sanctionsSources,
       isActiveSanctioned: undefined,
+      aggregatedSourceIds: compact([
+        ...crimeSources.map((source) => source.internalId),
+        ...pepSources.map((source) => source.internalId),
+        ...sanctionsSources.map((source) => source.internalId),
+      ]),
     }
+  }
+
+  private getPepSources(topics: string[], entityType: SanctionsEntityType) {
+    const pepSources = topics
+      .filter((topic) => topic.startsWith('role') || topic.startsWith('poi'))
+      .map((topic) => ({
+        sourceName: topic,
+        internalId: topic,
+      }))
+    for (const source of pepSources) {
+      if (entityType === 'PERSON') {
+        const state = this.PEPToEntityIdMapPerson.get(source.internalId) || 0
+        this.PEPToEntityIdMapPerson.set(source.internalId, state + 1)
+      } else if (entityType === 'BUSINESS') {
+        const state = this.PEPToEntityIdMapBusiness.get(source.internalId) || 0
+        this.PEPToEntityIdMapBusiness.set(source.internalId, state + 1)
+      }
+    }
+    return pepSources
+  }
+  private getCrimeSources(topics: string[], entityType: SanctionsEntityType) {
+    const crimeSources = topics
+      .filter((topic) => topic.startsWith('crime'))
+      .map((topic) => ({
+        sourceName: topic,
+        internalId: topic,
+      }))
+    for (const source of crimeSources) {
+      if (entityType === 'PERSON') {
+        const state =
+          this.CrimeSourceToEntityIdMapPerson.get(source.internalId) || 0
+        this.CrimeSourceToEntityIdMapPerson.set(source.internalId, state + 1)
+      } else if (entityType === 'BUSINESS') {
+        const state =
+          this.CrimeSourceToEntityIdMapBusiness.get(source.internalId) || 0
+        this.CrimeSourceToEntityIdMapBusiness.set(source.internalId, state + 1)
+      }
+    }
+    return crimeSources
+  }
+  private getSanctionsSources(
+    programId: string[],
+    entityType: SanctionsEntityType
+  ): SanctionsSource[] {
+    const sanctionsSources = programId.map((id) => ({
+      sourceName: this.programs[id].sourceName,
+      internalId: id,
+    }))
+    for (const source of sanctionsSources) {
+      if (entityType === 'PERSON') {
+        const state =
+          this.SanctionsSourceToEntityIdMapPerson.get(source.internalId) || 0
+        this.SanctionsSourceToEntityIdMapPerson.set(
+          source.internalId,
+          state + 1
+        )
+      } else if (entityType === 'BUSINESS') {
+        const state =
+          this.SanctionsSourceToEntityIdMapBusiness.get(source.internalId) || 0
+        this.SanctionsSourceToEntityIdMapBusiness.set(
+          source.internalId,
+          state + 1
+        )
+      }
+    }
+    return sanctionsSources
   }
 
   private transformOrganizationEntity(
@@ -479,6 +745,18 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         )
       )
     )
+    const pepSources = this.getPepSources(
+      entity?.properties?.topics ?? [],
+      'BUSINESS'
+    )
+    const crimeSources = this.getCrimeSources(
+      entity?.properties?.topics ?? [],
+      'BUSINESS'
+    )
+    const sanctionsSources = this.getSanctionsSources(
+      entity?.properties?.programId ?? [],
+      'BUSINESS'
+    )
     return {
       id: entity.id,
       name: normalizedName,
@@ -492,7 +770,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         sanctionSearchTypes
       ),
       freetext: properties.notes?.join('\n') || '',
-      sanctionsSources: properties.sourceUrl?.map((source) => ({
+      screeningSources: properties.sourceUrl?.map((source) => ({
         url: source,
         name: source,
       })),
@@ -531,6 +809,24 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
       nationality: (countryOfIncorporation.length
         ? countryOfIncorporation
         : ['ZZ']) as CountryCode[],
+      pepSources,
+      otherSources: [
+        ...(crimeSources.length
+          ? [
+              {
+                type: 'CRIME',
+                value: crimeSources,
+              },
+            ]
+          : []),
+      ],
+      sanctionsSources,
+      isActiveSanctioned: undefined,
+      aggregatedSourceIds: compact([
+        ...crimeSources.map((source) => source.internalId),
+        ...pepSources.map((source) => source.internalId),
+        ...sanctionsSources.map((source) => source.internalId),
+      ]),
     }
   }
 
@@ -557,6 +853,9 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
               return 'CRIME'
             case 'role.pep':
             case 'role.rca':
+            case 'role.oligarch':
+            case 'role.judge':
+            case 'role.diplo':
               return 'PEP'
             case 'sanction':
             case 'sanction.linked':

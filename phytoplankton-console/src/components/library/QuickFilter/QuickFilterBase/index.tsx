@@ -55,63 +55,61 @@ export default function QuickFilterBase(props: Props) {
   };
   return (
     <>
-      <QuickFilterButton
-        isActive={isOpen || onClear != null}
-        buttonText={
-          <>
-            {title}
-            {buttonText == null ? null : (
-              <>
-                {': '}
-                {buttonText}
-              </>
-            )}
-          </>
-        }
-        icon={icon}
-        analyticsName={analyticsName}
-        autoWidth={autoWidth}
-        onClear={!readOnly && allowClear ? onClear : undefined}
-        onClick={
-          !readOnly
-            ? () => {
-                onUpdateFilterClose && onUpdateFilterClose(isOpen);
-                setOpen((isOpen) => !isOpen);
-                deferredFocus();
-              }
-            : undefined
-        }
-      >
-        <Popover
-          disableInnerPadding
-          hideArrow
-          trigger="click"
-          visible={isOpen}
-          content={
-            <div
-              className={s.content}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <div className={s.contentTitle}>{title}</div>
-              {description && <div className={s.contentDescription}>{description}</div>}
-              <div className={s.contentBody}>
-                {typeof children === 'function' ? children({ isOpen, setOpen }) : children}
-              </div>
+      <Popover
+        disableInnerPadding
+        hideArrow
+        trigger="click"
+        visible={isOpen}
+        content={
+          <div
+            className={s.content}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <div className={s.contentTitle}>{title}</div>
+            {description && <div className={s.contentDescription}>{description}</div>}
+            <div className={s.contentBody}>
+              {typeof children === 'function' ? children({ isOpen, setOpen }) : children}
             </div>
+          </div>
+        }
+        onVisibleChange={(isVisible) => {
+          setOpen(isVisible);
+          onUpdateFilterClose && onUpdateFilterClose(!isVisible);
+        }}
+        arrowPointAtCenter={false}
+        autoAdjustOverflow={true}
+        placement="bottomLeft"
+      >
+        <QuickFilterButton
+          isActive={isOpen || onClear != null}
+          buttonText={
+            <>
+              {title}
+              {buttonText == null ? null : (
+                <>
+                  {': '}
+                  {buttonText}
+                </>
+              )}
+            </>
           }
-          onVisibleChange={(isVisible) => {
-            setOpen(isVisible);
-            onUpdateFilterClose && onUpdateFilterClose(!isVisible);
-          }}
-          arrowPointAtCenter={true}
-          autoAdjustOverflow={true}
-          placement="bottomLeft"
-        >
-          <div className={s.popoverAnchor} />
-        </Popover>
-      </QuickFilterButton>
+          icon={icon}
+          analyticsName={analyticsName}
+          autoWidth={autoWidth}
+          onClear={!readOnly && allowClear ? onClear : undefined}
+          onClick={
+            !readOnly
+              ? () => {
+                  onUpdateFilterClose && onUpdateFilterClose(isOpen);
+                  setOpen((isOpen) => !isOpen);
+                  deferredFocus();
+                }
+              : undefined
+          }
+        />
+      </Popover>
     </>
   );
 }

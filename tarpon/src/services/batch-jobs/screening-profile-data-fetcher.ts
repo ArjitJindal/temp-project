@@ -101,7 +101,6 @@ export async function runScreeningProfileDataFetcherBatchJob(
       logger.info(`Tenant ${tenantId} has aggregateScreeningProfileData`)
       const screeningProfileService = new ScreeningProfileService(tenantId, {
         dynamoDb,
-        mongoDb: client,
       })
       const { items: screeningProfiles } =
         await screeningProfileService.getScreeningProfiles()

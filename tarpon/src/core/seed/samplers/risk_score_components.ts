@@ -6,7 +6,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
-import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 export class ConsumerUserRiskScoreSampler extends BaseSampler<

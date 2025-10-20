@@ -44,10 +44,8 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 import { hasFeature } from '@/core/utils/context'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 

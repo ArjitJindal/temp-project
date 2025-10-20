@@ -22,7 +22,7 @@ import {
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
 import { useAlertQuery } from '@/pages/case-management/common';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
@@ -31,11 +31,10 @@ import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
-import { getAlertUrl } from '@/utils/routing';
+import { getAlertUrl, getCaseUrl } from '@/utils/routing';
 import Tag from '@/components/library/Tag';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import { useReasons } from '@/utils/reasons';
 
@@ -54,7 +53,6 @@ export default function QaTable(props: Props) {
   const tableRef = useRef<TableRefType>(null);
   const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
-  const alertDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
   const closingResons = useReasons('CLOSURE');
 
   const helper = new ColumnHelper<TableAlertItem>();
@@ -80,12 +78,7 @@ export default function QaTable(props: Props) {
           return (
             <>
               {entity?.caseId && alertId && (
-                <Id
-                  to={addBackUrlToRoute(
-                    getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
-                  )}
-                  testName="alert-id"
-                >
+                <Id to={addBackUrlToRoute(getCaseUrl(entity.caseId, 'alerts'))} testName="alert-id">
                   {alertId}
                 </Id>
               )}
@@ -99,9 +92,7 @@ export default function QaTable(props: Props) {
           return `${item?.caseId ?? ''}`;
         },
         link(value, item) {
-          return item?.caseId && value
-            ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
-            : '';
+          return item?.caseId && value ? getAlertUrl(item.caseId, value) : '';
         },
       },
     }),
@@ -217,9 +208,9 @@ export default function QaTable(props: Props) {
             <AssigneesDropdown
               assignments={assignments}
               editing={!entity.ruleQaStatus}
-              onChange={(assignees) => {
+              onChange={async (assignees) => {
                 if (entity.alertId) {
-                  qaAssigneesUpdateMutation.mutate({
+                  await qaAssigneesUpdateMutation.mutateAsync({
                     alertId: entity.alertId,
                     AlertQaAssignmentsUpdateRequest: {
                       assignments: assignees.map((assigneeUserId) => ({
@@ -250,7 +241,7 @@ export default function QaTable(props: Props) {
                 return null;
               }
               return (
-                <Link to={getAlertUrl(caseId, alertId, alertDetailsPageEnabled)}>
+                <Link to={getAlertUrl(caseId, alertId)}>
                   <>
                     <Button type="PRIMARY">View</Button>
                   </>

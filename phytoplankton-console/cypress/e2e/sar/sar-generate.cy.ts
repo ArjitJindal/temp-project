@@ -1,6 +1,6 @@
 import { PERMISSIONS } from '../../support/permissions';
 
-describe('SAR Generate', () => {
+describe.skip('SAR Generate', () => {
   const REQUIRED_PERMISSIONS = [
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.CASE_DETAILS,

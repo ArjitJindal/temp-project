@@ -11,7 +11,6 @@ import {
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange, subtractTime } from '../utils/time-utils'
 import {
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
@@ -23,6 +22,7 @@ import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 
 import { TransactionAggregationRule } from './aggregation-rule'
+import { TimeWindow } from '@/@types/rule/params'
 import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
@@ -163,6 +163,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     yield* await this.transactionRepository.getGenericUserSendingTransactionsGenerator(
       this.transaction.originUserId,
       this.transaction.originPaymentDetails,
+      undefined,
       {
         beforeTimestamp: this.transaction.timestamp,
         afterTimestamp: subtractTime(

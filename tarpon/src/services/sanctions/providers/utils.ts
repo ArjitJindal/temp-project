@@ -424,6 +424,10 @@ function sanitizeOpenSanctionsEntities(
     const processedEntity = {
       ...entity,
       sanctionSearchTypes: screeningTypes,
+      mediaSources: undefined,
+      sanctionsSources: undefined,
+      pepSources: undefined,
+      otherSources: undefined,
       associates: entity.associates?.map((a) => {
         return {
           ...a,

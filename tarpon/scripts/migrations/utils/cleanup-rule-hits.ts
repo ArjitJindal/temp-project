@@ -16,7 +16,7 @@ import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { logger } from '@/core/logger'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'

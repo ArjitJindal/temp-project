@@ -8,8 +8,7 @@ import {
 import { TransactionState, TransactionStateAlias } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Button from '@/components/library/Button';
-import { useHasResources } from '@/utils/user-utils';
-import TextInput from '@/components/library/TextInput';
+import { STRING } from '@/components/library/Table/standardDataTypes';
 
 interface TableItem {
   state: TransactionState;
@@ -17,19 +16,45 @@ interface TableItem {
   stateAlias: string | undefined;
 }
 
-interface ExternalState {
-  newStateToAlias: Map<TransactionState, string>;
-  savedStateToAlias: Map<TransactionState | undefined, string>;
-  savingState: TransactionState | null;
-  onUpdateAlias: (state: TransactionState, newAlias: string) => void;
-  onSaveAlias: (state: TransactionState) => void;
-}
-
 const columnHelper = new ColumnHelper<TableItem>();
 
 export const TransactionStateSettings: React.FC = () => {
   const settings = useSettings();
-  const permissions = useHasResources(['write:::settings/transactions/transaction-state-alias/*']);
+  const mutateTenantSettings = useUpdateTenantSettings();
+  const [savingState, setSavingState] = useState<TransactionState | null>(null);
+  const [commitedStateToAlias, setCommitedStateToAlias] = useState<
+    Map<TransactionState | undefined, string>
+  >(new Map());
+
+  const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
+    () =>
+      new Map((settings.transactionStateAlias || []).map((entry) => [entry.state, entry.alias])),
+    [settings.transactionStateAlias],
+  );
+
+  const savedStateToAlias = useMemo(
+    () => new Map([...stateToAlias, ...commitedStateToAlias]),
+    [stateToAlias, commitedStateToAlias],
+  );
+  const handleSaveAlias = useCallback(
+    async (state: TransactionState, newAlias: string) => {
+      setSavingState(state);
+      try {
+        const updatedStateToAlias = new Map(savedStateToAlias).set(state, newAlias);
+        const transactionStateAlias = Array.from(updatedStateToAlias.entries())
+          .map((entry) => ({
+            state: entry[0],
+            alias: entry[1],
+          }))
+          .filter((item) => !!item.alias) as TransactionStateAlias[];
+        await mutateTenantSettings.mutateAsync({ transactionStateAlias });
+        setCommitedStateToAlias(updatedStateToAlias);
+      } finally {
+        setSavingState(null);
+      }
+    },
+    [mutateTenantSettings, savedStateToAlias],
+  );
 
   const columns = useMemo(
     () =>
@@ -44,40 +69,29 @@ export const TransactionStateSettings: React.FC = () => {
           key: 'description',
           defaultWidth: 250,
         }),
-        columnHelper.display({
+        columnHelper.simple({
           title: 'Alias',
+          key: 'stateAlias',
           tooltip:
             'Allows you to add a name that will overwrite the default Transaction state displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
           defaultWidth: 200,
-          render: (item, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { newStateToAlias, onUpdateAlias } = externalState;
-            return (
-              <TextInput
-                value={newStateToAlias.get(item.state) ?? item.stateAlias}
-                onChange={(newValue) => onUpdateAlias(item.state, newValue || '')}
-                isDisabled={!permissions}
-              />
-            );
-          },
+          type: STRING,
+          defaultEditState: true,
         }),
         columnHelper.display({
           title: 'Action',
           enableResizing: false,
-          render: (item, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { newStateToAlias, savingState, savedStateToAlias, onSaveAlias } = externalState;
+          render: (item, ctx) => {
+            const rowApi = ctx.rowApi;
+            const draft = (rowApi?.getDraft?.() as TableItem) ?? item;
+            const isBusy = Boolean(rowApi?.isBusy);
+            const isDirty = (draft.stateAlias ?? '') !== (item.stateAlias ?? '');
             return (
               <Button
                 type="PRIMARY"
-                onClick={() => onSaveAlias(item.state)}
-                isDisabled={
-                  !!savingState ||
-                  newStateToAlias.get(item.state) === undefined ||
-                  (savedStateToAlias.get(item.state) || '') ===
-                    (newStateToAlias.get(item.state) || '')
-                }
-                isLoading={item.state === savingState}
+                onClick={() => rowApi?.save?.()}
+                isDisabled={!isDirty}
+                isLoading={isBusy || item.state === savingState}
                 requiredResources={['write:::settings/transactions/*']}
               >
                 Update
@@ -86,51 +100,9 @@ export const TransactionStateSettings: React.FC = () => {
           },
         }),
       ]),
-    [permissions],
+    [savingState],
   );
-  const [savingState, setSavingState] = useState<TransactionState | null>(null);
-  const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
-    () =>
-      new Map((settings.transactionStateAlias || []).map((entry) => [entry.state, entry.alias])),
-    [settings.transactionStateAlias],
-  );
-  const [commitedStateToAlias, setCommitedStateToAlias] = useState<
-    Map<TransactionState | undefined, string>
-  >(new Map());
-  const savedStateToAlias = useMemo(
-    () => new Map([...stateToAlias, ...commitedStateToAlias]),
-    [stateToAlias, commitedStateToAlias],
-  );
-  const [newStateToAlias, setNewStateToAlias] = useState<Map<TransactionState, string>>(new Map());
-  const handleUpdateAlias = useCallback(
-    (state: TransactionState, newAlias: string) => {
-      setNewStateToAlias(new Map(newStateToAlias).set(state, newAlias.trim()));
-    },
-    [newStateToAlias],
-  );
-  const mutateTenantSettings = useUpdateTenantSettings();
-  const handleSaveAlias = useCallback(
-    async (state: TransactionState) => {
-      setSavingState(state);
-      try {
-        const updatedStateToAlias = new Map(savedStateToAlias).set(
-          state,
-          newStateToAlias.get(state) || '',
-        );
-        const transactionStateAlias = Array.from(updatedStateToAlias.entries())
-          .map((entry) => ({
-            state: entry[0],
-            alias: entry[1],
-          }))
-          .filter((item) => !!item.alias) as TransactionStateAlias[];
-        await mutateTenantSettings.mutateAsync({ transactionStateAlias });
-        setCommitedStateToAlias(updatedStateToAlias);
-      } finally {
-        setSavingState(null);
-      }
-    },
-    [mutateTenantSettings, newStateToAlias, savedStateToAlias],
-  );
+
   const tableData = useMemo<TableItem[]>(
     () => [
       {
@@ -182,13 +154,6 @@ export const TransactionStateSettings: React.FC = () => {
     [stateToAlias],
   );
 
-  const externalState: ExternalState = {
-    newStateToAlias,
-    savingState,
-    savedStateToAlias,
-    onUpdateAlias: handleUpdateAlias,
-    onSaveAlias: handleSaveAlias,
-  };
   return (
     <SettingsCard
       title="Transaction state alias"
@@ -202,8 +167,13 @@ export const TransactionStateSettings: React.FC = () => {
         data={{
           items: tableData,
         }}
+        rowEditing={{
+          mode: 'single',
+          onSave: async (rowKey, drafted) => {
+            await handleSaveAlias(rowKey as TransactionState, drafted.stateAlias ?? '');
+          },
+        }}
         toolsOptions={false}
-        externalState={externalState}
       />
     </SettingsCard>
   );

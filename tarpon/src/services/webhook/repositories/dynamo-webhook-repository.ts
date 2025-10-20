@@ -3,7 +3,7 @@ import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
 import omit from 'lodash/omit'
 import { GetCommand, GetCommandInput } from '@aws-sdk/lib-dynamodb'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { traceable } from '@/core/xray'
@@ -13,7 +13,7 @@ import {
   dangerouslyDeletePartitionKey,
   DynamoTransactionBatch,
 } from '@/utils/dynamodb'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { envIs } from '@/utils/env'
 
 const handleLocalChangeCapture = async (

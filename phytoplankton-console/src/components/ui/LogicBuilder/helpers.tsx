@@ -170,6 +170,7 @@ export function makeConfig(
         const selectedKey = props.selectedKey;
         if (isViewMode) {
           const option = options.find((x) => x.value === selectedKey);
+          const originalItem = filteredItems.find((x) => x.path === selectedKey);
 
           return (
             <VariableInfoPopover
@@ -181,7 +182,10 @@ export function makeConfig(
                   : undefined
               }
             >
-              <ViewModeTags color={selectedKey ? variableColors[selectedKey] : undefined}>
+              <ViewModeTags
+                color={selectedKey ? variableColors[selectedKey] : undefined}
+                fullTextForTooltip={originalItem?.fullLabel}
+              >
                 {option?.label ?? selectedKey}
               </ViewModeTags>
             </VariableInfoPopover>

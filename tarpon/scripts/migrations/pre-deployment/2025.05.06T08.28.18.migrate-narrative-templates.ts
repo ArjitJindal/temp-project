@@ -1,9 +1,9 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts/repository'
-import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongodb-definitions'
+import { Tenant } from '@/@types/tenant'
+import { NARRATIVE_TEMPLATE_COLLECTION } from '@/utils/mongo-table-names'
 import { NarrativeRepository } from '@/services/tenants/repositories/narrative-template-repository'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 import { NarrativeTemplate } from '@/@types/openapi-internal/NarrativeTemplate'
 
 async function migrateTenant(tenant: Tenant) {

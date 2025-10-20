@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
-import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongodb-definitions'
+import { Tenant } from '@/@types/tenant'
+import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongo-table-names'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const EVENT_TYPE_TO_ENTITY_MAP = {

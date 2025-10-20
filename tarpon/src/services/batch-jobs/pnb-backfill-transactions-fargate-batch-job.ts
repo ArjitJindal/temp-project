@@ -11,7 +11,7 @@ import {
 import { acquireInMemoryLocks } from '@/utils/lock'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { pickKnownEntityFields } from '@/utils/object'
 
 export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {

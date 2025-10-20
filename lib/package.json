@@ -11,7 +11,7 @@
   },
   "author": "",
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.749.0",
+    "@aws-sdk/client-api-gateway": "^3.888.0",
     "aws-cdk-lib": "~2.217.0",
     "constructs": "^10.4.2",
     "dayjs": "^1.11.12",

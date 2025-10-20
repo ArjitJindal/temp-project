@@ -4,10 +4,8 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
-import {
-  DEFAULT_CLASSIFICATION_SETTINGS,
-  RiskRepository,
-} from '@/services/risk-scoring/repositories/risk-repository'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/constants/risk/classification'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'

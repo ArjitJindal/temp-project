@@ -30,7 +30,7 @@ import { User } from '@/@types/openapi-public/User'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
-import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
+import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongo-table-names'
 import { Business } from '@/@types/openapi-internal/Business'
 
 export type DynamoDbEntityType =

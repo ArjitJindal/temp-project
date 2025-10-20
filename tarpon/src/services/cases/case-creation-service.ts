@@ -14,7 +14,7 @@ import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -22,7 +22,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { COUNTERPARTY_RULES } from '@flagright/lib/constants'
+import { COUNTERPARTY_RULES } from '@flagright/lib/constants/rules-engine'
 import { backOff } from 'exponential-backoff'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
@@ -31,9 +31,13 @@ import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
 import { AccountsService } from '../accounts'
-import { getPaymentMethodAddress } from '../../utils/payment-details'
+import {
+  getPaymentDetailsNameString,
+  getPaymentMethodAddress,
+} from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -113,14 +117,11 @@ import {
 import { CaseSubject } from '@/@types/cases/CasesInternal'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
-import { isConsoleMigrationEnabled } from '@/utils/clickhouse/utils'
+import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
 
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'
-import {
-  getPaymentDetailsName,
-  getPaymentEmailId,
-} from '@/utils/payment-details'
+import { getPaymentEmailId } from '@/utils/payment-details'
 import { Address } from '@/@types/openapi-public/Address'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
@@ -517,7 +518,7 @@ export class CaseCreationService {
     const originEmail: string | undefined =
       getPaymentEmailId(originPaymentDetails)
     const originName: string | undefined =
-      getPaymentDetailsName(originPaymentDetails)
+      getPaymentDetailsNameString(originPaymentDetails)
 
     if (isAnyRuleHasOriginHit) {
       if (originUserId) {
@@ -572,7 +573,7 @@ export class CaseCreationService {
       const destinationEmail: string | undefined = getPaymentEmailId(
         destinationPaymentDetails
       )
-      const destinationName: string | undefined = getPaymentDetailsName(
+      const destinationName: string | undefined = getPaymentDetailsNameString(
         destinationPaymentDetails
       )
 
@@ -1195,6 +1196,12 @@ export class CaseCreationService {
 
     const now = Date.now()
 
+    // Delete alert data from parent case
+    await this.dynamoCaseRepository.deleteCaseAlertData(
+      sourceCase.caseId ?? '',
+      newCaseAlerts.map((alert) => alert.alertId ?? '')
+    )
+
     // Create new case
     const newCase = await this.addOrUpdateCase({
       alerts: newCaseAlerts,
@@ -1417,8 +1424,8 @@ export class CaseCreationService {
       ruleInstances
     )
 
-    // Group subjects by direction and collect relevant rule instance IDs
-    const groupedHitSubjects = this.groupHitSubjectsByDirection(
+    // Group subjects by direction and alertCreatedFor configuration
+    const caseGroups = this.createCaseGroups(
       hitSubjects,
       flattenedHitRules,
       ruleInstances
@@ -1426,24 +1433,9 @@ export class CaseCreationService {
 
     const result: Case[] = []
 
-    // Process each direction group
-    for (const [direction, subjectsForDirection] of groupedHitSubjects) {
-      const directionRuleInstances = this.getRuleInstancesForDirection(
-        ruleInstances,
-        subjectsForDirection
-      )
-
-      // Find the highest priority subject type for this direction
-      const selectedSubject = this.selectHighestPrioritySubject(
-        subjectsForDirection,
-        directionRuleInstances
-      )
-
-      if (!selectedSubject) {
-        continue
-      }
-
-      const { subject } = selectedSubject
+    // Process each case group
+    for (const caseGroup of caseGroups) {
+      const { subject, direction, ruleInstancesForGroup } = caseGroup
 
       // Acquire lock to prevent concurrent case creation for the same subject
       await acquireLock(this.dynamoDb, generateChecksum(subject), {
@@ -1452,14 +1444,14 @@ export class CaseCreationService {
       })
 
       try {
-        const casesForDirection = await this.processCasesForDirection(
+        const casesForGroup = await this.processCasesForDirection(
           subject,
           direction,
-          directionRuleInstances,
+          ruleInstancesForGroup,
           flattenedHitRules,
           params
         )
-        result.push(...casesForDirection)
+        result.push(...casesForGroup)
       } finally {
         await releaseLock(this.dynamoDb, generateChecksum(subject))
       }
@@ -1469,68 +1461,63 @@ export class CaseCreationService {
   }
 
   /**
-   * Groups hit subjects by direction and collects relevant rule instance IDs.
-   * This ensures we only create one case per direction while tracking all relevant rules.
+   * Creates case groups by combining direction and alertCreatedFor configuration.
+   * Each group represents a unique combination that needs a separate case.
    */
-  private groupHitSubjectsByDirection(
+  private createCaseGroups(
     hitSubjects: Array<{ subject: CaseSubject; direction: RuleHitDirection }>,
     flattenedHitRules: ExtendedHitRulesDetails[],
     ruleInstances: ReadonlyArray<RuleInstance>
-  ): Map<
-    RuleHitDirection,
-    Array<{
+  ): Array<{
+    subject: CaseSubject
+    direction: RuleHitDirection
+    ruleInstancesForGroup: RuleInstance[]
+  }> {
+    const caseGroups: Array<{
       subject: CaseSubject
       direction: RuleHitDirection
-      ruleInstanceIds: string[]
-    }>
-  > {
-    const groupedHitSubjects = new Map<
-      RuleHitDirection,
-      Array<{
-        subject: CaseSubject
-        direction: RuleHitDirection
-        ruleInstanceIds: string[]
-      }>
-    >()
+      ruleInstancesForGroup: RuleInstance[]
+    }> = []
 
+    // Group by direction first
+    const subjectsByDirection = new Map<RuleHitDirection, CaseSubject[]>()
     for (const { subject, direction } of hitSubjects) {
-      const relevantRuleInstanceIds: string[] = []
-
-      // Find all rule instances that hit this direction
-      for (const hitRule of flattenedHitRules) {
-        if (
-          !hitRule.ruleHitMeta?.hitDirections?.some(
-            (hitDirection) => hitDirection === direction
-          )
-        ) {
-          continue
-        }
-
-        const ruleInstance = ruleInstances.find(
-          (x) => x.id === hitRule.ruleInstanceId
-        )
-        if (ruleInstance == null) {
-          continue
-        }
-
-        if (!relevantRuleInstanceIds.includes(hitRule.ruleInstanceId)) {
-          relevantRuleInstanceIds.push(hitRule.ruleInstanceId)
-        }
+      if (!subjectsByDirection.has(direction)) {
+        subjectsByDirection.set(direction, [])
       }
+      subjectsByDirection.get(direction)?.push(subject)
+    }
 
-      if (relevantRuleInstanceIds.length > 0) {
-        if (!groupedHitSubjects.has(direction)) {
-          groupedHitSubjects.set(direction, [])
+    // For each direction, create groups based on alertCreatedFor
+    for (const [direction, subjects] of subjectsByDirection) {
+      const directionRuleInstances = this.getRuleInstancesForDirection(
+        ruleInstances,
+        flattenedHitRules,
+        direction
+      )
+
+      // Group rule instances by alertCreatedFor configuration
+      const ruleGroupsByAlertCreatedFor =
+        this.groupRuleInstancesByAlertCreatedFor(directionRuleInstances)
+
+      // Create a case group for each alertCreatedFor configuration
+      for (const ruleInstancesForGroup of ruleGroupsByAlertCreatedFor.values()) {
+        const bestSubject = this.selectBestSubjectForRuleGroup(
+          subjects,
+          ruleInstancesForGroup
+        )
+
+        if (bestSubject) {
+          caseGroups.push({
+            subject: bestSubject,
+            direction,
+            ruleInstancesForGroup,
+          })
         }
-        groupedHitSubjects.get(direction)?.push({
-          subject,
-          direction,
-          ruleInstanceIds: relevantRuleInstanceIds,
-        })
       }
     }
 
-    return groupedHitSubjects
+    return caseGroups
   }
 
   /**
@@ -1538,94 +1525,103 @@ export class CaseCreationService {
    */
   private getRuleInstancesForDirection(
     ruleInstances: ReadonlyArray<RuleInstance>,
-    subjectsForDirection: Array<{
-      subject: CaseSubject
-      direction: RuleHitDirection
-      ruleInstanceIds: string[]
-    }>
+    flattenedHitRules: ExtendedHitRulesDetails[],
+    direction: RuleHitDirection
   ): ReadonlyArray<RuleInstance> {
-    return ruleInstances.filter(
-      (ri) =>
-        ri.id &&
-        subjectsForDirection.some((s) =>
-          s.ruleInstanceIds.includes(ri.id as string)
+    const relevantRuleInstanceIds = new Set<string>()
+
+    // Find all rule instances that hit this direction
+    for (const hitRule of flattenedHitRules) {
+      if (
+        hitRule.ruleHitMeta?.hitDirections?.some(
+          (hitDirection) => hitDirection === direction
         )
+      ) {
+        relevantRuleInstanceIds.add(hitRule.ruleInstanceId)
+      }
+    }
+
+    return ruleInstances.filter(
+      (ri) => ri.id && relevantRuleInstanceIds.has(ri.id)
     )
   }
 
   /**
-   * Selects the highest priority subject type for a direction based on rule configurations.
-   * Priority order: USER > PAYMENT > NAME > EMAIL > ADDRESS
+   * Groups rule instances by their alertCreatedFor configuration.
    */
-  private selectHighestPrioritySubject(
-    subjectsForDirection: Array<{
-      subject: CaseSubject
-      direction: RuleHitDirection
-      ruleInstanceIds: string[]
-    }>,
-    directionRuleInstances: ReadonlyArray<RuleInstance>
-  ): { subject: CaseSubject; direction: RuleHitDirection } | null {
-    // Find all available subject types based on rule configurations
-    const allAvailableSubjectTypes = new Set<CaseSubject['type']>()
+  private groupRuleInstancesByAlertCreatedFor(
+    ruleInstances: ReadonlyArray<RuleInstance>
+  ): Map<string, RuleInstance[]> {
+    const ruleGroupsByAlertCreatedFor = new Map<string, RuleInstance[]>()
 
-    for (const ruleInstance of directionRuleInstances) {
+    for (const ruleInstance of ruleInstances) {
       let { alertCreatedFor } = ruleInstance.alertConfig ?? {}
       alertCreatedFor =
         !alertCreatedFor || alertCreatedFor.length === 0
           ? ['USER']
           : alertCreatedFor
 
-      // Add subject types that match this rule's alertCreatedFor configuration
-      for (const subject of subjectsForDirection) {
-        switch (subject.subject.type) {
-          case 'PAYMENT':
-            if (alertCreatedFor.includes('PAYMENT_DETAILS')) {
-              allAvailableSubjectTypes.add('PAYMENT')
-            }
-            break
-          case 'USER':
-            if (alertCreatedFor.includes('USER')) {
-              allAvailableSubjectTypes.add('USER')
-            }
-            break
-          case 'ADDRESS':
-            if (alertCreatedFor.includes('ADDRESS')) {
-              allAvailableSubjectTypes.add('ADDRESS')
-            }
-            break
-          case 'EMAIL':
-            if (alertCreatedFor.includes('EMAIL')) {
-              allAvailableSubjectTypes.add('EMAIL')
-            }
-            break
-          case 'NAME':
-            if (alertCreatedFor.includes('NAME')) {
-              allAvailableSubjectTypes.add('NAME')
-            }
-            break
-        }
+      // Create a key for this alertCreatedFor configuration
+      const alertCreatedForKey = alertCreatedFor.sort().join(',')
+
+      if (!ruleGroupsByAlertCreatedFor.has(alertCreatedForKey)) {
+        ruleGroupsByAlertCreatedFor.set(alertCreatedForKey, [])
       }
+      ruleGroupsByAlertCreatedFor.get(alertCreatedForKey)?.push(ruleInstance)
     }
 
-    if (allAvailableSubjectTypes.size === 0) {
+    return ruleGroupsByAlertCreatedFor
+  }
+
+  /**
+   * Selects the best subject for a group of rule instances with the same alertCreatedFor configuration.
+   * Priority order: USER > PAYMENT > NAME > EMAIL > ADDRESS
+   */
+  private selectBestSubjectForRuleGroup(
+    subjects: CaseSubject[],
+    ruleInstancesForGroup: ReadonlyArray<RuleInstance>
+  ): CaseSubject | null {
+    if (ruleInstancesForGroup.length === 0) {
       return null
     }
 
-    // Select the highest priority subject type (lower number = higher priority)
-    const selectedSubjectType = Array.from(allAvailableSubjectTypes).reduce(
-      (highest, current) => {
-        return CASE_CREATION_PRIORITY[current] < CASE_CREATION_PRIORITY[highest]
-          ? current
-          : highest
+    // Get the alertCreatedFor configuration (all rule instances in group should have the same)
+    const firstRule = ruleInstancesForGroup[0]
+    let { alertCreatedFor } = firstRule.alertConfig ?? {}
+    alertCreatedFor =
+      !alertCreatedFor || alertCreatedFor.length === 0
+        ? ['USER']
+        : alertCreatedFor
+
+    // Filter subjects that match the alertCreatedFor configuration
+    const matchingSubjects = subjects.filter((subject) => {
+      switch (subject.type) {
+        case 'PAYMENT':
+          return alertCreatedFor?.includes('PAYMENT_DETAILS')
+        case 'USER':
+          return alertCreatedFor?.includes('USER')
+        case 'ADDRESS':
+          return alertCreatedFor?.includes('ADDRESS')
+        case 'EMAIL':
+          return alertCreatedFor?.includes('EMAIL')
+        case 'NAME':
+          return alertCreatedFor?.includes('NAME')
+        default:
+          return false
       }
-    )
+    })
 
-    // Find the subject with the selected type
-    const selectedSubject = subjectsForDirection.find(
-      (s) => s.subject.type === selectedSubjectType
-    )
+    if (matchingSubjects.length === 0) {
+      return null
+    }
 
-    return selectedSubject || null
+    // Select the highest priority subject
+    return matchingSubjects.reduce((best, current) => {
+      return CASE_CREATION_PRIORITY[current.type] <
+        CASE_CREATION_PRIORITY[best.type]
+        ? current
+        : best
+    })
   }
 
   /**
@@ -2144,9 +2140,7 @@ export class CaseCreationService {
           tenantId,
           caseId: caseItem.caseId as string,
         }
-        const sqs = new SQS({
-          region: process.env.AWS_REGION,
-        })
+        const sqs = getSQSClient()
         const sqsSendMessageCommand = new SendMessageCommand({
           MessageBody: JSON.stringify(payload),
           QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,

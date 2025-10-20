@@ -22,7 +22,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+} from '@/utils/mongo-table-names'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 const BATCH_SIZE = 10000

@@ -50,9 +50,9 @@ import {
   isSanctionsDataFetchTenantSpecific,
 } from '@/services/sanctions/utils'
 import { TenantFeatures } from '@/@types/openapi-internal/TenantFeatures'
-import { getClickhouseCredentials } from '@/utils/clickhouse/utils'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 import { createApiUsageJobs, toggleApiKeys } from '@/utils/api-usage'
-import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/utils/clickhouse/definition'
+import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhouse/clickhouse-mongo-map'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { logger } from '@/core/logger'
@@ -63,7 +63,7 @@ const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'isAccountSuspended',
 ]
 
-const assertSettings = (
+export const assertSettings = (
   settings: TenantSettings,
   statements: PermissionStatements[]
 ) => {
@@ -100,9 +100,13 @@ const assertSettings = (
       batchRerunRiskScoringFrequency: [
         'write:::settings/risk-scoring/batch-rerun-risk-scoring-settings/*',
       ],
+      showAllDecimalPlaces: [
+        'write:::settings/transactions/show-all-decimal-places/*',
+      ],
+      aiSourcesDisabled: ['write:::settings/add-ons/ai-features/*'],
     }
 
-  for (const settingsKey in settingsKeys) {
+  for (const settingsKey of settingsKeys) {
     const requiredResources = settingPermissions[settingsKey] as
       | Resource[]
       | undefined
@@ -177,11 +181,11 @@ export const tenantsHandler = lambdaApi()(
     })
 
     handlers.registerGetTenantsSettings(
-      async (ctx) =>
+      async (ctx, request) =>
         await new TenantService(ctx.tenantId, {
           dynamoDb: getDynamoDbClientByEvent(event),
           mongoDb,
-        }).getTenantSettings()
+        }).getTenantSettings(request.unmaskDowJonesPassword)
     )
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
