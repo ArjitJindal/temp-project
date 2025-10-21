@@ -17,6 +17,7 @@ import { AsyncResource, getOr, isLoading, map, success } from '@/utils/asyncReso
 import { FLAT_FILE_PROGRESS } from '@/utils/queries/keys';
 import {
   FlatImportProgress,
+  isImportResultsAvailable,
   isOngoingImport,
   isValidationJobFound,
 } from '@/pages/transactions-import/helpers';
@@ -30,7 +31,7 @@ export default function TransactionsImport() {
   const queryClient = useQueryClient();
   const api = useApi();
 
-  const _progressRes = useProgressResource();
+  const apiProgressRes = useProgressResource();
 
   const fileUploadMutation = useMutation<unknown, unknown, { file: FileInfo }>(
     async (variables) => {
@@ -58,38 +59,50 @@ export default function TransactionsImport() {
     },
   );
 
-  let progressRes: AsyncResource<FlatImportProgress>;
-  if (isLoading(fileUploadMutation.dataResource)) {
-    progressRes = success({ kind: 'UPLOADING' });
-  } else {
-    if (isValidationJobFound(getOr(_progressRes, null))) {
-      progressRes = _progressRes;
+  const progressRes = useMemo((): AsyncResource<FlatImportProgress> => {
+    if (isLoading(fileUploadMutation.dataResource)) {
+      return success({ kind: 'UPLOADING' });
     } else {
-      progressRes = map(fileUploadMutation.dataResource, () => ({ kind: 'WAITING_FOR_JOB_START' }));
+      const apiProgressValue = getOr(apiProgressRes, null);
+      if (isValidationJobFound(apiProgressValue) || isImportResultsAvailable(apiProgressValue)) {
+        return apiProgressRes;
+      } else {
+        return map(fileUploadMutation.dataResource, () => ({ kind: 'WAITING_FOR_JOB_START' }));
+      }
     }
-  }
+  }, [fileUploadMutation, apiProgressRes]);
 
-  const isInProgress = isOngoingImport(getOr(progressRes, null));
-  const isJobFound = isValidationJobFound(getOr(progressRes, null));
+  const progressResValue = getOr(progressRes, null);
 
-  const activeStep = isInProgress ? 'DATA_VALIDATION' : selectedStep;
+  const isInProgress = isOngoingImport(progressResValue);
+  const isJobFound = isValidationJobFound(progressResValue);
+  const isResultsAvailable = isImportResultsAvailable(progressResValue);
+
+  const isUploadStepDisabled = isInProgress;
+  const isDataValidationStepDisabled = !(isInProgress || isJobFound || isResultsAvailable);
+
+  const activeStep = isUploadStepDisabled
+    ? 'DATA_VALIDATION'
+    : isDataValidationStepDisabled
+    ? 'UPLOAD_FILE'
+    : selectedStep;
 
   const steps = useMemo(() => {
     const steps: Step<StepKey>[] = [];
     steps.push({
       key: 'UPLOAD_FILE',
       title: 'Upload file',
-      isDisabled: isInProgress,
+      isDisabled: isUploadStepDisabled,
     });
     // not supported yet
     // steps.push({ key: 'DATA_MAPPING', title: 'Data mapping', isDisabled: file == null })
     steps.push({
       key: 'DATA_VALIDATION',
       title: 'Data validation',
-      isDisabled: !isInProgress && !isJobFound,
+      isDisabled: isDataValidationStepDisabled,
     });
     return steps;
-  }, [isInProgress, isJobFound]);
+  }, [isUploadStepDisabled, isDataValidationStepDisabled]);
 
   return (
     <PageWrapper
@@ -157,15 +170,14 @@ function useProgressResource(): AsyncResource<FlatImportProgress> {
       return { kind: 'API_DATA', value: response };
     },
     {
-      refetchInterval: (_progress) => {
-        return 5000;
-        // if (
-        //   progress != null &&
-        //   (progress.value.status === 'PENDING' || progress.value.status === 'IN_PROGRESS')
-        // ) {
-        //   return 5000;
-        // }
-        // return 60000;
+      refetchInterval: (progress) => {
+        if (
+          progress != null &&
+          (progress.value.status === 'PENDING' || progress.value.status === 'IN_PROGRESS')
+        ) {
+          return 3000;
+        }
+        return 60000;
       },
       backgroundFetch: true,
     },

@@ -34,5 +34,19 @@ export function isValidationJobFound(progress: FlatImportProgress | null): boole
     return false;
   }
 
-  return progress.value.isValidationJobFound === true;
+  return (
+    progress.value.isValidationJobFound === true || progress.value.isValidationJobRunning === true
+  );
+}
+
+export function isImportResultsAvailable(progress: FlatImportProgress | null): boolean {
+  if (
+    progress == null ||
+    progress.kind === 'WAITING_FOR_JOB_START' ||
+    progress.kind === 'UPLOADING'
+  ) {
+    return false;
+  }
+
+  return progress.value.status === 'SUCCESS';
 }
