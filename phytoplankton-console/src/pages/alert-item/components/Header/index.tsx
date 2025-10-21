@@ -9,9 +9,8 @@ import Dropdown from '@/components/library/Dropdown';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
-import { ALERT_ITEM, ALERT_LIST, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_LIST } from '@/utils/queries/keys';
 import { getAlertUrl, getCaseUrl } from '@/utils/routing';
-import { useQuery } from '@/utils/queries/hooks';
 import CommentButton from '@/components/CommentButton';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
@@ -39,6 +38,8 @@ import { useQaMode } from '@/utils/qa-mode';
 import { useBackUrl } from '@/utils/backUrl';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { useAlertDetails } from '@/utils/api/alerts';
+import { useCaseDetails } from '@/utils/api/cases';
 
 interface Props {
   alertItemRes: AsyncResource<Alert>;
@@ -55,18 +56,7 @@ export default function Header(props: Props) {
   );
   const { alertId, caseId } = alertItem ?? {};
   const isLoading = isAsyncResourceLoading(alertItemRes);
-  const caseQueryResults = useQuery(
-    CASES_ITEM(caseId ?? ''),
-    (): Promise<Case> => {
-      if (caseId == null) {
-        throw new Error(`Alert case id could not be empty`);
-      }
-      return api.getCase({ caseId });
-    },
-    {
-      enabled: !isLoading,
-    },
-  );
+  const caseQueryResults = useCaseDetails(caseId ?? undefined, { enabled: !isLoading });
   const api = useApi();
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
@@ -206,9 +196,9 @@ function useActions(
 ): AsyncResource<React.ReactNode[]> {
   const [qaMode] = useQaMode();
   const isSarEnabled = useFeatureEnabled('SAR');
-  const client = useQueryClient();
   const backUrl = useBackUrl();
   const queryClient = useQueryClient();
+  const alertDetails = useAlertDetails(getOr(alertItemRes, undefined)?.alertId);
 
   const navigate = useNavigate();
   const handleSuccessQa = () => {
@@ -257,7 +247,7 @@ function useActions(
               ids={alertId ? [alertId] : []}
               transactionIds={{}}
               onSaved={() => {
-                client.invalidateQueries(ALERT_ITEM(alertId ?? ''));
+                alertDetails.refetch();
               }}
               haveModal={true}
               user={

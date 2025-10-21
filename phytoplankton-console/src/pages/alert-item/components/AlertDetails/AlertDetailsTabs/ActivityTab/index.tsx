@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { flatten } from 'lodash';
 import { Alert, AlertStatus, Comment as ApiComment } from '@/apis';
 import { useUsers } from '@/utils/user-utils';
@@ -10,12 +9,12 @@ import {
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { success } from '@/utils/asyncResource';
-import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import ActivityCard, { getLogData } from '@/components/ActivityCard';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { useAlertUpdates } from '@/utils/api/alerts';
 
 type ActivityLogParams = Partial<{
   filterActivityBy: string[];
@@ -33,7 +32,7 @@ export default function ActivityTab(props: Props) {
   const api = useApi({ debounce: 500 });
   const commentEditorRef = useRef<CommentEditorRef>(null);
 
-  const queryClient = useQueryClient();
+  const { updateAlertQueryData, updateAlertItemCommentsData } = useAlertUpdates();
 
   const commentSubmitMutation = useMutation<
     ApiComment,
@@ -53,7 +52,7 @@ export default function ActivityTab(props: Props) {
     {
       onSuccess: async (newComment, { alertId }) => {
         commentEditorRef.current?.reset();
-        queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+        updateAlertQueryData(alertId, (alert) => {
           if (!alert) {
             return undefined;
           }
@@ -62,7 +61,7 @@ export default function ActivityTab(props: Props) {
             comments: [...(alert?.comments ?? []), newComment],
           };
         });
-        queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+        updateAlertItemCommentsData(alertId, (comments) => {
           return [...(comments ?? []), newComment];
         });
       },
@@ -83,7 +82,7 @@ export default function ActivityTab(props: Props) {
     {
       onSuccess: async (_, { commentId, groupId: alertId }) => {
         message.success('Comment deleted successfully');
-        queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+        updateAlertQueryData(alertId, (alert) => {
           if (!alert) {
             return undefined;
           }
@@ -92,7 +91,7 @@ export default function ActivityTab(props: Props) {
             comments: (alert?.comments ?? []).filter((comment) => comment.id !== commentId),
           };
         });
-        queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+        updateAlertItemCommentsData(alertId, (comments) => {
           if (comments == null) {
             return comments;
           }

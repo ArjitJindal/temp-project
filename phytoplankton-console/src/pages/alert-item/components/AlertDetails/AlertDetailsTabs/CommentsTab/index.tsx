@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { Alert, Comment as ApiComment } from '@/apis';
@@ -12,11 +11,11 @@ import CommentEditor, {
 } from '@/components/CommentEditor';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
-import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { getCommentsWithReplies } from '@/components/CommentsCard/utils';
+import { useAlertUpdates } from '@/utils/api/alerts';
 
 interface Props {
   alert: Alert | undefined;
@@ -33,8 +32,7 @@ export default function CommentsTab(props: Props) {
     comment: '',
     files: [],
   });
-
-  const queryClient = useQueryClient();
+  const { updateAlertQueryData, updateAlertItemCommentsData } = useAlertUpdates();
 
   const commentSubmitMutation = useMutation<
     ApiComment,
@@ -51,7 +49,7 @@ export default function CommentsTab(props: Props) {
       onSuccess: async (newComment, { alertId }) => {
         message.success('Comment added successfully');
         commentEditorRef.current?.reset();
-        queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+        updateAlertQueryData(alertId, (alert) => {
           if (!alert) {
             return undefined;
           }
@@ -60,7 +58,7 @@ export default function CommentsTab(props: Props) {
             comments: [...(alert?.comments ?? []), newComment],
           };
         });
-        queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+        updateAlertItemCommentsData(alertId, (comments) => {
           return [...(comments ?? []), newComment];
         });
       },
@@ -84,7 +82,7 @@ export default function CommentsTab(props: Props) {
     {
       onSuccess: async (_, { alertId, commentId }) => {
         message.success('Comment deleted successfully');
-        queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+        updateAlertQueryData(alertId, (alert) => {
           if (!alert) {
             return undefined;
           }
@@ -93,11 +91,8 @@ export default function CommentsTab(props: Props) {
             comments: (alert?.comments ?? []).filter((comment) => comment.id !== commentId),
           };
         });
-        queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
-          if (comments == null) {
-            return comments;
-          }
-          return comments.filter((comment) => comment.id !== commentId);
+        updateAlertItemCommentsData(alertId, (comments) => {
+          return (comments ?? []).filter((comment) => comment.id !== commentId);
         });
       },
       onError: (error) => {
@@ -118,14 +113,14 @@ export default function CommentsTab(props: Props) {
   };
 
   const handleNewComment = (newComment) => {
-    queryClient.setQueryData<Alert>(ALERT_ITEM(alert?.alertId ?? ''), (alert) => {
-      if (!alert) {
-        return undefined;
-      }
+    updateAlertQueryData(alert?.alertId, (alert) => {
       return {
         ...alert,
         comments: [...(alert?.comments ?? []), newComment],
-      };
+      } as Alert;
+    });
+    updateAlertItemCommentsData(alert?.alertId ?? '', (comments) => {
+      return [...(comments ?? []), newComment];
     });
   };
 

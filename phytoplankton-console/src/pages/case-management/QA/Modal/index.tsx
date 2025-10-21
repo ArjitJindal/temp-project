@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { QAFormValues } from '../types';
 import { TableSearchParams } from '../../types';
-import { useAlertQuery } from '../../common';
 import { ChecklistStatus } from '../../../../apis/models/ChecklistStatus';
 import Modal from '@/components/library/Modal';
 import Form from '@/components/library/Form';
@@ -17,6 +16,7 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import { AllParams } from '@/components/library/Table/types';
 import { getOr } from '@/utils/asyncResource';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
+import { useAlertList } from '@/utils/api/alerts';
 
 const initialValues: QAFormValues = {
   samplingName: '',
@@ -100,7 +100,7 @@ export const QAModal = (props: QAModalProps) => {
 const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } }) => {
   const { type, params, formState, initialValues } = props;
 
-  const alertsQueryResult = useAlertQuery(
+  const alertsQueryResult = useAlertList(
     {
       ...(type === 'CREATE' && params),
       pageSize: 1,

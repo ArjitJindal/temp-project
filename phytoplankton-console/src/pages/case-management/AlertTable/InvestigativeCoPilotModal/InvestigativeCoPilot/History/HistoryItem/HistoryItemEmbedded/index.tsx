@@ -7,9 +7,6 @@ import Linking from '@/pages/users-item/UserDetails/Linking';
 import SanctionsHitsTable from '@/components/SanctionsHitsTable';
 import { AllParams } from '@/components/library/Table/types';
 import { getOr } from '@/utils/asyncResource';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { ALERT_ITEM } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import SanctionsHitStatusChangeModal from '@/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
@@ -23,6 +20,7 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 
 import { SanctionsDetailsEntityType } from '@/apis/models/SanctionsDetailsEntityType';
+import { useAlertDetails } from '@/utils/api/alerts';
 
 interface Props {
   item: QuestionResponseEmbedded;
@@ -73,13 +71,7 @@ export const HitsTable = ({
   screeningDetails: string;
   type: 'OPEN' | 'CLEARED';
 }) => {
-  const api = useApi();
-  const alertResponse = useQuery(ALERT_ITEM(alertId), async () => {
-    if (!alertId) {
-      throw new Error(`Unable to fetch alert, id is empty`);
-    }
-    return api.getAlert({ alertId });
-  });
+  const alertResponse = useAlertDetails(alertId);
   const alertData = getOr(alertResponse.data, null);
 
   const initialParams = useMemo<AllParams<SanctionsHitsTableParams>>(() => {

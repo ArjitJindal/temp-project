@@ -18,7 +18,7 @@ import KycRiskDisplay from '@/pages/users-item/UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDisplay';
 import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
-import { useUpdateCaseQueryData } from '@/utils/api/cases';
+import { useCaseUpdates } from '@/utils/api/cases';
 import {
   canAssignToUser,
   createAssignments,
@@ -57,7 +57,7 @@ export default function SubHeader(props: Props) {
 
   const queryClient = useQueryClient();
   const hasEditingPermission = useHasResources(['write:::case-management/case-overview/*']);
-  const updateCaseQueryData = useUpdateCaseQueryData();
+  const { updateCaseQueryData } = useCaseUpdates();
   const handleUpdateCaseMutation = useMutation<
     unknown,
     unknown,
@@ -105,8 +105,8 @@ export default function SubHeader(props: Props) {
           ? queryClient.getQueryData<Case>(CASES_ITEM(caseId))
           : undefined;
         updateCaseQueryData(caseId, (caseItem) => {
-          if (caseItem == null) {
-            return caseItem;
+          if (!caseItem) {
+            return undefined;
           }
           if (isCaseEscalated) {
             return {

@@ -3,19 +3,14 @@ import { COPILOT_QUESTIONS } from '@flagright/lib/utils';
 import { usePreloadedHistory } from '../../AlertDetails/AlertDetailsTabs/AiForensicsTab/helpers';
 import PdfQuestionResponseItem from './PdfQuestionResponseItem';
 import s from './index.module.less';
-import { useQuery } from '@/utils/queries/hooks';
 import Button from '@/components/library/Button';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
 import { getOr } from '@/utils/asyncResource';
-import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
-import {
-  parseQuestionResponse,
-  QuestionResponse,
-} from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
+import { QuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { getErrorMessage } from '@/utils/lang';
+import { useAlertCopilotQuestions, useAlertDetails } from '@/utils/api/alerts';
 
 interface Props {
   alertId: string;
@@ -29,16 +24,10 @@ const groupIntoPages = (items: QuestionResponse[]): QuestionResponse[][] => {
 const AiForensicsPdfDownloadButton: React.FC<Props> = ({ alertId }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const pdfRef = useRef<HTMLDivElement>(null);
-  const api = useApi();
 
-  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
-    const response = await api.getAlert({ alertId });
-    return response;
-  });
+  const alertQueryResult = useAlertDetails(alertId);
 
-  const questionsQuery = useQuery(COPILOT_ALERT_QUESTIONS(alertId), async () =>
-    parseQuestionResponse(await api.getQuestions({ alertId })),
-  );
+  const questionsQuery = useAlertCopilotQuestions(alertId);
 
   const questions = getOr(questionsQuery.data, []);
 

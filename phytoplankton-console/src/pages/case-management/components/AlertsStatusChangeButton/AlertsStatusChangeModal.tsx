@@ -122,7 +122,7 @@ export default function AlertsStatusChangeModal(props: Props) {
           }
         }
       }
-      await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId as string) });
+      await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
       for (const alertId of props.entityIds) {
         await queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
       }
