@@ -33,6 +33,7 @@ mockFn(`../../GenericFormField`, () => ({
 
 // Mock FormContext
 const mockFormContext = {
+  isDisabled: false,
   values: {},
   setValues: jest.fn(),
   meta: {},

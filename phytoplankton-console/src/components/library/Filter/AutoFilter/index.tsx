@@ -41,6 +41,7 @@ export function AutoFilter(props: Props): JSX.Element {
     autoWidth,
     clearNotAllowedReason,
     readOnly: isReadOnly,
+    isDisabled: isReadOnly,
   };
 
   if (filter.dataType.kind === 'dateRange') {

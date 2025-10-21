@@ -15,7 +15,8 @@ interface Props {
 export default function ArrayItemForm<FormValues>(props: Props) {
   const { index, children } = props;
 
-  const { fieldValidators, values, setValues, meta, setMeta, alwaysShowErrors } = useFormContext();
+  const { fieldValidators, values, setValues, meta, setMeta, alwaysShowErrors, isDisabled } =
+    useFormContext();
 
   if (fieldValidators != null && !isArrayFieldValidator(fieldValidators)) {
     throw new Error(`ArrayItemForm expect to have array field validator`);
@@ -26,6 +27,7 @@ export default function ArrayItemForm<FormValues>(props: Props) {
   const name = `${index}`;
   const fieldMeta: FieldMeta = meta?.[name] ?? {};
   const subContext: FormContextValue<FormValues> = {
+    isDisabled,
     alwaysShowErrors,
     meta: fieldMeta.children ?? {},
     setMeta: (key, cb) => {

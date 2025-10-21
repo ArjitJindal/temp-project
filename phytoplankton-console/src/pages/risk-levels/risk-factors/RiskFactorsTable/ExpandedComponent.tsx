@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
-import { pickBy } from 'lodash';
+import { pick, pickBy } from 'lodash';
 import ValuesTable from '../../risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/RiskFactorConfigurationStep/ParametersTable/ValuesTable';
 import { ScopeSelectorValue, scopeToRiskEntityType } from './utils';
 import s from './styles.module.less';
@@ -11,6 +11,7 @@ import { useHasResources } from '@/utils/user-utils';
 import { RiskFactorRow } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/types';
 import ApprovalHeader from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/ApprovalHeader';
 import SpecialAttributesChanges from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/SpecialAttributesChanges';
+import { DiffPath, findDiff } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/diff';
 
 type BaseProps = {
   riskFactor: RiskFactorRow;
@@ -104,6 +105,19 @@ export const ExpandedComponent = (props: Props) => {
       </div>
     );
   } else {
+    let changedFields: DiffPath[] = [];
+    if (showPendingProposalFlag && riskFactor.proposal?.riskFactor) {
+      const fields = [
+        'riskLevelAssignmentValues',
+        'defaultRiskLevel',
+        'defaultRiskScore',
+        'defaultWeight',
+      ];
+      changedFields = findDiff(
+        pick(riskFactor, fields),
+        pick(riskFactor.proposal.riskFactor, fields),
+      );
+    }
     return (
       <div className={s.expandedRow}>
         {riskFactor.proposal && (
@@ -126,6 +140,7 @@ export const ExpandedComponent = (props: Props) => {
                 : {}),
             }
           }
+          changedFields={changedFields}
           onSave={(updatedEntity) => {
             setRiskFactors(updatedEntity);
           }}

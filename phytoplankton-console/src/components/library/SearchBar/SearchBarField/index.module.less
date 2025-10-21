@@ -10,6 +10,12 @@
   padding: 0 8px;
   gap: 8px;
 
+  &.isDisabled {
+    border-color: @figma-vars--tokens-colorBackgroundDisabled;
+    background: @figma-vars--tokens-colorBackgroundDisabled;
+    pointer-events: none;
+  }
+
   &:focus {
     border-color: blue;
   }
@@ -31,6 +37,7 @@
 .input {
   border: none;
   outline: none;
+  background: transparent;
 }
 
 .icon {

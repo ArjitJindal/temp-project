@@ -122,7 +122,7 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
               uniques: params.transactionTypes ?? undefined,
             }}
             onConfirm={(value) => {
-              setParams((state) => ({ ...state, transactionTypes: value.uniques }));
+              setParams((state) => ({ ...state, transactionTypes: value?.uniques }));
             }}
           />
         ),

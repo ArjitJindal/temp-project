@@ -7,7 +7,7 @@ declare module '*.react.svg' {
   import React from 'react';
   const _default: (
     props: React.SVGAttributes<React.ReactSVGElement> & {
-      ref?: React.MutableRefObject<unknown>;
+      ref?: React.MutableRefObject<unknown> | React.LegacyRef<unknown>;
     },
   ) => JSX.Element;
   export default _default;

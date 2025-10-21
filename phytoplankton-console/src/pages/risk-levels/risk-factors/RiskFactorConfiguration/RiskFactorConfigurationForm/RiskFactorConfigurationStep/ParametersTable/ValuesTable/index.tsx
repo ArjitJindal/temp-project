@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DeleteFilled } from '@ant-design/icons';
 import { isEqual as equal } from 'lodash';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
@@ -6,24 +6,24 @@ import cn from 'clsx';
 import {
   INPUT_RENDERERS,
   NEW_VALUE_INFOS,
-  VALUE_RENDERERS,
   PARAMETER_VALUES_FORM_VALIDATIONS,
   validate,
+  VALUE_RENDERERS,
 } from '../const';
 import { RiskValueContent } from '../types';
 import style from './style.module.less';
 import {
+  RiskFactor,
   RiskLevel,
-  RiskParameterValueLiteral,
-  RiskParameterValueRange,
-  RiskParameterValueMultiple,
-  RiskParameterValueTimeRange,
-  RiskParameterValueDayRange,
+  RiskParameterLevelKeyValue,
   RiskParameterValueAmountRange,
+  RiskParameterValueDayRange,
+  RiskParameterValueLiteral,
+  RiskParameterValueMultiple,
+  RiskParameterValueRange,
+  RiskParameterValueTimeRange,
   RiskScoreValueLevel,
   RiskScoreValueScore,
-  RiskParameterLevelKeyValue,
-  RiskFactor,
 } from '@/apis';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import {
@@ -40,8 +40,13 @@ import NumberInput from '@/components/library/NumberInput';
 import Dropdown from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
+import { DiffPath } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/diff';
+import { CHANGED_FIELD_MESSAGE } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/helpers';
+import { WarningIcon } from '@/components/library/Form/InputField';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props {
+  changedFields?: DiffPath[];
   entity: RiskFactor;
   onSave: (updatedEntity: RiskFactor) => void;
   onCancel?: () => void;
@@ -49,7 +54,7 @@ interface Props {
 }
 
 function ValuesTable(props: Props) {
-  const { entity, onSave, onCancel, canEditParameters = true } = props;
+  const { entity, onSave, onCancel, canEditParameters = true, changedFields = [] } = props;
 
   const riskClassificationValues = useRiskClassificationScores();
 
@@ -241,7 +246,14 @@ function ValuesTable(props: Props) {
     <div className={cn(style.root)}>
       <div className={style.table}>
         <div className={style.topHeader}>
-          <div className={style.header}>Weight</div>
+          <div className={style.header}>
+            {changedFields.some(([x]) => x === 'defaultWeight') && (
+              <Tooltip title={CHANGED_FIELD_MESSAGE}>
+                {({ ref }) => <WarningIcon rootRef={ref} />}
+              </Tooltip>
+            )}
+            Weight
+          </div>
           <P grey variant="m" fontWeight="normal" className={style.description}>
             Weights range from 0 (no impact) to 1 (maximum impact) and determine the risk factor's
             influence on the overall risk score. If a weight is not assigned, the system defaults it
@@ -280,7 +292,14 @@ function ValuesTable(props: Props) {
           </P>
         </div>
         <div className={style.risk}>
-          <div className={style.header}>Risk level</div>
+          <div className={style.header}>
+            {changedFields.some(([x]) => x === 'defaultRiskLevel') && (
+              <Tooltip title={CHANGED_FIELD_MESSAGE}>
+                {({ ref }) => <WarningIcon rootRef={ref} />}
+              </Tooltip>
+            )}
+            Risk level
+          </div>
           <RiskLevelSwitch
             isDisabled={!hasWritePermissions}
             value={
@@ -296,7 +315,14 @@ function ValuesTable(props: Props) {
           />
         </div>
         <div>
-          <div className={style.header}>Risk score (0-100)</div>
+          <div className={style.header}>
+            {changedFields.some(([x]) => x === 'defaultRiskScore') && (
+              <Tooltip title={CHANGED_FIELD_MESSAGE}>
+                {({ ref }) => <WarningIcon rootRef={ref} />}
+              </Tooltip>
+            )}
+            Risk score (0-100)
+          </div>
           <NumberInput
             onChange={(value) => {
               if (value != null) {
@@ -315,7 +341,14 @@ function ValuesTable(props: Props) {
           />
         </div>
         <div />
-        <div className={style.header}>Value</div>
+        <div className={style.header}>
+          {changedFields.some(([x]) => x === 'riskLevelAssignmentValues') && (
+            <Tooltip title={CHANGED_FIELD_MESSAGE}>
+              {({ ref }) => <WarningIcon rootRef={ref} />}
+            </Tooltip>
+          )}
+          Value
+        </div>
         <div className={style.header}>Risk level</div>
         <div className={style.header}>Risk score (0-100)</div>
         <div className={style.header}>
@@ -368,26 +401,28 @@ function ValuesTable(props: Props) {
               <div>
                 {VALUE_RENDERERS[safeEntity.dataType]({
                   value: parameterValue.content,
-                  onChange: (
-                    newValue?:
-                      | RiskParameterValueLiteral
-                      | RiskParameterValueRange
-                      | RiskParameterValueMultiple
-                      | RiskParameterValueTimeRange
-                      | RiskParameterValueDayRange
-                      | RiskParameterValueAmountRange,
-                  ) => {
-                    if (newValue) {
-                      setValues(
-                        values.map((oldValue, i) =>
-                          i !== index
-                            ? oldValue
-                            : { ...oldValue, parameterValue: { content: newValue } },
-                        ),
-                      );
-                    }
-                  },
-                  handleRemoveValue,
+                  onChange: hasWritePermissions
+                    ? (
+                        newValue?:
+                          | RiskParameterValueLiteral
+                          | RiskParameterValueRange
+                          | RiskParameterValueMultiple
+                          | RiskParameterValueTimeRange
+                          | RiskParameterValueDayRange
+                          | RiskParameterValueAmountRange,
+                      ) => {
+                        if (newValue) {
+                          setValues(
+                            values.map((oldValue, i) =>
+                              i !== index
+                                ? oldValue
+                                : { ...oldValue, parameterValue: { content: newValue } },
+                            ),
+                          );
+                        }
+                      }
+                    : undefined,
+                  handleRemoveValue: hasWritePermissions ? handleRemoveValue : undefined,
                 })}
               </div>
               <RiskLevelSwitch
@@ -425,7 +460,7 @@ function ValuesTable(props: Props) {
         <div className={style.newItemRow}>
           <div>
             {INPUT_RENDERERS[safeEntity.dataType]({
-              disabled: !hasWritePermissions,
+              isDisabled: !hasWritePermissions,
               value: newValue,
               existedValues: values.map((x) => x.parameterValue.content),
               onChange: setNewValue,
