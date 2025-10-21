@@ -310,6 +310,10 @@ const customTextWidget: CoreWidgets['text'] = {
       );
     }
 
+    if (isViewMode(props.config)) {
+      return <ViewModeTags>{[props.value]}</ViewModeTags>;
+    }
+
     const fieldSettings = props.fieldDefinition.fieldSettings as FieldSettingsWithUniqueType;
 
     if (fieldSettings?.uniqueType?.length && fieldSettings?.allowNewValues) {
@@ -458,10 +462,6 @@ const customTextWidget: CoreWidgets['text'] = {
           },
         });
       }
-    }
-
-    if (isViewMode(props.config)) {
-      return <ViewModeTags>{[props.value]}</ViewModeTags>;
     }
 
     if (isArrayType) {

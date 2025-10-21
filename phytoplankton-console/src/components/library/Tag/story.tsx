@@ -25,6 +25,10 @@ import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import SanctionsHitStatusTag from '@/components/ui/SanctionsHitStatusTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
+import Label from '@/components/library/Label';
+import Toggle from '@/components/library/Toggle';
+import TextInput from '@/components/library/TextInput';
+import NumberInput from '@/components/library/NumberInput';
 
 function TagsList<T>(props: { items: T[]; children: (value: T) => JSX.Element }) {
   return (
@@ -39,8 +43,65 @@ function TagsList<T>(props: { items: T[]; children: (value: T) => JSX.Element })
 export default function (): JSX.Element {
   return (
     <>
-      <UseCase title={'Default use'}>
-        <Tag>{'Text content'}</Tag>
+      <UseCase
+        title={'Default use'}
+        initialState={{
+          text: 'Text content, it could be very long text here, so that we could check if wrapping works',
+        }}
+      >
+        {([state, setState]) => (
+          <>
+            <div
+              style={{
+                gap: '16px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+              }}
+            >
+              <Label label={'Text'}>
+                <TextInput
+                  value={state.text}
+                  onChange={(newValue) => {
+                    setState(() => ({ ...state, text: newValue }));
+                  }}
+                />
+              </Label>
+              <Label label={'Max width'}>
+                <NumberInput
+                  min={30}
+                  max={600}
+                  value={state.maxWidth}
+                  onChange={(newValue) => {
+                    setState(() => ({ ...state, maxWidth: newValue }));
+                  }}
+                />
+              </Label>
+              <Label label={'Trim text'} position={'LEFT'}>
+                <Toggle
+                  value={state.trimText}
+                  onChange={(newValue) => {
+                    setState(() => ({ ...state, trimText: newValue }));
+                  }}
+                />
+              </Label>
+              <Label label={'Disable wrap text'} position={'LEFT'}>
+                <Toggle
+                  value={state.disableWrapText}
+                  onChange={(newValue) => {
+                    setState(() => ({ ...state, disableWrapText: newValue }));
+                  }}
+                />
+              </Label>
+            </div>
+            <Tag
+              trimText={state.trimText}
+              disableWrapText={state.disableWrapText}
+              maxWidth={state.maxWidth || undefined}
+            >
+              {state.text}
+            </Tag>
+          </>
+        )}
       </UseCase>
       <UseCase title={'Colors'}>
         <TagsList<TagColor>

@@ -1,3 +1,7 @@
+import { Transform } from 'stream'
+import { pipeline } from 'stream/promises'
+import { createInterface } from 'readline'
+import * as fs from 'fs'
 import { ClickHouseClient } from '@clickhouse/client'
 import compact from 'lodash/compact'
 import round from 'lodash/round'
@@ -9,6 +13,7 @@ import {
   getClickhouseDataOnly,
   getClickhouseCountOnly,
 } from '../../../utils/pagination'
+import { TimeRange } from './transaction-repository-interface'
 import {
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsStatsByTimeRequest,
@@ -36,6 +41,8 @@ import { CurrencyService } from '@/services/currency'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { logger } from '@/core/logger'
 
 type StatsByType = {
   transactionType: string
@@ -59,6 +66,7 @@ type StatsByTime = {
   aggregateBy: string
   timestamp: number
 }
+const CLICKHOUSE_DATA_FILE = 'clickhouse_results.json'
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -317,6 +325,22 @@ export class ClickhouseTransactionsRepository {
 
     if (params.filterReference) {
       whereConditions.push(`reference = '${params.filterReference}'`)
+    }
+
+    // Filter by action reasons from transaction events using subquery
+    if (params.filterActionReasons?.length) {
+      const reasonConditions = params.filterActionReasons
+        .map((reason) => `arrayExists(x -> x LIKE '%${reason}%', reasons)`)
+        .join(' OR ')
+
+      whereConditions.push(`
+        id IN (
+          SELECT DISTINCT transactionId 
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} 
+          WHERE (${reasonConditions})
+          AND length(reasons) > 0
+        )
+      `)
     }
 
     const queryWhereConditions = [...whereConditions]
@@ -592,7 +616,7 @@ export class ClickhouseTransactionsRepository {
       'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
       ars_score: 'arsScore',
     }
-
+    const originalSortField = sortField
     if (sortField in sortFieldMapper) {
       sortField = sortFieldMapper[sortField]
     }
@@ -672,7 +696,7 @@ export class ClickhouseTransactionsRepository {
 
     const sortedTransactions = getSortedData<TransactionTableItem>({
       data: items,
-      sortField,
+      sortField: originalSortField,
       sortOrder,
       groupByField: 'transactionId',
       groupBySortField: 'updatedAt',
@@ -934,5 +958,165 @@ export class ClickhouseTransactionsRepository {
       }
     }
     return result
+  }
+  private getTranformStream() {
+    return new Transform({
+      objectMode: true,
+      transform(chunk, _enc, cb) {
+        try {
+          // ClickHouse stream emits an array of rows per chunk
+          const out = chunk.map((row) => row.text).join(`\n`) + '\n'
+          cb(null, out)
+        } catch (err) {
+          cb(err as Error)
+        }
+      },
+    })
+  }
+
+  public async *getUniquePaymentDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ) {
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+    const paymentDetailMethodField =
+      direction === 'ORIGIN'
+        ? 'originPaymentMethod'
+        : 'destinationPaymentMethod'
+    const nativeFieldToCh = (field: string) => `${paymentDetailsField}_${field}`
+    const globalBatch: PaymentDetails[] = []
+    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
+      const paymentIdentifiers =
+        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
+      const identifierColumns = paymentIdentifiers.map(
+        (identifier) => `${nativeFieldToCh(identifier)}`
+      )
+
+      const query = `
+    SELECT ${identifierColumns.join(', ')}
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+    WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
+        timeRange.beforeTimestamp
+      }
+      AND ${paymentDetailMethodField} = '${paymentMethod}'
+    LIMIT 1 BY ${identifierColumns.join(', ')}
+  `
+      const resultSet = await this.clickhouseClient.query({
+        query,
+        format: 'JSONEachRow',
+      })
+      const transformStream = this.getTranformStream()
+      const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+      await pipeline(resultSet.stream(), transformStream, writeStream)
+      const rl = createInterface({
+        input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+        crlfDelay: Infinity,
+      })
+      try {
+        for await (const line of rl) {
+          if (!line) {
+            continue
+          }
+          try {
+            const data = JSON.parse(line)
+            const details: PaymentDetails = {
+              method: paymentMethod,
+              ...Object.fromEntries(
+                paymentIdentifiers.map((field) => [
+                  field,
+                  data?.[nativeFieldToCh(field)],
+                ])
+              ),
+            }
+            globalBatch.push(details)
+
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          } catch (e) {
+            logger.error(e)
+            throw e
+          }
+        }
+      } catch (e) {
+        logger.error(e)
+        throw e
+      } finally {
+        fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+          if (err) {
+            logger.error('error deleting file', err)
+          }
+        })
+      }
+    }
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
+  }
+  public async *getUniqueUserIdGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
+    const userField =
+      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+    const query = `
+SELECT ${userField} 
+FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp} 
+AND ${userField} != ''
+LIMIT 1 BY ${userField}`
+
+    // Execute query as a stream
+    const resultSet = await this.clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    const transformStream = this.getTranformStream()
+    const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+    await pipeline(resultSet.stream(), transformStream, writeStream)
+    const rl = createInterface({
+      input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+      crlfDelay: Infinity,
+    })
+    let batch: string[] = []
+    try {
+      for await (const line of rl) {
+        if (!line) {
+          continue
+        }
+        const data = JSON.parse(line)
+        try {
+          const userId = data[userField]
+          if (userId) {
+            batch.push(userId)
+            if (batch.length >= chunkSize) {
+              yield batch
+              batch = []
+            }
+          }
+        } catch (e) {
+          logger.error('Got from .json', e)
+        }
+      }
+    } catch (e) {
+      logger.error('Got error while reading file ', e)
+      throw e
+    } finally {
+      fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+        if (err) {
+          logger.error('Error deleting file', err)
+        }
+      })
+    }
+
+    if (batch.length > 0) {
+      yield batch
+    }
   }
 }

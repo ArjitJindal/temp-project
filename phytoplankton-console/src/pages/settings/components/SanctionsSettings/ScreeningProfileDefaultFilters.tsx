@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { ENTITY_TYPE_OPTIONS } from '@/components/ScreeningHitTable';
+import { sanitizeFuzziness } from '@/components/ScreeningHitTable/utils';
 
 type ScreeningProfileDefaultFiltersParams = {
   screeningProfileId?: string;
@@ -70,7 +71,7 @@ const ScreeningProfileDefaultFilters = () => {
         if (response) {
           const updatedParams: ScreeningProfileDefaultFiltersParams = {
             yearOfBirth: response.yearOfBirth,
-            fuzziness: response.fuzziness,
+            fuzziness: sanitizeFuzziness(response.fuzziness, 'hundred'),
             nationality: response.nationality,
             documentId: response.documentId,
             types: response.types,
@@ -94,6 +95,7 @@ const ScreeningProfileDefaultFilters = () => {
       .postDefaultManualScreeningFilters({
         DefaultManualScreeningFiltersRequest: {
           ...params,
+          fuzziness: sanitizeFuzziness(params.fuzziness, 'one'),
           documentId: params.documentId
             ? Array.isArray(params.documentId)
               ? params.documentId
@@ -121,7 +123,7 @@ const ScreeningProfileDefaultFilters = () => {
       if (defaultScreeningFilters) {
         const updatedParams: ScreeningProfileDefaultFiltersParams = {
           yearOfBirth: defaultScreeningFilters.yearOfBirth,
-          fuzziness: defaultScreeningFilters.fuzziness,
+          fuzziness: sanitizeFuzziness(defaultScreeningFilters.fuzziness, 'hundred'),
           nationality: defaultScreeningFilters.nationality,
           documentId: defaultScreeningFilters.documentId,
           types: defaultScreeningFilters.types,
@@ -183,16 +185,19 @@ const ScreeningProfileDefaultFilters = () => {
     },
     {
       title: 'Fuzziness',
-      description: '(The default value is 0.5)',
+      description: '(The default value is 50%)',
       key: 'fuzziness',
       readOnly: false,
       renderer: {
         kind: 'number',
+        displayFunction: (value) => {
+          return `${value}%`;
+        },
         displayAs: 'slider',
         min: 0,
-        max: 1,
-        step: 0.1,
-        defaultValue: 0.5,
+        max: 100,
+        step: 1,
+        defaultValue: 50,
       },
     },
     {

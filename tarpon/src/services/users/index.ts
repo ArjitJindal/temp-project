@@ -20,6 +20,7 @@ import { ClickHouseClient } from '@clickhouse/client'
 import { UserUpdateApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
 import { UserUpdateApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import has from 'lodash/has'
+import pickBy from 'lodash/pickBy'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
@@ -877,6 +878,7 @@ export class UserService {
   private async sendUserAndKycWebhook(
     oldUser: User | Business,
     newUser: User | Business,
+    comment: string,
     isManual: boolean
   ): Promise<void> {
     const webhookTasks: ThinWebhookDeliveryTask<
@@ -886,9 +888,12 @@ export class UserService {
       newUser.userStateDetails &&
       diff(oldUser.userStateDetails ?? {}, newUser.userStateDetails ?? {})
     ) {
-      const webhookUserStateDetails: WebhookUserStateDetails = {
+      const webhookUserStateDetails: WebhookUserStateDetails & {
+        description?: string
+      } = {
         ...newUser.userStateDetails,
         userId: newUser.userId,
+        description: comment,
       }
 
       webhookTasks.push({
@@ -903,9 +908,12 @@ export class UserService {
       newUser.kycStatusDetails &&
       diff(oldUser.kycStatusDetails ?? {}, newUser.kycStatusDetails ?? {})
     ) {
-      const webhookKYCStatusDetails: WebhookKYCStatusDetails = {
+      const webhookKYCStatusDetails: WebhookKYCStatusDetails & {
+        description?: string
+      } = {
         ...newUser.kycStatusDetails,
         userId: newUser.userId,
+        description: comment,
       }
 
       webhookTasks.push({
@@ -1606,8 +1614,8 @@ export class UserService {
         {
           entityId: user.userId,
           entityAction: 'UPDATE',
-          newImage: updateRequest,
-          oldImage: oldImage,
+          newImage: pickBy(updateRequest, (value) => !isEmpty(value)),
+          oldImage: pickBy(oldImage, (value) => !isEmpty(value)),
           entitySubtype: has(updateRequest, 'userStateDetails')
             ? 'USER_STATUS_CHANGE'
             : 'USER_KYC_STATUS_CHANGE',
@@ -1622,10 +1630,29 @@ export class UserService {
     user: User | Business,
     updateRequest: UserUpdateRequest
   ): UserUpdateRequest {
-    return Object.keys(updateRequest).reduce((acc, key) => {
-      acc[key] = key === 'pepStatus' ? (user as User).pepStatus : user[key]
-      return acc
-    }, {} as UserUpdateRequest)
+    const oldImage: UserUpdateRequest = {}
+    const isBusiness = isBusinessUser(user)
+
+    for (const key of Object.keys(updateRequest)) {
+      // Consumer-only fields
+      if (
+        !isBusiness &&
+        [
+          'pepStatus',
+          'sanctionsStatus',
+          'adverseMediaStatus',
+          'eoddDate',
+        ].includes(key)
+      ) {
+        oldImage[key] = user[key]
+      }
+      // All user fields
+      else if (['tags', 'userStateDetails', 'kycStatusDetails'].includes(key)) {
+        oldImage[key] = user[key]
+      }
+    }
+
+    return oldImage
   }
 
   private createUpdatedUser(
@@ -1892,7 +1919,12 @@ export class UserService {
         files: updateRequest.comment?.files ?? [],
         updatedAt: Date.now(),
       }),
-      this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
+      this.sendUserAndKycWebhook(
+        user,
+        updatedUser,
+        updateRequest.comment?.body ?? '',
+        options?.bySystem ?? false
+      ),
     ])
     return savedComment
   }
@@ -2413,19 +2445,27 @@ export class UserService {
     userId: string,
     proposedChange: UserProposedChange,
     comment: string,
-    createdBy: string
+    createdBy: string,
+    additionalChanges?: UserProposedChange[]
   ): Promise<AuditLogReturnData<UserApproval>> {
+    // Combine primary change with additional changes
+    const allChanges = [proposedChange, ...(additionalChanges || [])]
+
+    // Primary change determines the workflow
+    const primaryChange = proposedChange
+
     // Fetch tenant settings to get workflow mapping
     const settings: TenantSettings = await tenantSettings(this.tenantId)
     const workflowId =
-      settings.workflowSettings?.userApprovalWorkflows?.[proposedChange.field]
+      settings.workflowSettings?.userApprovalWorkflows?.[primaryChange.field]
 
     if (!workflowId) {
-      // No workflow configured - automatically apply the change
+      // No workflow configured - automatically apply all changes
       console.log(
-        `No workflow configured for field: ${proposedChange.field}. Auto-approving change for user: ${userId}`
+        `No workflow configured for primary field: ${primaryChange.field}. Auto-approving ${allChanges.length} change(s) for user: ${userId}`
       )
 
+      // Get user data before applying changes
       const oldUser = await this.userRepository.getUser<
         UserWithRulesResult | BusinessWithRulesResult
       >(userId)
@@ -2433,23 +2473,17 @@ export class UserService {
         throw new NotFound('User not found')
       }
 
-      // Create update request from the proposed change
-      const updateRequest: UserUpdateRequest = {} as UserUpdateRequest
-      ;(updateRequest as any)[proposedChange.field] = proposedChange.value
+      // Apply all changes using the existing applyUserApprovalChanges method
+      // This method already handles CRA lock changes, risk assignments, and other field types properly
+      await this.applyUserApprovalChanges(userId, oldUser, allChanges)
 
-      // Use the existing updateUser method to apply the change
-      // This ensures all the proper validation, audit logging, and side effects are handled
-      await this.updateUser(oldUser, updateRequest, undefined, {
-        bySystem: true,
-      })
-
-      // Return a mock approval object indicating the change was auto-approved
-      // This allows the frontend to know that the change was processed successfully
+      // Return a mock approval object indicating the changes were auto-approved
+      // This allows the frontend to know that the changes were processed successfully
       const timestamp = Date.now()
       const autoApproval = new UserApproval()
       autoApproval.id = timestamp
       autoApproval.userId = userId
-      autoApproval.proposedChanges = [proposedChange]
+      autoApproval.proposedChanges = allChanges
       autoApproval.comment = comment
       autoApproval.workflowRef = { id: 'auto-approved', version: 1 }
       autoApproval.approvalStatus = 'APPROVED'
@@ -2503,13 +2537,13 @@ export class UserService {
       }
 
       // Apply all the proposed changes using the same method used in normal approvals
-      await this.applyUserApprovalChanges(userId, oldUser, [proposedChange])
+      await this.applyUserApprovalChanges(userId, oldUser, allChanges)
 
       // Return a mock approval object indicating the change was auto-approved
       const autoApproval = new UserApproval()
       autoApproval.id = timestamp
       autoApproval.userId = userId
-      autoApproval.proposedChanges = [proposedChange]
+      autoApproval.proposedChanges = allChanges
       autoApproval.comment = comment
       autoApproval.workflowRef = { id: workflow.id, version: workflow.version }
       autoApproval.approvalStatus = 'APPROVED'
@@ -2537,7 +2571,7 @@ export class UserService {
     const approval: UserApproval = {
       id: timestamp,
       userId,
-      proposedChanges: [proposedChange],
+      proposedChanges: allChanges,
       comment,
       workflowRef: { id: workflow.id, version: workflow.version },
       approvalStatus: 'PENDING',
@@ -2657,15 +2691,29 @@ export class UserService {
       })
 
       const newIsUpdatable = craLockChange.value as boolean
-      await riskService.updateRiskAssignmentLock(userId, newIsUpdatable)
+
+      // Check for releaseAt timestamp in proposed changes (for approval workflow)
+      const releaseAtChange = proposedChanges.find(
+        (change) => change.field === 'CraLockReleaseAt'
+      )
+      const releaseAt = releaseAtChange?.value as number | undefined
+
+      await riskService.updateRiskAssignmentLock(
+        userId,
+        newIsUpdatable,
+        releaseAt
+      )
       console.log(
-        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}`
+        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
       )
     }
 
     // Handle other fields through the standard updateUser method
     const otherFields = proposedChanges.filter(
-      (change) => change.field !== 'Cra' && change.field !== 'CraLock'
+      (change) =>
+        change.field !== 'Cra' &&
+        change.field !== 'CraLock' &&
+        change.field !== 'CraLockReleaseAt'
     )
 
     if (otherFields.length > 0) {

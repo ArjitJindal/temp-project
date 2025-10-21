@@ -9,6 +9,7 @@ export enum SanctionsDataProviders {
   ACURIS = 'acuris',
   DOW_JONES = 'dowjones',
   OPEN_SANCTIONS = 'open-sanctions',
+  LSEG = 'lseg',
   LIST = 'list',
 }
 
@@ -29,4 +30,9 @@ export interface SanctionsSearchPropsWithRequest extends SanctionsSearchProps {
 
 export interface SanctionsSearchPropsWithData extends SanctionsSearchProps {
   data: SanctionsEntity[] | undefined
+}
+
+export enum Gender {
+  MALE = 'Male',
+  FEMALE = 'Female',
 }

@@ -97,7 +97,7 @@ import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import dayjs from '@/utils/dayjs'
-import { EntityData, TimestampRange } from '@/@types/tranasction/aggregation'
+import { EntityData, TimestampSlice } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
   getPaymentDetailsNameString,
@@ -204,6 +204,7 @@ export class LogicEvaluator {
   private mode: Mode
   private transactionEventRepository?: TransactionEventRepository
   private backfillNamespace: string | undefined
+  private aggregationDynamoTable: string
 
   constructor(
     tenantId: string,
@@ -221,6 +222,10 @@ export class LogicEvaluator {
       dynamoDb: this.dynamoDb,
     })
     this.mode = mode
+    this.aggregationDynamoTable =
+      tenantId === '4c9cdf0251'
+        ? StackConstants.AGGREGATION_DYNAMODB_TABLE_NAME
+        : StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
   }
 
   public setBackfillNamespace(backfillNamespace: string | undefined) {
@@ -750,7 +755,7 @@ export class LogicEvaluator {
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     entityData: EntityData | undefined,
-    timeRange?: TimestampRange,
+    timeRange?: TimestampSlice,
     totalTimeSlices?: number
   ): Promise<boolean> {
     let userKeyId: string | undefined
@@ -853,7 +858,7 @@ export class LogicEvaluator {
       await batchWrite(
         this.dynamoDb,
         writeRequests,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+        this.aggregationDynamoTable
       )
     } else {
       await this.aggregationRepository.rebuildUserTimeAggregations(
@@ -872,7 +877,8 @@ export class LogicEvaluator {
       userKeyId,
       lastTransactionTimestamp,
       totalTimeSlices,
-      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices
+      hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') && !totalTimeSlices,
+      timeRange?.sliceNumber
     )
     logger.debug('Rebuilt aggregation for time window', timeRange)
     return true

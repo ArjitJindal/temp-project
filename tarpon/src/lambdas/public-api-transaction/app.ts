@@ -14,7 +14,6 @@ import { DefaultApiPostConsumerTransactionRequest } from '@/@types/openapi-publi
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   filterLiveRules,
   sendAsyncRuleTasks,
@@ -65,7 +64,6 @@ export const transactionHandler = publicLambdaApi()(
 
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const mongoDb = await getMongoDbClient()
     const opensearchClient = hasFeature('OPEN_SEARCH')
       ? await getSharedOpensearchClient()
       : undefined
@@ -108,7 +106,6 @@ export const transactionHandler = publicLambdaApi()(
           tenantId,
           logicEvaluator,
           {
-            mongoDb,
             dynamoDb,
           }
         )
@@ -139,7 +136,7 @@ export const transactionHandler = publicLambdaApi()(
         tenantId,
         dynamoDb,
         logicEvaluator,
-        mongoDb,
+        undefined,
         opensearchClient
       )
       const result = await rulesEngine.verifyTransaction(transaction, {
@@ -188,7 +185,6 @@ export const transactionHandler = publicLambdaApi()(
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb,
       })
       const { response, validatedTransactions } =
         await batchImportService.importTransactions(
@@ -217,7 +213,6 @@ export const transactionHandler = publicLambdaApi()(
       const { batchId, page, pageSize } = request
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
-        mongoDb,
       })
       return await batchImportService.getBatchTransactions(batchId, {
         page,

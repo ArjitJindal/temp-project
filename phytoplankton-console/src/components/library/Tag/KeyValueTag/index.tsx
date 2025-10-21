@@ -11,7 +11,7 @@ interface Props {
 export default function KeyValueTag(props: Props) {
   const { tag } = props;
   return (
-    <Tag className={s.root} wrapText={false}>
+    <Tag className={s.root} disableWrapText={false}>
       <span>
         {tag.key}:{' '}
         <span style={{ fontWeight: 700 }}>

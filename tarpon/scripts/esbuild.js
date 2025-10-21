@@ -350,6 +350,10 @@ async function buildLambdaLayer() {
     version: '1.0.0',
     private: true,
     dependencies: layerDeps,
+    // Add resolutions to prevent vulnerable dependencies in examples
+    resolutions: {
+      minimist: '^1.2.8',
+    },
   }
   await fs.remove(LAYER_DIR)
   await fs.ensureDir(LAYER_DIR)
@@ -358,6 +362,24 @@ async function buildLambdaLayer() {
   })
   console.log(`📥 Installing ${Object.keys(layerDeps).join(', ')}`)
   execSync(`npm install --production`, { cwd: LAYER_DIR, stdio: 'inherit' })
+
+  // Remove vulnerable example directories from the layer
+  console.log('🧹 Removing vulnerable example directories...')
+  const exampleDirs = [
+    'node_modules/html-to-docx/example',
+    'node_modules/html-to-docx/examples',
+    'node_modules/html-to-docx/demo',
+    'node_modules/html-to-docx/test',
+  ]
+
+  for (const dir of exampleDirs) {
+    const fullPath = path.join(LAYER_DIR, dir)
+    if (await fs.pathExists(fullPath)) {
+      await fs.remove(fullPath)
+      console.log(`   Removed: ${dir}`)
+    }
+  }
+
   console.log('✅ Layer built at:', LAYER_DIR)
 }
 

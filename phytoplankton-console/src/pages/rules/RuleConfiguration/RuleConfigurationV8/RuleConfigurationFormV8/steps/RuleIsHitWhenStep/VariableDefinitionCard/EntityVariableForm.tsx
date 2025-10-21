@@ -240,18 +240,22 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           return false;
         }
 
+        let matchesEntityType = false;
+
         if (filterType === 'TRANSACTION' && v.entity?.startsWith('TRANSACTION')) {
-          return true;
+          matchesEntityType = true;
+        } else if (filterType === 'CONSUMER_USER') {
+          matchesEntityType =
+            v.entity?.startsWith('USER') || v.entity?.includes(filterType) || false;
+        } else if (filterType === 'BUSINESS_USER') {
+          matchesEntityType =
+            v.entity?.startsWith('USER') || v.entity?.includes(filterType) || false;
+        } else {
+          matchesEntityType = true;
         }
-        if (filterType === 'CONSUMER_USER') {
-          if (!(v.entity?.startsWith('USER') || v.entity?.includes(filterType))) {
-            return false;
-          }
-        }
-        if (filterType === 'BUSINESS_USER') {
-          if (!(v.entity?.startsWith('USER') || v.entity?.includes(filterType))) {
-            return false;
-          }
+
+        if (!matchesEntityType) {
+          return false;
         }
 
         if (searchKey) {

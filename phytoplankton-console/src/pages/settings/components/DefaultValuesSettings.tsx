@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { Resource, hasResources } from '@flagright/lib/utils';
 import Select, { Option } from '@/components/library/Select';
@@ -12,19 +12,11 @@ import Button from '@/components/library/Button';
 import Table from '@/components/library/Table';
 import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { StatePair } from '@/utils/state';
-
 type TableItem = {
   valueType: string;
   options: Option<string>[];
   label: string;
   requiredResources: { read: Resource[]; write: Resource[] };
-};
-
-type ExternalState = {
-  value: StatePair<{ [key: string]: string }>;
-  saving: boolean;
-  onSave: (key: string, value: string) => void;
 };
 
 const DEFAULT_VALUES = {
@@ -38,7 +30,18 @@ export const DefaultValuesSettings = () => {
   const settings = useSettings();
 
   const { statements } = useResources();
-
+  const mutateTenantSettings = useUpdateTenantSettings();
+  const handleSave = useCallback(
+    (key: string, v: string) => {
+      mutateTenantSettings.mutate({
+        defaultValues: {
+          ...settings.defaultValues,
+          [key]: v,
+        },
+      });
+    },
+    [mutateTenantSettings, settings.defaultValues],
+  );
   const columns = useMemo(
     () =>
       columnHelper.list([
@@ -49,9 +52,7 @@ export const DefaultValuesSettings = () => {
         columnHelper.display({
           title: 'Options',
           id: 'options',
-          render: (record, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [value, setValue] = externalState.value;
+          render: (record) => {
             return (
               <Select
                 value={value[record.valueType]}
@@ -71,18 +72,14 @@ export const DefaultValuesSettings = () => {
         columnHelper.display({
           id: 'action',
           title: 'Action',
-          render: (record, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { onSave } = externalState;
-            const [value] = externalState.value;
-            const saving = externalState.saving;
+          render: (record) => {
             return (
               <Button
                 type="PRIMARY"
                 onClick={() => {
-                  onSave(record.valueType, value[record.valueType]);
+                  handleSave(record.valueType, value[record.valueType]);
                 }}
-                isLoading={saving}
+                isLoading={mutateTenantSettings.isLoading}
                 requiredResources={record.requiredResources.write}
               >
                 Save
@@ -91,7 +88,7 @@ export const DefaultValuesSettings = () => {
           },
         }),
       ]),
-    [statements],
+    [value, statements, mutateTenantSettings.isLoading, handleSave],
   );
 
   useEffect(() => {
@@ -104,22 +101,6 @@ export const DefaultValuesSettings = () => {
       });
     }
   }, [settings.defaultValues]);
-
-  const mutateTenantSettings = useUpdateTenantSettings();
-  const handleSave = async (key: string, value: string) => {
-    mutateTenantSettings.mutate({
-      defaultValues: {
-        ...settings.defaultValues,
-        [key]: value,
-      },
-    });
-  };
-
-  const externalState: ExternalState = {
-    value: [value, setValue],
-    saving: mutateTenantSettings.isLoading,
-    onSave: handleSave,
-  };
 
   const items: TableItem[] = useMemo(() => {
     const items: TableItem[] = [
@@ -160,7 +141,6 @@ export const DefaultValuesSettings = () => {
           columns={columns}
           data={{ items }}
           pagination={false}
-          externalState={externalState}
         />
       </SettingsCard>
     </div>

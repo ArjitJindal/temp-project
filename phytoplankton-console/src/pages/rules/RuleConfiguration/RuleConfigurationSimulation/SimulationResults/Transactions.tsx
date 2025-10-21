@@ -56,11 +56,16 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
     SIMULATION_JOB_ITERATION_RESULT(taskId, params),
     async (paginationParams) => {
       const { timestamp, ...restParams } = params;
+      const [sortField, sortOrder] = (params.sort?.[0] as
+        | [string, 'ascend' | 'descend']
+        | undefined) ?? ['timestamp', 'descend'];
       const response = await api.getSimulationTaskIdResult({
         taskId,
         ...restParams,
         page: paginationParams.page || params.page,
         pageSize: params.pageSize,
+        sortField,
+        sortOrder,
         filterType: 'BEACON_TRANSACTION',
         filterTransactionId: params.transactionId,
         filterHitStatus: params.hit,
@@ -214,8 +219,9 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
       filtering: true,
     }),
     helper.derived({
-      id: 'originAmountDetails',
+      id: 'originAmountDetails.transactionAmount',
       title: 'Origin amount',
+      tooltip: 'Sorting is based on the original transaction value',
       value: (entity) => {
         return {
           amountValue: entity.originAmountDetails?.transactionAmount ?? 0,
@@ -271,8 +277,9 @@ export const SimulationTransactionsHit = (props: SimulationTransactionsHitProps)
       filtering: true,
     }),
     helper.derived({
-      id: 'destinationAmountDetails',
+      id: 'destinationAmountDetails.transactionAmount',
       title: 'Destination amount',
+      tooltip: 'Sorting is based on the original transaction value',
       value: (entity) => {
         return {
           amountValue: entity.destinationAmountDetails?.transactionAmount ?? 0,

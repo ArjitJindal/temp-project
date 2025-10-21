@@ -271,15 +271,28 @@ export class TarponChangeMongoDbConsumer {
       dynamoDb,
     })
 
+    const activeRuleInstances = await ruleInstancesRepo.getActiveRuleInstances(
+      'USER'
+    )
+
     if (!isEqual(oldUser?.hitRules, newUser?.hitRules)) {
       /* Comparing hit rules to avoid a loop being created */
-      const ruleInstances = await ruleInstancesRepo.getRuleInstancesByIds(
-        filterLiveRules({ hitRules: internalUser.hitRules }, true).hitRules.map(
-          (rule) => rule.ruleInstanceId
-        )
+      const ruleInstanceIds = filterLiveRules(
+        { hitRules: internalUser.hitRules },
+        true
+      ).hitRules.map((rule) => rule.ruleInstanceId)
+      const ruleInstances = activeRuleInstances.filter(
+        (ruleInstance) =>
+          ruleInstance.id && ruleInstanceIds.includes(ruleInstance.id)
       )
+      const userHitRules: HitRulesDetails[] =
+        internalUser.hitRules?.filter((hitRule) =>
+          activeRuleInstances.some(
+            (ruleInstance) => ruleInstance.id === hitRule.ruleInstanceId // Filter rules which are active because we merge rules when running ongoing screening.
+          )
+        ) ?? []
       await userService.handleUserStatusUpdateTrigger(
-        internalUser.hitRules as HitRulesDetails[],
+        userHitRules,
         ruleInstances,
         internalUser,
         null // Only sending it for one direction to avoid updating twice
@@ -313,7 +326,11 @@ export class TarponChangeMongoDbConsumer {
       ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
     })
     const newHitRules = savedUser.hitRules?.filter(
-      (hitRule) => !hitRule.ruleHitMeta?.isOngoingScreeningHit
+      (hitRule) =>
+        !hitRule.ruleHitMeta?.isOngoingScreeningHit &&
+        activeRuleInstances.some(
+          (ruleInstance) => ruleInstance.id === hitRule.ruleInstanceId
+        )
     )
     // NOTE: This is a workaround to avoid creating redundant cases. In 748200a, we update
     // user.riskLevel and user.kycRiskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel or user.kycRiskLevel

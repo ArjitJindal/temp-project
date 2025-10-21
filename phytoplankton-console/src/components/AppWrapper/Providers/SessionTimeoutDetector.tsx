@@ -29,9 +29,10 @@ export const SessionTimeoutProvider: React.FC<{ children: React.ReactNode }> = (
     });
   }, [logout]);
 
-  const disabled = !settings.sessionTimeoutMinutes || settings.sessionTimeoutMinutes === 0;
+  const disabled = !settings.sessionTimeoutMinutes || settings.sessionTimeoutMinutes <= 0;
+  const timeoutMinutes = Math.max(1, settings.sessionTimeoutMinutes ?? 60); // Ensure positive value
   const { reset } = useIdleTimer({
-    timeout: disabled ? undefined : (settings.sessionTimeoutMinutes ?? 60) * 60 * 1000,
+    timeout: disabled ? undefined : timeoutMinutes * 60 * 1000,
     onIdle: handleOnIdle,
     debounce: 500,
     crossTab: true,

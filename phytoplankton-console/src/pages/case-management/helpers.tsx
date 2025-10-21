@@ -46,7 +46,7 @@ import { useRoles } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
-import { useReasons } from '@/utils/reasons';
+import { useCombinedReasons } from '@/utils/reasons';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -272,7 +272,7 @@ export const useCaseAlertFilters = (
   const roleAssignedToOptions = map(roles, 'name');
   roleAssignedToOptions.unshift('Unassigned');
 
-  const closureReasons = useReasons('CLOSURE');
+  const closureReasons = useCombinedReasons();
 
   return denseArray([
     {

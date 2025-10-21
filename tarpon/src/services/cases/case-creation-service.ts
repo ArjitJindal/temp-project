@@ -14,7 +14,7 @@ import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -37,6 +37,7 @@ import {
 } from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
+import { getSQSClient } from '@/utils/sns-sqs-client'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -1195,6 +1196,12 @@ export class CaseCreationService {
 
     const now = Date.now()
 
+    // Delete alert data from parent case
+    await this.dynamoCaseRepository.deleteCaseAlertData(
+      sourceCase.caseId ?? '',
+      newCaseAlerts.map((alert) => alert.alertId ?? '')
+    )
+
     // Create new case
     const newCase = await this.addOrUpdateCase({
       alerts: newCaseAlerts,
@@ -2133,9 +2140,7 @@ export class CaseCreationService {
           tenantId,
           caseId: caseItem.caseId as string,
         }
-        const sqs = new SQS({
-          region: process.env.AWS_REGION,
-        })
+        const sqs = getSQSClient()
         const sqsSendMessageCommand = new SendMessageCommand({
           MessageBody: JSON.stringify(payload),
           QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,

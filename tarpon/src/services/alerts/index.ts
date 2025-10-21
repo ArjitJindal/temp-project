@@ -41,6 +41,8 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
+import { AlertEscalation } from '@/@types/openapi-internal/AlertEscalation'
+import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseService } from '@/services/cases'
 import { hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
@@ -63,7 +65,6 @@ import {
   sendMessageToMongoUpdateConsumer,
   withTransaction,
 } from '@/utils/mongodb-utils'
-import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
@@ -335,40 +336,10 @@ export class AlertsService extends CaseAlertsCommonService {
   }
 
   // TODO: FIX THIS
-  @auditLog('ALERT', 'STATUS_CHANGE', 'ESCALATE')
-  public async escalateAlerts(
-    caseId: string,
-    caseEscalationRequest: CaseEscalationRequest
-  ): Promise<AlertEscalationAuditLogReturnData> {
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb,
-      this.dynamoDb
-    )
-    const accountsService = AccountsService.getInstance(this.dynamoDb, true)
-    const accounts = await accountsService.getAllActiveAccounts(this.tenantId)
-    const currentUserId = getContext()?.user?.id
-    const currentUserAccount = accounts.find((a) => a.id === currentUserId)
-    const isPNB = hasFeature('PNB')
-
-    if (!currentUserAccount) {
-      throw new Forbidden('User not found or deleted')
-    }
-
-    const isReviewRequired = !!currentUserAccount.reviewerId
-
-    const caseService = new CaseService(
-      this.caseRepository,
-      this.s3,
-      this.s3Config,
-      this.awsCredentials
-    )
-
-    const c = (await caseService.getCase(caseId)).result
-
-    if (!c) {
-      throw new NotFound(`Cannot find case ${caseId}`)
-    }
+  /**
+   * Validates that a case can be escalated
+   */
+  private validateCaseForEscalation(c: Case): void {
     if (
       c.caseHierarchyDetails?.parentCaseId &&
       !hasFeature('MULTI_LEVEL_ESCALATION') &&
@@ -378,16 +349,16 @@ export class AlertsService extends CaseAlertsCommonService {
         `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
       )
     }
-    let { alertEscalations } = caseEscalationRequest
-    const { caseUpdateRequest } = caseEscalationRequest
+  }
 
-    const alertIds = alertEscalations?.map((alert) => alert.alertId) || []
-    const isTransactionsEscalation = alertEscalations?.some(
-      (ae) => ae.transactionIds?.length ?? 0 > 0
-    )
-
-    // Hydrate escalation requests with the txn IDS if none were specified
-    alertEscalations = alertEscalations?.map((alert) => {
+  /**
+   * Filters alert escalation transactions to exclude already escalated ones
+   */
+  private filterEscalationTransactions(
+    alertEscalations: AlertEscalation[] | undefined,
+    c: Case
+  ): AlertEscalation[] | undefined {
+    return alertEscalations?.map((alert) => {
       if (isEmpty(alert.transactionIds)) {
         return alert
       }
@@ -401,16 +372,26 @@ export class AlertsService extends CaseAlertsCommonService {
       }
       return alert
     })
+  }
 
-    const currentTimestamp = Date.now()
-
-    const escalatedAlerts = c.alerts?.filter((alert) =>
+  /**
+   * Partitions alerts into those being escalated and those remaining in the parent case
+   * Note: When only some transactions are escalated, the alert appears in BOTH lists
+   */
+  private partitionAlerts(
+    caseAlerts: Alert[] | undefined,
+    alertEscalations: AlertEscalation[] | undefined
+  ): {
+    escalatedAlerts: Alert[] | undefined
+    remainingAlerts: Alert[] | undefined
+  } {
+    const escalatedAlerts = caseAlerts?.filter((alert) =>
       alertEscalations?.some(
         (alertEscalation) => alertEscalation.alertId === alert.alertId
       )
     )
 
-    const remainingAlerts = c.alerts?.filter(
+    const remainingAlerts = caseAlerts?.filter(
       (alert) =>
         !alertEscalations?.some(
           (alertEscalation) =>
@@ -422,178 +403,179 @@ export class AlertsService extends CaseAlertsCommonService {
         )
     )
 
-    // if there are no remaining alerts, then we are escalating the entire case
-    // except for PNB (quickfix for escalation bugs)
-    if (!isPNB && !remainingAlerts?.length && caseUpdateRequest) {
-      // TODO: issue is here, we are escalating the case but case is already escalated compared to the alert
-      //       we only want to escalate the only alert inside the case. we have to handle this differently
-      const response = await caseService.escalateCase(caseId, caseUpdateRequest)
-      return {
-        result: response.result,
-        publishAuditLog: () => false,
-        entities: [],
-      }
+    return { escalatedAlerts, remainingAlerts }
+  }
+
+  /**
+   * Handles PNB-specific alert escalation without creating child case
+   */
+  private async handlePNBAlertEscalation(
+    alertIds: string[],
+    escalatedAlerts: Alert[],
+    caseEscalationRequest: CaseEscalationRequest,
+    currentUserAccount: Account,
+    currentUserId: string | undefined,
+    currentTimestamp: number,
+    accounts: Account[]
+  ): Promise<AlertEscalationAuditLogReturnData> {
+    const { caseUpdateRequest } = caseEscalationRequest
+    const isReviewRequired = !!currentUserAccount.reviewerId
+
+    if (!escalatedAlerts?.length) {
+      throw new BadRequest('No alerts found to escalate')
     }
 
-    // this is for PNB only, escalate the alert without escalating the case
-    if (isPNB && !remainingAlerts?.length && caseUpdateRequest) {
-      if (!escalatedAlerts?.length) {
-        throw new BadRequest('No alerts found to escalate')
-      }
+    const firstAlert = escalatedAlerts[0]
+    const isAlreadyEscalated =
+      statusEscalated(firstAlert?.alertStatus) &&
+      !isStatusInReview(firstAlert?.alertStatus)
+    const alertStatus = isAlreadyEscalated
+      ? 'ESCALATED_L2'
+      : isReviewRequired
+      ? 'IN_REVIEW_ESCALATED'
+      : 'ESCALATED'
 
-      const firstAlert = escalatedAlerts?.[0]
-      const isAlreadyEscalated =
-        statusEscalated(firstAlert?.alertStatus) &&
-        !isStatusInReview(firstAlert?.alertStatus)
-      const alertStatus = isAlreadyEscalated
-        ? 'ESCALATED_L2'
-        : isReviewRequired
-        ? 'IN_REVIEW_ESCALATED'
-        : 'ESCALATED'
-      await this.updateStatus(
-        alertIds,
-        {
-          alertStatus: alertStatus,
-          reason: caseUpdateRequest?.reason ?? [],
-          comment: caseUpdateRequest?.comment ?? '',
-          files: caseUpdateRequest?.files ?? [],
-          otherReason: caseUpdateRequest?.otherReason ?? '',
-          priority: caseUpdateRequest?.priority,
-          closeSourceCase: caseEscalationRequest.closeSourceCase,
-          tags: caseUpdateRequest?.tags,
-          screeningDetails: caseUpdateRequest?.screeningDetails,
-          listId: caseUpdateRequest?.listId,
-        },
-        { cascadeCaseUpdates: false }
-      )
-
-      let assignee
-
-      // this step is only necessary when escalating to L1 or L2
-      // if (!(alertStatus === 'IN_REVIEW_ESCALATED')) {
-      // we need to update reviewAsssignment structure with L1 or L2 assignments when escalating
-      const newReviewAssignments =
-        alertStatus === 'IN_REVIEW_ESCALATED'
-          ? ([
-              {
-                assignedByUserId: currentUserId ?? '',
-                assigneeUserId: currentUserAccount.reviewerId,
-                timestamp: currentTimestamp,
-              },
-            ] as Assignment[])
-          : await this.getEscalationAssignments(
-              firstAlert?.alertStatus as CaseStatus,
-              firstAlert.reviewAssignments || [],
-              accounts
-            )
-
-      const reviewAssignments = uniqBy(
-        [...newReviewAssignments, ...(firstAlert.reviewAssignments ?? [])],
-        'assigneeUserId'
-      )
-
-      await this.alertsRepository.updateReviewAssignments(
-        escalatedAlerts.map((alert) => alert.alertId ?? ''), // alertId is always defined
-        reviewAssignments
-      )
-
-      if (alertStatus.startsWith('IN_REVIEW_ESCALATED')) {
-        assignee = reviewAssignments.filter((r) => !r.escalationLevel)[0]
-          ?.assigneeUserId
-      } else if (statusEscalatedL2(alertStatus)) {
-        assignee = reviewAssignments.filter(
-          (r) => r.escalationLevel === 'L2'
-        )[0]?.assigneeUserId
-      } else if (statusEscalated(alertStatus)) {
-        assignee = reviewAssignments.filter(
-          (r) => r.escalationLevel === 'L1'
-        )[0]?.assigneeUserId
-      }
-      // }
-
-      return {
-        result: {
-          assigneeIds: [assignee],
-        },
-        publishAuditLog: () => false,
-        entities: [],
-      }
-    }
-
-    if (
-      isReviewRequired &&
-      alertEscalations &&
-      !isStatusInReview(remainingAlerts?.[0]?.alertStatus) &&
-      !isTransactionsEscalation &&
-      !isPNB
-    ) {
-      await this.updateStatus(
-        alertIds,
-        {
-          // alertStatus: 'IN_REVIEW_ESCALATED',
-          alertStatus: 'ESCALATED',
-          reason: caseUpdateRequest?.reason ?? [],
-          comment: caseUpdateRequest?.comment ?? '',
-          files: caseUpdateRequest?.files ?? [],
-          otherReason: caseUpdateRequest?.otherReason ?? '',
-          priority: caseUpdateRequest?.priority,
-          closeSourceCase: caseEscalationRequest.closeSourceCase,
-          tags: caseUpdateRequest?.tags,
-          screeningDetails: caseUpdateRequest?.screeningDetails,
-          listId: caseUpdateRequest?.listId,
-        },
-        { cascadeCaseUpdates: false }
-      )
-
-      if (caseUpdateRequest?.caseStatus) {
-        await caseService.updateStatus(
-          [caseId],
-          {
-            reason: caseUpdateRequest?.reason ?? [],
-            comment: caseUpdateRequest?.comment ?? '',
-            files: caseUpdateRequest?.files ?? [],
-            caseStatus: caseUpdateRequest?.caseStatus,
-            otherReason: caseUpdateRequest?.otherReason ?? '',
-            priority: caseUpdateRequest?.priority,
-            tags: caseUpdateRequest?.tags,
-            screeningDetails: caseUpdateRequest?.screeningDetails,
-            listId: caseUpdateRequest?.listId,
-          },
-          { filterInReview: true }
-        )
-      }
-
-      return {
-        result: {
-          assigneeIds: [currentUserAccount.reviewerId as string],
-        },
-        publishAuditLog: () => false,
-        entities: [],
-      }
-    }
-
-    // if the reuqest specifies the alerts to be escalated
-    // then we need to pick the first of the selected alerts
-    let firstAlert = c.alerts?.[0]
-    if (alertEscalations?.length) {
-      firstAlert = c.alerts?.filter((alert) =>
-        alertEscalations?.some(
-          (alertEscalation) => alertEscalation.alertId === alert.alertId
-        )
-      )?.[0]
-    }
-    const existingReviewAssignments =
-      statusEscalated(c.caseStatus) && !isStatusInReview(c.caseStatus)
-        ? firstAlert?.reviewAssignments ?? []
-        : []
-
-    const assignmentStatus = isPNB ? firstAlert?.alertStatus : c.caseStatus
-    const reviewAssignments = await this.getEscalationAssignments(
-      assignmentStatus as CaseStatus,
-      existingReviewAssignments,
-      accounts
+    await this.updateStatus(
+      alertIds,
+      {
+        alertStatus: alertStatus,
+        reason: caseUpdateRequest?.reason ?? [],
+        comment: caseUpdateRequest?.comment ?? '',
+        files: caseUpdateRequest?.files ?? [],
+        otherReason: caseUpdateRequest?.otherReason ?? '',
+        priority: caseUpdateRequest?.priority,
+        closeSourceCase: caseEscalationRequest.closeSourceCase,
+        tags: caseUpdateRequest?.tags,
+        screeningDetails: caseUpdateRequest?.screeningDetails,
+        listId: caseUpdateRequest?.listId,
+      },
+      { cascadeCaseUpdates: false }
     )
 
+    // this step is only necessary when escalating to L1 or L2
+    // if (!(alertStatus === 'IN_REVIEW_ESCALATED')) {
+    // we need to update reviewAsssignment structure with L1 or L2 assignments when escalating
+    const newReviewAssignments =
+      alertStatus === 'IN_REVIEW_ESCALATED'
+        ? ([
+            {
+              assignedByUserId: currentUserId ?? '',
+              assigneeUserId: currentUserAccount.reviewerId,
+              timestamp: currentTimestamp,
+            },
+          ] as Assignment[])
+        : await this.getEscalationAssignments(
+            firstAlert?.alertStatus as CaseStatus,
+            firstAlert.reviewAssignments || [],
+            accounts
+          )
+
+    const reviewAssignments = uniqBy(
+      [...newReviewAssignments, ...(firstAlert.reviewAssignments ?? [])],
+      'assigneeUserId'
+    )
+
+    await this.alertsRepository.updateReviewAssignments(
+      escalatedAlerts.map((alert) => alert.alertId ?? ''),
+      reviewAssignments
+    )
+
+    let assignee
+    if (alertStatus.startsWith('IN_REVIEW_ESCALATED')) {
+      assignee = reviewAssignments.filter((r) => !r.escalationLevel)[0]
+        ?.assigneeUserId
+    } else if (statusEscalatedL2(alertStatus)) {
+      assignee = reviewAssignments.filter((r) => r.escalationLevel === 'L2')[0]
+        ?.assigneeUserId
+    } else if (statusEscalated(alertStatus)) {
+      assignee = reviewAssignments.filter((r) => r.escalationLevel === 'L1')[0]
+        ?.assigneeUserId
+    }
+
+    return {
+      result: {
+        assigneeIds: [assignee],
+      },
+      publishAuditLog: () => false,
+      entities: [],
+    }
+  }
+
+  /**
+   * Handles alert escalation with review requirement (non-PNB)
+   */
+  private async handleReviewRequiredEscalation(
+    alertIds: string[],
+    caseId: string,
+    caseEscalationRequest: CaseEscalationRequest,
+    caseService: CaseService,
+    currentUserAccount: Account
+  ): Promise<AlertEscalationAuditLogReturnData> {
+    const { caseUpdateRequest } = caseEscalationRequest
+
+    await this.updateStatus(
+      alertIds,
+      {
+        alertStatus: 'ESCALATED',
+        reason: caseUpdateRequest?.reason ?? [],
+        comment: caseUpdateRequest?.comment ?? '',
+        files: caseUpdateRequest?.files ?? [],
+        otherReason: caseUpdateRequest?.otherReason ?? '',
+        priority: caseUpdateRequest?.priority,
+        closeSourceCase: caseEscalationRequest.closeSourceCase,
+        tags: caseUpdateRequest?.tags,
+        screeningDetails: caseUpdateRequest?.screeningDetails,
+        listId: caseUpdateRequest?.listId,
+      },
+      { cascadeCaseUpdates: false }
+    )
+
+    if (caseUpdateRequest?.caseStatus) {
+      await caseService.updateStatus(
+        [caseId],
+        {
+          reason: caseUpdateRequest?.reason ?? [],
+          comment: caseUpdateRequest?.comment ?? '',
+          files: caseUpdateRequest?.files ?? [],
+          caseStatus: caseUpdateRequest?.caseStatus,
+          otherReason: caseUpdateRequest?.otherReason ?? '',
+          priority: caseUpdateRequest?.priority,
+          tags: caseUpdateRequest?.tags,
+          screeningDetails: caseUpdateRequest?.screeningDetails,
+          listId: caseUpdateRequest?.listId,
+        },
+        { filterInReview: true }
+      )
+    }
+
+    return {
+      result: {
+        assigneeIds: [currentUserAccount.reviewerId as string],
+      },
+      publishAuditLog: () => false,
+      entities: [],
+    }
+  }
+
+  /**
+   * Creates escalated alert details with updated status and assignments
+   */
+  private createEscalatedAlertDetails(
+    escalatedAlerts: Alert[] | undefined,
+    alertEscalations: AlertEscalation[] | undefined,
+    c: Case,
+    currentUserId: string | undefined,
+    currentTimestamp: number,
+    isTransactionsEscalation: boolean,
+    isReviewRequired: boolean,
+    currentUserAccount: Account,
+    reviewAssignments: Assignment[],
+    caseEscalationRequest: CaseEscalationRequest,
+    isPNB: boolean
+  ): {
+    escalatedAlertsDetails: Alert[] | undefined
+    newAlertsTransactions: Array<{ alertId: string; transactionIds: string[] }>
+  } {
     const newAlertsTransactions: Array<{
       alertId: string
       transactionIds: string[]
@@ -637,7 +619,10 @@ export class AlertsService extends CaseAlertsCommonService {
           transactionIds = escalationAlertReq.transactionIds
           alertId = `${escalatedAlert.alertId}.${childNumber}`
           parentAlertId = escalatedAlert.alertId
-          newAlertsTransactions.push({ alertId, transactionIds })
+          newAlertsTransactions.push({
+            alertId,
+            transactionIds: transactionIds ?? [],
+          })
         }
 
         return {
@@ -672,53 +657,60 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     )
 
-    for (const value of newAlertsTransactions) {
-      await transactionsRepo.updateTransactionAlertIds(value.transactionIds, [
-        value.alertId,
-      ])
-    }
-    // child case id is the parent case id + the number of child cases
-    const childNumber = c.caseHierarchyDetails?.childCaseIds
-      ? c.caseHierarchyDetails.childCaseIds.length + 1
-      : 1
+    return { escalatedAlertsDetails, newAlertsTransactions }
+  }
 
-    const childCaseId = `${c.caseId}.${childNumber}`
-
-    // filter out transactions that were escalated from the case
-    const filteredTransactionsForNewCase = (
-      await transactionsRepo.getTransactionsByIds(c.caseTransactionsIds || [])
-    )?.filter((transaction) =>
-      transaction.hitRules.some((ruleInstance) =>
-        escalatedAlertsDetails
-          ?.map((eA) => eA.ruleInstanceId)
-          .includes(ruleInstance.ruleInstanceId)
-      )
+  /**
+   * Filters transactions for new and existing cases based on escalated alerts
+   */
+  private async filterTransactionsByCasePartition(
+    transactionsRepo: MongoDbTransactionRepository,
+    caseTransactionIds: string[],
+    escalatedAlertsDetails: Alert[] | undefined,
+    remainingAlerts: Alert[] | undefined
+  ): Promise<{
+    filteredTransactionIdsForNewCase: string[]
+    filteredTransactionIdsForExistingCase: string[]
+  }> {
+    const allTransactions = await transactionsRepo.getTransactionsByIds(
+      caseTransactionIds || []
     )
-
-    const filteredTransactionIdsForNewCase =
-      filteredTransactionsForNewCase?.map(
-        (transaction) => transaction.transactionId
-      )
+    // filter out transactions that were escalated from the case
+    const filteredTransactionsForNewCase = allTransactions?.filter(
+      (transaction) =>
+        transaction.hitRules.some((ruleInstance) =>
+          escalatedAlertsDetails
+            ?.map((eA) => eA.ruleInstanceId)
+            .includes(ruleInstance.ruleInstanceId)
+        )
+    )
 
     // filter out transactions that will be in existing case
-    const filteredTransactionsForExistingCase = (
-      await transactionsRepo.getTransactionsByIds(c.caseTransactionsIds || [])
-    ).filter((transaction) =>
-      transaction.hitRules.some((ruleInstance) =>
-        remainingAlerts
-          ?.map((rA) => rA.ruleInstanceId)
-          .includes(ruleInstance.ruleInstanceId)
-      )
+    const filteredTransactionsForExistingCase = allTransactions.filter(
+      (transaction) =>
+        transaction.hitRules.some((ruleInstance) =>
+          remainingAlerts
+            ?.map((rA) => rA.ruleInstanceId)
+            .includes(ruleInstance.ruleInstanceId)
+        )
     )
 
-    const filteredTransactionIdsForExistingCase =
-      filteredTransactionsForExistingCase?.map(
-        (transaction) => transaction.transactionId
-      )
+    return {
+      filteredTransactionIdsForNewCase:
+        filteredTransactionsForNewCase?.map((t) => t.transactionId) || [],
+      filteredTransactionIdsForExistingCase:
+        filteredTransactionsForExistingCase?.map((t) => t.transactionId) || [],
+    }
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { statusChanges, lastStatusChange, ...mainCaseAttributes } = c
-
+  /**
+   * Creates child case hierarchy details
+   */
+  private createCaseHierarchyDetails(
+    c: Case,
+    childCaseId: string,
+    alertEscalations: AlertEscalation[] | undefined
+  ): CaseHierarchyDetails {
     let childTransactionIds =
       alertEscalations?.flatMap((a) => a.transactionIds || []) || []
 
@@ -730,19 +722,45 @@ export class AlertsService extends CaseAlertsCommonService {
 
     childTransactionIds = uniq(childTransactionIds)
 
-    let caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails = {
+    const baseHierarchy: CaseHierarchyDetails = {
       childCaseIds: [childCaseId],
       childTransactionIds,
       parentCaseId: c.caseHierarchyDetails?.parentCaseId,
     }
 
     if (c.caseHierarchyDetails?.childCaseIds) {
-      caseHierarchyDetailsForOriginalCase = {
+      return {
         childCaseIds: [...c.caseHierarchyDetails.childCaseIds, childCaseId],
         childTransactionIds,
         parentCaseId: c.caseHierarchyDetails.parentCaseId,
       }
     }
+
+    return baseHierarchy
+  }
+
+  /**
+   * Creates the child case and updated parent case objects
+   */
+  private createChildAndParentCases(
+    c: Case,
+    childCaseId: string,
+    escalatedAlertsDetails: Alert[] | undefined,
+    remainingAlerts: Alert[] | undefined,
+    currentTimestamp: number,
+    isTransactionsEscalation: boolean,
+    isReviewRequired: boolean,
+    reviewAssignments: Assignment[],
+    filteredTransactionIdsForNewCase: string[],
+    filteredTransactionIdsForExistingCase: string[],
+    caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails,
+    caseEscalationRequest: CaseEscalationRequest,
+    escalatedAlerts: Alert[] | undefined,
+    caseId: string,
+    currentUserId: string | undefined
+  ): { newCase: Case; updatedExistingCase: Case } {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { statusChanges, lastStatusChange, ...mainCaseAttributes } = c
 
     const closeSourceCase =
       !isTransactionsEscalation &&
@@ -806,17 +824,25 @@ export class AlertsService extends CaseAlertsCommonService {
       updatedExistingCase.caseStatus = 'CLOSED'
     }
 
-    await this.caseRepository.addCaseMongo(omit(newCase, '_id'))
-    await this.caseRepository.addCaseMongo(updatedExistingCase)
+    return { newCase, updatedExistingCase }
+  }
 
-    await caseService.updateStatus([newCase.caseId ?? ''], {
-      ...caseUpdateRequest,
-      caseStatus: newCase.caseStatus,
-    })
-
-    const updatedTransactions =
-      alertEscalations?.flatMap((item) => item.transactionIds ?? []) ?? []
-
+  /**
+   * Creates audit log entities for escalation
+   */
+  private createEscalationAuditLog(
+    caseId: string,
+    childCaseId: string,
+    c: Case,
+    newCase: Case,
+    caseUpdateRequest: CaseStatusUpdate | undefined,
+    updatedTransactions: string[],
+    alertIds: string[],
+    reviewAssignments: Assignment[]
+  ): AuditLogEntity<
+    AlertUpdateAuditLogImage | CaseUpdateAuditLogImage,
+    AlertUpdateAuditLogImage | CaseUpdateAuditLogImage
+  >[] {
     const auditLogEntities: AuditLogEntity<
       AlertUpdateAuditLogImage | CaseUpdateAuditLogImage,
       AlertUpdateAuditLogImage | CaseUpdateAuditLogImage
@@ -872,6 +898,230 @@ export class AlertsService extends CaseAlertsCommonService {
         logMetadata: getAlertAuditLogMetadata(alertEntity),
       })
     }
+
+    return auditLogEntities
+  }
+
+  @auditLog('ALERT', 'STATUS_CHANGE', 'ESCALATE')
+  public async escalateAlerts(
+    caseId: string,
+    caseEscalationRequest: CaseEscalationRequest
+  ): Promise<AlertEscalationAuditLogReturnData> {
+    // Initialize services and context
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb,
+      this.dynamoDb
+    )
+    const accountsService = AccountsService.getInstance(this.dynamoDb, true)
+    const accounts = await accountsService.getAllActiveAccounts(this.tenantId)
+    const currentUserId = getContext()?.user?.id
+    const currentUserAccount = accounts.find((a) => a.id === currentUserId)
+    const isPNB = hasFeature('PNB')
+
+    if (!currentUserAccount) {
+      throw new Forbidden('User not found or deleted')
+    }
+
+    const isReviewRequired = !!currentUserAccount.reviewerId
+
+    const caseService = new CaseService(
+      this.caseRepository,
+      this.s3,
+      this.s3Config,
+      this.awsCredentials
+    )
+
+    // Fetch and validate case
+    const c = (await caseService.getCase(caseId)).result
+
+    if (!c) {
+      throw new NotFound(`Cannot find case ${caseId}`)
+    }
+
+    this.validateCaseForEscalation(c)
+
+    // Process escalation requests
+    let { alertEscalations } = caseEscalationRequest
+    const { caseUpdateRequest } = caseEscalationRequest
+
+    const alertIds = alertEscalations?.map((alert) => alert.alertId) || []
+    const isTransactionsEscalation = alertEscalations?.some(
+      (ae) => ae.transactionIds?.length ?? 0 > 0
+    )
+
+    alertEscalations = this.filterEscalationTransactions(alertEscalations, c)
+
+    const currentTimestamp = Date.now()
+    const { escalatedAlerts, remainingAlerts } = this.partitionAlerts(
+      c.alerts,
+      alertEscalations
+    )
+
+    // if there are no remaining alerts, then we are escalating the entire case
+    // except for PNB (quickfix for escalation bugs)
+    if (!isPNB && !remainingAlerts?.length && caseUpdateRequest) {
+      // TODO: issue is here, we are escalating the case but case is already escalated compared to the alert
+      //       we only want to escalate the only alert inside the case. we have to handle this differently
+      const response = await caseService.escalateCase(caseId, caseUpdateRequest)
+      return {
+        result: response.result,
+        publishAuditLog: () => false,
+        entities: [],
+      }
+    }
+
+    // Handle PNB-specific escalation (no child case creation)
+    if (isPNB && !remainingAlerts?.length && caseUpdateRequest) {
+      return this.handlePNBAlertEscalation(
+        alertIds,
+        escalatedAlerts || [],
+        caseEscalationRequest,
+        currentUserAccount,
+        currentUserId,
+        currentTimestamp,
+        accounts
+      )
+    }
+
+    // Handle review-required escalation (non-PNB)
+    if (
+      isReviewRequired &&
+      alertEscalations &&
+      !isStatusInReview(remainingAlerts?.[0]?.alertStatus) &&
+      !isTransactionsEscalation &&
+      !isPNB
+    ) {
+      return this.handleReviewRequiredEscalation(
+        alertIds,
+        caseId,
+        caseEscalationRequest,
+        caseService,
+        currentUserAccount
+      )
+    }
+
+    // Standard child case creation flow
+    // Get review assignments
+    // if the reuqest specifies the alerts to be escalated
+    // then we need to pick the first of the selected alerts
+    let firstAlert = c.alerts?.[0]
+    if (alertEscalations?.length) {
+      firstAlert = c.alerts?.filter((alert) =>
+        alertEscalations?.some(
+          (alertEscalation) => alertEscalation.alertId === alert.alertId
+        )
+      )?.[0]
+    }
+
+    const existingReviewAssignments =
+      statusEscalated(c.caseStatus) && !isStatusInReview(c.caseStatus)
+        ? firstAlert?.reviewAssignments ?? []
+        : []
+
+    const assignmentStatus = isPNB ? firstAlert?.alertStatus : c.caseStatus
+    const reviewAssignments = await this.getEscalationAssignments(
+      assignmentStatus as CaseStatus,
+      existingReviewAssignments,
+      accounts
+    )
+
+    // Create escalated alert details
+    const { escalatedAlertsDetails, newAlertsTransactions } =
+      this.createEscalatedAlertDetails(
+        escalatedAlerts,
+        alertEscalations,
+        c,
+        currentUserId,
+        currentTimestamp,
+        isTransactionsEscalation ?? false,
+        isReviewRequired,
+        currentUserAccount,
+        reviewAssignments,
+        caseEscalationRequest,
+        isPNB
+      )
+
+    // Update transaction alert IDs for new alerts
+    for (const value of newAlertsTransactions) {
+      await transactionsRepo.updateTransactionAlertIds(value.transactionIds, [
+        value.alertId,
+      ])
+    }
+
+    // Generate child case ID
+    const childNumber = c.caseHierarchyDetails?.childCaseIds
+      ? c.caseHierarchyDetails.childCaseIds.length + 1
+      : 1
+    const childCaseId = `${c.caseId}.${childNumber}`
+
+    // Filter transactions for child and parent cases
+    const {
+      filteredTransactionIdsForNewCase,
+      filteredTransactionIdsForExistingCase,
+    } = await this.filterTransactionsByCasePartition(
+      transactionsRepo,
+      c.caseTransactionsIds || [],
+      escalatedAlertsDetails,
+      remainingAlerts
+    )
+
+    // Create hierarchy details
+    const caseHierarchyDetailsForOriginalCase = this.createCaseHierarchyDetails(
+      c,
+      childCaseId,
+      alertEscalations
+    )
+
+    // Create new child case and update parent case
+    const { newCase, updatedExistingCase } = this.createChildAndParentCases(
+      c,
+      childCaseId,
+      escalatedAlertsDetails,
+      remainingAlerts,
+      currentTimestamp,
+      isTransactionsEscalation ?? false,
+      isReviewRequired,
+      reviewAssignments,
+      filteredTransactionIdsForNewCase,
+      filteredTransactionIdsForExistingCase,
+      caseHierarchyDetailsForOriginalCase,
+      caseEscalationRequest,
+      escalatedAlerts,
+      caseId,
+      currentUserId
+    )
+
+    // Delete alert data from parent case
+    await this.caseRepository.dynamoCaseRepository.deleteCaseAlertData(
+      caseId,
+      escalatedAlerts?.map((alert) => alert.alertId ?? '') ?? []
+    )
+
+    // Persist cases
+    await this.caseRepository.addCaseMongo(omit(newCase, '_id'))
+    await this.caseRepository.addCaseMongo(updatedExistingCase)
+
+    // Update child case status
+    await caseService.updateStatus([newCase.caseId ?? ''], {
+      ...caseUpdateRequest,
+      caseStatus: newCase.caseStatus,
+    })
+
+    // Create audit log
+    const updatedTransactions =
+      alertEscalations?.flatMap((item) => item.transactionIds ?? []) ?? []
+
+    const auditLogEntities = this.createEscalationAuditLog(
+      caseId,
+      childCaseId,
+      c,
+      newCase,
+      caseUpdateRequest,
+      updatedTransactions,
+      alertIds,
+      reviewAssignments
+    )
 
     const assigneeIds = reviewAssignments
       .map((v) => v.assigneeUserId)
@@ -1502,7 +1752,7 @@ export class AlertsService extends CaseAlertsCommonService {
         ...(statusUpdateRequest?.alertStatus === 'CLOSED' &&
         updateChecklistStatus &&
         hasFeature('QA')
-          ? [this.alertsRepository.markAllChecklistItemsAsDone(alertIds)]
+          ? [this.alertsRepository.markUnMarkedChecklistItemsDone(alertIds)]
           : []),
         ...(this.hasFeatureSla
           ? alerts.map((alert) => {

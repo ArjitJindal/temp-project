@@ -42,8 +42,9 @@ describe('Approval of payments', () => {
             cy.get('input[data-cy="row-table-checkbox"]').eq(i).click();
           }
 
-          cy.contains('Allow').click();
+          cy.get('[data-cy="table-footer"]').contains('Allow').click();
           cy.intercept('GET', '**/transactions**').as('bulk-approval-request');
+          cy.waitNothingLoading();
           allowTransaction();
 
           cy.get('[data-cy="status-button"]').click();
@@ -58,10 +59,11 @@ describe('Approval of payments', () => {
 });
 
 function allowTransaction() {
-  cy.selectOptionsByLabel('Reason', ['False positive']);
-  cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-  cy.get('[data-cy="comment-textbox"]').eq(0).type('This is a test');
-  cy.get('.ant-modal-footer button').eq(0).click();
+  cy.get('[role="dialog"]').within(() => {
+    cy.selectOptionsByLabel('Reason', ['False positive']);
+    cy.get('[data-cy="comment-textbox"]').eq(0).type('This is a test');
+    cy.get('[data-cy="modal-ok"]').eq(0).click();
+  });
   cy.wait('@approval-request', { timeout: 15000 })
     .its('response.statusCode')
     .should('be.oneOf', [200, 304]);

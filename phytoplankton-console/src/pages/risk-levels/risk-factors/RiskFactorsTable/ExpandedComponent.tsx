@@ -12,11 +12,10 @@ import { RiskFactorRow } from '@/pages/risk-levels/risk-factors/RiskFactorsTable
 import ApprovalHeader from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/ApprovalHeader';
 import SpecialAttributesChanges from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/SpecialAttributesChanges';
 
-type Props = {
+type BaseProps = {
   riskFactor: RiskFactorRow;
   mode: 'simulation' | 'normal' | 'version-history';
   jobId?: string;
-  activeIterationIndex: number;
   handleSimulationSave?: (riskFactors: RiskFactor[]) => void;
   selectedSection: ScopeSelectorValue;
   simulationRiskFactors?: RiskFactor[];
@@ -24,6 +23,20 @@ type Props = {
   isEditable: boolean;
   setEditableRiskFactor: (riskFactor: RiskFactor | null) => void;
 };
+
+type SimulationModeProps = BaseProps & {
+  activeIterationIndex: number;
+};
+
+type NormalModeProps = BaseProps & {
+  activeIterationIndex?: number;
+};
+
+type VersionHistoryModeProps = BaseProps & {
+  activeIterationIndex?: number;
+};
+
+type Props = SimulationModeProps | NormalModeProps | VersionHistoryModeProps;
 
 export const ExpandedComponent = (props: Props) => {
   const {

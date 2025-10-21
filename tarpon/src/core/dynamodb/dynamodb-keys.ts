@@ -66,6 +66,7 @@ export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
 export const AVG_ARS_KEY_IDENTIFIER = '#avg-ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
+export const DRS_LOCK_KEY_IDENTIFIER = '#drs-lock'
 export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
 export const SHARED_PARTITION_KEY_PREFIX = 'shared'
 export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
@@ -136,6 +137,22 @@ export const DynamoDbKeys = {
   SCREENING_PROFILE: (tenantId: string, screeningProfileId?: string) => ({
     PartitionKeyID: `${tenantId}#screening-profile`,
     SortKeyID: screeningProfileId,
+  }),
+  SANCTIONS_SEARCH_BATCH_JOB_STATUS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#sanctions-search-batch-job-status`,
+    SortKeyID: tenantId,
+  }),
+  SANCTIONS_WHITELIST_BATCH_JOB_STATUS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#sanctions-whitelist-batch-job-status`,
+    SortKeyID: tenantId,
+  }),
+  SANCTION_SEARCHES: (tenantId: string, id?: string) => ({
+    PartitionKeyID: `${tenantId}#sanction-searches`,
+    SortKeyID: id,
+  }),
+  SANCTIONS_WHITELIST_ENTITIES: (tenantId: string, id?: string) => ({
+    PartitionKeyID: `${tenantId}#sanctions-whitelist-entities`,
+    SortKeyID: id,
   }),
   CRM_RECORD: (tenantId: string, modelName: CRMModelType, id: string) => ({
     PartitionKeyID: `${tenantId}${CRM_RECORD_KEY_IDENTIFIER}#${CRM_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
@@ -613,6 +630,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${DRS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
+  DRS_LOCK_ITEM: (tenantId: string, userId: string, releaseAt: string) => ({
+    PartitionKeyID: `${tenantId}#${DRS_LOCK_KEY_IDENTIFIER}`,
+    SortKeyID: `${userId}#${releaseAt}`, // userId first for efficient user-specific queries
+  }),
   ARS_VALUE_ITEM: (
     tenantId: string,
     transactionId: string,
@@ -786,6 +807,10 @@ export const DynamoDbKeys = {
   CLICKHOUSE_SYNC_CHECKSUM: (tenantId: string) => ({
     PartitionKeyID: `${CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER}`,
     SortKeyID: tenantId,
+  }),
+  CLOUDWATCH_LOGS_SYNC_STATE: () => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#cloudwatch_logs_sync`,
+    SortKeyID: 'last_synced_timestamp',
   }),
 }
 

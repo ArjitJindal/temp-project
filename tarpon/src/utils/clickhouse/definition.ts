@@ -1143,6 +1143,138 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "deliveredAt UInt64 MATERIALIZED JSONExtractUInt(data, 'deliveredAt')",
     ],
   },
+  // Table 1: Raw CloudWatch logs (keep everything for debugging/auditing)
+  {
+    table: CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS.tableName,
+    idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.CloudwatchLogs],
+    timestampColumn: 'timestamp',
+    engine: 'MergeTree',
+    partitionBy: 'toYYYYMM(timestamp)',
+    primaryKey: '(logGroup, requestId, timestamp)',
+    orderBy: '(logGroup, requestId, timestamp)',
+    database: CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS.database,
+    columns: [
+      'timestamp DateTime64(3) CODEC(DoubleDelta, LZ4)',
+      'requestId String CODEC(ZSTD(1))',
+      'logGroup LowCardinality(String) CODEC(ZSTD(1))',
+      'logStream String CODEC(ZSTD(1))',
+      'message String CODEC(ZSTD(1))',
+      'logAttributes Map(LowCardinality(String), String) CODEC(ZSTD(1))',
+    ],
+    indexes: [
+      {
+        column: 'message',
+        name: 'idx_message',
+        type: 'tokenbf_v1',
+        options: {
+          granularity: 1,
+          bloomFilterSize: 32678,
+          numHashFunctions: 3,
+          randomSeed: 0,
+        },
+      },
+    ],
+    materializedViews: [
+      {
+        // MV1: Raw logs → Correlated table (merges REPORT + JSON logs by requestId)
+        viewName: 'cloudwatch_logs_correlated_mv',
+        table: CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS_CORRELATED.tableName,
+        columns: [
+          'requestId String',
+          'requestStartTimestamp DateTime64(3)',
+          'requestEndTimestamp DateTime64(3)',
+          'tenantId String',
+          'duration Float64',
+          'billedDuration UInt32',
+          'memorySize UInt32',
+          'maxMemoryUsed UInt32',
+          'initDuration Nullable(Float64)',
+          'logGroup LowCardinality(String)',
+          'logStream String',
+          'xrayTraceId String',
+          'httpMethod String',
+          'resource String',
+          'entityId String',
+        ],
+        engine: 'ReplacingMergeTree',
+        primaryKey: '(requestId)',
+        orderBy: '(requestId)',
+        partitionBy: 'toDate(requestStartTimestamp)',
+        query: `
+          SELECT
+            requestId,
+            min(timestamp) AS requestStartTimestamp,
+            max(timestamp) AS requestEndTimestamp,
+            anyIf(logAttributes['tenantId'], logAttributes['tenantId'] != '') AS tenantId,
+            max(toFloat64OrNull(logAttributes['duration'])) AS duration,
+            max(toUInt32OrNull(logAttributes['billedDuration'])) AS billedDuration,
+            max(toUInt32OrNull(logAttributes['memorySize'])) AS memorySize,
+            max(toUInt32OrNull(logAttributes['maxMemoryUsed'])) AS maxMemoryUsed,
+            max(toFloat64OrNull(logAttributes['initDuration'])) AS initDuration,
+            any(logGroup) AS logGroup,
+            any(logStream) AS logStream,
+            anyLastIf(logAttributes['xrayTraceId'], logAttributes['xrayTraceId'] != '') AS xrayTraceId,
+            anyIf(logAttributes['httpMethod'], logAttributes['httpMethod'] != '') AS httpMethod,
+            anyIf(logAttributes['resouce'], logAttributes['resouce'] != '') AS resource,
+            anyIf(logAttributes['entityId'], logAttributes['entityId'] != '') AS entityId
+          FROM ${CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS.tableName}
+          GROUP BY requestId
+        `,
+      },
+    ],
+  },
+  // Table 2: Correlated logs (ReplacingMergeTree merges REPORT + JSON by requestId)
+  // This table is exported to S3 Parquet for PostHog analytics
+  {
+    table: CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS_CORRELATED.tableName,
+    idColumn:
+      CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.CloudwatchLogsCorrelated],
+    timestampColumn: 'requestStartTimestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(requestId)',
+    orderBy: '(requestId)',
+    partitionBy: 'toDate(requestStartTimestamp)',
+    database: CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS.database,
+    columns: [
+      'requestId String CODEC(ZSTD(1))',
+      'requestStartTimestamp DateTime64(3) CODEC(DoubleDelta, LZ4)',
+      'requestEndTimestamp DateTime64(3) CODEC(DoubleDelta, LZ4)',
+      'tenantId String CODEC(ZSTD(1))',
+      'duration Float64 CODEC(ZSTD(1))',
+      'billedDuration UInt32 CODEC(ZSTD(1))',
+      'memorySize UInt32 CODEC(ZSTD(1))',
+      'maxMemoryUsed UInt32 CODEC(ZSTD(1))',
+      'initDuration Nullable(Float64) CODEC(ZSTD(1))',
+      'logGroup LowCardinality(String) CODEC(ZSTD(1))',
+      'logStream String CODEC(ZSTD(1))',
+      'xrayTraceId String CODEC(ZSTD(1))',
+      'httpMethod String CODEC(ZSTD(1))',
+      'resource String CODEC(ZSTD(1))',
+      'entityId String CODEC(ZSTD(1))',
+    ],
+    indexes: [
+      {
+        column: 'tenantId',
+        name: 'idx_tenantId',
+        type: 'set',
+        options: {
+          granularity: 4,
+          setSize: 1000,
+        },
+      },
+      {
+        column: 'entityId',
+        name: 'idx_entityId',
+        type: 'tokenbf_v1',
+        options: {
+          granularity: 1,
+          bloomFilterSize: 32678,
+          numHashFunctions: 3,
+          randomSeed: 0,
+        },
+      },
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']

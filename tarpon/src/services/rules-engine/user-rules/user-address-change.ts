@@ -25,7 +25,6 @@ export default class UserAddressChange extends UserRule<UserAddressChangeRulePar
     const user = this.user
     const userRepository = new UserRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
     })
 
     const isBusiness = isBusinessUser(user)

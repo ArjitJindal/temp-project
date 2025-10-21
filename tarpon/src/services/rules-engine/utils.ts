@@ -41,6 +41,7 @@ import {
 import { isDemoTenant } from '@/utils/tenant-id'
 import { sanitiseBucketedKey } from '@/core/dynamodb/key-utils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export function getSenderKeys(
   tenantId: string,
@@ -497,13 +498,13 @@ const sqs = getSQSClient()
 export async function sendTransactionAggregationTasks(
   messages: FifoSqsMessage[],
   dynamoDb: DynamoDBDocumentClient,
-  mongoDb: MongoClient
+  mongoDb?: MongoClient
 ) {
   if (envIs('local', 'test')) {
     const { handleTransactionAggregationTasks } = await import(
       '@/core/local-handlers/transaction-aggregation'
     )
-
+    mongoDb = mongoDb ?? (await getMongoDbClient())
     await handleTransactionAggregationTasks(messages, dynamoDb, mongoDb)
   } else {
     const finalMessages = [...messages]

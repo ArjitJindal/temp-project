@@ -22,6 +22,7 @@ import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType
 import { SanctionsDataProviderName } from '@/apis';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
+import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/LSEGSanctionsSearchType';
 
 export const SanctionsSettings = () => {
   const screeningPermissions = useHasResources([
@@ -31,6 +32,7 @@ export const SanctionsSettings = () => {
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAcurisEnabled = useFeatureEnabled('ACURIS');
   const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
+  const isLSEGEnabled = useFeatureEnabled('LSEG');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const isScreeningProfilesEnabled = isAcurisEnabled || isDowJonesEnabled;
   const branding = getBranding();
@@ -73,6 +75,11 @@ export const SanctionsSettings = () => {
   const [dowJonesScreeningTypes, setDowJonesScreeningTypes] =
     useState<SanctionsSettingsProviderScreeningTypes>(
       getSettings('dowjones', DOW_JONES_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
+    );
+
+  const [lsegScreeningTypes, setLsegScreeningTypes] =
+    useState<SanctionsSettingsProviderScreeningTypes>(
+      getSettings('lseg', LSEG_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
     );
 
   const handleTypesChange = (value: SanctionsSettingsProviderScreeningTypes) => {
@@ -128,6 +135,17 @@ export const SanctionsSettings = () => {
         screeningTypes={dowJonesScreeningTypes}
         searchTypes={DOW_JONES_SANCTIONS_SEARCH_TYPES}
         onScreeningTypesChange={setDowJonesScreeningTypes}
+        isLoading={updateTenantSettingsMutation.isLoading}
+        onSave={handleTypesChange}
+        isSanctionsEnabled={isSanctionsEnabled}
+        hasPermissions={screeningPermissions}
+      />
+      <SanctionsProviderSettings
+        title="LSEG"
+        hasFeature={isLSEGEnabled}
+        screeningTypes={lsegScreeningTypes}
+        searchTypes={LSEG_SANCTIONS_SEARCH_TYPES}
+        onScreeningTypesChange={setLsegScreeningTypes}
         isLoading={updateTenantSettingsMutation.isLoading}
         onSave={handleTypesChange}
         isSanctionsEnabled={isSanctionsEnabled}

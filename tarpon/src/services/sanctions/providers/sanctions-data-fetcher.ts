@@ -64,6 +64,7 @@ import { ModelTier } from '@/utils/llms/base-service'
 import { generateHashFromString } from '@/utils/object'
 import { getContext } from '@/core/utils/context-storage'
 import { formatAddress } from '@/utils/address-formatter'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const OPENSEARCH_NON_PROJECTED_FIELDS = [
   'rawResponse',
@@ -75,14 +76,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly searchRepository: SanctionsProviderSearchRepository
 
   protected readonly tenantId: string
-  protected readonly mongoDb: MongoClient
+  protected readonly mongoDb: MongoClient | undefined
   private readonly dynamoDb: DynamoDBDocumentClient
   private readonly opensearchClient?: Client
   constructor(
     provider: SanctionsDataProviderName,
     tenantId: string,
     connections: {
-      mongoDb: MongoClient
+      mongoDb?: MongoClient
       dynamoDb: DynamoDBDocumentClient
       opensearchClient?: Client
     }
@@ -93,6 +94,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
     this.opensearchClient = connections.opensearchClient
+  }
+
+  protected async getMongoDbClient() {
+    return this.mongoDb ?? (await getMongoDbClient())
   }
 
   abstract fullLoad(
@@ -351,6 +356,38 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchDocumentCondition)
       }
     }
+    if (request.countryOfResidence) {
+      andConditions.push({
+        $and: [
+          {
+            'addresses.country': {
+              $in: request.countryOfResidence,
+            },
+          },
+          {
+            'addresses.addressType': {
+              $eq: 'Residential',
+            },
+          },
+        ],
+      })
+    }
+    if (request.registrationId) {
+      andConditions.push({
+        $or: [
+          {
+            'documents.formattedId': {
+              $eq: request.registrationId,
+            },
+          },
+          {
+            'documents.id': {
+              $eq: request.registrationId,
+            },
+          },
+        ],
+      })
+    }
     if (!request.allowDocumentMatches && request.documentId?.length) {
       andConditions.push({
         $and: [
@@ -459,7 +496,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     if (request.gender) {
       const matchGenderCondition = {
         gender: {
-          $in: [request.gender, 'Unknown', null],
+          $in: [humanizeAuto(request.gender), 'Unknown', null],
         },
       }
       if (request.orFilters?.includes('gender')) {
@@ -500,12 +537,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     mediaSources?: 0
     sanctionsSources?: 0
     pepSources?: 0
+    otherSources?: 0
   } {
     const projection: {
       rawResponse: 0
       mediaSources?: 0
       sanctionsSources?: 0
       pepSources?: 0
+      otherSources?: 0
     } = {
       rawResponse: 0,
     }
@@ -515,6 +554,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       projection.mediaSources = 0
       projection.sanctionsSources = 0
       projection.pepSources = 0
+      projection.otherSources = 0
     }
 
     return projection
@@ -566,7 +606,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async searchWithMatchingNames(
     props: SanctionsSearchPropsWithRequest
   ): Promise<SanctionsProviderResponse> {
-    const db = this.mongoDb.db()
+    const db = (await this.getMongoDbClient()).db()
     const {
       request: requestOriginal,
       limit = 200,
@@ -654,9 +694,21 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.registrationId) {
       andFilters.push({
-        text: {
-          query: request.registrationId,
-          path: 'documents.id',
+        bool: {
+          should: [
+            {
+              text: {
+                query: request.registrationId,
+                path: 'documents.formattedId',
+              },
+            },
+            {
+              text: {
+                query: request.registrationId,
+                path: 'documents.id',
+              },
+            },
+          ],
         },
       })
     }
@@ -946,6 +998,18 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             path: 'gender',
           },
         },
+        {
+          equals: {
+            value: 'Unknown',
+            path: 'gender',
+          },
+        },
+        {
+          equals: {
+            value: null,
+            path: 'gender',
+          },
+        },
       ]
       if (request.orFilters?.includes('gender')) {
         orFilters.push(...genderMatch)
@@ -1114,7 +1178,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ),
       request
     )
-
     return this.searchRepository.saveSearch(filteredResults, requestOriginal)
   }
 
@@ -1375,7 +1438,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
   async getSanctionSourceDetailsInternal(request: SanctionsSearchRequest) {
     const screeningProfileService = new ScreeningProfileService(this.tenantId, {
-      mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
     return getSanctionSourceDetails(request, screeningProfileService)
@@ -1420,10 +1482,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       (request.manualSearch || !containAllSources) &&
       !aggregateScreeningProfileData
     ) {
-      const typesCondition = [
+      const typesCondition: QueryContainer[] = [
         { terms: { sanctionSearchTypes: request.types } },
         { terms: { 'associates.sanctionsSearchTypes': request.types } },
       ]
+
       mustConditions.push({
         bool: {
           should: typesCondition,
@@ -1450,7 +1513,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     if (request.gender) {
       const genderCondition = [
-        { terms: { gender: [request.gender, 'Unknown'] } },
+        { terms: { gender: [humanizeAuto(request.gender), 'Unknown'] } },
         { bool: { must_not: { exists: { field: 'gender' } } } },
       ]
       if (request.orFilters?.includes('gender')) {
@@ -1577,6 +1640,45 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
+    if (request.countryOfResidence) {
+      mustConditions.push({
+        bool: {
+          must: [
+            {
+              terms: {
+                'addresses.country': request.countryOfResidence,
+              },
+            },
+            {
+              term: {
+                'addresses.addressType': 'Residential',
+              },
+            },
+          ],
+        },
+      })
+    }
+
+    if (request.registrationId) {
+      mustConditions.push({
+        bool: {
+          should: [
+            {
+              term: {
+                'documents.formattedId': request.registrationId,
+              },
+            },
+            {
+              term: {
+                'documents.id': request.registrationId,
+              },
+            },
+          ],
+          minimum_should_match: 1,
+        },
+      })
+    }
+
     if (
       request.entityType &&
       request.entityType !== 'EXTERNAL_USER' &&
@@ -1669,6 +1771,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ? new Set(request.stopwords.map((word) => word.toLowerCase()))
       : undefined
     const hits = await this.getOpensearchQueryResults(props)
+
     const fuzzinessSettings = request?.fuzzinessSettings
     const filterResultsTime = Date.now()
     const filteredResults = this.filterResults(
@@ -1807,7 +1910,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       (request.fuzzinessRange?.upperBound === 100 ||
         (request.fuzziness ?? 0) * 100 === 100)
     ) {
-      result = await this.searchWithoutMatchingNames(request, this.mongoDb.db())
+      result = await this.searchWithoutMatchingNames(
+        request,
+        (await this.getMongoDbClient()).db()
+      )
     } else {
       result = await this.searchWithMatchingNames({
         request,

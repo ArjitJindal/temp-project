@@ -13,7 +13,11 @@ import { LegacyFilters } from '@/services/rules-engine/filters'
 export type RiskScoreDetails = TransactionRiskScoringResult & {
   components?: RiskScoreComponent[]
 }
-export type TimestampRange = { startTimestamp: number; endTimestamp: number }
+export type TimestampSlice = {
+  startTimestamp: number
+  endTimestamp: number
+  sliceNumber?: number
+}
 
 export type TransactionAggregationTask = {
   transactionId: string
@@ -46,7 +50,7 @@ export type V8LogicAggregationRebuildTask = {
   jobId: string
   aggregationVariable: LogicAggregationVariable
   currentTimestamp: number
-  timeWindow?: TimestampRange
+  timeWindow?: TimestampSlice
   totalSliceCount?: number
   userId?: string
   paymentDetails?: PaymentDetails

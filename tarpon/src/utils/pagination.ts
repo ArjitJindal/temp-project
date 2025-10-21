@@ -243,7 +243,7 @@ export async function offsetPaginateClickhouse<T>(
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
   const countWhere = countWhereClause === undefined ? where : countWhereClause
-  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
+  const countQuery = `SELECT count(*) as count FROM ${queryTableName} FINAL ${
     countWhere
       ? `WHERE ${countWhere} AND timestamp != 0`
       : 'WHERE timestamp != 0'
@@ -421,7 +421,7 @@ export async function offsetPaginateClickhouseWithoutDataTable(
       : `WHERE ${includeTimestampFilter ? 'timestamp != 0' : '1'}`
   } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
 
-  const countQuery = `SELECT uniqExact(id) as count FROM ${queryTableName} ${
+  const countQuery = `SELECT count(*) as count FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 

@@ -1,10 +1,7 @@
 import { RiskClassificationScore, RiskLevel } from '@/apis';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import Table from '@/components/library/Table';
-import {
-  columns,
-  ExternalState,
-} from '@/pages/risk-levels/configure/RiskClassificationTable/consts';
+import { makeColumns } from '@/pages/risk-levels/configure/RiskClassificationTable/consts';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export type State = number[];
@@ -73,13 +70,8 @@ const RiskClassificationTable = (props: Props) => {
     isActive: settings.riskLevelAlias?.find(({ level }) => level === key)?.isActive ?? true,
   })) as TableItem[];
 
-  const externalState: ExternalState = {
-    state,
-    setState,
-    isDisabled,
-    LEVEL_ENTRIES,
-  };
 
+  const columns = makeColumns({ state, setState, isDisabled ,LEVEL_ENTRIES });
   return (
     <Table<TableItem>
       rowKey="key"
@@ -89,7 +81,6 @@ const RiskClassificationTable = (props: Props) => {
       data={{ items: LEVEL_ENTRIES }}
       toolsOptions={false}
       showResultsInfo={false}
-      externalState={externalState}
     />
   );
 };

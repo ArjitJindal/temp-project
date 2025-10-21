@@ -297,11 +297,17 @@ export const allUsersViewHandler = lambdaApi()(
     // User Approval Routes
     handlers.registerPostUserApprovalProposal(async (ctx, request) => {
       const { proposedChanges, comment } = request.UserApprovalUpdateRequest
+
+      // Extract primary change (first) and additional changes (rest)
+      const [primaryChange, ...additionalChanges] = proposedChanges
+
+      // Use unified method - primary change determines workflow, additional changes are bundled
       const response = await userService.proposeUserFieldChange(
         request.userId,
-        proposedChanges[0],
+        primaryChange,
         comment,
-        userId
+        userId,
+        additionalChanges.length > 0 ? additionalChanges : undefined
       )
       return response.result
     })

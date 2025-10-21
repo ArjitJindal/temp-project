@@ -3565,7 +3565,13 @@ paths:
                 $ref: '#/components/schemas/TenantSettings'
         '401':
           description: Unauthorized
-    parameters: []
+    parameters:
+      - name: unmaskDowJonesPassword
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
     post:
       summary: Tenant - POST Settings
       operationId: post-tenants-settings
@@ -4434,13 +4440,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              title: ManualRiskAssignmentPayload
-              properties:
-                riskLevel:
-                  $ref: '#/components/schemas/RiskLevel'
-                isUpdatable:
-                  type: boolean
+              $ref: '#/components/schemas/ManualRiskAssignmentPayload'
         required: true
         description: ''
       responses:
@@ -6962,16 +6962,20 @@ paths:
       operationId: get-sanctions-sources
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/manual-screening
       parameters:
         - schema:
-            $ref: '#/components/schemas/SanctionsSourceType'
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
           in: query
           name: filterSourceType
         - schema:
             type: string
           in: query
           name: searchTerm
+        - schema:
+            $ref: '#/components/schemas/SanctionsDataProviderName'
+          in: query
+          name: provider
       responses:
         '200':
           description: OK
@@ -7173,7 +7177,7 @@ paths:
       tags: []
       x-flagright:
         resources:
-          - read:::sanctions/search
+          - read:::screening/manual-screening
       responses:
         '200':
           description: OK
@@ -8760,6 +8764,19 @@ components:
       required:
         - listId
         - items
+    ManualRiskAssignmentPayload:
+      title: ManualRiskAssignmentPayload
+      type: object
+      properties:
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        isUpdatable:
+          type: boolean
+        releaseAt:
+          type: number
+          description:
+            Timestamp (Unix epoch ms) when CRA lock should expire (only used
+            when isUpdatable is false)
     DynamoDbClickhouseBackfillBatchJobEntity:
       title: DynamoDbClickhouseBackfillBatchJobEntity
       type: string
@@ -9235,6 +9252,12 @@ components:
           type: number
         updateCount:
           type: number
+        lockedAt:
+          type: number
+          description: Timestamp when CRA was locked
+        lockExpiresAt:
+          type: number
+          description: Timestamp when CRA lock will automatically expire
       required:
         - createdAt
         - drsScore
@@ -10696,6 +10719,9 @@ components:
             type: string
         paymentApprovalTimestamp:
           type: number
+        reason:
+          type: string
+          description: The last reason chosen for payment approval or block action
       required:
         - transactionId
         - timestamp
@@ -11994,6 +12020,14 @@ components:
             - DAILY
             - WEEKLY
             - MONTHLY
+        craLockTimerHours:
+          type: number
+          minimum: 1
+          maximum: 8760
+          description:
+            Default duration in hours for CRA locks. Used as the default value
+            when users lock CRAs. When undefined/omitted, no default is provided
+            and users must specify duration.
         narrativeMode:
           $ref: '#/components/schemas/NarrativeMode'
         allowManualNarrativeModeUpdates:
@@ -12037,6 +12071,8 @@ components:
           $ref: '#/components/schemas/LLMProvider'
         workflowSettings:
           $ref: '#/components/schemas/WorkflowSettings'
+        showAllDecimalPlaces:
+          type: boolean
     LLMProvider:
       type: string
       enum:
@@ -13075,7 +13111,6 @@ components:
       type: string
       title: Feature
       enum:
-        - ALERT_DETAILS_PAGE
         - RISK_LEVELS
         - RISK_SCORING
         - SLACK_ALERTS
@@ -13110,6 +13145,7 @@ components:
         - MANUAL_PRE_AGGREGATION
         - MANUAL_DASHBOARD_REFRESH
         - ACURIS
+        - LSEG
         - 314A
         - CLICKHOUSE_MIGRATION
         - CHAINALYSIS
@@ -13121,6 +13157,7 @@ components:
         - USER_CHANGES_APPROVAL
         - DISABLE_GLOBAL_AGGREGATIONS
         - EDD_REPORT
+        - CRA_LOCK_TIMER
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
@@ -14482,6 +14519,17 @@ components:
         - list
         - open-sanctions
         - acuris
+        - lseg
+    SanctionsDataProviderScreeningInfo:
+      title: SanctionsDataProviderScreeningInfo
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
@@ -14979,6 +15027,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AdverseMediaRelevanceInternal'
+        crime:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                type: string
         screeningProfileStatus:
           type: string
           enum:
@@ -14986,6 +15041,8 @@ components:
             - DISABLED
         containAllSources:
           type: boolean
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
       required:
         - screeningProfileName
     ScreeningProfileResponse:
@@ -15040,6 +15097,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AdverseMediaSourceRelevance'
+        crime:
+          type: object
+          properties:
+            relevance:
+              type: array
+              items:
+                type: string
         createdAt:
           type: number
         updatedAt:
@@ -15052,6 +15116,8 @@ components:
           $ref: '#/components/schemas/StatusEnum'
         containAllSources:
           type: boolean
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
       required:
         - screeningProfileId
         - screeningProfileName
@@ -15076,10 +15142,8 @@ components:
       properties:
         id:
           type: string
-        sourceName:
-          type: string
         sourceType:
-          $ref: '#/components/schemas/SanctionsSourceType'
+          $ref: '#/components/schemas/GenericSanctionsSearchType'
         sourceCountry:
           type: string
         displayName:
@@ -15090,12 +15154,16 @@ components:
       title: SanctionsSourceListResponse
       type: object
       properties:
-        items:
+        relevance:
+          type: array
+          items:
+            type: string
+        sources:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsSourceResponse'
       required:
-        - items
+        - sources
     PepRank:
       title: PepRank
       type: string
@@ -15103,14 +15171,6 @@ components:
         - LEVEL_1
         - LEVEL_2
         - LEVEL_3
-    SanctionsSourceType:
-      title: SanctionsSourceType
-      type: string
-      enum:
-        - SANCTIONS
-        - PEP
-        - ADVERSE_MEDIA
-        - REGULATORY_ENFORCEMENT_LIST
     StatusEnum:
       title: StatusEnum
       type: string
@@ -15128,6 +15188,14 @@ components:
         - CRIME
     AcurisSanctionsSearchType:
       title: AcurisSanctionsSearchType
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
+        - REGULATORY_ENFORCEMENT_LIST
+    LSEGSanctionsSearchType:
+      title: LSEGSanctionsSearchType
       type: string
       enum:
         - SANCTIONS
@@ -15160,6 +15228,13 @@ components:
       enum:
         - POI
         - PEP
+    OpenSanctionsPEPSourceRelevance:
+      title: OpenSanctionsPEPSourceRelevance
+      type: string
+      enum:
+        - PEP
+        - PEP_BY_ASSOCIATION
+        - POI
     RELSourceRelevance:
       title: RELSourceRelevance
       type: string
@@ -15606,6 +15681,8 @@ components:
       title: SanctionsAssociate
       type: object
       properties:
+        id:
+          type: string
         name:
           type: string
         association:
@@ -15676,7 +15753,7 @@ components:
           items:
             type: string
         sourceType:
-          $ref: '#/components/schemas/SanctionsSourceType'
+          $ref: '#/components/schemas/GenericSanctionsSearchType'
         entityType:
           type: string
         refId:
@@ -18466,6 +18543,13 @@ components:
       type: object
       properties:
         dowjonesCreds:
+          type: object
+          properties:
+            username:
+              type: string
+            password:
+              type: string
+        lsegCreds:
           type: object
           properties:
             username:

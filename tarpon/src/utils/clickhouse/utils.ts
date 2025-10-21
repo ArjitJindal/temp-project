@@ -1,13 +1,13 @@
 import { ClickHouseClient, ResponseJSON } from '@clickhouse/client'
-import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { JsonMigrationService } from 'thunder-schema'
 import get from 'lodash/get'
 import maxBy from 'lodash/maxBy'
 import memoize from 'lodash/memoize'
 import map from 'lodash/map'
 import groupBy from 'lodash/groupBy'
+import { bulkSendMessages, getSQSClient } from '../sns-sqs-client'
 import { envIs } from '../env'
-import { bulkSendMessages } from '../sns-sqs-client'
 import { generateColumnsFromModel } from './model-schema-parser'
 import {
   getClickhouseClient,
@@ -72,6 +72,8 @@ const getAllColumns = (table: ClickhouseTableDefinition) => {
         error
       )
     }
+  } else if (table.columns) {
+    return table.columns
   }
   return [
     'id String',
@@ -471,7 +473,7 @@ export function getSortedData<T>({
   return sortedItems
 }
 
-const sqs = new SQS({ region: process.env.AWS_REGION })
+const sqs = getSQSClient()
 
 export const sendMessageToMongoConsumer = async (
   message: MongoConsumerMessage
@@ -666,11 +668,11 @@ function getIndexDefinition(
     case 'inverted':
       return `(${columnName}) TYPE ${options.type}(${options.config.granularity})`
     case 'bloom_filter':
-      return `(${columnName}) TYPE bloom_filter(${options.config.granularity})`
+      return `(${columnName}) TYPE bloom_filter(${options.config.bloomFilterIndex}) GRANULARITY ${options.config.granularity})`
     case 'minmax':
       return `(${columnName}) TYPE minmax GRANULARITY ${options.config.granularity}`
     case 'set':
-      return `(${columnName}) TYPE set(${options.config.granularity})`
+      return `(${columnName}) TYPE set(${options.config.setSize}) GRANULARITY ${options.config.granularity}`
     case 'tokenbf_v1':
       return `(${columnName}) TYPE tokenbf_v1(${options.config.bloomFilterSize}, ${options.config.numHashFunctions}, ${options.config.randomSeed}) GRANULARITY ${options.config.granularity}`
     default:

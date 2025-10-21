@@ -35,6 +35,7 @@ interface Props<Item extends object, Params extends object = CommonParams> {
   totalPages?: number;
   leftTools?: React.ReactNode;
   readOnlyFilters?: boolean;
+  topTools?: React.ReactNode;
 }
 
 export default function Header<Item extends object, Params extends object = CommonParams>({
@@ -54,6 +55,7 @@ export default function Header<Item extends object, Params extends object = Comm
   totalPages,
   leftTools,
   readOnlyFilters = false,
+  topTools,
 }: Props<Item, Params>) {
   const autoFilters = useAutoFilters(columns);
   const allFilters = useMemo(() => [...autoFilters, ...extraFilters], [autoFilters, extraFilters]);
@@ -78,6 +80,7 @@ export default function Header<Item extends object, Params extends object = Comm
         hasFilters && s.filtersVisible,
       )}
     >
+      {topTools && <div>{topTools}</div>}
       {(hasFilters || hasTools || leftTools) && (
         <div className={s.root}>
           {hasFilters ? (

@@ -284,7 +284,7 @@ export function useTransactionStateLabel(
 
 export function useUpdateTenantSettings(successMessage?: string) {
   const api = useApi();
-  const reloadSettings = useReloadSettings();
+  // const reloadSettings = useReloadSettings();
   return useMutation<unknown, unknown, TenantSettings>(
     async (partialTenantSettings) => {
       await api.postTenantsSettings({
@@ -295,6 +295,28 @@ export function useUpdateTenantSettings(successMessage?: string) {
       retry: false,
       onSuccess: () => {
         message.success(successMessage || 'Settings saved successfully');
+        // reloadSettings();
+      },
+      onError: (e) => {
+        message.fatal('Failed to save settings', e);
+      },
+    },
+  );
+}
+
+export function useReloadTenantSettings(successMessage?: string) {
+  const api = useApi();
+  const reloadSettings = useReloadSettings();
+  return useMutation<unknown, unknown, TenantSettings>(
+    async (partialTenantSettings) => {
+      await api.postTenantsSettings({
+        TenantSettings: partialTenantSettings,
+      });
+    },
+    {
+      retry: false,
+      onSuccess: () => {
+        message.success(successMessage || 'Settings updated successfully');
         reloadSettings();
       },
       onError: (e) => {

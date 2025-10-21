@@ -5,7 +5,8 @@ import { RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
 import Slider from '@/components/library/Slider';
 import { State, TableItem } from '@/pages/risk-levels/configure/RiskClassificationTable/index';
 
-export interface ExternalState {
+const helper = new ColumnHelper<TableItem>();
+export function makeColumns(options: {
   state: State | null;
   setState?: React.Dispatch<React.SetStateAction<State | null>>;
   isDisabled: boolean;

@@ -171,7 +171,7 @@ export function getExecutedAndHitRulesResult(
 export class RulesEngineService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
-  mongoDb: MongoClient
+  mongoDb?: MongoClient
   transactionRepository: DynamoDbTransactionRepository
   transactionEventRepository: TransactionEventRepository
   ruleRepository: RuleRepository
@@ -189,7 +189,7 @@ export class RulesEngineService {
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
     logicEvaluator: LogicEvaluator,
-    mongoDb: MongoClient,
+    mongoDb?: MongoClient,
     opensearchClient?: Client
   ) {
     // this need to be changed
@@ -534,6 +534,10 @@ export class RulesEngineService {
 
     saveTransactionSegment?.close()
 
+    const aggregationSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Send Transaction Aggregation Tasks'
+    )
     try {
       await Promise.all([
         sendTransactionAggregationTasks(
@@ -562,6 +566,7 @@ export class RulesEngineService {
             },
           ]),
       ])
+      aggregationSegment?.close()
     } catch (e) {
       logger.error(e)
     }
@@ -1455,14 +1460,15 @@ export class RulesEngineService {
       if (shouldRunRule && tracing) {
         runSegment = await addNewSubsegment(segmentNamespace, 'Rule Execution')
       }
-      const ruleComputeResult = await ruleClassInstance.computeRule()
-      const result =
-        shouldRunRule && ruleComputeResult
-          ? ruleComputeResult
-          : {
-              ruleHitResult: undefined,
-              ruleExecutionResult: undefined,
-            }
+      const ruleComputeResult = shouldRunRule
+        ? await ruleClassInstance.computeRule()
+        : undefined
+      const result = ruleComputeResult
+        ? ruleComputeResult
+        : {
+            ruleHitResult: undefined,
+            ruleExecutionResult: undefined,
+          }
       ruleResult = result.ruleHitResult
       ruleExecutionResult = result.ruleExecutionResult
       runSegment?.close()

@@ -37,7 +37,7 @@ export const exportDataForBarGraphs = (
   xField: string,
   yField?: string,
   seriesLabel?: string,
-  sortBy: string[] = ['value'],
+  sortBy: string[] = ['time'],
   sortDir: ('desc' | 'asc')[] = ['desc'],
 ): string => {
   const parsedData = orderBy(data, sortBy, sortDir).map((dataItem) => {

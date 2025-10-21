@@ -136,16 +136,14 @@ async function sendWebhookTasksToWebhooks<T extends object = object>(
           )
         )
       )
-
-      return
+    } else {
+      const deduplicatedEntries = uniqBy(entries, 'Id')
+      await bulkSendMessages(
+        sqs,
+        process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
+        deduplicatedEntries
+      )
     }
-    const deduplicatedEntries = uniqBy(entries, 'Id')
-    await bulkSendMessages(
-      sqs,
-      process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
-      deduplicatedEntries
-    )
-
     if (entries.length > 0) {
       logger.info(`${entries.length} webhooks sent`)
     }

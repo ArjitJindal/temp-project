@@ -3,7 +3,7 @@ import { Client } from '@opensearch-project/opensearch'
 import {
   RELATIONSHIP_CODE_TO_NAME,
   LEVEL_TIER_MAP,
-} from '../dow-jones-constants'
+} from '../constants/dow-jones-constants'
 import { normalizeSource } from '../utils'
 import {
   Action,
@@ -17,8 +17,8 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 import { hasFeature } from '@/core/utils/context'
 import { bulkUpdate } from '@/utils/opensearch-utils'
-import { DowJonesSanctionsSearchType } from '@/@types/openapi-internal/DowJonesSanctionsSearchType'
 import { generateHashFromString } from '@/utils/object'
+import { GenericSanctionsSearchType } from '@/@types/openapi-internal/GenericSanctionsSearchType'
 export class MongoSanctionsRepository implements SanctionsRepository {
   collectionName: string
   opensearchClient?: Client
@@ -138,7 +138,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
         id: string
         name: string
         occupations: SanctionsOccupation[]
-        sanctionSearchTypes: DowJonesSanctionsSearchType[]
+        sanctionSearchTypes: GenericSanctionsSearchType[]
       }>([
         { $match: { id: { $in: assocationIds }, provider, version } },
         {

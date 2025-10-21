@@ -51,7 +51,7 @@ function ValueTag(props: {
 
   return (
     <Tooltip title={tooltipText} placement="top">
-      <Tag color={props.color} trimText={false} wrapText={false}>
+      <Tag color={props.color} trimText={false} disableWrapText={false}>
         {children}
       </Tag>
     </Tooltip>

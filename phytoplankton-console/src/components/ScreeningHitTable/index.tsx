@@ -12,6 +12,7 @@ import {
   useSettings,
 } from '../AppWrapper/Providers/SettingsProvider';
 import ScreeningHitDetailsDrawer from './ScreeningHitDetailsDrawer';
+import { sanitizeFuzziness } from './utils';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
@@ -33,6 +34,7 @@ import Id from '@/components/ui/Id';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
+import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/LSEGSanctionsSearchType';
 import { useQuery } from '@/utils/queries/hooks';
 import {
   DEFAULT_MANUAL_SCREENING_FILTERS,
@@ -43,6 +45,7 @@ import { useApi } from '@/api';
 import { getOr, match } from '@/utils/asyncResource';
 import { useHasResources } from '@/utils/user-utils';
 import { getErrorMessage } from '@/utils/lang';
+
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
   searchTerm?: string;
@@ -69,6 +72,7 @@ interface Props {
   searchedAt?: number;
   selectionActions?: SelectionAction<SanctionsEntity, TableSearchParams>[];
   readOnly?: boolean;
+  topTools?: React.ReactNode;
 }
 
 export const ENTITY_TYPE_OPTIONS = [
@@ -90,6 +94,7 @@ export default function SanctionsSearchTable(props: Props) {
     selectedIds,
     onSelect,
     readOnly = false,
+    topTools,
   } = props;
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
@@ -97,12 +102,13 @@ export default function SanctionsSearchTable(props: Props) {
   const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
   const canEditManualScreeningFilters = useHasResources([
-    'write:::screening/manual-screening-filters/*',
+    'write:::screening/manual-screening/manual-screening-filters/*',
   ]);
 
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
+  const hasFeatureLSEG = useFeatureEnabled('LSEG');
   const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
 
   const searchProfileResult = useQuery(
@@ -256,12 +262,25 @@ export default function SanctionsSearchTable(props: Props) {
     );
   }, [settings, hasFeatureDowJones]);
 
-  const options = uniq([...openSanctionsOptions, ...acurisOptions, ...dowJonesOptions]).map(
-    (option) => ({
-      label: humanizeAuto(option),
-      value: option,
-    }),
-  );
+  const lsegOptions = useMemo(() => {
+    if (!hasFeatureLSEG) {
+      return [];
+    }
+    return (
+      settings?.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'lseg')
+        ?.screeningTypes ?? LSEG_SANCTIONS_SEARCH_TYPES
+    );
+  }, [settings, hasFeatureLSEG]);
+
+  const options = uniq([
+    ...openSanctionsOptions,
+    ...acurisOptions,
+    ...dowJonesOptions,
+    ...lsegOptions,
+  ]).map((option) => ({
+    label: humanizeAuto(option),
+    value: option,
+  }));
 
   const searchProfiles = getOr(searchProfileResult.data, { items: [], total: 0 }).items;
   const selectedProfile = searchProfiles.find(
@@ -285,7 +304,7 @@ export default function SanctionsSearchTable(props: Props) {
       const searchParams = updatedParams as any;
       let hasChanges = false;
       if (selectedProfile.fuzziness !== undefined) {
-        searchParams.fuzziness = selectedProfile.fuzziness;
+        searchParams.fuzziness = sanitizeFuzziness(selectedProfile.fuzziness, 'hundred');
         hasChanges = true;
       }
       if (selectedProfile.types && selectedProfile.types.length > 0) {
@@ -314,58 +333,51 @@ export default function SanctionsSearchTable(props: Props) {
     : [];
 
   const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
-    {
-      title: 'Search term',
-      key: 'searchTerm',
-      renderer: {
-        kind: 'string',
-      },
-    },
-    {
-      title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
-      key: 'yearOfBirth',
-      renderer: {
-        kind: 'year',
-      },
-      showFilterByDefault: params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',
-    },
-    {
-      title: 'Gender',
-      key: 'gender',
-      description: 'Select gender (only for Person)',
-      renderer: {
-        kind: 'select',
-        options: [
-          { value: 'MALE', label: 'Male' },
-          { value: 'FEMALE', label: 'Female' },
-          { value: 'UNKNOWN', label: 'Unknown' },
-        ],
-        mode: 'SINGLE',
-        displayMode: 'select',
-      },
-      showFilterByDefault: true,
-    },
+    ...(params?.entityType === 'PERSON' || !params?.entityType
+      ? [
+          {
+            title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
+            key: 'yearOfBirth',
+            renderer: {
+              kind: 'year',
+            },
+            showFilterByDefault:
+              params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',
+          } as ExtraFilterProps<TableSearchParams>,
+          {
+            title: 'Gender',
+            key: 'gender',
+            description: 'Select gender',
+            renderer: {
+              kind: 'select',
+              options: [
+                { value: 'MALE', label: 'Male' },
+                { value: 'FEMALE', label: 'Female' },
+                { value: 'UNKNOWN', label: 'Unknown' },
+              ],
+              mode: 'SINGLE',
+              displayMode: 'select',
+            },
+            showFilterByDefault: true,
+          } as ExtraFilterProps<TableSearchParams>,
+        ]
+      : []),
     {
       title: 'Fuzziness',
-      description: '(The default value is 0.5)',
+      description: '(The default value is 20%)',
       key: 'fuzziness',
+
       renderer: {
         kind: 'number',
+        displayFunction: (value) => {
+          return `${value}%`;
+        },
         displayAs: 'slider',
         min: 0,
-        max: 1,
-        step: 0.1,
-        defaultValue: 0.5,
-      },
-    },
-    {
-      title: 'User type',
-      key: 'entityType',
-      renderer: {
-        kind: 'select',
-        options: ENTITY_TYPE_OPTIONS,
-        mode: 'SINGLE',
-        displayMode: 'select',
+        max: 100,
+        allowClear: false,
+        step: 1,
+        defaultValue: 20,
       },
     },
   ];
@@ -432,7 +444,7 @@ export default function SanctionsSearchTable(props: Props) {
     });
 
     // Add Country of residence filter only for Acuris provider
-    if (hasFeatureAcuris) {
+    if (hasFeatureAcuris && params?.entityType === 'PERSON') {
       extraFilters.push({
         title: 'Country of residence',
         key: 'countryOfResidence',
@@ -544,6 +556,20 @@ export default function SanctionsSearchTable(props: Props) {
     renderer.filterKey = filter.key;
   });
 
+  extraFilters.unshift({
+    title: 'User type',
+    key: 'entityType',
+    pinFilterToLeft: true,
+    showFilterByDefault: true,
+    renderer: {
+      kind: 'select',
+      options: ENTITY_TYPE_OPTIONS,
+      mode: 'SINGLE',
+      displayMode: 'select',
+      allowClear: false,
+    },
+  });
+
   return (
     <>
       <QueryResultsTable<SanctionsEntity, TableSearchParams>
@@ -570,6 +596,7 @@ export default function SanctionsSearchTable(props: Props) {
         toolsOptions={{
           reload: false,
         }}
+        topTools={topTools}
         fitHeight
         cursor={queryResult.cursor}
         readOnlyFilters={readOnly}

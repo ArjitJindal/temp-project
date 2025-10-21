@@ -425,4 +425,16 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME]: {
+    codePath: 'cloudwatch-logs-ingestion',
+    handlerName: 'cloudwatchLogsIngestionHandler',
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
+  [StackConstants.CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME]: {
+    codePath: 'cloudwatch-logs-s3-exporter',
+    handlerName: 'cloudwatchLogsS3ExporterHandler',
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
 }

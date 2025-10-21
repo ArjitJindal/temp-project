@@ -27,6 +27,7 @@ import SlaPolicySettings from './components/SlaPolicySettings';
 import { SecuritySettings } from './components/SecuritySettings';
 import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
 import CraToggleSettings from './components/CraToggleSettings';
+import CraLockTimerSettings from './components/CraLockTimerSettings';
 import { PepStatusConfigSettings } from './components/PepStatusConfigSettings';
 import TagSettings from './components/TagSettings';
 import ReRunTriggerSettings from './components/ReRunTriggerSettings';
@@ -49,6 +50,7 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { getOr } from '@/utils/asyncResource';
 import { Authorized } from '@/components/utils/Authorized';
 import { UserUpdateApprovalSettings } from '@/pages/settings/components/UserUpdateApprovalSettings';
+import { DecimalSettings } from '@/pages/settings/components/DecimalSettings';
 
 export default function SettingsPage() {
   const { section = 'system' } = useParams<'section'>() as {
@@ -123,6 +125,7 @@ export default function SettingsPage() {
               <>
                 <PaymentApprovalSettings />
                 <TransactionStateSettings />
+                <DecimalSettings />
               </>
             ),
           },
@@ -160,6 +163,9 @@ export default function SettingsPage() {
                 </Feature>
                 <Feature name="RISK_SCORING">
                   <CraToggleSettings />
+                  <Feature name={'CRA_LOCK_TIMER'}>
+                    <CraLockTimerSettings />
+                  </Feature>
                   <RiskAlgorithmsCra />
                   <ReRunTriggerSettings />
                   <BatchRerunRiskScoringSettings />

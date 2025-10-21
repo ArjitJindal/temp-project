@@ -180,7 +180,8 @@ export class RiskService {
   async createOrUpdateRiskAssignment(
     userId: string,
     riskLevel: RiskLevel | undefined,
-    isUpdatable?: boolean
+    isUpdatable?: boolean,
+    releaseAt?: number
   ): Promise<DrsRiskItemAuditLogReturnData> {
     if (!riskLevel) {
       throw new BadRequest('Invalid request - please provide riskLevel')
@@ -191,7 +192,8 @@ export class RiskService {
       await this.riskRepository.createOrUpdateManualDRSRiskItem(
         userId,
         riskLevel,
-        isUpdatable
+        isUpdatable,
+        releaseAt
       )
     const logMetadata = {
       userId: newDrsRiskItem?.userId,
@@ -216,7 +218,8 @@ export class RiskService {
   @auditLog('RISK_SCORING', 'DRS_RISK_LEVEL', 'UPDATE')
   async updateRiskAssignmentLock(
     userId: string,
-    isUpdatable: boolean
+    isUpdatable: boolean,
+    releaseAt?: number
   ): Promise<DrsRiskItemAuditLogReturnData> {
     console.log(
       `updateRiskAssignmentLock called for user ${userId} with isUpdatable=${isUpdatable}`
@@ -241,7 +244,8 @@ export class RiskService {
     // Update only the isUpdatable field atomically
     const newDrsRiskItem = await this.riskRepository.updateRiskAssignmentLock(
       userId,
-      isUpdatable
+      isUpdatable,
+      releaseAt
     )
 
     console.log(`Updated risk item:`, {
@@ -1503,6 +1507,10 @@ export class RiskService {
   async workflowGetPendingRiskFactorProposals(): Promise<RiskFactorApproval[]> {
     const pendingApprovals = await this.riskRepository.getPendingRiskFactors()
     return pendingApprovals
+  }
+
+  async unlockExpiredCraLocks(): Promise<string[]> {
+    return await this.riskRepository.unlockExpiredCraLocks()
   }
 }
 

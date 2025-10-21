@@ -36,11 +36,18 @@ export interface TenantSyncAnalysis {
 export class ClickHouseChecksum {
   private readonly CLICKHOUSE_SYNC_VERSION = '1.0.0'
 
-  generateClickHouseTableChecksums(): ClickHouseTableChecksum[] {
+  generateClickHouseTableChecksums(
+    tenantId: string
+  ): ClickHouseTableChecksum[] {
     const checksums: ClickHouseTableChecksum[] = []
     const timestamp = Date.now()
 
     for (const table of ClickHouseTables) {
+      const database =
+        table.database ?? (tenantId === 'default' ? '' : tenantId)
+      if (database !== tenantId) {
+        continue
+      }
       const tableDefinition = {
         table: table.table,
         idColumn: table.idColumn,
@@ -106,7 +113,7 @@ export class ClickHouseChecksum {
     tenantId: string,
     storedChecksums: ClickHouseSyncChecksum | null
   ): Promise<TenantSyncAnalysis> {
-    const currentChecksums = this.generateClickHouseTableChecksums()
+    const currentChecksums = this.generateClickHouseTableChecksums(tenantId)
     const databaseTablesQuery = `SHOW FULL TABLES FROM ${getClickhouseDbName(
       tenantId
     )}`
@@ -261,11 +268,12 @@ export class ClickHouseChecksum {
   }
 
   updateTableChecksums(
+    tenantId: string,
     storedChecksums: ClickHouseSyncChecksum | null,
     tableChecksums: ClickHouseTableChecksum[]
   ): ClickHouseTableChecksum[] {
     if (!storedChecksums) {
-      return this.generateClickHouseTableChecksums()
+      return this.generateClickHouseTableChecksums(tenantId)
     }
 
     const existingChecksumsMap = new Map(

@@ -8,6 +8,7 @@ import {
 import Tabs from '@/components/library/Tabs';
 import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM } from '@/utils/queries/keys';
+import { isScreeningAlert } from '@/utils/api/alerts';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
@@ -48,11 +49,14 @@ function ExpandedRowRenderer(props: Props) {
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
   });
+
+  const defaultActiveKey = isScreeningAlert(alert) ? AlertTabs.MATCH_LIST : AlertTabs.TRANSACTIONS;
+
   return (
     <Tabs
       items={tabItems.filter(({ key }) => !TABS_TO_HIDE_IN_TABLE.some((x) => x === key))}
       type="line"
-      defaultActiveKey={AlertTabs.TRANSACTIONS}
+      defaultActiveKey={defaultActiveKey}
     />
   );
 }

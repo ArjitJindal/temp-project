@@ -639,6 +639,9 @@ export class MongoDbTransactionRepository
       })
     }
 
+    // Note: filterActionReasons is handled at a higher level in MongoDB
+    // due to the need for a separate query to transaction_events collection
+
     if (conditions.length === 0) {
       return {}
     }
@@ -730,6 +733,12 @@ export class MongoDbTransactionRepository
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
+    const uiToMongoSortField: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+    }
+    const effectiveSortField = uiToMongoSortField[sortField] ?? sortField
+
     const pipeline: Document[] = [{ $match: query }]
 
     if (sortField === 'ruleHitCount') {
@@ -742,7 +751,7 @@ export class MongoDbTransactionRepository
         { $sort: { Hit: sortOrder } }
       )
     } else {
-      pipeline.push({ $sort: { [sortField]: sortOrder } })
+      pipeline.push({ $sort: { [effectiveSortField]: sortOrder } })
     }
     pipeline.push(...paginatePipeline(params))
     if (params?.includeUsers) {
@@ -2220,41 +2229,56 @@ export class MongoDbTransactionRepository
     )
   }
 
-  public async getUniqueUserIds(
+  public async *getUniqueUserIdGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<string[]> {
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
-
     const userField =
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
-    const result = await collection
-      .aggregate([
-        {
-          $match: {
-            timestamp: {
-              $gte: timeRange.afterTimestamp,
-              $lt: timeRange.beforeTimestamp,
+    const cursor = collection
+      .aggregate(
+        [
+          {
+            $match: {
+              timestamp: {
+                $gte: timeRange.afterTimestamp,
+                $lt: timeRange.beforeTimestamp,
+              },
+              [userField]: { $exists: true },
             },
-            [userField]: { $exists: true },
           },
-        },
-        {
-          $group: {
-            _id: `$${userField}`,
+          {
+            $group: {
+              _id: `$${userField}`,
+            },
           },
-        },
-      ])
-      .toArray()
-    return result.map((v) => v._id)
+        ],
+        { allowDiskUse: true }
+      )
+      .batchSize(chunkSize * 2)
+    let results: string[] = []
+    for await (const idData of cursor) {
+      results.push(idData._id)
+
+      if (results.length >= chunkSize) {
+        yield results
+        results = []
+      }
+    }
+    if (results.length > 0) {
+      yield results
+    }
   }
 
-  public async getUniqueAddressDetails(
+  public async *getUniqueAddressDetailsGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<Address[]> {
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<Address[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
@@ -2288,8 +2312,7 @@ export class MongoDbTransactionRepository
       'country',
     ]
 
-    let allResult: Address[] = []
-
+    const globalBatch: Address[] = []
     for (const paymentMethod of PAYMENT_METHODS) {
       const addressField = ADDRESS_FIELD_MAPPING[paymentMethod]
 
@@ -2298,68 +2321,72 @@ export class MongoDbTransactionRepository
         continue
       }
 
-      const result = await collection
-        .aggregate([
-          {
-            $match: {
-              timestamp: {
-                $gte: timeRange.afterTimestamp,
-                $lt: timeRange.beforeTimestamp,
-              },
-              [paymentDetailsField]: { $exists: true },
-              [`${paymentDetailsField}.method`]: paymentMethod,
-              [`${paymentDetailsField}.${addressField}`]: {
-                $exists: true,
-                $ne: null,
+      const cursor = collection
+        .aggregate(
+          [
+            {
+              $match: {
+                timestamp: {
+                  $gte: timeRange.afterTimestamp,
+                  $lt: timeRange.beforeTimestamp,
+                },
+                [paymentDetailsField]: { $exists: true },
+                [`${paymentDetailsField}.method`]: paymentMethod,
+                [`${paymentDetailsField}.${addressField}`]: {
+                  $exists: true,
+                  $ne: null,
+                },
               },
             },
-          },
-          {
-            $group: {
-              _id: ADDRESS_FIELDS.map(
-                (field) => `$${paymentDetailsField}.${addressField}.${field}`
-              ),
+            {
+              $group: {
+                _id: ADDRESS_FIELDS.map(
+                  (field) => `$${paymentDetailsField}.${addressField}.${field}`
+                ),
+              },
             },
-          },
-        ])
-        .toArray()
+          ],
+          { allowDiskUse: true }
+        )
+        .batchSize(chunkSize * 2)
+      for await (const data of cursor) {
+        const addressData = Object.fromEntries(
+          ADDRESS_FIELDS.map((field, index) => [field, data._id[index]])
+        )
 
-      allResult = allResult.concat(
-        result
-          .map((v) => {
-            const addressData = Object.fromEntries(
-              ADDRESS_FIELDS.map((field, index) => [field, v._id[index]])
-            )
+        // Filter out null/undefined values and reconstruct the Address object
+        const filteredAddress: Partial<Address> = {}
+        Object.entries(addressData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            filteredAddress[key as keyof Address] = value
+          }
+        })
 
-            // Filter out null/undefined values and reconstruct the Address object
-            const filteredAddress: Partial<Address> = {}
-            Object.entries(addressData).forEach(([key, value]) => {
-              if (value !== null && value !== undefined) {
-                filteredAddress[key as keyof Address] = value
-              }
-            })
-
-            // Ensure addressLines is defined and not empty
-            if (
-              !filteredAddress.addressLines ||
-              filteredAddress.addressLines.length === 0
-            ) {
-              return undefined
-            }
-
-            return filteredAddress as Address
-          })
-          .filter((address): address is Address => address !== undefined)
-      )
+        // Ensure addressLines is defined and not empty
+        if (
+          !filteredAddress ||
+          !filteredAddress.addressLines ||
+          filteredAddress.addressLines.length === 0
+        ) {
+          continue
+        }
+        globalBatch.push(filteredAddress as Address)
+        if (globalBatch.length >= chunkSize) {
+          yield globalBatch.splice(0)
+        }
+      }
     }
 
-    return allResult
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
   }
 
-  public async getUniqueNameDetails(
+  public async *getUniqueNameDetailsGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<(ConsumerName | string)[]> {
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<(ConsumerName | string)[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
@@ -2387,114 +2414,113 @@ export class MongoDbTransactionRepository
     // Name fields to extract from ConsumerName object
     const NAME_FIELDS = ['firstName', 'middleName', 'lastName']
 
-    let allResult: (ConsumerName | string)[] = []
-
+    const globalBatch: (ConsumerName | string)[] = []
     for (const paymentMethod of PAYMENT_METHODS) {
       const nameField = NAME_FIELD_MAPPING[paymentMethod]
 
       // For CARD payment method, extract individual name fields
       if (paymentMethod === 'CARD') {
-        const result = await collection
-          .aggregate([
-            {
-              $match: {
-                timestamp: {
-                  $gte: timeRange.afterTimestamp,
-                  $lt: timeRange.beforeTimestamp,
-                },
-                [paymentDetailsField]: { $exists: true },
-                [`${paymentDetailsField}.method`]: paymentMethod,
-                [`${paymentDetailsField}.${nameField}`]: {
-                  $exists: true,
-                  $ne: null,
+        const cursor = collection
+          .aggregate(
+            [
+              {
+                $match: {
+                  timestamp: {
+                    $gte: timeRange.afterTimestamp,
+                    $lt: timeRange.beforeTimestamp,
+                  },
+                  [paymentDetailsField]: { $exists: true },
+                  [`${paymentDetailsField}.method`]: paymentMethod,
+                  [`${paymentDetailsField}.${nameField}`]: {
+                    $exists: true,
+                    $ne: null,
+                  },
                 },
               },
-            },
-            {
-              $group: {
-                _id: NAME_FIELDS.map(
-                  (field) => `$${paymentDetailsField}.${nameField}.${field}`
-                ),
+              {
+                $group: {
+                  _id: NAME_FIELDS.map(
+                    (field) => `$${paymentDetailsField}.${nameField}.${field}`
+                  ),
+                },
               },
-            },
-          ])
-          .toArray()
+            ],
+            { allowDiskUse: true }
+          )
+          .batchSize(chunkSize * 2)
+        for await (const data of cursor) {
+          const nameData = data._id
 
-        allResult = allResult.concat(
-          result
-            .map((v) => {
-              const nameData = v._id
-
-              // Reconstruct the ConsumerName from array of fields
-              if (Array.isArray(nameData)) {
-                const filteredName: Partial<ConsumerName> = {}
-                NAME_FIELDS.forEach((field, index) => {
-                  const value = nameData[index]
-                  if (value !== null && value !== undefined) {
-                    filteredName[field as keyof ConsumerName] = value as string
-                  }
-                })
-
-                // Ensure firstName is present (required field)
-                if (filteredName.firstName) {
-                  return filteredName as ConsumerName
-                }
+          // Reconstruct the ConsumerName from array of fields
+          if (Array.isArray(nameData)) {
+            const filteredName: Partial<ConsumerName> = {}
+            NAME_FIELDS.forEach((field, index) => {
+              const value = nameData[index]
+              if (value !== null && value !== undefined) {
+                filteredName[field as keyof ConsumerName] = value as string
               }
-
-              return undefined
             })
-            .filter((name): name is ConsumerName => name !== undefined)
-        )
+
+            // Ensure firstName is present (required field)
+            if (!filteredName || !filteredName.firstName) {
+              continue
+            }
+            globalBatch.push(filteredName as ConsumerName)
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          }
+        }
       } else {
         // For other payment methods, extract the entire name field as string
-        const result = await collection
-          .aggregate([
-            {
-              $match: {
-                timestamp: {
-                  $gte: timeRange.afterTimestamp,
-                  $lt: timeRange.beforeTimestamp,
-                },
-                [paymentDetailsField]: { $exists: true },
-                [`${paymentDetailsField}.method`]: paymentMethod,
-                [`${paymentDetailsField}.${nameField}`]: {
-                  $exists: true,
-                  $ne: null,
+        const cursor = collection
+          .aggregate(
+            [
+              {
+                $match: {
+                  timestamp: {
+                    $gte: timeRange.afterTimestamp,
+                    $lt: timeRange.beforeTimestamp,
+                  },
+                  [paymentDetailsField]: { $exists: true },
+                  [`${paymentDetailsField}.method`]: paymentMethod,
+                  [`${paymentDetailsField}.${nameField}`]: {
+                    $exists: true,
+                    $ne: null,
+                  },
                 },
               },
-            },
-            {
-              $group: {
-                _id: `$${paymentDetailsField}.${nameField}`,
+              {
+                $group: {
+                  _id: `$${paymentDetailsField}.${nameField}`,
+                },
               },
-            },
-          ])
-          .toArray()
-
-        allResult = allResult.concat(
-          result
-            .map((v) => {
-              const nameData = v._id
-
-              // Return string names as-is
-              if (typeof nameData === 'string') {
-                return nameData
-              }
-
-              return undefined
-            })
-            .filter((name): name is string => name !== undefined)
-        )
+            ],
+            { allowDiskUse: true }
+          )
+          .batchSize(chunkSize * 2)
+        for await (const data of cursor) {
+          const nameData = data._id
+          if (typeof nameData === 'string' && nameData) {
+            globalBatch.push(nameData)
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          }
+        }
       }
     }
 
-    return allResult
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
   }
 
-  public async getUniqueEmailDetails(
+  public async *getUniqueEmailDetailsGenerator(
     direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<string[]> {
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
@@ -2504,50 +2530,9 @@ export class MongoDbTransactionRepository
         ? 'originPaymentDetails'
         : 'destinationPaymentDetails'
 
-    const result = await collection
-      .aggregate([
-        {
-          $match: {
-            timestamp: {
-              $gte: timeRange.afterTimestamp,
-              $lt: timeRange.beforeTimestamp,
-            },
-            [paymentDetailsField]: { $exists: true },
-            [`${paymentDetailsField}.emailId`]: { $exists: true, $ne: null },
-          },
-        },
-        {
-          $group: {
-            _id: `$${paymentDetailsField}.emailId`,
-          },
-        },
-      ])
-      .toArray()
-
-    return result
-      .map((v) => v._id)
-      .filter((email): email is string => email !== null && email !== undefined)
-  }
-
-  public async getUniquePaymentDetails(
-    direction: 'ORIGIN' | 'DESTINATION',
-    timeRange: TimeRange
-  ): Promise<PaymentDetails[]> {
-    const db = this.mongoDb.db()
-    const name = TRANSACTIONS_COLLECTION(this.tenantId)
-    const collection = db.collection<InternalTransaction>(name)
-
-    const paymentDetailsField =
-      direction === 'ORIGIN'
-        ? 'originPaymentDetails'
-        : 'destinationPaymentDetails'
-
-    let allResult: PaymentDetails[] = []
-    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
-      const paymentIdentifiers =
-        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
-      const result = await collection
-        .aggregate([
+    const cursor = collection
+      .aggregate(
+        [
           {
             $match: {
               timestamp: {
@@ -2555,29 +2540,94 @@ export class MongoDbTransactionRepository
                 $lt: timeRange.beforeTimestamp,
               },
               [paymentDetailsField]: { $exists: true },
-              [`${paymentDetailsField}.method`]: paymentMethod,
+              [`${paymentDetailsField}.emailId`]: { $exists: true, $ne: null },
             },
           },
           {
             $group: {
-              _id: paymentIdentifiers.map(
-                (field) => `$${paymentDetailsField}.${field}`
-              ),
+              _id: `$${paymentDetailsField}.emailId`,
             },
           },
-        ])
-        .toArray()
+        ],
+        { allowDiskUse: true }
+      )
+      .batchSize(chunkSize * 2)
+    const results: string[] = []
+    for await (const data of cursor) {
+      const email = data._id
+      if (email === null || email === undefined) {
+        continue
+      }
+      results.push(email)
+      if (results.length >= chunkSize) {
+        yield results.splice(0)
+      }
+    }
+    if (results.length > 0) {
+      yield results
+    }
+  }
 
-      allResult = allResult.concat(
-        result.map((v) => ({
+  public async *getUniquePaymentDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<PaymentDetails[]> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<InternalTransaction>(name)
+
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+    const globalBatch: PaymentDetails[] = []
+    for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
+      const paymentIdentifiers =
+        PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
+      const cursor = collection
+        .aggregate(
+          [
+            {
+              $match: {
+                timestamp: {
+                  $gte: timeRange.afterTimestamp,
+                  $lt: timeRange.beforeTimestamp,
+                },
+                [paymentDetailsField]: { $exists: true },
+                [`${paymentDetailsField}.method`]: paymentMethod,
+              },
+            },
+            {
+              $group: {
+                _id: paymentIdentifiers.map(
+                  (field) => `$${paymentDetailsField}.${field}`
+                ),
+              },
+            },
+          ],
+          { allowDiskUse: true }
+        )
+
+        .batchSize(chunkSize * 2)
+      for await (const v of cursor) {
+        const details: PaymentDetails = {
           method: paymentMethod,
           ...Object.fromEntries(
             paymentIdentifiers.map((field, index) => [field, v._id[index]])
           ),
-        }))
-      )
+        }
+
+        globalBatch.push(details)
+
+        if (globalBatch.length >= chunkSize) {
+          yield globalBatch.splice(0)
+        }
+      }
     }
-    return allResult
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
   }
 
   /**

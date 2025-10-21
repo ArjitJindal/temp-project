@@ -5,6 +5,7 @@ import { logger } from '@/core/logger'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/insert'
 import { batchGet } from '@/utils/dynamodb'
 import { DynamoConsumerMessage } from '@/@types/dynamo'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 
 export class DynamoDbConsumer {
   dynamoDb: DynamoDBDocumentClient
@@ -19,6 +20,13 @@ export class DynamoDbConsumer {
     await Promise.all(
       messages.map(async (event) => {
         const keys = event.items.map((item) => item.key)
+        if (event.deleteFromClickHouse) {
+          await this.deleteFromClickHouse(
+            event.tenantId,
+            event.tableName,
+            event.whereClause
+          )
+        }
         const updatedItems = await batchGet(
           this.dynamoDb,
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(event.tenantId),
@@ -45,5 +53,23 @@ export class DynamoDbConsumer {
         }
       })
     )
+  }
+
+  private async deleteFromClickHouse(
+    tenantId: string,
+    tableName: string,
+    whereClause: string
+  ) {
+    if (!whereClause) {
+      return
+    }
+    const client = await getClickhouseClient(tenantId)
+    const query = `DELETE FROM ${tableName} WHERE ${whereClause}`
+    logger.info('Executing delete in ClickHouse', {
+      tenantId,
+      tableName,
+      whereClause,
+    })
+    await client.exec({ query })
   }
 }

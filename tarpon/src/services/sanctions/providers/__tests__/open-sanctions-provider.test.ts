@@ -81,6 +81,7 @@ describe('OpenSanctionsProvider', () => {
 
     expect(result).toEqual({
       id: 'entity123',
+      aggregatedSourceIds: ['crime'],
       aka: ['john doe', 'jd'],
       countries: ['United States of America'],
       countryCodes: ['US'],
@@ -103,6 +104,19 @@ describe('OpenSanctionsProvider', () => {
       isActiveSanctioned: undefined,
       isDeseased: false,
       occupations: [],
+      otherSources: [
+        {
+          type: 'CRIME',
+          value: [
+            {
+              internalId: 'crime',
+              sourceName: 'crime',
+            },
+          ],
+        },
+      ],
+      pepSources: [],
+      sanctionsSources: [],
       dateOfBirths: ['1980-05-12'],
     })
   })
