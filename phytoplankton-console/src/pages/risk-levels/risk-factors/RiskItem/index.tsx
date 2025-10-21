@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
+import { useLocalStorageState } from 'ahooks';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
@@ -11,7 +12,6 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { RiskClassificationScore, RiskFactor, RiskFactorParameter } from '@/apis';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
-import { useSafeLocalStorageState } from '@/utils/hooks';
 import {
   AsyncResource,
   getOr,
@@ -29,6 +29,7 @@ import {
   SimulationLocalStorageKey,
 } from '@/store/risk-factors';
 import {
+  DEFAULT_RISK_FACTORS_MAP,
   RiskFactorsTypeMap,
   scopeToRiskEntityType,
 } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/utils';
@@ -192,18 +193,16 @@ interface SimulationRiskItemFormProps {
   dataKey?: string;
 }
 
+// we are storing the new stimulated risk factor to a local storage now we need to figure out if we are correctly handling the display logic
 function SimulationRiskItemForm(props: SimulationRiskItemFormProps) {
   const { type, mode, id, riskClassificationValues, navigateToRiskFactors, dataKey } = props;
-  const [riskFactorsMap, setRiskFactorsMap] = useSafeLocalStorageState<RiskFactorsTypeMap>(
+  const [riskFactorsMap, setRiskFactorsMap] = useLocalStorageState<RiskFactorsTypeMap>(
     `${SimulationLocalStorageKey}-${dataKey}`,
-    {
-      CONSUMER_USER: [],
-      BUSINESS: [],
-      TRANSACTION: [],
-    },
   );
   const riskFactor = id
-    ? riskFactorsMap[scopeToRiskEntityType(type)]?.find((riskFactor) => riskFactor.id === id)
+    ? (riskFactorsMap ?? DEFAULT_RISK_FACTORS_MAP)[scopeToRiskEntityType(type)]?.find(
+        (riskFactor) => riskFactor.id === id,
+      )
     : undefined;
 
   // Don't wait for data if we're creating a new risk factor

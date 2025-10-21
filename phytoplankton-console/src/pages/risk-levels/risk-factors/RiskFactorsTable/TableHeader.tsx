@@ -10,14 +10,27 @@ import Button from '@/components/library/Button';
 import { useHasResources } from '@/utils/user-utils';
 import { useBulkRerunUsersStatus } from '@/utils/batch-rerun-users';
 
-interface Props {
+interface BaseProps {
   selectedSection: ScopeSelectorValue;
   setSelectedSection: (value: ScopeSelectorValue) => void;
   mode: 'simulation' | 'normal' | 'version-history';
   canEditRiskFactors: boolean;
   jobId?: string;
-  activeIterationIndex?: number;
 }
+
+type SimulationModeProps = BaseProps & {
+  activeIterationIndex: number;
+};
+
+type NormalModeProps = BaseProps & {
+  activeIterationIndex?: number;
+};
+
+type VersionHistoryModeProps = BaseProps & {
+  activeIterationIndex?: number;
+};
+
+type Props = SimulationModeProps | NormalModeProps | VersionHistoryModeProps;
 
 export const TableHeader = ({
   selectedSection,
