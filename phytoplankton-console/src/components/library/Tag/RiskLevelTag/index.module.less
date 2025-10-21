@@ -9,6 +9,12 @@
   margin-right: 8px;
 }
 
+.inActive {
+  border-color: @fr-colors-v2-state-disabled;
+  background-color: @fr-colors-v2-state-disabled;
+  color: @fr-colors-v2-gray-10;
+}
+
 .root {
   &.level-VERY-LOW {
     border-color: @fr-colors-v2-risk-level-base-very-low;
@@ -33,11 +39,6 @@
   &.level-VERY_HIGH {
     border-color: @fr-colors-v2-risk-level-base-very-high;
     background-color: @fr-colors-v2-risk-level-bg-very-high;
-    color: @fr-colors-v2-gray-10;
-  }
-  &.inActive {
-    border-color: @fr-colors-v2-state-disabled;
-    background-color: @fr-colors-v2-state-disabled;
     color: @fr-colors-v2-gray-10;
   }
 }

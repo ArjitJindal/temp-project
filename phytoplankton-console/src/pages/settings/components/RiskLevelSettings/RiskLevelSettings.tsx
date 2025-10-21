@@ -10,6 +10,7 @@ import { RiskLevel, RiskLevelAlias } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { STRING, BOOLEAN } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
+import { RISK_LEVELS } from '@/utils/risk-levels';
 
 interface TableItem {
   level: RiskLevel;
@@ -97,13 +98,11 @@ export const RiskLevelSettings: React.FC = () => {
   const handleSaveAll = useCallback(async () => {
     setSaving(true);
     try {
-      const riskLevelAlias: RiskLevelAlias[] = Array.from(newLevelToAlias.entries()).map(
-        ([level, alias]) => ({
-          level,
-          alias,
-          isActive: newLevelToActive.get(level) ?? true,
-        }),
-      );
+      const riskLevelAlias: RiskLevelAlias[] = RISK_LEVELS.map((level) => ({
+        level,
+        alias: newLevelToAlias.get(level) ?? '',
+        isActive: newLevelToActive.get(level) ?? true,
+      }));
 
       await mutateTenantSettings.mutateAsync({ riskLevelAlias });
 
@@ -115,8 +114,7 @@ export const RiskLevelSettings: React.FC = () => {
   }, [mutateTenantSettings, newLevelToAlias, newLevelToActive]);
 
   const tableData = useMemo<TableItem[]>(() => {
-    const levels: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
-    return levels.map((level) => ({
+    return RISK_LEVELS.map((level) => ({
       level,
       levelAlias: newLevelToAlias.get(level) ?? '',
       isActive: newLevelToActive.get(level) ?? true,
