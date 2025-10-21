@@ -39,7 +39,7 @@ export default function RiskAlgorithmsCra() {
       const isAfterCutoff =
         creationDate.isAfter(cutoffDate) || creationDate.isSame(cutoffDate, 'day');
       if (creationDate.isValid() && isAfterCutoff) {
-        return true && currentAlgorithm?.type === 'FORMULA_SIMPLE_AVG';
+        return currentAlgorithm?.type === 'FORMULA_SIMPLE_AVG';
       }
       return false;
     } catch (error) {
@@ -71,7 +71,7 @@ export default function RiskAlgorithmsCra() {
           }}
           // should be disabled when no persmission
           // can edit when a new tenant or a super admin
-          isDisabled={!permissions || !((canChangeRiskAlgo && hasWritePermission) || superAdmin)}
+          isDisabled={!permissions || !((canChangeRiskAlgo && hasWritePermission) || !superAdmin)}
         >
           Update
         </Button>
