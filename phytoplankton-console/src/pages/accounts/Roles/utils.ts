@@ -80,7 +80,12 @@ export function exportRolesDetails(roles: AccountRole[]) {
   const exportDataRows: string[] = [];
   exportDataRows.push(',' + roles.map((r) => r.name).join(','));
   PERMISSIONS.forEach((p) => {
-    const row = [p.split(':').map(humanizeAuto).join('->')];
+    const row = [
+      p
+        .split(':')
+        .map((x) => humanizeAuto(x))
+        .join('->'),
+    ];
     roles.forEach((r) => {
       const rolePermissions = r.permissions;
       row.push(rolePermissions.includes(p) ? 'Yes' : 'No');
