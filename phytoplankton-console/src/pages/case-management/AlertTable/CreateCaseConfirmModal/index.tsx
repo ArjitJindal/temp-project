@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCreateNewCaseMutation } from '@/pages/case-management/AlertTable/helpers';
+import { useCreateNewCaseMutation } from '@/utils/api/cases';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 

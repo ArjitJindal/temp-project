@@ -1,11 +1,8 @@
 import { TableUser } from './CaseTable/types';
-import { QueryResult } from '@/utils/queries/types';
-import { AllParams, TableData } from '@/components/library/Table/types';
+import { AllParams } from '@/components/library/Table/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
-import { useApi } from '@/api';
-import { FlagrightAuth0User, useAuth0User } from '@/utils/user-utils';
-import { PaginationParams, usePaginatedQuery } from '@/utils/queries/hooks';
-import { ALERT_LIST } from '@/utils/queries/keys';
+import { FlagrightAuth0User } from '@/utils/user-utils';
+import { PaginationParams } from '@/utils/queries/hooks';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { getStatuses } from '@/utils/case-utils';
 import { AlertListResponseItem, ChecklistStatus } from '@/apis';
@@ -115,34 +112,7 @@ export const getAlertsQueryParams = (
   return preparedParams;
 };
 
-export function useAlertQuery(
-  params: AllParams<TableSearchParams>,
-  defaultApiParams?: DefaultApiGetAlertListRequest,
-): QueryResult<TableData<TableAlertItem>> {
-  const api = useApi();
-  const user = useAuth0User();
-  return usePaginatedQuery(
-    ALERT_LIST({ ...params, ...defaultApiParams }),
-    async (paginationParams) => {
-      const preparedParams = getAlertsQueryParams(params, user, paginationParams, defaultApiParams);
-
-      const result = await api.getAlertList(
-        Object.entries(preparedParams).reduce(
-          (acc, [key, value]) => ({ ...acc, [key]: value }),
-          {},
-        ),
-      );
-      return {
-        items: presentAlertData(result.data),
-        total: result.total,
-        totalPages: result.totalPages,
-      };
-    },
-    { meta: { atf: true } },
-  );
-}
-
-function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
+export function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
   return data.map(({ alert, caseUsers, ...rest }) => {
     const caseUser = caseUsers ?? {};
     const user = caseUser?.origin?.userId

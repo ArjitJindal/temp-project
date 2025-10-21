@@ -1,5 +1,5 @@
+import { useMutation } from '@tanstack/react-query';
 import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import EditableComment from './EditableComment';
 import { useApi } from '@/api';
@@ -15,10 +15,9 @@ import Button from '@/components/library/Button';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { statusInReview } from '@/utils/case-utils';
-import { ChecklistItem, HydratedChecklist, useAlertChecklist } from '@/utils/checklist-templates';
+import { useAlertChecklist, useAlertUpdates } from '@/utils/api/alerts';
 import { useQaMode } from '@/utils/qa-mode';
-import { ALERT_CHECKLIST } from '@/utils/queries/keys';
-
+import { ChecklistItem, HydratedChecklist } from '@/utils/api/alerts/types';
 interface Props {
   alert: Alert;
 }
@@ -120,17 +119,16 @@ export default function ChecklistTab(props: Props) {
   const [category, setCategory] = useState<string | undefined>();
   const [qaModeSet] = useQaMode();
   const api = useApi();
+  const { updateAlertChecklistData } = useAlertUpdates();
 
   const actionRef = useRef<TableRefType>(null);
-  const queryClient = useQueryClient();
 
   const updateQueryData = useCallback(
     (alertId: string, checklistItemIds: string[], data: Partial<ChecklistItem>) => {
-      queryClient.setQueryData<HydratedChecklist>(ALERT_CHECKLIST(alertId), (checklist) => {
+      updateAlertChecklistData(alertId, (checklist) => {
         if (!checklist) {
           return undefined;
         }
-
         return checklist.map((c) => {
           return {
             ...c,
@@ -147,7 +145,7 @@ export default function ChecklistTab(props: Props) {
         });
       });
     },
-    [queryClient],
+    [updateAlertChecklistData],
   );
 
   const onQaStatusChange = useMutation(

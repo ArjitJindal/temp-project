@@ -78,7 +78,9 @@ export type QuestionResponse =
   | QuestionResponseRuleHit
   | QuestionResponseRuleLogic;
 
-export function parseQuestionResponse(responses: Api.GetQuestionsResponse): QuestionResponse[] {
+export function parseQuestionResponse(
+  responses: Api.GetQuestionsResponse,
+): QuestionResponse[] | QuestionResponseSkeleton[] {
   return (
     responses.data?.map((response) => {
       const { questionType, ...rest } = response;

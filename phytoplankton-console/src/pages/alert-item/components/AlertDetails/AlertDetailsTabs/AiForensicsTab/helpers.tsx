@@ -1,12 +1,10 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
 import { Alert, InternalBusinessUser, InternalConsumerUser, RuleInstance } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { useCheckedTransactionsQuery } from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions/helpers';
 import { AsyncResource, isSuccess, loading, map, success } from '@/utils/asyncResource';
-import Money from '@/components/ui/Money';
-import { ALERT_ITEM_TRANSACTION_STATS, USERS_ITEM } from '@/utils/queries/keys';
+import { USERS_ITEM } from '@/utils/queries/keys';
 import {
   QuestionResponse,
   QuestionResponseRuleHit,
@@ -14,59 +12,6 @@ import {
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { useRules } from '@/utils/rules';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-
-interface StatsItem {
-  title: string;
-  children: AsyncResource<ReactNode>;
-}
-
-export default function useStats(alert: Alert, caseUserId: string): StatsItem[] {
-  const result: StatsItem[] = [];
-
-  const { queryResult } = useCheckedTransactionsQuery(alert, caseUserId);
-
-  const api = useApi();
-
-  const transactionsStatsQueryResult = useQuery(
-    ALERT_ITEM_TRANSACTION_STATS(alert.alertId ?? ''),
-    () => {
-      if (alert.alertId == null) {
-        throw new Error(`Alert id can not be empty`);
-      }
-      return api.getAlertTransactionStats({
-        alertId: alert.alertId,
-        referenceCurrency: 'USD',
-      });
-    },
-  );
-
-  result.push({
-    title: 'Transactions checked',
-    children: map(queryResult.data, (x) => x.total?.toString() ?? '0'),
-  });
-
-  result.push({
-    title: 'Transactions hit',
-    children: success((alert.transactionIds?.length ?? 0).toString()),
-  });
-
-  result.push({
-    title: 'Total amount transacted',
-    children: map(transactionsStatsQueryResult.data, (stats) => (
-      <Money
-        value={stats.totalTransactionsAmount.amount}
-        currency={stats.totalTransactionsAmount.currency}
-      />
-    )),
-  });
-
-  result.push({
-    title: 'No. of Users transacted with',
-    children: map(transactionsStatsQueryResult.data, (stats) => stats.numberOfUsersTransactedWith),
-  });
-
-  return result;
-}
 
 export function usePreloadedHistory(
   alert: Alert,

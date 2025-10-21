@@ -22,6 +22,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import HistoryItemRuleHit from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemRuleHit';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { HistoryItem } from '@/utils/api/alerts/types';
 
 interface Props {
   isUnread: boolean;
@@ -66,7 +67,7 @@ export default function HistoryItem(props: Props) {
 
   const api = useApi();
   const updateVarsMutation = useMutation<
-    QuestionResponse,
+    HistoryItem,
     unknown,
     VariablesValues & { page?: number; pageSize?: number }
   >(
@@ -88,7 +89,7 @@ export default function HistoryItem(props: Props) {
     },
     {
       onSuccess: (data) => {
-        setItemState(data);
+        setItemState(data as QuestionResponse);
       },
       onError: (error) => {
         message.error(getErrorMessage(error));

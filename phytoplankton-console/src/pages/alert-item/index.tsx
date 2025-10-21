@@ -1,38 +1,20 @@
 import { useParams } from 'react-router';
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import Header from './components/Header';
 import AlertDetails from './components/AlertDetails';
 import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM } from '@/utils/queries/keys';
-import { Alert, Comment } from '@/apis';
-import { useApi } from '@/api';
-import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
-import { notFound } from '@/utils/errors';
+import { Comment } from '@/apis';
+import { useAlertUpdates, useAlertDetails } from '@/utils/api/alerts';
 
 function AlertItemPage() {
   const { id: alertId } = useParams<'id'>() as { id: string };
 
-  const api = useApi();
-  const queryClient = useQueryClient();
+  const alertQueryResults = useAlertDetails(alertId);
 
-  const alertQueryResults = useQuery(ALERT_ITEM(alertId), async (): Promise<Alert> => {
-    try {
-      return await api.getAlert({ alertId });
-    } catch (error: any) {
-      if (error?.code === 404) {
-        notFound(`Alert with ID "${alertId}" not found`);
-      }
-      throw error;
-    }
-  });
-
-  const updateAlertQueryData = useUpdateAlertQueryData();
-  const updateAlertItemCommentsData = useUpdateAlertItemCommentsData();
+  const { updateAlertQueryData, updateAlertItemCommentsData } = useAlertUpdates();
 
   const handleCommentAdded = async (newComment: Comment, groupId: string) => {
     updateAlertQueryData(groupId, (alertItem) => {
@@ -50,7 +32,7 @@ function AlertItemPage() {
   };
 
   const onReload = () => {
-    queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
+    alertQueryResults.refetch();
   };
 
   const [headerStickyElRef, setHeaderStickyElRef] = useState<HTMLDivElement | null>(null);

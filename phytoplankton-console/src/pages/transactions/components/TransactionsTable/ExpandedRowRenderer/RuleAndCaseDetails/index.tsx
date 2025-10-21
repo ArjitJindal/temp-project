@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import s from './styles.module.less';
 import { Alert, InternalTransaction, RuleAction } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { ALERT_LIST } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Id from '@/components/ui/Id';
 import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
@@ -15,6 +12,7 @@ import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useRuleOptions } from '@/utils/rules';
 import { PRIORITY } from '@/components/library/Table/standardDataTypes';
+import { useAlertList } from '@/utils/api/alerts';
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
 interface Props {
@@ -25,29 +23,17 @@ interface Props {
 export default function RuleAndCaseDetails(props: Props) {
   const { transaction, action } = props;
 
-  const api = useApi();
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
 
-  const queryResults = usePaginatedQuery<Alert>(
-    ALERT_LIST({ action, transactionId: transaction.transactionId, ...params }),
-    async ({ page }) => {
-      const response = await api.getAlertList({
-        ...params,
-        page: page ?? params.page,
-        filterRuleInstanceId: action
-          ? transaction.hitRules
-              .filter((rule) => rule.ruleInstanceId && rule.ruleAction === action)
-              .map((rule) => rule.ruleInstanceId)
-          : undefined,
-        filterTransactionIds: [transaction.transactionId],
-      });
+  const queryResults = useAlertList(params, {
+    filterRuleInstanceId: action
+      ? transaction.hitRules
+          .filter((rule) => rule.ruleInstanceId && rule.ruleAction === action)
+          .map((rule) => rule.ruleInstanceId)
+      : undefined,
+    filterTransactionIds: [transaction.transactionId],
+  });
 
-      return {
-        items: response.data.map(({ alert }) => alert),
-        total: response.total,
-      };
-    },
-  );
   const ruleOptions = useRuleOptions();
   const columns = useColumns();
   return (
