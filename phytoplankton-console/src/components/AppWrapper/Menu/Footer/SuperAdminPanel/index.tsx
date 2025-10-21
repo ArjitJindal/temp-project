@@ -287,6 +287,11 @@ export const featureDescriptions: Record<
     tag: FeatureTag.ENG,
     description: 'Aggregate on custom fields such as name, email, or address.',
   },
+  FLAT_FILES_IMPORT_TRANSACTIONS: {
+    title: 'Flat files import for transactions (WIP)',
+    tag: FeatureTag.FLAT_FILES_IMPORT_TRANSACTIONS,
+    description: 'Enables button for importing transactions from  flat files',
+  },
 };
 
 export default function SuperAdminPanel() {

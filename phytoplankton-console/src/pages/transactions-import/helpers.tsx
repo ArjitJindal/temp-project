@@ -1,9 +1,36 @@
-import { FlatFileProgressResponse } from '@/apis';
+export type FileImportApiData =
+  | {
+      kind: 'IMPORT_DONE';
+      total?: number;
+      errored?: number;
+      succeeded?: number;
+      errorsFileUrl?: string;
+    }
+  | {
+      kind: 'IMPORT_IN_PROGRESS';
+      total?: number;
+      processed?: number;
+      errored?: number;
+      succeeded?: number;
+    }
+  | {
+      kind: 'VALIDATION_IN_PROGRESS';
+      total?: number;
+      processed?: number;
+      errored?: number;
+      succeeded?: number;
+    }
+  | {
+      kind: 'VALIDATION_PENDING';
+    }
+  | {
+      kind: 'NOT_FOUND';
+    };
 
 export type FlatImportProgress =
   | {
       kind: 'API_DATA';
-      value: FlatFileProgressResponse;
+      value: FileImportApiData;
     }
   | {
       kind: 'UPLOADING';
@@ -22,7 +49,11 @@ export function isOngoingImport(progress: FlatImportProgress | null): boolean {
   if (progress.kind === 'WAITING_FOR_JOB_START') {
     return true;
   }
-  return progress.value.status === 'PENDING' || progress.value.status === 'IN_PROGRESS';
+  return (
+    progress.value.kind === 'IMPORT_IN_PROGRESS' ||
+    progress.value.kind === 'VALIDATION_IN_PROGRESS' ||
+    progress.value.kind === 'VALIDATION_PENDING'
+  );
 }
 
 export function isValidationJobFound(progress: FlatImportProgress | null): boolean {
@@ -34,9 +65,14 @@ export function isValidationJobFound(progress: FlatImportProgress | null): boole
     return false;
   }
 
-  return (
-    progress.value.isValidationJobFound === true || progress.value.isValidationJobRunning === true
-  );
+  if (
+    progress.value.kind === 'VALIDATION_IN_PROGRESS' ||
+    progress.value.kind === 'IMPORT_IN_PROGRESS'
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isImportResultsAvailable(progress: FlatImportProgress | null): boolean {
@@ -48,5 +84,5 @@ export function isImportResultsAvailable(progress: FlatImportProgress | null): b
     return false;
   }
 
-  return progress.value.status === 'SUCCESS';
+  return progress.value.kind === 'IMPORT_DONE';
 }

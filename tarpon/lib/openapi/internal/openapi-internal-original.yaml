@@ -13162,6 +13162,7 @@ components:
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
+        - FLAT_FILES_IMPORT_TRANSACTIONS
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
