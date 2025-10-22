@@ -351,14 +351,7 @@ export function useTanstackTable<
       });
       setSortingPersisted(newSort);
     },
-    [
-      sorting,
-      onChangeParams,
-      params,
-      defaultSorting,
-      setSortingPersisted,
-      clientSideSorting,
-    ],
+    [sorting, onChangeParams, params, defaultSorting, setSortingPersisted, clientSideSorting],
   );
 
   const columnOrderAdapted: ColumnOrder = useMemo(() => {
