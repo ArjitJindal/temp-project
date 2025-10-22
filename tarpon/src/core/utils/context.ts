@@ -491,7 +491,7 @@ export async function tenantSettings(
   tenantId: string
 ): Promise<TenantSettings> {
   const contextSettings = getContext()?.settings
-  if (contextSettings && !isEmpty(contextSettings) && !unmaskDowJonesPassword) {
+  if (contextSettings && !isEmpty(contextSettings)) {
     return contextSettings
   }
 
