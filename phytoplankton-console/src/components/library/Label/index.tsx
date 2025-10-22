@@ -13,6 +13,7 @@ export interface Props extends InputProps<string> {
   position?: 'TOP' | 'RIGHT' | 'LEFT';
   level?: 1 | 2 | 3 | 4;
   iconRight?: React.ReactNode;
+  iconLeft?: React.ReactNode;
   description?: string;
   element?: 'label' | 'div';
   required?:
@@ -39,6 +40,7 @@ export default function Label(props: Props) {
       showHint: false,
     },
     testId,
+    iconLeft,
     iconRight,
     labelClassName,
   } = props;
@@ -47,10 +49,11 @@ export default function Label(props: Props) {
 
   const labelEl = (
     <div className={cn(s.label, s[`level-${level}`])} data-cy={'label'}>
-      {iconRight ? (
+      {iconLeft || iconRight ? (
         <div className={s.labelText}>
+          {iconLeft && <span className={s.labelIcon}>{iconLeft}</span>}
           <span>{label}</span>
-          <span className={s.iconRight}>{iconRight}</span>
+          {iconRight && <span className={s.labelIcon}>{iconRight}</span>}
         </div>
       ) : (
         label

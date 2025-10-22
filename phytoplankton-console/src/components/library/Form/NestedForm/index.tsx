@@ -11,13 +11,15 @@ interface Props {
 export default function NestedForm<FormValues>(props: Props) {
   const { name, children } = props;
 
-  const { fieldValidators, values, setValues, meta, setMeta, alwaysShowErrors } = useFormContext();
+  const { isDisabled, fieldValidators, values, setValues, meta, setMeta, alwaysShowErrors } =
+    useFormContext();
   if (values != null && typeof values !== 'object') {
     throw new Error(`Nested form expect to have object in the context`);
   }
 
   const fieldMeta: FieldMeta = meta?.[name] ?? {};
   const subContext: FormContextValue<FormValues> = {
+    isDisabled,
     alwaysShowErrors,
     meta: fieldMeta.children ?? {},
     setMeta: (key, cb) => {

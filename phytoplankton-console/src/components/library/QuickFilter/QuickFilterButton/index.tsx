@@ -9,16 +9,27 @@ export interface Props {
   icon?: React.ReactNode | false;
   analyticsName?: string;
   isActive?: boolean;
+  isDisabled?: boolean;
   onClear?: () => void;
   onClick?: () => void;
   children?: React.ReactNode;
 }
 
 export default function QuickFilterButton(props: Props) {
-  const { icon, autoWidth = false, buttonText, onClick, isActive, onClear, children } = props;
+  const {
+    icon,
+    autoWidth = false,
+    buttonText,
+    onClick,
+    isActive,
+    isDisabled,
+    onClear,
+    children,
+  } = props;
   return (
     <button
       data-cy="rules-filter"
+      disabled={isDisabled}
       className={cn(
         s.root,
         isActive && s.isActive,

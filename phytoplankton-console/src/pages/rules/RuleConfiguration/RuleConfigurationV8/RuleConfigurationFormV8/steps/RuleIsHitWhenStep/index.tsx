@@ -118,6 +118,7 @@ export default function RuleIsHitWhenStep(props: {
         }}
       />
       <DefineLogicCard
+        readOnly={props.readOnly}
         ruleType={props.ruleType}
         entityVariablesFieldState={entityVariablesFieldState}
         aggVariablesFieldState={aggVariablesFieldState}

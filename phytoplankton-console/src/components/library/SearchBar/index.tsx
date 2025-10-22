@@ -8,6 +8,7 @@ import { FilterProps } from '@/components/library/Filter/types';
 import { AsyncResource } from '@/utils/asyncResource';
 
 export interface SearchBarProps<FilterParams> {
+  readOnly?: boolean;
   search?: string;
   filters?: FilterProps<FilterParams>[];
   filterParams?: FilterParams;
@@ -55,6 +56,7 @@ export default function SearchBar<FilterParams extends object = object>(
     setIsAIEnabled,
     onBlur,
     variant = 'default',
+    readOnly,
   } = props;
 
   const [isDropdownVisible, setDropdownVisible] = useState(false);
@@ -63,6 +65,9 @@ export default function SearchBar<FilterParams extends object = object>(
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (readOnly) {
+      return;
+    }
     const listener = (e) => {
       const isChild = isDeepChild(rootRef.current, e.target as HTMLElement | null);
       setDropdownVisible(isChild);
@@ -71,7 +76,7 @@ export default function SearchBar<FilterParams extends object = object>(
     return () => {
       window.removeEventListener('click', listener);
     };
-  }, []);
+  }, [readOnly]);
 
   useEffect(() => {
     if (!isDropdownVisible) {
@@ -92,6 +97,7 @@ export default function SearchBar<FilterParams extends object = object>(
   return (
     <div className={s.root} ref={rootRef}>
       <SearchBarField
+        isDisabled={readOnly}
         value={search}
         onChange={onSearch}
         onEnter={(e) => {

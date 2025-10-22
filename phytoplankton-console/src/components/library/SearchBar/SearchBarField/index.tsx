@@ -46,6 +46,7 @@ export default function SearchBarField<FilterParams extends object = object>(
     isAIEnabled,
     setIsAIEnabled,
     variant,
+    isDisabled,
   } = props;
 
   const isAllFiltersEmpty = useMemo(() => {
@@ -58,7 +59,7 @@ export default function SearchBarField<FilterParams extends object = object>(
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className={s.root}>
+    <div className={cn(s.root, isDisabled && s.isDisabled)}>
       {isAIEnabled ? (
         <div className={s.icons}>
           {setIsAIEnabled && (
@@ -91,6 +92,7 @@ export default function SearchBarField<FilterParams extends object = object>(
             onEnter?.(e);
           }
         }}
+        disabled={isDisabled}
       />
       <div className={s.icons}>
         {(value || !isAllFiltersEmpty) && variant !== 'minimal' ? (
@@ -110,6 +112,7 @@ export default function SearchBarField<FilterParams extends object = object>(
           <>
             {filters.map((filter) => (
               <Filter<FilterParams>
+                readOnly={isDisabled}
                 key={filter.key}
                 filter={filter}
                 params={filterParams}

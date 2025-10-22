@@ -27,11 +27,16 @@ import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-lin
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '@/pages/risk-levels/risk-factors/utils';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
+import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import Checkbox from '@/components/library/Checkbox';
 import { P } from '@/components/ui/Typography';
+import { WarningIcon } from '@/components/library/Form/InputField';
+import { CHANGED_FIELD_MESSAGE } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/helpers';
 
 interface Props {
   ruleType: RuleType;
+  readOnly?: boolean;
+  hasChanges?: boolean;
   entityVariablesFieldState: FieldState<RiskFactorConfigurationStepFormValues['entityVariables']>;
   aggVariablesFieldState: FieldState<RiskFactorConfigurationStepFormValues['aggregationVariables']>;
   riskLevelLogic: FieldState<RiskFactorConfigurationStepFormValues['riskLevelLogic']>;
@@ -82,6 +87,8 @@ export const LogicDefinitionCard = (props: Props) => {
     riskLevelLogic,
     baseCurrencyFieldState,
     ruleType,
+    readOnly = false,
+    hasChanges = false,
   } = props;
   const [isOpen, setIsOpen] = useState(false);
 
@@ -188,15 +195,24 @@ export const LogicDefinitionCard = (props: Props) => {
               label="Logic definition"
               description="Using the above defined variables configure a risk factor logic mapped to one or more risk levels"
               required={true}
+              iconLeft={
+                hasChanges && (
+                  <Tooltip title={CHANGED_FIELD_MESSAGE}>
+                    {({ ref }) => <WarningIcon rootRef={ref} />}
+                  </Tooltip>
+                )
+              }
             />
-            <Button
-              testName="add-variable-v8"
-              isLoading={false}
-              onClick={handleAddLogic}
-              isDisabled={!hasVariables}
-            >
-              Add logic
-            </Button>
+            {!readOnly && (
+              <Button
+                testName="add-variable-v8"
+                isLoading={false}
+                onClick={handleAddLogic}
+                isDisabled={!hasVariables}
+              >
+                Add logic
+              </Button>
+            )}
           </div>
           <div className={s.parameters}>
             {(riskLevelLogic?.value ?? []).map((val, i) => {
@@ -207,18 +223,28 @@ export const LogicDefinitionCard = (props: Props) => {
                     <Tag
                       key={i}
                       color="action"
-                      actions={[
-                        {
-                          key: 'edit',
-                          icon: <PencilLineIcon className={s.editVariableIcon} />,
-                          action: () => handleEdit(i),
-                        },
-                        {
-                          key: 'delete',
-                          icon: <DeleteBinLineIcon />,
-                          action: () => handleDelete(i),
-                        },
-                      ]}
+                      actions={
+                        readOnly
+                          ? [
+                              {
+                                key: 'view',
+                                icon: <EyeLineIcon className={s.editVariableIcon} />,
+                                action: () => handleEdit(i),
+                              },
+                            ]
+                          : [
+                              {
+                                key: 'edit',
+                                icon: <PencilLineIcon className={s.editVariableIcon} />,
+                                action: () => handleEdit(i),
+                              },
+                              {
+                                key: 'delete',
+                                icon: <DeleteBinLineIcon />,
+                                action: () => handleDelete(i),
+                              },
+                            ]
+                      }
                     >
                       Configuration ({riskLevelLabel(val.riskLevel as RiskLevel)})
                     </Tag>
@@ -236,6 +262,7 @@ export const LogicDefinitionCard = (props: Props) => {
         onCancel={resetModalState}
         onOk={handleSave}
         okText={'Save'}
+        hideOk={readOnly}
         okProps={{
           isDisabled: ['logic', 'riskLevel', 'riskScore', 'weight'].some((x) =>
             x === 'riskScore'
@@ -259,6 +286,7 @@ export const LogicDefinitionCard = (props: Props) => {
                   placeholder="Select base currency"
                   mode="SINGLE"
                   options={CURRENCIES_SELECT_OPTIONS}
+                  isDisabled={readOnly}
                 />
               </Label>
             </div>
@@ -267,6 +295,9 @@ export const LogicDefinitionCard = (props: Props) => {
             renderIf={
               <RuleLogicBuilder
                 ruleType={ruleType}
+                configParams={{
+                  mode: readOnly ? 'VIEW' : 'EDIT',
+                }}
                 entityVariableTypes={[
                   'TRANSACTION',
                   'TRANSACTION_EVENT',
@@ -293,6 +324,7 @@ export const LogicDefinitionCard = (props: Props) => {
                 <div className={s.riskLevelInfo}>
                   <Label label={'Risk level'} required={true}>
                     <RiskLevelSwitch
+                      isDisabled={readOnly}
                       value={currentRiskLevelAssignmentValues?.riskLevel}
                       onChange={(riskLevel) => {
                         if (riskLevel) {
@@ -316,6 +348,7 @@ export const LogicDefinitionCard = (props: Props) => {
                       min={0}
                       max={100}
                       value={currentRiskLevelAssignmentValues?.riskScore}
+                      isDisabled={readOnly}
                       onChange={(riskScore) => {
                         const riskLevel = getSelectedRiskLevel(riskScore, riskClassificationValues);
                         setCurrentRiskLevelAssignmentValues(
@@ -332,6 +365,7 @@ export const LogicDefinitionCard = (props: Props) => {
                 </div>
                 <Label label="Risk weight (0 to 1)" required={true}>
                   <Slider
+                    isDisabled={readOnly}
                     value={currentRiskLevelAssignmentValues?.weight}
                     onChange={(val) => {
                       setCurrentRiskLevelAssignmentValues({
@@ -363,6 +397,7 @@ export const LogicDefinitionCard = (props: Props) => {
                     position="RIGHT"
                   >
                     <Checkbox
+                      isDisabled={readOnly}
                       onChange={(val) => {
                         setCurrentRiskLevelAssignmentValues({
                           ...(currentRiskLevelAssignmentValues ?? {}),
@@ -379,6 +414,7 @@ export const LogicDefinitionCard = (props: Props) => {
                     position="RIGHT"
                   >
                     <Checkbox
+                      isDisabled={readOnly}
                       onChange={(val) => {
                         setCurrentRiskLevelAssignmentValues({
                           ...(currentRiskLevelAssignmentValues ?? {}),
