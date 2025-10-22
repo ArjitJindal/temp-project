@@ -7,8 +7,6 @@ import { State, TableItem } from '@/pages/risk-levels/configure/RiskClassificati
 
 const helper = new ColumnHelper<TableItem>();
 
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
 function getActiveGlobalIndices(entries: TableItem[]) {
   return entries.filter((t) => t.isActive).map((t) => t.index);
 }
@@ -19,6 +17,7 @@ export function makeColumns(options: {
   isDisabled: boolean;
   LEVEL_ENTRIES: TableItem[];
 }): TableColumn<TableItem>[] {
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
   const { state, setState, isDisabled, LEVEL_ENTRIES } = options;
   return helper.list([
     helper.simple({
@@ -48,6 +47,11 @@ export function makeColumns(options: {
         const sEnd = Number.isFinite(end) ? end : 100;
 
         const isLastActive = idxInActive === activeGlobals.length - 1;
+
+        // Handle case where start equals end (should show as single value)
+        if (sStart === sEnd) {
+          return `${sStart} to ${sEnd}`;
+        }
 
         return isLastActive ? `≥ ${sStart} to ≤ ${sEnd}` : `≥ ${sStart} to < ${sEnd}`;
       },
@@ -106,8 +110,10 @@ export function makeColumns(options: {
 
                 // Determine limits for this slider
                 const lowerLimitForStart = gPrevPrev !== null ? updated[gPrevPrev] ?? 0 : 0;
-                const upperLimitForStart =
-                  (rawEnd === undefined ? (gCurr !== null ? updated[gCurr] : 100) : rawEnd) - 1;
+                const upperLimitForStart = Math.max(
+                  lowerLimitForStart + 1,
+                  (rawEnd === undefined ? (gCurr !== null ? updated[gCurr] : 100) : rawEnd) - 1,
+                );
 
                 const clampedStart = clamp(
                   Math.round(rawStart),
@@ -115,7 +121,7 @@ export function makeColumns(options: {
                   upperLimitForStart,
                 );
 
-                const lowerLimitForEnd = clampedStart + 1;
+                const lowerLimitForEnd = idxInActive === 0 ? clampedStart : clampedStart + 1;
                 const upperLimitForEnd = gNext !== null ? updated[gNext] ?? 100 : 100;
                 const clampedEnd = clamp(Math.round(rawEnd), lowerLimitForEnd, upperLimitForEnd);
 
@@ -131,11 +137,14 @@ export function makeColumns(options: {
                   }
                 }
 
-                updated[0] = 0;
+                if (activeGlobals.length > 0) {
+                  const lastActiveIndex = activeGlobals[activeGlobals.length - 1];
+                  updated[lastActiveIndex] = 100;
+                }
+                updated[updated.length - 1] = 100;
                 for (let i = 1; i < updated.length; i++) {
                   updated[i] = Math.max(updated[i], updated[i - 1]);
                 }
-                updated[updated.length - 1] = 100;
 
                 return updated as State;
               });
