@@ -42,7 +42,7 @@ describe('Create scenario', () => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
       createAggregationVariable('Variable 2', 'type');
       if (type === 'USER') {
-        createEntityVariable('User id', type);
+        createEntityVariable('User ID', type);
       } else {
         createEntityVariable('Type', type);
       }
@@ -137,7 +137,7 @@ describe('Create scenario', () => {
     if (type === 'USER') {
       cy.get('input[data-cy="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
     } else {
-      cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction id');
+      cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction ID');
     }
     cy.get('[data-cy~="variable-entity-v8"]').click().type(`${entityText}`).wait(1);
     cy.get(`div[title="${entityText}"]`).click();
