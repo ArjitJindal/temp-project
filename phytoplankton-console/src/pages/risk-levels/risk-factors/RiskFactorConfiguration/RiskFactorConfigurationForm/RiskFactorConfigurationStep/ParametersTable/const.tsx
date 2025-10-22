@@ -29,7 +29,7 @@ import Select, { Option } from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
-import { SETTINGS, TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
+import { TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { BUSINESS_USER_SEGMENTS } from '@/apis/models-custom/BusinessUserSegment';
@@ -51,6 +51,7 @@ import { hasOverlaps } from '@/utils/math';
 import { convertToDays } from '@/utils/dayjs';
 import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
+import { useSettingsData } from '@/utils/api/auth';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -660,8 +661,7 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
     return <MultipleSelect options={SOURCE_OF_FUNDS_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
   AMOUNT_RANGE: ((props) => {
-    const api = useApi();
-    const queryData = useQuery(SETTINGS(), () => api.getTenantsSettings());
+    const queryData = useSettingsData();
     const defaultCurrency =
       props.existedValues?.at(-1)?.currency ??
       getOr(queryData.data, {}).defaultValues?.currency ??

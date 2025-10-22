@@ -13,7 +13,7 @@ import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { AsyncResource, isLoading } from '@/utils/asyncResource';
 import { Hint } from '@/components/library/Form/InputField';
 import { uploadFile } from '@/utils/file-uploader';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { getErrorMessage } from '@/utils/lang';
 
 export const MAX_COMMENT_LENGTH = 10000;
@@ -58,7 +58,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
   const api = useApi();
   const [uploadingCount, setUploadingCount] = useState(0);
   const [templateValue, setTemplateValue] = useState<string | undefined>(undefined);
-  const [users] = useUsers();
+  const { users } = useUsers();
   const removeFile = useCallback(
     (s3Key) =>
       onChangeValues({

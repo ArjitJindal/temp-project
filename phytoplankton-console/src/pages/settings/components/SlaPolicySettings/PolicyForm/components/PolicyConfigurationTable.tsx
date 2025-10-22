@@ -8,7 +8,7 @@ import TimeInput from './TimeInput';
 import StatusesCountInput from './StatusesCountInput';
 import Label from '@/components/library/Label';
 import Select, { Option } from '@/components/library/Select';
-import { useRoles } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import GenericFormField from '@/components/library/Form/GenericFormField';
@@ -31,16 +31,16 @@ const workingDaysOptions: Option<SLAPolicyConfigurationWorkingDaysEnum>[] = [
 function PolicyConfigurationTable() {
   const formContext = useFormContext<FormValues['policyConfiguration']>();
   const statusCountDetails = formContext.values?.statusDetails?.statusesCount;
-  const [roles] = useRoles();
+  const { rolesList } = useRoles();
   const warningTime = formContext.values?.SLATime?.warningTime;
   const statuses = formContext.values?.statusDetails?.statuses;
   const [isWarningTime, setIsWarningTime] = useState(warningTime ? true : false);
   const [isStatusCount, setIsStatusCount] = useState(statusCountDetails ? true : false);
   const roleOptions = useMemo(() => {
-    return roles
-      .map((role) => ({ label: capitalize(role?.name) ?? '', value: role?.name ?? '' }))
+    return rolesList
+      .map((role) => ({ label: capitalize(role.name) ?? '', value: role.name ?? '' }))
       .filter((data) => data.label !== '');
-  }, [roles]);
+  }, [rolesList]);
   return (
     <div className={s.root}>
       <div className={s.table}>

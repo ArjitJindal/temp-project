@@ -54,7 +54,7 @@ import StatusFilterButton from '@/components/ActivityCard/Filters/StatusFilterBu
 import AlertIdSearchFilter from '@/components/ActivityCard/Filters/AlertIdSearchFIlter';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
@@ -185,7 +185,7 @@ function useTabs(
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const isEnhancedDueDiligenceEnabled = useFeatureEnabled('EDD_REPORT');
   const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
-  const [users] = useUsers();
+  const { users } = useUsers();
   const riskClassificationValues = useRiskClassificationScores();
   const { updateAlertQueryData, updateAlertItemCommentsData } = useAlertUpdates();
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();

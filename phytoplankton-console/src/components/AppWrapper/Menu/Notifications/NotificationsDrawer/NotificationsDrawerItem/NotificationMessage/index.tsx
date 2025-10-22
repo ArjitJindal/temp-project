@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import s from './index.module.less';
-import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { neverReturn } from '@/utils/lang';
 import { Notification } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 import { getNextStatus, statusEscalated, statusInReview } from '@/utils/case-utils';
@@ -292,7 +293,7 @@ function EntityId(props: Props) {
 
 function Author(props: Props) {
   const { notification } = props;
-  const [users] = useUsers({
+  const { users } = useUsers({
     includeRootUsers: true,
   });
   const user = users[notification.triggeredBy];

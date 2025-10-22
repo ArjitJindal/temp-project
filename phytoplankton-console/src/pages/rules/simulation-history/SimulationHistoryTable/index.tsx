@@ -8,7 +8,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import COLORS from '@/components/ui/colors';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOBS } from '@/utils/queries/keys';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, NUMBER, SIMULATION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -20,7 +20,7 @@ import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAd
 export function SimulationHistoryTable(props: { rulesTab: string }) {
   const api = useApi();
   const { rules } = useRules();
-  const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users, isLoading } = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [params, setParams] = useState<AllParams<DefaultApiGetSimulationsRequest>>({
     ...DEFAULT_PARAMS_STATE,
     page: 1,
@@ -112,7 +112,7 @@ export function SimulationHistoryTable(props: { rulesTab: string }) {
             key: 'createdBy',
             type: {
               render: (createdBy) => {
-                if (loading || !createdBy) {
+                if (isLoading || !createdBy) {
                   return <></>;
                 }
 
@@ -121,7 +121,7 @@ export function SimulationHistoryTable(props: { rulesTab: string }) {
                 return <span>{user}</span>;
               },
               stringify: (createdBy) => {
-                if (loading || !createdBy) {
+                if (isLoading || !createdBy) {
                   return '';
                 }
 

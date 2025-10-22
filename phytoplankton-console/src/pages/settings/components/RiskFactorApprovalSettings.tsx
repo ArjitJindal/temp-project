@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsCard from '@/components/library/SettingsCard';
 import Select from '@/components/library/Select';
-import { useHasResources, useRoles } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -22,17 +23,17 @@ export const RiskFactorApprovalSettings: React.FC = () => {
   const isApprovalWorkflowsEnabled = useFeatureEnabled('APPROVAL_WORKFLOWS');
   // todo: use factors permissions
   const permissions = useHasResources(['write:::settings/risk-scoring/risk-levels-approval/*']);
-  const [roles, isLoadingRoles] = useRoles();
+  const { rolesList, isLoading: isLoadingRoles } = useRoles();
 
   const [selectedRole, setSelectedRole] = useState<string>();
 
   // Create role options from fetched roles
   const roleOptions = useMemo(() => {
-    return roles.map((role) => ({
+    return rolesList.map((role) => ({
       label: formatRoleName(role.name), // Show formatted readable name
       value: role.name, // Send role name to backend
     }));
-  }, [roles]);
+  }, [rolesList]);
 
   // Fetch current workflow configuration
   const currentWorkflowQueryResult = useQuery(

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import PopupContent from './PopupContent';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 
 interface Props {
   onConfirm: (users: string[]) => void;
@@ -13,17 +13,17 @@ interface Props {
 }
 
 export function AccountsFilter(props: Props) {
-  const [users, loading] = useUsers();
+  const { users, isLoading } = useUsers();
   const { onConfirm, onUpdateFilterClose } = props;
 
   const isEmpty = useMemo(() => (props?.users?.length ? false : true), [props.users]);
 
   const finalUsers = useMemo(() => {
-    if (!loading) {
+    if (!isLoading) {
       return props.users?.map((user) => users?.[user]?.name ?? user);
     }
     return [];
-  }, [props.users, users, loading]);
+  }, [props.users, users, isLoading]);
 
   return (
     <QuickFilterBase

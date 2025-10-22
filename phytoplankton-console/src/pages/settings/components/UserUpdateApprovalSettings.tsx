@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsCard from '@/components/library/SettingsCard';
 import Select from '@/components/library/Select';
-import { useHasResources, useRoles } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
+import { useRoles, useSettingsData } from '@/utils/api/auth';
 import {
   useFeatureEnabled,
   useUpdateTenantSettings,
@@ -13,7 +14,6 @@ import { getErrorMessage, neverReturn } from '@/utils/lang';
 import Button from '@/components/library/Button';
 import {
   CreateWorkflowType,
-  TenantSettings,
   UserUpdateApprovalWorkflow,
   WorkflowSettingsUserApprovalWorkflows,
 } from '@/apis';
@@ -289,17 +289,17 @@ export const UserUpdateApprovalSettings: React.FC = () => {
 function RoleList(props: InputProps<string[]>) {
   const { value, onChange } = props;
 
-  const [roles, isLoadingRoles] = useRoles();
+  const { rolesList, isLoading: isLoadingRoles } = useRoles();
   const permissions = useHasResources(['write:::users/user-overview/*']);
 
   // Create role options from fetched roles
   const roleOptions = useMemo(() => {
-    return roles.map((role) => ({
+    return rolesList.map((role) => ({
       label: formatRoleName(role.name), // Show formatted readable name
       value: role.name, // Send role name to backend
       isDisabled: value?.includes(role.name),
     }));
-  }, [roles, value]);
+  }, [rolesList, value]);
 
   return (
     <div
@@ -385,9 +385,7 @@ function SelectWrapper(props: { children: React.ReactNode }) {
 export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
   const api = useApi();
 
-  const { data: tenantSettingsRes } = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
-    return await api.getTenantsSettings();
-  });
+  const { data: tenantSettingsRes } = useSettingsData();
 
   const fieldsToWorkflowIdRes = map(
     tenantSettingsRes,

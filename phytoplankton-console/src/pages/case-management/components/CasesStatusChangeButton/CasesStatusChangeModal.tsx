@@ -11,7 +11,8 @@ import { useApi } from '@/api';
 import { CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useCurrentUser, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useCurrentUser } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import {
   getAssigneeName,
   getStatusChangeUpdatesFromFormValues,
@@ -31,7 +32,7 @@ export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'upda
 export default function CasesStatusChangeModal(props: Props) {
   const api = useApi();
   const auth0User = useAuth0User();
-  const [users] = useUsers();
+  const { users } = useUsers();
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');

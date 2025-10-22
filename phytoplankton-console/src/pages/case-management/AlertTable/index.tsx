@@ -45,7 +45,8 @@ import { getAlertUrl, makeUrl } from '@/utils/routing';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAccounts, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
+import { useUsers, useAccounts } from '@/utils/api/auth';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -274,7 +275,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     setModalVisibility,
   } = props;
   const settings = useSettings();
-  const accounts = useAccounts();
+  const { data: accounts } = useAccounts();
   const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const isPNBDay2Enabled = useFeatureEnabled('PNB_DAY_2');
@@ -285,7 +286,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const qaEnabled = useQaEnabled();
   const api = useApi();
   const user = useAuth0User();
-  const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users, isLoading: loadingUsers } = useUsers({
+    includeRootUsers: true,
+    includeBlockedUsers: true,
+  });
   const userAccount = users[user.userId];
   const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
@@ -596,12 +600,12 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       <SlaStatus
                         slaPolicyDetails={entity.slaPolicyDetails}
                         entity={entity as Alert}
-                        accounts={accounts}
+                        accounts={getOr(accounts, [])}
                       />
                     );
                   },
                 }),
-                ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], accounts),
+                ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], getOr(accounts, [])),
               ]
             : []),
           helper.simple<'alertStatus'>({

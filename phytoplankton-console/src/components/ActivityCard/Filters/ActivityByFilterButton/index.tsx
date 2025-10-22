@@ -1,6 +1,6 @@
 import React from 'react';
 import AccountCircleOutline from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuickFilter';
 
 interface Props {
@@ -10,12 +10,12 @@ interface Props {
 
 export default function ActivityByFilterButton(props: Props) {
   const { initialState, onConfirm } = props;
-  const [users, loadingUsers] = useUsers();
-  const options = loadingUsers
+  const { users, isLoading } = useUsers();
+  const options = isLoading
     ? []
-    : Object.values(users).map((key) => ({
-        value: key.id,
-        label: key.name ?? key.email ?? key.id,
+    : Object.values(users).map((user) => ({
+        value: user.id,
+        label: user.name ?? user.email ?? user.id,
       }));
   return (
     <ListQuickFilter

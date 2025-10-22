@@ -16,7 +16,8 @@ import {
   Comment,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { useAccounts, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
+import { useUsers, useAccounts } from '@/utils/api/auth';
 import {
   AllParams,
   DerivedColumn,
@@ -112,7 +113,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
   } = props;
 
   const settings = useSettings();
-  const accounts = useAccounts();
+  const { data: accounts } = useAccounts();
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
   const user = useAuth0User();
@@ -172,7 +173,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
     reloadTable();
   }, [params.caseStatus, reloadTable]);
 
-  const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
+  const { users, isLoading } = useUsers({ includeBlockedUsers: true });
 
   const userAccount = users[user.userId];
 
@@ -389,12 +390,12 @@ function CaseTable<FirstModalProps, SecondModalProps>(
                   <SlaStatus
                     slaPolicyDetails={entity.slaPolicyDetails}
                     entity={entity as Case}
-                    accounts={accounts}
+                    accounts={getOr(accounts, [])}
                   />
                 );
               },
             }),
-            ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], accounts),
+            ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], getOr(accounts, [])),
           ]
         : []) as TableColumn<TableItem>[]),
       ...((isInReview
@@ -429,7 +430,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
                 },
                 render: (userId, _) => {
                   return userId ? (
-                    <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+                    <ConsoleUserAvatar userId={userId} users={users} loadingUsers={isLoading} />
                   ) : (
                     <>-</>
                   );
@@ -603,7 +604,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
             },
             render: (userId, _) => {
               return userId ? (
-                <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+                <ConsoleUserAvatar userId={userId} users={users} loadingUsers={isLoading} />
               ) : (
                 <>-</>
               );
@@ -662,7 +663,7 @@ function CaseTable<FirstModalProps, SecondModalProps>(
     user.userId,
     caseReviewAssignmentUpdateMutation,
     caseAssignmentUpdateMutation,
-    loadingUsers,
+    isLoading,
     setFirstModalVisibility,
     userAccount?.escalationLevel,
     updateFirstModalState,

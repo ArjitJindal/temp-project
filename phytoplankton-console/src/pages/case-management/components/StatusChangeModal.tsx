@@ -21,7 +21,8 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import { useCurrentUser, useUsers } from '@/utils/user-utils';
+import { useCurrentUser } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { useReasons } from '@/utils/reasons';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -102,7 +103,7 @@ export default function StatusChangeModal(props: Props) {
   const isReopen = oldStatus === 'CLOSED' && newStatus === 'REOPENED';
   const showConfirmation = isVisible && (isReopen || isAwaitingConfirmation || skipReasonsModal);
   const [showErrors, setAlwaysShowErrors] = useState(false);
-  const [users] = useUsers();
+  const { users } = useUsers();
   const currentUser = useCurrentUser();
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
   const multiLevelEscalation = useFeatureEnabled('MULTI_LEVEL_ESCALATION');

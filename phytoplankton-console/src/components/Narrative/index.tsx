@@ -22,7 +22,7 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 
 export const OTHER_REASON: string = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
@@ -109,7 +109,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
   const editorRef = useRef<MarkdownEditor>(null);
   const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
 
-  const [users] = useUsers();
+  const { users } = useUsers();
 
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');

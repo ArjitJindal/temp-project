@@ -20,14 +20,14 @@ import AccountTag from '@/components/AccountTag';
 import { getOr } from '@/utils/asyncResource';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 
 interface Params extends TableCommonParams {
   dateRange?: RangeValue<Dayjs>;
 }
 
 function TeamSLAPerformanceCard(props: WidgetProps) {
-  const [users] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
+  const { users } = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
   const startTime = dayjs().subtract(1, 'month');
   const endTime = dayjs();
   const [params, setParams] = useState<AllParams<Params>>({

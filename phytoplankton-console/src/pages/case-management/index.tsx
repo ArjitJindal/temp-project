@@ -30,7 +30,8 @@ import Label from '@/components/library/Label';
 import { applyUpdater, Updater } from '@/utils/state';
 import { useIsChanged } from '@/utils/hooks';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useAuth0User, useUsers } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { useFirstAvailableDerivedStatus } from '@/utils/permissions/case-permission-filter';
 import { useFirstAvailableDerivedAlertStatus } from '@/utils/permissions/alert-permission-filter';
 
@@ -40,7 +41,7 @@ export default function CaseManagementPage() {
   const [qaMode, setQaMode] = useQaMode();
   const hasQaEnabled = useFeatureEnabled('QA');
   const auth0User = useAuth0User();
-  const [users] = useUsers();
+  const { users } = useUsers();
   const userAccount = users[auth0User.userId];
 
   const [params, setParams] = useNavigationParams<AllParams<TableSearchParams>>({

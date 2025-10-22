@@ -8,7 +8,7 @@ import PageWrapper from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/library/Button';
-import { useRoles } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import { notEmpty } from '@/utils/array';
 
@@ -17,14 +17,14 @@ export default function () {
     section: 'team' | 'roles';
   }>();
   const navigate = useNavigate();
-  const [roles] = useRoles();
+  const { rolesList } = useRoles();
 
   const handleCreateRole = () => {
     navigate(makeUrl('/accounts/roles/new'), { replace: true });
   };
 
   const handleDownloadRoles = () => {
-    exportRolesDetails(roles);
+    exportRolesDetails(rolesList);
   };
 
   const handleTabChange = (section: string) => {

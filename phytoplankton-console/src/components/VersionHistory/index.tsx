@@ -15,7 +15,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { VersionHistory, VersionHistoryType } from '@/apis';
 import { DATE_TIME, STRING } from '@/components/library/Table/standardDataTypes';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import AccountTag from '@/components/AccountTag';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
@@ -100,7 +100,7 @@ export default function RiskLevelsVersionHistoryPage() {
     });
   });
 
-  const [users] = useUsers();
+  const { users } = useUsers();
   const helper = new ColumnHelper<VersionHistory>();
 
   const columns: TableColumn<VersionHistory>[] = helper.list([

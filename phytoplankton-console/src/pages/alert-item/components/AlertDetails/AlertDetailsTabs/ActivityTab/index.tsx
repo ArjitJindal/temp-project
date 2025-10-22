@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { flatten } from 'lodash';
 import { Alert, AlertStatus, Comment as ApiComment } from '@/apis';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import {
   CommentEditorRef,
   FormValues as CommentEditorFormValues,
@@ -104,7 +104,7 @@ export default function ActivityTab(props: Props) {
     },
   );
 
-  const [users, _] = useUsers();
+  const { users } = useUsers();
 
   const riskClassificationValues = useRiskClassificationScores();
 

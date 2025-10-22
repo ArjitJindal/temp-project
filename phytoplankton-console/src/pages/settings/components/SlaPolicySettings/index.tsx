@@ -23,8 +23,8 @@ import {
   useAuth0User,
   useCurrentUser,
   useHasResources,
-  useUsers,
 } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
@@ -60,7 +60,7 @@ const defaultValues: FormValues = {
 export function SlaPolicySettings() {
   const api = useApi();
   const auth0User = useAuth0User();
-  const [users, loadingUsers] = useUsers();
+  const { users, isLoading } = useUsers();
   const [params, setParams] = useState<AllParams<DefaultApiGetSlaPoliciesRequest>>({
     ...DEFAULT_PARAMS_STATE,
     pageSize: 50,
@@ -226,7 +226,7 @@ export function SlaPolicySettings() {
         type: {
           render: (userId, _) => {
             return userId ? (
-              <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+              <ConsoleUserAvatar userId={userId} users={users} loadingUsers={isLoading} />
             ) : (
               <>-</>
             );
@@ -281,7 +281,7 @@ export function SlaPolicySettings() {
         },
       }),
     ]);
-  }, [deletionMutation, handleOpenForm, users, loadingUsers, handleCopySlaPolicy, isPnb]);
+  }, [deletionMutation, handleOpenForm, users, isLoading, handleCopySlaPolicy, isPnb]);
   const initialValues = selectedSlaPolicy ?? defaultValues;
   return (
     <SettingsCard

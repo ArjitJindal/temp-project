@@ -10,7 +10,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_STATS_QA_ALERTS_BY_ASSIGNEE } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { WidgetProps } from '@/components/library/Widget/types';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { map, getOr, isSuccess } from '@/utils/asyncResource';
 
@@ -43,7 +43,7 @@ const QaAlertsByAssignee = (props: Props) => {
     },
   );
 
-  const [users] = useUsers();
+  const { users } = useUsers();
 
   const itemsRes = map(qaAlertsByAssignee.data, ({ items }) => items);
 
