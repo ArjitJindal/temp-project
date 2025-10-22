@@ -353,7 +353,6 @@ export function useTanstackTable<
     },
     [
       sorting,
-      localSorting,
       onChangeParams,
       params,
       defaultSorting,
