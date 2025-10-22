@@ -1562,51 +1562,58 @@ export class CaseRepository {
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const filters = this.getMongoParamsQuery(params)
 
+    // Build an array of $and filters for each direction, then $or over the directions
     const directionFilters: Filter<Case>[] = []
+
     for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const andFilters: Filter<Case>[] = []
       const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
       if (address.addressLines) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.addressLines`]: {
             $in: address.addressLines,
           },
         })
       } else {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.addressLines`]: null,
         })
       }
       if (address.postcode) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.postcode`]: address.postcode,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.postcode`]: null })
+        andFilters.push({ [`address.${directionKey}.postcode`]: null })
       }
       if (address.city) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.city`]: address.city,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.city`]: null })
+        andFilters.push({ [`address.${directionKey}.city`]: null })
       }
       if (address.state) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.state`]: address.state,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.state`]: null })
+        andFilters.push({ [`address.${directionKey}.state`]: null })
       }
       if (address.country) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.country`]: address.country,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.country`]: null })
+        andFilters.push({ [`address.${directionKey}.country`]: null })
       }
+      directionFilters.push({ $and: andFilters })
+    }
 
+    if (directionFilters.length > 0) {
       filters.push({ $or: directionFilters })
     }
+
     return await casesCollection
       .find({
         ...(filters.length > 0 ? { $and: filters } : {}),

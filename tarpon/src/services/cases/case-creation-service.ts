@@ -1295,7 +1295,7 @@ export class CaseCreationService {
     return `${ruleInstanceId}${RULEINSTANCE_SEPARATOR}${searchTerm}`
   }
 
-  private async getCasesBySubject(
+  public async getCasesBySubject(
     subject: CaseSubject,
     params: SubjectCasesQueryParams
   ): Promise<Case[]> {
