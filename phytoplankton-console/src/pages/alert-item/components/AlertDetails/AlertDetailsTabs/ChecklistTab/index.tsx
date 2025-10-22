@@ -11,7 +11,6 @@ import SegmentedControl from '@/components/library/SegmentedControl';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { TableRefType, ColumnDataType } from '@/components/library/Table/types';
-import Button from '@/components/library/Button';
 import * as Card from '@/components/ui/Card';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { statusInReview } from '@/utils/case-utils';
@@ -21,97 +20,6 @@ import { ChecklistItem, HydratedChecklist } from '@/utils/api/alerts/types';
 interface Props {
   alert: Alert;
 }
-
-const CHECKLIST_STATUS_TYPE: ColumnDataType<ChecklistDoneStatus, ChecklistItem> = {
-  render: (value) => <>{value === 'NOT_STARTED' ? '-' : humanizeConstant(value ?? '')}</>,
-  renderEdit: (context) => {
-    const [state] = context.edit.state;
-    return (
-      <Dropdown<ChecklistDoneStatus>
-        options={(['DONE', 'NOT_DONE', 'NOT_APPLICABLE'] as const).map((s) => ({
-          label: humanizeConstant(s),
-          value: s,
-        }))}
-        arrow={'LINE'}
-        bordered
-        disabled={context.edit.isBusy}
-        selectedKeys={[state ?? '']}
-        onSelect={(e) => context.edit.onConfirm(e.value)}
-        minWidth={150}
-        writeResources={['write:::case-management/case-overview/*']}
-      >
-        <div>{humanizeConstant(state ?? 'SELECT_STATUS')}</div>
-      </Dropdown>
-    );
-  },
-};
-
-const QA_STATUS_TYPE: ColumnDataType<ChecklistStatus | undefined, ChecklistItem> = {
-  render: (value) => {
-    switch (value) {
-      case 'PASSED':
-        return <>Pass</>;
-      case 'FAILED':
-        return <>Fail</>;
-      case 'NOT_APPLICABLE':
-        return <>Not applicable</>;
-      default:
-        return <>-</>;
-    }
-  },
-  renderEdit: (context) => {
-    const [state] = context.edit.state;
-    return (
-      <Dropdown<ChecklistStatus>
-        options={CHECKLIST_STATUSS.map((s) => ({
-          label:
-            s === 'NOT_APPLICABLE'
-              ? 'Not applicable'
-              : s === 'PASSED'
-              ? 'Pass'
-              : s === 'FAILED'
-              ? 'Fail'
-              : 'Select status',
-          value: s,
-        }))}
-        arrow={'LINE'}
-        bordered
-        disabled={context.edit.isBusy}
-        onSelect={(e) => context.edit.onConfirm(e.value)}
-        minWidth={200}
-        selectedKeys={state ? [state] : undefined}
-        writeResources={['write:::case-management/qa/*']}
-      >
-        <div>
-          {state == null
-            ? 'Select status'
-            : state === 'PASSED'
-            ? 'Pass'
-            : state === 'FAILED'
-            ? 'Fail'
-            : state === 'NOT_APPLICABLE'
-            ? 'Not applicable'
-            : '-'}
-        </div>
-      </Dropdown>
-    );
-  },
-};
-
-const COMMENT_TYPE: ColumnDataType<string | undefined, ChecklistItem> = {
-  render: (value) => <div>{value}</div>,
-  renderEdit: (context) => {
-    const [state] = context.edit.state;
-    return (
-      <EditableComment
-        value={state}
-        onChange={(value) => context.edit.onConfirm(value)}
-        onBlur={() => {}}
-        isDisabled={context.edit.isBusy}
-      />
-    );
-  },
-};
 
 export default function ChecklistTab(props: Props) {
   const { alert } = props;
@@ -238,6 +146,125 @@ export default function ChecklistTab(props: Props) {
 
   const columns = useMemo(() => {
     const helper = new ColumnHelper<ChecklistItem>();
+    const canEdit = (_item?: ChecklistItem) => isStatusEditable || qaModeSet;
+
+    const DONE_TYPE: ColumnDataType<ChecklistDoneStatus, ChecklistItem> = {
+      render: (value) => <>{value === 'NOT_STARTED' ? '-' : humanizeConstant(value ?? '')}</>,
+      renderEdit: (context) => {
+        const [state] = context.edit.state;
+        const item = context.item;
+        return (
+          <Dropdown<ChecklistDoneStatus>
+            options={(['DONE', 'NOT_DONE', 'NOT_APPLICABLE'] as const).map((s) => ({
+              label: humanizeConstant(s),
+              value: s,
+            }))}
+            arrow={'LINE'}
+            bordered
+            disabled={context.edit.isBusy || !canEdit(item)}
+            selectedKeys={[state ?? '']}
+            onSelect={(e) => {
+              // Persist immediately (no actions column)
+              if (item && item.id) {
+                checklistItemChangeMutation.mutate({
+                  item,
+                  changes: { done: e.value },
+                });
+              }
+              context.edit.onConfirm(e.value);
+            }}
+            minWidth={150}
+            writeResources={['write:::case-management/case-overview/*']}
+          >
+            <div>{humanizeConstant(state ?? 'SELECT_STATUS')}</div>
+          </Dropdown>
+        );
+      },
+    };
+
+    const QA_STATUS_TYPE: ColumnDataType<ChecklistStatus | undefined, ChecklistItem> = {
+      render: (value) => {
+        switch (value) {
+          case 'PASSED':
+            return <>Pass</>;
+          case 'FAILED':
+            return <>Fail</>;
+          case 'NOT_APPLICABLE':
+            return <>Not applicable</>;
+          default:
+            return <>-</>;
+        }
+      },
+      renderEdit: (context) => {
+        const [state] = context.edit.state;
+        const item = context.item;
+        return (
+          <Dropdown<ChecklistStatus>
+            options={CHECKLIST_STATUSS.map((s) => ({
+              label:
+                s === 'NOT_APPLICABLE'
+                  ? 'Not applicable'
+                  : s === 'PASSED'
+                  ? 'Pass'
+                  : s === 'FAILED'
+                  ? 'Fail'
+                  : 'Select status',
+              value: s,
+            }))}
+            arrow={'LINE'}
+            bordered
+            disabled={context.edit.isBusy || !canEdit(item)}
+            onSelect={(e) => {
+              if (item && item.id) {
+                onQaStatusChange.mutate({
+                  status: e.value,
+                  checklistItemIds: [item.id],
+                });
+              }
+              context.edit.onConfirm(e.value);
+            }}
+            minWidth={200}
+            selectedKeys={state ? [state] : undefined}
+            writeResources={['write:::case-management/qa/*']}
+          >
+            <div>
+              {state == null
+                ? 'Select status'
+                : state === 'PASSED'
+                ? 'Pass'
+                : state === 'FAILED'
+                ? 'Fail'
+                : state === 'NOT_APPLICABLE'
+                ? 'Not applicable'
+                : '-'}
+            </div>
+          </Dropdown>
+        );
+      },
+    };
+
+    const COMMENT_TYPE: ColumnDataType<string | undefined, ChecklistItem> = {
+      render: (value) => <div>{value}</div>,
+      renderEdit: (context) => {
+        const [state] = context.edit.state;
+        const item = context.item;
+        return (
+          <EditableComment
+            value={state}
+            onChange={(value) => context.edit.onConfirm(value)}
+            onBlur={() => {
+              if (item && item.id && canEdit(item)) {
+                checklistItemChangeMutation.mutate({
+                  item,
+                  changes: { comment: state },
+                });
+              }
+            }}
+            isDisabled={context.edit.isBusy || !canEdit(item)}
+          />
+        );
+      },
+    };
     const columns = helper.list([
       helper.simple({
         key: 'name',
@@ -252,7 +279,8 @@ export default function ChecklistTab(props: Props) {
         key: 'done',
         title: 'Checklist status',
         defaultWidth: 200,
-        type: CHECKLIST_STATUS_TYPE as any,
+        defaultEditState: isStatusEditable,
+        type: DONE_TYPE,
       }),
     ]);
 
@@ -262,6 +290,7 @@ export default function ChecklistTab(props: Props) {
           title: 'QA status',
           key: 'qaStatus',
           defaultWidth: 220,
+          defaultEditState: true,
           type: QA_STATUS_TYPE as any,
         }),
       );
@@ -269,59 +298,14 @@ export default function ChecklistTab(props: Props) {
         helper.simple<'comment'>({
           key: 'comment',
           title: 'Comment',
+          defaultEditState: true,
           type: COMMENT_TYPE as any,
-        }),
-      );
-      columns.push(
-        helper.display({
-          title: 'Actions',
-          id: 'rowActions',
-          defaultWidth: 160,
-          render: (item, context) => {
-            const rowApi = context.rowApi;
-            const canEdit = isStatusEditable || qaModeSet;
-            if (rowApi?.isEditing) {
-              return (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Button
-                    size="SMALL"
-                    type="PRIMARY"
-                    isLoading={Boolean(rowApi?.isBusy)}
-                    onClick={() => {
-                      rowApi.save?.();
-                    }}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    size="SMALL"
-                    type="SECONDARY"
-                    isLoading={Boolean(rowApi?.isBusy)}
-                    onClick={() => rowApi.cancelEdit?.()}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              );
-            }
-            return (
-              <Button
-                size="SMALL"
-                type="SECONDARY"
-                isLoading={Boolean(rowApi?.isBusy)}
-                isDisabled={!canEdit}
-                onClick={() => rowApi?.startEdit?.()}
-              >
-                Edit
-              </Button>
-            );
-          },
         }),
       );
     }
 
     return columns;
-  }, [qaModeSet, isStatusEditable]);
+  }, [qaModeSet, isStatusEditable, checklistItemChangeMutation, onQaStatusChange]);
 
   return (
     <AsyncResourceRenderer<HydratedChecklist> resource={checklistQueryResult.data}>
