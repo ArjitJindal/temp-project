@@ -21,7 +21,9 @@ import { isValidAIAttribute } from '@/apis/models-custom/AIAttribute';
 
 export const AISources = () => {
   const settings = useSettings();
-  const updateSettings = useUpdateTenantSettings('AI sources settings saved successfully');
+  const updateSettings = useUpdateTenantSettings({
+    successMessage: 'AI sources settings saved successfully',
+  });
   const [aiSourcesDisabled, setAiSourcesDisabled] = useState(settings.aiSourcesDisabled ?? []);
   const api = useApi();
   const AI_SOURCES = useQuery<AiSourcesResponse>(COPILOT_AI_RESOURCES(), async () => {
