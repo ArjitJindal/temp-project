@@ -694,7 +694,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.registrationId) {
       andFilters.push({
-        bool: {
+        compound: {
           should: [
             {
               text: {
