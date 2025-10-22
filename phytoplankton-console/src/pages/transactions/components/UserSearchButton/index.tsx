@@ -89,7 +89,9 @@ export default function UserSearchButton(props: Props) {
 
   return (
     <QuickFilterBase
-      title={title ?? `${firstLetterUpper(settings.userAlias)} ID/Name`}
+      title={
+        title ?? `${firstLetterUpper(settings.userAlias)} ${filterType === 'id' ? 'ID' : 'name'}`
+      }
       icon={<UserProfileIcon />}
       buttonText={filterType === 'id' ? userId : user?.name ?? userId ?? params?.userName}
       onClear={
