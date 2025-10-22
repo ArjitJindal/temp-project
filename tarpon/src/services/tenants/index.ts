@@ -886,17 +886,7 @@ export class TenantService {
   public async getTenantSettings(
     unmaskDowJonesPassword?: boolean
   ): Promise<TenantSettings> {
-    if (!unmaskDowJonesPassword) {
-      const contextTenantSettings = getContext()?.settings
-      if (contextTenantSettings) {
-        return contextTenantSettings
-      }
-    }
-
-    const tenantRepository = new TenantRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-    const settings = await tenantRepository.getTenantSettings()
+    const settings = await tenantSettings(this.tenantId)
 
     if (
       settings.sanctions?.dowjonesCreds?.password &&

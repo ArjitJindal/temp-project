@@ -107,12 +107,6 @@ export async function getInitialContext(
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       const allSettings = await tenantRepository.getTenantSettings()
 
-      if (allSettings?.sanctions?.dowjonesCreds?.password) {
-        allSettings.sanctions.dowjonesCreds.password = '*'.repeat(
-          allSettings.sanctions.dowjonesCreds.password.length
-        )
-      }
-
       features = allSettings?.features
       settings = allSettings
     }
@@ -494,8 +488,7 @@ export async function userStatements(
 }
 
 export async function tenantSettings(
-  tenantId: string,
-  unmaskDowJonesPassword?: boolean
+  tenantId: string
 ): Promise<TenantSettings> {
   const contextSettings = getContext()?.settings
   if (contextSettings && !isEmpty(contextSettings) && !unmaskDowJonesPassword) {
@@ -506,12 +499,6 @@ export async function tenantSettings(
     dynamoDb: getDynamoDbClient(),
   })
   const settings = await tenantRepository.getTenantSettings()
-
-  if (settings?.sanctions?.dowjonesCreds?.password && !unmaskDowJonesPassword) {
-    settings.sanctions.dowjonesCreds.password = '*'.repeat(
-      settings.sanctions.dowjonesCreds.password.length
-    )
-  }
 
   if (isEmpty(contextSettings) && settings) {
     updateTenantSettings(settings)
