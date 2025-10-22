@@ -326,16 +326,16 @@ export function useTanstackTable<
   const handleChangeSorting = useCallback(
     (changes: Updater<TanTable.SortingState>) => {
       if (clientSideSorting) {
-        // For client-side sorting, update local sorting state
-        const newState: TanTable.SortingState = applyUpdater(localSorting, changes);
-        setLocalSorting(newState);
+        setLocalSorting((prev) => {
+          const newState = applyUpdater(prev, changes);
+          const newSort: SortingParamsItem[] =
+            newState.length === 0 && defaultSorting != null
+              ? [defaultSorting]
+              : newState.map(({ id, desc }) => [id, desc ? 'descend' : 'ascend']);
+          setSortingPersisted(newSort);
 
-        // Also persist the sorting state
-        const newSort: SortingParamsItem[] =
-          newState.length === 0 && defaultSorting != null
-            ? [defaultSorting]
-            : newState.map(({ id, desc }) => [id, desc ? 'descend' : 'ascend']);
-        setSortingPersisted(newSort);
+          return newState;
+        });
         return;
       }
 
