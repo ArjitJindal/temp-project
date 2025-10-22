@@ -702,7 +702,11 @@ export class AccountsService {
     const patchedUser = await this.auth0.patchAccount(
       { tenantId: tenant.id, orgName: tenant.orgName },
       accountId,
-      { app_metadata: patchedData, role: patchedData.role },
+      {
+        app_metadata: patchedData,
+        role: patchedData.role,
+        name: patchedData.name,
+      },
       overwriteReviewPermissions
     )
 
