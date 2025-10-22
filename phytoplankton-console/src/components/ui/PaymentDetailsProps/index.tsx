@@ -14,7 +14,7 @@ import {
   Tag as ApiTag,
   CurrencyCode,
   UserDetails,
-  CorrespondenceBankDetails,
+  CorrespondentBankDetails,
 } from '@/apis';
 import { notNullish } from '@/utils/array';
 import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
@@ -169,9 +169,9 @@ function renderValue(
     ));
   }
 
-  if (key === 'correspondenceBankDetails') {
-    const correspondenceBankDetails = value as CorrespondenceBankDetails[];
-    return correspondenceBankDetails.map((correspondenceBankDetail) => (
+  if (key === 'correspondentBankDetails') {
+    const correspondentBankDetails = value as CorrespondentBankDetails[];
+    return correspondentBankDetails.map((correspondenceBankDetail) => (
       <BankDetails key={correspondenceBankDetail.bankName} bankDetails={correspondenceBankDetail} />
     ));
   }

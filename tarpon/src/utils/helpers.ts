@@ -167,9 +167,9 @@ export const extractBankInfoFromPaymentDetails = (
         },
       ]
     case 'SWIFT': {
-      const correspondenceBankDetails = paymentDetails.correspondenceBankDetails
+      const correspondentBankDetails = paymentDetails.correspondentBankDetails
       const bankNames: BankInfo[] =
-        correspondenceBankDetails?.map((correspondenceBankDetail) => ({
+        correspondentBankDetails?.map((correspondenceBankDetail) => ({
           bankName: correspondenceBankDetail.bankName,
         })) ?? []
 
