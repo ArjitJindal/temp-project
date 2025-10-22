@@ -20,9 +20,10 @@ import {
   QuestionResponse,
   QuestionResponseSkeleton,
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
-import { ALERT_ITEM, COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
+import { COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
+import { useAlertDetails } from '@/utils/api/alerts';
 
 type FormValues = {
   searchString: string;
@@ -57,10 +58,7 @@ export const SearchBar = (props: Props) => {
   ];
 
   const api = useApi();
-  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
-    const response = await api.getAlert({ alertId });
-    return response;
-  });
+  const alertQueryResult = useAlertDetails(alertId);
   const alert = getOr(alertQueryResult.data, undefined);
   const suggestionsQueryResult = useQuery<string[]>(
     COPILOT_SUGGESTIONS(debouncedSearch, alertId),

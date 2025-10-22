@@ -1,10 +1,8 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useApi } from '@/api';
 import { useAuth0User, useHasResources } from '@/utils/user-utils';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
-import { ALERT_ITEM } from '@/utils/queries/keys';
 import { canAssignToUser, createAssignments, getAssignmentsToShow } from '@/utils/case-utils';
 import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import {
@@ -14,6 +12,7 @@ import {
 } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { all } from '@/utils/asyncResource';
+import { useAlertDetails } from '@/utils/api/alerts';
 
 interface Props {
   alertItem: Alert;
@@ -22,10 +21,11 @@ interface Props {
 export default function AlertAssigneesDropdown(props: Props): JSX.Element {
   const { alertItem } = props;
   const api = useApi();
-  const client = useQueryClient();
   const user = useAuth0User();
   const hasEditingPermission = useHasResources(['write:::case-management/case-overview/*']);
   const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
+
+  const alertDetails = useAlertDetails(alertItem.alertId);
 
   const reviewAssignmentsToMutationAlerts = useMutation<
     unknown,
@@ -41,9 +41,9 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
       });
     },
     {
-      onSuccess: async () => {
+      onSuccess: () => {
         message.success('Review assignees updated successfully');
-        await client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
+        alertDetails.refetch();
       },
       onError: (error) => {
         message.fatal(`Unable to assign alert: ${error.message}`);
@@ -63,7 +63,7 @@ export default function AlertAssigneesDropdown(props: Props): JSX.Element {
     {
       onSuccess: async () => {
         message.success('Assignees updated successfully');
-        await client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
+        alertDetails.refetch();
       },
       onError: (error) => {
         message.fatal(`Unable to assign alert: ${error.message}`);

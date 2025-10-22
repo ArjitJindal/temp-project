@@ -4,7 +4,7 @@ import { TableSearchParams } from '../../types';
 import { QAFormValues } from '../types';
 import { QAModal } from '../Modal';
 import { useAlertsSamplingCreateMutation } from '../utils';
-import { getAlertsQueryParams } from '../../common';
+import { getAlertsQueryParams } from '../../utils';
 import s from './style.module.less';
 import Dropdown, { DropdownOption } from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';

@@ -9,14 +9,13 @@ import AlertsStatusChangeModal, {
 } from './components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import { dayjs } from '@/utils/dayjs';
 import { Case } from '@/apis';
-import { useApi } from '@/api';
-import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
+import { PaginatedData } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
-import { CASES_LIST } from '@/utils/queries/keys';
 import { useRuleOptions } from '@/utils/rules';
 import { useAuth0User } from '@/utils/user-utils';
 import { getStatuses } from '@/utils/case-utils';
 import { QueryResult } from '@/utils/queries/types';
+import { useCaseList } from '@/utils/api/cases';
 
 interface CaseTableChildrenProps extends ModalHandlers<CasesStatusChangeModalProps> {
   params: AllParams<TableSearchParams>;
@@ -32,104 +31,56 @@ export default function CaseTableWrapper(props: {
 }) {
   const { params, onChangeParams } = props;
 
-  const api = useApi({ debounce: 500 });
   const auth0user = useAuth0User();
+  const [sortField, sortOrder] = params.sort[0] ?? [];
 
-  const queryResults = usePaginatedQuery<Case>(
-    CASES_LIST(params),
-    async (paginationParams) => {
-      const {
-        sort,
-        page,
-        pageSize,
-        view,
-        createdTimestamp,
-        caseId,
-        rulesHitFilter,
-        rulesExecutedFilter,
-        userId,
-        parentUserId,
-        originMethodFilter,
-        destinationMethodFilter,
-        tagKey,
-        tagValue,
-        caseStatus,
-        businessIndustryFilter,
-        riskLevels,
-        userStates,
-        showCases,
-        assignedTo,
-        roleAssignedTo,
-        updatedAt,
-        caseTypesFilter,
-        ruleQueueIds,
-        alertPriority,
-        ruleNature,
-        filterCaseSlaPolicyId,
-        filterCaseSlaPolicyStatus,
-        filterClosingReason,
-      } = params;
+  const queryResults = useCaseList({
+    ...params,
+    filterId: params.caseId,
+    filterRulesHit: params.rulesHitFilter,
+    filterRulesExecuted: params.rulesExecutedFilter,
+    filterCaseStatus: getStatuses(params.caseStatus),
+    filterUserId: params.userId,
+    filterParentUserId: params.parentUserId,
+    sortField: sortField ?? undefined,
+    sortOrder: sortOrder ?? undefined,
+    filterOriginPaymentMethods: params.originMethodFilter,
+    filterDestinationPaymentMethods: params.destinationMethodFilter,
+    filterTransactionTagKey: params.tagKey,
+    filterTransactionTagValue: params.tagValue,
+    filterBusinessIndustries: params.businessIndustryFilter,
+    filterRiskLevel: params.riskLevels,
+    filterCaseTypes: params.caseTypesFilter,
+    filterUserState: params.userStates,
+    filterRuleQueueIds: params.ruleQueueIds,
+    filterRuleNature: params.ruleNature,
+    filterAssignmentsIds:
+      params.showCases === 'MY'
+        ? [auth0user.userId]
+        : params.assignedTo?.length
+        ? params.assignedTo
+        : undefined,
+    filterAssignmentsRoles: params.roleAssignedTo?.length ? params.roleAssignedTo : undefined,
+    ...(params.updatedAt && {
+      filterCasesByLastUpdatedStartTimestamp: params.updatedAt
+        ? dayjs(params.updatedAt[0]).valueOf()
+        : 0,
+      filterCasesByLastUpdatedEndTimestamp: params.updatedAt
+        ? dayjs(params.updatedAt[1]).valueOf()
+        : Number.MAX_SAFE_INTEGER,
+    }),
+    filterAlertPriority: params.alertPriority,
+    filterCaseSlaPolicyId: params.filterCaseSlaPolicyId?.length
+      ? params.filterCaseSlaPolicyId
+      : undefined,
+    filterCaseSlaPolicyStatus: params.filterCaseSlaPolicyStatus?.length
+      ? params.filterCaseSlaPolicyStatus
+      : undefined,
+    filterCaseClosureReasons: params.filterClosingReason?.length
+      ? params.filterClosingReason
+      : undefined,
+  });
 
-      const [sortField, sortOrder] = sort[0] ?? [];
-
-      const afterTimestamp =
-        createdTimestamp && createdTimestamp[0] !== undefined && createdTimestamp[0] !== null
-          ? dayjs(createdTimestamp[0]).valueOf()
-          : 0;
-      const beforeTimestamp =
-        createdTimestamp && createdTimestamp[1] !== undefined && createdTimestamp[1] !== null
-          ? dayjs(createdTimestamp[1]).valueOf()
-          : Number.MAX_SAFE_INTEGER;
-
-      const response = await api.getCaseList({
-        page,
-        pageSize,
-        view,
-        ...paginationParams,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId: caseId,
-        filterRulesHit: rulesHitFilter,
-        filterRulesExecuted: rulesExecutedFilter,
-        filterCaseStatus: getStatuses(caseStatus),
-        filterUserId: userId,
-        filterParentUserId: parentUserId,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        filterOriginPaymentMethods: originMethodFilter,
-        filterDestinationPaymentMethods: destinationMethodFilter,
-        filterTransactionTagKey: tagKey,
-        filterTransactionTagValue: tagValue,
-        filterBusinessIndustries: businessIndustryFilter,
-        filterRiskLevel: riskLevels,
-        filterCaseTypes: caseTypesFilter,
-        filterUserState: userStates,
-        filterRuleQueueIds: ruleQueueIds,
-        filterRuleNature: ruleNature,
-        filterAssignmentsIds:
-          showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
-        filterAssignmentsRoles: roleAssignedTo?.length ? roleAssignedTo : undefined,
-        ...(updatedAt && {
-          filterCasesByLastUpdatedStartTimestamp: updatedAt ? dayjs(updatedAt[0]).valueOf() : 0,
-          filterCasesByLastUpdatedEndTimestamp: updatedAt
-            ? dayjs(updatedAt[1]).valueOf()
-            : Number.MAX_SAFE_INTEGER,
-        }),
-        filterAlertPriority: alertPriority,
-        filterCaseSlaPolicyId: filterCaseSlaPolicyId?.length ? filterCaseSlaPolicyId : undefined,
-        filterCaseSlaPolicyStatus: filterCaseSlaPolicyStatus?.length
-          ? filterCaseSlaPolicyStatus
-          : undefined,
-        filterCaseClosureReasons: filterClosingReason?.length ? filterClosingReason : undefined,
-      });
-
-      return {
-        total: response.total,
-        items: response.data,
-      };
-    },
-    { meta: { atf: true } },
-  );
   const ruleOptions = useRuleOptions();
 
   return (

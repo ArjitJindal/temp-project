@@ -1,6 +1,6 @@
 import { useCallback, useState, useMemo } from 'react';
 import { atom } from 'jotai';
-import { clone } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { RiskFactor } from '@/apis';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import {
@@ -11,12 +11,27 @@ import {
 export const DEFAULT_SIMULATION_STORAGE_KEY = 'temp-risk-factors';
 export const SimulationLocalStorageKey = 'risk-factors-simulation';
 
-export const useSimulationRiskFactors = (jobId: string, activeIterationIndex: number) => {
+export const useSimulationRiskFactors = (
+  jobId: string,
+  activeIterationIndex: number,
+  defaultRiskFactorsMap: RiskFactor[],
+) => {
+  const localStorageKey = `${SimulationLocalStorageKey}-${jobId ?? 'new'}-${activeIterationIndex}`;
+  const initialRiskFactorsMap: RiskFactorsTypeMap = defaultRiskFactorsMap.reduce(
+    (acc, riskFactor) => {
+      acc[riskFactor.type].push(riskFactor);
+      return acc;
+    },
+    cloneDeep(DEFAULT_RISK_FACTORS_MAP),
+  );
+  // Setting the value on first render or when key changes
+  useMemo(() => {
+    if (!window.localStorage.getItem(localStorageKey)) {
+      window.localStorage.setItem(localStorageKey, JSON.stringify(initialRiskFactorsMap));
+    }
+  }, [localStorageKey, initialRiskFactorsMap]);
   const [simulationRiskFactorsMap, setSimulationRiskFactorsMap] =
-    useSafeLocalStorageState<RiskFactorsTypeMap>(
-      `${SimulationLocalStorageKey}-${jobId ?? 'new'}-${activeIterationIndex}`,
-      clone(DEFAULT_RISK_FACTORS_MAP),
-    );
+    useSafeLocalStorageState<RiskFactorsTypeMap>(localStorageKey, initialRiskFactorsMap, true);
 
   return {
     simulationRiskFactorsMap,
@@ -40,9 +55,9 @@ export const useTempRiskFactors = (params: TempRiskFactorsParams) => {
           acc[riskFactor.type].push(riskFactor);
         }
         return acc;
-      }, clone(DEFAULT_RISK_FACTORS_MAP));
+      }, cloneDeep(DEFAULT_RISK_FACTORS_MAP));
     }
-    return clone(DEFAULT_RISK_FACTORS_MAP);
+    return cloneDeep(DEFAULT_RISK_FACTORS_MAP);
   }, [riskFactors]);
 
   const [localStorageRiskFactors, setLocalStorageRiskFactors] =

@@ -1,11 +1,7 @@
-import React from 'react';
 import pluralize from 'pluralize';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import dayjs, { TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import { all } from '@/utils/asyncResource';
@@ -14,11 +10,12 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
-import { Case } from '@/apis';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useAlertDetails } from '@/utils/api/alerts';
+import { useCaseDetails } from '@/utils/api/cases';
 
 interface Props {
   alertId: string;
@@ -27,22 +24,11 @@ interface Props {
 
 export default function InvestigativeCoPilotAlertInfo(props: Props) {
   const { alertId, caseId } = props;
-  const api = useApi();
   const settings = useSettings();
 
-  const caseQueryResults = useQuery(
-    CASES_ITEM(caseId),
-    (): Promise<Case> =>
-      api.getCase({
-        caseId,
-      }),
-  );
+  const caseQueryResults = useCaseDetails(caseId);
 
-  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () =>
-    api.getAlert({
-      alertId,
-    }),
-  );
+  const alertQueryResult = useAlertDetails(alertId);
 
   return (
     <AsyncResourceRenderer resource={all([caseQueryResults.data, alertQueryResult.data])}>

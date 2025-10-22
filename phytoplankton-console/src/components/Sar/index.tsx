@@ -9,14 +9,15 @@ import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import { useApi } from '@/api';
 import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import { Case, Report, ReportTypesResponse } from '@/apis';
+import { Report, ReportTypesResponse } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
-import { CASES_ITEM, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
+import { REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { ReportSubjectType } from '@/apis/models/ReportSubjectType';
 import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useCaseDetails } from '@/utils/api/cases/index';
 
 interface CommonProps {
   alertIds?: string[];
@@ -39,13 +40,7 @@ export function SarButton(props: UserProps | CaseProps) {
     return api.getReportTypes({ allReportType: true });
   });
 
-  const caseQueryResult = useQuery<Case>(
-    CASES_ITEM('caseId' in props ? props.caseId : ''),
-    async () => {
-      return await api.getCase({ caseId: 'caseId' in props ? props.caseId : '' });
-    },
-    { enabled: 'caseId' in props },
-  );
+  const caseQueryResult = useCaseDetails('caseId' in props ? props.caseId : undefined);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setLoading] = useState(false);

@@ -24,17 +24,36 @@ import {
 } from '@/utils/asyncResource';
 import { RiskFactorRow } from '@/pages/risk-levels/risk-factors/RiskFactorsTable/types';
 
-interface Props {
+type BaseProps = {
   type: string;
-  mode: 'simulation' | 'normal' | 'version-history';
-  simulationRiskFactors?: RiskFactor[];
   queryResults: (selectedSection: ScopeSelectorValue) => QueryResult<{ items: RiskFactor[] }>;
-  activeIterationIndex?: number;
   jobId?: string;
   canEditRiskFactors?: boolean;
-  handleSimulationSave?: (riskFactors: RiskFactor[]) => void;
   baseUrl?: string;
-}
+};
+
+type SimulationModeProps = BaseProps & {
+  mode: 'simulation';
+  activeIterationIndex: number;
+  simulationRiskFactors?: RiskFactor[];
+  handleSimulationSave?: (riskFactors: RiskFactor[]) => void;
+};
+
+type NormalModeProps = BaseProps & {
+  mode: 'normal';
+  activeIterationIndex?: number;
+  simulationRiskFactors?: never;
+  handleSimulationSave?: never;
+};
+
+type VersionHistoryModeProps = BaseProps & {
+  mode: 'version-history';
+  activeIterationIndex?: number;
+  simulationRiskFactors?: never;
+  handleSimulationSave?: never;
+};
+
+type Props = SimulationModeProps | NormalModeProps | VersionHistoryModeProps;
 
 export default function RiskFactorsTable(props: Props) {
   const {
@@ -42,7 +61,7 @@ export default function RiskFactorsTable(props: Props) {
     mode,
     simulationRiskFactors,
     queryResults: queryResultsFactory,
-    activeIterationIndex = 1,
+    activeIterationIndex,
     jobId,
     canEditRiskFactors = true,
     handleSimulationSave,
@@ -127,7 +146,6 @@ export default function RiskFactorsTable(props: Props) {
             case 'TRANSACTION':
               return type === 'transaction';
           }
-          return false;
         })
         .map((proposal): RiskFactorRow => {
           return {
@@ -168,6 +186,7 @@ export default function RiskFactorsTable(props: Props) {
           }
         }}
         mode={mode}
+        activeIterationIndex={activeIterationIndex}
       />
       <QueryResultsTable<RiskFactorRow>
         rowKey="id"

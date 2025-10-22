@@ -10,10 +10,9 @@ import ActivityTab from './ActivityTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
-import { CursorPaginatedData, useCursorQuery, useQuery } from '@/utils/queries/hooks';
+import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
 import {
   ALERT_ITEM_COMMENTS,
-  CASES_ITEM,
   SANCTIONS_HITS_ALL,
   SANCTIONS_HITS_SEARCH,
 } from '@/utils/queries/keys';
@@ -52,6 +51,7 @@ import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords';
 import CRMDataComponent from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
 import Tooltip from '@/components/library/Tooltip';
+import { useCaseDetails } from '@/utils/api/cases';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -285,7 +285,6 @@ export function useAlertTabs(props: Props): TabItem[] {
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
 
-  const api = useApi();
   const settings = useSettings();
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
@@ -293,12 +292,7 @@ export function useAlertTabs(props: Props): TabItem[] {
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
-  const caseQueryResult = useQuery(CASES_ITEM(alert.caseId ?? ''), () => {
-    if (alert.caseId == null) {
-      throw new Error(`Alert doesn't have case assigned`);
-    }
-    return api.getCase({ caseId: alert.caseId });
-  });
+  const caseQueryResult = useCaseDetails(alert.caseId ?? undefined);
   const userQueryResult = useConsoleUser(caseUserId);
 
   const tabs: TabItem[] = useMemo(() => {

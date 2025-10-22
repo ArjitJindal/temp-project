@@ -5,7 +5,6 @@ import { useLocation } from 'react-router';
 import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
-import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import SlaStatus from '../components/SlaStatus';
@@ -35,13 +34,11 @@ import {
   isSingleRow,
   SelectionAction,
   TableColumn,
-  TableData,
   TableDataSimpleItem,
   TableRefType,
 } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
-import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, makeUrl } from '@/utils/routing';
@@ -106,6 +103,7 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
+import { useAlertList } from '@/utils/api/alerts';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -374,7 +372,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
   const { changeHitsStatusMutation } = useChangeSanctionsHitsStatusMutation();
 
-  const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
+  const queryResults = useAlertList(params);
 
   const actionRef = useRef<TableRefType>(null);
 
