@@ -3,6 +3,8 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { useNavigate, useParams } from 'react-router';
 import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
+import Button from '@/components/library/Button';
+import Upload2LineIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.svg';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import {
@@ -193,9 +195,23 @@ export default function UsersList() {
   useEffect(() => {
     setLocalStorageActiveTab(list);
   }, [setLocalStorageActiveTab, list]);
+  const showImportButton = list === 'consumer' || list === 'business';
+
   return (
     <PageWrapper
       title={i18n('menu.users.lists').replace('Users', `${firstLetterUpper(settings.userAlias)}s`)}
+      actionButton={
+        showImportButton && (
+          <Button
+            type={'TETRIARY'}
+            asLink={true}
+            to={`/users/list/${list}/import`}
+            icon={<Upload2LineIcon />}
+          >
+            Import CSV
+          </Button>
+        )
+      }
     >
       <PageTabs
         activeKey={list}

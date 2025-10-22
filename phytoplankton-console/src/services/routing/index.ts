@@ -36,6 +36,7 @@ import SanctionsPage from '@/pages/sanctions';
 import SettingsPage from '@/pages/settings';
 import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
+import UsersImport from '@/pages/users-import/UsersImport';
 import UsersItemPage from '@/pages/users-item';
 import UsersUsersListPage from '@/pages/users/users-list';
 import WorkflowsPage from '@/pages/workflows/workflows-page';
@@ -52,7 +53,6 @@ import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPag
 import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
-import TransactionsImport from '@/pages/transactions-import';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -183,7 +183,7 @@ export function useRoutes(): RouteItem[] {
           },
           {
             name: 'transactions-import',
-            component: TransactionsImport,
+            component: TransactionsListPage,
             path: '/transactions/import/csv',
           },
           {
@@ -226,6 +226,12 @@ export function useRoutes(): RouteItem[] {
                 path: '/users/list/:list',
                 name: 'user-lists-all',
                 component: UsersUsersListPage,
+              },
+              {
+                path: '/users/list/:list/import',
+                name: 'user-import',
+                component: UsersImport,
+                hideInMenu: true,
               },
               {
                 path: '/users/list/:list/:id',
