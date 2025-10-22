@@ -112,7 +112,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     tenantId: string,
     connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
-    const settings = await tenantSettings(tenantId)
+    const settings = await tenantSettings(tenantId, true)
     const dowJonesSettings = settings?.sanctions?.providerScreeningTypes?.find(
       (type) => type.provider === SanctionsDataProviders.DOW_JONES
     )
