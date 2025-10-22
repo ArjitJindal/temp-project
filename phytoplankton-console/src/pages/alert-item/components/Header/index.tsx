@@ -138,7 +138,7 @@ export default function Header(props: Props) {
                   ? [
                       {
                         value: 'ai-forensics-report',
-                        label: <div className={s.centeredLabel}>AIF Report</div>,
+                        label: <div className={s.leftLabel}>AIF Report</div>,
                       },
                     ]
                   : []),
@@ -314,13 +314,13 @@ function buildEscalationOptions(
       // Basic escalation
       result.push({
         value: 'escalate',
-        label: <div className={s.centeredLabel}>Escalate</div>,
+        label: <div className={s.leftLabel}>Escalate</div>,
       });
     } else if (isMultiLevelEscalationEnabled && isAlertEscalated && !isAlertEscalatedL2) {
       // L2 escalation
       result.push({
         value: 'escalate-l2',
-        label: <div className={s.centeredLabel}>Escalate L2</div>,
+        label: <div className={s.leftLabel}>Escalate L2</div>,
       });
     }
   }
