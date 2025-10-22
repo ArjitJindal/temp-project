@@ -70,8 +70,7 @@ const RiskClassificationTable = (props: Props) => {
     isActive: settings.riskLevelAlias?.find(({ level }) => level === key)?.isActive ?? true,
   })) as TableItem[];
 
-
-  const columns = makeColumns({ state, setState, isDisabled ,LEVEL_ENTRIES });
+  const columns = makeColumns({ state, setState, isDisabled, LEVEL_ENTRIES });
   return (
     <Table<TableItem>
       rowKey="key"

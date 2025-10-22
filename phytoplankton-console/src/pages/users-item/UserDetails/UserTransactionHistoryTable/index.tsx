@@ -15,7 +15,6 @@ import {
 } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { CASES_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
@@ -74,7 +73,6 @@ type TableParams = TransactionsTableParams;
 
 export function Content(props: { userId: string }) {
   const { userId } = props;
-  const api = useApi();
   const settings = useSettings();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const riskClassificationValues = useRiskClassificationScores();
