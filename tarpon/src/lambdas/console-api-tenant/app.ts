@@ -15,7 +15,7 @@ import {
   assertCurrentUserRoleAboveAdmin,
   assertHasDangerousTenantDelete,
 } from '@/@types/jwt'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -168,7 +168,7 @@ export const tenantsHandler = lambdaApi()(
       if (newTenantId && isDemoTenant(newTenantId)) {
         throw new BadRequest('Tenant id should not end with -test')
       }
-      const dynamoDb = getDynamoDbClient()
+      const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantService = new TenantService(newTenantId, {
         mongoDb,
         dynamoDb,
