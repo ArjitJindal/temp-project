@@ -756,9 +756,7 @@ withFeaturesToggled(
         const notifications =
           await notificationsService.getNotificationsByRecipient(user2)
 
-        // TODO: restore this line - the issue is caused by PNB escalation quickfixes
-        // expect(notifications.length).toBe(1)
-        expect(notifications.length).toBe(2)
+        expect(notifications.length).toBe(1)
         expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
           'SENT'
         )
@@ -1015,9 +1013,7 @@ withFeaturesToggled(
         const notifications =
           await notificationsService.getNotificationsByRecipient(user2)
 
-        // TODO: restore this line - the issue is caused by PNB escalation quickfixes
-        // expect(notifications.length).toBe(1)
-        expect(notifications.length).toBe(2)
+        expect(notifications.length).toBe(1)
         expect(notifications[0]?.consoleNotificationStatuses?.[0].status).toBe(
           'SENT'
         )
