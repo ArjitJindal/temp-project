@@ -51,7 +51,11 @@ import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 import { assertCurrentUserRole, isFlagrightInternalUser } from '@/@types/jwt'
-import { tenantSettings, updateTenantSettings } from '@/core/utils/context'
+import {
+  sanitizeTenantSettings,
+  tenantSettings,
+  updateTenantSettings,
+} from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
@@ -89,13 +93,6 @@ const secondaryQueueTenantsCache = createNonConsoleApiInMemoryCache<string[]>({
   max: 100,
   ttlMinutes: 10,
 })
-
-export const maskPassword = (password: string): string => {
-  if (!password) {
-    return password
-  }
-  return '*'.repeat(password.length)
-}
 
 @traceable
 export class TenantService {
@@ -886,18 +883,10 @@ export class TenantService {
   public async getTenantSettings(
     unmaskDowJonesPassword?: boolean
   ): Promise<TenantSettings> {
+    // this always contains dowjones password
     const settings = await tenantSettings(this.tenantId)
 
-    if (
-      settings.sanctions?.dowjonesCreds?.password &&
-      !unmaskDowJonesPassword
-    ) {
-      settings.sanctions.dowjonesCreds.password = maskPassword(
-        settings.sanctions.dowjonesCreds.password
-      )
-    }
-
-    return settings
+    return sanitizeTenantSettings(settings, !unmaskDowJonesPassword)
   }
 
   public async getTenantById(tenantId: string) {
