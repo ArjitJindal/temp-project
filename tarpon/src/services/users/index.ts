@@ -1388,7 +1388,8 @@ export class UserService {
 
   public async getUser(
     userId: string,
-    getAttachments: boolean
+    getAttachments: boolean,
+    excludeComments: boolean = false
   ): Promise<InternalUser> {
     const user = await this.userRepository.getUserById(userId)
 
@@ -1467,7 +1468,7 @@ export class UserService {
 
     return {
       ...user,
-      comments: mergedComments,
+      comments: excludeComments ? [] : mergedComments,
       attachments: userAttachments,
       shareHolders: user.shareHolders?.map((shareHolder) => {
         return {
@@ -1492,9 +1493,10 @@ export class UserService {
 
   @auditLog('USER', 'USER_VIEW', 'VIEW')
   public async getBusinessUser(
-    userId: string
+    userId: string,
+    excludeComments: boolean = false
   ): Promise<AuditLogReturnData<InternalBusinessUser | null>> {
-    const user = await this.getUser(userId, true)
+    const user = await this.getUser(userId, true, excludeComments)
 
     return {
       entities: [{ entityId: userId, entityAction: 'VIEW' }],
@@ -1504,9 +1506,10 @@ export class UserService {
 
   @auditLog('USER', 'USER_VIEW', 'VIEW')
   public async getConsumerUser(
-    userId: string
+    userId: string,
+    excludeComments: boolean = false
   ): Promise<AuditLogReturnData<InternalConsumerUser | null>> {
-    const user = await this.getUser(userId, true)
+    const user = await this.getUser(userId, true, excludeComments)
     return {
       entities: [{ entityId: userId, entityAction: 'VIEW' }],
       result: user && (await this.getAugmentedUser<InternalConsumerUser>(user)),
