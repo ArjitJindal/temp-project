@@ -22,6 +22,7 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
+import { useHasResources } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
 
 export const OTHER_REASON: string = 'Other';
@@ -113,6 +114,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
 
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
+  const hasTransactionWritePermission = useHasResources(['write:::transactions/overview/*']);
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -181,7 +183,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
           {(inputProps) => <TextInput {...inputProps} />}
         </InputField>
       )}
-      {showPaymentApprovalStatusChange && (
+      {showPaymentApprovalStatusChange && hasTransactionWritePermission && (
         <InputField<FormValues<R>, 'updateTransactionStatus'>
           name="updateTransactionStatus"
           label="Update status of suspended transactions to"
