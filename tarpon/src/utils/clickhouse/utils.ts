@@ -745,8 +745,16 @@ export const runExecClickhouseQuery = async (
 
 export const createDbIfNotExists = async (tenantId: string) => {
   await executeClickhouseDefaultClientQuery(async (client) => {
-    await client.query({
-      query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(tenantId)}`,
-    })
+    await executeWithBackoff(
+      async () => {
+        await client.query({
+          query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(
+            tenantId
+          )}`,
+        })
+      },
+      'create database',
+      { tenantId, databaseName: getClickhouseDbName(tenantId) }
+    )
   })
 }
