@@ -208,7 +208,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () => {
         const txnIndexes: Document[] = [
           'arsScore.arsScore',
-          'arsScore.riskLevel',
           'caseStatus',
           'createdAt',
           'updatedAt',
@@ -219,10 +218,8 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'destinationPaymentDetails.method',
           'originPaymentMethodId',
           'destinationPaymentMethodId',
-          'destinationUserId',
           'executedRules.ruleHit',
           'executedRules.ruleId',
-          'executedRules.ruleInstanceId',
           'hitRules.ruleAction',
           'hitRules.isShadow',
           'hitRules.ruleHitMeta.hitDirections',
@@ -231,7 +228,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'originAmountDetails.transactionCurrency',
           'originPaymentDetails.country',
           'originPaymentDetails.method',
-          'originUserId',
           'status',
           'tags.key',
           'transactionState',
@@ -239,7 +235,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'hitRules.ruleInstanceId',
           'paymentApprovalTimestamp',
         ].flatMap((i) => {
-          return [{ [i]: 1, timestamp: 1, _id: 1 }]
+          return [{ [i]: 1, timestamp: 1 }]
         })
 
         txnIndexes.push(
