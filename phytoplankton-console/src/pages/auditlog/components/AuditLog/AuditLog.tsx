@@ -124,7 +124,9 @@ export default function AuditLogTable() {
         return {
           entityType: item.type,
           entityId:
-            item.type === 'RULE' && item.action !== 'DOWNLOAD'
+            item.type === 'ACCOUNT'
+              ? item.newImage?.email
+              : item.type === 'RULE' && item.action !== 'DOWNLOAD'
               ? `${item.logMetadata.ruleId} (${item.entityId})`
               : item.entityId,
         };
