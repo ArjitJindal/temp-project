@@ -19,6 +19,24 @@ export const createTransactionFunctionPerformanceDashboard = (
         search: 'flagright/ApiUsageMetrics',
         populateFrom: 'Tenant Id',
       },
+      {
+        type: 'pattern',
+        pattern: '__BIN__',
+        inputType: 'input',
+        id: 'bin_minutes',
+        label: 'BinDuration(mins)[PressEnter]',
+        defaultValue: '2',
+        visible: true,
+      },
+      {
+        type: 'pattern',
+        pattern: '__RPSBIN__',
+        inputType: 'input',
+        id: 'bin_seconds',
+        label: 'RPS BIN (seconds)',
+        defaultValue: '10',
+        visible: true,
+      },
     ],
     widgets: [
       {
@@ -55,10 +73,10 @@ export const createTransactionFunctionPerformanceDashboard = (
         height: 6,
         properties: {
           query:
-            "SOURCE '/aws/lambda/tarponPublicApiTransactionFunction' | fields @timestamp, @requestId, @duration, @initDuration, requestId, tenantId\n| filter @message like /REPORT RequestId/ or @message like /Verifying transaction/\n| filter not(ispresent(tenantId)) or tenantId='__TENANT_ID__'\n| stats \n    bin(earliest(@timestamp), 2m) as time_bucket,\n    latest(tenantId) as tenant_id,\n    latest(@duration) + coalesce(latest(@initDuration), 0) as duration\n    by coalesce(requestId, @requestId) as request_id\n| filter ispresent(tenant_id) and ispresent(duration) and ispresent(request_id)\n| stats \n    pct(duration, 99) as p99_duration,\n    pct(duration, 50) as p50_duration\n    by time_bucket\n| sort time_bucket desc",
+            "SOURCE '/aws/lambda/tarponPublicApiTransactionFunction' | fields @timestamp, @requestId, @duration, @initDuration, requestId, tenantId\n| filter @message like /REPORT RequestId/ or @message like /Verifying transaction/\n| filter not(ispresent(tenantId)) or tenantId='__TENANT_ID__'\n| stats \n    bin(earliest(@timestamp), __BIN__m) as time_bucket,\n    latest(tenantId) as tenant_id,\n    latest(@duration) + coalesce(latest(@initDuration), 0) as duration\n    by coalesce(requestId, @requestId) as request_id\n| filter ispresent(tenant_id) and ispresent(duration) and ispresent(request_id)\n| stats \n    pct(duration, 99) as p99_duration,\n    pct(duration, 50) as p50_duration,\n    max(duration) as max_duration\n    by time_bucket\n| sort time_bucket desc",
           queryLanguage: 'CWLI',
           region: stack.region,
-          title: 'Performance Trends[P50, P99] - 2mins bin',
+          title: 'Performance Trends[P50, P99] - __BIN__mins bin',
           view: 'timeSeries',
           stacked: false,
         },
@@ -67,6 +85,22 @@ export const createTransactionFunctionPerformanceDashboard = (
         type: 'log',
         x: 0,
         y: 15,
+        width: 24,
+        height: 6,
+        properties: {
+          query:
+            "SOURCE '/aws/lambda/tarponPublicApiTransactionFunction' | fields @timestamp, @message, @logStream, @log\n| filter tenantId='__TENANT_ID__' and message like /Verifying transaction/\n| stats count() as requests by bin(@timestamp, __RPSBIN__s) as time_bucket\n| sort time_bucket desc",
+          queryLanguage: 'CWLI',
+          region: stack.region,
+          title: 'RPS - __RPSBIN__ seconds bin',
+          view: 'timeSeries',
+          stacked: false,
+        },
+      },
+      {
+        type: 'log',
+        x: 0,
+        y: 21,
         width: 24,
         height: 6,
         properties: {
@@ -81,7 +115,7 @@ export const createTransactionFunctionPerformanceDashboard = (
       {
         type: 'log',
         x: 0,
-        y: 21,
+        y: 27,
         width: 24,
         height: 3,
         properties: {
