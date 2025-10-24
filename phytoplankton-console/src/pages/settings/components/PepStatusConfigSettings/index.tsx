@@ -11,7 +11,7 @@ export const PepStatusConfigSettings = () => {
   const settings = useSettings();
   const permissions = useHasResources(['write:::settings/users/pep-status-lock/*']);
 
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const mutateTenantSettings = useUpdateTenantSettings({ enableReloadSettings: true });
   const handleDisable = () => {
     mutateTenantSettings.mutate({ pepStatusLock: false });
   };

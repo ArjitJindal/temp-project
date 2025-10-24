@@ -8,7 +8,7 @@ import { useHasResources } from '@/utils/user-utils';
 
 export default function CraToggleSettings() {
   const settings = useSettings();
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const mutateTenantSettings = useUpdateTenantSettings({ enableReloadSettings: true });
   const permissions = useHasResources(['write:::settings/risk-scoring/risk-scoring-cra/*']);
   const handleDisable = () => {
     mutateTenantSettings.mutate({ riskScoringCraEnabled: false });
