@@ -2417,7 +2417,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (
       !vpc ||
       !this.config.resource.LAMBDA_VPC_ENABLED ||
-      envIsNot('sandbox') // TODO: remove this once we have a way to test SQS Interface VPC endpoint
+      (envIsNot('prod') && envIsNot('sandbox'))
     ) {
       return null
     }
