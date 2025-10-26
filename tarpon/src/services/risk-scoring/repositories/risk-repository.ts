@@ -26,6 +26,7 @@ import {
 import {
   hasFeature,
   tenantHasFeature,
+  tenantSettings,
   updateTenantRiskClassificationValues,
 } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
@@ -127,8 +128,13 @@ export class RiskRepository {
   ): Promise<RiskLevel | null | undefined> {
     const drsScore = await this.getDrsScore(userId)
     const riskClassificationValues = await this.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     return drsScore?.prevDrsScore
-      ? getRiskLevelFromScore(riskClassificationValues, drsScore.prevDrsScore)
+      ? getRiskLevelFromScore(
+          riskClassificationValues,
+          drsScore.prevDrsScore,
+          riskLevelAlias
+        )
       : null
   }
 
@@ -756,9 +762,11 @@ export class RiskRepository {
     }
 
     const riskClassificationValues = await this.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const derivedRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      drsScore.drsScore
+      drsScore.drsScore,
+      riskLevelAlias
     )
     const result = {
       ...drsScore,
@@ -914,14 +922,15 @@ export class RiskRepository {
     items: Array<T>
   ): Promise<T[]> {
     const riskClassificationValues = await this.getRiskClassificationValues()
-
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     return items.map((item) => ({
       ...item,
       arsScore: item.arsScore && {
         ...item.arsScore,
         riskLevel: getRiskLevelFromScore(
           riskClassificationValues,
-          item.arsScore.arsScore
+          item.arsScore.arsScore,
+          riskLevelAlias
         ),
       },
     }))
@@ -1261,12 +1270,14 @@ export class RiskRepository {
       { userId }
     )
     const riskClassificationValues = await this.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     return krsValue
       ? {
           ...krsValue,
           riskLevel: getRiskLevelFromScore(
             riskClassificationValues,
-            krsValue.krsScore
+            krsValue.krsScore,
+            riskLevelAlias
           ),
         }
       : null
@@ -1720,6 +1731,7 @@ export class RiskRepository {
     const count = await collection.countDocuments({ userId: request.userId })
 
     const riskClassificationValues = await this.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const arsPromises = result.map((data) => {
       const hasArs = !isNotArsChangeTxId(data.transactionId)
       return hasArs && data.transactionId
@@ -1735,7 +1747,8 @@ export class RiskRepository {
         ? {
             arsRiskLevel: getRiskLevelFromScore(
               riskClassificationValues,
-              arsScore?.arsScore ?? null
+              arsScore?.arsScore ?? null,
+              riskLevelAlias
             ),
             arsRiskScore: arsScore?.arsScore,
           }
@@ -1745,7 +1758,8 @@ export class RiskRepository {
         ...data,
         derivedRiskLevel: getRiskLevelFromScore(
           riskClassificationValues,
-          data.drsScore
+          data.drsScore,
+          riskLevelAlias
         ),
         ...arsData,
       }

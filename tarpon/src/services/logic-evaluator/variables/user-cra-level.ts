@@ -4,7 +4,7 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize'
 import { CommonUserLogicVariable, LogicVariableContext } from './types'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
-import { hasFeatures } from '@/core/utils/context'
+import { hasFeatures, tenantSettings } from '@/core/utils/context'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
@@ -47,10 +47,12 @@ export const USER_CRA_LEVEL: CommonUserLogicVariable = {
     })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(context.tenantId)
     const craScore = await riskRepository.getDrsScore(user.userId)
     return getRiskLevelFromScore(
       riskClassificationValues,
-      craScore?.drsScore ?? null
+      craScore?.drsScore ?? null,
+      riskLevelAlias
     )
   },
 }

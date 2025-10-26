@@ -49,6 +49,7 @@ import { RiskClassificationApprovalRequestActionEnum } from '@/@types/openapi-in
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { tenantSettings } from '@/core/utils/context'
 
 export const RISK_LEVEL_CONSTANT = 'RLV'
 export const RISK_FACTORS_VERSION_CONSTANT = 'RFV'
@@ -298,9 +299,11 @@ export class RiskService {
       delete result['SortKeyID']
       const riskClassificationValues =
         await this.riskRepository.getRiskClassificationValues()
+      const { riskLevelAlias } = await tenantSettings(this.tenantId)
       const riskLevel = getRiskLevelFromScore(
         riskClassificationValues,
-        result.krsScore
+        result.krsScore,
+        riskLevelAlias
       )
       result = {
         ...result,
@@ -421,9 +424,11 @@ export class RiskService {
       delete result['SortKeyID']
       const riskClassificationValues =
         await this.riskRepository.getRiskClassificationValues()
+      const { riskLevelAlias } = await tenantSettings(this.tenantId)
       const derivedRiskLevel = getRiskLevelFromScore(
         riskClassificationValues,
-        result.drsScore
+        result.drsScore,
+        riskLevelAlias
       )
       result = {
         ...result,

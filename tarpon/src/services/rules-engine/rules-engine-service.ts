@@ -72,6 +72,7 @@ import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import {
   hasFeature,
   publishMetric,
+  tenantSettings,
   updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
@@ -452,19 +453,22 @@ export class RulesEngineService {
         ])
         const riskClassificationValues =
           await this.riskRepository.getRiskClassificationValues()
+        const { riskLevelAlias } = await tenantSettings(this.tenantId)
         const userRiskScoreDetails = {
           originUserCraRiskScore: originUserDrs?.drsScore,
           destinationUserCraRiskScore: destinationUserDrs?.drsScore,
           originUserCraRiskLevel: originUserDrs?.drsScore
             ? getRiskLevelFromScore(
                 riskClassificationValues,
-                originUserDrs.drsScore
+                originUserDrs.drsScore,
+                riskLevelAlias
               )
             : undefined,
           destinationUserCraRiskLevel: destinationUserDrs?.drsScore
             ? getRiskLevelFromScore(
                 riskClassificationValues,
-                destinationUserDrs.drsScore
+                destinationUserDrs.drsScore,
+                riskLevelAlias
               )
             : undefined,
         }
