@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { RiskClassificationScore, RiskLevel } from '@/apis';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
 import Table from '@/components/library/Table';
@@ -64,12 +64,16 @@ const RiskClassificationTable = (props: Props) => {
   const { state, setState, isDisabled = false } = props;
   const settings = useSettings();
 
-  const LEVEL_ENTRIES = RISK_LEVELS.map((key, i) => ({
-    key,
-    index: i,
-    title: RISK_LEVEL_LABELS[key],
-    isActive: settings.riskLevelAlias?.find(({ level }) => level === key)?.isActive ?? true,
-  })) as TableItem[];
+  const LEVEL_ENTRIES = useMemo(
+    () =>
+      RISK_LEVELS.map((key, i) => ({
+        key,
+        index: i,
+        title: RISK_LEVEL_LABELS[key],
+        isActive: settings.riskLevelAlias?.find(({ level }) => level === key)?.isActive ?? true,
+      })) as TableItem[],
+    [settings.riskLevelAlias],
+  );
 
   useEffect(() => {
     if (!setState) {

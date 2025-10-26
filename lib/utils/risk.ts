@@ -77,6 +77,13 @@ export const getRiskLevelFromScore = (
   }
 
   if (!riskLevel) {
+    const firstActive = activeLevels[0]
+    if (firstActive && riskScore < firstActive.lowerBoundRiskScore) {
+      riskLevel = firstActive.riskLevel
+    }
+  }
+
+  if (!riskLevel) {
     const lastActive = activeLevels[activeLevels.length - 1]
     if (lastActive && riskScore >= lastActive.upperBoundRiskScore) {
       riskLevel = lastActive.riskLevel
