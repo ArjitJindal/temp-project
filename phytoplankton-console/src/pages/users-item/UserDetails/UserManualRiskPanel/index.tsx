@@ -307,6 +307,10 @@ export default function UserManualRiskPanel(props: Props) {
     }
     const drsData = syncState.value;
 
+    if (!drsData) {
+      return undefined;
+    }
+
     return {
       lockedAt: drsData.lockedAt,
       lockExpiresAt: drsData.lockExpiresAt,
