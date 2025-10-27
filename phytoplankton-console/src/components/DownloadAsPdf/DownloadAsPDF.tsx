@@ -283,7 +283,7 @@ const DownloadAsPDF = async (props: Props) => {
     const pageWidth = doc.internal.pageSize.getWidth() - 20;
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    let position = 30;
+    let position = 35;
     addAndSetFonts(doc);
 
     addTopFormatting(doc, logoImage, orientation, documentTimestamp);
@@ -300,7 +300,7 @@ const DownloadAsPDF = async (props: Props) => {
         if (i > 0) {
           doc.addPage();
           addTopFormatting(doc, logoImage, orientation, documentTimestamp);
-          position = 0;
+          position = 5; // Start new pages with some clearance from logo
         }
         position += reportTitle ? 16 : 0;
         if (!addRecurringPages) {
