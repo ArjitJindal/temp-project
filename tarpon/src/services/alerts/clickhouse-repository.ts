@@ -356,7 +356,13 @@ export class ClickhouseAlertRepository {
 
     if (params.filterTransactionIds != null) {
       whereConditions.push(
-        `hasAny(transactionIds, ['${params.filterTransactionIds.join("','")}'])`
+        `id IN (
+           SELECT
+             replaceAll(alertId, '"', '') AS alertId
+           FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+           ARRAY JOIN JSONExtractArrayRaw(data, 'alertIds') AS alertId
+           WHERE id IN ('${params.filterTransactionIds.join("','")}')
+        )`
       )
     }
 
