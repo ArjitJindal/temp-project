@@ -896,15 +896,20 @@ export class ClickhouseTransactionsRepository {
       labelFormat = 'MM/DD HH:00'
     }
 
+    const aggregateByField =
+      params.aggregateBy === 'originCurrency'
+        ? 'originAmountDetails_transactionCurrency'
+        : params.aggregateBy === 'status'
+        ? 'status'
+        : 'transactionState'
+
     const query = `
       SELECT
         ${clickhouseFormat} as timedata,
         count() as count,
         timestamp,
         sum(originAmountDetails_amountInUsd) as sum,
-        ${
-          params.aggregateBy === 'status' ? 'status' : 'transactionState'
-        } as aggregateBy
+        ${aggregateByField} as aggregateBy
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE ${whereClause}
       GROUP BY timestamp, timedata, aggregateBy

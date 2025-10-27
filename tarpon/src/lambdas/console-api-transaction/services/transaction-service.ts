@@ -1,7 +1,7 @@
 import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { NotFound } from 'http-errors'
+import createHttpError, { NotFound } from 'http-errors'
 import compact from 'lodash/compact'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -816,7 +816,7 @@ export class TransactionService {
   public async getStatsByTime(
     params: DefaultApiGetTransactionsStatsByTimeRequest,
     referenceCurrency: Currency,
-    aggregateBy: 'status' | 'transactionState'
+    aggregateBy: 'status' | 'transactionState' | 'originCurrency'
   ): Promise<TransactionsStatsByTimeResponse['data']> {
     if (isClickhouseEnabled()) {
       const clickhouseClient = await getClickhouseClient(this.tenantId)
@@ -833,10 +833,16 @@ export class TransactionService {
       )
     }
 
+    if (aggregateBy === 'originCurrency' && !isClickhouseEnabled()) {
+      throw new createHttpError.BadRequest(
+        'Origin currency is not supported for MongoDB'
+      )
+    }
+
     return await this.transactionRepository.getStatsByTime(
       params,
       referenceCurrency,
-      aggregateBy
+      aggregateBy as 'status' | 'transactionState'
     )
   }
 
