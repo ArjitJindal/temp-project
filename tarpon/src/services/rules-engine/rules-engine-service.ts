@@ -2005,6 +2005,7 @@ export class RulesEngineService {
   public async applyTransactionAction(
     data: TransactionAction,
     userId: string,
+    email: string,
     paymentApprovalAction: boolean = false
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
@@ -2090,6 +2091,7 @@ export class RulesEngineService {
           comment,
           type: txn?.type,
         } as TransactionStatusDetails,
+        account: email,
       }))
 
     await sendWebhookTasks<TransactionStatusDetails>(

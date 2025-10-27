@@ -116,7 +116,8 @@ export class UpdateTransactionStatusBatchJobRunner extends BatchJobRunner {
             comment: comment ?? '',
             otherReason: otherReason,
           },
-          parameters.userId
+          parameters.userId,
+          parameters.email || ''
         )
       },
       { concurrency: 10 }

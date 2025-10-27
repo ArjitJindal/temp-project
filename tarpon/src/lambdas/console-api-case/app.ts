@@ -379,6 +379,7 @@ export const casesHandler = lambdaApi()(
             reason: updates.reason,
             otherReason: updates.otherReason,
             userId: ctx.userId,
+            email: ctx.email,
           },
         })
       }
@@ -404,6 +405,7 @@ export const casesHandler = lambdaApi()(
             reason: updates.reason,
             otherReason: updates.otherReason,
             userId: ctx.userId,
+            email: ctx.email,
           },
         })
       }

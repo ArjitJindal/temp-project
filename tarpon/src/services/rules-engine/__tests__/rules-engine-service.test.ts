@@ -1202,7 +1202,8 @@ describe('Verify Transaction for Simulation', () => {
         reason: ['Anti-money laundering'],
         comment: 'test',
       },
-      'user1'
+      'user1',
+      'test@email.com'
     )
     const txn = await transactionRepository.getInternalTransactionById(
       t.transactionId

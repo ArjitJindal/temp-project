@@ -255,6 +255,7 @@ export const transactionsViewHandler = lambdaApi()(
       const response = await rulesEngineService.applyTransactionAction(
         req.TransactionAction,
         ctx.userId,
+        ctx.email,
         true
       )
       await caseService.applyTransactionAction(req.TransactionAction)

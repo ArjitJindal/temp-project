@@ -48,6 +48,7 @@ async function buildWebhookRequest(
     data: webhookDeliveryTask.payload,
     createdTimestamp: webhookDeliveryTask.createdAt,
     triggeredBy: webhookDeliveryTask.triggeredBy,
+    account: webhookDeliveryTask.account,
   }
 
   const hmacs = secrets.map((secret) => createHmac('sha256', secret))

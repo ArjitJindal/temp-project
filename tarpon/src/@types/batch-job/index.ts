@@ -559,6 +559,7 @@ interface UpdateTransactionStatusBatchJobParameters {
   reason: string[]
   otherReason: string | undefined
   userId: string
+  email?: string
 }
 
 interface CaseUpdateTransactionStatusBatchJobParameters

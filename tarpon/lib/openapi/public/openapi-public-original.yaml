@@ -6192,6 +6192,9 @@ components:
             epoch.
           minimum: 315529200000
           maximum: 4133890801000
+        account:
+          type: string
+          description: Email ID associated with the event
       required:
         - id
         - triggeredBy

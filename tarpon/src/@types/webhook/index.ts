@@ -13,6 +13,7 @@ export type WebhookDeliveryTask<T extends object = object> = {
   payload: T
   triggeredBy: 'MANUAL' | 'SYSTEM'
   entityId: string
+  account?: string
 }
 
 export type WebhookRetryTask<T extends object = object> = {
