@@ -297,6 +297,10 @@ const customTextWidget: CoreWidgets['text'] = {
       }
     }
 
+    if (isViewMode(props.config)) {
+      return <ViewModeTags>{[props.value]}</ViewModeTags>;
+    }
+
     if (MULTI_SELECT_LIST_OPERATORS.includes(operator)) {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
