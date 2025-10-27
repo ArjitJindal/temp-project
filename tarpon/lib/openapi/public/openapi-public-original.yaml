@@ -6118,6 +6118,9 @@ components:
           $ref: '#/components/schemas/RuleAction'
         comment:
           type: string
+        type:
+          type: string
+          description: 'Type of transaction (ex: DEPOSIT, WITHDRAWAL, TRANSFER, EXTERNAL_PAYMENT, REFUND, OTHER)'
       required:
         - transactionId
         - status

@@ -938,7 +938,8 @@ export class RulesEngineService {
       await sendStatusChangeWebhook(
         this.tenantId,
         transaction.transactionId,
-        finalStatus
+        finalStatus,
+        transaction.type
       )
     }
   }
@@ -2087,6 +2088,7 @@ export class RulesEngineService {
           status: action,
           reasons: reason,
           comment,
+          type: txn?.type,
         } as TransactionStatusDetails,
       }))
 
@@ -2138,7 +2140,8 @@ export class RulesEngineService {
 const sendStatusChangeWebhook = async (
   tenantId: string,
   transactionId: string,
-  newStatus: string | undefined
+  newStatus: string | undefined,
+  transactionType?: string
 ) => {
   const webhookTask: ThinWebhookDeliveryTask = {
     event: 'TRANSACTION_STATUS_UPDATED',
@@ -2148,6 +2151,7 @@ const sendStatusChangeWebhook = async (
       transactionId,
       status: newStatus,
       reasons: 'Status updated by async rule',
+      transactionType,
     },
   }
   await sendWebhookTasks(tenantId, [webhookTask])
