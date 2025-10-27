@@ -3,7 +3,7 @@ import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/uti
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllUsersTableItem, RiskClassificationScore, RiskLevel } from '@/apis';
-import { FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
+import { RISK_LEVEL, RISK_SCORE } from '@/components/library/Table/standardDataTypes';
 
 export function getRiskScoringColumns(
   riskClassificationValuesMap: RiskClassificationScore[],
@@ -23,7 +23,7 @@ export function getRiskScoringColumns(
     }),
     helper.derived({
       title: 'CRA risk score',
-      type: FLOAT,
+      type: RISK_SCORE,
       tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
       value: (entity) =>
         !isEmpty(entity.manualRiskLevel) && entity.manualRiskLevel != null
@@ -50,7 +50,7 @@ export function getRiskScoringColumns(
     helper.simple<'krsScore'>({
       key: 'krsScore',
       title: 'KRS risk score',
-      type: FLOAT,
+      type: RISK_SCORE,
       tooltip: 'Know your customer - accounts for KYC Risk Score',
     }),
   ]);

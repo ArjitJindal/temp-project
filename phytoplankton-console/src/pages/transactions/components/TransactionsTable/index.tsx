@@ -38,10 +38,10 @@ import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Provider
 import {
   COUNTRY,
   DATE,
-  FLOAT,
   MONEY,
   MONEY_CURRENCIES,
   PAYMENT_METHOD,
+  RISK_SCORE,
   RULE_ACTION_STATUS,
   STRING,
   TAGS,
@@ -391,7 +391,7 @@ export default function TransactionsTable(props: Props) {
             helper.simple<'arsScore.arsScore'>({
               title: 'TRS score',
               key: 'arsScore.arsScore',
-              type: FLOAT,
+              type: RISK_SCORE,
               sorting: true,
               tooltip: 'Transaction Risk Score',
               exporting: true,

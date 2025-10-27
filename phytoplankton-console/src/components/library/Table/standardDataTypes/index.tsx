@@ -175,6 +175,28 @@ export const FLOAT: ColumnDataType<number> = {
   stringify: (value) => `${(value ?? 0.0)?.toFixed(2)}`,
 };
 
+const RiskScoreRender: React.FC<{ value: number | undefined }> = ({ value }) => {
+  return <span>{formatNumber(value ?? 0, { keepDecimals: true, showAllDecimals: false })}</span>;
+};
+
+export const RISK_SCORE: ColumnDataType<number> = {
+  render: (value) => <RiskScoreRender value={value} />,
+  stringify: (value) => `${(value ?? 0.0)?.toFixed(2)}`,
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <NumberInput
+          value={state}
+          onChange={(newValue) => {
+            context.edit.onConfirm(newValue);
+          }}
+        />
+      </div>
+    );
+  },
+};
+
 export const STRING: ColumnDataType<string> = {
   render: (value) => <span>{Array.isArray(value) ? value.join(', ') : value}</span>,
   stringify: (value) => (Array.isArray(value) ? value.join(', ') : value ?? ''),

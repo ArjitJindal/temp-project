@@ -5,9 +5,9 @@ import { InternalTransactionEvent, RiskLevel } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   DATE_TIME,
-  FLOAT,
   ID,
   RISK_LEVEL,
+  RISK_SCORE,
   TRANSACTION_STATE,
 } from '@/components/library/Table/standardDataTypes';
 import { useApi } from '@/api';
@@ -107,7 +107,7 @@ export default function TransactionEventsTable(props: Props) {
       helper.simple<'riskScoreDetails.trsScore'>({
         title: 'TRS score',
         key: 'riskScoreDetails.trsScore',
-        type: FLOAT,
+        type: RISK_SCORE,
       }),
       helper.derived({
         title: 'TRS level',
