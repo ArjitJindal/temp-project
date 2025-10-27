@@ -37,6 +37,7 @@ interface DownloadSourceProps {
   evidenceId?: string;
   entityType?: SanctionsEntityType;
   sanctionsSourceFields?: SanctionsSourceFields[];
+  url?: string;
 }
 
 export default function ListingCard(props: Props & DownloadSourceProps) {
@@ -54,6 +55,7 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
     entityType,
     sanctionsSourceFields,
     provider,
+    url,
   } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = compact(listedTime);
@@ -78,7 +80,10 @@ export default function ListingCard(props: Props & DownloadSourceProps) {
           )}
           <div className={s.titleText}>
             {title}
-            {!pdfMode && typeof title !== 'string' && provider === 'acuris' ? (
+            {!pdfMode &&
+            typeof title !== 'string' &&
+            provider === 'acuris' &&
+            !url?.includes('acurisriskintelligence') ? (
               <DownloadButton
                 resourceId={resourceId}
                 evidenceId={evidenceId}

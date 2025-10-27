@@ -1023,8 +1023,8 @@ export class AcurisProvider extends SanctionsDataFetcher {
         if (!isMediaSource) {
           return undefined
         }
-        const url = evidence.originalUrl || evidence.assetUrl
-        const name = evidence.title || url
+        const url = evidence.assetUrl || evidence.originalUrl
+        const name = evidence.title || evidence.originalUrl || evidence.assetUrl
         return {
           url,
           createdAt: evidence.captureDateIso
@@ -1080,8 +1080,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
     category?: string,
     sourceName?: string
   ): SanctionsSource {
-    const url = evidence.originalUrl || evidence.assetUrl
-    const name = evidenceName || evidence.title || url
+    const url = evidence.assetUrl || evidence.originalUrl
+    const name =
+      evidenceName ||
+      evidence.title ||
+      evidence.originalUrl ||
+      evidence.assetUrl
     return {
       url,
       createdAt: evidence.captureDateIso

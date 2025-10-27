@@ -677,6 +677,7 @@ function useTabs(
 
                 return (
                   <ListingCard
+                    url={source?.url}
                     pdfMode={pdfMode}
                     key={source?.name}
                     countries={source.countryCodes || []}
