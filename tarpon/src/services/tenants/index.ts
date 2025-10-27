@@ -34,6 +34,7 @@ import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { CounterRepository } from '../counter/repository'
 import { BatchRerunUsersService } from '../batch-users-rerun'
+import { createDefaultWorkflow } from '../workflow/approval-utils'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -73,6 +74,7 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { WorkflowService } from '@/services/workflow'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -475,6 +477,28 @@ export class TenantService {
         RISK_FACTORS.length
       ),
     ])
+
+    // Creating default workflows for new tenant
+    const workflowService = new WorkflowService(tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const defaultRiskFactorsApprovalWorkflow = await createDefaultWorkflow(
+      'risk-factors-approval'
+    )
+    const defaultRiskLevelsApprovalWorkflow = await createDefaultWorkflow(
+      'risk-levels-approval'
+    )
+    await workflowService.saveWorkflow(
+      'risk-factors-approval',
+      '_default',
+      defaultRiskFactorsApprovalWorkflow
+    )
+    await workflowService.saveWorkflow(
+      'risk-levels-approval',
+      '_default',
+      defaultRiskLevelsApprovalWorkflow
+    )
 
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',

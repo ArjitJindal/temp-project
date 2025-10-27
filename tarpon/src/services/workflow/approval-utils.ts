@@ -4,6 +4,8 @@ import { AccountsService } from '@/services/accounts'
 import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
 import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
 import { UserUpdateApprovalWorkflow } from '@/@types/openapi-internal/UserUpdateApprovalWorkflow'
+import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
+import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 
 type ApprovalWorkflow =
   | RiskLevelApprovalWorkflow
@@ -24,6 +26,23 @@ function isApprovalWorkflow(workflow: Workflow): workflow is ApprovalWorkflow {
     'approvalChain' in workflow &&
     Array.isArray((workflow as any).approvalChain)
   )
+}
+
+export async function createDefaultWorkflow(
+  workflowType: WorkflowType
+): Promise<Workflow> {
+  const defaultWorkflow: Workflow = {
+    id: '_default',
+    workflowType: workflowType as any,
+    version: Date.now(),
+    name: `Default ${workflowType} Workflow`,
+    description: `Default workflow for approving ${workflowType} changes`,
+    author: FLAGRIGHT_SYSTEM_USER,
+    enabled: true,
+    approvalChain: ['reviewer'],
+  }
+
+  return defaultWorkflow
 }
 
 /**
