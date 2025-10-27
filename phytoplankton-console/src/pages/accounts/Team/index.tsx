@@ -140,17 +140,17 @@ export default function Team() {
                   title: 'Name',
                   defaultWidth: 220,
                   type: {
-                    render(name, context) {
+                    render(name, _context) {
                       return (
                         <div className={s.name}>
                           <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                            {!name || context.item.email === context.item.name ? '-' : name}
+                            {!name ? '-' : name}
                           </P>
                         </div>
                       );
                     },
-                    stringify(value, item) {
-                      return !value || item.email === item.name ? '-' : value;
+                    stringify(value, _item) {
+                      return !value ? '-' : value;
                     },
                   },
                 }),
