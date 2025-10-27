@@ -763,11 +763,9 @@ export class RiskRepository {
     }
 
     const riskClassificationValues = await this.getRiskClassificationValues()
-    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const derivedRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      drsScore.drsScore,
-      riskLevelAlias
+      drsScore.drsScore
     )
     const result = {
       ...drsScore,
