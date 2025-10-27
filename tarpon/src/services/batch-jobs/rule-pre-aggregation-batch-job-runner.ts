@@ -555,7 +555,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_ADDRESS') {
-      const transactionsRepo = this.mongoTransactionsRepo
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<Address[]>([])
@@ -595,7 +597,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_EMAIL') {
-      const transactionsRepo = this.mongoTransactionsRepo
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<string[]>([])
@@ -633,7 +637,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_NAME') {
-      const transactionsRepo = this.mongoTransactionsRepo
+      const transactionsRepo = this.clickhouseTransactionsRepo
+        ? this.clickhouseTransactionsRepo
+        : this.mongoTransactionsRepo
       const originGenerator =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? staticValueGenerator<(ConsumerName | string)[]>([])
