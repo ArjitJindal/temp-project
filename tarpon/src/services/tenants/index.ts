@@ -428,7 +428,7 @@ export class TenantService {
         webhookSettings: {
           retryBackoffStrategy: 'LINEAR',
           retryOnlyFor: ['3XX', '4XX', '5XX'],
-          maxRetryHours: envIs('prod') ? 96 : 24,
+          maxRetryHours: 24,
           maxRetryReachedAction: envIs('prod') ? 'IGNORE' : 'DISABLE_WEBHOOK',
         },
         riskScoringAlgorithm: { type: 'FORMULA_SIMPLE_AVG' },

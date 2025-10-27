@@ -21,7 +21,6 @@ import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfigura
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import { initializeTenantContext, withContext } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
-import { envIs } from '@/utils/env'
 import { isWhitelabeledTenantFromSettings } from '@/utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -36,8 +35,7 @@ import { isJsonString } from '@/utils/object'
 
 export class ClientServerError extends Error {}
 
-// For non-production env, we only retry up to 1 day
-const MAX_RETRY_HOURS = envIs('prod') ? 4 * 24 : 24
+const MAX_RETRY_HOURS = 24
 
 async function buildWebhookRequest(
   tenantSettings: TenantSettings,
