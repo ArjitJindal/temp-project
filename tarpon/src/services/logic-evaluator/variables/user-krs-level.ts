@@ -4,7 +4,7 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize'
 import { CommonUserLogicVariable, LogicVariableContext } from './types'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
-import { hasFeatures } from '@/core/utils/context'
+import { hasFeatures, tenantSettings } from '@/core/utils/context'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
@@ -38,12 +38,14 @@ export const USER_KRS_LEVEL: CommonUserLogicVariable = {
     const riskRepository = new RiskRepository(context.tenantId, {
       dynamoDb,
     })
+    const { riskLevelAlias } = await tenantSettings(context.tenantId)
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
     const krsScore = await riskRepository.getKrsScore(user.userId)
     return getRiskLevelFromScore(
       riskClassificationValues,
-      krsScore?.krsScore ?? null
+      krsScore?.krsScore ?? null,
+      riskLevelAlias
     )
   },
 }

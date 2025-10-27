@@ -61,7 +61,7 @@ import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
@@ -661,6 +661,7 @@ export class UserRepository {
 
     const isPulseEnabled = this.isPulseEnabled()
     const riskClassificationValues = await this.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const queryConditions = await this.getMongoUsersQuery(
       params,
       isPulseEnabled,
@@ -750,7 +751,7 @@ export class UserRepository {
       ])
       .toArray()
     if (isPulseEnabled) {
-      users = insertRiskScores(users, riskClassificationValues)
+      users = insertRiskScores(users, riskClassificationValues, riskLevelAlias)
     }
 
     const total = await collection.countDocuments(query, {
@@ -780,6 +781,7 @@ export class UserRepository {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const [kycRiskScore, craRiskScore, riskClassificationValues] =
       await Promise.all([
         riskRepository.getKrsScore(userId),
@@ -789,12 +791,14 @@ export class UserRepository {
 
     const kycRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      kycRiskScore?.krsScore ?? null
+      kycRiskScore?.krsScore ?? null,
+      riskLevelAlias
     )
 
     const craRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      craRiskScore?.drsScore ?? null
+      craRiskScore?.drsScore ?? null,
+      riskLevelAlias
     )
 
     if (hasFeature('RISK_LEVELS') && !hasFeature('RISK_SCORING')) {

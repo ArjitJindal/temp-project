@@ -119,7 +119,7 @@ export default function TransactionTRSChartCard(props: Partial<WidgetProps>) {
               VERY_HIGH: COLORS_V2_ANALYTICS_CHARTS_02,
             }}
             formatSeries={(series) => {
-              return getRiskLevelLabel(series, settings);
+              return getRiskLevelLabel(series, settings).riskLevelLabel;
             }}
             formatCategory={formatDate}
           />

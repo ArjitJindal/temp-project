@@ -77,7 +77,7 @@ const drawBarGraph = (
   let x = startX + 10;
   RISK_LEVELS.forEach((level) => {
     const { before = 0, after = 0 } = data.get(level) || { before: 0, after: 0 };
-    const label = getRiskLevelLabel(level, settings);
+    const label = getRiskLevelLabel(level, settings).riskLevelLabel;
 
     const beforeHeight = Math.max(0, (before / maxValue) * graphHeight) || 0;
     const afterHeight = Math.max(0, (after / maxValue) * graphHeight) || 0;
@@ -130,7 +130,11 @@ const drawBarGraph = (
     const [br, bg, bb] = COLORS.GRAPH.BEFORE[level];
     doc.setFillColor(br, bg, bb);
     doc.circle(legendX + 4, currentY + 4, 1, 'F');
-    doc.text(`${getRiskLevelLabel(level, settings)} (before):`, legendX + 12, currentY + 4);
+    doc.text(
+      `${getRiskLevelLabel(level, settings).riskLevelLabel} (before):`,
+      legendX + 12,
+      currentY + 4,
+    );
     doc.text(before.toString(), legendX + 80, currentY + 4);
     currentY += 12;
   });
@@ -142,7 +146,11 @@ const drawBarGraph = (
     const [ar, ag, ab] = COLORS.GRAPH.AFTER[level];
     doc.setFillColor(ar, ag, ab);
     doc.circle(legendX + 4, currentY + 4, 1, 'F');
-    doc.text(`${getRiskLevelLabel(level, settings)} (after):`, legendX + 12, currentY + 4);
+    doc.text(
+      `${getRiskLevelLabel(level, settings).riskLevelLabel} (after):`,
+      legendX + 12,
+      currentY + 4,
+    );
     doc.text(after.toString(), legendX + 80, currentY + 4);
     currentY += 12;
   });

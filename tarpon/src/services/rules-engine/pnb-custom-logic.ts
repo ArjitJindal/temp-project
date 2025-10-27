@@ -14,6 +14,7 @@ import { User } from '@/@types/openapi-internal/User'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { tenantSettings } from '@/core/utils/context'
 
 export const PNB_INTERNAL_RULES: RuleInstance[] = [
   {
@@ -1588,13 +1589,16 @@ export async function handleInternalTagUpdateForPNB({
     })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(userRepository.tenantId)
     const currentRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      userDrsScore.drsScore
+      userDrsScore.drsScore,
+      riskLevelAlias
     )
     const previousRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      userDrsScore.prevDrsScore
+      userDrsScore.prevDrsScore,
+      riskLevelAlias
     )
     const previousRiskLevelForPnb = getRiskLevelForPNBFromTags(
       previousRiskLevel,

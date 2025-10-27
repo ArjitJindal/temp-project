@@ -10,7 +10,7 @@ import { isDemoTenant } from '@/utils/tenant-id'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { sendWebhookTasks } from '@/services/webhook/utils'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { getRiskLevelForPNB } from '@/services/rules-engine/pnb-custom-logic'
 import { User } from '@/@types/openapi-internal/User'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -67,7 +67,7 @@ export async function drsScoreEventHandler(
   const riskRepository = new RiskRepository(tenantId, dbClients)
   const userRepository = new UserRepository(tenantId, dbClients)
   const casesRepo = new CaseRepository(tenantId, dbClients)
-
+  const { riskLevelAlias } = await tenantSettings(tenantId)
   newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
 
   if (newDrsScore.triggeredBy !== 'PUBLIC_API' && newDrsScore.userId) {
@@ -76,11 +76,13 @@ export async function drsScoreEventHandler(
 
     const oldRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      oldDrsScore?.drsScore ?? null
+      oldDrsScore?.drsScore ?? null,
+      riskLevelAlias
     )
     const newRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
-      newDrsScore.drsScore
+      newDrsScore.drsScore,
+      riskLevelAlias
     )
     if (!oldDrsScore || oldRiskLevel !== newRiskLevel) {
       let riskLevel = newRiskLevel

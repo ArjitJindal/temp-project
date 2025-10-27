@@ -40,7 +40,7 @@ import { Priority } from '@/@types/openapi-internal/Priority'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import { OptionalPagination } from '@/@types/pagination'
@@ -1114,7 +1114,7 @@ export class CaseRepository {
     }
     let cursor = await this.getCasesCursor(params, options)
     const total = this.getCasesCount(params)
-
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     if (hasFeature('RISK_LEVELS')) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
@@ -1130,7 +1130,8 @@ export class CaseRepository {
         if (caseItem?.caseUsers?.originUserDrsScore != null) {
           originUserRiskLevel = getRiskLevelFromScore(
             riskClassification,
-            caseItem.caseUsers.originUserDrsScore
+            caseItem.caseUsers.originUserDrsScore,
+            riskLevelAlias
           )
 
           caseItem.caseUsers.originUserRiskLevel = originUserRiskLevel
@@ -1139,7 +1140,8 @@ export class CaseRepository {
         if (caseItem?.caseUsers?.destinationUserDrsScore != null) {
           destinationUserRiskLevel = getRiskLevelFromScore(
             riskClassification,
-            caseItem.caseUsers.destinationUserDrsScore
+            caseItem.caseUsers.destinationUserDrsScore,
+            riskLevelAlias
           )
 
           caseItem.caseUsers.destinationUserRiskLevel = destinationUserRiskLevel

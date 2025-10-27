@@ -14,11 +14,15 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
   const settings = useSettings();
   const id = useId('RiskSwitch-');
   const isReadonly = onChange == null;
+
   return (
     <div className={cn(s.root, componentIsDisabled && s.isDisabled)} data-sentry-allow={true}>
       {RISK_LEVELS.map((level) => {
         const isCurrent = level === value;
-        const isDisabled = disabledLevels?.includes(level) || componentIsDisabled;
+        const riskLevelAlias = getRiskLevelLabel(level, settings);
+        const isDisabled =
+          componentIsDisabled || disabledLevels?.includes(level) || !riskLevelAlias.isActive;
+
         return (
           <label
             data-cy={`risk-level-${level}`}
@@ -39,21 +43,17 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
                     borderColor: isDisabled ? undefined : RISK_LEVEL_COLORS[level].primary,
                   }
                 : isDisabled
-                ? {
-                    opacity: 0.5,
-                  }
+                ? { opacity: 0.5 }
                 : {}
             }
           >
-            {getRiskLevelLabel(level, settings)}
+            {riskLevelAlias.riskLevelLabel}
             <input
               type="radio"
               name={id}
               checked={isCurrent}
               disabled={isDisabled}
-              onChange={() => {
-                onChange?.(level);
-              }}
+              onChange={() => onChange?.(level)}
             />
           </label>
         );

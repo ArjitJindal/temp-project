@@ -32,7 +32,10 @@ import {
 } from '@/utils/defaultCountriesRiskLevel';
 import { useHasResources } from '@/utils/user-utils';
 import { P } from '@/components/ui/Typography';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  getLastActiveRiskLevel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { levelToAlias, useRiskClassificationScores } from '@/utils/risk-levels';
 import Alert from '@/components/library/Alert';
 import Slider from '@/components/library/Slider';
@@ -109,7 +112,11 @@ function ValuesTable(props: Props) {
       defaultRiskLevel:
         defaultRiskValue.type === 'RISK_LEVEL'
           ? defaultRiskValue.value
-          : getRiskLevelFromScore(riskClassificationValues, defaultRiskValue.value),
+          : getRiskLevelFromScore(
+              riskClassificationValues,
+              defaultRiskValue.value,
+              configSetting?.riskLevelAlias ?? [],
+            ),
       defaultRiskScore:
         defaultRiskValue.type === 'RISK_SCORE'
           ? defaultRiskValue.value
@@ -117,7 +124,15 @@ function ValuesTable(props: Props) {
       defaultWeight: weight,
     };
     onSave(updatedEntity);
-  }, [entity, values, defaultRiskValue, weight, onSave, riskClassificationValues]);
+  }, [
+    entity,
+    values,
+    defaultRiskValue,
+    weight,
+    onSave,
+    riskClassificationValues,
+    configSetting?.riskLevelAlias,
+  ]);
 
   const handleCancel = useCallback(() => {
     setValues(entity.riskLevelAssignmentValues || []);
@@ -212,9 +227,10 @@ function ValuesTable(props: Props) {
     setValues([]);
   };
 
-  const aliasForVeryHigh = configSetting?.riskLevelAlias
-    ? levelToAlias('VERY_HIGH', configSetting?.riskLevelAlias)
-    : 'VERY_HIGH';
+  const LastActiveRiskLevel = getLastActiveRiskLevel(configSetting);
+  const LastActiveRiskLevelAlias = configSetting?.riskLevelAlias
+    ? levelToAlias(LastActiveRiskLevel, configSetting?.riskLevelAlias)
+    : LastActiveRiskLevel;
 
   const dataTypeValidations = PARAMETER_VALUES_FORM_VALIDATIONS[safeEntity.dataType] ?? [];
   const newValueValidationMessage: string | null = validate(
@@ -287,8 +303,8 @@ function ValuesTable(props: Props) {
           <div className={style.header}>Default risk level</div>
           <P grey variant="m" fontWeight="normal" className={style.description}>
             Any value lacking an assigned risk level will be categorized under default risk level.
-            The system configuration designates the default value as '{aliasForVeryHigh}' when no
-            specific risk level is allocated.
+            The system configuration designates the default value as '{LastActiveRiskLevelAlias}'
+            when no specific risk level is allocated.
           </P>
         </div>
         <div className={style.risk}>
@@ -305,7 +321,11 @@ function ValuesTable(props: Props) {
             value={
               defaultRiskValue.type === 'RISK_LEVEL'
                 ? defaultRiskValue.value
-                : getRiskLevelFromScore(riskClassificationValues, defaultRiskValue.value)
+                : getRiskLevelFromScore(
+                    riskClassificationValues,
+                    defaultRiskValue.value,
+                    configSetting?.riskLevelAlias ?? [],
+                  )
             }
             onChange={(newRiskLevel) => {
               if (newRiskLevel != null) {
@@ -430,7 +450,11 @@ function ValuesTable(props: Props) {
                 value={
                   riskValue.type === 'RISK_LEVEL'
                     ? riskValue.value
-                    : getRiskLevelFromScore(riskClassificationValues, riskValue.value)
+                    : getRiskLevelFromScore(
+                        riskClassificationValues,
+                        riskValue.value,
+                        configSetting?.riskLevelAlias ?? [],
+                      )
                 }
                 onChange={handleChangeRiskLevel}
               />
@@ -477,7 +501,11 @@ function ValuesTable(props: Props) {
                   newRiskValue?.type === 'RISK_LEVEL'
                     ? newRiskValue.value
                     : newRiskValue?.value != null
-                    ? getRiskLevelFromScore(riskClassificationValues, newRiskValue.value)
+                    ? getRiskLevelFromScore(
+                        riskClassificationValues,
+                        newRiskValue.value,
+                        configSetting?.riskLevelAlias ?? [],
+                      )
                     : undefined
                 }
                 onChange={(newRiskLevel) => {

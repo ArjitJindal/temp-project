@@ -13,6 +13,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
+import { RiskLevelAlias } from '@/@types/openapi-internal/RiskLevelAlias'
 const internalUserAttributes = InternalUser.getAttributeTypeMap().map(
   (v) => v.name
 )
@@ -66,7 +67,8 @@ export function insertRiskScores(
     | WithId<InternalBusinessUser | InternalConsumerUser>[]
     | (InternalBusinessUser | InternalConsumerUser)[]
     | AllUsersTableItem[],
-  riskClassificationValues: RiskClassificationScore[]
+  riskClassificationValues: RiskClassificationScore[],
+  riskLevelAlias?: RiskLevelAlias[]
 ) {
   const updatedItems = items.map((user) => {
     const drsScore = user?.drsScore
@@ -75,7 +77,11 @@ export function insertRiskScores(
     if (drsScore != null) {
       const derivedRiskLevel = drsScore?.manualRiskLevel
         ? undefined
-        : getRiskLevelFromScore(riskClassificationValues, drsScore?.drsScore)
+        : getRiskLevelFromScore(
+            riskClassificationValues,
+            drsScore?.drsScore,
+            riskLevelAlias
+          )
       const newDrsScore: DrsScore = {
         ...drsScore,
         derivedRiskLevel,
@@ -89,7 +95,8 @@ export function insertRiskScores(
     if (krsScore != null) {
       const derivedRiskLevel = getRiskLevelFromScore(
         riskClassificationValues,
-        krsScore?.krsScore
+        krsScore?.krsScore,
+        riskLevelAlias
       )
 
       const newKrsScore: KrsScore = {

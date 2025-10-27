@@ -377,7 +377,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       type: {
         render: (riskLevel) => {
           if (riskLevel) {
-            return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+            return <>{getRiskLevelLabel(riskLevel, settings).riskLevelLabel}</>;
           } else {
             return <>{'-'}</>;
           }
@@ -405,7 +405,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       type: {
         render: (riskLevel) => {
           if (riskLevel) {
-            return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+            return <>{getRiskLevelLabel(riskLevel, settings).riskLevelLabel}</>;
           } else {
             return <>{'-'}</>;
           }
@@ -433,7 +433,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       type: {
         render: (riskLevel) => {
           if (riskLevel) {
-            return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+            return <>{getRiskLevelLabel(riskLevel, settings).riskLevelLabel}</>;
           } else {
             return <>{'-'}</>;
           }
@@ -461,7 +461,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       type: {
         render: (riskLevel) => {
           if (riskLevel) {
-            return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+            return <>{getRiskLevelLabel(riskLevel, settings).riskLevelLabel}</>;
           } else {
             return <>{'-'}</>;
           }

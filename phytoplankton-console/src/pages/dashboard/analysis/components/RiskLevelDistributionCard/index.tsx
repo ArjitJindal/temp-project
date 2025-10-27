@@ -69,7 +69,10 @@ function RiskLevelDistributionCardBase(props: Props & { groupBy: GroupBy }) {
   const valueNames = useMemo(
     () =>
       Object.fromEntries(
-        RISK_LEVELS.map((riskLevel) => [riskLevel, getRiskLevelLabel(riskLevel, settings)]),
+        RISK_LEVELS.map((riskLevel) => [
+          riskLevel,
+          getRiskLevelLabel(riskLevel, settings).riskLevelLabel,
+        ]),
       ),
     [settings],
   ) as { [key in RiskLevel]: string };

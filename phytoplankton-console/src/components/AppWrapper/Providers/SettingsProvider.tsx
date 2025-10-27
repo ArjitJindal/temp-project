@@ -209,9 +209,28 @@ export function useRuleActionLabel(ruleAction: RuleAction | undefined): string |
   return getRuleActionLabel(ruleAction, settings);
 }
 
-export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
-  const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
-  return alias || humanizeConstant(riskLevel);
+export function getRiskLevelLabel(
+  riskLevel: RiskLevel,
+  settings: TenantSettings,
+): { riskLevelLabel: string; isActive: boolean } {
+  const riskLevelData = settings.riskLevelAlias?.find((item) => item.level === riskLevel);
+
+  const alias = riskLevelData?.alias?.trim();
+  const isActive = riskLevelData?.isActive ?? true;
+  const riskLevelLabel = alias && alias.length > 0 ? alias : humanizeConstant(riskLevel);
+
+  return { riskLevelLabel, isActive };
+}
+
+export function getFirstActiveRiskLevel(settings: TenantSettings): RiskLevel {
+  const firstActive = settings.riskLevelAlias?.find((item) => item.isActive);
+  return firstActive ? firstActive.level : 'VERY_LOW';
+}
+export function getLastActiveRiskLevel(settings: TenantSettings): RiskLevel {
+  const lastActive = settings.riskLevelAlias
+    ? [...settings.riskLevelAlias].reverse().find((item) => item.isActive)
+    : undefined;
+  return lastActive?.level || 'VERY_HIGH';
 }
 
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
@@ -224,7 +243,7 @@ export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSe
 
 export function useRiskLevelLabel(riskLevel: RiskLevel): string | undefined {
   const settings = useSettings();
-  return getRiskLevelLabel(riskLevel, settings);
+  return getRiskLevelLabel(riskLevel, settings).riskLevelLabel;
 }
 
 export function getTransactionStateLabel(

@@ -337,12 +337,12 @@ export default function TransactionsTable(props: Props) {
   } = props;
 
   const settings = useSettings();
-
   const ruleOptions = useRuleOptions();
   const riskClassificationValues = useRiskClassificationScores();
 
   const columns: TableColumn<TransactionTableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TransactionTableItem>();
+    const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
 
     let alertColumns: DerivedColumn<any, any>[] = [];
     if (alert) {
@@ -404,11 +404,21 @@ export default function TransactionsTable(props: Props) {
                   if (value == null) {
                     return <>-</>;
                   }
-                  const riskLevel = getRiskLevelFromScore(riskClassificationValues, value);
+                  const riskLevel = getRiskLevelFromScore(
+                    riskClassificationValues,
+                    value,
+                    configRiskLevelAliasArray,
+                  );
                   return <RiskLevelTag level={riskLevel} />;
                 },
                 stringify: (value) => {
-                  return value ? getRiskLevelFromScore(riskClassificationValues, value) : '-';
+                  return value
+                    ? getRiskLevelFromScore(
+                        riskClassificationValues,
+                        value,
+                        configRiskLevelAliasArray,
+                      )
+                    : '-';
                 },
               },
               tooltip: 'Transaction Risk Score level',
@@ -616,6 +626,7 @@ export default function TransactionsTable(props: Props) {
     settings.userAlias,
     showDetailsView,
     riskClassificationValues,
+    settings?.riskLevelAlias,
   ]);
 
   const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [

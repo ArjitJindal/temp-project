@@ -87,7 +87,7 @@ function useLogicConfigRes(
               v.uiDefinition.fieldSettings.listValues = v.uiDefinition.fieldSettings.listValues.map(
                 (item: any) => ({
                   ...item,
-                  title: getRiskLevelLabel(item.value, settings),
+                  title: getRiskLevelLabel(item.value, settings).riskLevelLabel,
                 }),
               );
             }

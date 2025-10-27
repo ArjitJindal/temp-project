@@ -48,6 +48,7 @@ const getUserWidgetsProps = (
 ): ReportItem[] => {
   const drsRiskScore = riskScores?.drsRiskScore;
   const kycRiskScore = riskScores?.kycRiskScore;
+  const configRiskLevelAliasArray = tenantSettings?.riskLevelAlias || [];
   const userType = user.type;
   const companyDetails =
     user.type === 'BUSINESS' ? user.legalEntity.companyGeneralDetails : undefined;
@@ -56,16 +57,20 @@ const getUserWidgetsProps = (
   const craRiskLevel = drsRiskScore?.riskLevel
     ? drsRiskScore.riskLevel
     : drsRiskScore?.score
-    ? getRiskLevelFromScore(riskClassificationValues, drsRiskScore.score)
+    ? getRiskLevelFromScore(riskClassificationValues, drsRiskScore.score, configRiskLevelAliasArray)
     : drsRiskScore?.manualRiskLevel;
   const krsRiskLevel = user.krsScore?.riskLevel
     ? user.krsScore?.riskLevel
     : krsRiskScore
-    ? getRiskLevelFromScore(riskClassificationValues, krsRiskScore)
+    ? getRiskLevelFromScore(riskClassificationValues, krsRiskScore, configRiskLevelAliasArray)
     : user.krsScore?.manualRiskLevel;
 
-  const krsLabel = krsRiskLevel ? getRiskLevelLabel(krsRiskLevel, tenantSettings) : '-';
-  const drsLabel = craRiskLevel ? `${getRiskLevelLabel(craRiskLevel, tenantSettings)} ` : '-';
+  const krsLabel = krsRiskLevel
+    ? getRiskLevelLabel(krsRiskLevel, tenantSettings).riskLevelLabel
+    : '-';
+  const drsLabel = craRiskLevel
+    ? `${getRiskLevelLabel(craRiskLevel, tenantSettings).riskLevelLabel} `
+    : '-';
   const userAlias = humanizeAuto(tenantSettings.userAlias ?? 'User');
   const userDetails: ReportItem[] = [
     {
@@ -279,7 +284,7 @@ const getUserSupportTables = (
             parameterName,
             parameterValue,
             component.score,
-            getRiskLevelLabel(component.riskLevel, tenantSettings),
+            getRiskLevelLabel(component.riskLevel, tenantSettings).riskLevelLabel,
           ];
         }) ?? [],
     };

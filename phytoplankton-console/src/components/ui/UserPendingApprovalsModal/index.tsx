@@ -277,7 +277,7 @@ function useColumns() {
               return <>{isUpdatable ? 'Unlocked' : 'Locked'}</>;
             } else if (field === 'Cra') {
               const newLevel = value;
-              return <>{getRiskLevelLabel(newLevel, settings)}</>;
+              return <>{getRiskLevelLabel(newLevel, settings).riskLevelLabel}</>;
             }
 
             return UNKNOWN.render(value, context);

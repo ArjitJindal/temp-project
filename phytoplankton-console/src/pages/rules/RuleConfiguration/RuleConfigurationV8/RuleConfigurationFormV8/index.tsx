@@ -23,7 +23,7 @@ import { Step, StepperSteps } from '@/components/library/Stepper';
 import Form, { FormRef } from '@/components/library/Form';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import { message } from '@/components/library/Message';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FieldValidators, isResultValid } from '@/components/library/Form/utils/validation/types';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { RISK_LEVELS } from '@/utils/risk-levels';
@@ -88,7 +88,10 @@ function RuleConfigurationFormV8(
   const [isSimulationModeEnabled] = useSafeLocalStorageState('SIMULATION_RULES', false);
 
   const formId = useId(`form-`);
-
+  const settings = useSettings();
+  const activeRiskLevels =
+    settings.riskLevelAlias?.filter((item) => item.isActive).map((item) => item.level) ??
+    RISK_LEVELS;
   const [formState, setFormState] = useState<RuleConfigurationFormV8Values>(initialValues);
 
   const fieldValidators: FieldValidators<RuleConfigurationFormV8Values> = useMemo(() => {
@@ -104,7 +107,7 @@ function RuleConfigurationFormV8(
         ruleLogic: isRiskLevelsEnabled ? undefined : notEmpty,
         riskLevelRuleLogic: isRiskLevelsEnabled
           ? (value) => {
-              const emptyRiskLevels = RISK_LEVELS.filter((riskLevel) => {
+              const emptyRiskLevels = activeRiskLevels.filter((riskLevel) => {
                 const valueElement = value?.[riskLevel];
                 const result = notEmpty(valueElement);
                 return !isResultValid(result);
@@ -128,6 +131,7 @@ function RuleConfigurationFormV8(
     };
   }, [
     isRiskLevelsEnabled,
+    activeRiskLevels,
     formState?.alertCreationDetailsStep,
     isAsyncRulesEnabled,
     isSimulationModeEnabled,
