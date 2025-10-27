@@ -2451,7 +2451,7 @@ export class CdkTarponStack extends cdk.Stack {
         service: InterfaceVpcEndpointAwsService.SQS,
         subnets: { subnets: privateSubnets.subnets },
         securityGroups: [sqsEndpointSecurityGroup],
-        privateDnsEnabled: false,
+        privateDnsEnabled: true,
       }
     )
 
