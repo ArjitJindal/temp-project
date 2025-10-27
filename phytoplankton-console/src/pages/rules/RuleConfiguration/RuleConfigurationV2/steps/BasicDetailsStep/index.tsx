@@ -324,6 +324,7 @@ function SimulationIterationDetails() {
 function AlertCreationDetails(props: Props) {
   const { rule } = props;
   const settings = useSettings();
+  const isCustomAggregationEnabled = useFeatureEnabled('CUSTOM_AGGREGATION_FIELDS');
   const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   return (
     <>
@@ -349,7 +350,7 @@ function AlertCreationDetails(props: Props) {
             {(inputProps) => (
               <SelectionGroup<AlertCreatedForEnum>
                 mode="MULTIPLE"
-                options={getAlertCreatedFor(settings)}
+                options={getAlertCreatedFor(settings, isCustomAggregationEnabled)}
                 {...inputProps}
               />
             )}

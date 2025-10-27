@@ -51,6 +51,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
 export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) {
   const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
+  const isCustomAggregationEnabled = useFeatureEnabled('CUSTOM_AGGREGATION_FIELDS');
   const settings = useSettings();
   return (
     <Card.Root>
@@ -85,7 +86,7 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                     {(inputProps) => (
                       <SelectionGroup<AlertCreatedForEnum>
                         mode="MULTIPLE"
-                        options={getAlertCreatedFor(settings)}
+                        options={getAlertCreatedFor(settings, isCustomAggregationEnabled)}
                         {...inputProps}
                       />
                     )}

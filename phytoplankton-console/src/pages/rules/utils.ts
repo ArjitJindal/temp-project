@@ -155,14 +155,11 @@ export const RULE_CASE_PRIORITY: { label: string; value: Priority }[] = PRIORITY
 
 export const getAlertCreatedFor = (
   tenantSettings: TenantSettings,
+  includeCustomAggregationFields: boolean = false,
 ): { label: string; value: AlertCreatedForEnum }[] => {
-  const alertCreatedFor = [
-    'USER',
-    'PAYMENT_DETAILS',
-    'EMAIL',
-    'NAME',
-    'ADDRESS',
-  ] as AlertCreatedForEnum[];
+  const alertCreatedFor = includeCustomAggregationFields
+    ? ['USER', 'PAYMENT_DETAILS', 'EMAIL', 'NAME', 'ADDRESS']
+    : ['USER', 'PAYMENT_DETAILS'];
   return alertCreatedFor.map((alertCreatedFor) => ({
     label:
       alertCreatedFor === 'USER'
