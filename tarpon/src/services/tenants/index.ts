@@ -438,6 +438,7 @@ export class TenantService {
         ...(tenantData.features.includes('CRM') && {
           crmIntegrationName: 'ZENDESK',
         }),
+        isAiEnabled: true,
       }
 
       const dynamoDb = this.dynamoDb
