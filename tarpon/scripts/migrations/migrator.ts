@@ -24,7 +24,7 @@ import { isDemoTenant } from '@/utils/tenant-id'
 import { saveMigrationProgressToDynamo } from '@/utils/migration-progress'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts/repository'
+import { Tenant } from '@/@types/tenant'
 
 async function migrateTenant(tenant: Tenant) {}
 

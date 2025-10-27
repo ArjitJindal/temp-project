@@ -9939,6 +9939,8 @@ components:
             - RECEIVER
         screeningAlertCreationLogic:
           $ref: '#/components/schemas/ScreeningAlertCreationLogic'
+        alertCreationLogic:
+          $ref: '#/components/schemas/AlertCreationLogic'
       required:
         - casePriority
         - nature
@@ -9952,6 +9954,12 @@ components:
       type: string
       enum:
         - PER_SEARCH_ALERT
+        - SINGLE_ALERT
+    AlertCreationLogic:
+      title: AlertCreationLogic
+      type: string
+      enum:
+        - PER_COUNTERPARTY_ALERT
         - SINGLE_ALERT
     UserRuleRunCondition:
       title: UserRuleRunCondition
@@ -14099,6 +14107,13 @@ components:
           type: array
           items:
             type: string
+        alertMeta:
+          type: object
+          properties:
+            originPaymentMethodId:
+              type: string
+            destinationPaymentMethodId:
+              type: string
       required:
         - createdTimestamp
         - ruleInstanceId

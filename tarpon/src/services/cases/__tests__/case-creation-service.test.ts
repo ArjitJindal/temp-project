@@ -55,6 +55,7 @@ import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { disableLocalChangeHandler } from '@/utils/local-change-handler'
+import { AlertCreationLogic } from '@/@types/openapi-internal/AlertCreationLogic'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 jest.mock('@/services/sanctions', () => {
@@ -1316,7 +1317,7 @@ describe('Screening counterparty alerts R-169', () => {
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       alertConfig: { alertCreatedFor: ['USER'] },
-      screeningAlertCreationLogic: 'PER_SEARCH_ALERT',
+      alertCreationLogic: 'PER_COUNTERPARTY_ALERT',
     },
     {
       id: `R-169`,
@@ -1326,7 +1327,7 @@ describe('Screening counterparty alerts R-169', () => {
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       alertConfig: { alertCreatedFor: ['USER'] },
-      screeningAlertCreationLogic: 'SINGLE_ALERT',
+      alertCreationLogic: 'SINGLE_ALERT',
     },
   ])
 
@@ -1431,7 +1432,7 @@ describe('Screening counterparty alerts R-170', () => {
       ruleImplementationName: 'payment-details-screening',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      screeningAlertCreationLogic: 'PER_SEARCH_ALERT',
+      alertCreationLogic: 'PER_COUNTERPARTY_ALERT',
       alertConfig: { alertCreatedFor: ['PAYMENT_DETAILS'] },
     },
   ])
@@ -1545,8 +1546,8 @@ describe('Screening business user R-128', () => {
       ruleImplementationName: 'sanctions-business-user',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      screeningAlertCreationLogic: 'PER_SEARCH_ALERT',
       alertConfig: { alertCreatedFor: ['USER'] },
+      alertCreationLogic: 'PER_COUNTERPARTY_ALERT',
       parameters: {
         entityTypes: ['DIRECTOR'],
         fuzziness: 0.5,
@@ -2626,6 +2627,178 @@ describe('Testing not adding transactions to alerts in selected status (Frozen S
   })
 })
 
+describe('Test counterparty alerts', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setupRules(TEST_TENANT_ID, {
+    hitDirections: ['ORIGIN', 'DESTINATION'],
+    alertCreationLogic: 'PER_COUNTERPARTY_ALERT',
+  })
+  setupUsers(TEST_TENANT_ID)
+
+  test('Test counterparty alerts', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    const transaction = getTestTransaction({
+      transactionId: '111',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: TEST_USER_2.userId,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '11111111-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
+        cardFingerprint: '22222222-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [transaction])
+    expect(results).toHaveLength(1)
+    const [result] = results
+    const caseCreationResult = await caseCreationService.handleTransaction(
+      {
+        ...transaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction,
+        ...result,
+      })
+    )
+
+    expect(caseCreationResult).toHaveLength(2)
+    expect(caseCreationResult[0].alerts).toHaveLength(1)
+    expect(caseCreationResult[1].alerts).toHaveLength(1)
+
+    const transaction2 = getTestTransaction({
+      transactionId: '222',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: TEST_USER_2.userId,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
+        cardFingerprint: '33333333-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '44444444-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+    const results2 = await bulkVerifyTransactions(TEST_TENANT_ID, [
+      transaction2,
+    ])
+    expect(results2).toHaveLength(1)
+    const [result2] = results2
+    const caseCreationResult2 = await caseCreationService.handleTransaction(
+      {
+        ...transaction2,
+        ...result2,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result2),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction2,
+        ...result2,
+      })
+    )
+    expect(caseCreationResult2).toHaveLength(2)
+    expect(caseCreationResult2[0].alerts).toHaveLength(2)
+
+    // test with same payment details
+    const transaction3 = getTestTransaction({
+      transactionId: '333',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: TEST_USER_2.userId,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '11111111-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '22222222-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+
+    const results3 = await bulkVerifyTransactions(TEST_TENANT_ID, [
+      transaction3,
+    ])
+    expect(results3).toHaveLength(1)
+    const [result3] = results3
+    const caseCreationResult3 = await caseCreationService.handleTransaction(
+      {
+        ...transaction3,
+        ...result3,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result3),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction3,
+        ...result3,
+      })
+    )
+    expect(caseCreationResult3).toHaveLength(2)
+    console.log(JSON.stringify(caseCreationResult3, null, 2))
+    expect(caseCreationResult3[0].alerts).toHaveLength(2)
+
+    const transaction4 = getTestTransaction({
+      transactionId: '111',
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: TEST_USER_2.userId,
+      originPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
+        cardFingerprint: '66666666-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      destinationPaymentDetails: {
+        method: 'CARD',
+        nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
+        cardFingerprint: '22222222-6411-4519-87a9-ad12eb8a29b2',
+        cardIssuedCountry: 'US',
+        transactionReferenceField: 'DEPOSIT',
+      },
+    })
+
+    const results4 = await bulkVerifyTransactions(TEST_TENANT_ID, [
+      transaction4,
+    ])
+    expect(results4).toHaveLength(1)
+    const [result4] = results4
+    const caseCreationResult4 = await caseCreationService.handleTransaction(
+      {
+        ...transaction4,
+        ...result4,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result4),
+      await caseCreationService.getTransactionSubjects({
+        ...transaction4,
+        ...result4,
+      })
+    )
+    expect(caseCreationResult4).toHaveLength(2)
+    expect(caseCreationResult4[0].alerts).toHaveLength(2)
+    expect(caseCreationResult4[1].alerts).toHaveLength(3)
+
+    console.log(JSON.stringify(caseCreationResult4[1].alerts, null, 2))
+    console.log(JSON.stringify(caseCreationResult4[0].alerts, null, 2))
+  })
+})
+
 /*
   Helpers
  */
@@ -2645,6 +2818,7 @@ function setupRules(
     ruleType?: RuleType
     ruleRunMode?: RuleRunMode
     ruleExecutionMode?: RuleExecutionMode
+    alertCreationLogic?: AlertCreationLogic
   } = {}
 ) {
   const ruleType = parameters.ruleType ?? 'TRANSACTION'
@@ -2659,6 +2833,7 @@ function setupRules(
         },
         ruleRunMode: parameters.ruleRunMode ?? 'LIVE',
         ruleExecutionMode: parameters.ruleExecutionMode ?? 'SYNC',
+        alertCreationLogic: parameters.alertCreationLogic ?? 'SINGLE_ALERT',
       },
     ])
   }

@@ -181,7 +181,7 @@ export function ruleInstanceToFormValues(
         basicDetailsStep: {
           ruleName: ruleInstance.ruleNameAlias,
           ruleDescription: ruleInstance.ruleDescriptionAlias,
-          screeningAlertCreationLogic: ruleInstance.screeningAlertCreationLogic,
+          alertCreationLogic: ruleInstance.alertCreationLogic,
           ruleNature: ruleInstance.nature,
           casePriority: ruleInstance.casePriority,
           ruleLabels: ruleInstance.labels,
@@ -365,7 +365,7 @@ export function formValuesToRuleInstance(
     checklistTemplateId: basicDetailsStep.checklistTemplateId,
     ruleExecutionMode: basicDetailsStep.ruleExecutionMode,
     alertCreationOnHit: basicDetailsStep.alertCreationOnHit,
-    screeningAlertCreationLogic: basicDetailsStep.screeningAlertCreationLogic,
+    alertCreationLogic: basicDetailsStep.alertCreationLogic,
     alertConfig: {
       alertAssignees:
         basicDetailsStep.alertAssigneesType == 'EMAIL'

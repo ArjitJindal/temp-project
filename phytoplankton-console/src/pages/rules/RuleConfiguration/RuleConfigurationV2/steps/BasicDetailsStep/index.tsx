@@ -8,6 +8,7 @@ import { DefaultAlertStatusInput } from '../../../RuleConfigurationV8/RuleConfig
 import s from './style.module.less';
 import Label from '@/components/library/Label';
 import {
+  AlertCreationLogic,
   DefaultAlertStatusForCaseCreation,
   DerivedStatus,
   Priority,
@@ -15,7 +16,6 @@ import {
   RuleExecutionMode,
   RuleLabels,
   RuleNature,
-  ScreeningAlertCreationLogic,
 } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
@@ -71,7 +71,7 @@ export interface FormValues {
   ruleExecutionMode: RuleExecutionMode;
   defaultAlertStatus?: DefaultAlertStatusForCaseCreation;
   alertCreationOnHit?: boolean;
-  screeningAlertCreationLogic?: ScreeningAlertCreationLogic;
+  alertCreationLogic: AlertCreationLogic;
 }
 
 export const defaultAlertCreatedFor: AlertCreatedForEnum[] = ['USER'];
@@ -93,7 +93,7 @@ export const INITIAL_VALUES: FormValues = {
   alertCreatedFor: defaultAlertCreatedFor,
   ruleExecutionMode: 'SYNC',
   alertCreationOnHit: true,
-  screeningAlertCreationLogic: 'SINGLE_ALERT',
+  alertCreationLogic: 'SINGLE_ALERT',
 };
 
 interface Props {
@@ -118,14 +118,14 @@ export default function BasicDetailsStep(props: Props) {
   return <div className={s.root}>{component}</div>;
 }
 
-type ScreeningAlertCreationLogicOption = {
-  value: ScreeningAlertCreationLogic;
+type AlertCreationLogicOption = {
+  value: AlertCreationLogic;
   label: string;
 };
 
-const SCREENING_ALERT_CREATION_LOGICS: ScreeningAlertCreationLogicOption[] = [
+const ALERT_CREATION_LOGICS: AlertCreationLogicOption[] = [
   { value: 'SINGLE_ALERT', label: 'Single alert for all counterparties' },
-  { value: 'PER_SEARCH_ALERT', label: 'Separate alert for each counterparty' },
+  { value: 'PER_COUNTERPARTY_ALERT', label: 'Separate alert for each counterparty' },
 ];
 
 function RuleDetails(props: Props) {
@@ -356,15 +356,15 @@ function AlertCreationDetails(props: Props) {
             )}
           </InputField>
           {COUNTERPARTY_RULES.includes(rule.id) && (
-            <InputField<FormValues, 'screeningAlertCreationLogic'>
-              name={'screeningAlertCreationLogic'}
+            <InputField<FormValues, 'alertCreationLogic'>
+              name={'alertCreationLogic'}
               label={'Alert creation logic'}
               labelProps={{ required: { value: true, showHint: true } }}
             >
               {(inputProps) => (
-                <Select<ScreeningAlertCreationLogic>
+                <Select<AlertCreationLogic>
                   mode="SINGLE"
-                  options={SCREENING_ALERT_CREATION_LOGICS}
+                  options={ALERT_CREATION_LOGICS}
                   {...inputProps}
                   value={inputProps.value ?? 'SINGLE_ALERT'}
                 />
