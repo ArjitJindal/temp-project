@@ -2068,15 +2068,17 @@ export class RulesEngineService {
               !!transaction
           )
           .map((transaction) => ({
-            transaction,
+            transaction: {
+              ...transaction,
+              paymentApprovalTimestamp: paymentApprovalAction
+                ? Date.now()
+                : transaction.paymentApprovalTimestamp,
+            },
             rulesResult: {
               status: action,
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
             },
-            paymentApprovalTimestamp: paymentApprovalAction
-              ? Date.now()
-              : transaction.paymentApprovalTimestamp,
           }))
       ),
     ]

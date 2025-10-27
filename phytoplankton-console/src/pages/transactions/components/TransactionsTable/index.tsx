@@ -451,7 +451,8 @@ export default function TransactionsTable(props: Props) {
       ...(isPaymentApprovals && (params?.status === 'ALLOW' || params?.status === 'BLOCK')
         ? [
             helper.simple<'paymentApprovalTimestamp'>({
-              title: 'Payment approval timestamp',
+              title: 'Action timestamp',
+
               key: 'paymentApprovalTimestamp',
               type: {
                 ...DATE,
@@ -462,6 +463,10 @@ export default function TransactionsTable(props: Props) {
               },
               sorting: true,
               filtering: true,
+              tooltip:
+                params?.status === 'ALLOW'
+                  ? 'Timestamp of transaction approval'
+                  : 'Timestamp of transaction block',
             }),
             helper.simple<'reason'>({
               title: 'Reason',
