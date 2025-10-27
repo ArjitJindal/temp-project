@@ -93,6 +93,33 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       ),
     });
 
+    const responseHeadersFunction = new cloudfront.Function(this, 'ResponseHeadersFunction', {
+      code: cloudfront.FunctionCode.fromInline(`
+        function handler(event) {
+          var response = event.response;
+          var headers = response.headers;
+          var uri = event.request.uri;
+          
+          // Set Content-Type based on file extension
+          if (uri === '/' || uri.endsWith('.html') || uri === '/index.html') {
+            headers['content-type'] = { value: 'text/html; charset=UTF-8' };
+          } else if (uri.endsWith('.js')) {
+            headers['content-type'] = { value: 'application/javascript; charset=UTF-8' };
+          } else if (uri.endsWith('.css')) {
+            headers['content-type'] = { value: 'text/css; charset=UTF-8' };
+          } else if (uri.endsWith('.json')) {
+            headers['content-type'] = { value: 'application/json; charset=UTF-8' };
+          } else if (uri.endsWith('.xml')) {
+            headers['content-type'] = { value: 'application/xml; charset=UTF-8' };
+          } else if (uri.endsWith('.txt')) {
+            headers['content-type'] = { value: 'text/plain; charset=UTF-8' };
+          }
+          
+          return response;
+        }
+      `),
+    });
+
     const extraBehaviours =
       process.env.ENV === 'dev:user'
         ? {
@@ -141,7 +168,55 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
             eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
             function: spaRewriteFunction,
           },
+          {
+            eventType: cloudfront.FunctionEventType.VIEWER_RESPONSE,
+            function: responseHeadersFunction,
+          },
         ],
+        responseHeadersPolicy: new cloudfront.ResponseHeadersPolicy(this, 'SecurityHeadersPolicy', {
+          securityHeadersBehavior: {
+            strictTransportSecurity: {
+              accessControlMaxAge: Duration.seconds(31536000),
+              includeSubdomains: true,
+              override: true,
+            },
+            contentTypeOptions: {
+              override: true,
+            },
+            frameOptions: {
+              frameOption: cloudfront.HeadersFrameOption.DENY,
+              override: true,
+            },
+            referrerPolicy: {
+              referrerPolicy: cloudfront.HeadersReferrerPolicy.NO_REFERRER,
+              override: true,
+            },
+          },
+          customHeadersBehavior: {
+            customHeaders: [
+              {
+                header: 'Cross-Origin-Embedder-Policy',
+                value: 'credentialless',
+                override: true,
+              },
+              {
+                header: 'Cross-Origin-Opener-Policy',
+                value: 'same-origin',
+                override: true,
+              },
+              {
+                header: 'Cross-Origin-Resource-Policy',
+                value: 'same-origin',
+                override: true,
+              },
+              {
+                header: 'Permissions-Policy',
+                value: 'geolocation=(), camera=(), microphone=()',
+                override: true,
+              },
+            ],
+          },
+        }),
         ...extraBehaviours,
       },
     });
