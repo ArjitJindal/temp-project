@@ -97,7 +97,7 @@ export class BackfillWhitelistEntitiesBatchJobRunner extends BatchJobRunner {
     const groupedEntities = new Map<string, SanctionsWhitelistEntity[]>()
 
     for (const entity of entities) {
-      if (!entity.provider || !entity.entity) {
+      if (!entity.provider || !entity.entity || !entity.sanctionsEntity) {
         continue
       }
 

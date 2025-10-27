@@ -10,7 +10,7 @@ import { useAuth0User, useHasResources } from '@/utils/user-utils';
 export const ProductionAccessControl = () => {
   const settings = useSettings();
   const user = useAuth0User();
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const mutateTenantSettings = useUpdateTenantSettings({ enableReloadSettings: true });
   const hasSystemConfigWrite = useHasResources([
     'write:::settings/system-config/production-access-control/*',
   ]);

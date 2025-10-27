@@ -20,7 +20,7 @@ import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg
 import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import { P } from '@/components/ui/Typography';
 import Avatar from '@/components/library/Avatar';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import QaTable from '@/pages/case-management/QA/Table';
 import { Authorized } from '@/components/utils/Authorized';
@@ -38,7 +38,7 @@ export const QASamplePage = () => {
 
   const sampleQueryResult = useAlertQaSample(samplingId);
 
-  const [users] = useUsers();
+  const { users } = useUsers();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 

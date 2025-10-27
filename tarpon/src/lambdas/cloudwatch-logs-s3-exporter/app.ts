@@ -184,7 +184,8 @@ export const handleCloudwatchLogsS3Export = async () => {
         xrayTraceId,
         httpMethod,
         resource,
-        entityId
+        entityId,
+        '${process.env.AWS_REGION}' as region
       FROM ${CLICKHOUSE_DEFINITIONS.CLOUDWATCH_LOGS_CORRELATED.tableName}
       WHERE requestEndTimestamp > fromUnixTimestamp64Milli(${lastSyncedTimestamp})
         AND requestEndTimestamp <= fromUnixTimestamp64Milli(${newMaxTimestamp})

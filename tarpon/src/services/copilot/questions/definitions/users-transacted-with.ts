@@ -56,7 +56,7 @@ export const UsersTransactedWith: TableQuestion<
     const derivedPage = page || 1
     const paginationQuery = `
       SELECT
-        COUNT(*) AS count
+        COUNT(DISTINCT id) AS count
       FROM transactions
       WHERE
           ${userIdKey} = '${userId}'
@@ -72,37 +72,38 @@ export const UsersTransactedWith: TableQuestion<
 
     const clickhouseQuery = `
       WITH transactions_data AS (
-      SELECT
+        SELECT
           ${otherUserIdKey} AS userId,
           COUNT(*) AS count,
           SUM(originAmountDetails_amountInUsd) AS sum
-      FROM transactions
-      WHERE
+        FROM transactions FINAL
+        WHERE
           ${userIdKey} = '${userId}'
           AND timestamp between ${period.from} and ${period.to}
-      GROUP BY ${otherUserIdKey}
-  ),
-  users_data AS (
-      SELECT
+        GROUP BY ${otherUserIdKey}
+      ),
+      users_data AS (
+        SELECT
+        
           username,
           type,
           id
-      FROM users_by_id
-      WHERE id IN (SELECT userId FROM transactions_data)
-  )
-  SELECT
-      transactions_data.userId as userId,
-      users_data.username as name,
-      users_data.type as userType,
-      transactions_data.count as count,
-      transactions_data.sum as sum
+        FROM users_by_id FINAL
+        WHERE id IN (SELECT userId FROM transactions_data)
+      )
+      SELECT
+        transactions_data.userId as userId,
+        users_data.username as name,
+        users_data.type as userType,
+        transactions_data.count as count,
+        transactions_data.sum as sum
       FROM transactions_data
       LEFT JOIN users_data
-          ON transactions_data.userId = users_data.id
+        ON transactions_data.userId = users_data.id
       ${orderByClause || 'ORDER BY count DESC'}
       LIMIT ${derivedPageSize}
       OFFSET ${(derivedPage - 1) * derivedPageSize}
-      `
+    `
 
     const tenantId = getContext()?.tenantId ?? ''
     const [rows, total] = await Promise.all([

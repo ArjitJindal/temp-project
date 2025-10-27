@@ -8,7 +8,7 @@ import { STRING } from '@/components/library/Table/standardDataTypes';
 import * as Card from '@/components/ui/Card';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
-import { useRolesQueryResult } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';
 import Id from '@/components/ui/Id';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -25,7 +25,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 const helper = new ColumnHelper<AccountRole>();
 
 export default function RolesV2() {
-  const rolesQueryResult = useRolesQueryResult();
+  const { roles, refetch } = useRoles();
   const navigate = useNavigate();
   const api = useApi();
 
@@ -34,12 +34,12 @@ export default function RolesV2() {
       try {
         await api.deleteRole({ roleId: item.id });
         message.success(`Role "${formatRoleName(item.name)}" has been deleted`);
-        rolesQueryResult.refetch();
+        refetch();
       } catch (error) {
         message.error(`Failed to delete role: ${getErrorMessage(error)}`);
       }
     },
-    [api, rolesQueryResult],
+    [api, refetch],
   );
 
   const handleDuplicate = useCallback(
@@ -156,7 +156,7 @@ export default function RolesV2() {
     <Card.Root className={styles.tableCard}>
       <QueryResultsTable<AccountRole>
         rowKey="name"
-        queryResults={rolesQueryResult}
+        queryResults={roles}
         columns={columns}
         pagination={false}
         sizingMode="FULL_WIDTH"

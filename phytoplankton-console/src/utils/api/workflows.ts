@@ -27,7 +27,7 @@ import {
 } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { AsyncResource, map, success } from '@/utils/asyncResource';
+import { AsyncResource, getOr, map, success } from '@/utils/asyncResource';
 import { useUserApprovalSettings } from '@/pages/settings/components/UserUpdateApprovalSettings';
 import { useAccountRawRole } from '@/utils/user-utils';
 
@@ -298,4 +298,120 @@ export function useUserFieldChain(
       }),
     [approvalSettingsRes, isApprovalWorkflowsEnabled, field],
   );
+}
+
+export interface DispositionFieldApprovalInfo {
+  field: keyof WorkflowSettingsUserApprovalWorkflows;
+  fieldDisplayName: string;
+  requiresApproval: boolean;
+  isAutoApprove: boolean;
+  approvalChain: string[];
+}
+
+export interface DispositionApprovalWarnings {
+  hasFieldsRequiringApproval: boolean;
+  hasFieldsWithAutoApproval: boolean;
+  fieldsInfo: DispositionFieldApprovalInfo[];
+  approvalFields: DispositionFieldApprovalInfo[];
+  autoApprovalFields: DispositionFieldApprovalInfo[];
+  directFields: DispositionFieldApprovalInfo[];
+}
+
+/**
+ * Hook to check which disposition fields require approval workflows
+ * and provide warnings for the UI
+ */
+export function useDispositionApprovalWarnings(): DispositionApprovalWarnings {
+  const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const currentRole = useAccountRawRole();
+
+  // Get approval chains for all supported fields
+  const eoddChainRes = useUserFieldChain('eoddDate');
+  const pepChainRes = useUserFieldChain('PepStatus');
+  const craChainRes = useUserFieldChain('Cra');
+  const craLockChainRes = useUserFieldChain('CraLock');
+
+  return useMemo(() => {
+    if (!isUserChangesApprovalEnabled) {
+      // Feature disabled - no approvals needed
+      return {
+        hasFieldsRequiringApproval: false,
+        hasFieldsWithAutoApproval: false,
+        fieldsInfo: [],
+        approvalFields: [],
+        autoApprovalFields: [],
+        directFields: [],
+      };
+    }
+
+    const fieldsInfo: DispositionFieldApprovalInfo[] = [
+      {
+        field: 'eoddDate',
+        fieldDisplayName: 'EODD Date',
+        requiresApproval: false,
+        isAutoApprove: false,
+        approvalChain: getOr(eoddChainRes, []),
+      },
+      {
+        field: 'PepStatus',
+        fieldDisplayName: 'PEP/Sanctions/Adverse Media Status',
+        requiresApproval: false,
+        isAutoApprove: false,
+        approvalChain: getOr(pepChainRes, []),
+      },
+      {
+        field: 'Cra',
+        fieldDisplayName: 'CRA Status',
+        requiresApproval: false,
+        isAutoApprove: false,
+        approvalChain: getOr(craChainRes, []),
+      },
+      {
+        field: 'CraLock',
+        fieldDisplayName: 'CRA Lock',
+        requiresApproval: false,
+        isAutoApprove: false,
+        approvalChain: getOr(craLockChainRes, []),
+      },
+    ];
+
+    // Update requiresApproval and isAutoApprove based on approval chains
+    fieldsInfo.forEach((fieldInfo) => {
+      const { approvalChain } = fieldInfo;
+
+      if (approvalChain.length === 0) {
+        // No approval chain configured
+        fieldInfo.requiresApproval = false;
+        fieldInfo.isAutoApprove = false;
+      } else if (approvalChain.length === 1 && currentRole && approvalChain[0] === currentRole) {
+        // Auto-approve: chain has one step and current user has that role
+        fieldInfo.requiresApproval = false;
+        fieldInfo.isAutoApprove = true;
+      } else {
+        // Requires approval
+        fieldInfo.requiresApproval = true;
+        fieldInfo.isAutoApprove = false;
+      }
+    });
+
+    const approvalFields = fieldsInfo.filter((f) => f.requiresApproval);
+    const autoApprovalFields = fieldsInfo.filter((f) => f.isAutoApprove);
+    const directFields = fieldsInfo.filter((f) => !f.requiresApproval && !f.isAutoApprove);
+
+    return {
+      hasFieldsRequiringApproval: approvalFields.length > 0,
+      hasFieldsWithAutoApproval: autoApprovalFields.length > 0,
+      fieldsInfo,
+      approvalFields,
+      autoApprovalFields,
+      directFields,
+    };
+  }, [
+    isUserChangesApprovalEnabled,
+    currentRole,
+    eoddChainRes,
+    pepChainRes,
+    craChainRes,
+    craLockChainRes,
+  ]);
 }

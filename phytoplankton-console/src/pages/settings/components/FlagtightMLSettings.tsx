@@ -16,7 +16,7 @@ export const FlagrightMLSettings = () => {
   const settings = useSettings();
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const mutateTenantSettings = useUpdateTenantSettings({ enableReloadSettings: true });
   const handleToggle = () => {
     mutateTenantSettings.mutate({ isMlEnabled: !settings.isMlEnabled });
   };

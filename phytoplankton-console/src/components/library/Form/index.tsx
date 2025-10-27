@@ -6,7 +6,7 @@ import { FormContext, FormContextValue } from './context';
 import { FormValidationResult, validateForm } from './utils/validation/utils';
 import { InternalFieldsMeta } from './types';
 import { useDeepEqualEffect, useDeepEqualMemo, useIsChanged } from '@/utils/hooks';
-import { StatePair } from '@/utils/state';
+import { StatePair, Updater } from '@/utils/state';
 import Portal from '@/components/library/Portal';
 
 export interface FormRef<FormValues> {
@@ -26,6 +26,7 @@ interface ChildrenProps<FormValues> {
 interface Props<FormValues> {
   id?: string;
   initialValues: FormValues;
+  initialMeta?: InternalFieldsMeta;
   children: React.ReactNode | ((props: ChildrenProps<FormValues>) => React.ReactNode);
   formValidators?:
     | Validator<FormValues>[]
@@ -35,6 +36,7 @@ interface Props<FormValues> {
     | ((props: { values: FormValues }) => FieldValidators<FormValues>);
   className?: string;
   alwaysShowErrors?: boolean;
+  isDisabled?: boolean;
   portaled?: boolean; // useful for creating nested forms
   onSubmit?: (values: FormValues, state: { isValid: boolean }) => void;
   onChange?: (state: { values: FormValues; isValid: boolean }) => void;
@@ -50,11 +52,23 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     alwaysShowErrors = false,
     onSubmit,
     onChange,
+    isDisabled = false,
+    initialMeta,
   } = props;
 
   const [formValues, setFormValues] = useState<FormValues>(initialValues ?? ({} as FormValues));
   const [isFormValid, setFormValid] = useState<boolean>(false);
-  const [fieldMeta, setFieldsMeta] = useState<InternalFieldsMeta>({});
+  const [fieldMeta, setFieldsMeta] = useState<InternalFieldsMeta>(initialMeta ?? {});
+
+  const handleSetFormValues = useCallback(
+    (updater: Updater<FormValues>) => {
+      if (isDisabled) {
+        return;
+      }
+      return setFormValues(updater);
+    },
+    [isDisabled],
+  );
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -93,7 +107,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
     (): FormRef<FormValues> => ({
       getValues: (): FormValues => formValues,
       setValues: (formValues: FormValues) => {
-        setFormValues(formValues);
+        handleSetFormValues(formValues);
       },
       validate: (externalFormValues?: FormValues) => {
         return (
@@ -104,16 +118,17 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
         handleSubmit();
       },
       resetFields: (values = initialValues) => {
-        setFormValues(values);
+        handleSetFormValues(values);
         setFieldsMeta({});
       },
     }),
   );
 
   const formContext: FormContextValue<FormValues> = {
+    isDisabled,
     alwaysShowErrors: alwaysShowErrors,
     values: formValues,
-    setValues: setFormValues,
+    setValues: handleSetFormValues,
     meta: fieldMeta,
     setMeta: (key, cb) => {
       setFieldsMeta((state) => ({
@@ -155,7 +170,7 @@ function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormV
       {typeof children === 'function'
         ? children({
             validationResult,
-            valuesState: [formValues, setFormValues],
+            valuesState: [formValues, handleSetFormValues],
             isFormValid,
           })
         : children}

@@ -56,7 +56,7 @@ export const businessUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetBusinessUsersItem(async (ctx, request) => {
-      const user = await userService.getBusinessUser(request.userId)
+      const user = await userService.getBusinessUser(request.userId, true)
       if (user.result == null) {
         throw new NotFound(`Unable to find user by id`)
       }
@@ -114,7 +114,7 @@ export const consumerUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetConsumerUsersItem(async (ctx, request) => {
-      const user = await userService.getConsumerUser(request.userId)
+      const user = await userService.getConsumerUser(request.userId, true)
       if (user.result == null) {
         throw new NotFound(`Unable to find user by id`)
       }
@@ -174,7 +174,8 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerGetUsersItem(
-      async (ctx, request) => await userService.getUser(request.userId, true)
+      async (ctx, request) =>
+        await userService.getUser(request.userId, true, true)
     )
 
     handlers.registerPostUserComments(async (ctx, request) => {

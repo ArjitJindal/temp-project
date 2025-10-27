@@ -1,5 +1,6 @@
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
+import pick from 'lodash/pick'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 import { StackConstants } from '../../../lib/constants'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -14,6 +15,7 @@ import {
 import { BatchJob } from '@/@types/batch-job'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongo-table-names'
 import { logger } from '@/core/logger'
+import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 
 export class BackfillSearchHitsBatchJobRunner extends BatchJobRunner {
   private dynamoDb!: DynamoDBDocumentClient
@@ -95,6 +97,7 @@ export class BackfillSearchHitsBatchJobRunner extends BatchJobRunner {
       uniqueKeys.add(dynamoHash)
 
       const dynamoItem = this.createDynamoItem(dynamoHash, searchHistory)
+
       if (dynamoItem) {
         requests.push({
           PutRequest: {
@@ -115,10 +118,15 @@ export class BackfillSearchHitsBatchJobRunner extends BatchJobRunner {
     const response = searchHistory.response
     const searchId = response?.searchId
 
-    if (response && searchId) {
+    const santizedResponse = pick(
+      response,
+      SanctionsSearchResponse.getAttributeTypeMap().map((attr) => attr.name)
+    )
+
+    if (santizedResponse && searchId) {
       const simplifiedResponse = {
-        ...response,
-        data: response.data?.map((entity) => ({
+        ...santizedResponse,
+        data: santizedResponse.data?.map((entity) => ({
           entityId: entity.id,
           entityType: entity.entityType,
         })),

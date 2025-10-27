@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import { useIsInviteDisabled } from './utils';
@@ -17,7 +17,7 @@ import {
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
-import { useAuth0User, useInvalidateUsers } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
 import TextInput from '@/components/library/TextInput';
 import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
@@ -31,6 +31,7 @@ import { getOr } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
 import { ExpandContentButton } from '@/components/library/ExpandContentButton';
+import { ACCOUNT_LIST } from '@/utils/queries/keys';
 
 interface Props {
   editAccount: Account | null;
@@ -140,8 +141,7 @@ export default function AccountForm(props: Props) {
     }
   }, [defaultValues, isVisibilityChanged, isVisible]);
 
-  const invalidateUsers = useInvalidateUsers();
-
+  const queryClient = useQueryClient();
   const isInviteButtonDisabled = useMemo(() => {
     if (isEdit) {
       return false;
@@ -196,7 +196,7 @@ export default function AccountForm(props: Props) {
         onSuccess();
         props.onChangeVisibility(false);
         await new Promise((resolve) => setTimeout(resolve, 3000)); // sleep for 3 seconds to let the account get synced
-        invalidateUsers.invalidate();
+        queryClient.invalidateQueries(ACCOUNT_LIST());
       },
       onError: (e) => {
         message.fatal(`Failed to invite user - ${getErrorMessage(e)}`, e);
@@ -250,7 +250,7 @@ export default function AccountForm(props: Props) {
         message.success('Account updated successfully');
         onSuccess();
         props.onChangeVisibility(false);
-        invalidateUsers.invalidate();
+        queryClient.invalidateQueries(ACCOUNT_LIST());
       },
       onError: (e) => {
         message.fatal(`Failed to update account - ${getErrorMessage(e)}`, e);

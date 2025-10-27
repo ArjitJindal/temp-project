@@ -338,7 +338,7 @@ export function useAlertTabs(props: Props): TabItem[] {
           return {
             title: 'Comments',
             key: tab,
-            children: <CommentsTab alert={alert} />,
+            children: <CommentsTab alertId={alert.alertId ?? ''} />,
           };
         }
         if (tab === AlertTabs.ACTIVITY) {

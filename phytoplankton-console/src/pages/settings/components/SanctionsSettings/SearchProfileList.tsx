@@ -11,7 +11,8 @@ import { SearchProfileResponse } from '@/apis';
 import { SEARCH_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
-import { useHasResources, useUsers } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import Tag from '@/components/library/Tag';
 import SettingsCard from '@/components/library/SettingsCard';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -23,7 +24,7 @@ import Confirm from '@/components/utils/Confirm';
 
 export const SearchProfileList = ({ hasFeature }) => {
   const api = useApi();
-  const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users, isLoading } = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [deleting, setDeleting] = useState(false);
   const [editingProfile, setEditingProfile] = useState<SearchProfileResponse | undefined>(
     undefined,
@@ -162,7 +163,7 @@ export const SearchProfileList = ({ hasFeature }) => {
           },
           render: (userId, _) => {
             return userId ? (
-              <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+              <ConsoleUserAvatar userId={userId} users={users} loadingUsers={isLoading} />
             ) : (
               <>-</>
             );
@@ -225,7 +226,7 @@ export const SearchProfileList = ({ hasFeature }) => {
       }),
     ];
   }, [
-    loadingUsers,
+    isLoading,
     users,
     isReadOnly,
     updateStatusMutation,

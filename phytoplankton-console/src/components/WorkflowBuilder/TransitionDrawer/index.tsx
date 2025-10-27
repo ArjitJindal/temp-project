@@ -14,7 +14,7 @@ import { message } from '@/components/library/Message';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
 import { Validator } from '@/components/library/Form/utils/validation/types';
 import { useIsChanged } from '@/utils/hooks';
-import { useRoles } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import { WorkflowType } from '@/utils/api/workflows';
 
 export type FormValues = {
@@ -57,7 +57,11 @@ export default function TransitionDrawer(props: Props) {
   } = props;
   const formRef = useRef<FormRef<FormValues>>(null);
 
-  const [roles, isLoading] = useRoles();
+  const { rolesList, isLoading } = useRoles();
+  const rolesOptions = rolesList.map((role) => ({
+    label: role.name,
+    value: role.id,
+  }));
 
   const isVisibilityChanged = useIsChanged(isVisible);
   useEffect(() => {
@@ -188,10 +192,7 @@ export default function TransitionDrawer(props: Props) {
                 {({ value, onChange }) => (
                   <Select
                     isDisabled={isLoading}
-                    options={roles.map((role) => ({
-                      label: role.name,
-                      value: role.id,
-                    }))}
+                    options={rolesOptions}
                     value={value}
                     onChange={onChange}
                   />

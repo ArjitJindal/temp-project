@@ -55,6 +55,7 @@ import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { disableLocalChangeHandler } from '@/utils/local-change-handler'
+import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
@@ -2565,6 +2566,62 @@ describe('Testing not adding transactions to alerts in selected status (Frozen S
         .map((case_) => case_.alerts?.[0]?.ruleInstanceId)
         .sort()
       expect(ruleInstanceIds).toEqual(['ADDRESS-RULE.1', 'NAME-RULE.1'])
+    })
+
+    it('should create cases for different rule instances with different alertCreatedFor configurations', async () => {
+      const { caseCreationService } = await getServices(TEST_TENANT_ID)
+      MockDate.set(TODAY)
+
+      // Create a transaction that will hit both rules
+      const transaction = getTestTransaction({
+        type: 'DEPOSIT',
+        transactionId: 'T-2210-1',
+        timestamp: 1641654664000,
+        originUserId: undefined,
+        destinationUserId: undefined,
+        originPaymentDetails: {
+          method: 'GENERIC_BANK_ACCOUNT',
+          address: {
+            addressLines: ['Street Name Random 1'],
+          },
+        },
+        destinationPaymentDetails: {
+          method: 'GENERIC_BANK_ACCOUNT',
+          name: 'Street Name Random 2',
+        },
+        transactionState: 'CREATED',
+      })
+
+      const existingCase: Case = {
+        caseId: '123',
+        caseUsers: {
+          origin: { userId: TEST_USER_1.userId },
+        },
+        caseAggregates: DEFAULT_CASE_AGGREGATES,
+        caseType: 'SYSTEM',
+      }
+
+      await caseCreationService.caseRepository.addCaseMongo(existingCase)
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      const [result] = results
+      const subjects = await caseCreationService.getTransactionSubjects({
+        ...transaction,
+        ...result,
+      })
+
+      for (const directionSubjects of Object.values(subjects)) {
+        for (const subSubject of directionSubjects ?? []) {
+          const cases = await caseCreationService.getCasesBySubject(
+            subSubject,
+            {}
+          )
+
+          expect(cases).toHaveLength(0)
+        }
+      }
     })
   })
 })

@@ -27,15 +27,20 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
           <label
             data-cy={`risk-level-${level}`}
             key={level}
-            className={cn(s.button, isReadonly && s.isReadonly, isDisabled && s.isDisabled)}
+            className={cn(
+              s.button,
+              isReadonly && s.isReadonly,
+              isDisabled && s.isDisabled,
+              isCurrent && s.isCurrent,
+            )}
             style={
               isCurrent
                 ? {
                     zIndex: 2,
                     borderWidth: 1,
-                    background: RISK_LEVEL_COLORS[level].light,
-                    color: RISK_LEVEL_COLORS[level].text,
-                    borderColor: RISK_LEVEL_COLORS[level].primary,
+                    background: isDisabled ? undefined : RISK_LEVEL_COLORS[level].light,
+                    color: isDisabled ? undefined : RISK_LEVEL_COLORS[level].text,
+                    borderColor: isDisabled ? undefined : RISK_LEVEL_COLORS[level].primary,
                   }
                 : isDisabled
                 ? { opacity: 0.5 }

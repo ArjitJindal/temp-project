@@ -316,7 +316,7 @@ export function Content(props: { userId: string }) {
             uniques: params.productType ?? undefined,
           }}
           onConfirm={(value) => {
-            setParams((state) => ({ ...state, productType: value.uniques }));
+            setParams((state) => ({ ...state, productType: value?.uniques }));
           }}
         />
       ),
@@ -334,7 +334,7 @@ export function Content(props: { userId: string }) {
             uniques: params.transactionTypes ?? undefined,
           }}
           onConfirm={(value) => {
-            setParams((state) => ({ ...state, transactionTypes: value.uniques }));
+            setParams((state) => ({ ...state, transactionTypes: value?.uniques }));
           }}
         />
       ),

@@ -15,17 +15,17 @@ import Button from '@/components/library/Button';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
-import { useRolesQueryResult } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import { useQuery } from '@/utils/queries/hooks';
 
 export default function Roles() {
-  const result = useRolesQueryResult();
+  const { roles, refetch } = useRoles();
 
   return (
     <div className={s.container}>
       <Card className={s.container}>
-        <AsyncResourceRenderer resource={result.data}>
-          {(roles) => <RolesLayout roles={roles.items} onChange={result.refetch} />}
+        <AsyncResourceRenderer resource={roles.data}>
+          {(roles) => <RolesLayout roles={roles.items} onChange={refetch} />}
         </AsyncResourceRenderer>
       </Card>
     </div>

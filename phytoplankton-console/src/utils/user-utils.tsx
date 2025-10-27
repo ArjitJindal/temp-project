@@ -1,15 +1,9 @@
 import React, { useContext } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { keyBy } from 'lodash';
 import { hasResources, Resource } from '@flagright/lib/utils';
-import { useQuery } from './queries/hooks';
-import { ACCOUNT_LIST, ROLES_LIST, TENANT } from './queries/keys';
-import { getOr, isLoading } from './asyncResource';
-import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
-import { useApi } from '@/api';
-import { Account, AccountRole, Permission, PermissionStatements, Tenant } from '@/apis';
+import { Account, Permission, PermissionStatements } from '@/apis';
 import { useSettings, useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useUsers } from '@/utils/api/auth';
 
 export enum CommentType {
   COMMENT,
@@ -50,7 +44,7 @@ export interface FlagrightAuth0User {
   orgName: string | null;
 }
 
-const SYSTEM_USERS: Account[] = [
+export const SYSTEM_USERS: Account[] = [
   {
     name: FLAGRIGHT_SYSTEM_USER,
     email: FLAGRIGHT_SYSTEM_USER,
@@ -93,7 +87,7 @@ export function useAuth0User(): FlagrightAuth0User {
 }
 
 export function useCurrentUser(): Account | null {
-  const [users] = useUsers();
+  const { users } = useUsers();
   const userId = useCurrentUserId();
   return users[userId];
 }
@@ -112,11 +106,6 @@ export function useAccountRole(): UserRole {
 export function useAccountRawRole(): string | null {
   const user = useAuth0User();
   return user?.role ?? null;
-}
-
-export function usePermissions(): Map<Permission, boolean> {
-  const user = useAuth0User();
-  return user.permissions || new Map<Permission, boolean>();
 }
 
 export function hasMinimumPermission(
@@ -176,7 +165,6 @@ export function hasMinimumPermission(
   });
 }
 
-// Keep the hook as a wrapper for convenience
 export function useHasMinimumPermission(requiredResources: Resource[]): boolean {
   const { statements } = useResources();
   return hasMinimumPermission(statements, requiredResources);
@@ -232,104 +220,8 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
-export function useRolesQueryResult() {
-  const api = useApi();
-  return useQuery(ROLES_LIST(), async () => {
-    const roles = await api.getRoles();
-    return {
-      items: roles,
-      total: roles.length,
-    };
-  });
-}
-
-export function useRoles(): [AccountRole[], boolean, () => void] {
-  const rolesQueryResult = useRolesQueryResult();
-  return [
-    getOr(rolesQueryResult.data, { items: [], total: 0 }).items,
-    isLoading(rolesQueryResult.data),
-    rolesQueryResult.refetch,
-  ];
-}
-
-export function useAccountsQueryResult(): QueryResult<Account[]> {
-  const api = useApi();
-  return useQuery(
-    ACCOUNT_LIST(),
-    async () => {
-      try {
-        return await api.getAccounts();
-      } catch (e) {
-        console.error(e);
-        return [];
-      }
-    },
-    {
-      staleTime: Infinity,
-    },
-  );
-}
-
-export function useAccountTenantInfoQueryResult(): QueryResult<Tenant> {
-  const api = useApi();
-  const { tenantId: currentUserTenantId } = useAuth0User();
-  return useQuery(TENANT(currentUserTenantId), async () => {
-    try {
-      return await api.getTenant();
-    } catch (e) {
-      console.error(e);
-      return undefined;
-    }
-  });
-}
-
-export function useAccounts(): Account[] {
-  const accountsQueryResult = useAccountsQueryResult();
-  return getOr(accountsQueryResult.data, []);
-}
-
-export function useUsers(
-  options: {
-    includeRootUsers?: boolean;
-    includeBlockedUsers?: boolean;
-    includeSystemUsers?: boolean;
-  } = {
-    includeRootUsers: false,
-    includeBlockedUsers: false,
-    includeSystemUsers: true,
-  },
-): [{ [userId: string]: Account }, boolean] {
-  const user = useAuth0User();
-  const usersQueryResult = useAccountsQueryResult();
-  const users = getOr(usersQueryResult.data, []);
-  const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
-
-  let tempUsers = [...users, ...(options.includeSystemUsers ? SYSTEM_USERS : [])];
-
-  if (!options.includeRootUsers && !isSuperAdmin) {
-    tempUsers = tempUsers.filter((user) => {
-      const role = parseUserRole(user.role);
-      return role !== UserRole.ROOT && role !== UserRole.WHITELABEL_ROOT;
-    });
-  }
-
-  if (!options.includeBlockedUsers) {
-    tempUsers = tempUsers.filter((user) => !user.blocked);
-  }
-  return [keyBy(tempUsers, 'id'), isLoading(usersQueryResult.data)];
-}
-
-export function useInvalidateUsers() {
-  const queryClient = useQueryClient();
-  return {
-    invalidate: () => {
-      queryClient.invalidateQueries(ACCOUNT_LIST());
-    },
-  };
-}
-
 export function useUserName(userId: string | null | undefined): string {
-  const [users, isLoading] = useUsers();
+  const { users, isLoading } = useUsers();
   const settings = useSettings();
   // todo: i18n
   if (isLoading || !userId) {
@@ -339,7 +231,7 @@ export function useUserName(userId: string | null | undefined): string {
 }
 
 export function useUser(userId: string | null | undefined): Account | null {
-  const [users, isLoading] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
+  const { users, isLoading } = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
 
   if (isLoading || !userId) {
     return null;
@@ -357,12 +249,6 @@ export function useUser(userId: string | null | undefined): Account | null {
   return user;
 }
 
-export function useTenantInfo(): Tenant | null {
-  const tenantQueryResult = useAccountTenantInfoQueryResult();
-  const tenant = getOr(tenantQueryResult.data, null);
-  return tenant;
-}
-
 export function useSortedUsers(
   options: {
     includeRootUsers?: boolean;
@@ -375,7 +261,7 @@ export function useSortedUsers(
   },
 ): [Account[], boolean] {
   const currentUser = useAuth0User();
-  const [users, loading] = useUsers(options);
+  const { users, isLoading } = useUsers(options);
   return [
     Object.values(users)
       .sort((accountA, accountB) => {
@@ -386,7 +272,7 @@ export function useSortedUsers(
         return accountA.name.localeCompare(accountB.name);
       })
       .filter((account) => !isSystemUser(account.id)),
-    loading,
+    isLoading,
   ];
 }
 

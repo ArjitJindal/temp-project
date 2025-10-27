@@ -338,6 +338,7 @@ export class RiskRepository {
         entity: { ...newDrsScoreItem },
         key: primaryKey,
         tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        propertiesToUnset: ['manualRiskLevel'],
       },
       { versioned: true }
     )

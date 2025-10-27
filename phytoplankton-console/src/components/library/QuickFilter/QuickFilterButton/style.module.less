@@ -17,22 +17,30 @@
     pointer-events: none;
   }
 
-  &:hover {
-    background: @fr-colors-v2-gray-1;
+  &:disabled {
+    border-color: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
+    color: @figma-vars--tokens-colorTextDisabled;
+    opacity: 0.75;
   }
 
-  &.isActive {
-    color: @fr-colors-v2-primary-flagrightBlue;
-    border-color: @fr-colors-v2-primary-flagrightBlue;
-
+  &:not(:disabled) {
     &:hover {
-      background: @fr-colors-v2-highlight-flagrightBlue;
+      background: @fr-colors-v2-gray-1;
     }
-  }
 
-  &.autoWidth {
-    .title {
-      max-width: unset;
+    &.isActive {
+      color: @fr-colors-v2-primary-flagrightBlue;
+      border-color: @fr-colors-v2-primary-flagrightBlue;
+
+      &:hover {
+        background: @fr-colors-v2-highlight-flagrightBlue;
+      }
+    }
+
+    &.autoWidth {
+      .title {
+        max-width: unset;
+      }
     }
   }
 }

@@ -123,6 +123,12 @@ export const assertSettings = (
       )
     }
   }
+
+  if (settings.sessionTimeoutMinutes && settings.sessionTimeoutMinutes < 0) {
+    throw new createHttpError.BadRequest(
+      'Session timeout minutes cannot be less than 0'
+    )
+  }
 }
 
 export const tenantsHandler = lambdaApi()(

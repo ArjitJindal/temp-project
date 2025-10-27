@@ -12,7 +12,7 @@ import { AllParams, TableColumn } from '@/components/library/Table/types';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { Authorized } from '@/components/utils/Authorized';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import AccountTag from '@/components/AccountTag';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
@@ -34,7 +34,7 @@ export interface QASamplesTableParams {
 }
 
 const QASamplesTable = () => {
-  const [users] = useUsers();
+  const { users } = useUsers();
   const [params, onChangeParams] = useState<AllParams<QASamplesTableParams>>({
     pageSize: 20,
     sort: [['createdAt', 'descend']],

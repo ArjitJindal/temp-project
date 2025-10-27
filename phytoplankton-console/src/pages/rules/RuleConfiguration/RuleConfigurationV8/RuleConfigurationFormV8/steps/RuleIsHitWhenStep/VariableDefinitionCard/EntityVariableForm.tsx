@@ -234,41 +234,67 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     const filterType = filterParams.types as string;
     const isUserRule = ruleType === 'USER';
 
-    return entityVariables
-      .filter((v) => {
-        if (isUserRule && (v.entity?.startsWith('TRANSACTION') || !isUserSenderVariable(v.key))) {
-          return false;
-        }
+    const filteredVariables = entityVariables.filter((v) => {
+      if (isUserRule && (v.entity?.startsWith('TRANSACTION') || !isUserSenderVariable(v.key))) {
+        return false;
+      }
 
-        let matchesEntityType = false;
+      let matchesEntityType = false;
 
-        if (filterType === 'TRANSACTION' && v.entity?.startsWith('TRANSACTION')) {
-          matchesEntityType = true;
-        } else if (filterType === 'CONSUMER_USER') {
-          matchesEntityType =
-            v.entity?.startsWith('USER') || v.entity?.includes(filterType) || false;
-        } else if (filterType === 'BUSINESS_USER') {
-          matchesEntityType =
-            v.entity?.startsWith('USER') || v.entity?.includes(filterType) || false;
-        } else {
-          matchesEntityType = true;
-        }
+      if (filterType === 'TRANSACTION' && v.entity?.startsWith('TRANSACTION')) {
+        matchesEntityType = true;
+      } else if (filterType === 'CONSUMER_USER') {
+        matchesEntityType = v.entity?.startsWith('USER') || v.entity?.includes(filterType) || false;
+      } else if (filterType === 'BUSINESS_USER') {
+        matchesEntityType = v.entity?.startsWith('USER') || v.entity?.includes(filterType) || false;
+      } else {
+        matchesEntityType = true;
+      }
 
-        if (!matchesEntityType) {
-          return false;
-        }
+      if (!matchesEntityType) {
+        return false;
+      }
 
-        if (searchKey) {
-          return v.uiDefinition.label.toLowerCase().includes(searchKey.toLowerCase());
-        }
+      if (searchKey) {
+        return v.uiDefinition.label.toLowerCase().includes(searchKey.toLowerCase());
+      }
 
-        return true;
-      })
-      .map((v) => ({
-        itemId: v.key,
-        itemName: firstLetterUpper(v.uiDefinition.label.split('/')[1]?.trim()),
-        itemDescription: '',
-      }));
+      return true;
+    });
+
+    const sortedVariables = searchKey
+      ? filteredVariables.sort((a, b) => {
+          const searchLower = searchKey.toLowerCase();
+          const aFieldName = a.uiDefinition.label.split('>').pop()?.trim().toLowerCase() || '';
+          const bFieldName = b.uiDefinition.label.split('>').pop()?.trim().toLowerCase() || '';
+
+          // Calculate match scores: exact match = 3, starts with = 2, contains = 1, no match = 0
+          const getMatchScore = (fieldName: string) => {
+            if (fieldName === searchLower) {
+              return 3;
+            }
+            if (fieldName.startsWith(searchLower)) {
+              return 2;
+            }
+            if (fieldName.includes(searchLower)) {
+              return 1;
+            }
+            return 0;
+          };
+
+          const aScore = getMatchScore(aFieldName);
+          const bScore = getMatchScore(bFieldName);
+
+          // Sort by match score (higher first), then alphabetically
+          return bScore - aScore || aFieldName.localeCompare(bFieldName);
+        })
+      : filteredVariables;
+
+    return sortedVariables.map((v) => ({
+      itemId: v.key,
+      itemName: firstLetterUpper(v.uiDefinition.label.split('/')[1]?.trim()),
+      itemDescription: '',
+    }));
   }, [entityVariables, ruleType, filterParams.types, searchKey]);
 
   const entityVariablesFiltered = useMemo(() => {
@@ -486,6 +512,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
       >
         <Card.Section direction="vertical">
           <SearchBar
+            readOnly={readOnly}
             search={searchKey}
             onSearch={(value) => {
               setSearchKey(value);

@@ -32,10 +32,11 @@ export default function PaymentFiltersInput(props: Props) {
   const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
-  const { alwaysShowErrors } = useFormContext();
+  const { alwaysShowErrors, isDisabled } = useFormContext();
 
   const subContext: FormContextValue<ValueType | undefined> = useMemo(
     () => ({
+      isDisabled,
       meta: fieldMeta,
       setMeta: (key, cb) => {
         setFieldsMeta((state) => {
@@ -51,7 +52,7 @@ export default function PaymentFiltersInput(props: Props) {
       },
       alwaysShowErrors,
     }),
-    [alwaysShowErrors, value, fieldMeta, onChange],
+    [alwaysShowErrors, value, fieldMeta, onChange, isDisabled],
   );
 
   return (

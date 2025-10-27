@@ -24,7 +24,14 @@ interface SingleProps<Value extends Comparable> extends SharedProps<Value>, Inpu
 type Props<Value extends Comparable> = MultipleProps<Value> | SingleProps<Value>;
 
 export default function ListQuickFilter<Value extends Comparable>(props: Props<Value>) {
-  const { options, onChange = () => {}, onUpdateFilterClose, closeOnSingleSelect, ...rest } = props;
+  const {
+    options,
+    onChange = () => {},
+    onUpdateFilterClose,
+    closeOnSingleSelect,
+    isDisabled,
+    ...rest
+  } = props;
 
   const valueArray: Value[] = props.value
     ? props.mode === 'SINGLE'
@@ -45,6 +52,7 @@ export default function ListQuickFilter<Value extends Comparable>(props: Props<V
     <QuickFilterBase
       onUpdateFilterClose={onUpdateFilterClose}
       {...rest}
+      isDisabled={isDisabled}
       buttonText={buttonText}
       onClear={
         isEmpty
@@ -69,8 +77,8 @@ export default function ListQuickFilter<Value extends Comparable>(props: Props<V
                 : valueArray.filter((x) => x !== value);
               props.onChange?.(newValue);
 
-              // Close if closeOnSingleSelect is true and this is the first selection
-              if (closeOnSingleSelect && valueArray.length === 0) {
+              // Close if closeOnSingleSelect is true and this is the first selection or unselecting
+              if (closeOnSingleSelect && (valueArray.length === 0 || valueArray.includes(value))) {
                 setOpen(false);
                 onUpdateFilterClose && onUpdateFilterClose(true);
               }

@@ -6,9 +6,10 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import SettingsCard from '@/components/library/SettingsCard';
-import { isSuperAdmin, useAuth0User, useHasResources, useTenantInfo } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useHasResources } from '@/utils/user-utils';
 import Button from '@/components/library/Button';
 import { dayjs } from '@/utils/dayjs';
+import { useTenantInfo } from '@/utils/api/auth';
 
 export default function RiskAlgorithmsCra() {
   const settings = useSettings();

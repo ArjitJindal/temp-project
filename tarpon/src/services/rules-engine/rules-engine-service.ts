@@ -922,14 +922,16 @@ export class RulesEngineService {
         },
         transaction.timestamp
       ),
-      this.transactionEventRepository.saveTransactionEvent(
-        newTransactionEvent,
-        {
-          executedRules: executedRules,
-          hitRules: hitRules,
-          status: finalStatus,
-        }
-      ),
+      hitRules.length > 0
+        ? this.transactionEventRepository.saveTransactionEvent(
+            newTransactionEvent,
+            {
+              executedRules: executedRules,
+              hitRules: hitRules,
+              status: finalStatus,
+            }
+          )
+        : Promise.resolve(),
       sendTransactionAggregationTasks(
         aggregationMessages,
         this.dynamoDb,

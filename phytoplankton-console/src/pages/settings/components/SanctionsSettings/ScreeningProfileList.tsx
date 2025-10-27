@@ -11,7 +11,7 @@ import { ScreeningProfileResponse } from '@/apis';
 import { SCREENING_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import Tag from '@/components/library/Tag';
 import SettingsCard from '@/components/library/SettingsCard';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -24,7 +24,7 @@ import AccountTag from '@/components/AccountTag';
 
 export const ScreeningProfileList = ({ hasFeature }) => {
   const api = useApi();
-  const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users } = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [deleting, setDeleting] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ScreeningProfileResponse | undefined>(
     undefined,

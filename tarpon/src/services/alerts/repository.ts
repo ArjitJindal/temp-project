@@ -1292,10 +1292,17 @@ export class AlertsRepository {
         'alerts.alertId': { $in: alertIds },
       },
       {
-        $set: { 'alerts.$.ruleChecklist.$[item].done': 'DONE' },
+        $set: { 'alerts.$[alert].ruleChecklist.$[item].done': 'DONE' },
       },
       {
         arrayFilters: [
+          {
+            'alert.alertId': { $in: alertIds },
+            'alert.ruleChecklist': {
+              $exists: true,
+              $ne: null,
+            },
+          },
           {
             'item.done': 'NOT_STARTED',
           },

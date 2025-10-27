@@ -26,6 +26,7 @@ import Button from '@/components/library/Button';
 import { getAllEntityVariableKeys } from '@/pages/rules/utils';
 
 interface Props {
+  readOnly?: boolean;
   ruleType: RuleType;
   entityVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicEntityVariables']>;
   aggVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicAggregationVariables']>;
@@ -38,6 +39,7 @@ interface Props {
 
 export default function DefineLogicCard(props: Props) {
   const {
+    readOnly = false,
     ruleType,
     entityVariablesFieldState,
     aggVariablesFieldState,
@@ -110,7 +112,7 @@ export default function DefineLogicCard(props: Props) {
               'Create rule logic using the defined variables and operators for execution'
             }
           />
-          {!showRuleLogicBuilder && (
+          {!showRuleLogicBuilder && !readOnly && (
             <Button
               testName="add-logic-v8"
               isDisabled={!hasVariables}

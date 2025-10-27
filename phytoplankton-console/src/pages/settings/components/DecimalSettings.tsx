@@ -8,10 +8,13 @@ import { useHasResources } from '@/utils/user-utils';
 
 export const DecimalSettings = () => {
   const settings = useSettings();
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const mutateTenantSettings = useUpdateTenantSettings({
+    enableReloadSettings: true,
+    successMessage: 'Decimal places settings saved successfully',
+  });
 
   const handleToggle = (showAllDecimalPlaces?: boolean) => {
-    mutateTenantSettings.mutate({ showAllDecimalPlaces: !showAllDecimalPlaces });
+    mutateTenantSettings.mutate({ showAllDecimalPlaces: showAllDecimalPlaces ?? false });
   };
 
   const permissions = useHasResources(['write:::settings/transactions/show-all-decimal-places/*']);

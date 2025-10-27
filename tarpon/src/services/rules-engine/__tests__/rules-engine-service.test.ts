@@ -175,6 +175,13 @@ describe('Verify Transaction', () => {
         ruleRunMode: 'LIVE',
         ruleExecutionMode: 'ASYNC',
       },
+      {
+        id: 'TEST-R-3',
+        ruleImplementationName: 'tests/test-non-hit-rule',
+        type: 'TRANSACTION',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'ASYNC',
+      },
     ])
 
     test('returns executed rules (w/o async rules)', async () => {
@@ -275,6 +282,18 @@ describe('Verify Transaction', () => {
             },
           },
           {
+            ruleId: 'TEST-R-3',
+            executedAt: expect.any(Number),
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            ruleHit: false,
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+          },
+          {
             ruleId: 'TEST-R-1',
             executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
@@ -322,6 +341,59 @@ describe('Verify Transaction', () => {
         ],
         updateCount: expect.any(Number),
       } as TransactionMonitoringResult)
+    })
+
+    test('returns transaction event description (w/ async rules (hit))', async () => {
+      enableAsyncRulesInTest()
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+      const transaction = getTestTransaction({ transactionId: 'dummy-3' })
+      await rulesEngine.verifyTransaction(transaction)
+      const transactionEventRepository = new TransactionEventRepository(
+        TEST_TENANT_ID,
+        { dynamoDb }
+      )
+      const lastTransactionEvent =
+        await transactionEventRepository.getLastTransactionEvent(
+          transaction.transactionId as string
+        )
+      expect(lastTransactionEvent?.eventDescription).toEqual(
+        'Transaction event created as a result of asynchronous rule execution.'
+      )
+    })
+
+    test('does not returns transaction event description (w/ async rules (no hit))', async () => {
+      enableAsyncRulesInTest()
+
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator,
+        mongoDb
+      )
+      const transaction = getTestTransaction({ transactionId: 'dummy-4' })
+      await rulesEngine.verifyTransaction(transaction)
+
+      const transactionEventRepository = new TransactionEventRepository(
+        TEST_TENANT_ID,
+        { dynamoDb }
+      )
+
+      const events = transactionEventRepository.getTransactionEvents(
+        transaction.transactionId
+      )
+      const asyncRuleEvents = (await events).filter(
+        (event: any) =>
+          event.eventDescription ===
+          'Transaction event created as a result of asynchronous rule execution.'
+      )
+      expect(asyncRuleEvents.length).toBe(1) // only 1 async rule is hit
     })
   })
 

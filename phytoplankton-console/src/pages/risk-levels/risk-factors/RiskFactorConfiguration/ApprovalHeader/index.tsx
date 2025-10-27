@@ -118,9 +118,7 @@ export default function ApprovalHeader(props: Props) {
                 )}
               </div>
             </div>
-            {showProposal && (
-              <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
-            )}
+            <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
           </div>
         );
       }}

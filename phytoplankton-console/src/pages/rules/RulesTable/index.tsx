@@ -109,7 +109,7 @@ export const RulesTable: React.FC<Props> = (props) => {
         title: 'ID',
         subtitle: 'Name',
         key: 'id',
-        defaultWidth: 170,
+        defaultWidth: 180,
         sorting: true,
         type: {
           render: (id: string | undefined, { item: entity }) => {

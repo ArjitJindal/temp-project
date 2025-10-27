@@ -15,7 +15,7 @@ import Confirm from '@/components/utils/Confirm';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useRoles } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 
 interface RoleHeaderProps {
   mode: 'view' | 'edit';
@@ -40,7 +40,7 @@ const RoleHeader: React.FC<RoleHeaderProps> = ({
 }) => {
   const api = useApi();
   const navigate = useNavigate();
-  const [, , refetchRoles] = useRoles();
+  const { refetch } = useRoles();
 
   const handleDelete = async () => {
     if (!roleId) {
@@ -50,7 +50,7 @@ const RoleHeader: React.FC<RoleHeaderProps> = ({
 
     try {
       await api.deleteRole({ roleId });
-      refetchRoles();
+      refetch();
       message.success(`Role "${formatRoleName(name)}" has been deleted`);
       navigate('/accounts/roles');
     } catch (error) {

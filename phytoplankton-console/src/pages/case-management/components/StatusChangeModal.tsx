@@ -21,10 +21,12 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import { useCurrentUser, useUsers } from '@/utils/user-utils';
+import { useCurrentUser } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { useReasons } from '@/utils/reasons';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import { useDispositionApprovalWarnings } from '@/utils/api/workflows';
 
 export interface FormValues {
   reasons: string[];
@@ -102,7 +104,7 @@ export default function StatusChangeModal(props: Props) {
   const isReopen = oldStatus === 'CLOSED' && newStatus === 'REOPENED';
   const showConfirmation = isVisible && (isReopen || isAwaitingConfirmation || skipReasonsModal);
   const [showErrors, setAlwaysShowErrors] = useState(false);
-  const [users] = useUsers();
+  const { users } = useUsers();
   const currentUser = useCurrentUser();
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
   const multiLevelEscalation = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
@@ -145,10 +147,24 @@ export default function StatusChangeModal(props: Props) {
     isValid: false,
   });
 
+  // Check if approval workflows require a reason (only if feature is enabled)
+  const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
+  const approvalWarnings = useDispositionApprovalWarnings();
+  const requiresReasonForApprovals =
+    isUserChangesApprovalEnabled &&
+    (approvalWarnings.hasFieldsRequiringApproval || approvalWarnings.hasFieldsWithAutoApproval);
+
   const actionReasonValidator = () => {
-    return !formState.values.kycStatusDetails && !formState.values.userStateDetails
-      ? undefined
-      : notEmpty;
+    // Require reason if KYC/User status details are being changed (existing logic)
+    const requiresReasonForStatusChanges =
+      formState.values.kycStatusDetails || formState.values.userStateDetails;
+
+    // Require reason if any field changes need approval workflow (only when feature is enabled)
+    if (requiresReasonForStatusChanges || requiresReasonForApprovals) {
+      return notEmpty;
+    }
+
+    return undefined;
   };
 
   const isPaymentApprovalEnabled = useSettings().isPaymentApprovalEnabled;

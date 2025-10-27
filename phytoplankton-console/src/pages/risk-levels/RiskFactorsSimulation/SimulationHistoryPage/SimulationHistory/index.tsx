@@ -5,7 +5,7 @@ import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOBS } from '@/utils/queries/keys';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, NUMBER, SIMULATION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -20,7 +20,7 @@ const type = 'RISK_FACTORS_V8';
 export type SimulationJob = V8RiskSimulationJob;
 export function SimulationHistory() {
   const api = useApi();
-  const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users, isLoading } = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [params, setParams] = useState<AllParams<DefaultApiGetSimulationsRequest>>({
     ...DEFAULT_PARAMS_STATE,
     page: 1,
@@ -95,7 +95,7 @@ export function SimulationHistory() {
             defaultWidth: 300,
             type: {
               render: (createdBy) => {
-                if (loading || !createdBy) {
+                if (isLoading || !createdBy) {
                   return <></>;
                 }
 
@@ -104,7 +104,7 @@ export function SimulationHistory() {
                 return <span>{user}</span>;
               },
               stringify: (createdBy) => {
-                if (loading || !createdBy) {
+                if (isLoading || !createdBy) {
                   return '';
                 }
 

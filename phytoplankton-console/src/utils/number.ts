@@ -2,59 +2,50 @@ export function formatNumber(
   rawAmount: number | string | undefined,
   options?: { compact?: boolean; keepDecimals?: boolean; showAllDecimals?: boolean },
 ): string {
-  try {
-    if (rawAmount == null) {
-      return '-';
-    }
-
-    const { compact = false, keepDecimals = false, showAllDecimals = false } = options ?? {};
-
-    let amount = 0;
-
-    try {
-      amount = typeof rawAmount === 'string' ? parseFloat(rawAmount) : rawAmount;
-    } catch (error) {
-      return '-';
-    }
-
-    if (isNaN(amount)) {
-      return '-';
-    }
-
-    let formattedNumber;
-
-    try {
-      const numberFormat = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: showAllDecimals ? 20 : keepDecimals ? 2 : 0,
-        minimumFractionDigits: showAllDecimals ? 0 : keepDecimals ? 2 : 0,
-      });
-      formattedNumber = numberFormat.format(amount);
-    } catch (error) {
-      return '-';
-    }
-
-    if (compact) {
-      const numberFormat = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: showAllDecimals ? 20 : 2,
-        minimumFractionDigits: showAllDecimals ? 0 : 2,
-      });
-      const absAmount = Math.abs(amount);
-      if (absAmount >= 1000000) {
-        formattedNumber = `${numberFormat.format(amount / 1000_000)}m`;
-      } else if (absAmount >= 1000) {
-        formattedNumber = `${numberFormat.format(amount / 1000)}k`;
-      } else if (absAmount === 0) {
-        // For zero, don't show decimal places
-        formattedNumber = '0';
-      } else {
-        // For numbers smaller than 1000 (but not zero), apply the compact formatting rules (2 decimal places)
-        formattedNumber = numberFormat.format(amount);
-      }
-    }
-
-    return formattedNumber;
-  } catch (error) {
+  if (rawAmount == null) {
     return '-';
+  }
+
+  const { compact = false, keepDecimals = true, showAllDecimals = false } = options ?? {};
+  const amount = typeof rawAmount === 'string' ? parseFloat(rawAmount) : rawAmount;
+
+  if (!isFinite(amount)) {
+    return '-';
+  }
+
+  // Helper to get correct decimals
+  const hasDecimals = amount % 1 !== 0;
+  const getNumberFormat = (maxDecimals: number, minDecimals: number) =>
+    new Intl.NumberFormat('en-US', {
+      maximumFractionDigits: maxDecimals,
+      minimumFractionDigits: minDecimals,
+    });
+
+  if (compact) {
+    const absAmount = Math.abs(amount);
+
+    // Determine correct formatted value and suffix
+    let display: number, suffix: string;
+    if (absAmount >= 1_000_000) {
+      display = amount / 1_000_000;
+      suffix = 'm';
+    } else if (absAmount >= 1_000) {
+      display = amount / 1_000;
+      suffix = 'k';
+    } else if (absAmount === 0) {
+      return '0';
+    } else {
+      display = amount;
+      suffix = '';
+    }
+
+    const maxDecimals = showAllDecimals ? 20 : 2;
+    const minDecimals = showAllDecimals ? 0 : keepDecimals && display % 1 !== 0 ? 2 : 0;
+    return `${getNumberFormat(maxDecimals, minDecimals).format(display)}${suffix}`;
+  } else {
+    const maxDecimals = showAllDecimals ? 20 : keepDecimals ? 2 : 0;
+    const minDecimals = showAllDecimals ? 0 : keepDecimals && hasDecimals ? 2 : 0;
+    return getNumberFormat(maxDecimals, minDecimals).format(amount);
   }
 }
 
