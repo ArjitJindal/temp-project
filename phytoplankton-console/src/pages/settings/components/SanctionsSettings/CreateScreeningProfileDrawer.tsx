@@ -45,6 +45,8 @@ import { map } from '@/utils/asyncResource';
 import Table from '@/components/library/Table';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/GenericSanctionsSearchType';
+import { OPEN_SANCTIONS_PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/OpenSanctionsPEPSourceRelevance';
+import { OPEN_SANCTIONS_CRIME_SOURCE_RELEVANCES } from '@/apis/models-custom/OpenSanctionsCrimeSourceRelevance';
 
 const ScreeningTypeMap: {
   [key in GenericSanctionsSearchType]: string;
@@ -140,7 +142,7 @@ const getDefaultConfig = (provider?: SanctionsDataProviderName): ScreeningProfil
       },
       pep: {
         sourceIds: [] as string[],
-        relevance: [],
+        relevance: OPEN_SANCTIONS_PEP_SOURCE_RELEVANCES,
       },
       adverseMedia: {
         relevance: [],
@@ -150,7 +152,7 @@ const getDefaultConfig = (provider?: SanctionsDataProviderName): ScreeningProfil
         sourceIds: [] as string[],
       },
       crime: {
-        relevance: [],
+        relevance: OPEN_SANCTIONS_CRIME_SOURCE_RELEVANCES,
       },
     };
   }
@@ -281,6 +283,8 @@ export default function CreateScreeningProfileDrawer({ isOpen, onClose, initialV
         requestPayload.pep?.relevance?.length === PEP_SOURCE_RELEVANCES.length &&
         requestPayload.rel?.relevance?.length === REL_SOURCE_RELEVANCES.length;
 
+      const action = initialValues ? 'Updating' : 'Creating';
+      message.loading(`${action} screening profile...`);
       if (initialValues?.screeningProfileId) {
         return api.updateScreeningProfile({
           screeningProfileId: initialValues.screeningProfileId,
@@ -351,12 +355,18 @@ export default function CreateScreeningProfileDrawer({ isOpen, onClose, initialV
       ...request,
       ...payload,
       screeningProfileName: request?.screeningProfileName,
+      screeningProfileDescription: request?.screeningProfileDescription,
+      isDefault: request?.isDefault,
+      provider: request?.provider,
     });
   };
 
   const handleDrawerSubmit = () => {
     setAlwaysShowErrors(true);
-
+    if (!selectedProvider) {
+      message.error('Please select provider');
+      return;
+    }
     if (!validateSourcesAndRelevance()) {
       return;
     }
@@ -558,8 +568,14 @@ const ScreeningProfileForm = ({
       </InputField>
       <InputField<ScreeningProfileRequest, 'provider'>
         name="provider"
-        label="Select providers"
+        label="Select provider"
         description="Select data provider to populate screening sources"
+        labelProps={{
+          required: {
+            showHint: true,
+            value: true,
+          },
+        }}
       >
         {(inputProps) => (
           <Select

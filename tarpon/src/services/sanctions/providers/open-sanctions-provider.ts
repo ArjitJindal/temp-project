@@ -517,18 +517,20 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         )
       )
     )
-    const pepSources = this.getPepSources(
-      entity?.properties?.topics ?? [],
-      'PERSON'
-    )
-    const crimeSources = this.getCrimeSources(
-      entity?.properties?.topics ?? [],
-      'PERSON'
-    )
+    const pepSources = sanctionSearchTypes.includes('PEP')
+      ? this.getPepSources(entity?.properties?.topics ?? [], 'PERSON')
+      : []
+    const crimeSources = sanctionSearchTypes.includes('CRIME')
+      ? this.getCrimeSources(entity?.properties?.topics ?? [], 'PERSON')
+      : []
     const sanctionsSources = this.getSanctionsSources(
       entity?.properties?.programId ?? [],
       'PERSON'
     )
+
+    if (sanctionsSources.length > 0) {
+      sanctionSearchTypes = uniq([...sanctionSearchTypes, 'SANCTIONS'])
+    }
     return {
       id: entity.id,
       name: normalizedName,
@@ -745,18 +747,19 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         )
       )
     )
-    const pepSources = this.getPepSources(
-      entity?.properties?.topics ?? [],
-      'BUSINESS'
-    )
-    const crimeSources = this.getCrimeSources(
-      entity?.properties?.topics ?? [],
-      'BUSINESS'
-    )
+    const pepSources = sanctionSearchTypes.includes('PEP')
+      ? this.getPepSources(entity?.properties?.topics ?? [], 'BUSINESS')
+      : []
+    const crimeSources = sanctionSearchTypes.includes('CRIME')
+      ? this.getCrimeSources(entity?.properties?.topics ?? [], 'BUSINESS')
+      : []
     const sanctionsSources = this.getSanctionsSources(
       entity?.properties?.programId ?? [],
       'BUSINESS'
     )
+    if (sanctionsSources.length > 0) {
+      sanctionSearchTypes = uniq([...sanctionSearchTypes, 'SANCTIONS'])
+    }
     return {
       id: entity.id,
       name: normalizedName,

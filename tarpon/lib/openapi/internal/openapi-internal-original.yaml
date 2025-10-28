@@ -15020,7 +15020,7 @@ components:
             relevance:
               type: array
               items:
-                $ref: '#/components/schemas/PEPRelevanceInternal'
+                type: string
             sourceIds:
               type: array
               items:
@@ -15248,9 +15248,24 @@ components:
       title: OpenSanctionsPEPSourceRelevance
       type: string
       enum:
-        - PEP
-        - PEP_BY_ASSOCIATION
-        - POI
+        - poi
+        - role.pep
+        - role.rca
+        - role.oligarch
+        - role.diplo
+        - role.judge
+    OpenSanctionsCrimeSourceRelevance:
+      title: OpenSanctionsCrimeSourceRelevance
+      type: string
+      enum:
+        - crime
+        - crime.fraud
+        - crime.cyber
+        - crime.fin
+        - crime.war
+        - crime.boss
+        - crime.terror
+        - crime.traffick
     RELSourceRelevance:
       title: RELSourceRelevance
       type: string

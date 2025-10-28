@@ -34,7 +34,8 @@ export const SanctionsSettings = () => {
   const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
   const isLSEGEnabled = useFeatureEnabled('LSEG');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
-  const isScreeningProfilesEnabled = isAcurisEnabled || isDowJonesEnabled;
+  const isScreeningProfilesEnabled =
+    isAcurisEnabled || isDowJonesEnabled || hasFeatureOpenSanctions;
   const branding = getBranding();
 
   const handleKYC6Download = () => {

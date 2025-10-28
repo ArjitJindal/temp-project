@@ -207,7 +207,7 @@ export class ScreeningProfileService {
         'A screening profile consisting of all available source lists and relevance nodes',
       isDefault: true,
       screeningProfileStatus: 'ENABLED' as const,
-
+      provider: SanctionsDataProviders.ACURIS,
       ...this.createSourceConfig(
         acurisSanctionsSearchType,
         'SANCTIONS' as AcurisSanctionsSearchType,
