@@ -42,7 +42,7 @@ export const getLatestTeamStatsClickhouseQuery = (
                         countIf(caseStatus = 'OPEN_IN_PROGRESS') AS inProgress,
                         countIf(caseStatus = 'OPEN_ON_HOLD') AS onHold
                     FROM 
-                        cases
+                        ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
                     ARRAY JOIN 
                         assignments
                     WHERE 
@@ -63,7 +63,7 @@ export const getLatestTeamStatsClickhouseQuery = (
                             'IN_REVIEW_ESCALATED'
                         )) AS inReview
                     FROM 
-                        cases
+                        ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
                     ARRAY JOIN 
                         reviewAssignments
                     WHERE 
@@ -122,7 +122,7 @@ export const getLatestTeamStatsClickhouseQuery = (
                         countIf(alerts.alertStatus = 'OPEN_IN_PROGRESS') AS inProgress,
                         countIf(alerts.alertStatus = 'OPEN_ON_HOLD') AS onHold
                     FROM 
-                        ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+                        ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
                     ARRAY JOIN 
                         alerts AS alerts
                     ARRAY JOIN alerts.assignments as assignments
@@ -144,7 +144,7 @@ export const getLatestTeamStatsClickhouseQuery = (
                             'IN_REVIEW_ESCALATED'
                         )) AS inReview
                     FROM 
-                        ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+                        ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
                     ARRAY JOIN 
                         alerts AS alerts
                     ARRAY JOIN alerts.reviewAssignments as reviewAssignments
