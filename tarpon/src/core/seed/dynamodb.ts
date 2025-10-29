@@ -9,6 +9,8 @@ import { getCrmRecords, getCrmUserRecordLinks } from './data/crm-records'
 import { riskFactors } from './data/risk-factors'
 import { getNotifications } from './data/notifications'
 import { auditlogs } from './data/auditlogs'
+import { versionHistory } from './data/version-history'
+import { getNarrativeTemplates } from './data/narrative'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { users } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -55,6 +57,10 @@ import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { data as transactionEvents } from '@/core/seed/data/transaction_events'
 import { getUserEvents } from '@/core/seed/data/user_events'
 import { envIs } from '@/utils/env'
+import { VersionHistoryRepository } from '@/services/version-history/repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { NarrativeRepository } from '@/services/tenants/repositories/narrative-template-repository'
+import { getClickhouseCredentials } from '@/utils/clickhouse/client'
 
 export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
@@ -452,6 +458,26 @@ export async function seedDynamo(
   notificationsWriteRequests.forEach((writeRequest) => {
     pushWriteRequest(notificationsTableName, writeRequest)
   })
+
+  // version history
+  logger.info('DYNAMO: Create version history')
+  const versionHistoryRepository = new VersionHistoryRepository(tenantId, {
+    mongoDb: await getMongoDbClient(),
+  })
+  for (const versionHistoryItem of versionHistory()) {
+    await versionHistoryRepository.createVersionHistory(versionHistoryItem)
+  }
+
+  // Narrative templates
+  logger.info('DYNAMO: Create narrative templates')
+  const narrativeTemplateRepository = new NarrativeRepository(
+    tenantId,
+    await getMongoDbClient(),
+    await getClickhouseCredentials(tenantId)
+  )
+  for (const narrativeTemplate of getNarrativeTemplates()) {
+    await narrativeTemplateRepository.createNarrativeTemplate(narrativeTemplate)
+  }
 
   // writing data to dynamo db
   for (const tableName in writeRequests) {
