@@ -988,9 +988,16 @@ export const getForneticsEntityId = (tenantSettings?: TenantSettings) => {
           return (
             <Id
               to={addBackUrlToRoute(
-                makeUrl(`/reports/:id`, {
-                  id: value,
-                }),
+                makeUrl(
+                  '/report/:reportId/:mode',
+                  {
+                    reportId: value,
+                    mode: 'view',
+                  },
+                  {
+                    source: 'alert',
+                  },
+                ),
               )}
               toNewTab
             >

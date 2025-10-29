@@ -85,6 +85,7 @@ export const Recommendation = ({ alertId, pdfMode }: { alertId: string; pdfMode?
                   alertIds={[alert.alertId].filter(notEmpty)}
                   caseId={alert.caseId}
                   transactionIds={alert?.transactionIds ?? []}
+                  source="alert"
                 />
               )}
             </div>

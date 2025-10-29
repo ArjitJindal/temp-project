@@ -282,6 +282,7 @@ export default function Header(props: Props) {
                 alertIds={[]}
                 transactionIds={[]}
                 key={`sar-button-${caseId}`}
+                source="case"
               />,
               ...(!isReview && caseId
                 ? [

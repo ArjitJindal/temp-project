@@ -44,7 +44,7 @@ export default function Header(props: Props) {
         })),
       ]}
       buttons={[
-        <SarButton userId={userId} key="sar-button" />,
+        <SarButton userId={userId} key="sar-button" source="user" />,
         <CommentButton
           onSuccess={(createdComment) => onNewComment(createdComment, CommentType.COMMENT)}
           submitRequest={async (commentFormValues) => {

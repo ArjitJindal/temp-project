@@ -1364,6 +1364,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           alertIds={selectedIds}
           transactionIds={selectedTransactionIds}
           isDisabled={isDisabled}
+          source="alert"
         />
       );
     },

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { groupBy } from 'lodash';
+import s from '../index.module.less';
 import { JsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
 import JsonSchemaEditor from '@/components/library/JsonSchemaEditor';
 import VerticalMenu from '@/components/library/VerticalMenu';
@@ -9,6 +10,7 @@ import {
   isResultValid,
   NestedValidationResult,
 } from '@/components/library/Form/utils/validation/types';
+import * as Card from '@/components/ui/Card';
 
 export default function ReportStep(props: {
   settings: Partial<JsonSchemaEditorSettings>;
@@ -42,19 +44,28 @@ export default function ReportStep(props: {
   const activeGroup = groups.find((x) => x.group === activeMenuItem);
 
   return (
-    <VerticalMenu items={menuItems} active={activeMenuItem} onChange={setActiveMenuItem}>
-      {activeGroup?.properties && (
-        <JsonSchemaEditor
-          settings={settings}
-          parametersSchema={{
-            ...parametersSchema,
-            properties: activeGroup?.properties.reduce(
-              (acc, x) => ({ ...acc, [x.name]: x.schema }),
-              {},
-            ),
-          }}
-        />
-      )}
-    </VerticalMenu>
+    <div className={s.formWrapper}>
+      <Card.Root className={s.stepWrapper}>
+        <Card.Section>
+          <VerticalMenu items={menuItems} active={activeMenuItem} onChange={setActiveMenuItem} />
+        </Card.Section>
+      </Card.Root>
+      <Card.Root className={s.formContent}>
+        <Card.Section>
+          {activeGroup?.properties && (
+            <JsonSchemaEditor
+              settings={settings}
+              parametersSchema={{
+                ...parametersSchema,
+                properties: activeGroup?.properties.reduce(
+                  (acc, x) => ({ ...acc, [x.name]: x.schema }),
+                  {},
+                ),
+              }}
+            />
+          )}
+        </Card.Section>
+      </Card.Root>
+    </div>
   );
 }

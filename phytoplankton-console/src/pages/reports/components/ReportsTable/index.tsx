@@ -143,7 +143,20 @@ export default function ReportsTable() {
             render: (_value, { item: entity }) => {
               return (
                 <Id
-                  to={canWrite ? makeUrl('/reports/:reportId', { reportId: entity.id }) : undefined}
+                  to={
+                    canWrite
+                      ? makeUrl(
+                          `/report/:reportId/:mode`,
+                          {
+                            reportId: entity.id,
+                            mode: entity.status === 'DRAFT' ? 'edit' : 'view',
+                          },
+                          {
+                            source: 'sar',
+                          },
+                        )
+                      : undefined
+                  }
                   testName="report-id"
                   alwaysShowCopy={!canWrite}
                 >

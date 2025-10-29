@@ -3,7 +3,7 @@ import s from './index.module.less';
 import { StatePair } from '@/utils/state';
 import { FileInfo, Report } from '@/apis';
 import Form from '@/components/library/Form';
-import Stepper from '@/components/library/Stepper';
+import { StepperSteps } from '@/components/library/Stepper';
 import NestedForm from '@/components/library/Form/NestedForm';
 import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
 import {
@@ -16,14 +16,13 @@ import {
   Step,
   TRANSACTION_METADATA_STEP,
   TRANSACTION_STEP,
-} from '@/components/Sar/SarReportDrawer';
-import IndicatorsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/IndicatorsStep';
-import ReportStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/ReportStep';
-import TransactionStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
-import AttachmentsStep from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/AttachmentsStep';
+} from '@/components/Sar/SarReport';
+import IndicatorsStep from '@/components/Sar/SarReport/SarReportForm/IndicatorsStep';
+import ReportStep from '@/components/Sar/SarReport/SarReportForm/ReportStep';
+import TransactionStep from '@/components/Sar/SarReport/SarReportForm/TransactionStep';
+import AttachmentsStep from '@/components/Sar/SarReport/SarReportForm/AttachmentsStep';
 import { makeValidators } from '@/components/library/JsonSchemaEditor/utils';
 import { PropertyItem } from '@/components/library/JsonSchemaEditor/types';
-import { ObjectFieldValidator } from '@/components/library/Form/utils/validation/types';
 import { message } from '@/components/library/Message';
 
 export type FormState = Partial<{
@@ -54,10 +53,11 @@ interface Props {
   activeStepState: StatePair<string>;
   onSubmit: (formState: Report) => void;
   onChange: (formState: Report) => void;
+  readOnly?: boolean;
 }
 
-export default function SarReportDrawerForm(props: Props) {
-  const { formId, report, steps, activeStepState, onSubmit, onChange } = props;
+export default function SarReportForm(props: Props) {
+  const { formId, report, steps, activeStepState, onSubmit, onChange, readOnly } = props;
   const [activeStep, setActiveStep] = activeStepState;
   const initialValues = deserializeFormState(report);
 
@@ -119,11 +119,11 @@ export default function SarReportDrawerForm(props: Props) {
 
   return (
     <Form
-      portaled
       id={formId}
       className={s.root}
-      fieldValidators={fieldValidators as ObjectFieldValidator<FormState>}
+      fieldValidators={fieldValidators}
       initialValues={initialValues}
+      isDisabled={readOnly}
       alwaysShowErrors={alwaysShowErrors}
       onChange={({ values }) => {
         onChange(serializeFormState(report, values));
@@ -140,18 +140,20 @@ export default function SarReportDrawerForm(props: Props) {
       }}
     >
       {({ validationResult }) => (
-        <Stepper
-          steps={steps.map((step) => ({
-            ...step,
-            isInvalid:
-              alwaysShowErrors && validationResult?.fieldValidationErrors?.[step.key] != null,
-          }))}
-          active={activeStep}
-          onChange={setActiveStep}
-        >
-          {(activeStepKey) => (
-            <NestedForm<any> name={activeStepKey}>
-              {activeStepKey == REPORT_STEP && (
+        <div className={s.stepper}>
+          <StepperSteps
+            steps={steps.map((step) => ({
+              ...step,
+              isInvalid:
+                alwaysShowErrors && validationResult?.fieldValidationErrors?.[step.key] != null,
+            }))}
+            active={activeStep}
+            onChange={setActiveStep}
+          />
+
+          <div className={s.stepperContent}>
+            <NestedForm<any> name={activeStep}>
+              {activeStep === REPORT_STEP && (
                 <ReportStep
                   validationResult={validationResult?.fieldValidationErrors?.[REPORT_STEP]}
                   parametersSchema={report.schema?.reportSchema}
@@ -159,7 +161,8 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
-              {activeStepKey === DEFINITION_METADATA_STEP && (
+
+              {activeStep === DEFINITION_METADATA_STEP && (
                 <ReportStep
                   settings={settings}
                   parametersSchema={report.schema?.definitionsSchema}
@@ -169,7 +172,8 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
-              {activeStepKey == TRANSACTION_METADATA_STEP && (
+
+              {activeStep === TRANSACTION_METADATA_STEP && (
                 <ReportStep
                   validationResult={
                     validationResult?.fieldValidationErrors?.[TRANSACTION_METADATA_STEP]
@@ -179,7 +183,8 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
-              {activeStepKey == CUSTOMER_AND_ACCOUNT_DETAILS_STEP && (
+
+              {activeStep === CUSTOMER_AND_ACCOUNT_DETAILS_STEP && (
                 <ReportStep
                   validationResult={
                     validationResult?.fieldValidationErrors?.[CUSTOMER_AND_ACCOUNT_DETAILS_STEP]
@@ -189,7 +194,8 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
-              {activeStepKey === TRANSACTION_STEP && (
+
+              {activeStep === TRANSACTION_STEP && (
                 <TransactionStep
                   settings={settings}
                   report={report}
@@ -197,14 +203,16 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
-              {activeStepKey === INDICATOR_STEP && (
+
+              {activeStep === INDICATOR_STEP && (
                 <GenericFormField<any> name={'selection'}>
                   {(props: FormFieldRenderProps<string[]>) => (
                     <IndicatorsStep report={report} {...props} />
                   )}
                 </GenericFormField>
               )}
-              {activeStepKey === CURRENCY_TRANSACTION_STEP && (
+
+              {activeStep === CURRENCY_TRANSACTION_STEP && (
                 <ReportStep
                   settings={settings}
                   parametersSchema={report.schema?.currencyTransactionSchema}
@@ -214,12 +222,13 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
-              {activeStepKey === ATTACHMENTS_STEP && (
+
+              {activeStep === ATTACHMENTS_STEP && (
                 <AttachmentsStep reportTypeId={report.reportTypeId} />
               )}
             </NestedForm>
-          )}
-        </Stepper>
+          </div>
+        </div>
       )}
     </Form>
   );

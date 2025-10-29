@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSarContext } from '../..';
+import styles from '../index.module.less';
 import s from './index.module.less';
 import ArrayItemForm from '@/components/library/Form/ArrayItemForm';
 import { JsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
@@ -10,10 +11,11 @@ import {
   isResultValid,
   NestedValidationResult,
 } from '@/components/library/Form/utils/validation/types';
-import NewTransactionForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep/NewTransactionForm';
+import NewTransactionForm from '@/components/Sar/SarReport/SarReportForm/TransactionStep/NewTransactionForm';
 import { useFormState } from '@/components/library/Form/utils/hooks';
 import Button from '@/components/library/Button';
 import { Option } from '@/components/library/Select';
+import * as Card from '@/components/ui/Card';
 
 export type TransactionStepContextValue = {
   activeTransactionId: string;
@@ -70,53 +72,64 @@ export default function TransactionStep(props: Props) {
   });
 
   return (
-    <VerticalMenu
-      items={[...menuItems, { key: 'ADD', title: 'Add transaction' }]}
-      active={activeTransaction}
-      onChange={setActiveTransaction}
-    >
-      {activeTransaction === 'ADD' ? (
-        <NewTransactionForm
-          onSubmit={({ transactionId }) => {
-            if (transactionId == null) {
-              return;
-            }
-            formState.setValues((prevState) => [
-              ...prevState,
-              {
-                id: transactionId,
-                ...report.parameters.transactions?.find((x) => x.id === transactionId)?.transaction,
-              },
-            ]);
-            setActiveTransaction(transactionId);
-          }}
-          transactionIds={selectableTransactionIds}
-        />
-      ) : (
-        activeTransactionIndex >= 0 && (
-          <ArrayItemForm index={activeTransactionIndex}>
-            <div className={s.root}>
-              <JsonSchemaEditor
-                settings={settings}
-                parametersSchema={report?.schema?.transactionSchema}
-              />
-              <Button
-                type={'DANGER'}
-                onClick={() => {
-                  formState.setValues((prevState) => {
-                    return prevState.filter((x) => x.id !== activeTransaction);
-                  });
-                  if (activeTransactionIndex > 0) {
-                    setActiveTransaction(transactionIds[activeTransactionIndex - 1]);
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </ArrayItemForm>
-        )
-      )}
-    </VerticalMenu>
+    <div className={styles.formWrapper}>
+      <Card.Root className={styles.stepWrapper}>
+        <Card.Section>
+          <VerticalMenu
+            items={[...menuItems, { key: 'ADD', title: 'Add transaction' }]}
+            active={activeTransaction}
+            onChange={setActiveTransaction}
+          />
+        </Card.Section>
+      </Card.Root>
+      <Card.Root className={styles.formContent}>
+        <Card.Section>
+          {activeTransaction === 'ADD' ? (
+            <NewTransactionForm
+              onSubmit={({ transactionId }) => {
+                if (transactionId == null) {
+                  return;
+                }
+                formState.setValues((prevState) => [
+                  ...prevState,
+                  {
+                    id: transactionId,
+                    ...report.parameters.transactions?.find((x) => x.id === transactionId)
+                      ?.transaction,
+                  },
+                ]);
+                setActiveTransaction(transactionId);
+              }}
+              transactionIds={selectableTransactionIds}
+            />
+          ) : (
+            activeTransactionIndex >= 0 && (
+              <ArrayItemForm index={activeTransactionIndex}>
+                <div className={s.root}>
+                  <JsonSchemaEditor
+                    settings={settings}
+                    parametersSchema={report?.schema?.transactionSchema}
+                    className={s.schemaEditor}
+                  />
+                  <Button
+                    type={'DANGER'}
+                    onClick={() => {
+                      formState.setValues((prevState) => {
+                        return prevState.filter((x) => x.id !== activeTransaction);
+                      });
+                      if (activeTransactionIndex > 0) {
+                        setActiveTransaction(transactionIds[activeTransactionIndex - 1]);
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </ArrayItemForm>
+            )
+          )}
+        </Card.Section>
+      </Card.Root>
+    </div>
   );
 }

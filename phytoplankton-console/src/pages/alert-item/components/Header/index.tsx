@@ -264,7 +264,7 @@ function useActions(
     // SAR report button
     {
       if (isSarEnabled && caseId != null) {
-        result.push(<SarButton caseId={caseId} alertIds={[alertId]} />);
+        result.push(<SarButton caseId={caseId} alertIds={[alertId]} source="alert" />);
       }
     }
 

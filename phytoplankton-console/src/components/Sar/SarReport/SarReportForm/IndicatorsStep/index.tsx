@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import s from './style.module.less';
 import { Report, ReportSchemaIndicators } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import * as Card from '@/components/ui/Card';
 
 const columnHelper = new ColumnHelper<ReportSchemaIndicators>();
 
@@ -36,34 +36,36 @@ export default function IndicatorsStep(props: Props) {
     );
   }, [report?.schema?.indicators, search]);
   return (
-    <div className={s.root}>
-      <TextInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Search for indicator code, description"
-      />
-      <div>
-        <Table<ReportSchemaIndicators>
-          rowKey="key"
-          data={{ items: filteredIndicators }}
-          selection={true}
-          selectedIds={value ?? []}
-          onSelect={handeSelect}
-          toolsOptions={false}
-          columns={[
-            columnHelper.simple({
-              key: 'key',
-              title: 'Code',
-            }),
-            columnHelper.simple({
-              key: 'description',
-              title: 'Indicator',
-              defaultWidth: 400,
-            }),
-          ]}
-          fitHeight={800}
+    <Card.Root>
+      <Card.Section>
+        <TextInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search for indicator code, description"
         />
-      </div>
-    </div>
+        <div>
+          <Table<ReportSchemaIndicators>
+            rowKey="key"
+            data={{ items: filteredIndicators }}
+            selection={true}
+            selectedIds={value ?? []}
+            onSelect={handeSelect}
+            toolsOptions={false}
+            columns={[
+              columnHelper.simple({
+                key: 'key',
+                title: 'Code',
+              }),
+              columnHelper.simple({
+                key: 'description',
+                title: 'Indicator',
+                defaultWidth: 400,
+              }),
+            ]}
+            fitHeight={800}
+          />
+        </div>
+      </Card.Section>
+    </Card.Root>
   );
 }

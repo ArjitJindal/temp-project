@@ -1,13 +1,8 @@
 @import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+
 .root {
   display: none;
-}
-
-.footer {
-  display: grid;
-  width: 100%;
-  grid-template-columns: min-content min-content;
-  justify-content: space-between;
 }
 
 .tabContent {
@@ -23,11 +18,30 @@
 .footerButtons {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  gap: 12px;
+  position: sticky;
+  bottom: 0;
+  background: @fr-global-bg-color;
+  padding: 16px 0;
+  margin-bottom: -16px;
+  z-index: @sticky-z-index;
+  justify-content: space-between;
 
   button {
     width: max-content;
   }
+}
+
+.footerButtonsRight {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.footerButtonsLeft {
+  display: flex;
+  gap: 12px;
 }
 
 .result {

@@ -1,9 +1,9 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { isEmpty } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { useReportType } from '../utils';
 import s from './style.module.less';
-import Drawer from '@/components/library/Drawer';
 import { Report, ReportStatus } from '@/apis';
 import { useApi } from '@/api';
 import StepButtons from '@/components/library/StepButtons';
@@ -12,10 +12,11 @@ import Button from '@/components/library/Button';
 import { download, downloadUrl } from '@/utils/browser';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useId } from '@/utils/hooks';
-import SarReportDrawerForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm';
+import { useId, useNavigationGuard } from '@/utils/hooks';
+import SarReportForm from '@/components/Sar/SarReport/SarReportForm';
 import { notEmpty } from '@/utils/array';
 import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
+import ConfirmModal from '@/components/utils/Confirm/ConfirmModal';
 
 const DISABLE_SUBMIT_STATUSES: ReportStatus[] = ['SUBMITTING', 'SUBMISSION_REJECTED'];
 
@@ -54,8 +55,8 @@ export type Step = {
 
 interface Props {
   initialReport: Report;
-  isVisible: boolean;
-  onChangeVisibility: (isVisible: boolean) => void;
+  mode: 'edit' | 'view';
+  source: string;
 }
 
 async function downloadReport(report: Report, api: FlagrightApi) {
@@ -79,60 +80,60 @@ async function downloadReport(report: Report, api: FlagrightApi) {
   }
 }
 
-export default function SarReportDrawer(props: Props) {
+export default function SarReport({ initialReport, mode, source }: Props) {
   const api = useApi();
+  const navigate = useNavigate();
   const steps = useMemo(
     (): Step[] =>
       [
-        !isEmpty(props.initialReport.schema?.reportSchema) &&
-          props.initialReport.schema !== undefined && {
+        !isEmpty(initialReport.schema?.reportSchema) &&
+          initialReport.schema !== undefined && {
             key: REPORT_STEP,
             title: 'General details',
             description: 'Enter reporting entity, person and report details',
           },
-        !isEmpty(props.initialReport.schema?.customerAndAccountDetailsSchema) && {
+        !isEmpty(initialReport.schema?.customerAndAccountDetailsSchema) && {
           key: CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
           title: 'Customer & Account details',
           description: 'Enter customer information and account holder details',
         },
-        !isEmpty(props.initialReport.schema?.definitionsSchema) && {
+        !isEmpty(initialReport.schema?.definitionsSchema) && {
           key: DEFINITION_METADATA_STEP,
           title: 'Definitions',
           description: 'Enter definitions of transactions that you want to report',
         },
-        !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
+        !isEmpty(initialReport.schema?.transactionMetadataSchema) && {
           key: TRANSACTION_METADATA_STEP,
           title: 'Suspicious activity details',
           description: 'Enter details of transactions that you want to report',
         },
-        !isEmpty(props.initialReport.schema?.transactionSchema) && {
+        !isEmpty(initialReport.schema?.transactionSchema) && {
           key: TRANSACTION_STEP,
           title: 'Suspicious activity details',
           description: 'Enter details of transactions that you want to report',
         },
-        !isEmpty(props.initialReport.schema?.indicators) && {
+        !isEmpty(initialReport.schema?.indicators) && {
           key: INDICATOR_STEP,
           title: 'Indicators',
           description: 'Select one or more indicators that are relevant to your report',
         },
-        !isEmpty(props.initialReport.schema?.currencyTransactionSchema) && {
+        !isEmpty(initialReport.schema?.currencyTransactionSchema) && {
           key: CURRENCY_TRANSACTION_STEP,
           title: 'Transaction activity details',
           description: 'Enter details of transactions that you want to report',
         },
-        !(props.initialReport.schema?.settings?.disableAttachmentsStep === true) && {
+        !(initialReport.schema?.settings?.disableAttachmentsStep === true) && {
           key: ATTACHMENTS_STEP,
           title: 'Attachments',
           description: 'Upload any supporting documents for your report',
         },
       ].filter(notEmpty),
-    [props.initialReport.schema],
+    [initialReport.schema],
   );
-  const reportType = useReportType(props.initialReport.reportTypeId);
+  const reportType = useReportType(initialReport.reportTypeId);
   const directSumission = reportType?.directSubmission ?? false;
   const [activeStep, setActiveStep] = useState<string>(steps[0].key);
-  const [report, setReport] = useState(props.initialReport);
-  const [draft, setDraft] = useState<Report>(props.initialReport);
+  const [draft, setDraft] = useState<Report>(initialReport);
   const [hasChanges, setHasChanges] = useState(false);
 
   const submitMutation = useMutation<
@@ -158,11 +159,12 @@ export default function SarReportDrawer(props: Props) {
     },
     {
       onSuccess: (r) => {
-        setReport(r);
         setHasChanges(false);
+        cancel();
         message.success(
           `Report ${r.id} successfully ${directSumission ? 'submitted' : 'generated'}`,
         );
+        handleClose();
       },
       onError: (e) => {
         message.error(`Failed to submit report`, { details: getErrorMessage(e) });
@@ -181,22 +183,23 @@ export default function SarReportDrawer(props: Props) {
       const reportWithoutSchema = { ...event.report };
       reportWithoutSchema.schema = undefined;
 
-      if (!report.id) {
+      if (!initialReport.id) {
         throw new Error('Report ID is not defined!');
       }
 
       const result = await api.postReportsReportIdDraft({
-        reportId: report.id,
+        reportId: initialReport.id,
         Report: reportWithoutSchema,
       });
       return result;
     },
     {
       onSuccess: (r) => {
-        setReport(r);
         setDraft(r);
         setHasChanges(false);
+        cancel();
         message.success(`Draft of report saved successfully!`);
+        handleClose();
       },
       onError: (e) => {
         message.fatal(`Failed to save draft of report: ${getErrorMessage(e)}`);
@@ -204,83 +207,123 @@ export default function SarReportDrawer(props: Props) {
     },
   );
 
+  const handleClose = () => {
+    switch (source) {
+      case 'user':
+        navigate('/users/list/all');
+        break;
+      case 'alert':
+        navigate('/case-management/cases?showCases=ALL_ALERTS');
+        break;
+      case 'case':
+        navigate('/case-management/cases?showCases=ALL');
+        break;
+      case 'sar':
+        navigate('/reports');
+        break;
+    }
+  };
+
+  const handleCancel = () => {
+    if (mode === 'view' || !hasChanges) {
+      handleClose();
+      return;
+    }
+    triggerConfirmForClose();
+  };
+
   const activeStepIndex = steps.findIndex(({ key }) => key === activeStep);
   const formId = useId(`form-`);
   const [metaData, setMetaData] = useState<Record<string, unknown>>({});
+
+  const { isConfirmVisible, confirm, cancel, triggerConfirmForClose } = useNavigationGuard({
+    isDirty: hasChanges,
+    enabled: mode !== 'view',
+    onConfirmCustom: handleClose,
+  });
   return (
     <SarContext.Provider
       value={{
-        report: props.initialReport,
+        report: initialReport,
         metaData,
         setMetaData: (key, value) => setMetaData((prev) => ({ ...prev, [key]: value })),
       }}
     >
-      <Drawer
-        isVisible={props.isVisible}
-        onChangeVisibility={props.onChangeVisibility}
-        title={'SAR report'}
-        hasChanges={hasChanges}
-        footer={
-          <div className={s.footer}>
-            <StepButtons
-              nextDisabled={activeStepIndex === steps.length - 1}
-              prevDisabled={activeStepIndex === 0}
-              onNext={() => {
-                setActiveStep(steps[activeStepIndex + 1].key);
-              }}
-              onPrevious={() => {
-                setActiveStep(steps[activeStepIndex - 1].key);
-              }}
-            />
-            <div className={s.footerButtons}>
-              {!DISABLE_SUBMIT_STATUSES.includes(report.status) && (
-                <Button
-                  isLoading={saveDraftMutation.isLoading}
-                  type="TETRIARY"
-                  onClick={() => saveDraftMutation.mutate({ report: draft })}
-                >
-                  {'Save draft'}
-                </Button>
-              )}
+      <SarReportForm
+        report={initialReport}
+        formId={formId}
+        steps={steps}
+        activeStepState={[activeStep, setActiveStep]}
+        readOnly={mode === 'view'}
+        onChange={(updatedReport) => {
+          setDraft(updatedReport);
+          setHasChanges(true);
+        }}
+        onSubmit={(report: Report) => {
+          submitMutation.mutate({
+            report,
+          });
+        }}
+      />
+      <div className={s.footerButtons}>
+        <div className={s.footerButtonsLeft}>
+          <StepButtons
+            nextDisabled={activeStepIndex === steps.length - 1}
+            prevDisabled={activeStepIndex === 0}
+            onNext={() => {
+              setActiveStep(steps[activeStepIndex + 1].key);
+            }}
+            onPrevious={() => {
+              setActiveStep(steps[activeStepIndex - 1].key);
+            }}
+          />
+          <Button isLoading={saveDraftMutation.isLoading} type="TETRIARY" onClick={handleCancel}>
+            {mode === 'view' ? 'Close' : 'Cancel'}
+          </Button>
+        </div>
+        <div className={s.footerButtonsRight}>
+          {!DISABLE_SUBMIT_STATUSES.includes(initialReport.status) && (
+            <Button
+              isLoading={saveDraftMutation.isLoading}
+              type="TETRIARY"
+              isDisabled={mode === 'view'}
+              onClick={() => saveDraftMutation.mutate({ report: draft })}
+            >
+              Save draft
+            </Button>
+          )}
 
-              <Button
-                type="TETRIARY"
-                isDisabled={props.initialReport.revisions.length === 0}
-                onClick={() => downloadReport(props.initialReport, api)}
-              >
-                Download
-              </Button>
-              <Button
-                isLoading={submitMutation.isLoading}
-                type="PRIMARY"
-                htmlAttrs={{
-                  form: formId,
-                }}
-                htmlType={'submit'}
-                isDisabled={directSumission && DISABLE_SUBMIT_STATUSES.includes(report.status)}
-              >
-                {directSumission ? 'Submit' : 'Generate report'}
-              </Button>
-            </div>
-          </div>
-        }
-      >
-        <SarReportDrawerForm
-          report={report}
-          formId={formId}
-          steps={steps}
-          activeStepState={[activeStep, setActiveStep]}
-          onChange={(updatedReport) => {
-            setDraft(updatedReport);
-            setHasChanges(true);
-          }}
-          onSubmit={(report: Report) => {
-            submitMutation.mutate({
-              report,
-            });
-          }}
-        />
-      </Drawer>
+          <Button
+            type="TETRIARY"
+            isDisabled={initialReport.revisions.length === 0}
+            onClick={() => downloadReport(initialReport, api)}
+          >
+            Download
+          </Button>
+          <Button
+            isLoading={submitMutation.isLoading}
+            type="PRIMARY"
+            htmlAttrs={{
+              form: formId,
+            }}
+            htmlType={'submit'}
+            isDisabled={
+              mode === 'view' ||
+              (directSumission && DISABLE_SUBMIT_STATUSES.includes(initialReport.status))
+            }
+          >
+            {directSumission ? 'Submit' : 'Generate report'}
+          </Button>
+        </div>
+      </div>
+      <ConfirmModal
+        isVisible={isConfirmVisible}
+        title="Confirm action"
+        text="Are you sure you want to close the SAR? You will lose all unsaved changes."
+        onConfirm={confirm}
+        onCancel={cancel}
+        isDanger
+      />
     </SarContext.Provider>
   );
 }
