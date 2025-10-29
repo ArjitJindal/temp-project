@@ -232,6 +232,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         ],
       })
+
+      if (pepCategory.includes('POI')) {
+        conditions.push({
+          $and: [
+            {
+              'pepSources.category': 'POI',
+            },
+          ],
+        })
+      }
     }
 
     if (relCategory && relSourceIds) {
