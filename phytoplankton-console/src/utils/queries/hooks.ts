@@ -71,25 +71,14 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
       refetch: results.refetch,
     };
   }
-  if (results.isLoading) {
+  if (results.status === 'loading') {
     return {
-      data: loading<TData>(results.data ?? null),
+      data: loading<TData>(null),
       refetch: results.refetch,
+      isRefreshing: false,
     };
   }
-  if (results.isFetching) {
-    return {
-      data: loading<TData>(results.data),
-      refetch: results.refetch,
-    };
-  }
-  if (results.isSuccess) {
-    return {
-      data: success<TData>(results.data),
-      refetch: results.refetch,
-    };
-  }
-  if (results.isError) {
+  if (results.status === 'error') {
     let error = results.error as any;
     while (error) {
       if (error instanceof NotFoundError) {
@@ -103,7 +92,11 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
       refetch: results.refetch,
     };
   }
-  throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
+  return {
+    data: success<TData>(results.data as TData),
+    refetch: results.refetch,
+    isRefreshing: results.isFetching,
+  };
 }
 
 export type PaginatedData<T> = {

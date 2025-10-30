@@ -306,7 +306,7 @@ export const MannualCaseCreationModal = (props: Props) => {
               <TextArea
                 {...inputProps}
                 rows={4}
-                placeholder={`Write a narrative explaining the reson for ${
+                placeholder={`Write a narrative explaining the reason for ${
                   type === 'CREATE' ? 'creating a new case' : 'adding transactions to this case'
                 }`}
               />

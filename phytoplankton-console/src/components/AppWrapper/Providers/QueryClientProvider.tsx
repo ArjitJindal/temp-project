@@ -11,7 +11,8 @@ interface Props {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 20000,
+      staleTime: 600000,
+      cacheTime: 1800000,
       networkMode: 'always',
       refetchOnWindowFocus: false,
       keepPreviousData: true,

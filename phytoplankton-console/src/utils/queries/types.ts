@@ -15,6 +15,7 @@ export interface Cursor {
 export interface QueryResult<Data> {
   data: ar.AsyncResource<Data>;
   refetch: () => void;
+  isRefreshing?: boolean;
   paginate?: (params: PaginationParams) => Promise<Data>;
   loadingNext?: boolean;
   cursor?: ar.AsyncResource<Cursor>;
@@ -25,10 +26,11 @@ export function map<T, R>(
   fn: (value: T) => R,
   loadingFn?: (lastValue: T | null) => R,
 ): QueryResult<R> {
-  const { paginate, data, refetch } = res;
+  const { paginate, data, refetch, isRefreshing } = res;
   return {
     data: ar.map(data, fn, loadingFn),
     refetch,
+    isRefreshing,
     paginate: paginate ? async (page) => fn(await paginate(page)) : undefined,
   };
 }
