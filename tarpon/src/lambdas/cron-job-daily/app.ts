@@ -34,6 +34,7 @@ import { getSecret } from '@/utils/secrets-manager'
 import {
   CUSTOMER_ON_CALL_GROUP_ID,
   ENGINEERING_GROUP_ID,
+  ENGINEERING_HELP_CHANNEL_ID,
   ENGINEERING_ON_CALL_GROUP_ID,
   INCIDENTS_BUGS_CHANNEL_ID,
 } from '@/utils/slack'
@@ -47,6 +48,7 @@ import { createApiUsageJobs } from '@/utils/api-usage'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { BatchRerunUsersService } from '@/services/batch-users-rerun'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const dynamoDb = getDynamoDbClient()
@@ -254,6 +256,17 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   } catch (e) {
     logger.error(
       `Failed to check transactions deviation: ${(e as Error)?.message}`,
+      e
+    )
+  }
+
+  try {
+    for (const tenant of tenantInfos) {
+      await getDeployingRuleInstances(tenant, { dynamoDb, mongoDb })
+    }
+  } catch (e) {
+    logger.error(
+      `Failed to get deploying rule instances: ${(e as Error)?.message}`,
       e
     )
   }
@@ -636,5 +649,49 @@ async function rerunRiskScoring(
     logger.info(
       `Skipping risk scoring rerun for tenant ${tenantId} with frequency ${frequency} - conditions not met`
     )
+  }
+}
+
+async function getDeployingRuleInstances(
+  tenant: TenantInfo,
+  connection: { dynamoDb: DynamoDBClient; mongoDb: MongoClient }
+) {
+  if (envIs('dev')) {
+    return
+  }
+
+  const ruleInstanceRepository = new RuleInstanceRepository(
+    tenant.tenant.id,
+    connection
+  )
+  const deployingRuleInstances =
+    await ruleInstanceRepository.getDeployingRuleInstances()
+
+  if (deployingRuleInstances.length === 0) {
+    return
+  }
+
+  let message = `Deploying rule instances for tenant ${tenant.tenant.name} (${tenant.tenant.id}):`
+  deployingRuleInstances.forEach((ruleInstance, index) => {
+    message += `\n${index + 1}. ${ruleInstance.id} (${ruleInstance.ruleId}) - ${
+      ruleInstance.ruleNameAlias
+    }`
+  })
+
+  const slack = await getSecret<{ token: string }>('slackCreds')
+
+  if (slack) {
+    const slackClient = new WebClient(slack.token)
+    await slackClient.chat.postMessage({
+      channel: ENGINEERING_HELP_CHANNEL_ID,
+      blocks: [
+        {
+          type: 'header',
+          text: { type: 'plain_text', text: 'Deploying Rule Instances' },
+        },
+        { type: 'divider' },
+        { type: 'section', text: { type: 'mrkdwn', text: slackify(message) } },
+      ],
+    })
   }
 }
