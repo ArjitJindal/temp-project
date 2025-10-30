@@ -2035,6 +2035,9 @@ export class CaseRepository {
   public async syncUniqueTags(
     tags: { type: 'CASE' | 'ALERT'; key: string; value: string }[]
   ): Promise<void> {
+    if (tags.length === 0) {
+      return
+    }
     const db = this.mongoDb.db()
     const uniqueTagsCollection = db.collection(
       UNIQUE_TAGS_COLLECTION(this.tenantId)
