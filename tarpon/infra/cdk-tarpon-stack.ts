@@ -834,6 +834,7 @@ export class CdkTarponStack extends cdk.Stack {
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     this.createDynamoDbVpcEndpoint(vpc)
+    this.createS3VpcEndpoint(vpc)
     this.sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
       vpc,
       vpcCidr
@@ -2408,6 +2409,42 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     return dynamoDbVpcEndpoint
+  }
+
+  private createS3VpcEndpoint(vpc: Vpc | null): GatewayVpcEndpoint | null {
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      (envIsNot('prod') && envIsNot('sandbox'))
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
+    })
+
+    // Create S3 Gateway VPC endpoint with explicit route table association
+    const s3VpcEndpoint = vpc.addGatewayEndpoint('s3-gateway-endpoint', {
+      service: GatewayVpcEndpointAwsService.S3,
+      subnets: [privateSubnets],
+    })
+
+    this.addTagsToResource(s3VpcEndpoint, {
+      Name: 'S3GatewayEndpoint',
+      Service: 'S3',
+      Stage: this.config.stage,
+    })
+
+    // Output VPC endpoint information
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, 'S3 Gateway VPC Endpoint ID', {
+        value: s3VpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return s3VpcEndpoint
   }
 
   private createSqsInterfaceVpcEndpoint(
