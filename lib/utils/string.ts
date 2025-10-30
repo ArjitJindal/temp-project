@@ -107,6 +107,21 @@ export function sanitizeString(
   }
 }
 
+// Sanitizes role names, preserving spaces and underscores
+export function sanitizeRoleName(str: string, preserveSpaces = true) {
+  if (typeof str !== 'string') {
+    throw new TypeError('Input must be a string')
+  }
+
+  const sanitizePattern = preserveSpaces ? /[^a-zA-Z0-9_\s]/g : /[^a-zA-Z0-9_]/g //allow alphabets, numbers and underscores
+  const processed = str.replace(sanitizePattern, '')
+  if (preserveSpaces) {
+    return processed.replace(/\s+/g, ' ').trim()
+  } else {
+    return processed.replace(/\s+/g, '')
+  }
+}
+
 export function normalize(str: string): string {
   let result = ''
   for (const char of str) {

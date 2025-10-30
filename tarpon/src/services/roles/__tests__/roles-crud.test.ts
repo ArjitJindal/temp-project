@@ -143,14 +143,14 @@ describe('Test Custom Roles Deletion and Updation', () => {
   test('Test Custom Role creation,updation and deletion', async () => {
     const roleService = RoleService.getInstance(getDynamoDbClient())
     const createdRoleResponse = await roleService.createRole(TEST_TENANT_ID, {
-      name: 'test-name',
+      name: 'test_name',
       description: 'test-description',
       permissions: [],
     })
     const createdRole = createdRoleResponse.result
     expect(createdRole).toEqual({
       id: 'test-id',
-      name: 'test-name',
+      name: 'test_name',
       description: 'test-description',
       permissions: [],
       statements: [],
