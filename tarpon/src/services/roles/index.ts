@@ -84,6 +84,13 @@ export class RoleService {
       tenantId,
       statements ?? []
     )
+
+    if (inputRole.description.length > 255) {
+      throw new BadRequest(
+        'Description length exceeds maximum limit of 255 characters.'
+      )
+    }
+
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',
       params: { ...inputRole, permissions, statements: optimizedStatements },
@@ -121,6 +128,13 @@ export class RoleService {
       tenantId,
       statements ?? []
     )
+
+    if (inputRole.description.length > 255) {
+      throw new BadRequest(
+        'Description length exceeds maximum limit of 255 characters.'
+      )
+    }
+
     await this.auth0.updateRole(tenantId, oldRole.id, {
       ...inputRole,
       permissions,
