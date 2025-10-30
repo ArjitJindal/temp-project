@@ -165,18 +165,24 @@ export const usePermissions = () => {
 export const useSettingsData = () => {
   const api = useApi();
   const { logout } = useAuth0();
-  return useQuery(SETTINGS(), async () => {
-    try {
-      return await api.getTenantsSettings();
-    } catch (e) {
-      if ((e as ApiException<unknown>).httpMessage === 'Unauthorized') {
-        logout({
-          returnTo: window.location.origin,
-        });
+  return useQuery(
+    SETTINGS(),
+    async () => {
+      try {
+        return await api.getTenantsSettings();
+      } catch (e) {
+        if ((e as ApiException<unknown>).httpMessage === 'Unauthorized') {
+          logout({
+            returnTo: window.location.origin,
+          });
+        }
+        throw e;
       }
-      throw e;
-    }
-  });
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
 };
 
 export const useAuthUpdates = () => {
