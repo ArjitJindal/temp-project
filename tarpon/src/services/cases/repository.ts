@@ -30,7 +30,10 @@ import {
   withTransaction,
   internalMongoBulkUpdate,
 } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION } from '@/utils/mongo-table-names'
+import {
+  CASES_COLLECTION,
+  UNIQUE_TAGS_COLLECTION,
+} from '@/utils/mongo-table-names'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -66,6 +69,7 @@ import {
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
 import { Address } from '@/@types/openapi-public/Address'
+import { CasesUniquesField } from '@/@types/openapi-internal/CasesUniquesField'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 50_000
@@ -1969,5 +1973,54 @@ export class CaseRepository {
         entityType: 'CASE',
       }
     })
+  }
+
+  public async getUniques(params: {
+    field: CasesUniquesField
+    filter?: string
+    type: 'CASE' | 'ALERT'
+  }): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const uniqueTagsCollection = db.collection(
+      UNIQUE_TAGS_COLLECTION(this.tenantId)
+    )
+    if (params.field === 'TAGS_KEY') {
+      const pipeline: Document[] = [
+        {
+          $match: {
+            type: params.type,
+            tag: { $ne: null },
+          },
+        },
+        {
+          $group: { _id: '$tag' },
+        },
+      ]
+      const uniqueTags = await uniqueTagsCollection
+        .aggregate<{ _id: string }>(pipeline)
+        .toArray()
+
+      return uniqueTags.map((doc) => doc._id)
+    }
+    if (params.field === 'TAGS_VALUE') {
+      const pipeline: Document[] = [
+        {
+          $match: {
+            type: params.type,
+            ...(params.filter ? { tag: params.filter } : {}),
+            value: { $ne: null },
+          },
+        },
+        {
+          $group: { _id: '$value' },
+        },
+      ]
+      const uniqueTags = await uniqueTagsCollection
+        .aggregate<{ _id: string }>(pipeline)
+        .toArray()
+
+      return uniqueTags.map((doc) => doc._id)
+    }
+    return []
   }
 }

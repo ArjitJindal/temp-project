@@ -744,7 +744,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         ruleChecklistTemplateId String,
         ruleChecklistItemId Array(String),
         qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)),
-        ruleNature String
+        ruleNature String,
+        tags Array(Tuple(key String, value String))
       )) MATERIALIZED
         arrayMap(x -> CAST((
           JSONExtractString(x, 'alertId'),
@@ -765,8 +766,9 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractString(x, 'ruleChecklistTemplateId'),
           JSONExtractArrayRaw(x, 'ruleChecklist', 'checklistItemId'),
           JSONExtract(x, 'qaAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))'),
-          JSONExtractString(x, 'ruleNature')
-        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String)'),
+          JSONExtractString(x, 'ruleNature'),
+          JSONExtract(x, 'tags', 'Array(Tuple(key String, value String))')
+        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String, tags Array(Tuple(key String, value String)))'),
         JSONExtractArrayRaw(data, 'alerts'))`,
     ],
     materializedViews: [

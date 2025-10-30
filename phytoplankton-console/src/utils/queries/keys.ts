@@ -3,6 +3,7 @@ import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
 import {
+  CasesUniquesField,
   CrmName,
   GenericSanctionsSearchType,
   ListSubtype,
@@ -170,6 +171,13 @@ export const USERS_UNIQUES = (
     filter?: string;
   } = {},
 ): QueryKey => ['users', 'uniques', field, params];
+export const CASES_UNIQUES = (
+  field: CasesUniquesField,
+  params: {
+    filter?: string;
+    type?: 'CASE' | 'ALERT';
+  } = {},
+): QueryKey => ['cases', 'uniques', field, params.type, params.filter].filter(Boolean);
 export const UNIQUES = (
   type: 'transactions' | 'users',
   field: TransactionsUniquesField | UsersUniquesField,

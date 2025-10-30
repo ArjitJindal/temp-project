@@ -504,6 +504,11 @@ export const casesHandler = lambdaApi()(
       })
     })
 
+    handlers.registerGetCasesUniques(async (ctx, request) => {
+      const response = await caseService.getUniques(request)
+      return response
+    })
+
     return await handlers.handle(event)
   }
 )

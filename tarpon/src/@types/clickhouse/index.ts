@@ -85,6 +85,6 @@ export type ClickhouseBatchOptions = {
   initialCursor?: { timestamp: number; id: string | number }
   additionalWhere?: string
   additionalSelect?: { name: string; expr: string }[]
-  additionalJoin?: string
+  additionalJoin?: string | string[]
   clickhouseClient: ClickHouseClient
 }
