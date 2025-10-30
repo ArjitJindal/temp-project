@@ -13,6 +13,8 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Tag } from '@/@types/openapi-internal/Tag'
 import { Case } from '@/@types/openapi-internal/Case'
 
+const BATCH_SIZE = 10000
+
 async function backfillTags(
   tags: Tag[],
   uniqueTagsCollection: Collection<Document>,
@@ -61,8 +63,8 @@ async function migrateTenant(tenant: Tenant) {
           { name: 'key', expr: 'tupleElement(tags, 1)' },
           { name: 'value', expr: 'tupleElement(tags, 2)' },
         ],
-        clickhouseBatchSize: 10,
-        processBatchSize: 10,
+        clickhouseBatchSize: BATCH_SIZE,
+        processBatchSize: BATCH_SIZE,
         additionalJoin: 'tags',
         additionalWhere:
           "tupleElement(tags, 1) != '' AND tupleElement(tags, 2) != ''",
@@ -86,8 +88,8 @@ async function migrateTenant(tenant: Tenant) {
           { name: 'key', expr: 'tupleElement(tag, 1)' },
           { name: 'value', expr: 'tupleElement(tag, 2)' },
         ],
-        clickhouseBatchSize: 10,
-        processBatchSize: 10,
+        clickhouseBatchSize: BATCH_SIZE,
+        processBatchSize: BATCH_SIZE,
         additionalJoin: ['alerts AS alert', 'alert.tags AS tag'],
         additionalWhere:
           "tupleElement(tag, 1) != '' AND tupleElement(tag, 2) != ''",

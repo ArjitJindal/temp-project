@@ -70,6 +70,7 @@ import {
 } from '@/utils/console-migration'
 import { Address } from '@/@types/openapi-public/Address'
 import { CasesUniquesField } from '@/@types/openapi-internal/CasesUniquesField'
+import { uniqObjects } from '@/utils/object'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export const MAX_TRANSACTION_IN_A_CASE = 50_000
@@ -323,6 +324,14 @@ export class CaseRepository {
       if (caseToSave._id && typeof caseToSave._id === 'string') {
         caseToSave._id = new ObjectId(caseToSave._id)
       }
+
+      await this.syncUniqueTags(
+        uniqObjects(caseEntity.caseAggregates?.tags ?? []).map((t) => ({
+          type: 'CASE',
+          key: t.key,
+          value: t.value,
+        }))
+      )
 
       await internalMongoReplace(
         this.mongoDb,
@@ -2022,5 +2031,22 @@ export class CaseRepository {
       return uniqueTags.map((doc) => doc._id)
     }
     return []
+  }
+  public async syncUniqueTags(
+    tags: { type: 'CASE' | 'ALERT'; key: string; value: string }[]
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const uniqueTagsCollection = db.collection(
+      UNIQUE_TAGS_COLLECTION(this.tenantId)
+    )
+    // ordered: false because we want to continue with remaining inserts when one fails
+    // it fails if the tag already exists
+    await uniqueTagsCollection
+      .insertMany(tags, { ordered: false })
+      .catch((err) => {
+        if (err.code !== 11000) {
+          throw err
+        }
+      })
   }
 }
