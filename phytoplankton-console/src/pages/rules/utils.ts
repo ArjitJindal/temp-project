@@ -12,6 +12,7 @@ import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/R
 import { useApi } from '@/api';
 import {
   Priority,
+  RiskLevelRuleLogic,
   Rule,
   RuleInstance,
   RuleLabels,
@@ -248,6 +249,7 @@ export function ruleInstanceToFormValues(
 export function ruleInstanceToFormValuesV8(
   isRiskLevelsEnabled: boolean,
   ruleInstance?: RuleInstance,
+  settings?: TenantSettings,
 ): RuleConfigurationFormV8Values | undefined {
   if (!ruleInstance) {
     return undefined;
@@ -256,6 +258,32 @@ export function ruleInstanceToFormValuesV8(
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
   };
+
+  const isRiskLevelActive = (riskLevel: string): boolean => {
+    if (!settings?.riskLevelAlias) {
+      return true;
+    }
+    const levelSetting = settings.riskLevelAlias.find((item) => item.level === riskLevel);
+    return levelSetting?.isActive ?? true;
+  };
+  const processRiskLevelLogic = (
+    riskLevelLogic?: RiskLevelRuleLogic | null,
+    fallbackLogic?: any,
+  ): RiskLevelRuleLogic | undefined => {
+    const allLevels = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'] as const;
+    const result: Partial<RiskLevelRuleLogic> = {};
+
+    allLevels.forEach((level) => {
+      if (isRiskLevelActive(level)) {
+        result[level] = riskLevelLogic?.[level] ?? fallbackLogic;
+      } else {
+        result[level] = {};
+      }
+    });
+
+    return result as RiskLevelRuleLogic;
+  };
+
   return {
     basicDetailsStep: {
       ruleType: ruleInstance.type,
@@ -274,15 +302,10 @@ export function ruleInstanceToFormValuesV8(
       ruleLogicMlVariables: ruleInstance.logicMachineLearningVariables ?? [],
       ...(isRiskLevelsEnabled
         ? {
-            riskLevelRuleLogic:
-              ruleInstance.riskLevelLogic ??
-              (ruleInstance.logic && {
-                VERY_HIGH: ruleInstance.logic,
-                HIGH: ruleInstance.logic,
-                MEDIUM: ruleInstance.logic,
-                LOW: ruleInstance.logic,
-                VERY_LOW: ruleInstance.logic,
-              }),
+            riskLevelRuleLogic: processRiskLevelLogic(
+              ruleInstance.riskLevelLogic as RiskLevelRuleLogic | undefined,
+              ruleInstance.logic,
+            ),
             riskLevelRuleActions:
               ruleInstance.riskLevelActions ??
               (ruleInstance.action && {
@@ -438,6 +461,7 @@ export function formValuesToRuleInstanceV8(
   initialRuleInstance: RuleInstance,
   formValues: RuleConfigurationFormV8Values,
   isRiskLevelsEnabled: boolean,
+  settings?: TenantSettings,
 ): RuleInstance {
   const { basicDetailsStep, ruleIsHitWhenStep, alertCreationDetailsStep } = formValues;
   const {
@@ -458,6 +482,15 @@ export function formValuesToRuleInstanceV8(
   if (alertCreationDetailsStep.alertPriority == null || basicDetailsStep.ruleNature == null) {
     throw new Error(`Passed form values are not valid`);
   }
+
+  // Helper function to check if a risk level is active
+  const isRiskLevelActive = (riskLevel: string): boolean => {
+    if (!settings?.riskLevelAlias) {
+      return true; // Default to active if settings not provided
+    }
+    const levelSetting = settings.riskLevelAlias.find((item) => item.level === riskLevel);
+    return levelSetting?.isActive ?? true;
+  };
 
   return {
     ...initialRuleInstance,
@@ -500,18 +533,24 @@ export function formValuesToRuleInstanceV8(
       ? {
           riskLevelLogic: riskLevelRuleLogic
             ? {
-                VERY_HIGH: riskLevelRuleLogic['VERY_HIGH'],
-                HIGH: riskLevelRuleLogic['HIGH'],
-                MEDIUM: riskLevelRuleLogic['MEDIUM'],
-                LOW: riskLevelRuleLogic['LOW'],
-                VERY_LOW: riskLevelRuleLogic['VERY_LOW'],
+                VERY_HIGH: isRiskLevelActive('VERY_HIGH')
+                  ? riskLevelRuleLogic['VERY_HIGH'] ?? ruleLogic
+                  : {},
+                HIGH: isRiskLevelActive('HIGH') ? riskLevelRuleLogic['HIGH'] ?? ruleLogic : {},
+                MEDIUM: isRiskLevelActive('MEDIUM')
+                  ? riskLevelRuleLogic['MEDIUM'] ?? ruleLogic
+                  : {},
+                LOW: isRiskLevelActive('LOW') ? riskLevelRuleLogic['LOW'] ?? ruleLogic : {},
+                VERY_LOW: isRiskLevelActive('VERY_LOW')
+                  ? riskLevelRuleLogic['VERY_LOW'] ?? ruleLogic
+                  : {},
               }
             : {
-                VERY_HIGH: ruleLogic,
-                HIGH: ruleLogic,
-                MEDIUM: ruleLogic,
-                LOW: ruleLogic,
-                VERY_LOW: ruleLogic,
+                VERY_HIGH: isRiskLevelActive('VERY_HIGH') ? ruleLogic : {},
+                HIGH: isRiskLevelActive('HIGH') ? ruleLogic : {},
+                MEDIUM: isRiskLevelActive('MEDIUM') ? ruleLogic : {},
+                LOW: isRiskLevelActive('LOW') ? ruleLogic : {},
+                VERY_LOW: isRiskLevelActive('VERY_LOW') ? ruleLogic : {},
               },
           riskLevelActions: riskLevelRuleActions
             ? {

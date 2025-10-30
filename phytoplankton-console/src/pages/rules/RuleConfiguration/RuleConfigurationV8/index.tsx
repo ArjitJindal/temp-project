@@ -18,7 +18,7 @@ import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import Button from '@/components/library/Button';
 import { FormRef } from '@/components/library/Form';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
@@ -47,7 +47,8 @@ export default function RuleConfigurationV8(props: Props) {
   const [ruleMode, setRuleMode] = useState<RuleRunMode>('LIVE');
   const [isRuleModeModalOpen, setIsRuleModeModalOpen] = useState(false);
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
-  const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance);
+  const settings = useSettings();
+  const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance, settings);
   const [isValuesSame, setIsValuesSame] = useState(true);
   const api = useApi();
   const queryResult = useQuery(NEW_RULE_ID(ruleInstance?.ruleId), async () => {
@@ -61,7 +62,7 @@ export default function RuleConfigurationV8(props: Props) {
     (formValues: RuleConfigurationFormV8Values) => {
       if (type === 'EDIT' && ruleInstance) {
         updateRuleInstanceMutation.mutate(
-          formValuesToRuleInstanceV8(ruleInstance, formValues, isRiskLevelsEnabled),
+          formValuesToRuleInstanceV8(ruleInstance, formValues, isRiskLevelsEnabled, settings),
         );
       } else if (type === 'CREATE' || type === 'DUPLICATE') {
         createRuleInstanceMutation.mutate(
@@ -74,6 +75,7 @@ export default function RuleConfigurationV8(props: Props) {
             } as RuleInstance,
             formValues,
             isRiskLevelsEnabled,
+            settings,
           ),
         );
       }
@@ -86,6 +88,7 @@ export default function RuleConfigurationV8(props: Props) {
       type,
       updateRuleInstanceMutation,
       ruleMode,
+      settings,
     ],
   );
 
