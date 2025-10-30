@@ -3,7 +3,7 @@ import concat from 'lodash/concat'
 import startCase from 'lodash/startCase'
 import uniq from 'lodash/uniq'
 import { COUNTRIES } from '@flagright/lib/constants/countries'
-import { MongoClient } from 'mongodb'
+import { AnyBulkWriteOperation, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   COLLECTIONS_MAP,
@@ -47,6 +47,18 @@ interface OpenSanctionsEntity {
   last_seen?: string
   last_change?: string
   target?: boolean
+}
+
+type OpenSanctionsSanctionEntity = OpenSanctionsEntity & {
+  properties: {
+    entity: string[]
+    program: string[]
+    sourceUrl: string[]
+    programUrl: string[]
+    authority: string[]
+    country: string[]
+    programId: string[]
+  }
 }
 
 type OpenSanctionsPersonEntity = OpenSanctionsEntity & {
@@ -147,6 +159,8 @@ type Program = {
   sourceCountry: string
 }
 
+const DATAFEED_URL =
+  'https://data.opensanctions.org/datasets/latest/default/entities.ftm.json'
 @traceable
 export class OpenSanctionsProvider extends SanctionsDataFetcher {
   private types: OpenSanctionsSearchType[]
@@ -212,11 +226,85 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     }
     await this.loadPrograms()
     this.entityTypes = [entityType]
-    return this.processUrl(
-      repo,
-      version,
-      'https://data.opensanctions.org/datasets/latest/default/entities.ftm.json'
-    )
+    await this.processUrl(repo, version, DATAFEED_URL)
+    await this.processSanctionsSources(repo, version)
+  }
+
+  async processSanctionsSources(repo: SanctionsRepository, version: string) {
+    let operations: AnyBulkWriteOperation<SanctionsEntity>[] = []
+    await this.streamResponseLines(DATAFEED_URL, async (line) => {
+      const entity: OpenSanctionsSanctionEntity | undefined = JSON.parse(line)
+      if (!entity || entity.schema !== 'Sanction') {
+        return
+      }
+      const sanctionsEntity = this.transformSanctionsEntity(entity)
+      const sanctionsSource = sanctionsEntity?.sanctionsSources?.[0]
+      if (sanctionsEntity && sanctionsSource) {
+        operations.push({
+          updateOne: {
+            filter: {
+              id: sanctionsEntity.id,
+              provider: SanctionsDataProviders.OPEN_SANCTIONS,
+            },
+            update: {
+              $addToSet: {
+                sanctionsSources: sanctionsSource,
+              },
+            },
+            upsert: false,
+          },
+        })
+      }
+      if (
+        (this.iteration < 100 && operations.length > 100) ||
+        operations.length > 1000
+      ) {
+        this.iteration++
+        await Promise.all([
+          repo.saveSanctionsData(operations),
+          this.saveSourceMapsToCollection(version),
+        ])
+        logger.info(`Saved ${operations.length} entities`)
+        operations = []
+      }
+    })
+    if (operations.length > 0) {
+      await Promise.all([
+        repo.saveSanctionsData(operations),
+        this.saveSourceMapsToCollection(version),
+      ])
+      logger.info(`Saved ${operations.length} entities`)
+    }
+  }
+
+  private transformSanctionsEntity(
+    entity: OpenSanctionsSanctionEntity
+  ): Partial<SanctionsEntity> | undefined {
+    const id = entity.properties.entity[0]
+    if (!id) {
+      return undefined
+    }
+    if (!entity.properties.programId?.length) {
+      return undefined
+    }
+    const sanctionsSource = this.getSanctionsSources(
+      entity.properties.programId,
+      'PERSON'
+    )[0]
+    if (!sanctionsSource) {
+      return undefined
+    }
+    return {
+      id,
+      sanctionsSources: [
+        {
+          ...sanctionsSource,
+          ...(entity.properties.sourceUrl?.length
+            ? { url: entity.properties.sourceUrl[0] }
+            : {}),
+        },
+      ],
+    }
   }
 
   async loadPrograms() {

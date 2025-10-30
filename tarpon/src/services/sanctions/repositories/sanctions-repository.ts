@@ -1,5 +1,6 @@
 import uniq from 'lodash/uniq'
 import { Client } from '@opensearch-project/opensearch'
+import { AnyBulkWriteOperation } from 'mongodb'
 import {
   RELATIONSHIP_CODE_TO_NAME,
   LEVEL_TIER_MAP,
@@ -250,5 +251,13 @@ export class MongoSanctionsRepository implements SanctionsRepository {
         await coll.bulkWrite(bulkWriteOperations)
       }
     }
+  }
+
+  async saveSanctionsData(
+    operations: AnyBulkWriteOperation<SanctionsEntity>[]
+  ): Promise<void> {
+    const client = await getMongoDbClient()
+    const coll = client.db().collection<SanctionsEntity>(this.collectionName)
+    await coll.bulkWrite(operations)
   }
 }

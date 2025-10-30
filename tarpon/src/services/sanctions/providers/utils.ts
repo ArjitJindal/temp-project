@@ -425,7 +425,9 @@ function sanitizeOpenSanctionsEntities(
       ...entity,
       sanctionSearchTypes: screeningTypes,
       mediaSources: undefined,
-      sanctionsSources: undefined,
+      sanctionsSources: entity.sanctionsSources?.filter(
+        (source) => source.url !== undefined
+      ),
       pepSources: undefined,
       otherSources: undefined,
       associates: entity.associates?.map((a) => {
