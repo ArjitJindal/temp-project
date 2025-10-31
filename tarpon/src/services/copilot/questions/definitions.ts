@@ -1,6 +1,7 @@
 import { Question } from './types'
 import { ClearedHits, OpenHits } from './definitions/hits'
 import { CardMerchantIdentifier } from './definitions/merchant-identifier'
+import { TransactionsByCountry } from './definitions/transaction-by-country'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { TransactionAggregations } from '@/services/copilot/questions/definitions/transaction-aggregations'
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
@@ -50,6 +51,7 @@ export const getQuestions = (): Question<any>[] =>
     TransactionSummary,
     ReferenceWordCount,
     CardMerchantIdentifier,
+    TransactionsByCountry,
     ...TransactionAggregations,
     ...TransactionQuestions,
     ...(hasFeature('CRM') ? [CrmInsights] : []),

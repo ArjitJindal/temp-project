@@ -9075,6 +9075,8 @@ components:
             $ref: '#/components/schemas/TableHeaders'
         total:
           type: number
+        transactionsCount:
+          type: number
         rows:
           type: array
           items:
