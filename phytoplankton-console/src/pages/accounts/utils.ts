@@ -1,4 +1,4 @@
-import { sanitizeRoleName } from '@flagright/lib/utils';
+import { sanitizeString } from '@flagright/lib/utils';
 import { AccountRole } from '@/apis';
 
 const demoRolePrefix = 'demo-';
@@ -40,12 +40,14 @@ export const formatRoleName = (roleName: string | undefined) => {
     return '';
   }
   const sanitized = getSantiziedRoleName(roleName);
+
   // Remove special characters, preserving alphanumeric sequences
-  const cleanedName = sanitizeRoleName(sanitized, true);
+  const cleanedName = sanitizeString(sanitized, true);
 
   // Split at spaces and hyphens, preserving alphanumeric sequences
   return cleanedName
     .split(/[\s-]+/)
     .filter((word) => word.length > 0) // Remove empty segments
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };

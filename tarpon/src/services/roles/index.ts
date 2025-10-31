@@ -6,12 +6,7 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { getOptimizedPermissions } from '../rbac/utils/permissions'
 import { Auth0RolesRepository } from './repository/auth0'
 import { DynamoRolesRepository } from './repository/dynamo'
-import {
-  getNamespacedRoleName,
-  isInNamespace,
-  sanitizeRoleName,
-  transformRole,
-} from './utils'
+import { getNamespacedRoleName, isInNamespace, transformRole } from './utils'
 import { MicroTenantInfo, Tenant } from '@/@types/tenant'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
@@ -95,9 +90,6 @@ export class RoleService {
         'Description length exceeds maximum limit of 255 characters.'
       )
     }
-
-    const sanitizedRoleName = await sanitizeRoleName(inputRole.name, true)
-    inputRole.name = sanitizedRoleName
 
     const data = await this.auth0.createRole(tenantId, {
       type: 'AUTH0',

@@ -106,8 +106,8 @@ export default function RoleDetails({
       return;
     }
 
-    const trimmedName = name.trim();
-    if (!role?.id && rolesList.some((r) => r.name === trimmedName)) {
+    const trimmedName = name.trim().toLowerCase();
+    if (!role?.id && rolesList.some((r) => r.name.toLowerCase() === trimmedName)) {
       message.error(`Role name: ${name} already exists`);
       setIsLoading(false);
       return;
