@@ -138,7 +138,10 @@ export default function DefineLogicCard(props: Props) {
                   }}
                   placeholder="Select base currency"
                   mode="SINGLE"
-                  options={CURRENCIES_SELECT_OPTIONS}
+                  options={[
+                    ...CURRENCIES_SELECT_OPTIONS,
+                    { value: 'ORIGINAL_CURRENCY', label: 'Original currency' },
+                  ]}
                 />
               </Label>
             </div>

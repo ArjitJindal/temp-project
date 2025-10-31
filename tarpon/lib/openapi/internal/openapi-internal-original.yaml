@@ -9494,7 +9494,11 @@ components:
         aggregationFilterFieldValue:
           type: string
         baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         timeWindow:
           type: object
           properties:
@@ -9616,7 +9620,11 @@ components:
           items:
             $ref: '#/components/schemas/LogicAggregationVariable'
         defaultBaseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         parametersSchema:
           type: object
         defaultParameters:
@@ -9841,7 +9849,11 @@ components:
           items:
             $ref: '#/components/schemas/LogicEntityVariableInUse'
         baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         parameters:
           type: object
         action:
@@ -12851,7 +12863,11 @@ components:
         description:
           type: string
         baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         type:
           $ref: '#/components/schemas/RiskEntityType'
         riskLevelAssignmentValues:

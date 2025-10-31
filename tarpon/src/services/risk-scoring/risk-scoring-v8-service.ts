@@ -46,6 +46,7 @@ import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent
 import { logger } from '@/core/logger'
 import { updateLogMetadata, withContext } from '@/core/utils/context'
 import { RiskLevelAlias } from '@/@types/openapi-internal/RiskLevelAlias'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
@@ -127,7 +128,9 @@ export class RiskScoringV8Service {
         },
         {
           tenantId: this.tenantId,
-          baseCurrency: factor.baseCurrency ?? 'USD',
+          baseCurrency:
+            (factor.baseCurrency as CurrencyCode | 'ORIGINAL_CURRENCY') ??
+            'USD',
         },
         riskData
       )

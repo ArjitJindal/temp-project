@@ -18,7 +18,7 @@ import AlertCreationDetailsStep, {
 import { useId, useSafeLocalStorageState } from '@/utils/hooks';
 import * as Card from '@/components/ui/Card';
 
-import { Rule, RuleType } from '@/apis';
+import { CurrencyCode, Rule, RuleType } from '@/apis';
 import { Step, StepperSteps } from '@/components/library/Stepper';
 import Form, { FormRef } from '@/components/library/Form';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
@@ -325,7 +325,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
       ruleLogic: rule?.defaultLogic,
       ruleLogicEntityVariables: [],
       ruleLogicAggregationVariables: rule?.defaultLogicAggregationVariables ?? [],
-      baseCurrency: rule?.defaultBaseCurrency,
+      baseCurrency: rule?.defaultBaseCurrency as CurrencyCode,
     };
     if (isRiskLevelsEnabled) {
       ruleIsHitWhenStep.riskLevelRuleLogic = rule?.defaultRiskLevelLogic ?? {

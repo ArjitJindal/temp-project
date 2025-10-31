@@ -106,6 +106,7 @@ import {
   getPaymentMethodAddressString,
 } from '@/utils/payment-details'
 import { formatConsumerName, getAddressString } from '@/utils/helpers'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 class RebuildSyncRetryError extends Error {
   constructor() {
     super()
@@ -1057,7 +1058,9 @@ export class LogicEvaluator {
             ) as TransactionLogicVariable)
           : undefined
       const context: LogicVariableContext = {
-        baseCurrency: aggregationVariable.baseCurrency,
+        baseCurrency: aggregationVariable.baseCurrency as
+          | CurrencyCode
+          | 'ORIGINAL_CURRENCY',
         dynamoDb: this.dynamoDb,
         tenantId: this.tenantId,
       }
@@ -1292,7 +1295,9 @@ export class LogicEvaluator {
       data
     )
     const entityVarDataloader = this.entityVarLoader(data, {
-      baseCurrency: aggregationVariable.baseCurrency,
+      baseCurrency: aggregationVariable.baseCurrency as
+        | CurrencyCode
+        | 'ORIGINAL_CURRENCY',
       tenantId: this.tenantId,
       dynamoDb: this.dynamoDb,
     })
@@ -1666,7 +1671,9 @@ export class LogicEvaluator {
 
     const aggregator = getLogicVariableAggregator(aggregationFunc)
     const entityVarDataloader = this.entityVarLoader(data, {
-      baseCurrency: aggregationVariable.baseCurrency,
+      baseCurrency: aggregationVariable.baseCurrency as
+        | CurrencyCode
+        | 'ORIGINAL_CURRENCY',
       tenantId: this.tenantId,
       dynamoDb: this.dynamoDb,
     })
@@ -1903,7 +1910,9 @@ export class LogicEvaluator {
       aggregationVariable.filtersLogic,
       {},
       {
-        baseCurrency: aggregationVariable.baseCurrency,
+        baseCurrency: aggregationVariable.baseCurrency as
+          | CurrencyCode
+          | 'ORIGINAL_CURRENCY',
         tenantId: this.tenantId,
       },
       data

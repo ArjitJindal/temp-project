@@ -311,6 +311,9 @@ const loadAmount = async (
     logger.error('Missing DynamoDB in context')
     return
   }
+  if (context?.baseCurrency === 'ORIGINAL_CURRENCY') {
+    return amountDetails.transactionAmount
+  }
   const currencyService = new CurrencyService(context?.dynamoDb)
   const amount = await currencyService.getTargetCurrencyAmount(
     amountDetails,

@@ -129,6 +129,7 @@ import {
   DuplicateTransactionReturnType,
 } from '@/@types/tranasction/aggregation'
 import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -1380,7 +1381,9 @@ export class RulesEngineService {
             entity: ruleInstance.logicEntityVariables,
           },
           {
-            baseCurrency: ruleInstance.baseCurrency,
+            baseCurrency: ruleInstance.baseCurrency as
+              | CurrencyCode
+              | 'ORIGINAL_CURRENCY',
             tenantId: this.tenantId,
           },
           data

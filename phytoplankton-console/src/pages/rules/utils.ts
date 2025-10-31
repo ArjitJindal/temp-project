@@ -11,6 +11,7 @@ import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/Rul
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
 import {
+  CurrencyCode,
   Priority,
   RiskLevelRuleLogic,
   Rule,
@@ -296,7 +297,7 @@ export function ruleInstanceToFormValuesV8(
       alertCreationOnHit: ruleInstance.alertCreationOnHit,
     },
     ruleIsHitWhenStep: {
-      baseCurrency: ruleInstance.baseCurrency,
+      baseCurrency: ruleInstance.baseCurrency as CurrencyCode,
       ruleLogicEntityVariables: ruleInstance.logicEntityVariables,
       ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
       ruleLogicMlVariables: ruleInstance.logicMachineLearningVariables ?? [],

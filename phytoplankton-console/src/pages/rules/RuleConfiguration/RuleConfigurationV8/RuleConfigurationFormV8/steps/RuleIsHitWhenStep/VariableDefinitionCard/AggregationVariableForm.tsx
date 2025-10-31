@@ -661,7 +661,10 @@ export const AggregationVariableFormContent: React.FC<
               }
               mode="SINGLE"
               placeholder="Select base currency"
-              options={CURRENCIES_SELECT_OPTIONS}
+              options={[
+                ...CURRENCIES_SELECT_OPTIONS,
+                { value: 'ORIGINAL_CURRENCY', label: 'Original currency' },
+              ]}
               isDisabled={readOnly}
             />
           </Label>
