@@ -180,7 +180,8 @@ export function operatorCheck(
 export function calculateSLATimeWindowsForPolicy(
   slaPolicyConfiguration: SLAPolicyConfiguration,
   elapsedTime: number,
-  entityStatus: DerivedStatus | PolicyStatusDetailsStatusesEnum
+  entityStatus: DerivedStatus | PolicyStatusDetailsStatusesEnum,
+  startTime: number
 ): { timeToWarning: number; timeToBreach: number } {
   const { warningTime, breachTime } = slaPolicyConfiguration.SLATime
   if (
@@ -201,12 +202,12 @@ export function calculateSLATimeWindowsForPolicy(
     breachTime.granularity
   ).asMilliseconds()
 
-  const currentTime = Date.now()
+  // Calculate absolute timestamps when thresholds will be reached
   const timeToWarning = warningTime
-    ? currentTime + (warningTimeMs - elapsedTime)
+    ? startTime + warningTimeMs
     : Number.MAX_SAFE_INTEGER
 
-  const timeToBreach = currentTime + (breachTimeMs - elapsedTime)
+  const timeToBreach = startTime + breachTimeMs
 
   return {
     timeToWarning,
