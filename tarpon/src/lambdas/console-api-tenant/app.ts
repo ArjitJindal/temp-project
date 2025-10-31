@@ -15,7 +15,7 @@ import {
   assertCurrentUserRoleAboveAdmin,
   assertHasDangerousTenantDelete,
 } from '@/@types/jwt'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -168,7 +168,9 @@ export const tenantsHandler = lambdaApi()(
       if (newTenantId && isDemoTenant(newTenantId)) {
         throw new BadRequest('Tenant id should not end with -test')
       }
-      const dynamoDb = getDynamoDbClientByEvent(event)
+      // WARNING: should never be changed to getDynamoDbClientByEvent(event), because the later doesn't allow any dynamodb
+      // actions on the newer tenants partition keys.
+      const dynamoDb = getDynamoDbClient()
       const tenantService = new TenantService(newTenantId, {
         mongoDb,
         dynamoDb,
