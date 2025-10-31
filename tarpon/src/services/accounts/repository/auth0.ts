@@ -196,7 +196,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       userManager.update(
         { id: accountId },
         {
-          name: patchData.name ?? user.name,
+          name: patchData.name || user.name,
           app_metadata: {
             ...patchedAppMetadata,
             // Specific Undefined Check Don't Change
