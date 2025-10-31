@@ -30,6 +30,12 @@ export const config: Config = {
   },
   resource: {
     ...configProdEu2.resource,
+    CLOUDWATCH_LOGS_INGESTION: {
+      ENABLED: false,
+    },
+    CLOUDWATCH_LOGS_S3_EXPORT: {
+      ENABLED: false,
+    },
   },
   viper: {
     ADMIN_EMAILS: ADMIN_EMAILS,

@@ -2176,86 +2176,90 @@ export class CdkTarponStack extends cdk.Stack {
         })
       }
 
-      // Reference the replicated secrets in the current region
-      // NOTE: Deploy to eu-central-1 FIRST to create primary secrets with replicas
-      // Then deploy to other regions which will reference the replica secrets
-      const accessKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
-      const secretKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
+      // S3 Parquet Export Lambda (ClickHouse → S3 Parquet)
+      // Conditionally deploy based on CLOUDWATCH_LOGS_S3_EXPORT.ENABLED
+      if (this.config.resource.CLOUDWATCH_LOGS_S3_EXPORT?.ENABLED !== false) {
+        // Reference the replicated secrets in the current region
+        // NOTE: Deploy to eu-central-1 FIRST to create primary secrets with replicas
+        // Then deploy to other regions which will reference the replica secrets
+        const accessKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
+        const secretKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
 
-      const { alias: s3ExporterAlias, func: s3ExporterFunc } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME,
-        },
-        heavyLibLayer
-      )
+        const { alias: s3ExporterAlias, func: s3ExporterFunc } = createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME,
+          },
+          heavyLibLayer
+        )
 
-      // Construct centralized S3 bucket name (always in eu-central-1)
-      const centralizedParquetBucketName = getNameForGlobalResource(
-        StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
-        config,
-        'eu-central-1'
-      )
+        // Construct centralized S3 bucket name (always in eu-central-1)
+        const centralizedParquetBucketName = getNameForGlobalResource(
+          StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
+          config,
+          'eu-central-1'
+        )
 
-      s3ExporterFunc.addToRolePolicy(
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['secretsmanager:GetSecretValue'],
-          resources: [
-            `${accessKeySecretArn}*`, // Add * for versioning
-            `${secretKeySecretArn}*`,
-          ],
+        s3ExporterFunc.addToRolePolicy(
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [
+              `${accessKeySecretArn}*`, // Add * for versioning
+              `${secretKeySecretArn}*`,
+            ],
+          })
+        )
+
+        // Local DynamoDB read/write for sync state tracking
+        s3ExporterFunc.addToRolePolicy(
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              'dynamodb:GetItem',
+              'dynamodb:PutItem',
+              'dynamodb:UpdateItem',
+            ],
+            resources: [
+              `arn:aws:dynamodb:${config.env.region}:${config.env.account}:table/${DYNAMODB_TABLE_NAMES.TARPON}`,
+            ],
+          })
+        )
+
+        // Add environment variables
+        s3ExporterFunc.addEnvironment(
+          'PARQUET_S3_BUCKET_NAME',
+          centralizedParquetBucketName // S3 bucket in eu-central-1
+        )
+        s3ExporterFunc.addEnvironment(
+          'POSTHOG_ACCESS_KEY_SECRET_ARN',
+          accessKeySecretArn // Secret in the current region
+        )
+        s3ExporterFunc.addEnvironment(
+          'POSTHOG_SECRET_KEY_SECRET_ARN',
+          secretKeySecretArn // Secret in the current region
+        )
+
+        // Cron job to trigger the Lambda every 10 minutes
+        const cloudwatchLogsExportRule = new events.Rule(
+          this,
+          'CloudWatchLogsS3ExportRule',
+          {
+            schedule: Schedule.cron({ minute: '*/10' }),
+            description:
+              'Trigger Lambda to export CloudWatch logs from ClickHouse to S3 Parquet every 10 minutes',
+          }
+        )
+
+        cloudwatchLogsExportRule.addTarget(
+          new targets.LambdaFunction(s3ExporterAlias)
+        )
+
+        new CfnOutput(this, 'CloudWatch Logs S3 Exporter Lambda', {
+          value: s3ExporterFunc.functionName,
         })
-      )
-
-      // Local DynamoDB read/write for sync state tracking
-      s3ExporterFunc.addToRolePolicy(
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: [
-            'dynamodb:GetItem',
-            'dynamodb:PutItem',
-            'dynamodb:UpdateItem',
-          ],
-          resources: [
-            `arn:aws:dynamodb:${config.env.region}:${config.env.account}:table/${DYNAMODB_TABLE_NAMES.TARPON}`,
-          ],
-        })
-      )
-
-      // Add environment variables
-      s3ExporterFunc.addEnvironment(
-        'PARQUET_S3_BUCKET_NAME',
-        centralizedParquetBucketName // S3 bucket in eu-central-1
-      )
-      s3ExporterFunc.addEnvironment(
-        'POSTHOG_ACCESS_KEY_SECRET_ARN',
-        accessKeySecretArn // Secret in the current region
-      )
-      s3ExporterFunc.addEnvironment(
-        'POSTHOG_SECRET_KEY_SECRET_ARN',
-        secretKeySecretArn // Secret in the current region
-      )
-
-      // Cron job to trigger the Lambda every 10 minutes
-      const cloudwatchLogsExportRule = new events.Rule(
-        this,
-        'CloudWatchLogsS3ExportRule',
-        {
-          schedule: Schedule.cron({ minute: '*/10' }),
-          description:
-            'Trigger Lambda to export CloudWatch logs from ClickHouse to S3 Parquet every 10 minutes',
-        }
-      )
-
-      cloudwatchLogsExportRule.addTarget(
-        new targets.LambdaFunction(s3ExporterAlias)
-      )
-
-      new CfnOutput(this, 'CloudWatch Logs S3 Exporter Lambda', {
-        value: s3ExporterFunc.functionName,
-      })
+      }
     }
 
     if (this.config.clickhouse?.awsPrivateLinkEndpointName && vpc) {

@@ -94,11 +94,14 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     CLOUDWATCH_LOGS_INGESTION: {
-      ENABLED: true,
+      ENABLED: false,
       FIREHOSE_BUFFER_INTERVAL_SECONDS: 300,
       FIREHOSE_BUFFER_SIZE_MB: 5,
       LOG_GROUP_NAME: '/aws/lambda/tarponPublicApiTransactionFunction',
       FILTER_PATTERN: '[REPORT, RequestId, ..., duration=Duration*, ...]',
+    },
+    CLOUDWATCH_LOGS_S3_EXPORT: {
+      ENABLED: false,
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
