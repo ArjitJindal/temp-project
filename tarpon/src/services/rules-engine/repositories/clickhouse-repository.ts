@@ -249,7 +249,11 @@ export class ClickhouseTransactionsRepository {
           )}') AND length(nonShadowHitRules) > 0`
         )
       } else {
-        whereConditions.push(`status IN ('${params.filterStatus.join("','")}')`)
+        whereConditions.push(
+          `status IN ('${params.filterStatus.join(
+            "','"
+          )}') AND transactionState = 'SUSPENDED'` // Payment approvals for Blocked transactions should only show manually blocked transactions
+        )
       }
     }
 

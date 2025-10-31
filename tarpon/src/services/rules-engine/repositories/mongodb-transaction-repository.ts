@@ -447,7 +447,10 @@ export class MongoDbTransactionRepository
         params.filterStatus.splice(params.filterStatus.indexOf('ALLOW'), 1)
         conditions.push(this.getApproveTransactionsMongoQuery())
       } else if (params.filterStatus.length > 0) {
-        conditions.push({ status: { $in: params.filterStatus } })
+        conditions.push({
+          status: { $in: params.filterStatus },
+          transactionState: { $in: ['SUSPENDED'] }, // Payment approvals for Blocked transactions should only show manually blocked transactions
+        })
       }
     }
 
