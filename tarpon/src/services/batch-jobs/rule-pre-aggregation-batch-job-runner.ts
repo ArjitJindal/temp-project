@@ -442,7 +442,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     const { afterTimestamp } = getTimeRangeByTimeWindows(
       currentTimestamp,
       timeWindow.start,
-      timeWindow.end
+      timeWindow.end,
+      aggregationVar.useEventTimestamp
     )
     const duration = dayjs(currentTimestamp).diff(
       dayjs(afterTimestamp),

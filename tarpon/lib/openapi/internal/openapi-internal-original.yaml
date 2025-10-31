@@ -9509,6 +9509,8 @@ components:
           type: number
         lastNEntities:
           type: number
+        useEventTimestamp:
+          type: boolean
         includeCurrentEntity:
           type: boolean
       required:

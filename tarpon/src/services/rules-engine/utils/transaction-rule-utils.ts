@@ -7,6 +7,7 @@ import memoizeOne from 'memoize-one'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   AuxiliaryIndexTransaction,
+  AuxiliaryIndexTransactionData,
   RulesEngineTransactionRepositoryInterface,
   TransactionWithRiskDetails,
 } from '../repositories/transaction-repository-interface'
@@ -352,17 +353,19 @@ export async function* getTransactionUserPastTransactionsGenerator(
 }
 
 export async function groupTransactionsByGranularity<T>(
-  transactions: AuxiliaryIndexTransaction[],
-  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
-  granularity: LogicAggregationTimeWindowGranularity
+  transactionsData: AuxiliaryIndexTransactionData[],
+  aggregator: (transactions: AuxiliaryIndexTransactionData[]) => Promise<T>,
+  granularity: LogicAggregationTimeWindowGranularity,
+  useEventTimestamp = false
 ): Promise<{ [timeKey: string]: T }> {
-  return groupTransactions(
-    transactions,
-    (transaction) =>
-      getTransactionStatsTimeGroupLabel(
-        transaction.timestamp ?? 0,
-        granularity
-      ),
+  return groupTransactions<T, AuxiliaryIndexTransactionData>(
+    transactionsData,
+    (transactionData) => {
+      const timestampToUse = useEventTimestamp
+        ? transactionData.lastTxEvent.timestamp
+        : transactionData.transaction.timestamp ?? 0
+      return getTransactionStatsTimeGroupLabel(timestampToUse, granularity)
+    },
     aggregator
   )
 }
@@ -372,7 +375,7 @@ export async function groupTransactionsByTime<T>(
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
   timeGranularity: LogicAggregationTimeWindowGranularity
 ): Promise<{ [hourKey: string]: T }> {
-  return groupTransactions(
+  return groupTransactions<T, AuxiliaryIndexTransaction>(
     transactions,
     (transaction) =>
       getTransactionStatsTimeGroupLabelV2(
@@ -383,10 +386,10 @@ export async function groupTransactionsByTime<T>(
   )
 }
 
-export async function groupTransactions<T>(
-  transactions: AuxiliaryIndexTransaction[],
-  iteratee: (transactions: AuxiliaryIndexTransaction) => string,
-  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
+export async function groupTransactions<T, U extends object>(
+  transactions: U[],
+  iteratee: (transactions: U) => string,
+  aggregator: (transactions: U[]) => Promise<T>
 ): Promise<{ [timeKey: string]: T }> {
   const groups = groupBy(transactions, iteratee)
   const newGroups: { [key: string]: T } = {}

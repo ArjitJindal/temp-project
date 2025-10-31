@@ -6120,7 +6120,8 @@ components:
           type: string
         type:
           type: string
-          description: 'Type of transaction (ex: DEPOSIT, WITHDRAWAL, TRANSFER, EXTERNAL_PAYMENT, REFUND, OTHER)'
+          description: 'Type of transaction (ex: DEPOSIT, WITHDRAWAL, TRANSFER,
+            EXTERNAL_PAYMENT, REFUND, OTHER)'
       required:
         - transactionId
         - status

@@ -139,6 +139,10 @@ export type AuxiliaryIndexTransactionWithDirection =
   AuxiliaryIndexTransaction & {
     direction?: 'origin' | 'destination'
   }
+export type AuxiliaryIndexTransactionDataWithDirection = {
+  transaction: AuxiliaryIndexTransactionWithDirection
+  lastTxEvent: TransactionEventWithRulesResult
+}
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: LogicEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
 
@@ -951,7 +955,7 @@ export class LogicEvaluator {
     // For now, as a workaround, we stop fetching transactions if the timeout is reached to avoid repeatedly
     // retrying to rebuild and fail.
     // TODO: Proper fix by FR-5225
-    const isFargate = process.env.AWS_FUNCTION_NAME == null
+    const isFargate = process.env.AWS_LAMBDA_FUNCTION_NAME == null
     let timeoutReached = false
     let timeout: NodeJS.Timeout | undefined
 
@@ -988,7 +992,8 @@ export class LogicEvaluator {
       }
 
       // Filter transactions by filtersLogic
-      const targetTransactions: AuxiliaryIndexTransactionWithDirection[] = []
+      const targetTransactionData: AuxiliaryIndexTransactionDataWithDirection[] =
+        []
       for (const transaction of transactions) {
         const senderUser = userFilterDirections.has('sender')
           ? await this.userLoader(transaction.originUserId)
@@ -996,18 +1001,24 @@ export class LogicEvaluator {
         const receiverUser = userFilterDirections.has('receiver')
           ? await this.userLoader(transaction.destinationUserId)
           : undefined
-
+        const data: LogicData = {
+          type: 'TRANSACTION',
+          transaction: transaction as TransactionWithRiskDetails,
+          transactionEvents: [],
+          senderUser,
+          receiverUser,
+        }
         const isTransactionFiltered =
-          await this.isDataIncludedInAggregationVariable(aggregationVariable, {
-            type: 'TRANSACTION',
-            transaction: transaction as TransactionWithRiskDetails,
-            transactionEvents: [],
-            senderUser,
-            receiverUser,
-          })
+          await this.isDataIncludedInAggregationVariable(
+            aggregationVariable,
+            data
+          )
         if (isTransactionFiltered) {
           targetTransactionsCount++
-          targetTransactions.push(transaction)
+          targetTransactionData.push({
+            transaction: transaction,
+            lastTxEvent: data.transactionEvents[0],
+          })
           if (
             (transaction.timestamp ?? 0) >= threeDaysBeforeTimestamp &&
             transaction.transactionId &&
@@ -1052,11 +1063,17 @@ export class LogicEvaluator {
       }
       const hasGroups = Boolean(txGroupByEntityVariable)
       const partialTimeAggregatedResult = await groupTransactionsByGranularity(
-        targetTransactions,
+        targetTransactionData,
         async (groupTransactions) => {
           const aggregateValues = await Promise.all(
             groupTransactions.map(
-              async (transaction: AuxiliaryIndexTransactionWithDirection) => {
+              async (
+                transactionData: AuxiliaryIndexTransactionDataWithDirection
+              ) => {
+                const { transaction, lastTxEvent } = transactionData
+                const timestampToUse = aggregationVariable.useEventTimestamp
+                  ? lastTxEvent.timestamp
+                  : transaction.timestamp
                 // TODO: support tx event for aggregation variable
                 const entityVariable =
                   transaction.direction === 'origin'
@@ -1085,14 +1102,14 @@ export class LogicEvaluator {
                   groupValue: {
                     value: groupValue,
                     entity: {
-                      timestamp: transaction.timestamp,
+                      timestamp: timestampToUse,
                       value,
                     },
                   },
                   ...(!hasGroups
                     ? {
                         entity: {
-                          timestamp: transaction.timestamp,
+                          timestamp: timestampToUse,
                           value,
                         },
                       }
@@ -1335,7 +1352,10 @@ export class LogicEvaluator {
       newDataValue?: any
     }
   ) {
-    const { transaction } = data
+    const { transaction, transactionEvents } = data
+    const timestampToUse = aggregationVariable.useEventTimestamp
+      ? last(transactionEvents)?.timestamp ?? transaction.timestamp
+      : transaction.timestamp
     const shouldSkipUpdateAggregation = await this.isTransactionApplied(
       aggregationVariable,
       direction,
@@ -1371,7 +1391,7 @@ export class LogicEvaluator {
           userKeyId,
           aggregationVariable,
           0,
-          transaction.timestamp + 1,
+          timestampToUse + 1,
           aggregationGranularity,
           newData.newGroupValue
         )
@@ -1381,7 +1401,7 @@ export class LogicEvaluator {
           1
         ) ?? 1
       const groupLabel = getTransactionStatsTimeGroupLabel(
-        transaction.timestamp,
+        timestampToUse,
         aggregationGranularity
       )
       targetAggregation = find(aggregations, (obj) =>
@@ -1419,8 +1439,8 @@ export class LogicEvaluator {
         await this.aggregationRepository.getUserLogicTimeAggregations(
           userKeyId,
           aggregationVariable,
-          transaction.timestamp,
-          transaction.timestamp + 1,
+          timestampToUse,
+          timestampToUse + 1,
           aggregationGranularity,
           newData.newGroupValue
         )
@@ -1432,7 +1452,7 @@ export class LogicEvaluator {
 
     targetAggregation = targetAggregation ?? {
       time: getTransactionStatsTimeGroupLabel(
-        transaction.timestamp,
+        timestampToUse,
         aggregationGranularity
       ),
       value: aggregator.init(),
@@ -1445,7 +1465,7 @@ export class LogicEvaluator {
     if (aggregationVariable.lastNEntities) {
       newTargetAggregation.entities = (targetAggregation.entities ?? []).concat(
         {
-          timestamp: transaction.timestamp,
+          timestamp: timestampToUse,
           value: newData.newDataValue,
         }
       )
@@ -1597,8 +1617,24 @@ export class LogicEvaluator {
     data: LogicData
   ) {
     const { aggregationFunc } = aggregationVariable
+    let timestampForLookBack: number
+
+    if (data.type === 'TRANSACTION') {
+      const useEventTimestamp =
+        aggregationVariable.useEventTimestamp &&
+        data.transactionEvents.length > 0
+
+      if (useEventTimestamp) {
+        timestampForLookBack =
+          last(data.transactionEvents)?.timestamp ?? data.transaction.timestamp
+      } else {
+        timestampForLookBack = data.transaction.timestamp
+      }
+    } else {
+      timestampForLookBack = Date.now()
+    }
     const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
-      data.type === 'TRANSACTION' ? data.transaction.timestamp : Date.now(),
+      timestampForLookBack,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
@@ -1680,7 +1716,7 @@ export class LogicEvaluator {
             data.type === 'TRANSACTION'
               ? await this.rebuildAggregationVariable(
                   aggregationVariable,
-                  data.transaction.timestamp,
+                  timestampForLookBack,
                   direction === 'origin'
                     ? data.transaction.originUserId
                     : data.transaction.destinationUserId,
@@ -1696,7 +1732,7 @@ export class LogicEvaluator {
                 )
               : await this.rebuildAggregationVariable(
                   aggregationVariable,
-                  Date.now(),
+                  timestampForLookBack,
                   data.user.userId,
                   undefined,
                   undefined
@@ -1737,7 +1773,11 @@ export class LogicEvaluator {
       data.type === 'TRANSACTION' &&
       aggregationVariable.includeCurrentEntity &&
       newTransactionIsTargetDirection &&
-      this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
+      this.isNewDataWithinTimeWindow(
+        timestampForLookBack,
+        afterTimestamp,
+        beforeTimestamp
+      )
     ) {
       ;[shouldIncludeNewData, shouldSkipUpdateAggregation] = await Promise.all([
         this.isDataIncludedInAggregationVariable(aggregationVariable, data),
@@ -1838,9 +1878,10 @@ export class LogicEvaluator {
     if (
       data.type === 'TRANSACTION' &&
       isEmpty(data.transactionEvents) &&
-      entityVariableKeys.find((v) =>
+      (entityVariableKeys.find((v) =>
         v.startsWith(TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE)
-      )
+      ) ||
+        aggregationVariable.useEventTimestamp)
     ) {
       await this.initialize()
       if (this.transactionEventRepository) {
@@ -1872,14 +1913,14 @@ export class LogicEvaluator {
   }
 
   private isNewDataWithinTimeWindow(
-    data: TransactionLogicData,
+    dataTimestampToCheck: number,
     afterTimestamp: number,
     beforeTimestamp: number
   ): boolean {
     return (
-      data.transaction.timestamp !== undefined &&
-      data.transaction.timestamp >= afterTimestamp &&
-      data.transaction.timestamp <= beforeTimestamp
+      dataTimestampToCheck !== undefined &&
+      dataTimestampToCheck >= afterTimestamp &&
+      dataTimestampToCheck <= beforeTimestamp
     )
   }
 

@@ -762,6 +762,25 @@ export const AggregationVariableFormContent: React.FC<
             />
           </Label>
         )}
+        {!aggregateByLastN && (
+          <Label
+            label="Use event timestamp for aggregation"
+            hint="When enabled, transaction event timestamps will be used for time-based aggregation instead of transaction timestamp."
+            required={{ value: false, showHint: !readOnly }}
+          >
+            <SelectionGroup
+              value={formValues.useEventTimestamp ?? false}
+              onChange={(useEventTimestamp) => {
+                handleUpdateForm({
+                  useEventTimestamp,
+                });
+              }}
+              mode={'SINGLE'}
+              options={BOOLEAN_OPTIONS}
+              isDisabled={readOnly}
+            />
+          </Label>
+        )}
       </PropertyColumns>
       {timeWindowValidationError && <Alert type="ERROR">{timeWindowValidationError}</Alert>}
       {!hideFilters && (
