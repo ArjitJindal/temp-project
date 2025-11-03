@@ -43,10 +43,10 @@ import WorkflowsPage from '@/pages/workflows/workflows-page';
 import WorkflowsCreatePage from '@/pages/workflows/workflows-create-page';
 import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import {
+  hasMinimumPermission,
   isAtLeastAdmin,
   useAuth0User,
   useHasResources,
-  hasMinimumPermission,
 } from '@/utils/user-utils';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
@@ -54,6 +54,7 @@ import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
 import ReportItem from '@/pages/report-item';
+import TransactionsImportPage from '@/pages/transactions-import';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -184,7 +185,7 @@ export function useRoutes(): RouteItem[] {
           },
           {
             name: 'transactions-import',
-            component: TransactionsListPage,
+            component: TransactionsImportPage,
             path: '/transactions/import/csv',
           },
           {

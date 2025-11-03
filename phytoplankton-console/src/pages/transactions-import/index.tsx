@@ -26,7 +26,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 type StepKey = 'UPLOAD_FILE' | 'DATA_MAPPING' | 'DATA_VALIDATION';
 
-export default function TransactionsImport() {
+export default function TransactionsImportPage() {
   const [selectedStep, setSelectedStep] = useState<StepKey>('UPLOAD_FILE');
   const [file, setFile] = useState<FileInfo>();
 
