@@ -5,9 +5,9 @@ import { InternalTransactionEvent, RiskLevel } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   DATE_TIME,
-  FLOAT,
   ID,
   RISK_LEVEL,
+  RISK_SCORE,
   TRANSACTION_STATE,
 } from '@/components/library/Table/standardDataTypes';
 import { useApi } from '@/api';
@@ -20,6 +20,7 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
 import { processTagsRecursively } from '@/utils/object';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   transactionId: string;
@@ -63,7 +64,7 @@ export default function TransactionEventsTable(props: Props) {
   });
 
   const api = useApi();
-
+  const settings = useSettings();
   const riskClassificationValues = useRiskClassificationScores();
 
   const queryResults = usePaginatedQuery(
@@ -76,6 +77,7 @@ export default function TransactionEventsTable(props: Props) {
       }),
   );
   const columns: TableColumn<InternalTransactionEvent>[] = useMemo(() => {
+    const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
     const helper = new ColumnHelper<InternalTransactionEvent>();
     return helper.list([
       helper.simple({
@@ -107,7 +109,7 @@ export default function TransactionEventsTable(props: Props) {
       helper.simple<'riskScoreDetails.trsScore'>({
         title: 'TRS score',
         key: 'riskScoreDetails.trsScore',
-        type: FLOAT,
+        type: RISK_SCORE,
       }),
       helper.derived({
         title: 'TRS level',
@@ -116,6 +118,7 @@ export default function TransactionEventsTable(props: Props) {
           return getRiskLevelFromScore(
             riskClassificationValues,
             entity.riskScoreDetails?.trsScore || null,
+            configRiskLevelAliasArray,
           );
         },
       }),
@@ -128,7 +131,7 @@ export default function TransactionEventsTable(props: Props) {
         },
       }),
     ]);
-  }, [riskClassificationValues]);
+  }, [riskClassificationValues, settings?.riskLevelAlias]);
 
   return (
     <QueryResultsTable<InternalTransactionEvent, Params>

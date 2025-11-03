@@ -166,6 +166,15 @@ export class SimulationResultRepository {
       })
     }
 
+    if (
+      params.filterTransactionTypes &&
+      params.filterTransactionTypes.length > 0
+    ) {
+      conditions.push({
+        transactionType: { $in: params.filterTransactionTypes },
+      })
+    }
+
     return conditions
   }
 

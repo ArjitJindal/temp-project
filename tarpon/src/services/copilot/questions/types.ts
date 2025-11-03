@@ -101,7 +101,11 @@ export type TableQuestion<V extends Variables> = {
   headers: ColumnDefinition[]
 } & AggregationQuestion<
   V & { pageSize?: PageSize; page?: number },
-  { items: (string | string[] | number | undefined)[][]; total?: number }
+  {
+    items: (string | string[] | number | undefined)[][]
+    total?: number
+    transactionsCount?: number
+  }
 >
 
 export type TimeseriesQuestion<V extends Variables> = {

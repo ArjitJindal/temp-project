@@ -104,7 +104,6 @@ export class BatchRerunUsersService {
             transactionId: 'RISK_SCORING_RERUN',
             factorScoreDetails: newKrsScore.scoreDetails,
             components: newKrsScore.components,
-            isUpdatable: false,
           })
           return
         }

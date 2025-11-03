@@ -45,6 +45,8 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { logger } from '@/core/logger'
 import { updateLogMetadata, withContext } from '@/core/utils/context'
+import { RiskLevelAlias } from '@/@types/openapi-internal/RiskLevelAlias'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
@@ -126,7 +128,9 @@ export class RiskScoringV8Service {
         },
         {
           tenantId: this.tenantId,
-          baseCurrency: factor.baseCurrency ?? 'USD',
+          baseCurrency:
+            (factor.baseCurrency as CurrencyCode | 'ORIGINAL_CURRENCY') ??
+            'USD',
         },
         riskData
       )
@@ -386,13 +390,15 @@ export class RiskScoringV8Service {
       transaction.destinationUserId
     )
 
-    const { riskScoringCraEnabled = true } = await this.getTenantSettings()
+    const { riskScoringCraEnabled = true, riskLevelAlias } =
+      await this.getTenantSettings()
     if (riskScoringCraEnabled === false) {
       return {
         trsScore: arsScore.score,
         trsRiskLevel: getRiskLevelFromScore(
           riskClassificationValues,
-          arsScore.score
+          arsScore.score,
+          riskLevelAlias
         ),
       }
     }
@@ -416,29 +422,33 @@ export class RiskScoringV8Service {
       trsScore: arsScore.score,
       trsRiskLevel: getRiskLevelFromScore(
         riskClassificationValues,
-        arsScore.score
+        arsScore.score,
+        riskLevelAlias
       ),
       originUserCraRiskScore:
         originDrsScore ?? getDefaultRiskValue(riskClassificationValues),
       originUserCraRiskLevel: this.getRiskLevelOrDefault(
         riskClassificationValues,
-        originDrsScore
+        originDrsScore,
+        riskLevelAlias
       ),
       destinationUserCraRiskScore:
         destinationDrsScore ?? getDefaultRiskValue(riskClassificationValues),
       destinationUserCraRiskLevel: this.getRiskLevelOrDefault(
         riskClassificationValues,
-        destinationDrsScore
+        destinationDrsScore,
+        riskLevelAlias
       ),
     }
   }
 
   private getRiskLevelOrDefault(
     riskClassificationValues: Array<RiskClassificationScore>,
-    score?: number
+    score?: number,
+    riskLevelAlias?: RiskLevelAlias[]
   ) {
     return score
-      ? getRiskLevelFromScore(riskClassificationValues, score)
+      ? getRiskLevelFromScore(riskClassificationValues, score, riskLevelAlias)
       : DEFAULT_RISK_LEVEL
   }
 
@@ -701,7 +711,8 @@ export class RiskScoringV8Service {
       await this.riskRepository.getRiskClassificationValues()
     const userId = user.userId
     const krsScore = await this.getKrsScore(userId)
-    const { riskScoringCraEnabled = true } = await this.getTenantSettings()
+    const { riskScoringCraEnabled = true, riskLevelAlias } =
+      await this.getTenantSettings()
     const newKrsScore = await this.calculateAndUpdateKrsScore(
       user,
       riskClassificationValues,
@@ -746,7 +757,8 @@ export class RiskScoringV8Service {
       riskClassificationValues,
       newKrsScore.score,
       craRiskScore,
-      riskScoringCraEnabled
+      riskScoringCraEnabled,
+      riskLevelAlias
     )
   }
 
@@ -754,14 +766,16 @@ export class RiskScoringV8Service {
     riskClassificationValues: RiskClassificationScore[],
     kycRiskScore: number,
     craRiskScore: number | undefined,
-    craEnabled: boolean
+    craEnabled: boolean,
+    riskLevelAlias?: RiskLevelAlias[]
   ) {
     if (craEnabled === false) {
       return {
         kycRiskScore,
         kycRiskLevel: getRiskLevelFromScore(
           riskClassificationValues,
-          kycRiskScore
+          kycRiskScore,
+          riskLevelAlias
         ),
       }
     }
@@ -769,13 +783,15 @@ export class RiskScoringV8Service {
       kycRiskScore,
       kycRiskLevel: getRiskLevelFromScore(
         riskClassificationValues,
-        kycRiskScore
+        kycRiskScore,
+        riskLevelAlias
       ),
       craRiskScore:
         craRiskScore ?? getDefaultRiskValue(riskClassificationValues),
       craRiskLevel: getRiskLevelFromScore(
         riskClassificationValues,
-        craRiskScore ?? getDefaultRiskValue(riskClassificationValues)
+        craRiskScore ?? getDefaultRiskValue(riskClassificationValues),
+        riskLevelAlias
       ),
     }
   }

@@ -3,7 +3,8 @@ import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ActivityCard from '@/components/ActivityCard';
 import { useApi } from '@/api';
-import { CommentType, useUsers } from '@/utils/user-utils';
+import { CommentType } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import Avatar from '@/components/library/Avatar';
@@ -50,7 +51,7 @@ interface AliasMapping {
 export default function UserActivityCard(props: Props) {
   const { user, comments } = props;
   const api = useApi({ debounce: 500 });
-  const [users, _] = useUsers();
+  const { users } = useUsers();
   const queryClient = useQueryClient();
   const riskClassificationValues = useRiskClassificationScores();
 

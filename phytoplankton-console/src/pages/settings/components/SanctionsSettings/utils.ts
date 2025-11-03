@@ -9,6 +9,7 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSancti
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { GenericSanctionsSearchType } from '@/apis/models/GenericSanctionsSearchType';
+import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/GenericSanctionsSearchType';
 
 export const DEFAULT_PROVIDER_TYEPS_MAP: {
   [key: string]: GenericSanctionsSearchType[];
@@ -35,7 +36,7 @@ export function getSanctionsSearchTypeOptions(
   );
 }
 
-const getProviders = (features: Feature[]) => {
+export const getProviders = (features: Feature[]) => {
   const providers: SanctionsDataProviderName[] = [];
   features.forEach((f) => {
     if (f === 'ACURIS') {
@@ -87,7 +88,10 @@ export const getProviderScreeningInfo = (
     (type) => type.provider === provider,
   );
   return {
-    screeningTypes: (providerScreeningTypes?.screeningTypes ??
-      DEFAULT_PROVIDER_TYEPS_MAP[provider]) as GenericSanctionsSearchType[],
+    screeningTypes: GENERIC_SANCTIONS_SEARCH_TYPES.filter((type) =>
+      (providerScreeningTypes?.screeningTypes ?? DEFAULT_PROVIDER_TYEPS_MAP[provider]).includes(
+        type,
+      ),
+    ),
   };
 };

@@ -81,6 +81,16 @@ const UserTagSelection = (props: {
   const initialState = { key: '', value: '' };
   const settings = useSettings();
   const [state, setState] = useState<{ key: string; value: string }>(initialState);
+  const consoleTags = useMemo(() => settings?.consoleTags ?? [], [settings?.consoleTags]);
+  const selectedConsoleTag = useMemo(
+    () => consoleTags.find((t) => t.key === state.key),
+    [consoleTags, state.key],
+  );
+  const isEnum = selectedConsoleTag?.type === 'ENUM';
+  const enumOptions = useMemo(
+    () => (selectedConsoleTag?.options ?? []).map((opt) => ({ label: opt, value: opt })),
+    [selectedConsoleTag],
+  );
   const selectedTags: { [key: string]: boolean } = useMemo(() => {
     return values.reduce((acc, tag) => {
       acc[tag.key] = true;
@@ -94,7 +104,7 @@ const UserTagSelection = (props: {
   return (
     <div className={s.rowLayout}>
       <div className={cn(s.stateDetailsSingle, s.fullWidth)}>
-        <InputField<UserTag, 'key'> name="key" label={'Select user tag to update'}>
+        <InputField<UserTag, 'key'> name="key" label={`Select ${settings.userAlias} tag to update`}>
           {(inputProps) => (
             <Select<string>
               {...inputProps}
@@ -106,7 +116,7 @@ const UserTagSelection = (props: {
                 }))}
               onChange={(value) => {
                 if (value) {
-                  setState((prev) => ({ ...prev, key: value }));
+                  setState((prev) => ({ ...prev, key: value, value: '' }));
                 }
               }}
               value={state.key}
@@ -116,20 +126,37 @@ const UserTagSelection = (props: {
       </div>
 
       <div className={cn(s.stateDetailsSingle, s.fullWidth)}>
-        <InputField<UserTag, 'value'> name="value" label="Update user tag value to">
-          {(inputProps) => (
-            <TextInput
-              {...inputProps}
-              onChange={(value) => {
-                if (value) {
-                  setState((prev) => ({ ...prev, value }));
-                }
-              }}
-              value={state.value}
-              inputClassName={s.textInput}
-              className={s.inputContainer}
-            />
-          )}
+        <InputField<UserTag, 'value'>
+          name="value"
+          label={`Update ${settings.userAlias} tag value to`}
+        >
+          {(inputProps) => {
+            return isEnum ? (
+              <Select<string>
+                {...inputProps}
+                mode="SINGLE"
+                options={enumOptions}
+                value={state.value}
+                onChange={(value) => {
+                  if (value != null) {
+                    setState((prev) => ({ ...prev, value }));
+                  }
+                }}
+              />
+            ) : (
+              <TextInput
+                {...inputProps}
+                onChange={(value) => {
+                  if (value) {
+                    setState((prev) => ({ ...prev, value }));
+                  }
+                }}
+                value={state.value}
+                inputClassName={s.textInput}
+                className={s.inputContainer}
+              />
+            );
+          }}
         </InputField>
       </div>
 
@@ -157,6 +184,17 @@ const UserTagSelection = (props: {
 
 const UserTagSelected = (props: UserTagSelectionDeleteProps) => {
   const { tagKey, value, deleteAction, isEditable, updateAction } = props;
+  const settings = useSettings();
+  const consoleTags = useMemo(() => settings?.consoleTags ?? [], [settings?.consoleTags]);
+  const consoleTag = useMemo(
+    () => consoleTags.find((t) => t.key === tagKey),
+    [consoleTags, tagKey],
+  );
+  const isEnum = consoleTag?.type === 'ENUM';
+  const enumOptions = useMemo(
+    () => (consoleTag?.options ?? []).map((opt) => ({ label: opt, value: opt })),
+    [consoleTag],
+  );
 
   return (
     <div className={s.rowLayout}>
@@ -179,18 +217,31 @@ const UserTagSelected = (props: UserTagSelectionDeleteProps) => {
 
       <div className={cn(s.stateDetailsSingle, s.fullWidth)}>
         <InputField<UserTag, 'value'> name="value" label="User tag updated value">
-          {() => (
-            <TextInput
-              value={value}
-              inputClassName={s.textInput}
-              className={s.inputContainer}
-              onChange={(value) => {
-                if (isEditable) {
-                  updateAction('value', value ?? '');
-                }
-              }}
-            />
-          )}
+          {() => {
+            return isEnum ? (
+              <Select<string>
+                mode="SINGLE"
+                options={enumOptions}
+                value={value}
+                onChange={(newVal) => {
+                  if (isEditable) {
+                    updateAction('value', newVal ?? '');
+                  }
+                }}
+              />
+            ) : (
+              <TextInput
+                value={value}
+                inputClassName={s.textInput}
+                className={s.inputContainer}
+                onChange={(value) => {
+                  if (isEditable) {
+                    updateAction('value', value ?? '');
+                  }
+                }}
+              />
+            );
+          }}
         </InputField>
       </div>
 

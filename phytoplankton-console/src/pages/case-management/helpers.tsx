@@ -42,7 +42,7 @@ import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-perm
 import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
-import { useRoles } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
@@ -268,8 +268,8 @@ export const useCaseAlertFilters = (
   const allowedCaseStatuses = useDerivedStatusesFromPermissions();
   const allowedAlertStatuses = useDerivedAlertStatusesFromPermissions();
 
-  const [roles] = useRoles();
-  const roleAssignedToOptions = map(roles, 'name');
+  const { rolesList } = useRoles();
+  const roleAssignedToOptions = map(rolesList, 'name');
   roleAssignedToOptions.unshift('Unassigned');
 
   const closureReasons = useCombinedReasons();

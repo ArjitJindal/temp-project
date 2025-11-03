@@ -401,6 +401,9 @@ export type Config = {
       LOG_GROUP_NAME?: string
       FILTER_PATTERN?: string
     }
+    CLOUDWATCH_LOGS_S3_EXPORT?: {
+      ENABLED?: boolean
+    }
   }
   viper?: {
     ADMIN_EMAILS: string[]

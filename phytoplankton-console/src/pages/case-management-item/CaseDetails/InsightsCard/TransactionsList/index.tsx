@@ -122,7 +122,7 @@ export default function TransactionsList(props: Props) {
               onConfirm={(value) => {
                 setParams((state) => ({
                   ...state,
-                  productType: value.uniques,
+                  productType: value?.uniques,
                 }));
               }}
             />
@@ -142,7 +142,7 @@ export default function TransactionsList(props: Props) {
               onConfirm={(value) => {
                 setParams((state) => ({
                   ...state,
-                  transactionTypes: value.uniques,
+                  transactionTypes: value?.uniques,
                 }));
               }}
             />

@@ -8,7 +8,7 @@ import COLORS from '@/components/ui/colors';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { RISK_LEVEL_LABELS, RISK_LEVELS } from '@/utils/risk-levels';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -33,7 +33,7 @@ const renderRiskLevelData = (requiredRiskScores: RiskClassificationScore) => {
 
 export default function SimulationHistory(props: SimulationHistoryProps) {
   const api = useApi();
-  const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users, isLoading } = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const { setResult, setOpen } = props;
   const [params, setParams] = useState<AllParams<DefaultApiGetSimulationsRequest>>({
     ...DEFAULT_PARAMS_STATE,
@@ -131,7 +131,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
             key: 'createdBy',
             type: {
               render: (createdBy) => {
-                if (loading || !createdBy) {
+                if (isLoading || !createdBy) {
                   return <></>;
                 }
 
@@ -140,7 +140,7 @@ export default function SimulationHistory(props: SimulationHistoryProps) {
                 return <span>{user}</span>;
               },
               stringify: (createdBy) => {
-                if (loading || !createdBy) {
+                if (isLoading || !createdBy) {
                   return '';
                 }
 

@@ -1,11 +1,11 @@
 import React from 'react';
 import s from './index.module.less';
-import { CorrespondenceBankDetails } from '@/apis';
+import { CorrespondentBankDetails } from '@/apis';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import { notNullish } from '@/utils/array';
 
 interface Props {
-  bankDetails: CorrespondenceBankDetails;
+  bankDetails: CorrespondentBankDetails;
 }
 
 export default function BankDetails({ bankDetails }: Props) {

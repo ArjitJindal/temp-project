@@ -53,6 +53,7 @@ import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPag
 import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
+import ReportItem from '@/pages/report-item';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -343,9 +344,9 @@ export function useRoutes(): RouteItem[] {
             component: ReportsList,
           },
           {
-            path: '/reports/:reportId',
-            name: 'reports-item',
-            component: ReportsList,
+            path: '/report/:reportId/:mode',
+            name: 'report-item',
+            component: ReportItem,
           },
         ],
       },

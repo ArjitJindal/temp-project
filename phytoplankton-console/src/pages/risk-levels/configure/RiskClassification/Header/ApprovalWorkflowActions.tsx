@@ -48,7 +48,7 @@ function PendingProposalActions(
 
   const [showProposal] = showProposalState;
   const showingProposalState = showProposal;
-  const showComment = showingProposalState;
+  const showComment = true;
 
   return (
     <AsyncResourceRenderer resource={workflowsQueryResult.data}>

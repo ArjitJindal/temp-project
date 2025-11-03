@@ -22,6 +22,7 @@ export interface SanctionsSearchProps {
   relCategory?: RELSourceRelevance[]
   adverseMediaCategory?: AdverseMediaSourceRelevance[]
   containAllSources?: boolean
+  crimeCategory?: string[]
 }
 export interface SanctionsSearchPropsWithRequest extends SanctionsSearchProps {
   request: SanctionsSearchRequest

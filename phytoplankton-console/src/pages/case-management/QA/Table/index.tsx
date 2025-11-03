@@ -8,8 +8,7 @@ import { QAModal } from '../Modal';
 import { AddToSampleModal } from '../AddToSampleModal';
 import { QAFormValues } from '../types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { AllParams, TableData, TableRefType } from '@/components/library/Table/types';
-import { QueryResult } from '@/utils/queries/types';
+import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -21,7 +20,6 @@ import {
   PRIORITY,
   RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
-import { useAlertQuery } from '@/pages/case-management/common';
 import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { message } from '@/components/library/Message';
 import { useAuth0User } from '@/utils/user-utils';
@@ -37,6 +35,7 @@ import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import { useReasons } from '@/utils/reasons';
+import { useAlertList } from '@/utils/api/alerts';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -47,7 +46,7 @@ interface Props {
 
 export default function QaTable(props: Props) {
   const { params, onChangeParams, isSelectionEnabled, manuallyAddedAlerts } = props;
-  const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
+  const queryResults = useAlertList(params);
   const user = useAuth0User();
   const [qaMode] = useQaMode();
   const tableRef = useRef<TableRefType>(null);

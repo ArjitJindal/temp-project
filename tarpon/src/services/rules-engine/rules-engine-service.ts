@@ -72,6 +72,7 @@ import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import {
   hasFeature,
   publishMetric,
+  tenantSettings,
   updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
@@ -128,6 +129,7 @@ import {
   DuplicateTransactionReturnType,
 } from '@/@types/tranasction/aggregation'
 import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -452,19 +454,22 @@ export class RulesEngineService {
         ])
         const riskClassificationValues =
           await this.riskRepository.getRiskClassificationValues()
+        const { riskLevelAlias } = await tenantSettings(this.tenantId)
         const userRiskScoreDetails = {
           originUserCraRiskScore: originUserDrs?.drsScore,
           destinationUserCraRiskScore: destinationUserDrs?.drsScore,
           originUserCraRiskLevel: originUserDrs?.drsScore
             ? getRiskLevelFromScore(
                 riskClassificationValues,
-                originUserDrs.drsScore
+                originUserDrs.drsScore,
+                riskLevelAlias
               )
             : undefined,
           destinationUserCraRiskLevel: destinationUserDrs?.drsScore
             ? getRiskLevelFromScore(
                 riskClassificationValues,
-                destinationUserDrs.drsScore
+                destinationUserDrs.drsScore,
+                riskLevelAlias
               )
             : undefined,
         }
@@ -918,14 +923,16 @@ export class RulesEngineService {
         },
         transaction.timestamp
       ),
-      this.transactionEventRepository.saveTransactionEvent(
-        newTransactionEvent,
-        {
-          executedRules: executedRules,
-          hitRules: hitRules,
-          status: finalStatus,
-        }
-      ),
+      hitRules.length > 0
+        ? this.transactionEventRepository.saveTransactionEvent(
+            newTransactionEvent,
+            {
+              executedRules: executedRules,
+              hitRules: hitRules,
+              status: finalStatus,
+            }
+          )
+        : Promise.resolve(),
       sendTransactionAggregationTasks(
         aggregationMessages,
         this.dynamoDb,
@@ -936,7 +943,8 @@ export class RulesEngineService {
       await sendStatusChangeWebhook(
         this.tenantId,
         transaction.transactionId,
-        finalStatus
+        finalStatus,
+        transaction.type
       )
     }
   }
@@ -1373,7 +1381,9 @@ export class RulesEngineService {
             entity: ruleInstance.logicEntityVariables,
           },
           {
-            baseCurrency: ruleInstance.baseCurrency,
+            baseCurrency: ruleInstance.baseCurrency as
+              | CurrencyCode
+              | 'ORIGINAL_CURRENCY',
             tenantId: this.tenantId,
           },
           data
@@ -2002,6 +2012,7 @@ export class RulesEngineService {
   public async applyTransactionAction(
     data: TransactionAction,
     userId: string,
+    email: string,
     paymentApprovalAction: boolean = false
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
@@ -2060,15 +2071,17 @@ export class RulesEngineService {
               !!transaction
           )
           .map((transaction) => ({
-            transaction,
+            transaction: {
+              ...transaction,
+              paymentApprovalTimestamp: paymentApprovalAction
+                ? Date.now()
+                : transaction.paymentApprovalTimestamp,
+            },
             rulesResult: {
               status: action,
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
             },
-            paymentApprovalTimestamp: paymentApprovalAction
-              ? Date.now()
-              : transaction.paymentApprovalTimestamp,
           }))
       ),
     ]
@@ -2085,7 +2098,9 @@ export class RulesEngineService {
           status: action,
           reasons: reason,
           comment,
+          type: txn?.type,
         } as TransactionStatusDetails,
+        account: email,
       }))
 
     await sendWebhookTasks<TransactionStatusDetails>(
@@ -2136,7 +2151,8 @@ export class RulesEngineService {
 const sendStatusChangeWebhook = async (
   tenantId: string,
   transactionId: string,
-  newStatus: string | undefined
+  newStatus: string | undefined,
+  transactionType?: string
 ) => {
   const webhookTask: ThinWebhookDeliveryTask = {
     event: 'TRANSACTION_STATUS_UPDATED',
@@ -2146,6 +2162,7 @@ const sendStatusChangeWebhook = async (
       transactionId,
       status: newStatus,
       reasons: 'Status updated by async rule',
+      transactionType,
     },
   }
   await sendWebhookTasks(tenantId, [webhookTask])

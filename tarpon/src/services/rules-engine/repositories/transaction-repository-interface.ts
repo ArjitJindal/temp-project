@@ -9,6 +9,7 @@ import {
 } from '@/@types/tranasction/payment-type'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import { EntityData } from '@/@types/tranasction/aggregation'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
 export type TransactionWithRiskDetails = Omit<
   TransactionWithRulesResult,
@@ -21,6 +22,11 @@ export type AuxiliaryIndexTransaction = Omit<
 > & {
   senderKeyId?: string
   receiverKeyId?: string
+}
+
+export type AuxiliaryIndexTransactionData = {
+  transaction: AuxiliaryIndexTransaction
+  lastTxEvent: TransactionEventWithRulesResult
 }
 
 export type TimeRange = {

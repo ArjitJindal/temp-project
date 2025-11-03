@@ -170,7 +170,7 @@ const TableList = () => {
                   onConfirm={(value) => {
                     setParams((state) => ({
                       ...state,
-                      productType: value.uniques,
+                      productType: value?.uniques,
                     }));
                   }}
                   title="Product Type"
@@ -190,7 +190,7 @@ const TableList = () => {
                     uniques: params.transactionTypes ?? undefined,
                   }}
                   onConfirm={(value) => {
-                    setParams((state) => ({ ...state, transactionTypes: value.uniques }));
+                    setParams((state) => ({ ...state, transactionTypes: value?.uniques }));
                   }}
                 />
               ),

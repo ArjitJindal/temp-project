@@ -23,10 +23,11 @@ export default function DayWindowInput(props: Props) {
   const { value, schema, onChange } = props;
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
-  const { alwaysShowErrors } = useFormContext();
+  const { alwaysShowErrors, isDisabled } = useFormContext();
 
   const subContext: FormContextValue<ValueType | undefined> = useMemo(
     () => ({
+      isDisabled,
       meta: fieldMeta,
       setMeta: (key, cb) => {
         setFieldsMeta((state) => ({
@@ -42,7 +43,7 @@ export default function DayWindowInput(props: Props) {
       },
       alwaysShowErrors: alwaysShowErrors,
     }),
-    [alwaysShowErrors, value, fieldMeta, onChange],
+    [alwaysShowErrors, value, fieldMeta, onChange, isDisabled],
   );
 
   const properties = useOrderedProps(schema);

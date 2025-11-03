@@ -14,7 +14,8 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, ID, LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams, CommonParams } from '@/components/library/Table/types';
-import { getDisplayedUserInfo, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo, useAuth0User, useHasResources } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
@@ -50,7 +51,7 @@ export type TableParams = AllParams<TableSearchParams>;
 
 export default function ReportsTable() {
   const settings = useSettings();
-  const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
+  const { users, isLoading } = useUsers({ includeBlockedUsers: true });
   const api = useApi({ debounce: 500 });
   const auth0User = useAuth0User();
 
@@ -142,7 +143,20 @@ export default function ReportsTable() {
             render: (_value, { item: entity }) => {
               return (
                 <Id
-                  to={canWrite ? makeUrl('/reports/:reportId', { reportId: entity.id }) : undefined}
+                  to={
+                    canWrite
+                      ? makeUrl(
+                          `/report/:reportId/:mode`,
+                          {
+                            reportId: entity.id,
+                            mode: entity.status === 'DRAFT' ? 'edit' : 'view',
+                          },
+                          {
+                            source: 'sar',
+                          },
+                        )
+                      : undefined
+                  }
                   testName="report-id"
                   alwaysShowCopy={!canWrite}
                 >
@@ -192,7 +206,7 @@ export default function ReportsTable() {
           type: {
             render: (userId, _) => {
               return userId ? (
-                <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+                <ConsoleUserAvatar userId={userId} users={users} loadingUsers={isLoading} />
               ) : (
                 <>-</>
               );
@@ -288,7 +302,7 @@ export default function ReportsTable() {
     canWrite,
     deleteMutation,
     reportTypes,
-    loadingUsers,
+    isLoading,
     users,
     setDisplayStatusInfoReport,
     settings.userAlias,

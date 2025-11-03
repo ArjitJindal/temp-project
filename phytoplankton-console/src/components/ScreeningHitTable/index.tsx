@@ -109,7 +109,8 @@ export default function SanctionsSearchTable(props: Props) {
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const hasFeatureLSEG = useFeatureEnabled('LSEG');
-  const isScreeningProfileEnabled = hasFeatureAcuris || hasFeatureDowJones;
+  const isScreeningProfileEnabled =
+    hasFeatureAcuris || hasFeatureDowJones || hasFeatureOpenSanctions;
 
   const searchProfileResult = useQuery(
     SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),

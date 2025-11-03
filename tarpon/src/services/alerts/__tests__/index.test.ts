@@ -132,7 +132,8 @@ describe('test closeAlertIfAllTransactionsApproved', () => {
         reason: ['Other'],
         comment: 'test',
       },
-      TEST_ACCOUNT.id
+      TEST_ACCOUNT.id,
+      TEST_ACCOUNT.email
     )
     await alertsService.closeAlertIfAllTransactionsApproved(TEST_ALERT, [
       'T-3',
@@ -199,7 +200,8 @@ describe('test closeAlertIfAllTransactionsApproved', () => {
         reason: ['Other'],
         comment: 'test',
       },
-      TEST_ACCOUNT.id
+      TEST_ACCOUNT.id,
+      TEST_ACCOUNT.email
     )
     await alertsService.closeAlertIfAllTransactionsApproved(testAlert, ['T-6'])
     const case_ = await caseRepository.getCaseById('C-2')

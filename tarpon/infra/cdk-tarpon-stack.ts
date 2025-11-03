@@ -295,6 +295,36 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const lowTrafficAsyncRuleMultiplexerQueue = this.createQueue(
+      SQSQueues.LOW_TRAFFIC_ASYNC_RULE_QUEUE.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT, // Todo: Maybe reduce this
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
+    const highTrafficAsyncRuleMultiplexerQueue = this.createQueue(
+      SQSQueues.HIGH_TRAFFIC_ASYNC_RULE_QUEUE.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
+    const asyncRuleProcessorQueue = this.createQueue(
+      SQSQueues.ASYNC_RULE_PROCESSOR_QUEUE.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const batchAsyncRuleQueue = this.createQueue(
       SQSQueues.BATCH_ASYNC_RULE_QUEUE_NAME.name,
       {
@@ -640,6 +670,11 @@ export class CdkTarponStack extends cdk.Stack {
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         SECONDARY_ASYNC_RULE_QUEUE_URL: secondaryAsyncRuleQueue.queueUrl,
+        HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL:
+          highTrafficAsyncRuleMultiplexerQueue.queueUrl,
+        LOW_TRAFFIC_ASYNC_RULE_QUEUE_URL:
+          lowTrafficAsyncRuleMultiplexerQueue.queueUrl,
+        ASYNC_RULE_PROCESSOR_QUEUE_URL: asyncRuleProcessorQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
         DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
@@ -747,6 +782,9 @@ export class CdkTarponStack extends cdk.Stack {
             actionProcessingQueue.queueArn,
             dynamoDbConsumerQueue.queueArn,
             batchRerunUsersQueue.queueArn,
+            highTrafficAsyncRuleMultiplexerQueue.queueArn,
+            lowTrafficAsyncRuleMultiplexerQueue.queueArn,
+            asyncRuleProcessorQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -834,6 +872,7 @@ export class CdkTarponStack extends cdk.Stack {
     this.createOpensearchService(vpc, lambdaExecutionRole, ecsTaskExecutionRole)
 
     this.createDynamoDbVpcEndpoint(vpc)
+    this.createS3VpcEndpoint(vpc)
     this.sqsInterfaceVpcEndpoint = this.createSqsInterfaceVpcEndpoint(
       vpc,
       vpcCidr
@@ -1049,6 +1088,16 @@ export class CdkTarponStack extends cdk.Stack {
       heavyLibLayer
     )
 
+    const { alias: asyncRuleMultiplexer } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PRIMARY_ASYNC_RULE_MULTIPLEXER_NAME,
+        memorySize: config.resource.ASYNC_RULES_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
+
     // non-batch async rule
     asyncRuleAlias.addEventSource(
       new SqsEventSource(asyncRuleQueue, { maxConcurrency: 200, batchSize: 10 })
@@ -1065,6 +1114,22 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(secondaryAsyncRuleQueue, {
         maxConcurrency: 5,
         batchSize: 1,
+      })
+    )
+
+    asyncRuleMultiplexer.addEventSource(
+      new SqsEventSource(highTrafficAsyncRuleMultiplexerQueue, {
+        maxConcurrency: 10,
+        batchSize: 10,
+        reportBatchItemFailures: true,
+      })
+    )
+
+    asyncRuleMultiplexer.addEventSource(
+      new SqsEventSource(lowTrafficAsyncRuleMultiplexerQueue, {
+        maxConcurrency: 30,
+        batchSize: 10,
+        reportBatchItemFailures: true,
       })
     )
 
@@ -2175,86 +2240,90 @@ export class CdkTarponStack extends cdk.Stack {
         })
       }
 
-      // Reference the replicated secrets in the current region
-      // NOTE: Deploy to eu-central-1 FIRST to create primary secrets with replicas
-      // Then deploy to other regions which will reference the replica secrets
-      const accessKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
-      const secretKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
+      // S3 Parquet Export Lambda (ClickHouse → S3 Parquet)
+      // Conditionally deploy based on CLOUDWATCH_LOGS_S3_EXPORT.ENABLED
+      if (this.config.resource.CLOUDWATCH_LOGS_S3_EXPORT?.ENABLED !== false) {
+        // Reference the replicated secrets in the current region
+        // NOTE: Deploy to eu-central-1 FIRST to create primary secrets with replicas
+        // Then deploy to other regions which will reference the replica secrets
+        const accessKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_ACCESS_KEY_SECRET_NAME}`
+        const secretKeySecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:${StackConstants.POSTHOG_S3_SECRET_KEY_SECRET_NAME}`
 
-      const { alias: s3ExporterAlias, func: s3ExporterFunc } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME,
-        },
-        heavyLibLayer
-      )
+        const { alias: s3ExporterAlias, func: s3ExporterFunc } = createFunction(
+          this,
+          lambdaExecutionRole,
+          {
+            name: StackConstants.CLOUDWATCH_LOGS_S3_EXPORTER_FUNCTION_NAME,
+          },
+          heavyLibLayer
+        )
 
-      // Construct centralized S3 bucket name (always in eu-central-1)
-      const centralizedParquetBucketName = getNameForGlobalResource(
-        StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
-        config,
-        'eu-central-1'
-      )
+        // Construct centralized S3 bucket name (always in eu-central-1)
+        const centralizedParquetBucketName = getNameForGlobalResource(
+          StackConstants.CLOUDWATCH_LOGS_PARQUET_BUCKET_PREFIX,
+          config,
+          'eu-central-1'
+        )
 
-      s3ExporterFunc.addToRolePolicy(
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: ['secretsmanager:GetSecretValue'],
-          resources: [
-            `${accessKeySecretArn}*`, // Add * for versioning
-            `${secretKeySecretArn}*`,
-          ],
+        s3ExporterFunc.addToRolePolicy(
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [
+              `${accessKeySecretArn}*`, // Add * for versioning
+              `${secretKeySecretArn}*`,
+            ],
+          })
+        )
+
+        // Local DynamoDB read/write for sync state tracking
+        s3ExporterFunc.addToRolePolicy(
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              'dynamodb:GetItem',
+              'dynamodb:PutItem',
+              'dynamodb:UpdateItem',
+            ],
+            resources: [
+              `arn:aws:dynamodb:${config.env.region}:${config.env.account}:table/${DYNAMODB_TABLE_NAMES.TARPON}`,
+            ],
+          })
+        )
+
+        // Add environment variables
+        s3ExporterFunc.addEnvironment(
+          'PARQUET_S3_BUCKET_NAME',
+          centralizedParquetBucketName // S3 bucket in eu-central-1
+        )
+        s3ExporterFunc.addEnvironment(
+          'POSTHOG_ACCESS_KEY_SECRET_ARN',
+          accessKeySecretArn // Secret in the current region
+        )
+        s3ExporterFunc.addEnvironment(
+          'POSTHOG_SECRET_KEY_SECRET_ARN',
+          secretKeySecretArn // Secret in the current region
+        )
+
+        // Cron job to trigger the Lambda every 10 minutes
+        const cloudwatchLogsExportRule = new events.Rule(
+          this,
+          'CloudWatchLogsS3ExportRule',
+          {
+            schedule: Schedule.cron({ minute: '*/10' }),
+            description:
+              'Trigger Lambda to export CloudWatch logs from ClickHouse to S3 Parquet every 10 minutes',
+          }
+        )
+
+        cloudwatchLogsExportRule.addTarget(
+          new targets.LambdaFunction(s3ExporterAlias)
+        )
+
+        new CfnOutput(this, 'CloudWatch Logs S3 Exporter Lambda', {
+          value: s3ExporterFunc.functionName,
         })
-      )
-
-      // Local DynamoDB read/write for sync state tracking
-      s3ExporterFunc.addToRolePolicy(
-        new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: [
-            'dynamodb:GetItem',
-            'dynamodb:PutItem',
-            'dynamodb:UpdateItem',
-          ],
-          resources: [
-            `arn:aws:dynamodb:${config.env.region}:${config.env.account}:table/${DYNAMODB_TABLE_NAMES.TARPON}`,
-          ],
-        })
-      )
-
-      // Add environment variables
-      s3ExporterFunc.addEnvironment(
-        'PARQUET_S3_BUCKET_NAME',
-        centralizedParquetBucketName // S3 bucket in eu-central-1
-      )
-      s3ExporterFunc.addEnvironment(
-        'POSTHOG_ACCESS_KEY_SECRET_ARN',
-        accessKeySecretArn // Secret in the current region
-      )
-      s3ExporterFunc.addEnvironment(
-        'POSTHOG_SECRET_KEY_SECRET_ARN',
-        secretKeySecretArn // Secret in the current region
-      )
-
-      // Cron job to trigger the Lambda every 10 minutes
-      const cloudwatchLogsExportRule = new events.Rule(
-        this,
-        'CloudWatchLogsS3ExportRule',
-        {
-          schedule: Schedule.cron({ minute: '*/10' }),
-          description:
-            'Trigger Lambda to export CloudWatch logs from ClickHouse to S3 Parquet every 10 minutes',
-        }
-      )
-
-      cloudwatchLogsExportRule.addTarget(
-        new targets.LambdaFunction(s3ExporterAlias)
-      )
-
-      new CfnOutput(this, 'CloudWatch Logs S3 Exporter Lambda', {
-        value: s3ExporterFunc.functionName,
-      })
+      }
     }
 
     if (this.config.clickhouse?.awsPrivateLinkEndpointName && vpc) {
@@ -2410,6 +2479,42 @@ export class CdkTarponStack extends cdk.Stack {
     return dynamoDbVpcEndpoint
   }
 
+  private createS3VpcEndpoint(vpc: Vpc | null): GatewayVpcEndpoint | null {
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      (envIsNot('prod') && envIsNot('sandbox'))
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
+    })
+
+    // Create S3 Gateway VPC endpoint with explicit route table association
+    const s3VpcEndpoint = vpc.addGatewayEndpoint('s3-gateway-endpoint', {
+      service: GatewayVpcEndpointAwsService.S3,
+      subnets: [privateSubnets],
+    })
+
+    this.addTagsToResource(s3VpcEndpoint, {
+      Name: 'S3GatewayEndpoint',
+      Service: 'S3',
+      Stage: this.config.stage,
+    })
+
+    // Output VPC endpoint information
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, 'S3 Gateway VPC Endpoint ID', {
+        value: s3VpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return s3VpcEndpoint
+  }
+
   private createSqsInterfaceVpcEndpoint(
     vpc: Vpc | null,
     vpcCidr: string | null
@@ -2417,7 +2522,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (
       !vpc ||
       !this.config.resource.LAMBDA_VPC_ENABLED ||
-      envIsNot('sandbox') // TODO: remove this once we have a way to test SQS Interface VPC endpoint
+      (envIsNot('prod') && envIsNot('sandbox'))
     ) {
       return null
     }
@@ -2451,7 +2556,7 @@ export class CdkTarponStack extends cdk.Stack {
         service: InterfaceVpcEndpointAwsService.SQS,
         subnets: { subnets: privateSubnets.subnets },
         securityGroups: [sqsEndpointSecurityGroup],
-        privateDnsEnabled: false,
+        privateDnsEnabled: true,
       }
     )
 

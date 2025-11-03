@@ -425,7 +425,9 @@ function sanitizeOpenSanctionsEntities(
       ...entity,
       sanctionSearchTypes: screeningTypes,
       mediaSources: undefined,
-      sanctionsSources: undefined,
+      sanctionsSources: entity.sanctionsSources?.filter(
+        (source) => source.url !== undefined
+      ),
       pepSources: undefined,
       otherSources: undefined,
       associates: entity.associates?.map((a) => {
@@ -617,6 +619,7 @@ export async function getSanctionSourceDetails(
   let pepCategory: PEPSourceRelevance[] | undefined
   let relCategory: RELSourceRelevance[] | undefined
   let adverseMediaCategory: AdverseMediaSourceRelevance[] | undefined
+  let crimeCategory: string[] | undefined
   let containAllSources: boolean | undefined = undefined
   if (request.screeningProfileId) {
     const screeningProfileId = request.screeningProfileId
@@ -632,6 +635,7 @@ export async function getSanctionSourceDetails(
     pepCategory = screeningProfileData.pepCategory
     relCategory = screeningProfileData.relCategory
     adverseMediaCategory = screeningProfileData.adverseMediaCategory
+    crimeCategory = screeningProfileData.crimeCategory
     containAllSources = screeningProfileData.containAllSources
     if (request.types) {
       if (!request.types.includes('PEP')) {
@@ -649,6 +653,9 @@ export async function getSanctionSourceDetails(
       if (!request.types.includes('ADVERSE_MEDIA')) {
         adverseMediaCategory = []
       }
+      if (!request.types.includes('CRIME')) {
+        crimeCategory = []
+      }
     }
   }
   return {
@@ -659,6 +666,7 @@ export async function getSanctionSourceDetails(
     pepCategory,
     relCategory,
     adverseMediaCategory,
+    crimeCategory,
     containAllSources,
   }
 }
@@ -674,6 +682,7 @@ export function getScreeningProfileData(
   const relCategory = screeningProfile.rel?.relevance
   const adverseMediaCategory = screeningProfile.adverseMedia?.relevance
   const containAllSources = screeningProfile.containAllSources
+  const crimeCategory = screeningProfile.crime?.relevance
   return {
     sanctionSourceIds,
     pepSourceIds,
@@ -683,6 +692,7 @@ export function getScreeningProfileData(
     relCategory,
     adverseMediaCategory,
     containAllSources,
+    crimeCategory,
   }
 }
 

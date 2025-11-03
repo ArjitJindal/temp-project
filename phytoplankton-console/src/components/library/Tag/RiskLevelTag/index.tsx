@@ -16,9 +16,11 @@ export default function RiskLevelTag(props: Props): JSX.Element {
   if (!level) {
     return <>-</>;
   }
+  const { riskLevelLabel, isActive } = getRiskLevelLabel(level, settings);
   return (
-    <Tag className={cn(s.root, s[`level-${level}`])}>
-      {humanizeConstant(getRiskLevelLabel(level, settings))}
-    </Tag>
+    <div className={s.level}>
+      <Tag className={cn(s.root, s[`level-${level}`])}>{humanizeConstant(riskLevelLabel)}</Tag>
+      {!isActive && <Tag className={s.inActive}>Inactive</Tag>}
+    </div>
   );
 }

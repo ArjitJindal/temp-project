@@ -453,11 +453,28 @@ type TempGoCardlessBackfillDocument = {
   jobId: string
 }
 
+const PAUSE_GOCARDLESS_BACKFILL = false
+
+const matchPrefixes = [
+  'ltd_production_data/data_from_2025-01-01_to_2025-01-14_at',
+  'ltd_production_data/data_from_2025-01-14_to_2025-01-28_at',
+  'ltd_production_data/data_from_2025-01-28_to_2025-02-11_at',
+  'ltd_production_data/data_from_2025-02-11_to_2025-02-25_at',
+  'ltd_production_data/data_from_2025-02-25_to_2025-03-11_at',
+  'ltd_production_data/data_from_2025-03-11_to_2025-03-25_at',
+  'ltd_production_data/data_from_2025-03-25_to_2025-04-08_at',
+  'ltd_production_data/data_from_2025-04-08_to_2025-04-22_at',
+]
 export async function triggerGoCardlessBackfillBatchJob(mongoDb: MongoClient) {
-  if (envIsNot('prod') && process.env.REGION !== 'eu-2') {
+  if (envIsNot('prod') || (envIs('prod') && process.env.REGION !== 'eu-2')) {
     logger.info(
       'Skipping GoCardless backfill batch job in non-production environment'
     )
+    return
+  }
+
+  if (PAUSE_GOCARDLESS_BACKFILL) {
+    logger.info('GoCardless backfill batch job is paused')
     return
   }
 
@@ -480,13 +497,15 @@ export async function triggerGoCardlessBackfillBatchJob(mongoDb: MongoClient) {
     const response = await s3Client.send(
       new ListObjectsCommand({
         Bucket: 'flagright-gocardless-data',
-        Prefix: 'production_data/',
+        Prefix: 'ltd_production_data/',
         Marker: nextContinuationToken,
         MaxKeys: 1000,
       })
     )
     files.push(
-      ...(response.Contents?.map((object) => ({
+      ...(response.Contents?.filter((object) =>
+        matchPrefixes.some((prefix) => object.Key?.startsWith(prefix))
+      ).map((object) => ({
         Key: object.Key as string,
         LastModified: object.LastModified as Date,
       })) ?? [])

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { SanctionsHitStatus } from '@/apis';
 import {
@@ -6,10 +7,7 @@ import {
   useAlertTabs,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import Tabs from '@/components/library/Tabs';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM } from '@/utils/queries/keys';
-import { isScreeningAlert } from '@/utils/api/alerts';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { useAlertUpdates, isScreeningAlert } from '@/utils/api/alerts';
 
 interface Props {
   alert: TableAlertItem;
@@ -63,14 +61,13 @@ function ExpandedRowRenderer(props: Props) {
 
 // Wrap alert item into Query to make cache invalidation by alert id works
 export default function (props: Props) {
-  const { alert, ...rest } = props;
-  const alertQueryResult = useQuery(ALERT_ITEM(alert?.alertId ?? ''), () => {
-    return Promise.resolve(alert);
-  });
+  const { alert } = props;
+  const { updateAlertQueryData } = useAlertUpdates();
 
-  return (
-    <AsyncResourceRenderer resource={alertQueryResult.data}>
-      {(alert) => <ExpandedRowRenderer alert={alert} {...rest} />}
-    </AsyncResourceRenderer>
-  );
+  useEffect(() => {
+    updateAlertQueryData(alert.alertId, (alert) => alert);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alert.alertId]);
+
+  return <ExpandedRowRenderer {...props} />;
 }

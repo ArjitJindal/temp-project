@@ -1,22 +1,23 @@
 import { useCallback, useMemo, useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { uniqBy } from 'lodash';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import Button from '../library/Button';
 import Select from '../library/Select';
 import Label from '../library/Label';
 import Alert from '@/components/library/Alert';
 import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
-import { useApi } from '@/api';
-import SarReportDrawer from '@/components/Sar/SarReportDrawer';
-import { Case, Report, ReportTypesResponse } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
-import { CASES_ITEM, REPORT_SCHEMAS_ALL } from '@/utils/queries/keys';
+import { ReportTypesResponse } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { ReportSubjectType } from '@/apis/models/ReportSubjectType';
 import { Feature, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useCaseDetails } from '@/utils/api/cases';
+import { useReportTypes, useSarDraft } from '@/utils/api/sar';
+import { makeUrl } from '@/utils/routing';
+import { REPORTS_ITEM } from '@/utils/queries/keys';
 
 interface CommonProps {
   alertIds?: string[];
@@ -32,20 +33,12 @@ interface CaseProps extends CommonProps {
   caseId: string;
 }
 
-export function SarButton(props: UserProps | CaseProps) {
+export function SarButton(props: UserProps | (CaseProps & { source: string })) {
   const { alertIds, transactionIds, isDisabled } = props;
-  const api = useApi();
-  const queryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS_ALL(), () => {
-    return api.getReportTypes({ allReportType: true });
-  });
-
-  const caseQueryResult = useQuery<Case>(
-    CASES_ITEM('caseId' in props ? props.caseId : ''),
-    async () => {
-      return await api.getCase({ caseId: 'caseId' in props ? props.caseId : '' });
-    },
-    { enabled: 'caseId' in props },
-  );
+  const navigate = useNavigate();
+  const queryResult = useReportTypes();
+  const queryClient = useQueryClient();
+  const caseQueryResult = useCaseDetails('caseId' in props ? props.caseId : undefined);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setLoading] = useState(false);
@@ -60,26 +53,35 @@ export function SarButton(props: UserProps | CaseProps) {
     setReportTypeId(reportTypeId);
   }, []);
 
-  const draft = useMutation<Report, unknown, string>(
-    async (reportTypeId) => {
-      return api.getReportsDraft({
-        ...('caseId' in props ? { caseId: props.caseId } : { userId: props.userId }),
-        reportTypeId,
-        alertIds: alertIds ?? [],
-        transactionIds: transactionIds ?? [],
-      });
-    },
-    {
-      onSuccess: () => {
-        setIsModalVisible(false);
-        setLoading(false);
+  const draftMutation = useSarDraft({
+    alertIds,
+    transactionIds,
+    caseId: 'caseId' in props ? props.caseId : undefined,
+    userId: 'userId' in props ? props.userId : undefined,
+    options: {
+      onSuccess: (report) => {
+        if (report.id) {
+          queryClient.setQueryData(REPORTS_ITEM(report.id), report);
+          navigate(
+            makeUrl(
+              `/report/:reportId/:mode`,
+              {
+                reportId: report.id,
+                mode: 'edit',
+              },
+              {
+                source: 'source' in props ? props.source : 'user',
+              },
+            ),
+          );
+        }
       },
       onError: (error) => {
         message.fatal(`Failed to generate report draft! ${getErrorMessage(error)}`, error);
         setLoading(false);
       },
     },
-  );
+  });
 
   let reportSubjectType: ReportSubjectType;
   if ('userId' in props) {
@@ -121,43 +123,38 @@ export function SarButton(props: UserProps | CaseProps) {
           }}
         </AsyncResourceRenderer>
       )}
-      <Modal
-        title="Generate SAR"
-        isOpen={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        okText="Generate"
-        okProps={{
-          isDisabled: !reportTypeId || isLoading,
-        }}
-        onOk={() => {
-          if (reportTypeId) {
-            setLoading(true);
-            draft.mutate(reportTypeId);
-          }
-        }}
-        writeResources={['write:::case-management/case-details/*']}
-      >
-        <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
-          {(result) => {
-            return (
-              <SARProperties
-                result={result}
-                country={country}
-                reportTypeId={reportTypeId}
-                reportSubjectType={reportSubjectType}
-                handleCountryChange={handleCountryChange}
-                handleReportTypeIdChange={handleReportTypeIdChange}
-              />
-            );
+      {!isDisabled && (
+        <Modal
+          title="Generate SAR"
+          isOpen={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
+          okText="Generate"
+          okProps={{
+            isDisabled: !reportTypeId || isLoading,
           }}
-        </AsyncResourceRenderer>
-      </Modal>
-      {draft.data && (
-        <SarReportDrawer
-          initialReport={draft.data}
-          isVisible={!!draft.data}
-          onChangeVisibility={() => draft.reset()}
-        />
+          onOk={() => {
+            if (reportTypeId) {
+              setLoading(true);
+              draftMutation.mutate(reportTypeId);
+            }
+          }}
+          writeResources={['write:::case-management/case-details/*']}
+        >
+          <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
+            {(result) => {
+              return (
+                <SARProperties
+                  result={result}
+                  country={country}
+                  reportTypeId={reportTypeId}
+                  reportSubjectType={reportSubjectType}
+                  handleCountryChange={handleCountryChange}
+                  handleReportTypeIdChange={handleReportTypeIdChange}
+                />
+              );
+            }}
+          </AsyncResourceRenderer>
+        </Modal>
       )}
     </Feature>
   );

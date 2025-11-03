@@ -35,10 +35,11 @@ export default function TimeWindowInput(props: Props) {
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
   const [fiscalYearType, setFiscalYearType] = useState<'default' | 'indian'>('default');
 
-  const { alwaysShowErrors } = useFormContext();
+  const { isDisabled, alwaysShowErrors } = useFormContext();
 
   // todo: move all context providers to one place
   const subContext: FormContextValue<ValueType | undefined> = {
+    isDisabled,
     alwaysShowErrors,
     meta: fieldMeta,
     setMeta: (key, cb) => {

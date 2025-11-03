@@ -15,7 +15,8 @@ import { PERMISSIONS, ROLES_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { AccountRole, CreateAccountRole, PermissionStatements, PermissionsAction } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useRoles } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 import Confirm from '@/components/utils/Confirm';
 import { makeUrl } from '@/utils/routing';
 
@@ -38,7 +39,7 @@ export default function RoleDetails({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const auth0User = useAuth0User();
-  const [allRoles, , refetchRoles] = useRoles();
+  const { rolesList, refetch } = useRoles();
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState(role?.name || '');
   const [description, setDescription] = useState(role?.description || '');
@@ -106,7 +107,7 @@ export default function RoleDetails({
     }
 
     const trimmedName = name.trim().toLowerCase();
-    if (!role?.id && allRoles.some((r) => r.name.toLowerCase() === trimmedName)) {
+    if (!role?.id && rolesList.some((r) => r.name.toLowerCase() === trimmedName)) {
       message.error(`Role name: ${name} already exists`);
       setIsLoading(false);
       return;
@@ -160,7 +161,7 @@ export default function RoleDetails({
     name,
     role?.id,
     role?.name,
-    allRoles,
+    rolesList,
     currentStatements,
     description,
     api,
@@ -178,7 +179,7 @@ export default function RoleDetails({
     setIsLoading(true);
     try {
       await api.deleteRole({ roleId: role.id });
-      refetchRoles();
+      refetch();
       message.success(`Role "${role.name}" has been deleted`);
       navigate('/accounts/roles');
     } catch (error) {
@@ -186,7 +187,7 @@ export default function RoleDetails({
     } finally {
       setIsLoading(false);
     }
-  }, [api, role, navigate, refetchRoles]);
+  }, [api, role, navigate, refetch]);
 
   const handleNameChange = useCallback((newName: string) => {
     setName(newName);

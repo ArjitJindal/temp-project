@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { NodeDescription, NodeTypes } from './types';
-import { AsyncResource, loading, success } from '@/utils/asyncResource';
+import { AsyncResource, map } from '@/utils/asyncResource';
 import { AccountRole } from '@/apis';
-import { useRoles } from '@/utils/user-utils';
+import { useRoles } from '@/utils/api/auth';
 
 interface NodeContextValue {
   availableRoles: AsyncResource<Array<AccountRole>>;
@@ -18,14 +18,14 @@ export function NodeContextProvider(
 ) {
   const { onClickNode, children } = props;
 
-  const [roles, isLoading] = useRoles();
+  const { roles } = useRoles();
 
   const value: NodeContextValue = useMemo(
     () => ({
       onClickNode: onClickNode ?? (() => {}),
-      availableRoles: isLoading ? loading(roles) : success(roles),
+      availableRoles: map(roles.data, (x) => x.items),
     }),
-    [onClickNode, isLoading, roles],
+    [onClickNode, roles],
   );
   return <NodeContext.Provider value={value}>{children}</NodeContext.Provider>;
 }

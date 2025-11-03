@@ -168,7 +168,7 @@ export function userToAccount(user: GetUsers200ResponseOneOfInner): Account {
     role: role,
     email: email,
     emailVerified: user.email_verified ?? false,
-    name: user.name ?? '',
+    name: user.name ?? user.user_metadata?.name,
     picture: user.picture,
     blocked: user.blocked ?? false,
     reviewerId: app_metadata?.reviewerId,

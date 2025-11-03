@@ -16,7 +16,7 @@ function SlaStatus(props: Props) {
   return (
     <div className={s.root}>
       {slaPolicyDetails?.map((slaPolicyDetail, index) => {
-        if (slaPolicyDetail.policyStatus) {
+        if (slaPolicyDetail.policyStatus && slaPolicyDetail.elapsedTime) {
           return (
             <SlaPopover
               slaPolicyDetail={slaPolicyDetail as SLAPolicyStatusDetails}

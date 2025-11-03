@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { getDefaultProviders } from '../utils'
+import { batchWrite } from '@/utils/dynamodb'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -71,6 +72,103 @@ export class SanctionsWhitelistEntityRepository {
 
   private async getMongoDbClient() {
     return this.mongoDb ?? (await getMongoDbClient())
+  }
+
+  private async deleteFromDynamoDB(
+    records: SanctionsWhitelistEntity[]
+  ): Promise<void> {
+    // Group records by their DynamoDB key and sanctionsEntity.id
+    const groupedRecords = new Map<
+      string,
+      { hash: string; sanctionsEntityIds: Set<string> }
+    >()
+
+    for (const record of records) {
+      const subject: WhitelistSubject = {
+        userId: record.userId,
+        entityType: record.entityType,
+        searchTerm: record.searchTerm,
+        entity: record.entity,
+        paymentMethodId: record.paymentMethodId,
+        alertId: record.alertId,
+      }
+
+      // Choose filter fields based on entity type
+      const filterFields =
+        subject.entity === 'USER'
+          ? USER_ENTITY_FILTER_FIELDS
+          : OTHER_ENTITY_FILTER_FIELDS
+
+      const filterObject = filterFields.reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: subject[key],
+        }),
+        {}
+      )
+      const filterWithProvider = { ...filterObject, provider: record.provider }
+      const dynamoHash = generateChecksum(getSortedObject(filterWithProvider))
+
+      const key = `${dynamoHash}`
+      if (!groupedRecords.has(key)) {
+        groupedRecords.set(key, {
+          hash: dynamoHash,
+          sanctionsEntityIds: new Set(),
+        })
+      }
+      if (record.sanctionsEntity?.id) {
+        const group = groupedRecords.get(key)
+        if (group) {
+          group.sanctionsEntityIds.add(record.sanctionsEntity.id)
+        }
+      }
+    }
+
+    // Process each group
+    for (const { hash, sanctionsEntityIds } of groupedRecords.values()) {
+      const key = DynamoDbKeys.SANCTIONS_WHITELIST_ENTITIES(this.tenantId, hash)
+      const command = new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        Key: key,
+      })
+
+      const result = await this.dynamoDb.send(command)
+      const existingItems =
+        (result.Item?.items as SanctionsWhitelistEntity[] | undefined) ?? []
+
+      if (existingItems.length === 0) {
+        continue
+      }
+
+      // Filter out items that should be removed
+      const remainingItems = existingItems.filter(
+        (item) => !sanctionsEntityIds.has(item.sanctionsEntity.id)
+      )
+
+      // If no items left, delete the entry, otherwise update it
+      if (remainingItems.length === 0) {
+        await batchWrite(
+          this.dynamoDb,
+          [
+            {
+              DeleteRequest: {
+                Key: key,
+              },
+            },
+          ],
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+        )
+      } else {
+        const putCommand = new PutCommand({
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+          Item: {
+            ...key,
+            items: remainingItems,
+          },
+        })
+        await this.dynamoDb.send(putCommand)
+      }
+    }
   }
 
   private async saveToDynamoDB(
@@ -206,6 +304,31 @@ export class SanctionsWhitelistEntityRepository {
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
+
+    // First, fetch the records to get provider and subject info
+    // Only fetch fields needed for DynamoDB key computation
+    const recordsToDelete = await collection
+      .find(
+        { sanctionsWhitelistId: { $in: sanctionsWhitelistIds } },
+        {
+          projection: {
+            userId: 1,
+            entityType: 1,
+            searchTerm: 1,
+            entity: 1,
+            paymentMethodId: 1,
+            alertId: 1,
+            provider: 1,
+            sanctionsEntity: 1,
+          },
+        }
+      )
+      .toArray()
+
+    // Delete from DynamoDB in batches
+    await this.deleteFromDynamoDB(recordsToDelete)
+
+    // Delete from MongoDB
     await collection.deleteMany({
       sanctionsWhitelistId: { $in: sanctionsWhitelistIds },
     })

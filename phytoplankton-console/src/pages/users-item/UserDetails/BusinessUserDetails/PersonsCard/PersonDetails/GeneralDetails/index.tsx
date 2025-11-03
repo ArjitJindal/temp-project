@@ -18,7 +18,7 @@ export default function GeneralDetails(props: Props) {
     <EntityPropertiesCard
       title={'General details'}
       items={[
-        { label: 'First name', value: formatConsumerName(generalDetails.name) },
+        { label: 'Name', value: formatConsumerName(generalDetails.name) },
         { label: 'Date of birth', value: generalDetails.dateOfBirth },
         {
           label: 'Gender',

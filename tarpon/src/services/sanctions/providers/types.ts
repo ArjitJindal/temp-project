@@ -1,3 +1,4 @@
+import { AnyBulkWriteOperation } from 'mongodb'
 import {
   SanctionsDataProviderName,
   SanctionsEntity,
@@ -25,6 +26,8 @@ export interface SanctionsRepository {
     associations: [string, { id: string; association: string }[]][],
     version: string
   ): Promise<void>
+
+  saveSanctionsData(operations: AnyBulkWriteOperation<SanctionsEntity>[])
 }
 
 export interface SanctionsSourceRepository {

@@ -58,6 +58,7 @@ const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof LogicAggregationVariable> = [
   'baseCurrency',
   'aggregationFilterFieldKey',
   'aggregationFilterFieldValue',
+  'useEventTimestamp',
 ]
 
 export function getAggVarHash(

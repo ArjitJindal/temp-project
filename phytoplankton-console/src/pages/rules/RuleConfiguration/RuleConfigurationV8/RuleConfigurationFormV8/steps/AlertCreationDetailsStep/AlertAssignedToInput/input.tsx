@@ -5,23 +5,24 @@ import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import Alert from '@/components/library/Alert';
-import { useRoles, useUsers } from '@/utils/user-utils';
+import { useRoles, useUsers } from '@/utils/api/auth';
+
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 
 export function AlertAssignedToInput() {
   const alertAssigneesTypeFieldState = useFieldState<FormValues>('alertAssigneesType');
 
-  const [users] = useUsers({ includeBlockedUsers: false, includeRootUsers: true });
-  const [roles] = useRoles();
+  const { users } = useUsers({ includeBlockedUsers: false, includeRootUsers: true });
+  const { rolesList } = useRoles();
   const options = useMemo(() => {
     if (alertAssigneesTypeFieldState.value === 'EMAIL') {
       return Object.values(users).map((user) => ({ label: user?.email, value: user?.id }));
     } else {
-      return roles
-        .map((role) => ({ label: capitalize(role?.name) ?? '', value: role?.id ?? '' }))
+      return rolesList
+        .map((role) => ({ label: capitalize(role.name) ?? '', value: role.id ?? '' }))
         .filter((data) => data.label !== '');
     }
-  }, [users, roles, alertAssigneesTypeFieldState.value]);
+  }, [users, rolesList, alertAssigneesTypeFieldState.value]);
 
   return (
     <>

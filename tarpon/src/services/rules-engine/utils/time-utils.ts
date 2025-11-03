@@ -12,7 +12,7 @@ export type TimeWindowGranularity =
   | 'month'
   | 'year'
   | 'fiscal_year'
-
+export const TRANSACTION_EVENT_CYCLE_TIME = 4
 export type TimeWindowFiscalYear = {
   startMonth: number
   startDay: number
@@ -59,10 +59,16 @@ export function subtractTime(timestamp: Dayjs, timeWindow: TimeWindow): number {
 
 export function getTimestampRange(
   timestamp: number,
-  timeWindow: TimeWindow
+  timeWindow: TimeWindow,
+  useEventTimestamp = false
 ): { afterTimestamp: number; beforeTimestamp: number } {
+  const afterTimestamp = subtractTime(dayjs(timestamp), timeWindow)
   return {
-    afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
+    afterTimestamp: useEventTimestamp
+      ? dayjs(afterTimestamp)
+          .subtract(TRANSACTION_EVENT_CYCLE_TIME, 'week')
+          .valueOf() // Adding 4 weeks to include the transactions for whcih
+      : afterTimestamp,
     beforeTimestamp: timestamp,
   }
 }
@@ -70,7 +76,8 @@ export function getTimestampRange(
 export function getTimeRangeByTimeWindows(
   currentTimestamp: number,
   timeWindowFrom: LogicAggregationTimeWindow,
-  timeWindowTo: LogicAggregationTimeWindow
+  timeWindowTo: LogicAggregationTimeWindow,
+  useEventTimestamp = false
 ) {
   let afterTimestamp: number, beforeTimestamp: number
   if (timeWindowFrom.granularity === 'all_time') {
@@ -78,7 +85,8 @@ export function getTimeRangeByTimeWindows(
   } else {
     afterTimestamp = getTimestampRange(
       currentTimestamp,
-      timeWindowFrom as TimeWindow
+      timeWindowFrom as TimeWindow,
+      useEventTimestamp
     ).afterTimestamp
   }
   if (timeWindowTo.granularity === 'now') {

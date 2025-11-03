@@ -5,7 +5,6 @@ import { useLocation } from 'react-router';
 import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
-import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import SlaStatus from '../components/SlaStatus';
@@ -35,20 +34,19 @@ import {
   isSingleRow,
   SelectionAction,
   TableColumn,
-  TableData,
   TableDataSimpleItem,
   TableRefType,
 } from '@/components/library/Table/types';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
-import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, makeUrl } from '@/utils/routing';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAccounts, useAuth0User, useHasResources, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useHasResources } from '@/utils/user-utils';
+import { useUsers, useAccounts } from '@/utils/api/auth';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
@@ -106,6 +104,7 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
+import { useAlertList } from '@/utils/api/alerts';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -276,7 +275,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     setModalVisibility,
   } = props;
   const settings = useSettings();
-  const accounts = useAccounts();
+  const { data: accounts } = useAccounts();
   const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const isPNBDay2Enabled = useFeatureEnabled('PNB_DAY_2');
@@ -287,7 +286,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const qaEnabled = useQaEnabled();
   const api = useApi();
   const user = useAuth0User();
-  const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const { users, isLoading: loadingUsers } = useUsers({
+    includeRootUsers: true,
+    includeBlockedUsers: true,
+  });
   const userAccount = users[user.userId];
   const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
@@ -374,7 +376,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
   const { changeHitsStatusMutation } = useChangeSanctionsHitsStatusMutation();
 
-  const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
+  const queryResults = useAlertList(params);
 
   const actionRef = useRef<TableRefType>(null);
 
@@ -598,12 +600,12 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       <SlaStatus
                         slaPolicyDetails={entity.slaPolicyDetails}
                         entity={entity as Alert}
-                        accounts={accounts}
+                        accounts={getOr(accounts, [])}
                       />
                     );
                   },
                 }),
-                ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], accounts),
+                ...getSlaColumnsForExport(helper, slaPolicies.items ?? [], getOr(accounts, [])),
               ]
             : []),
           helper.simple<'alertStatus'>({
@@ -1362,6 +1364,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           alertIds={selectedIds}
           transactionIds={selectedTransactionIds}
           isDisabled={isDisabled}
+          source="alert"
         />
       );
     },

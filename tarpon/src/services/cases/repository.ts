@@ -40,7 +40,7 @@ import { Priority } from '@/@types/openapi-internal/Priority'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { COUNT_QUERY_LIMIT } from '@/constants/pagination'
 import { OptionalPagination } from '@/@types/pagination'
@@ -1114,7 +1114,7 @@ export class CaseRepository {
     }
     let cursor = await this.getCasesCursor(params, options)
     const total = this.getCasesCount(params)
-
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     if (hasFeature('RISK_LEVELS')) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
@@ -1130,7 +1130,8 @@ export class CaseRepository {
         if (caseItem?.caseUsers?.originUserDrsScore != null) {
           originUserRiskLevel = getRiskLevelFromScore(
             riskClassification,
-            caseItem.caseUsers.originUserDrsScore
+            caseItem.caseUsers.originUserDrsScore,
+            riskLevelAlias
           )
 
           caseItem.caseUsers.originUserRiskLevel = originUserRiskLevel
@@ -1139,7 +1140,8 @@ export class CaseRepository {
         if (caseItem?.caseUsers?.destinationUserDrsScore != null) {
           destinationUserRiskLevel = getRiskLevelFromScore(
             riskClassification,
-            caseItem.caseUsers.destinationUserDrsScore
+            caseItem.caseUsers.destinationUserDrsScore,
+            riskLevelAlias
           )
 
           caseItem.caseUsers.destinationUserRiskLevel = destinationUserRiskLevel
@@ -1562,51 +1564,58 @@ export class CaseRepository {
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const filters = this.getMongoParamsQuery(params)
 
+    // Build an array of $and filters for each direction, then $or over the directions
     const directionFilters: Filter<Case>[] = []
+
     for (const direction of params.directions ?? ['ORIGIN', 'DESTINATION']) {
+      const andFilters: Filter<Case>[] = []
       const directionKey = direction === 'ORIGIN' ? 'origin' : 'destination'
       if (address.addressLines) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.addressLines`]: {
             $in: address.addressLines,
           },
         })
       } else {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.addressLines`]: null,
         })
       }
       if (address.postcode) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.postcode`]: address.postcode,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.postcode`]: null })
+        andFilters.push({ [`address.${directionKey}.postcode`]: null })
       }
       if (address.city) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.city`]: address.city,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.city`]: null })
+        andFilters.push({ [`address.${directionKey}.city`]: null })
       }
       if (address.state) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.state`]: address.state,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.state`]: null })
+        andFilters.push({ [`address.${directionKey}.state`]: null })
       }
       if (address.country) {
-        directionFilters.push({
+        andFilters.push({
           [`address.${directionKey}.country`]: address.country,
         })
       } else {
-        directionFilters.push({ [`address.${directionKey}.country`]: null })
+        andFilters.push({ [`address.${directionKey}.country`]: null })
       }
+      directionFilters.push({ $and: andFilters })
+    }
 
+    if (directionFilters.length > 0) {
       filters.push({ $or: directionFilters })
     }
+
     return await casesCollection
       .find({
         ...(filters.length > 0 ? { $and: filters } : {}),

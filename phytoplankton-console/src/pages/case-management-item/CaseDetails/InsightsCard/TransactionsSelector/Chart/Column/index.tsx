@@ -4,9 +4,9 @@ import { Currency } from '@flagright/lib/constants';
 import { CalculatedParams, DataItem, Series } from '../types';
 import s from './styles.module.less';
 import Popover from './Popover';
-import { RuleAction, TransactionState } from '@/apis';
+import { CurrencyCode, RuleAction, TransactionState } from '@/apis';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import COLORS from '@/components/ui/colors';
+import COLORS, { ALL_CHART_COLORS } from '@/components/ui/colors';
 
 export const TRANSACTION_STATE_COLORS: {
   [key in TransactionState]: string;
@@ -22,17 +22,30 @@ export const TRANSACTION_STATE_COLORS: {
   REVERSED: COLORS.purple.base,
 };
 
+// Function to get color for currency codes
+export function getCurrencyColor(currencyCode: CurrencyCode): string {
+  // Use a hash-based approach to consistently assign colors to currencies
+  const hash = currencyCode.split('').reduce((acc, val) => acc + val.charCodeAt(0), 0);
+  const colorIndex = hash % ALL_CHART_COLORS.length;
+  return ALL_CHART_COLORS[colorIndex];
+}
+
 function Category(props: {
   ruleAction?: RuleAction;
   transactionState?: TransactionState;
+  currencyCode?: CurrencyCode;
   value: number;
   total: number;
   currency: Currency | null;
 }) {
-  const { ruleAction, value, total, transactionState } = props;
+  const { ruleAction, value, total, transactionState, currencyCode } = props;
   const color = ruleAction
     ? getRuleActionColorForDashboard(ruleAction)
-    : TRANSACTION_STATE_COLORS[transactionState as TransactionState];
+    : transactionState
+    ? TRANSACTION_STATE_COLORS[transactionState as TransactionState]
+    : currencyCode
+    ? getCurrencyColor(currencyCode)
+    : COLORS.gray5; // fallback color
   return (
     <div
       className={cn(s.category)}
@@ -95,13 +108,15 @@ export default function Column(props: Props) {
         >
           {Object.entries(item.values).map(([status, value]) => {
             const isState = status.toUpperCase() in TRANSACTION_STATE_COLORS;
+            const isRuleAction = ['ALLOW', 'SUSPEND', 'BLOCK', 'FLAG'].includes(
+              status.toUpperCase(),
+            );
+
             const keys = isState
-              ? {
-                  transactionState: status.toUpperCase() as TransactionState,
-                }
-              : {
-                  ruleAction: status as RuleAction,
-                };
+              ? { transactionState: status.toUpperCase() as TransactionState }
+              : isRuleAction
+              ? { ruleAction: status as RuleAction }
+              : { currencyCode: status as CurrencyCode };
             return (
               <Category key={status} total={total} value={value} currency={currency} {...keys} />
             );

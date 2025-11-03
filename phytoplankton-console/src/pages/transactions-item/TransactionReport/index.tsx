@@ -17,7 +17,7 @@ const getTransactionWidgetsProps = (
   const riskScore = transaction.riskScoreDetails?.trsScore ?? transaction.arsScore?.arsScore ?? 0;
   const riskLevel =
     transaction.riskScoreDetails?.trsRiskLevel ??
-    getRiskLevelFromScore(riskClassificationValues, riskScore) ??
+    getRiskLevelFromScore(riskClassificationValues, riskScore, tenantSettings.riskLevelAlias) ??
     DEFAULT_RISK_LEVEL;
 
   const hitDirections =
@@ -37,7 +37,10 @@ const getTransactionWidgetsProps = (
     },
     {
       title: 'Transaction risk score (TRS)',
-      value: `${getRiskLevelLabel(riskLevel, tenantSettings)} (${round(riskScore, 2)})`,
+      value: `${getRiskLevelLabel(riskLevel, tenantSettings).riskLevelLabel} (${round(
+        riskScore,
+        2,
+      )})`,
     },
     {
       title: 'Created on',

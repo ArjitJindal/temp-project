@@ -77,6 +77,7 @@ function HistoryItemBase(props: Props, ref?: React.ForwardedRef<HTMLDivElement |
       isUnread={isUnread}
       ref={ref}
       count={item.questionType === 'TABLE' ? item.total : undefined}
+      transactionsCount={item.questionType === 'TABLE' ? item.transactionsCount : undefined}
     >
       {item.explained && <div className={s.explained}>{item.explained}</div>}
       <div className={cn(item.questionType === 'TABLE' && s.children)}>{children}</div>

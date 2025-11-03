@@ -177,7 +177,8 @@ export class SLAService {
         type === 'alert'
           ? (entity as Alert).alertStatus
           : (entity as Case).caseStatus
-      )
+      ),
+      createdTimestamp
     )
 
     const existingStatus = entity.slaPolicyDetails?.find(
@@ -354,21 +355,78 @@ export class SLAService {
             }
             const slaPolicyDetails = entity.slaPolicyDetails ?? []
             const updatedSlaPolicyDetails: SLAPolicyDetails[] = []
+
+            // Get accounts for the entity
+            const accounts = entity.assignments
+              ? await this.getAccounts(
+                  entity.assignments.map((assignee) => assignee.assigneeUserId)
+                )
+              : []
+            const reviewAccounts = entity.reviewAssignments
+              ? await this.getAccounts(
+                  entity.reviewAssignments.map(
+                    (reviewAssignment) => reviewAssignment.assigneeUserId
+                  )
+                )
+              : []
+            // Count status occurrences
+            const statusChanges = entity.statusChanges ?? []
+            const countMap = new Map<string, number>()
+            statusChanges.forEach((statusChange) => {
+              const status = getDerivedStatus(statusChange.caseStatus)
+              countMap.set(status, (countMap.get(status) ?? 0) + 1)
+            })
             for (const slaPolicyDetail of slaPolicyDetails) {
-              if (
-                checkFor === 'BREACHED' &&
-                slaPolicyDetail.timeToBreach &&
-                slaPolicyDetail.timeToBreach < now
-              ) {
-                slaPolicyDetail.policyStatus = 'BREACHED'
-                slaPolicyDetail.updatedAt = Date.now()
-              } else if (
-                checkFor === 'WARNING' &&
-                slaPolicyDetail.timeToWarning &&
-                slaPolicyDetail.timeToWarning < now
-              ) {
-                slaPolicyDetail.policyStatus = 'WARNING'
-                slaPolicyDetail.updatedAt = Date.now()
+              // Get SLA policy to check conditions
+              const slaPolicy = await this.getSLAPolicy(
+                slaPolicyDetail.slaPolicyId
+              )
+              if (!slaPolicy || slaPolicy.isDeleted) {
+                updatedSlaPolicyDetails.push(slaPolicyDetail)
+                continue
+              }
+
+              // Determine current status and status count
+              const currentStatus =
+                type === 'alert'
+                  ? (entity as Alert).alertStatus
+                  : (entity as Case).caseStatus
+
+              if (!currentStatus) {
+                updatedSlaPolicyDetails.push(slaPolicyDetail)
+                continue
+              }
+
+              const statusCount =
+                countMap.get(getDerivedStatus(currentStatus)) ?? 0
+
+              // Check if policy status conditions are met
+              const isPolicyStatusMatched = matchPolicyStatusConditions(
+                currentStatus,
+                statusCount,
+                slaPolicy.policyConfiguration,
+                {
+                  makerAccounts: accounts,
+                  reviewerAccounts: reviewAccounts,
+                }
+              )
+
+              if (isPolicyStatusMatched) {
+                if (
+                  checkFor === 'BREACHED' &&
+                  slaPolicyDetail.timeToBreach &&
+                  slaPolicyDetail.timeToBreach < now
+                ) {
+                  slaPolicyDetail.policyStatus = 'BREACHED'
+                  slaPolicyDetail.updatedAt = Date.now()
+                } else if (
+                  checkFor === 'WARNING' &&
+                  slaPolicyDetail.timeToWarning &&
+                  slaPolicyDetail.timeToWarning < now
+                ) {
+                  slaPolicyDetail.policyStatus = 'WARNING'
+                  slaPolicyDetail.updatedAt = Date.now()
+                }
               }
               updatedSlaPolicyDetails.push(slaPolicyDetail)
             }

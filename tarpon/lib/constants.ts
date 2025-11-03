@@ -353,6 +353,9 @@ export const StackConstants = {
   SECONDARY_ASYNC_RULE_RUNNER_FUNCTION_NAME: getResourceName(
     'SecondaryAsyncRuleRunner'
   ),
+  PRIMARY_ASYNC_RULE_MULTIPLEXER_NAME: getResourceNameForTarpon(
+    'PrimaryAsyncRuleMultiplexer'
+  ),
 
   // CloudWatch Logs Ingestion
   CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME: getResourceNameForTarpon(
@@ -451,6 +454,18 @@ export const SQSQueues: {
   },
   SecondaryAsyncRuleQueue: {
     name: getResourceName('SecondaryAsyncRuleQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 360,
+  },
+  LOW_TRAFFIC_ASYNC_RULE_QUEUE: {
+    name: getResourceName('LowTrafficAsyncRuleQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 360,
+  },
+  HIGH_TRAFFIC_ASYNC_RULE_QUEUE: {
+    name: getResourceName('HighTrafficAsyncRuleQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 360,
+  },
+  ASYNC_RULE_PROCESSOR_QUEUE: {
+    name: getResourceName('AsyncRuleProcessorQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 360,
   },
 }

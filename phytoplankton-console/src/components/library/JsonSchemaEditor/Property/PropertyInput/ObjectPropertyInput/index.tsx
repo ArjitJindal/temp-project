@@ -34,7 +34,7 @@ export default function ObjectPropertyInput(props: Props) {
   const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
-  const { alwaysShowErrors, fieldValidators } = useFormContext();
+  const { alwaysShowErrors, fieldValidators, isDisabled } = useFormContext();
   const propertyContext = useContext(PropertyContext);
 
   let subFieldValidator = fieldValidators?.[propertyContext?.item.name ?? ''];
@@ -44,6 +44,7 @@ export default function ObjectPropertyInput(props: Props) {
     }
   }
   const subContext: FormContextValue<any> = {
+    isDisabled,
     alwaysShowErrors: alwaysShowErrors,
     meta: fieldMeta,
     setMeta: (key, cb) => {

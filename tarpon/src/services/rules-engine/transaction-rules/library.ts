@@ -1641,6 +1641,7 @@ const _RULES_LIBRARY: Array<
   },
   () => {
     const defaultParameters: SanctionsBusinessUserRuleParameters = {
+      entityTypes: ['LEGAL_NAME', 'SHAREHOLDER', 'DIRECTOR'],
       fuzziness: 20,
       screeningTypes: [],
       fuzzinessSetting: 'LEVENSHTEIN_DISTANCE_DEFAULT',

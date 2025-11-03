@@ -32,7 +32,7 @@ function createEntityVariable(entityText: string, type: 'USER' | 'TRANSACTION') 
   if (type === 'USER') {
     cy.get('input[data-cy~="variable-user-nature-v8-checkbox"]').eq(0).click(); // Added for consumer user nature
   } else {
-    cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction id');
+    cy.singleSelect('[data-cy~="variable-entity-v8"]', 'Transaction ID');
   }
   cy.getInputContainerByLabel('Entity').within(() => {
     cy.singleSelect('', entityText);
@@ -61,7 +61,7 @@ function createRiskFactor() {
   cy.wait('@logicConfig', { timeout: 120000 }).then((interception) => {
     expect(interception.response?.statusCode).to.eq(200);
     cy.wait(1000);
-    createEntityVariable('User id (origin or destination)', 'TRANSACTION');
+    createEntityVariable('User ID (origin or destination)', 'TRANSACTION');
     addCondition('user id', '123');
     cy.getInputByLabel('Risk score', 'input').type('50');
     cy.get('input[data-cy="input text-input"]').last().type('0.27');

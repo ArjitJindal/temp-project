@@ -661,7 +661,10 @@ export const AggregationVariableFormContent: React.FC<
               }
               mode="SINGLE"
               placeholder="Select base currency"
-              options={CURRENCIES_SELECT_OPTIONS}
+              options={[
+                ...CURRENCIES_SELECT_OPTIONS,
+                { value: 'ORIGINAL_CURRENCY', label: 'Original currency' },
+              ]}
               isDisabled={readOnly}
             />
           </Label>
@@ -759,6 +762,25 @@ export const AggregationVariableFormContent: React.FC<
               placeholder="Enter number of transactions"
               isError={!lastNEntitiesValidation}
               max={MAX_AGGREGATED_TRANSACTIONS}
+            />
+          </Label>
+        )}
+        {!aggregateByLastN && (
+          <Label
+            label="Use event timestamp for aggregation"
+            hint="When enabled, transaction event timestamps will be used for time-based aggregation instead of transaction timestamp."
+            required={{ value: false, showHint: !readOnly }}
+          >
+            <SelectionGroup
+              value={formValues.useEventTimestamp ?? false}
+              onChange={(useEventTimestamp) => {
+                handleUpdateForm({
+                  useEventTimestamp,
+                });
+              }}
+              mode={'SINGLE'}
+              options={BOOLEAN_OPTIONS}
+              isDisabled={readOnly}
             />
           </Label>
         )}

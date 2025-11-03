@@ -22,7 +22,6 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { S3 } from '@aws-sdk/client-s3'
-import { COUNTERPARTY_RULES } from '@flagright/lib/constants/rules-engine'
 import { backOff } from 'exponential-backoff'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
@@ -34,6 +33,7 @@ import { AccountsService } from '../accounts'
 import {
   getPaymentDetailsNameString,
   getPaymentMethodAddress,
+  getPaymentMethodId,
 } from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
@@ -123,6 +123,7 @@ import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearc
 import { envIs } from '@/utils/env'
 import { getPaymentEmailId } from '@/utils/payment-details'
 import { Address } from '@/@types/openapi-public/Address'
+import { AlertAlertMeta } from '@/@types/openapi-internal/AlertAlertMeta'
 
 const RULEINSTANCE_SEPARATOR = '~$~'
 
@@ -154,6 +155,8 @@ type NewCaseAuditLogReturnData = AuditLogReturnData<
 
 type ExtendedHitRulesDetails = HitRulesDetails & {
   compositeRuleInstanceId?: string
+  originPaymentMethodId?: string
+  destinationPaymentMethodId?: string
 }
 
 @traceable
@@ -699,7 +702,7 @@ export class CaseCreationService {
   }
 
   private async getAlertsForNewCase(
-    hitRules: HitRulesDetails[],
+    hitRules: ExtendedHitRulesDetails[],
     ruleInstances: readonly RuleInstance[],
     createdTimestamp: number,
     latestTransactionArrivalTimestamp?: number,
@@ -710,136 +713,155 @@ export class CaseCreationService {
       mongoDb: this.mongoDb,
       dynamoDb: this.caseRepository.dynamoDb,
     })
+
     const alerts: (Alert | null)[] = await Promise.all(
-      hitRules.map(async (hitRule: HitRulesDetails): Promise<Alert | null> => {
-        const ruleInstanceMatch: RuleInstance | null =
-          ruleInstances.find(
-            (ruleInstance) => hitRule.ruleInstanceId === ruleInstance.id
-          ) ?? null
+      hitRules.map(
+        async (hitRule: ExtendedHitRulesDetails): Promise<Alert | null> => {
+          const ruleInstanceMatch: RuleInstance | null =
+            ruleInstances.find(
+              (ruleInstance) => hitRule.ruleInstanceId === ruleInstance.id
+            ) ?? null
 
-        const now = Date.now()
-        const availableAfterTimestamp: number | undefined =
-          ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
-            ? calculateCaseAvailableDate(
-                now,
-                ruleInstanceMatch?.alertConfig?.alertCreationInterval,
-                (await this.tenantSettings())?.defaultValues?.tenantTimezone ??
-                  getDefaultTimezone()
-              )
-            : undefined
-        const ruleChecklist = checkListTemplates?.find(
-          (x) => x.id === ruleInstanceMatch?.checklistTemplateId
-        )
-        const assignee = await this.getRuleAlertAssignee(
-          ruleInstanceMatch?.alertConfig?.alertAssignees,
-          ruleInstanceMatch?.alertConfig?.alertAssigneeRole
-        )
-        const alertCount = await counterRepository.getNextCounterAndUpdate(
-          'Alert'
-        )
-        const updatedRuleHitMeta =
-          hitRule.ruleHitMeta != null
-            ? await this.addOrUpdateSanctionsHits(hitRule.ruleHitMeta, false)
-            : undefined
-        const auth0Domain =
-          getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-        const slaService = new SLAService(this.tenantId, auth0Domain, {
-          mongoDb: this.mongoDb,
-          dynamoDb: this.caseRepository.dynamoDb,
-        })
-        const newAlertStatus =
-          ruleInstanceMatch?.alertConfig?.defaultAlertStatus ?? 'OPEN'
-        const statusChange =
-          newAlertStatus !== 'OPEN'
-            ? ({
-                userId: FLAGRIGHT_SYSTEM_USER,
-                reason: ['Other'],
-                timestamp: now,
-                caseStatus: newAlertStatus,
-                otherReason: 'Status set by rule',
-                comment: `Alert default status set to '${newAlertStatus}' by rule configuration`,
-              } as CaseStatusChange)
-            : undefined
-
-        const newAlert: Alert = {
-          _id: alertCount,
-          alertId: `A-${alertCount}`,
-          createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
-          latestTransactionArrivalTimestamp,
-          updatedAt: now,
-          alertStatus: newAlertStatus,
-          ruleId: hitRule.ruleId,
-          availableAfterTimestamp: availableAfterTimestamp,
-          ruleInstanceId: hitRule.ruleInstanceId,
-          ruleName: hitRule.ruleName,
-          ruleDescription: hitRule.ruleDescription,
-          ruleAction: hitRule.ruleAction,
-          ruleHitMeta: updatedRuleHitMeta,
-          ruleNature: hitRule.nature,
-          ruleQueueId: ruleInstanceMatch?.queueId,
-          numberOfTransactionsHit: transaction ? 1 : 0,
-          transactionIds: transaction ? [transaction.transactionId] : [],
-          priority: (ruleInstanceMatch?.casePriority ??
-            last(PRIORITYS)) as Priority,
-          lastStatusChange: statusChange,
-          statusChanges: statusChange ? [statusChange] : [],
-          originPaymentMethods: transaction?.originPaymentDetails?.method
-            ? [transaction?.originPaymentDetails?.method]
-            : [],
-          destinationPaymentMethods: transaction?.destinationPaymentDetails
-            ?.method
-            ? [transaction?.destinationPaymentDetails?.method]
-            : [],
-          comments: statusChange
-            ? [
-                {
-                  body: statusChange.comment as string,
-                  createdAt: statusChange.timestamp,
+          const now = Date.now()
+          const availableAfterTimestamp: number | undefined =
+            ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
+              ? calculateCaseAvailableDate(
+                  now,
+                  ruleInstanceMatch?.alertConfig?.alertCreationInterval,
+                  (await this.tenantSettings())?.defaultValues
+                    ?.tenantTimezone ?? getDefaultTimezone()
+                )
+              : undefined
+          const ruleChecklist = checkListTemplates?.find(
+            (x) => x.id === ruleInstanceMatch?.checklistTemplateId
+          )
+          const assignee = await this.getRuleAlertAssignee(
+            ruleInstanceMatch?.alertConfig?.alertAssignees,
+            ruleInstanceMatch?.alertConfig?.alertAssigneeRole
+          )
+          const alertCount = await counterRepository.getNextCounterAndUpdate(
+            'Alert'
+          )
+          const updatedRuleHitMeta =
+            hitRule.ruleHitMeta != null
+              ? await this.addOrUpdateSanctionsHits(hitRule.ruleHitMeta, false)
+              : undefined
+          const auth0Domain =
+            getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+          const slaService = new SLAService(this.tenantId, auth0Domain, {
+            mongoDb: this.mongoDb,
+            dynamoDb: this.caseRepository.dynamoDb,
+          })
+          const newAlertStatus =
+            ruleInstanceMatch?.alertConfig?.defaultAlertStatus ?? 'OPEN'
+          const statusChange =
+            newAlertStatus !== 'OPEN'
+              ? ({
                   userId: FLAGRIGHT_SYSTEM_USER,
-                },
-              ]
-            : [],
-          ruleChecklistTemplateId: ruleInstanceMatch?.checklistTemplateId,
-          ruleChecklist: ruleChecklist?.categories.flatMap(
-            (category) =>
-              category.checklistItems.map(
-                (item) =>
-                  ({
-                    checklistItemId: item.id,
-                    done: 'NOT_STARTED',
-                  } as ChecklistItemValue)
-              ) ?? []
-          ),
-          assignments: assignee ? [assignee] : [],
-        }
-        const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
-          ruleInstanceMatch?.alertConfig?.slaPolicies?.map(async (id) => {
-            const slaDetail =
-              await slaService.calculateSLAStatusForEntity<Alert>(
-                newAlert,
-                id,
-                'alert'
-              )
-            return {
-              slaPolicyId: id,
-              updatedAt: now,
-              ...(slaDetail?.elapsedTime
-                ? {
-                    elapsedTime: slaDetail?.elapsedTime,
-                    policyStatus: slaDetail?.policyStatus,
-                    startedAt: slaDetail?.startedAt,
-                    timeToWarning: slaDetail?.timeToWarning,
-                    timeToBreach: slaDetail?.timeToBreach,
-                  }
-                : {}),
+                  reason: ['Other'],
+                  timestamp: now,
+                  caseStatus: newAlertStatus,
+                  otherReason: 'Status set by rule',
+                  comment: `Alert default status set to '${newAlertStatus}' by rule configuration`,
+                } as CaseStatusChange)
+              : undefined
+
+          let alertMeta: AlertAlertMeta | undefined = undefined
+
+          if (hitRule.destinationPaymentMethodId) {
+            alertMeta = {
+              ...(alertMeta ?? {}),
+              destinationPaymentMethodId: hitRule.destinationPaymentMethodId,
             }
-          }) || []
-        )
-        return {
-          ...newAlert,
-          slaPolicyDetails,
+          }
+          if (hitRule.originPaymentMethodId) {
+            alertMeta = {
+              ...(alertMeta ?? {}),
+              originPaymentMethodId: hitRule.originPaymentMethodId,
+            }
+          }
+
+          const newAlert: Alert = {
+            _id: alertCount,
+            alertId: `A-${alertCount}`,
+            createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
+            latestTransactionArrivalTimestamp,
+            updatedAt: now,
+            alertStatus: newAlertStatus,
+            ruleId: hitRule.ruleId,
+            availableAfterTimestamp: availableAfterTimestamp,
+            ruleInstanceId: hitRule.ruleInstanceId,
+            ruleName: hitRule.ruleName,
+            ruleDescription: hitRule.ruleDescription,
+            ruleAction: hitRule.ruleAction,
+            ruleHitMeta: updatedRuleHitMeta,
+            ruleNature: hitRule.nature,
+            ruleQueueId: ruleInstanceMatch?.queueId,
+            numberOfTransactionsHit: transaction ? 1 : 0,
+            transactionIds: transaction ? [transaction.transactionId] : [],
+            priority: (ruleInstanceMatch?.casePriority ??
+              last(PRIORITYS)) as Priority,
+            lastStatusChange: statusChange,
+            statusChanges: statusChange ? [statusChange] : [],
+            originPaymentMethods: transaction?.originPaymentDetails?.method
+              ? [transaction?.originPaymentDetails?.method]
+              : [],
+            destinationPaymentMethods: transaction?.destinationPaymentDetails
+              ?.method
+              ? [transaction?.destinationPaymentDetails?.method]
+              : [],
+            comments: statusChange
+              ? [
+                  {
+                    body: statusChange.comment as string,
+                    createdAt: statusChange.timestamp,
+                    userId: FLAGRIGHT_SYSTEM_USER,
+                  },
+                ]
+              : [],
+            ruleChecklistTemplateId: ruleInstanceMatch?.checklistTemplateId,
+            ruleChecklist: ruleChecklist?.categories.flatMap(
+              (category) =>
+                category.checklistItems.map(
+                  (item) =>
+                    ({
+                      checklistItemId: item.id,
+                      done: 'NOT_STARTED',
+                    } as ChecklistItemValue)
+                ) ?? []
+            ),
+            assignments: assignee ? [assignee] : [],
+            alertMeta,
+          }
+          const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
+            ruleInstanceMatch?.alertConfig?.slaPolicies?.map(async (id) => {
+              const slaDetail =
+                await slaService.calculateSLAStatusForEntity<Alert>(
+                  newAlert,
+                  id,
+                  'alert'
+                )
+              return {
+                slaPolicyId: id,
+                updatedAt: now,
+                ...(slaDetail?.elapsedTime
+                  ? {
+                      elapsedTime: slaDetail?.elapsedTime,
+                      policyStatus: slaDetail?.policyStatus,
+                      startedAt: slaDetail?.startedAt,
+                      timeToWarning: slaDetail?.timeToWarning,
+                      timeToBreach: slaDetail?.timeToBreach,
+                    }
+                  : {}),
+              }
+            }) || []
+          )
+          return {
+            ...newAlert,
+            slaPolicyDetails,
+          }
         }
-      })
+      )
     )
 
     return compact(alerts)
@@ -1295,7 +1317,7 @@ export class CaseCreationService {
     return `${ruleInstanceId}${RULEINSTANCE_SEPARATOR}${searchTerm}`
   }
 
-  private async getCasesBySubject(
+  public async getCasesBySubject(
     subject: CaseSubject,
     params: SubjectCasesQueryParams
   ): Promise<Case[]> {
@@ -1322,29 +1344,74 @@ export class CaseCreationService {
 
   private flattenHitRules(
     hitRules: HitRulesDetails[],
-    ruleInstances: readonly RuleInstance[]
+    ruleInstances: readonly RuleInstance[],
+    transaction?: InternalTransaction
   ): ExtendedHitRulesDetails[] {
     return hitRules.flatMap((hitRule) => {
       const ruleInstance = ruleInstances.find(
         (ruleInstance) => ruleInstance.id === hitRule.ruleInstanceId
       )
 
-      if (ruleInstance?.screeningAlertCreationLogic === 'PER_SEARCH_ALERT') {
-        return (
-          hitRule.ruleHitMeta?.sanctionsDetails?.map((x) => {
-            return {
+      if (
+        ruleInstance?.screeningAlertCreationLogic === 'PER_SEARCH_ALERT' ||
+        ruleInstance?.alertCreationLogic === 'PER_COUNTERPARTY_ALERT'
+      ) {
+        if (hitRule.ruleHitMeta?.sanctionsDetails?.length) {
+          return (
+            hitRule.ruleHitMeta?.sanctionsDetails?.map((x) => {
+              return {
+                ...hitRule,
+                compositeRuleInstanceId: this.generateCompositeRuleInstanceId(
+                  hitRule.ruleInstanceId,
+                  x.hitContext?.searchTerm ?? ''
+                ),
+                ruleHitMeta: {
+                  ...hitRule.ruleHitMeta,
+                  sanctionsDetails: [x],
+                },
+              }
+            }) ?? []
+          )
+        } else if (transaction) {
+          const originPaymentMethodId = getPaymentMethodId(
+            transaction.originPaymentDetails
+          )
+          const destinationPaymentMethodId = getPaymentMethodId(
+            transaction.destinationPaymentDetails
+          )
+          const extendedHitRule: ExtendedHitRulesDetails[] = []
+          if (
+            hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') &&
+            destinationPaymentMethodId
+          ) {
+            extendedHitRule.push({
               ...hitRule,
-              compositeRuleInstanceId: this.generateCompositeRuleInstanceId(
-                hitRule.ruleInstanceId,
-                x.hitContext?.searchTerm ?? ''
-              ),
               ruleHitMeta: {
                 ...hitRule.ruleHitMeta,
-                sanctionsDetails: [x],
+                hitDirections: ['ORIGIN'],
               },
-            }
-          }) ?? []
-        )
+              // then create new alert based on counterparty which will be destination payment method id
+              destinationPaymentMethodId: destinationPaymentMethodId,
+            })
+          }
+          if (
+            hitRule.ruleHitMeta?.hitDirections?.includes('DESTINATION') &&
+            originPaymentMethodId
+          ) {
+            extendedHitRule.push({
+              ...hitRule,
+
+              // then create new alert based on counterparty which will be origin payment method id
+              originPaymentMethodId: originPaymentMethodId,
+              ruleHitMeta: {
+                ...hitRule.ruleHitMeta,
+                hitDirections: ['DESTINATION'],
+              },
+            })
+          }
+          return extendedHitRule
+        }
+        return [hitRule]
       }
 
       return [hitRule]
@@ -1421,7 +1488,8 @@ export class CaseCreationService {
     // Flatten hit rules to handle composite rule instances (e.g., R-169, R-170 for counterparties)
     const flattenedHitRules: ExtendedHitRulesDetails[] = this.flattenHitRules(
       params.hitRules,
-      ruleInstances
+      ruleInstances,
+      params.transaction
     )
 
     // Group subjects by direction and alertCreatedFor configuration
@@ -1673,6 +1741,7 @@ export class CaseCreationService {
 
     // Remove hit rules that already have cases for the same transaction
     if (filteredTransaction) {
+      // TODO: Check if this works if new transaction event comes in with the same hit rules but new search terms
       filteredHitRules = await this.filterDuplicateHitRules(
         subject,
         filteredTransaction,
@@ -1754,6 +1823,15 @@ export class CaseCreationService {
     })
 
     return filteredHitRules.filter((hitRule) => {
+      // Skip rules with per search alert (or per counterparty alert)
+      if (
+        hitRule.compositeRuleInstanceId ||
+        hitRule.originPaymentMethodId ||
+        hitRule.destinationPaymentMethodId
+      ) {
+        return true
+      }
+
       return casesHavingSameTransaction.every((c) =>
         c.alerts?.every(
           (alert) => alert.ruleInstanceId !== hitRule.ruleInstanceId
@@ -2303,7 +2381,7 @@ export class CaseCreationService {
   ): boolean {
     return (
       this.getFrozenStatusFilter(alert, hitRule, ruleInstances) &&
-      this.searchTermAlreadyExists(alert, hitRule, ruleInstances)
+      this.counterPartyAlertAlreadyExists(alert, hitRule, ruleInstances)
     )
   }
 
@@ -2323,7 +2401,7 @@ export class CaseCreationService {
     return false
   }
 
-  private searchTermAlreadyExists(
+  private counterPartyAlertAlreadyExists(
     alert: Alert,
     hitRule: ExtendedHitRulesDetails,
     ruleInstances: readonly RuleInstance[]
@@ -2333,18 +2411,30 @@ export class CaseCreationService {
     )
 
     if (
-      COUNTERPARTY_RULES.includes(hitRule.ruleId ?? '') &&
-      ruleInstance?.screeningAlertCreationLogic === 'PER_SEARCH_ALERT'
+      ruleInstance?.screeningAlertCreationLogic === 'PER_SEARCH_ALERT' ||
+      ruleInstance?.alertCreationLogic === 'PER_COUNTERPARTY_ALERT'
     ) {
-      const isCounterpartyAlert = alert.ruleHitMeta?.sanctionsDetails?.find(
-        (x) =>
-          this.generateCompositeRuleInstanceId(
-            alert.ruleInstanceId,
-            x.hitContext?.searchTerm ?? ''
-          ) === hitRule.compositeRuleInstanceId
-      )
+      if (alert.ruleHitMeta?.sanctionsDetails) {
+        const isCounterpartyAlert = alert.ruleHitMeta?.sanctionsDetails?.find(
+          (x) =>
+            this.generateCompositeRuleInstanceId(
+              alert.ruleInstanceId,
+              x.hitContext?.searchTerm ?? ''
+            ) === hitRule.compositeRuleInstanceId
+        )
 
-      return isCounterpartyAlert != null
+        return isCounterpartyAlert != null
+      } else if (hitRule.destinationPaymentMethodId) {
+        return (
+          alert.alertMeta?.destinationPaymentMethodId ===
+          hitRule.destinationPaymentMethodId
+        )
+      } else if (hitRule.originPaymentMethodId) {
+        return (
+          alert.alertMeta?.originPaymentMethodId ===
+          hitRule.originPaymentMethodId
+        )
+      }
     }
 
     return true

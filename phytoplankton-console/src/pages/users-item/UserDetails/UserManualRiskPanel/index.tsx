@@ -83,8 +83,13 @@ export default function UserManualRiskPanel(props: Props) {
           return;
         }
 
-        setSyncState(success(result));
-        setIsLocked(result ? !result.isUpdatable : false);
+        if (result) {
+          setSyncState(success(result));
+          setIsLocked(!result.isUpdatable);
+        } else {
+          setSyncState(init());
+          setIsLocked(false);
+        }
       })
       .catch((e) => {
         if (isCanceled) {
@@ -306,6 +311,10 @@ export default function UserManualRiskPanel(props: Props) {
       return undefined;
     }
     const drsData = syncState.value;
+
+    if (!drsData) {
+      return undefined;
+    }
 
     return {
       lockedAt: drsData.lockedAt,

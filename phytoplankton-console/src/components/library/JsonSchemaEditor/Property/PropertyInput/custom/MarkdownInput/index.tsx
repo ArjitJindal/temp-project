@@ -3,8 +3,8 @@ import { InputProps } from '@/components/library/Form';
 import { CopilotWrapperContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import { ExtendedSchema, UiSchemaMarkdown } from '@/components/library/JsonSchemaEditor/types';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
-import { useSarContext } from '@/components/Sar/SarReportDrawer';
-import { TransactionStepContextValue } from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep';
+import { useSarContext } from '@/components/Sar/SarReport';
+import { TransactionStepContextValue } from '@/components/Sar/SarReport/SarReportForm/TransactionStep';
 
 interface Props extends InputProps<any> {
   schema: ExtendedSchema;

@@ -10,7 +10,11 @@ import ApplyToOtherLevelsCard from '@/pages/rules/RuleConfiguration/RuleConfigur
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  getFirstActiveRiskLevel,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { FieldState } from '@/components/library/Form/utils/hooks';
 import { RiskLevel } from '@/utils/risk-levels';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
@@ -22,6 +26,7 @@ import Button from '@/components/library/Button';
 import { getAllEntityVariableKeys } from '@/pages/rules/utils';
 
 interface Props {
+  readOnly?: boolean;
   ruleType: RuleType;
   entityVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicEntityVariables']>;
   aggVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicAggregationVariables']>;
@@ -34,6 +39,7 @@ interface Props {
 
 export default function DefineLogicCard(props: Props) {
   const {
+    readOnly = false,
     ruleType,
     entityVariablesFieldState,
     aggVariablesFieldState,
@@ -44,7 +50,9 @@ export default function DefineLogicCard(props: Props) {
     mlVariableFieldState,
   } = props;
   const settings = useSettings();
-  const [currentRiskLevel, setCurrentRiskLevel] = useState<RiskLevel>('VERY_LOW');
+  const [currentRiskLevel, setCurrentRiskLevel] = useState<RiskLevel>(
+    getFirstActiveRiskLevel(settings),
+  );
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const jsonLogic = useMemo(() => {
     return isRiskLevelsEnabled
@@ -104,7 +112,7 @@ export default function DefineLogicCard(props: Props) {
               'Create rule logic using the defined variables and operators for execution'
             }
           />
-          {!showRuleLogicBuilder && (
+          {!showRuleLogicBuilder && !readOnly && (
             <Button
               testName="add-logic-v8"
               isDisabled={!hasVariables}
@@ -130,7 +138,10 @@ export default function DefineLogicCard(props: Props) {
                   }}
                   placeholder="Select base currency"
                   mode="SINGLE"
-                  options={CURRENCIES_SELECT_OPTIONS}
+                  options={[
+                    ...CURRENCIES_SELECT_OPTIONS,
+                    { value: 'ORIGINAL_CURRENCY', label: 'Original currency' },
+                  ]}
                 />
               </Label>
             </div>

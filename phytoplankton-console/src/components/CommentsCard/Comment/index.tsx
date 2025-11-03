@@ -5,7 +5,8 @@ import { marked } from 'marked';
 import { Reply } from '../Reply';
 import { CommentWithReplies } from '..';
 import styles from './index.module.less';
-import { CommentType, getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
+import { CommentType, getDisplayedUserInfo } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/library/Avatar';
@@ -37,7 +38,7 @@ export default function Comment(props: Props) {
     handleAddComment,
     onCommentAdded,
   } = props;
-  const [users, isLoading] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
+  const { users, isLoading } = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
   const [showReplyEditor, setShowReplyEditor] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [user, currentUser] = useMemo(() => {

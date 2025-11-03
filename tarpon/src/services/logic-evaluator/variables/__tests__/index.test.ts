@@ -13,244 +13,248 @@ describe('List of entity variables', () => {
       getTransactionLogicEntityVariables()
     ).map((v) => omit(v, 'load'))
 
-    expect(entityVariables).toEqual(
-      expect.arrayContaining([
-        {
-          key: 'TRANSACTION:type',
-          entity: 'TRANSACTION',
-          valueType: 'string',
-          sourceField: 'type',
-          uiDefinition: {
-            label: 'Transaction / type',
-            type: 'text',
-            valueSources: ['value', 'field', 'func'],
-            fieldSettings: {
-              allowNewValues: true,
-              uniqueType: 'TRANSACTION_TYPES',
-              allowCustomValues: true,
-              listValues: expect.arrayContaining([
-                {
-                  title: 'Deposit',
-                  value: 'DEPOSIT',
-                },
-                {
-                  title: 'Transfer',
-                  value: 'TRANSFER',
-                },
-              ]),
+    const expectedVars = [
+      {
+        key: 'TRANSACTION:type',
+        entity: 'TRANSACTION',
+        valueType: 'string',
+        sourceField: 'type',
+        uiDefinition: {
+          label: 'Transaction / type',
+          type: 'text',
+          valueSources: ['value', 'field', 'func'],
+          fieldSettings: {
+            allowNewValues: true,
+            uniqueType: 'TRANSACTION_TYPES',
+            allowCustomValues: true,
+            listValues: expect.arrayContaining([
+              {
+                title: 'Deposit',
+                value: 'DEPOSIT',
+              },
+              {
+                title: 'Transfer',
+                value: 'TRANSFER',
+              },
+            ]),
+          },
+        },
+      },
+      {
+        key: 'TRANSACTION:transactionId',
+        entity: 'TRANSACTION',
+        valueType: 'string',
+        sourceField: 'transactionId',
+        uiDefinition: {
+          label: 'Transaction / transaction ID',
+          type: 'text',
+          valueSources: ['value', 'field', 'func'],
+        },
+      },
+      {
+        key: 'TRANSACTION:originAmountDetails-transactionCurrency',
+        entity: 'TRANSACTION',
+        valueType: 'string',
+        sourceField: 'originAmountDetails',
+        uiDefinition: {
+          label: 'Transaction / origin amount details > transaction currency',
+          type: 'text',
+          valueSources: ['value', 'field', 'func'],
+          fieldSettings: {
+            allowCustomValues: true,
+            listValues: expect.arrayContaining([
+              {
+                title: 'EUR (Euro)',
+                value: 'EUR',
+              },
+            ]),
+          },
+        },
+      },
+      {
+        key: 'CONSUMER_USER:userDetails-dateOfBirth__SENDER',
+        entity: 'CONSUMER_USER',
+        valueType: 'string',
+        uiDefinition: {
+          label: 'Consumer User / user details > date of birth',
+          type: 'text',
+          valueSources: ['value', 'field', 'func'],
+        },
+      },
+      {
+        key: 'CONSUMER_USER:userDetails-countryOfResidence__RECEIVER',
+        entity: 'CONSUMER_USER',
+        valueType: 'string',
+        uiDefinition: {
+          label: 'Consumer User / user details > country of residence',
+          type: 'text',
+          valueSources: ['value', 'field', 'func'],
+          fieldSettings: {
+            listValues: expect.arrayContaining([
+              {
+                title: 'Germany (DE)',
+                value: 'DE',
+              },
+            ]),
+            allowCustomValues: true,
+          },
+        },
+      },
+      {
+        key: 'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER',
+        entity: 'BUSINESS_USER',
+        valueType: 'string',
+        uiDefinition: {
+          label:
+            'Business User / legal entity > company general details > user segment',
+          type: 'text',
+          valueSources: ['value', 'field', 'func'],
+          fieldSettings: {
+            allowCustomValues: true,
+            listValues: expect.arrayContaining([
+              {
+                title: 'Sole Proprietorship',
+                value: 'SOLE_PROPRIETORSHIP',
+              },
+              {
+                title: 'Limited',
+                value: 'LIMITED',
+              },
+            ]),
+          },
+        },
+      },
+      {
+        key: 'TRANSACTION:tags',
+        entity: 'TRANSACTION',
+        valueType: 'array',
+        uiDefinition: {
+          label: 'Transaction / tags',
+          type: '!group',
+          mode: 'array',
+          conjunctions: ['AND', 'OR'],
+          subfields: {
+            key: {
+              label: 'key',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+              fieldSettings: {
+                allowCustomValues: true,
+                uniqueType: 'TAGS_KEY',
+                allowNewValues: true,
+              },
+            },
+            value: {
+              label: 'value',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+              fieldSettings: {
+                allowCustomValues: true,
+                uniqueType: 'TAGS_VALUE',
+                allowNewValues: true,
+              },
+            },
+            isTimestamp: {
+              label: 'is timestamp',
+              type: 'boolean',
+              valueSources: ['value', 'field', 'func'],
             },
           },
         },
-        {
-          key: 'TRANSACTION:transactionId',
-          entity: 'TRANSACTION',
-          valueType: 'string',
-          sourceField: 'transactionId',
-          uiDefinition: {
-            label: 'Transaction / transaction id',
-            type: 'text',
-            valueSources: ['value', 'field', 'func'],
-          },
-        },
-        {
-          key: 'TRANSACTION:originAmountDetails-transactionCurrency',
-          entity: 'TRANSACTION',
-          valueType: 'string',
-          sourceField: 'originAmountDetails',
-          uiDefinition: {
-            label: 'Transaction / origin amount details > transaction currency',
-            type: 'text',
-            valueSources: ['value', 'field', 'func'],
-            fieldSettings: {
-              allowCustomValues: true,
-              listValues: expect.arrayContaining([
-                {
-                  title: 'EUR (Euro)',
-                  value: 'EUR',
-                },
-              ]),
+        sourceField: 'tags',
+      },
+      {
+        key: 'CONSUMER_USER:legalDocuments__SENDER',
+        entity: 'CONSUMER_USER',
+        valueType: 'array',
+        uiDefinition: {
+          label: 'Consumer User / legal documents',
+          type: '!group',
+          mode: 'array',
+          conjunctions: ['AND', 'OR'],
+          subfields: {
+            documentType: {
+              label: 'document type',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
             },
-          },
-        },
-        {
-          key: 'CONSUMER_USER:userDetails-dateOfBirth__SENDER',
-          entity: 'CONSUMER_USER',
-          valueType: 'string',
-          uiDefinition: {
-            label: 'Consumer User / user details > date of birth',
-            type: 'text',
-            valueSources: ['value', 'field', 'func'],
-          },
-        },
-        {
-          key: 'CONSUMER_USER:userDetails-countryOfResidence__RECEIVER',
-          entity: 'CONSUMER_USER',
-          valueType: 'string',
-          uiDefinition: {
-            label: 'Consumer User / user details > country of residence',
-            type: 'text',
-            valueSources: ['value', 'field', 'func'],
-            fieldSettings: {
-              listValues: expect.arrayContaining([
-                {
-                  title: 'Germany (DE)',
-                  value: 'DE',
-                },
-              ]),
-              allowCustomValues: true,
+            documentNumber: {
+              label: 'document number',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
             },
-          },
-        },
-        {
-          key: 'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER',
-          entity: 'BUSINESS_USER',
-          valueType: 'string',
-          uiDefinition: {
-            label:
-              'Business User / legal entity > company general details > user segment',
-            type: 'text',
-            valueSources: ['value', 'field', 'func'],
-            fieldSettings: {
-              allowCustomValues: true,
-              listValues: expect.arrayContaining([
-                {
-                  title: 'Sole Proprietorship',
-                  value: 'SOLE_PROPRIETORSHIP',
-                },
-                {
-                  title: 'Limited',
-                  value: 'LIMITED',
-                },
-              ]),
+            documentIssuedDate: {
+              label: 'document issued date',
+              type: 'datetime',
+              valueSources: ['value', 'field', 'func'],
             },
-          },
-        },
-        {
-          key: 'TRANSACTION:tags',
-          entity: 'TRANSACTION',
-          valueType: 'array',
-          uiDefinition: {
-            label: 'Transaction / tags',
-            type: '!group',
-            mode: 'array',
-            conjunctions: ['AND', 'OR'],
-            subfields: {
-              key: {
-                label: 'key',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-                fieldSettings: {
-                  allowCustomValues: true,
-                  uniqueType: 'TAGS_KEY',
-                  allowNewValues: true,
-                },
-              },
-              value: {
-                label: 'value',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-                fieldSettings: {
-                  allowCustomValues: true,
-                  uniqueType: 'TAGS_VALUE',
-                  allowNewValues: true,
-                },
-              },
-              isTimestamp: {
-                label: 'is timestamp',
-                type: 'boolean',
-                valueSources: ['value', 'field', 'func'],
-              },
+            documentExpirationDate: {
+              label: 'document expiration date',
+              type: 'datetime',
+              valueSources: ['value', 'field', 'func'],
             },
-          },
-          sourceField: 'tags',
-        },
-        {
-          key: 'CONSUMER_USER:legalDocuments__SENDER',
-          entity: 'CONSUMER_USER',
-          valueType: 'array',
-          uiDefinition: {
-            label: 'Consumer User / legal documents',
-            type: '!group',
-            mode: 'array',
-            conjunctions: ['AND', 'OR'],
-            subfields: {
-              documentType: {
-                label: 'document type',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-              },
-              documentNumber: {
-                label: 'document number',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-              },
-              documentIssuedDate: {
-                label: 'document issued date',
-                type: 'datetime',
-                valueSources: ['value', 'field', 'func'],
-              },
-              documentExpirationDate: {
-                label: 'document expiration date',
-                type: 'datetime',
-                valueSources: ['value', 'field', 'func'],
-              },
-              documentIssuedCountry: {
-                label: 'document issued country',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-                fieldSettings: {
-                  listValues: expect.arrayContaining([
-                    {
-                      title: 'Germany (DE)',
-                      value: 'DE',
-                    },
-                  ]),
-                  allowCustomValues: true,
-                },
-              },
-              'nameOnDocument.firstName': {
-                label: 'name on document > first name',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-              },
-              'nameOnDocument.middleName': {
-                label: 'name on document > middle name',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-              },
-              'nameOnDocument.lastName': {
-                label: 'name on document > last name',
-                type: 'text',
-                valueSources: ['value', 'field', 'func'],
-              },
-              tags: {
-                label: 'tags',
-                type: '!group',
-                mode: 'array',
-                conjunctions: ['AND', 'OR'],
-                subfields: {
-                  key: {
-                    label: 'key',
-                    type: 'text',
-                    valueSources: ['value', 'field', 'func'],
+            documentIssuedCountry: {
+              label: 'document issued country',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+              fieldSettings: {
+                listValues: expect.arrayContaining([
+                  {
+                    title: 'Germany (DE)',
+                    value: 'DE',
                   },
-                  value: {
-                    label: 'value',
-                    type: 'text',
-                    valueSources: ['value', 'field', 'func'],
-                  },
-                  isTimestamp: {
-                    label: 'is timestamp',
-                    type: 'boolean',
-                    valueSources: ['value', 'field', 'func'],
-                  },
+                ]),
+                allowCustomValues: true,
+              },
+            },
+            'nameOnDocument.firstName': {
+              label: 'name on document > first name',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            'nameOnDocument.middleName': {
+              label: 'name on document > middle name',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            'nameOnDocument.lastName': {
+              label: 'name on document > last name',
+              type: 'text',
+              valueSources: ['value', 'field', 'func'],
+            },
+            tags: {
+              label: 'tags',
+              type: '!group',
+              mode: 'array',
+              conjunctions: ['AND', 'OR'],
+              subfields: {
+                key: {
+                  label: 'key',
+                  type: 'text',
+                  valueSources: ['value', 'field', 'func'],
+                },
+                value: {
+                  label: 'value',
+                  type: 'text',
+                  valueSources: ['value', 'field', 'func'],
+                },
+                isTimestamp: {
+                  label: 'is timestamp',
+                  type: 'boolean',
+                  valueSources: ['value', 'field', 'func'],
                 },
               },
             },
           },
         },
-      ])
-    )
+      },
+    ]
+
+    for (const expectedVar of expectedVars) {
+      const foundVar = entityVariables.find((x) => x.key === expectedVar.key)
+      expect(foundVar).toBeDefined()
+      expect(foundVar).toEqual(expectedVar)
+    }
   })
 
   // NOTE: Changing the key of an entity variable requires a migration

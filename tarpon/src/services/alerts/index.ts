@@ -1594,7 +1594,8 @@ export class AlertsService extends CaseAlertsCommonService {
     // override the case updates as a quickfix for PNB bugs
     const isPNB = hasFeature('PNB')
     const isClosing = statusUpdateRequest.alertStatus === 'CLOSED'
-    const cascadeCaseUpdates = isPNB && !isClosing ? false : true
+    const cascadeCaseUpdates =
+      isPNB && !isClosing ? false : options?.cascadeCaseUpdates ?? true
     const userId = externalRequest ? API_USER : getContext()?.user?.id
     const statusChange: CaseStatusChange = {
       userId: bySystem

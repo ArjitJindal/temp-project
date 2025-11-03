@@ -43,6 +43,8 @@ import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-li
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { logger } from '@/core/logger'
+import { Address } from '@/@types/openapi-public/Address'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 
 type StatsByType = {
   transactionType: string
@@ -246,6 +248,11 @@ export class ClickhouseTransactionsRepository {
             "','"
           )}') AND length(nonShadowHitRules) > 0`
         )
+      } else if (
+        params.isPaymentApprovals &&
+        params.filterStatus.includes('BLOCK')
+      ) {
+        whereConditions.push(`derived_status = 'BLOCK_MANUAL'`)
       } else {
         whereConditions.push(`status IN ('${params.filterStatus.join("','")}')`)
       }
@@ -896,15 +903,20 @@ export class ClickhouseTransactionsRepository {
       labelFormat = 'MM/DD HH:00'
     }
 
+    const aggregateByField =
+      params.aggregateBy === 'originCurrency'
+        ? 'originAmountDetails_transactionCurrency'
+        : params.aggregateBy === 'status'
+        ? 'status'
+        : 'transactionState'
+
     const query = `
       SELECT
         ${clickhouseFormat} as timedata,
         count() as count,
         timestamp,
         sum(originAmountDetails_amountInUsd) as sum,
-        ${
-          params.aggregateBy === 'status' ? 'status' : 'transactionState'
-        } as aggregateBy
+        ${aggregateByField} as aggregateBy
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE ${whereClause}
       GROUP BY timestamp, timedata, aggregateBy
@@ -1117,6 +1129,324 @@ LIMIT 1 BY ${userField}`
 
     if (batch.length > 0) {
       yield batch
+    }
+  }
+  public async *getUniqueEmailDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
+    const query = `
+    SELECT JSONExtractString(data, '${direction.toLowerCase()}PaymentDetails', 'emailId') as emailId 
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+    WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
+      timeRange.beforeTimestamp
+    } 
+    AND emailId != ''
+    LIMIT 1 BY emailId`
+
+    const resultSet = await this.clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+    const transformStream = this.getTranformStream()
+    const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+    await pipeline(resultSet.stream(), transformStream, writeStream)
+    const rl = createInterface({
+      input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+      crlfDelay: Infinity,
+    })
+    let batch: string[] = []
+    try {
+      for await (const line of rl) {
+        if (!line) {
+          continue
+        }
+        const data = JSON.parse(line)
+        try {
+          const email = data['emailId']
+          if (email) {
+            batch.push(email)
+            if (batch.length >= chunkSize) {
+              yield batch
+              batch = []
+            }
+          }
+        } catch (e) {
+          logger.error('Got from .json', e)
+        }
+      }
+    } catch (e) {
+      logger.error('Got error while reading file ', e)
+      throw e
+    } finally {
+      fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+        if (err) {
+          logger.error('Error deleting file', err)
+        }
+      })
+    }
+    if (batch.length > 0) {
+      yield batch
+    }
+  }
+  public async *getUniqueAddressDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<Address[]> {
+    const globalBatch: Address[] = []
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+
+    // Address field mapping for each payment method
+    const ADDRESS_FIELD_MAPPING: Record<PaymentMethod, string | undefined> = {
+      CHECK: 'shippingAddress',
+      CASH: 'address',
+      NPP: 'address',
+      GENERIC_BANK_ACCOUNT: 'address',
+      MPESA: 'address',
+      CARD: 'address',
+      SWIFT: 'address',
+      IBAN: 'bankAddress',
+      ACH: 'bankAddress',
+      UPI: undefined,
+      WALLET: undefined,
+    }
+
+    // Address fields to extract from Address object
+    const ADDRESS_FIELDS: (keyof Address)[] = [
+      'addressLines',
+      'postcode',
+      'city',
+      'state',
+      'country',
+    ]
+    const paymentDetailMethodField =
+      direction === 'ORIGIN'
+        ? 'originPaymentMethod'
+        : 'destinationPaymentMethod'
+    for (const paymentMethod of PAYMENT_METHODS) {
+      const addressField = ADDRESS_FIELD_MAPPING[paymentMethod]
+      if (addressField == null) {
+        continue
+      }
+      const query = `
+      SELECT ${ADDRESS_FIELDS.map((field) =>
+        field === 'addressLines'
+          ? `JSONExtractRaw(data, '${paymentDetailsField}', '${addressField}', '${field}') as ${field}`
+          : `JSONExtractString(data, '${paymentDetailsField}', '${addressField}', '${field}') as ${field}`
+      ).join(', ')} 
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+      WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
+        timeRange.beforeTimestamp
+      } 
+      AND ${paymentDetailMethodField} = '${paymentMethod}'
+      LIMIT 1 BY ${ADDRESS_FIELDS.map((field) => `${field}`).join(', ')}`
+      const resultSet = await this.clickhouseClient.query({
+        query,
+        format: 'JSONEachRow',
+      })
+      const transformStream = this.getTranformStream()
+      const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+      await pipeline(resultSet.stream(), transformStream, writeStream)
+      const rl = createInterface({
+        input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+        crlfDelay: Infinity,
+      })
+      try {
+        for await (const line of rl) {
+          if (!line) {
+            continue
+          }
+          const data = JSON.parse(line)
+          const address: Partial<Address> = {
+            ...Object.fromEntries(
+              ADDRESS_FIELDS.map((field) => {
+                if (field === 'addressLines' && data[field]) {
+                  // Parse the raw JSON string for addressLines
+                  try {
+                    return [field, JSON.parse(data[field])]
+                  } catch (e) {
+                    logger.warn(
+                      'Failed to parse addressLines JSON:',
+                      data[field]
+                    )
+                    return [field, []]
+                  }
+                }
+                return [field, data[field]]
+              })
+            ),
+          }
+          if (address.addressLines && address.addressLines.length > 0) {
+            globalBatch.push(address as Address)
+            if (globalBatch.length >= chunkSize) {
+              yield globalBatch.splice(0)
+            }
+          }
+        }
+      } catch (e) {
+        logger.error('Got error while reading file ', e)
+        throw e
+      } finally {
+        fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+          if (err) {
+            logger.error('Error deleting file', err)
+          }
+        })
+      }
+    }
+    if (globalBatch.length > 0) {
+      yield globalBatch
+    }
+  }
+  public async *getUniqueNameDetailsGenerator(
+    direction: 'ORIGIN' | 'DESTINATION',
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<(ConsumerName | string)[]> {
+    const globalBatch: (ConsumerName | string)[] = []
+    const paymentDetailsField =
+      direction === 'ORIGIN'
+        ? 'originPaymentDetails'
+        : 'destinationPaymentDetails'
+
+    // Name field mapping for each payment method
+    const NAME_FIELD_MAPPING: Record<PaymentMethod, string> = {
+      CHECK: 'name',
+      CASH: 'name',
+      NPP: 'name',
+      GENERIC_BANK_ACCOUNT: 'name',
+      MPESA: 'name',
+      IBAN: 'name',
+      ACH: 'name',
+      SWIFT: 'name',
+      UPI: 'name',
+      WALLET: 'name',
+      CARD: 'nameOnCard',
+    }
+
+    // Name fields to extract from ConsumerName object
+    const NAME_FIELDS = ['firstName', 'middleName', 'lastName']
+
+    const paymentDetailMethodField =
+      direction === 'ORIGIN'
+        ? 'originPaymentMethod'
+        : 'destinationPaymentMethod'
+
+    for (const paymentMethod of PAYMENT_METHODS) {
+      const nameField = NAME_FIELD_MAPPING[paymentMethod]
+      if (nameField == null) {
+        continue
+      }
+
+      // For CARD payment method, extract individual name fields
+      if (paymentMethod === 'CARD') {
+        const query = `
+        SELECT ${NAME_FIELDS.map(
+          (field) =>
+            `JSONExtractString(data, '${paymentDetailsField}', '${nameField}', '${field}') as ${field}`
+        ).join(', ')} 
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+        WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
+          timeRange.beforeTimestamp
+        } 
+        AND ${paymentDetailMethodField} = '${paymentMethod}'
+        AND JSONHas(data, '${paymentDetailsField}', '${nameField}')
+        LIMIT 1 BY ${NAME_FIELDS.map((field) => `${field}`).join(', ')}`
+        const resultSet = await this.clickhouseClient.query({
+          query,
+          format: 'JSONEachRow',
+        })
+        const transformStream = this.getTranformStream()
+        const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+        await pipeline(resultSet.stream(), transformStream, writeStream)
+        const rl = createInterface({
+          input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+          crlfDelay: Infinity,
+        })
+        try {
+          for await (const line of rl) {
+            if (!line) {
+              continue
+            }
+            const data = JSON.parse(line)
+            const name: Partial<ConsumerName> = {
+              ...Object.fromEntries(
+                NAME_FIELDS.map((field) => [field, data[field]])
+              ),
+            }
+            // Ensure firstName is present (required field)
+            if (name.firstName) {
+              globalBatch.push(name as ConsumerName)
+              if (globalBatch.length >= chunkSize) {
+                yield globalBatch.splice(0)
+              }
+            }
+          }
+        } catch (e) {
+          logger.error('Got error while reading file ', e)
+          throw e
+        } finally {
+          fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+            if (err) {
+              logger.error('Error deleting file', err)
+            }
+          })
+        }
+      } else {
+        // For other payment methods, extract the entire name field as string
+        const query = `
+        SELECT JSONExtractString(data, '${paymentDetailsField}', '${nameField}') as name
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+        WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp} 
+        AND ${paymentDetailMethodField} = '${paymentMethod}'
+        AND JSONHas(data, '${paymentDetailsField}', '${nameField}')
+        AND JSONExtractString(data, '${paymentDetailsField}', '${nameField}') != ''
+        LIMIT 1 BY name`
+        const resultSet = await this.clickhouseClient.query({
+          query,
+          format: 'JSONEachRow',
+        })
+        const transformStream = this.getTranformStream()
+        const writeStream = fs.createWriteStream(CLICKHOUSE_DATA_FILE)
+        await pipeline(resultSet.stream(), transformStream, writeStream)
+        const rl = createInterface({
+          input: fs.createReadStream(CLICKHOUSE_DATA_FILE),
+          crlfDelay: Infinity,
+        })
+        try {
+          for await (const line of rl) {
+            if (!line) {
+              continue
+            }
+            const data = JSON.parse(line)
+            const nameData = data.name
+            if (typeof nameData === 'string' && nameData) {
+              globalBatch.push(nameData)
+              if (globalBatch.length >= chunkSize) {
+                yield globalBatch.splice(0)
+              }
+            }
+          }
+        } catch (e) {
+          logger.error('Got error while reading file ', e)
+          throw e
+        } finally {
+          fs.unlink(CLICKHOUSE_DATA_FILE, (err) => {
+            if (err) {
+              logger.error('Error deleting file', err)
+            }
+          })
+        }
+      }
+    }
+
+    if (globalBatch.length > 0) {
+      yield globalBatch
     }
   }
 }

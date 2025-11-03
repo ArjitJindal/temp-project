@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useAuth0 } from '@auth0/auth0-react';
 import { isEmpty, toLower } from 'lodash';
 import { capitalizeWords, humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
@@ -8,18 +7,15 @@ import {
   PermissionStatements,
   Feature as FeatureName,
   TenantSettings,
-  ApiException,
   ManagedRoleName,
   RuleAction,
   RiskLevel,
   TransactionState,
   CountryCode,
 } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PageLoading } from '@/components/PageLoading';
-import { PERMISSIONS_STATEMENTS, SETTINGS } from '@/utils/queries/keys';
 import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { usePrevious } from '@/utils/hooks';
 import { all, isFailed, isSuccess } from '@/utils/asyncResource';
@@ -28,6 +24,7 @@ import ErrorPage from '@/components/ErrorPage';
 import { SuspendedAccount } from '@/components/SuspendedAccount';
 import Alert from '@/components/library/Alert';
 import { TransactionChartSeries } from '@/pages/dashboard/analysis/components/TransactionsChartWidget';
+import { usePermissions, useSettingsData } from '@/utils/api/auth';
 
 interface StatementsContextValue {
   statements: PermissionStatements[];
@@ -54,24 +51,11 @@ export const StatementsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }): JSX.Element => {
   const globalFeatures = FEATURES_ENABLED as FeatureName[];
-  const api = useApi();
   const role = useAccountRole();
-  const { logout } = useAuth0();
 
-  const queryResult = useQuery(PERMISSIONS_STATEMENTS(), () => api.getRolesByNameStatements());
+  const queryResult = usePermissions();
 
-  const settingsResults = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
-    try {
-      return await api.getTenantsSettings();
-    } catch (e) {
-      if ((e as ApiException<unknown>).httpMessage === 'Unauthorized') {
-        logout({
-          returnTo: window.location.origin,
-        });
-      }
-      throw e;
-    }
-  });
+  const settingsResults = useSettingsData();
 
   const previousSettingsResults = usePrevious(settingsResults);
 
@@ -225,9 +209,28 @@ export function useRuleActionLabel(ruleAction: RuleAction | undefined): string |
   return getRuleActionLabel(ruleAction, settings);
 }
 
-export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
-  const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
-  return alias || humanizeConstant(riskLevel);
+export function getRiskLevelLabel(
+  riskLevel: RiskLevel,
+  settings: TenantSettings,
+): { riskLevelLabel: string; isActive: boolean } {
+  const riskLevelData = settings.riskLevelAlias?.find((item) => item.level === riskLevel);
+
+  const alias = riskLevelData?.alias?.trim();
+  const isActive = riskLevelData?.isActive ?? true;
+  const riskLevelLabel = alias && alias.length > 0 ? alias : humanizeConstant(riskLevel);
+
+  return { riskLevelLabel, isActive };
+}
+
+export function getFirstActiveRiskLevel(settings: TenantSettings): RiskLevel {
+  const firstActive = settings.riskLevelAlias?.find((item) => item.isActive);
+  return firstActive ? firstActive.level : 'VERY_LOW';
+}
+export function getLastActiveRiskLevel(settings: TenantSettings): RiskLevel {
+  const lastActive = settings.riskLevelAlias
+    ? [...settings.riskLevelAlias].reverse().find((item) => item.isActive)
+    : undefined;
+  return lastActive?.level || 'VERY_HIGH';
 }
 
 export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
@@ -240,7 +243,7 @@ export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSe
 
 export function useRiskLevelLabel(riskLevel: RiskLevel): string | undefined {
   const settings = useSettings();
-  return getRiskLevelLabel(riskLevel, settings);
+  return getRiskLevelLabel(riskLevel, settings).riskLevelLabel;
 }
 
 export function getTransactionStateLabel(
@@ -263,9 +266,12 @@ export function useTransactionStateLabel(
   return getTransactionStateLabel(transactionState, settings);
 }
 
-export function useUpdateTenantSettings(successMessage?: string) {
+export function useUpdateTenantSettings(
+  options: { successMessage?: string; enableReloadSettings?: boolean } = {},
+) {
+  const { successMessage, enableReloadSettings } = options;
   const api = useApi();
-  // const reloadSettings = useReloadSettings();
+  const reloadSettings = useReloadSettings();
   return useMutation<unknown, unknown, TenantSettings>(
     async (partialTenantSettings) => {
       await api.postTenantsSettings({
@@ -276,7 +282,9 @@ export function useUpdateTenantSettings(successMessage?: string) {
       retry: false,
       onSuccess: () => {
         message.success(successMessage || 'Settings saved successfully');
-        // reloadSettings();
+        if (enableReloadSettings) {
+          reloadSettings();
+        }
       },
       onError: (e) => {
         message.fatal('Failed to save settings', e);
@@ -311,17 +319,22 @@ export function useGetAlias() {
   const { transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias } = useSettings();
   return useCallback(
     (x: string, humanize: boolean = false) => {
-      const countryAlias = COUNTRIES[x.toUpperCase() as CountryCode];
-      const alias =
+      const humaniseF = humanize ? humanizeAuto : (x: string) => x;
+      let alias =
         kycStatusAlias?.find((item) => item.state === x)?.alias ||
         userStateAlias?.find((item) => item.state === x)?.alias ||
         transactionStateAlias?.find((item) => item.state === x)?.alias ||
-        riskLevelAlias?.find((item) => item.level === x)?.alias ||
-        (countryAlias
-          ? `${COUNTRIES[x.toUpperCase() as CountryCode]} (${x.toUpperCase()})`
-          : undefined) ||
-        x;
-      return humanize ? humanizeAuto(alias) : alias;
+        riskLevelAlias?.find((item) => item.level === x)?.alias;
+
+      if (!alias) {
+        if (COUNTRIES[x.toUpperCase() as CountryCode]) {
+          alias = `${COUNTRIES[x.toUpperCase() as CountryCode]} (${x.toUpperCase()}`;
+        } else {
+          alias = humaniseF(x);
+        }
+      }
+
+      return alias;
     },
     [transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias],
   );

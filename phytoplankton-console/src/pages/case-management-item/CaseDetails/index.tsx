@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { flatten, isEmpty } from 'lodash';
-import { useQueryClient } from '@tanstack/react-query';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
@@ -13,20 +12,16 @@ import NameDetailsCard from './NameDetailsCard';
 import AddressDetailsCard from './AddressDetailsCard';
 import EmailDetailsCard from './EmailDetailsCard';
 import {
-  Alert,
   AlertStatus,
   Case,
   CaseStatus,
   Comment as ApiComment,
   Comment,
-  CommentsResponseItem,
   InternalBusinessUser,
   InternalConsumerUser,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
-import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_COMMENTS, ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
 import {
   all,
   AsyncResource,
@@ -59,7 +54,7 @@ import StatusFilterButton from '@/components/ActivityCard/Filters/StatusFilterBu
 import AlertIdSearchFilter from '@/components/ActivityCard/Filters/AlertIdSearchFIlter';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
@@ -68,6 +63,8 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import Tooltip from '@/components/library/Tooltip';
 import { CRM_ICON_MAP } from '@/pages/users-item/UserDetails/utils';
 import CRMData from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
+import { useAlertComments, useAlertUpdates } from '@/utils/api/alerts';
+import { useCaseUpdates } from '@/utils/api/cases';
 
 export interface ActivityLogFilterParams {
   filterActivityBy?: string[];
@@ -146,43 +143,29 @@ function useAlertsComments(
   caseRes: AsyncResource<Case>,
   alertIds: string[],
 ): AsyncResource<CommentGroup[]> {
-  const queryClient = useQueryClient();
-  const api = useApi();
   const isJustLoaded = useFinishedSuccessfully(caseRes);
-  const alertsCommentsRes = useQuery<CommentsResponseItem[]>(
-    ALERT_COMMENTS(alertIds),
-    async (): Promise<CommentsResponseItem[]> => {
-      const result = await api.getComments({
-        filterEntityIds: alertIds,
-        filterEntityTypes: ['ALERT'],
-      });
-      return result.items;
-    },
-    {
-      enabled: alertIds.length > 0,
-    },
-  );
+  const { updateAlertItemCommentsData } = useAlertUpdates();
+  const alertsCommentsRes = useAlertComments(alertIds);
   const commentsData = getOr(alertsCommentsRes.data, undefined);
 
   useEffect(() => {
     if (isJustLoaded && commentsData) {
-      for (const item of commentsData) {
+      for (const item of commentsData.items) {
         if (item.entityId) {
-          queryClient.setQueryData<ApiComment[]>(
-            ALERT_ITEM_COMMENTS(item.entityId),
-            item.comments ?? [],
-          );
+          updateAlertItemCommentsData(item.entityId, (comments) => {
+            return [...(comments ?? []), ...(item.comments ?? [])];
+          });
         }
       }
     }
-  }, [queryClient, isJustLoaded, commentsData]);
+  }, [isJustLoaded, commentsData, updateAlertItemCommentsData]);
 
   const commentsResources: AsyncResource<CommentGroup>[] = alertIds.map(
     (alertId: string): AsyncResource<CommentGroup> => {
       return success({
         title: 'Alert comments',
         id: alertId,
-        comments: commentsData?.find((item) => item.entityId === alertId)?.comments ?? [],
+        comments: commentsData?.items?.find((item) => item.entityId === alertId)?.comments ?? [],
       });
     },
   );
@@ -202,9 +185,9 @@ function useTabs(
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const isEnhancedDueDiligenceEnabled = useFeatureEnabled('EDD_REPORT');
   const alertCommentsRes = useAlertsComments(caseItemRes, alertIds);
-  const [users] = useUsers();
+  const { users } = useUsers();
   const riskClassificationValues = useRiskClassificationScores();
-  const queryClient = useQueryClient();
+  const { updateAlertQueryData, updateAlertItemCommentsData } = useAlertUpdates();
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
   const caseItem = isSuccess(caseItemRes) ? caseItemRes.value : undefined;
   const entityIds = caseItem ? getEntityIds(caseItem) : [];
@@ -214,7 +197,7 @@ function useTabs(
   const email = caseItem?.email?.origin ?? caseItem?.email?.destination ?? undefined;
   const name = caseItem?.name?.origin ?? caseItem?.name?.destination ?? undefined;
   const user = caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
-
+  const { updateCaseQueryData } = useCaseUpdates();
   const deleteCommentMutation = useMutation<
     unknown,
     unknown,
@@ -233,12 +216,12 @@ function useTabs(
       }
     },
     {
-      onSuccess: (data, variables) => {
+      onSuccess: (_, variables) => {
         message.success('Comment deleted successfully');
         const { commentId, groupId } = variables;
         if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
           const alertId = groupId.replace(ALERT_GROUP_PREFIX, '');
-          queryClient.setQueryData<Alert>(ALERT_ITEM(alertId), (alert) => {
+          updateAlertQueryData(alertId, (alert) => {
             if (!alert) {
               return undefined;
             }
@@ -247,25 +230,22 @@ function useTabs(
               comments: (alert?.comments ?? []).filter((comment) => comment.id !== commentId),
             };
           });
-          queryClient.setQueryData<ApiComment[]>(ALERT_ITEM_COMMENTS(alertId), (comments) => {
+          updateAlertItemCommentsData(alertId, (comments) => {
             if (comments == null) {
               return comments;
             }
             return comments.filter((comment) => comment.id !== commentId);
           });
         } else if (caseItem?.caseId) {
-          queryClient.setQueryData<Case>(
-            CASES_ITEM(caseItem.caseId),
-            (caseItem: Case | undefined) => {
-              if (caseItem == null) {
-                return caseItem;
-              }
-              return {
-                ...caseItem,
-                comments: caseItem.comments?.filter((comment) => comment.id !== commentId),
-              };
-            },
-          );
+          updateCaseQueryData(caseItem.caseId, (caseItem) => {
+            if (!caseItem) {
+              return undefined;
+            }
+            return {
+              ...caseItem,
+              comments: caseItem.comments?.filter((comment) => comment.id !== commentId),
+            };
+          });
         }
       },
     },

@@ -9,7 +9,10 @@ import { CASES_COLLECTION } from '@/utils/mongo-table-names'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { logger } from '@/core/logger'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
-import { calculateSLATimeWindowsForPolicy } from '@/services/sla/sla-utils'
+import {
+  calculateSLATimeWindowsForPolicy,
+  getSLAStatusFromElapsedTime,
+} from '@/services/sla/sla-utils'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 import { AlertsRepository } from '@/services/alerts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -58,7 +61,14 @@ const calculateTimeToWarningAndBreach = async <T extends Alert | Case>(
               if (!slaPolicy) {
                 return slaPolicyDetail
               }
-              const elapsedTime = slaPolicyDetail.elapsedTime ?? 0
+              const elapsedTime = slaPolicyDetail.elapsedTime
+              if (!elapsedTime) {
+                return slaPolicyDetail
+              }
+              const newStatus = getSLAStatusFromElapsedTime(
+                elapsedTime,
+                slaPolicy.policyConfiguration
+              )
               const { timeToWarning, timeToBreach } =
                 calculateSLATimeWindowsForPolicy(
                   slaPolicy.policyConfiguration,
@@ -67,10 +77,12 @@ const calculateTimeToWarningAndBreach = async <T extends Alert | Case>(
                     type === 'alert'
                       ? (entity as Alert).alertStatus
                       : (entity as Case).caseStatus
-                  )
+                  ),
+                  entity.createdTimestamp ?? Date.now()
                 )
               return {
                 ...slaPolicyDetail,
+                policyStatus: newStatus,
                 timeToWarning,
                 timeToBreach,
               }
@@ -101,9 +113,6 @@ const calculateTimeToWarningAndBreach = async <T extends Alert | Case>(
 }
 
 async function migrateTenant(tenant: Tenant) {
-  if (!hasFeature('ALERT_SLA')) {
-    return
-  }
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const caseCollection = mongoDb
@@ -112,57 +121,8 @@ async function migrateTenant(tenant: Tenant) {
   const alertSlaCursor = caseCollection
     .aggregate<Alert>([
       {
-        $match: {
-          alerts: {
-            $elemMatch: {
-              alertStatus: { $ne: 'CLOSED' },
-              $or: [
-                {
-                  slaPolicyDetails: {
-                    $not: {
-                      $elemMatch: {
-                        policyStatus: 'BREACHED',
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-        },
-      },
-      {
         $unwind: {
           path: '$alerts',
-        },
-      },
-      {
-        $match: {
-          $and: [
-            {
-              'alerts.alertStatus': {
-                $exists: true,
-              },
-            },
-            {
-              'alerts.alertStatus': {
-                $ne: 'CLOSED',
-              },
-            },
-            {
-              $or: [
-                {
-                  'alerts.slaPolicyDetails': {
-                    $not: {
-                      $elemMatch: {
-                        policyStatus: 'BREACHED',
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          ],
         },
       },
       {
@@ -197,22 +157,6 @@ async function migrateTenant(tenant: Tenant) {
               caseType: { $eq: 'MANUAL' },
             },
             { caseStatus: { $exists: true } },
-            {
-              caseStatus: { $ne: 'CLOSED' },
-            },
-            {
-              $or: [
-                {
-                  slaPolicyDetails: {
-                    $not: {
-                      $elemMatch: {
-                        policyStatus: 'BREACHED',
-                      },
-                    },
-                  },
-                },
-              ],
-            },
           ],
         },
       },
@@ -226,24 +170,28 @@ async function migrateTenant(tenant: Tenant) {
     mongoDb,
     dynamoDb,
   })
-  await calculateTimeToWarningAndBreach(
-    'alert',
-    alertSlaCursor,
-    { mongoDb, dynamoDb },
-    tenant.id,
-    async (updates: SlaUpdates[]) => {
-      await alertRepository.updateAlertSlaPolicyDetails(updates)
-    }
-  )
-  await calculateTimeToWarningAndBreach(
-    'case',
-    caseSlaCursor,
-    { mongoDb, dynamoDb },
-    tenant.id,
-    async (updates: SlaUpdates[]) => {
-      await caseRepository.updateCaseSlaPolicyDetails(updates)
-    }
-  )
+  if (hasFeature('ALERT_SLA')) {
+    await calculateTimeToWarningAndBreach(
+      'alert',
+      alertSlaCursor,
+      { mongoDb, dynamoDb },
+      tenant.id,
+      async (updates: SlaUpdates[]) => {
+        await alertRepository.updateAlertSlaPolicyDetails(updates)
+      }
+    )
+  }
+  if (hasFeature('PNB')) {
+    await calculateTimeToWarningAndBreach(
+      'case',
+      caseSlaCursor,
+      { mongoDb, dynamoDb },
+      tenant.id,
+      async (updates: SlaUpdates[]) => {
+        await caseRepository.updateCaseSlaPolicyDetails(updates)
+      }
+    )
+  }
 }
 
 export const up = async () => {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react';
 import { snakeCase } from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';

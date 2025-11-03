@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { NestedValidationResult } from '../utils/validation/types';
-import { useFieldState } from '@/components/library/Form/utils/hooks';
+import { useFieldState, useFormContext } from '@/components/library/Form/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 import { FieldContext } from '@/components/library/Form/context';
 
@@ -8,6 +8,8 @@ export interface FormFieldRenderProps<Value> extends InputProps<Value> {
   isValid: boolean;
   isTouched: boolean;
   isVisited: boolean;
+  isHighlighted: boolean;
+  highlightMessage: string | null;
   showError: boolean;
   onFocus: () => void;
   onBlur: () => void;
@@ -25,6 +27,7 @@ export default function GenericFormField<
   Key extends keyof FormValues = keyof FormValues,
 >(props: Props<Key, FormValues[Key]>): JSX.Element {
   const { name, children } = props;
+  const { isDisabled } = useFormContext<FormValues>();
   const fieldState = useFieldState<FormValues, Key>(name);
   const {
     value,
@@ -49,6 +52,7 @@ export default function GenericFormField<
     <FieldContext.Provider value={{ state: fieldState }}>
       {children({
         value,
+        isDisabled: isDisabled,
         onChange: handleChange,
         onFocus: () => {
           onChangeMeta((prev) => ({ ...prev, isTouched: true }));
@@ -58,6 +62,8 @@ export default function GenericFormField<
         },
         isTouched: meta.isTouched === true,
         isVisited: meta.isVisited === true,
+        isHighlighted: meta.highlight != null && meta.highlight !== '',
+        highlightMessage: meta.highlight != null && meta.highlight !== '' ? meta.highlight : null,
         isValid,
         showError,
         validationResult,

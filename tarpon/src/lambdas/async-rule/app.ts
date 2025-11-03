@@ -21,6 +21,11 @@ import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import { BatchImportService } from '@/services/batch-import'
 import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
+import {
+  getConnectors,
+  getPrimaryRecordIdentifier,
+} from '@/services/transaction-multiplexer/multiplexer-utils'
+import { TransactionMultiplexerRepository } from '@/services/transaction-multiplexer/repository'
 
 function getLockKeys(record: AsyncRuleRecord): string[] {
   switch (record.type) {
@@ -189,10 +194,16 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
           const isConcurrentAsyncRulesEnabled = hasFeature(
             'CONCURRENT_ASYNC_RULES'
           )
+          const isMultiplexed = hasFeature('MULTIPLEX_ASYNC_RULES_TX')
+          const multiplexingRepository = new TransactionMultiplexerRepository(
+            tenantId,
+            dynamoDb
+          )
           if (
             tenantId === '4c9cdf0251' &&
             process.env.AWS_LAMBDA_FUNCTION_NAME ===
-              StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME
+              StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME &&
+            !isMultiplexed
           ) {
             await sendAsyncRuleTasks(
               records.map((record) => record.body),
@@ -215,7 +226,9 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
           }
           for await (const record of records) {
             const lockKeys =
-              isConcurrentAsyncRulesEnabled && envIsNot('test', 'local')
+              isConcurrentAsyncRulesEnabled &&
+              envIsNot('test', 'local') &&
+              !isMultiplexed
                 ? getLockKeys(record.body)
                 : []
 
@@ -233,7 +246,24 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
             }
 
             await runAsyncRules(record.body)
-
+            if (
+              (isMultiplexed && record.body.type === 'TRANSACTION') ||
+              record.body.type === 'TRANSACTION_EVENT'
+            ) {
+              const identifiers = getConnectors(
+                {
+                  messageId: record.messageId,
+                  record: record.body,
+                },
+                ['USER_TRANSACTIONS', 'PAYMENT_DETAILS_TRANSACTIONS']
+                /* To improve this and include other aggregation types (Ideally queue should pass identifers for each record or generate by fetching aggTypes)
+                 */
+              )
+              await multiplexingRepository.markIdentifierAsProcessed(
+                identifiers,
+                getPrimaryRecordIdentifier(record.body)
+              )
+            }
             // Release locks
             if (lockKeys.length > 0) {
               await Promise.all(

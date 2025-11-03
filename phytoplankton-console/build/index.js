@@ -45,6 +45,36 @@ function serve() {
   const folder = path.join(env.PROJECT_DIR, env.OUTPUT_FOLDER);
 
   const app = express();
+
+  // Add security headers middleware
+  app.use((req, res, next) => {
+    // Apply security headers to all responses
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+
+    // Set Content-Type only for specific file types that need it
+    if (req.url === '/' || req.url.endsWith('.html') || req.url === '/index.html') {
+      res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+    } else if (req.url.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+    } else if (req.url.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+    } else if (req.url.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json; charset=UTF-8');
+    } else if (req.url.endsWith('.xml')) {
+      res.setHeader('Content-Type', 'application/xml; charset=UTF-8');
+    } else if (req.url.endsWith('.txt')) {
+      res.setHeader('Content-Type', 'text/plain; charset=UTF-8');
+    }
+    next();
+  });
+
   app.use(express.static(process.env.SERVE_DIRECTORY || folder));
   app.use(fallback('index.html', { root: folder }));
   app.get('/', function (req, res) {

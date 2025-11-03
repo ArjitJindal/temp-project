@@ -55,7 +55,7 @@ export interface LogicVariableBase {
 }
 
 export type LogicVariableContext = {
-  baseCurrency?: CurrencyCode
+  baseCurrency?: CurrencyCode | 'ORIGINAL_CURRENCY'
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
 }

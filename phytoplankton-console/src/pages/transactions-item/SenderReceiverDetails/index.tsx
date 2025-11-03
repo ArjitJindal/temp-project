@@ -30,7 +30,7 @@ export default function SenderReceiverDetails(props: Props) {
           <UserDetails
             type="DESTINATION"
             user={transaction.destinationUser}
-            userId={transaction.originUserId}
+            userId={transaction.destinationUserId}
             amountDetails={transaction.destinationAmountDetails}
             paymentDetails={transaction.destinationPaymentDetails}
             deviceData={transaction.destinationDeviceData}

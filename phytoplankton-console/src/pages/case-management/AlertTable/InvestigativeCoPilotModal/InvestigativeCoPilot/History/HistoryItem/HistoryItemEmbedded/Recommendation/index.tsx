@@ -5,22 +5,13 @@ import { SarButton } from '@/components/Sar';
 import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { ApproveSendBackButton } from '@/pages/case-management/components/ApproveSendBackButton';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { ALERT_ITEM } from '@/utils/queries/keys';
+import { useAlertDetails } from '@/utils/api/alerts';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
 
 export const Recommendation = ({ alertId, pdfMode }: { alertId: string; pdfMode?: boolean }) => {
   const settings = useSettings();
-  const api = useApi();
-  const alertQuery = useQuery(
-    ALERT_ITEM(alertId),
-    async () => {
-      return await api.getAlert({ alertId });
-    },
-    { enabled: !pdfMode },
-  );
+  const alertQuery = useAlertDetails(alertId, { enabled: !pdfMode });
   const isEscalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
 
   const userAlias = firstLetterUpper(settings.userAlias);
@@ -94,6 +85,7 @@ export const Recommendation = ({ alertId, pdfMode }: { alertId: string; pdfMode?
                   alertIds={[alert.alertId].filter(notEmpty)}
                   caseId={alert.caseId}
                   transactionIds={alert?.transactionIds ?? []}
+                  source="alert"
                 />
               )}
             </div>

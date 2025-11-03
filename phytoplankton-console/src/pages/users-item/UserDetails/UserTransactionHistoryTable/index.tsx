@@ -13,21 +13,18 @@ import {
   TransactionAmountDetails,
   TransactionState,
 } from '@/apis';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { CASES_LIST } from '@/utils/queries/keys';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   COUNTRY,
   DATE,
-  FLOAT,
   MONEY,
   MONEY_CURRENCIES,
   PAYMENT_METHOD,
   RISK_LEVEL,
+  RISK_SCORE,
   RULE_ACTION_STATUS,
   STRING,
   TRANSACTION_STATE,
@@ -50,6 +47,7 @@ import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
 import { useTransactionsQuery } from '@/pages/transactions/utils';
 import { TableDataItem } from '@/components/library/Table/types';
+import { useCaseItems } from '@/utils/api/cases';
 
 export type DataItem = {
   index: number;
@@ -75,7 +73,7 @@ type TableParams = TransactionsTableParams;
 
 export function Content(props: { userId: string }) {
   const { userId } = props;
-  const api = useApi();
+  const settings = useSettings();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const riskClassificationValues = useRiskClassificationScores();
 
@@ -92,7 +90,7 @@ export function Content(props: { userId: string }) {
     filterUserId: userId,
   };
 
-  const cases = useQuery(CASES_LIST(filter), async () => api.getCaseList(filter));
+  const cases = useCaseItems(filter);
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 
@@ -113,6 +111,7 @@ export function Content(props: { userId: string }) {
 
   const columns = useMemo(() => {
     const helper = new ColumnHelper<DataItem>();
+    const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
 
     return helper.list([
       helper.simple<'transactionId'>({
@@ -143,7 +142,7 @@ export function Content(props: { userId: string }) {
               title: 'TRS score',
               key: 'arsScore',
               id: 'arsScore',
-              type: FLOAT,
+              type: RISK_SCORE,
               sorting: true,
               tooltip: 'Transaction Risk Score',
             }),
@@ -151,7 +150,11 @@ export function Content(props: { userId: string }) {
               title: 'TRS level',
               id: 'arsRiskLevel',
               value: (entity) =>
-                getRiskLevelFromScore(riskClassificationValues, entity.arsScore ?? null),
+                getRiskLevelFromScore(
+                  riskClassificationValues,
+                  entity.arsScore ?? null,
+                  configRiskLevelAliasArray,
+                ),
               type: RISK_LEVEL,
               tooltip: 'Transaction Risk Score level',
             }),
@@ -277,7 +280,7 @@ export function Content(props: { userId: string }) {
         ]),
       }),
     ]);
-  }, [isRiskScoringEnabled, showDetailsView, riskClassificationValues]);
+  }, [isRiskScoringEnabled, showDetailsView, riskClassificationValues, settings?.riskLevelAlias]);
 
   const ruleOptions = useRuleOptions();
 
@@ -313,7 +316,7 @@ export function Content(props: { userId: string }) {
             uniques: params.productType ?? undefined,
           }}
           onConfirm={(value) => {
-            setParams((state) => ({ ...state, productType: value.uniques }));
+            setParams((state) => ({ ...state, productType: value?.uniques }));
           }}
         />
       ),
@@ -331,7 +334,7 @@ export function Content(props: { userId: string }) {
             uniques: params.transactionTypes ?? undefined,
           }}
           onConfirm={(value) => {
-            setParams((state) => ({ ...state, transactionTypes: value.uniques }));
+            setParams((state) => ({ ...state, transactionTypes: value?.uniques }));
           }}
         />
       ),

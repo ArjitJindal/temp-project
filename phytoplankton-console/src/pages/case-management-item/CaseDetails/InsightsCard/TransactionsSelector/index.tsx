@@ -10,6 +10,7 @@ import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import * as Form from '@/components/ui/Form';
 import { QueryResult } from '@/utils/queries/types';
 import {
+  CurrencyCode,
   TransactionState as LastTransactionState,
   RuleAction,
   TransactionsStatsByTimeResponseData,
@@ -25,12 +26,13 @@ import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import TransactionState from '@/components/ui/TransactionStateDisplay';
 import { Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Select from '@/components/library/Select';
+import { getOr } from '@/utils/asyncResource';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
-export type AggregateByField = 'status' | 'transactionState';
+export type AggregateByField = 'status' | 'transactionState' | 'originCurrency';
 export interface Params {
   selectedRuleActions?: RuleAction[];
   selectedTransactionStates?: LastTransactionState[];
@@ -51,9 +53,20 @@ interface Props {
 export default function TransactionsSelector(props: Props) {
   const { userId, params, onChangeParams, currency } = props;
   const response = useStatsQuery(params, userId, currency);
+  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const selectedKeys =
     params.aggregateBy === 'status' ? params.selectedRuleActions : params.selectedTransactionStates;
-  const options = params.aggregateBy === 'status' ? PARTIAL_RULE_ACTIONS : TRANSACTION_STATES;
+
+  const eligibleCurrencies = getOr(response.data, [])
+    .flatMap((x) => Object.keys(x.values))
+    .map((x) => x as CurrencyCode);
+
+  const options =
+    params.aggregateBy === 'status'
+      ? PARTIAL_RULE_ACTIONS
+      : params.aggregateBy === 'transactionState'
+      ? TRANSACTION_STATES
+      : eligibleCurrencies;
 
   return (
     <div className={cn(s.root)}>
@@ -93,7 +106,8 @@ export default function TransactionsSelector(props: Props) {
                   </SwitchButton>
                 );
               })
-            : TRANSACTION_STATES.map((option: LastTransactionState) => {
+            : params.aggregateBy === 'transactionState'
+            ? TRANSACTION_STATES.map((option: LastTransactionState) => {
                 const checked = params.selectedTransactionStates?.indexOf(option) !== -1;
                 return (
                   <SwitchButton
@@ -119,7 +133,8 @@ export default function TransactionsSelector(props: Props) {
                     </div>
                   </SwitchButton>
                 );
-              })}
+              })
+            : undefined}
         </div>
         <div className={s.settings}>
           <Feature name="NEW_FEATURES">
@@ -144,6 +159,9 @@ export default function TransactionsSelector(props: Props) {
             options={[
               { value: 'status', label: 'Transaction status' },
               { value: 'transactionState', label: 'Last transaction state' },
+              ...(isClickhouseEnabled
+                ? [{ value: 'originCurrency', label: 'Transaction currency' }]
+                : []),
             ]}
           />
           <Select<string>
@@ -227,7 +245,7 @@ export default function TransactionsSelector(props: Props) {
                         options.reduce((acc, item) => {
                           acc[item] = 0;
                           return acc;
-                        }, {} as { [key in RuleAction | LastTransactionState]: number }),
+                        }, {} as { [key in RuleAction | LastTransactionState | CurrencyCode]: number }),
                       ),
                   }))}
                 />

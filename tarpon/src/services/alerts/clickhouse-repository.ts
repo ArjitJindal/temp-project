@@ -22,9 +22,6 @@ import { getAssignmentsStatus } from '@/services/case-alerts-common/utils'
 import { DefaultApiGetAlertsQaSamplingRequest } from '@/@types/openapi-internal/RequestParameters'
 import { logger } from '@/core/logger'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
-export interface AlertClickhouse extends Alert {
-  caseStatus?: string
-}
 
 type StatusChanges = {
   statusChanges: CaseStatusChange[]
@@ -253,6 +250,11 @@ export class ClickhouseAlertRepository {
         )}'])
       `)
     }
+    if (params.filterCaseStatus != null) {
+      whereConditions.push(
+        `caseStatus IN ('${params.filterCaseStatus.join("','")}')`
+      )
+    }
     if (params.filterCaseTypes?.length) {
       whereConditions.push(
         `caseType IN ('${params.filterCaseTypes.join("','")}')`
@@ -336,12 +338,6 @@ export class ClickhouseAlertRepository {
       )
     }
 
-    if (params.filterCaseStatus != null) {
-      whereConditions.push(
-        `caseStatus IN ('${params.filterCaseStatus.join("','")}')`
-      )
-    }
-
     if (params.filterAlertStatus != null) {
       whereConditions.push(
         `alertStatus IN ('${params.filterAlertStatus.join("','")}')`
@@ -360,7 +356,13 @@ export class ClickhouseAlertRepository {
 
     if (params.filterTransactionIds != null) {
       whereConditions.push(
-        `hasAny(transactionIds, ['${params.filterTransactionIds.join("','")}'])`
+        `id IN (
+           SELECT
+             replaceAll(alertId, '"', '') AS alertId
+           FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+           ARRAY JOIN JSONExtractArrayRaw(data, 'alertIds') AS alertId
+           WHERE id IN ('${params.filterTransactionIds.join("','")}')
+        )`
       )
     }
 

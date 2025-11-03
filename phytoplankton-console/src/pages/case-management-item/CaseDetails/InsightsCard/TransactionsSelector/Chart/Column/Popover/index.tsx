@@ -2,18 +2,19 @@ import React from 'react';
 import { Currency } from '@flagright/lib/constants';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { DataItem, Series } from '../../types';
-import { TRANSACTION_STATE_COLORS } from '..';
+import { TRANSACTION_STATE_COLORS, getCurrencyColor } from '..';
 import s from './styles.module.less';
 import PopoverComponent from '@/components/ui/Popover';
 import { P } from '@/components/ui/Typography';
 import { ColorIndicator } from '@/pages/case-management-item/CaseDetails/InsightsCard/components/Legend';
 import { getRuleActionColorForDashboard } from '@/utils/rules';
-import { RuleAction, TransactionState } from '@/apis';
+import { CurrencyCode, RuleAction, TransactionState } from '@/apis';
 import Money from '@/components/ui/Money';
 import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { isValidCurrencyCode } from '@/apis/models-custom/CurrencyCode';
 
 interface Props {
   series: Series;
@@ -33,13 +34,22 @@ export default function Popover(props: Props) {
       </P>
       <div className={s.indicatorsTable}>
         {Object.entries(dataItem.values).map(([status, value]) => {
-          const isState = status in TRANSACTION_STATE_COLORS;
+          const isState = status.toUpperCase() in TRANSACTION_STATE_COLORS;
+          const isRuleAction = ['ALLOW', 'SUSPEND', 'BLOCK', 'FLAG'].includes(status.toUpperCase());
+
           const color = isState
-            ? TRANSACTION_STATE_COLORS[status as TransactionState]
-            : getRuleActionColorForDashboard(status as RuleAction);
+            ? TRANSACTION_STATE_COLORS[status.toUpperCase() as TransactionState]
+            : isRuleAction
+            ? getRuleActionColorForDashboard(status as RuleAction)
+            : getCurrencyColor(status as CurrencyCode);
+
           const title = isState
             ? humanizeAuto(status)
-            : getRuleActionLabel(status as RuleAction, settings) || 'Unknown';
+            : isValidCurrencyCode(status)
+            ? status.toUpperCase()
+            : isRuleAction
+            ? getRuleActionLabel(status as RuleAction, settings) || 'Unknown'
+            : status; // For currency codes, just show the code
           return (
             <IndicatorRow
               key={status}

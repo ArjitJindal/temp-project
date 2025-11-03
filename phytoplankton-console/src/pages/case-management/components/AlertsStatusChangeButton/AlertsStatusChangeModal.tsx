@@ -12,7 +12,8 @@ import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useCurrentUser, useUsers } from '@/utils/user-utils';
+import { useAuth0User, useCurrentUser } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import {
   getAssigneeName,
@@ -38,7 +39,7 @@ const isEscatedTimes = (caseId: string, times: number) => {
 export default function AlertsStatusChangeModal(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
-  const [users] = useUsers();
+  const { users } = useUsers();
   const auth0User = useAuth0User();
   const currentUser = useCurrentUser();
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
@@ -122,7 +123,7 @@ export default function AlertsStatusChangeModal(props: Props) {
           }
         }
       }
-      await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId as string) });
+      await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
       for (const alertId of props.entityIds) {
         await queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
       }

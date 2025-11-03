@@ -409,7 +409,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         frozenStatuses: BASIC_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
         alertCreatedFor: rule?.id === 'R-170' ? defaultAlertCreatedForR170 : defaultAlertCreatedFor,
         ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
-        screeningAlertCreationLogic: BASIC_DETAILS_STEP_INITIAL_VALUES.screeningAlertCreationLogic,
+        alertCreationLogic: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreationLogic,
       },
       standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
       ruleParametersStep: ruleParametersStep,

@@ -2,6 +2,7 @@ import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '../utils';
 import { RiskFactorConfigurationStepFormValues } from './RiskFactorConfigurationForm/RiskFactorConfigurationStep';
 import {
+  CurrencyCode,
   RiskClassificationScore,
   RiskEntityType,
   RiskFactor,
@@ -35,7 +36,7 @@ export function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurati
     defaultRiskValue: riskItem.defaultRiskScore ?? DEFAULT_RISK_LEVEL,
   };
   const riskFactorConfigurationStep = {
-    baseCurrency: riskItem.baseCurrency,
+    baseCurrency: riskItem.baseCurrency as CurrencyCode,
     aggregationVariables: riskItem.logicAggregationVariables,
     riskLevelLogic: riskItem.riskLevelLogic,
     entityVariables: riskItem.logicEntityVariables,

@@ -5,14 +5,7 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
 import { ResetUserMfa } from '../components/ResetUserMfa';
 import s from './index.module.less';
-import {
-  parseUserRole,
-  useAccountsQueryResult,
-  useAuth0User,
-  useHasResources,
-  useInvalidateUsers,
-  UserRole,
-} from '@/utils/user-utils';
+import { parseUserRole, useAuth0User, useHasResources, UserRole } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { Account } from '@/apis';
@@ -40,16 +33,17 @@ import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { useAccounts, useAuthUpdates } from '@/utils/api/auth';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const api = useApi();
+  const { updateAccounts } = useAuthUpdates();
   const [deletedUserId, setDeletedUserId] = useState<string | null>(null);
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
-  const invalidateUsers = useInvalidateUsers().invalidate;
   let messageVar: CloseMessage | null = null;
-  const allAccountsResult = useAccountsQueryResult();
+  const allAccountsResult = useAccounts();
   const queryClient = useQueryClient();
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
   const accountsResult: QueryResult<PaginatedData<Account>> = useMemo(() => {
@@ -106,20 +100,13 @@ export default function Team() {
     },
     {
       onSuccess: (data: Account, { deactivate }) => {
-        queryClient.setQueryData<Account[]>(ACCOUNT_LIST(), (oldData: Account[] | undefined) => {
-          if (oldData) {
-            return oldData.map((account: Account) => {
-              if (account.id === data.id) {
-                return {
-                  ...account,
-                  blocked: data.blocked,
-                  blockedReason: data.blockedReason,
-                };
-              }
-              return account;
-            });
-          }
-          return oldData;
+        updateAccounts((oldData: Account[] | undefined) => {
+          return oldData?.map((account) => {
+            if (account.id === data.id) {
+              return { ...account, blocked: data.blocked, blockedReason: data.blockedReason };
+            }
+            return account;
+          });
         });
         messageVar?.();
         message.success(`User ${deactivate ? 'deactivated' : 'reactivated'} successfully`);
@@ -153,17 +140,17 @@ export default function Team() {
                   title: 'Name',
                   defaultWidth: 220,
                   type: {
-                    render(name, context) {
+                    render(name, _context) {
                       return (
                         <div className={s.name}>
                           <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                            {!name || context.item.email === context.item.name ? '-' : name}
+                            {!name ? '-' : name}
                           </P>
                         </div>
                       );
                     },
-                    stringify(value, item) {
-                      return !value || item.email === item.name ? '-' : value;
+                    stringify(value, _item) {
+                      return !value ? '-' : value;
                     },
                   },
                 }),
@@ -437,8 +424,7 @@ export default function Team() {
                       item={item}
                       user={user}
                       onSuccess={() => {
-                        invalidateUsers();
-                        accountsResult.refetch();
+                        queryClient.invalidateQueries(ACCOUNT_LIST());
                       }}
                     />
                     <DeleteUser
@@ -446,8 +432,7 @@ export default function Team() {
                       user={user}
                       accounts={accounts}
                       onSuccess={() => {
-                        invalidateUsers();
-                        accountsResult.refetch();
+                        queryClient.invalidateQueries(ACCOUNT_LIST());
                       }}
                       setDeletedUserId={setDeletedUserId}
                     />

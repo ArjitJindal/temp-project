@@ -7,7 +7,12 @@ import { InternalUserEvent, RiskLevel, SortOrder } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { DATE_TIME, FLOAT, ID, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
+import {
+  DATE_TIME,
+  ID,
+  RISK_LEVEL,
+  RISK_SCORE,
+} from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { USER_EVENTS_LIST } from '@/utils/queries/keys';
@@ -59,6 +64,8 @@ export const UserEvents = (props: Props) => {
   const { userId } = props;
   const helper = new ColumnHelper<InternalUserEvent>();
   const api = useApi();
+  const settings = useSettings();
+  const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
@@ -105,7 +112,7 @@ export const UserEvents = (props: Props) => {
     helper.simple({
       title: 'KRS score',
       key: 'riskScoreDetails.kycRiskScore',
-      type: FLOAT,
+      type: RISK_SCORE,
     }),
     helper.derived<RiskLevel>({
       title: 'KRS level',
@@ -114,13 +121,14 @@ export const UserEvents = (props: Props) => {
         return getRiskLevelFromScore(
           riskClassificationValues,
           entity.riskScoreDetails?.kycRiskScore || null,
+          configRiskLevelAliasArray,
         );
       },
     }),
     helper.simple({
       title: 'CRA score',
       key: 'riskScoreDetails.craRiskScore',
-      type: FLOAT,
+      type: RISK_SCORE,
     }),
     helper.derived<RiskLevel>({
       title: 'CRA level',
@@ -129,6 +137,7 @@ export const UserEvents = (props: Props) => {
         return getRiskLevelFromScore(
           riskClassificationValues,
           entity.riskScoreDetails?.craRiskScore || null,
+          configRiskLevelAliasArray,
         );
       },
     }),

@@ -1766,6 +1766,7 @@ paths:
             enum:
               - status
               - transactionState
+              - originCurrency
           in: query
           name: aggregateBy
   /users/{userId}/crm:
@@ -9078,6 +9079,8 @@ components:
             $ref: '#/components/schemas/TableHeaders'
         total:
           type: number
+        transactionsCount:
+          type: number
         rows:
           type: array
           items:
@@ -9495,7 +9498,11 @@ components:
         aggregationFilterFieldValue:
           type: string
         baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         timeWindow:
           type: object
           properties:
@@ -9512,6 +9519,8 @@ components:
           type: number
         lastNEntities:
           type: number
+        useEventTimestamp:
+          type: boolean
         includeCurrentEntity:
           type: boolean
       required:
@@ -9615,7 +9624,11 @@ components:
           items:
             $ref: '#/components/schemas/LogicAggregationVariable'
         defaultBaseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         parametersSchema:
           type: object
         defaultParameters:
@@ -9840,7 +9853,11 @@ components:
           items:
             $ref: '#/components/schemas/LogicEntityVariableInUse'
         baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         parameters:
           type: object
         action:
@@ -9943,6 +9960,8 @@ components:
             - RECEIVER
         screeningAlertCreationLogic:
           $ref: '#/components/schemas/ScreeningAlertCreationLogic'
+        alertCreationLogic:
+          $ref: '#/components/schemas/AlertCreationLogic'
       required:
         - casePriority
         - nature
@@ -9956,6 +9975,12 @@ components:
       type: string
       enum:
         - PER_SEARCH_ALERT
+        - SINGLE_ALERT
+    AlertCreationLogic:
+      title: AlertCreationLogic
+      type: string
+      enum:
+        - PER_COUNTERPARTY_ALERT
         - SINGLE_ALERT
     UserRuleRunCondition:
       title: UserRuleRunCondition
@@ -10105,9 +10130,12 @@ components:
           $ref: '#/components/schemas/RiskLevel'
         alias:
           type: string
+        isActive:
+          type: boolean
       required:
         - level
         - alias
+        - isActive
     Priority:
       type: string
       title: Priority
@@ -12839,7 +12867,11 @@ components:
         description:
           type: string
         baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+            - type: string
+              enum:
+                - ORIGINAL_CURRENCY
         type:
           $ref: '#/components/schemas/RiskEntityType'
         riskLevelAssignmentValues:
@@ -13163,6 +13195,7 @@ components:
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
         - FLAT_FILES_IMPORT_TRANSACTIONS
+        - MULTIPLEX_ASYNC_RULES_TX
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -14101,6 +14134,13 @@ components:
           type: array
           items:
             type: string
+        alertMeta:
+          type: object
+          properties:
+            originPaymentMethodId:
+              type: string
+            destinationPaymentMethodId:
+              type: string
       required:
         - createdTimestamp
         - ruleInstanceId
@@ -15006,7 +15046,7 @@ components:
             relevance:
               type: array
               items:
-                $ref: '#/components/schemas/PEPRelevanceInternal'
+                type: string
             sourceIds:
               type: array
               items:
@@ -15234,9 +15274,24 @@ components:
       title: OpenSanctionsPEPSourceRelevance
       type: string
       enum:
-        - PEP
-        - PEP_BY_ASSOCIATION
-        - POI
+        - poi
+        - role.pep
+        - role.rca
+        - role.oligarch
+        - role.diplo
+        - role.judge
+    OpenSanctionsCrimeSourceRelevance:
+      title: OpenSanctionsCrimeSourceRelevance
+      type: string
+      enum:
+        - crime
+        - crime.fraud
+        - crime.cyber
+        - crime.fin
+        - crime.war
+        - crime.boss
+        - crime.terror
+        - crime.traffick
     RELSourceRelevance:
       title: RELSourceRelevance
       type: string

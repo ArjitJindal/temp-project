@@ -85,7 +85,7 @@ export default class MarkdownEditor extends Component<Props> {
   constructor(props: Props) {
     super(props);
     this.toolbarItems = [
-      ['heading', 'bold', 'italic', 'strike'],
+      ['bold', 'heading', 'italic', 'strike'],
       ['link'],
       ['hr', 'quote'],
       ['ul', 'ol'],

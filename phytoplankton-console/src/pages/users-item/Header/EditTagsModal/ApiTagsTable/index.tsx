@@ -5,7 +5,9 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Button from '@/components/library/Button';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { STRING } from '@/components/library/Table/standardDataTypes';
+import Select from '@/components/library/Select';
+import TextInput from '@/components/library/TextInput';
+import { ColumnDataType } from '@/components/library/Table/types';
 
 interface Props {
   tags: UserTag[] | undefined;
@@ -34,18 +36,88 @@ function ApiTagsTable(props: Props) {
   const { tags, setTags } = props;
 
   const helper = new ColumnHelper<Item>();
+  const existingKeys = new Set((tags ?? []).map((t) => t.key));
+  const consoleTags = settings.consoleTags ?? [];
+  const getConsoleTagByKey = (key?: string) => consoleTags.find((t) => t.key === key);
+  const keyOptions = consoleTags
+    .filter((t) => !existingKeys.has(t.key))
+    .map((t) => ({ label: t.key, value: t.key }));
+
+  const KEY_TYPE: ColumnDataType<string, Item> = {
+    render: (value) => <>{value}</>,
+    renderEdit: (ctx) => {
+      const rowApi = ctx.rowApi;
+      if (!rowApi?.isCreateRow) {
+        return <>{ctx.item.key}</>;
+      }
+      const draft = (rowApi.getDraft?.() as Item) ?? ctx.item;
+      return (
+        <Select
+          mode="SINGLE"
+          options={keyOptions}
+          value={draft.key}
+          onChange={(newKey) => {
+            rowApi.setDraft?.((prevUnknown: unknown) => {
+              const prev = (prevUnknown as Item) ?? ctx.item;
+              return { ...prev, key: newKey ?? '', value: '' };
+            });
+          }}
+        />
+      );
+    },
+  };
+
+  const VALUE_TYPE: ColumnDataType<string, Item> = {
+    render: (value) => <>{value}</>,
+    renderEdit: (ctx) => {
+      const rowApi = ctx.rowApi;
+      const draft = (rowApi?.getDraft?.() as Item) ?? ctx.item;
+      const selectedKey = draft.key ?? ctx.item.key;
+      const consoleTag = getConsoleTagByKey(selectedKey);
+      const isEnum = consoleTag?.type === 'ENUM';
+      if (isEnum) {
+        const options = (consoleTag?.options ?? []).map((opt) => ({ label: opt, value: opt }));
+        return (
+          <Select
+            mode="SINGLE"
+            options={options}
+            value={draft.value}
+            onChange={(newVal) => {
+              rowApi?.setDraft?.((prevUnknown: unknown) => {
+                const prev = (prevUnknown as Item) ?? ctx.item;
+                return { ...prev, value: newVal ?? '' };
+              });
+            }}
+          />
+        );
+      }
+      return (
+        <TextInput
+          className={s.valueInput}
+          value={draft.value}
+          onChange={(newVal) => {
+            rowApi?.setDraft?.((prevUnknown: unknown) => {
+              const prev = (prevUnknown as Item) ?? ctx.item;
+              return { ...prev, value: newVal ?? '' };
+            });
+          }}
+        />
+      );
+    },
+  };
+
   const columns = helper.list([
     helper.simple<'key'>({
       title: 'Key',
       key: 'key',
-      type: STRING,
+      type: KEY_TYPE as any,
       defaultWidth: 300,
       tooltip: `Use tag keys defined in settings to add new tags for a ${settings.userAlias}.`,
     }),
     helper.simple<'value'>({
       title: 'Value',
       key: 'value',
-      type: STRING,
+      type: VALUE_TYPE as any,
       defaultWidth: 400,
     }),
     helper.display({

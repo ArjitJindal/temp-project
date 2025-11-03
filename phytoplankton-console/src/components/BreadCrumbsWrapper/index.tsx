@@ -98,7 +98,6 @@ export const BreadCrumbsWrapper = forwardRef<TopRightSectionRef, PageWrapperProp
   );
 
   const location = useLocation();
-
   return (
     <TopRightSection
       className={props.className}

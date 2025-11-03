@@ -44,6 +44,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
+import { tenantSettings } from '@/core/utils/context'
 
 type SimulationRequest =
   | SimulationRiskLevelsParametersRequest
@@ -243,7 +244,7 @@ export class SimulationTaskRepository {
       await riskRepository.getRiskClassificationValues()
 
     const usersData = await users.toArray()
-
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const usersResult: SimulationV8RiskFactorsResult[] = usersData.map(
       (user) => {
         const randomKrsScore = random(1, 100)
@@ -251,20 +252,24 @@ export class SimulationTaskRepository {
 
         const simulatedKrsRiskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          randomKrsScore
+          randomKrsScore,
+          riskLevelAlias
         )
         const simulatedDrsRiskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          randomDrsScore
+          randomDrsScore,
+          riskLevelAlias
         )
 
         const currentKrsRiskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          user.krsScore?.krsScore ?? 0
+          user.krsScore?.krsScore ?? 0,
+          riskLevelAlias
         )
         const currentDrsRiskLevel = getRiskLevelFromScore(
           riskClassificationValues,
-          user.drsScore?.drsScore ?? 0
+          user.drsScore?.drsScore ?? 0,
+          riskLevelAlias
         )
         return {
           taskId: taskIds[0],
@@ -495,6 +500,7 @@ export class SimulationTaskRepository {
     const riskRepository = new RiskRepository(this.tenantId, { dynamoDb })
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
+    const { riskLevelAlias } = await tenantSettings(this.tenantId)
     const transactionsData: SimulationBeaconTransactionResult[] = []
     const users = new Map<string, SimulationBeaconResultUser>()
 
@@ -545,7 +551,8 @@ export class SimulationTaskRepository {
                 userType: destinationUser.type,
                 riskLevel: getRiskLevelFromScore(
                   riskClassificationValues,
-                  destinationUser.drsScore?.drsScore ?? null
+                  destinationUser.drsScore?.drsScore ?? null,
+                  riskLevelAlias
                 ),
                 riskScore: destinationUser.drsScore?.drsScore,
               },
@@ -559,7 +566,8 @@ export class SimulationTaskRepository {
                 userType: originUser.type,
                 riskLevel: getRiskLevelFromScore(
                   riskClassificationValues,
-                  originUser.drsScore?.drsScore ?? null
+                  originUser.drsScore?.drsScore ?? null,
+                  riskLevelAlias
                 ),
                 riskScore: originUser.drsScore?.drsScore,
               },
@@ -567,7 +575,8 @@ export class SimulationTaskRepository {
           : {}),
         riskLevel: getRiskLevelFromScore(
           riskClassificationValues,
-          transaction.arsScore?.arsScore ?? null
+          transaction.arsScore?.arsScore ?? null,
+          riskLevelAlias
         ),
         transactionType: transaction.type,
         riskScore: transaction.arsScore?.arsScore,
@@ -587,7 +596,8 @@ export class SimulationTaskRepository {
             userId,
             riskLevel: getRiskLevelFromScore(
               riskClassificationValues,
-              user.drsScore?.drsScore ?? null
+              user.drsScore?.drsScore ?? null,
+              riskLevelAlias
             ),
             riskScore: user.drsScore?.drsScore,
             hit: isTransactionHit ? 'HIT' : 'NO_HIT',

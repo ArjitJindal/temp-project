@@ -113,7 +113,9 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                   {firstLetterUpper(settings.userAlias)} Ids included
                 </P>
                 <P variant="m" fontWeight="medium">
-                  {iteration.sampleDetails?.userIds?.join(', ') ?? '-'}
+                  {Array.isArray(iteration.sampleDetails?.userIds)
+                    ? iteration.sampleDetails.userIds.join(', ')
+                    : '-'}
                 </P>
               </div>
               <div className={s.sampleProperty}>
@@ -121,7 +123,9 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                   List IDs included
                 </P>
                 <P variant="m" fontWeight="medium">
-                  {iteration.sampleDetails?.listIds?.join(', ') ?? '-'}
+                  {Array.isArray(iteration.sampleDetails?.listIds)
+                    ? iteration.sampleDetails.listIds.join(', ')
+                    : '-'}
                 </P>
               </div>
               <div className={s.sampleProperty}>
@@ -129,7 +133,9 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
                   Transaction IDs included
                 </P>
                 <P variant="m" fontWeight="medium">
-                  {iteration.sampleDetails?.transactionIds?.join(', ') ?? '-'}
+                  {Array.isArray(iteration.sampleDetails?.transactionIds)
+                    ? iteration.sampleDetails.transactionIds.join(', ')
+                    : '-'}
                 </P>
               </div>
             </div>

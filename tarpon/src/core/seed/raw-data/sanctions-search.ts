@@ -55,7 +55,7 @@ const commentGenerator = (rng: RandomNumberGenerator, hit: SanctionsHit) => {
     ]
 
     let comment = `${rng.pickRandom(openingStatements)}${matchTypes
-      .map(humanizeAuto)
+      .map((x) => humanizeAuto(x))
       .join(', ')}. `
 
     if (matchTypes.includes('name_exact') || matchTypes.includes('aka_exact')) {
@@ -120,7 +120,7 @@ const commentGenerator = (rng: RandomNumberGenerator, hit: SanctionsHit) => {
     ]
 
     let comment = `${rng.pickRandom(clearingStatements)}${matchTypes
-      .map(humanizeAuto)
+      .map((x) => humanizeAuto(x))
       .join(', ')}. `
 
     if (matchTypes.includes('name_exact') || matchTypes.includes('aka_exact')) {
@@ -453,8 +453,12 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
     const sanctionsEntityArray: SanctionsEntity[] = []
     const hitCount = this.rng.r(2).randomIntInclusive(1, 20)
     // 0% - 30% of total hits are open and 70% - 100% are cleared
-    const openHitCount = Math.floor(hitCount * this.rng.r(2).randomFloat(0.3))
-    const clearedHitCount = hitCount - openHitCount
+    // Ensure at least one OPEN hit so Human review queue is not empty
+    const openHitCount = Math.max(
+      1,
+      Math.floor(hitCount * this.rng.r(2).randomFloat(0.3))
+    )
+    const clearedHitCount = Math.max(0, hitCount - openHitCount)
 
     const getHits = (status: SanctionsHitStatus) => {
       const { hit, sanctionsEntity } = sanctionsSearchHit(
@@ -546,8 +550,12 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
     const sanctionsEntityArray: SanctionsEntity[] = []
     const hitCount = this.rng.r(2).randomIntInclusive(1, 20)
     // 0% - 30% of total hits are open and 70% - 100% are cleared
-    const openHitCount = Math.floor(hitCount * this.rng.r(2).randomFloat(0.3))
-    const clearedHitCount = hitCount - openHitCount
+    // Ensure at least one OPEN hit so Human review queue is not empty
+    const openHitCount = Math.max(
+      1,
+      Math.floor(hitCount * this.rng.r(2).randomFloat(0.3))
+    )
+    const clearedHitCount = Math.max(0, hitCount - openHitCount)
 
     const getHits = (status: SanctionsHitStatus) => {
       const { hit, sanctionsEntity } = sanctionsSearchHit(

@@ -14,7 +14,7 @@ import { message } from '@/components/library/Message';
 import { AsyncResource, isFailed, isSuccess } from '@/utils/asyncResource';
 import Spinner from '@/components/library/Spinner';
 import { NotificationListResponse } from '@/apis';
-import { useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 import Alert from '@/components/library/Alert';
 
 interface Props {
@@ -49,7 +49,7 @@ export default function NotificationsDrawer(props: Props) {
   const handleReadAll = () => {
     markAsReadMutation.mutate({});
   };
-  const [users, isUsersLoading] = useUsers({
+  const { users, isLoading } = useUsers({
     includeRootUsers: true,
   });
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
@@ -151,7 +151,7 @@ export default function NotificationsDrawer(props: Props) {
                   : `You don't have any notifications`}
               </div>
             )}
-            {!isUsersLoading &&
+            {!isLoading &&
               notifications.map((notification, i) => {
                 if (notifications.length === i + 1) {
                   return (
@@ -176,7 +176,7 @@ export default function NotificationsDrawer(props: Props) {
             {isFailed(data) ? (
               <Alert type={'ERROR'}>Unable to retrieve notifications. {data.message}</Alert>
             ) : (
-              <>{(isNotificationsLoading || isUsersLoading) && <Spinner />}</>
+              <>{(isNotificationsLoading || isLoading) && <Spinner />}</>
             )}
           </div>
         </div>

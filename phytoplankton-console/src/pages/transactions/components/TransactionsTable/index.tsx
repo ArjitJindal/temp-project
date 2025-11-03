@@ -38,10 +38,10 @@ import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Provider
 import {
   COUNTRY,
   DATE,
-  FLOAT,
   MONEY,
   MONEY_CURRENCIES,
   PAYMENT_METHOD,
+  RISK_SCORE,
   RULE_ACTION_STATUS,
   STRING,
   TAGS,
@@ -337,12 +337,12 @@ export default function TransactionsTable(props: Props) {
   } = props;
 
   const settings = useSettings();
-
   const ruleOptions = useRuleOptions();
   const riskClassificationValues = useRiskClassificationScores();
 
   const columns: TableColumn<TransactionTableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TransactionTableItem>();
+    const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
 
     let alertColumns: DerivedColumn<any, any>[] = [];
     if (alert) {
@@ -391,7 +391,7 @@ export default function TransactionsTable(props: Props) {
             helper.simple<'arsScore.arsScore'>({
               title: 'TRS score',
               key: 'arsScore.arsScore',
-              type: FLOAT,
+              type: RISK_SCORE,
               sorting: true,
               tooltip: 'Transaction Risk Score',
               exporting: true,
@@ -404,11 +404,21 @@ export default function TransactionsTable(props: Props) {
                   if (value == null) {
                     return <>-</>;
                   }
-                  const riskLevel = getRiskLevelFromScore(riskClassificationValues, value);
+                  const riskLevel = getRiskLevelFromScore(
+                    riskClassificationValues,
+                    value,
+                    configRiskLevelAliasArray,
+                  );
                   return <RiskLevelTag level={riskLevel} />;
                 },
                 stringify: (value) => {
-                  return value ? getRiskLevelFromScore(riskClassificationValues, value) : '-';
+                  return value
+                    ? getRiskLevelFromScore(
+                        riskClassificationValues,
+                        value,
+                        configRiskLevelAliasArray,
+                      )
+                    : '-';
                 },
               },
               tooltip: 'Transaction Risk Score level',
@@ -441,7 +451,8 @@ export default function TransactionsTable(props: Props) {
       ...(isPaymentApprovals && (params?.status === 'ALLOW' || params?.status === 'BLOCK')
         ? [
             helper.simple<'paymentApprovalTimestamp'>({
-              title: 'Payment approval timestamp',
+              title: 'Action timestamp',
+
               key: 'paymentApprovalTimestamp',
               type: {
                 ...DATE,
@@ -452,6 +463,10 @@ export default function TransactionsTable(props: Props) {
               },
               sorting: true,
               filtering: true,
+              tooltip:
+                params?.status === 'ALLOW'
+                  ? 'Timestamp of transaction approval'
+                  : 'Timestamp of transaction block',
             }),
             helper.simple<'reason'>({
               title: 'Reason',
@@ -616,6 +631,7 @@ export default function TransactionsTable(props: Props) {
     settings.userAlias,
     showDetailsView,
     riskClassificationValues,
+    settings?.riskLevelAlias,
   ]);
 
   const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [

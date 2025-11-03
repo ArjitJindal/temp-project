@@ -7,6 +7,7 @@ export interface FieldMeta {
   isTouched?: boolean;
   isVisited?: boolean;
   children?: MetaMap;
+  highlight?: string | null | undefined;
 }
 
 interface MetaMap {
@@ -14,6 +15,7 @@ interface MetaMap {
 }
 
 export interface FormContextValue<FormValues> {
+  isDisabled: boolean;
   values: FormValues;
   setValues: Dispatch<Updater<FormValues>>;
   meta: MetaMap;

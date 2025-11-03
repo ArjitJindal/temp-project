@@ -17,6 +17,8 @@ import { RiskLevel } from '@/apis';
 import { message } from '@/components/library/Message';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import NameAndDescription from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/NameAndDescription';
+import { makeMetaFromChangedFields } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/RiskFactorConfigurationForm/helpers';
+import { DiffPath } from '@/pages/risk-levels/risk-factors/RiskFactorConfiguration/diff';
 
 interface RiskFactorConfigurationFormProps {
   type: 'consumer' | 'business' | 'transaction';
@@ -28,6 +30,7 @@ interface RiskFactorConfigurationFormProps {
   id?: string;
   formInitialValues?: RiskFactorConfigurationFormValues;
   newRiskId?: string;
+  changedFields?: DiffPath[];
 }
 
 export const BASIC_DETAILS_STEP = 'basicDetailsStep';
@@ -48,6 +51,7 @@ function RiskFactorConfigurationForm(
     onSubmit,
     formInitialValues,
     newRiskId,
+    changedFields,
   } = props;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const INITIAL_VALUES = useMemo(() => {
@@ -145,11 +149,13 @@ function RiskFactorConfigurationForm(
       }
     >
       <Form<RiskFactorConfigurationFormValues>
+        isDisabled={readonly}
         key={formId}
         id={formId}
         ref={internalFormRef}
         className={s.root}
         initialValues={INITIAL_VALUES}
+        initialMeta={changedFields ? makeMetaFromChangedFields(changedFields) : undefined}
         onSubmit={handleSubmit}
         fieldValidators={fieldValidators}
         alwaysShowErrors={alwaysShowErrors || showValidationError}
@@ -178,7 +184,7 @@ function RiskFactorConfigurationForm(
           </Card.Root>
           <div className={cn(s.stepperContent)}>
             <div
-              className={cn(readonly ? s.readOnlyFormContent : '')}
+              // className={cn(readonly ? s.readOnlyFormContent : '')}
               tabIndex={readonly ? 0 : undefined}
               onKeyDownCapture={
                 readonly

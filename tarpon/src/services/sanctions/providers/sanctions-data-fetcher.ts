@@ -167,6 +167,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       pepCategory,
       relCategory,
       adverseMediaCategory,
+      crimeCategory,
     } = props
     const conditions: any[] = []
     if (sanctionsCategory && sanctionSourceIds) {
@@ -176,9 +177,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             'sanctionsSources.internalId': {
               $in: sanctionSourceIds,
             },
-            'sanctionsSources.category': {
-              $in: sanctionsCategory,
-            },
+            ...(sanctionsCategory.length > 0
+              ? {
+                  'sanctionsSources.category': {
+                    $in: sanctionsCategory,
+                  },
+                }
+              : {}),
           },
         ],
       })
@@ -189,11 +194,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         'pepSources.internalId'?: { $in: string[] }
         types?: string
       }> = [
-        {
-          'pepSources.internalId': {
-            $in: pepSourceIds,
-          },
-        },
+        ...(pepSourceIds.length > 0
+          ? [
+              {
+                'pepSources.internalId': {
+                  $in: pepSourceIds,
+                },
+              },
+            ]
+          : []),
       ]
 
       // Add PEP by association condition if needed
@@ -209,9 +218,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
       conditions.push({
         $and: [
-          {
-            $or: orConditions,
-          },
+          ...(orConditions.length > 0
+            ? [
+                {
+                  $or: orConditions,
+                },
+              ]
+            : []),
           {
             'pepSources.category': {
               $in: pepCategory,
@@ -219,6 +232,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         ],
       })
+
+      if (pepCategory.includes('POI')) {
+        conditions.push({
+          $and: [
+            {
+              'pepSources.category': 'POI',
+            },
+          ],
+        })
+      }
     }
 
     if (relCategory && relSourceIds) {
@@ -247,6 +270,19 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
+    if (crimeCategory?.length) {
+      conditions.push({
+        $and: [
+          {
+            'otherSources.type': 'CRIME',
+            'otherSources.value.category': {
+              $in: crimeCategory,
+            },
+          },
+        ],
+      })
+    }
+
     return conditions.length > 0 ? { $or: conditions } : {}
   }
 
@@ -263,6 +299,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       pepCategory,
       relCategory,
       adverseMediaCategory,
+      crimeCategory,
     } = props
     const andConditions: any[] = []
     const orConditions: any[] = []
@@ -302,6 +339,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       pepCategory,
       relCategory,
       adverseMediaCategory,
+      crimeCategory,
     })
     if (Object.keys(sourceCategoryFilters).length > 0) {
       andConditions.push(sourceCategoryFilters)
@@ -617,6 +655,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       pepCategory,
       relCategory,
       adverseMediaCategory,
+      crimeCategory,
     } = props
     const request = cloneDeep(requestOriginal)
     if (
@@ -694,7 +733,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (request.registrationId) {
       andFilters.push({
-        bool: {
+        compound: {
           should: [
             {
               text: {
@@ -1071,6 +1110,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 pepCategory,
                 relCategory,
                 adverseMediaCategory,
+                crimeCategory,
               }),
             },
             {
@@ -1158,6 +1198,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                   pepCategory,
                   relCategory,
                   adverseMediaCategory,
+                  crimeCategory,
                 }),
               },
             },
@@ -1890,6 +1931,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       pepCategory,
       relCategory,
       adverseMediaCategory,
+      crimeCategory,
       containAllSources,
     } = await this.getSanctionSourceDetailsInternal(request)
     if (hasFeature('OPEN_SEARCH')) {
@@ -1903,6 +1945,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         relCategory,
         adverseMediaCategory,
         containAllSources,
+        crimeCategory,
       })
     }
     if (
@@ -1925,6 +1968,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         pepCategory,
         relCategory,
         adverseMediaCategory,
+        crimeCategory,
       })
     }
     const data = result.data?.map(
@@ -1944,6 +1988,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         pepCategory,
         relCategory,
         adverseMediaCategory,
+        crimeCategory,
       }),
     }
   }

@@ -9,7 +9,7 @@ import s from './style.module.less';
 import { SimulationStatistics } from './SimulationStatistics';
 import { SimulationTransactionsHit } from './SimulationResults/Transactions';
 import { SimulationUsersHit } from './SimulationResults/Users';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RuleConfigurationForm, {
   RULE_CONFIGURATION_STEPS,
   RuleConfigurationFormValues,
@@ -90,6 +90,7 @@ export function RuleConfigurationSimulation(props: Props) {
   const [showDemoProgress, setShowDemoProgress] = useState(false);
   const { v8Mode, ruleInstance, onCancel, onRuleInstanceUpdated, rule } = props;
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const settings = useSettings();
   const [showValidationError, setShowValidationError] = useState(false);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const steps = v8Mode ? STEPS : RULE_CONFIGURATION_STEPS;
@@ -148,6 +149,7 @@ export function RuleConfigurationSimulation(props: Props) {
                 },
                 formValues as RuleConfigurationFormV8Values,
                 isRiskLevelsEnabled,
+                settings,
               )
             : formValuesToRuleInstance(
                 {
@@ -178,7 +180,7 @@ export function RuleConfigurationSimulation(props: Props) {
 
     setNewIterations(updatedIterations);
     return updatedIterations;
-  }, [isRiskLevelsEnabled, iterationFormRefs, newIterations, ruleInstance, v8Mode]);
+  }, [isRiskLevelsEnabled, iterationFormRefs, newIterations, ruleInstance, v8Mode, settings]);
   const handleDuplicate = useCallback(() => {
     const newIterations = syncFormValues();
     const activeIteration = newIterations[activeTabIndex];
@@ -249,7 +251,7 @@ export function RuleConfigurationSimulation(props: Props) {
       (iteration) =>
         !formRef.current?.validate(
           v8Mode
-            ? ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance)
+            ? ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance, settings)
             : ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
         ),
     );
@@ -272,6 +274,7 @@ export function RuleConfigurationSimulation(props: Props) {
     syncFormValues,
     v8Mode,
     isDemoMode,
+    settings,
   ]);
 
   const prevRuleInstance = usePrevious(ruleInstance);
@@ -332,7 +335,7 @@ export function RuleConfigurationSimulation(props: Props) {
     setNewIterations(updatedIterations);
     updatedIterations.forEach((iteration, i) => {
       const formValues = v8Mode
-        ? ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance)
+        ? ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance, settings)
         : ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance);
       if (formValues) {
         formValues.basicDetailsStep.simulationIterationName = iteration.name;
@@ -502,7 +505,11 @@ export function RuleConfigurationSimulation(props: Props) {
                       ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormV8Values>>}
                       rule={rule}
                       formInitialValues={merge(
-                        ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance),
+                        ruleInstanceToFormValuesV8(
+                          isRiskLevelsEnabled,
+                          iteration.ruleInstance,
+                          settings,
+                        ),
                         {
                           basicDetailsStep: {
                             simulationIterationName: iteration.name,

@@ -3,7 +3,6 @@ import { RuleActionSettings } from './components/RuleActionSettings';
 import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
 import { WebhookConfigurations } from './components/WebhookConfigurations';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
-import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { RiskLevelApprovalSettings } from './components/RiskLevelApprovalSettings';
 import { RiskFactorApprovalSettings } from './components/RiskFactorApprovalSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
@@ -37,6 +36,7 @@ import { CRMSettings } from './components/CRMSettings';
 import UserAliasSettings from './components/UserAliasSettings/UserAliasSettings';
 import StatusAliasSettings from './components/StatusAliasSettings/StatusAliasSettings';
 import BatchRerunRiskScoringSettings from './components/BatchRerunRiskScoringSettings';
+import { RiskLevelSettings } from './components/RiskLevelSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import {

@@ -292,6 +292,11 @@ export const featureDescriptions: Record<
     tag: FeatureTag.FLAT_FILES_IMPORT_TRANSACTIONS,
     description: 'Enables button for importing transactions from  flat files',
   },
+  MULTIPLEX_ASYNC_RULES_TX: {
+    title: 'Multiplex async rules',
+    description: 'Multiplex transaction/ transaction events for async rules',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {
@@ -618,8 +623,9 @@ export default function SuperAdminPanel() {
                 onChange={(v) => setFeatures(v ?? [])}
                 allowClear
                 isDisabled={!initialFeatures}
-                options={Object.entries(featureDescriptions).map(
-                  ([key, { title, tag, description }]) => ({
+                options={Object.entries(featureDescriptions)
+                  .sort(([, a], [, b]) => a.title.trim().localeCompare(b.title.trim()))
+                  .map(([key, { title, tag, description }]) => ({
                     value: key as Feature,
                     label: (
                       <span title={description}>
@@ -629,8 +635,7 @@ export default function SuperAdminPanel() {
                     ),
                     labelText: description,
                     title: description,
-                  }),
-                )}
+                  }))}
                 value={features || initialFeatures}
                 onDropdownVisibleChange={(visible) => {
                   if (!visible) {

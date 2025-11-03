@@ -5038,11 +5038,11 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - method
-    CorrespondenceBankDetails:
-      description: Model for Correspondence bank details
+    CorrespondentBankDetails:
+      description: Model for Correspondent bank details
       type: object
       x-examples: {}
-      title: CorrespondenceBankDetails
+      title: CorrespondentBankDetails
       properties:
         bankName:
           type: string
@@ -5093,10 +5093,10 @@ components:
           description: Special instructions if any
         address:
           $ref: '#/components/schemas/Address'
-        correspondenceBankDetails:
+        correspondentBankDetails:
           type: array
           items:
-            $ref: '#/components/schemas/CorrespondenceBankDetails'
+            $ref: '#/components/schemas/CorrespondentBankDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -6118,6 +6118,10 @@ components:
           $ref: '#/components/schemas/RuleAction'
         comment:
           type: string
+        type:
+          type: string
+          description: 'Type of transaction (ex: DEPOSIT, WITHDRAWAL, TRANSFER,
+            EXTERNAL_PAYMENT, REFUND, OTHER)'
       required:
         - transactionId
         - status
@@ -6189,6 +6193,9 @@ components:
             epoch.
           minimum: 315529200000
           maximum: 4133890801000
+        account:
+          type: string
+          description: Email ID associated with the event
       required:
         - id
         - triggeredBy

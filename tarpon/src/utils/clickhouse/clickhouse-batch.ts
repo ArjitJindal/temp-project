@@ -40,9 +40,7 @@ export async function processClickhouseInBatch<
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
 
     const query = `
-      SELECT ${
-        additionalSelect ? `${additionalSelect},` : ''
-      } id, timestamp, data
+      SELECT ${additionalSelect ? `${additionalSelect},` : ''} id, timestamp
       FROM ${tableName} FINAL
       ${additionalJoin ? `ARRAY JOIN ${additionalJoin}` : ''}
       ${whereClause}
@@ -51,7 +49,7 @@ export async function processClickhouseInBatch<
     `
 
     const clickhouseBatch = await executeClickhouseQuery<
-      { id: string; timestamp: number; data: any }[]
+      { id: string; timestamp: number }[]
     >(options.clickhouseClient, query)
 
     if (!clickhouseBatch || clickhouseBatch.length === 0) {
@@ -63,8 +61,6 @@ export async function processClickhouseInBatch<
       const slice = clickhouseBatch.slice(i, i + processBatchSize)
       await processBatch(
         slice.map((item) => {
-          const parsedData =
-            typeof item.data === 'string' ? JSON.parse(item.data) : item.data
           const additionalFields = options.additionalSelect
             ? options.additionalSelect.reduce((acc, s) => {
                 acc[s.name] = item[s.name]
@@ -73,10 +69,9 @@ export async function processClickhouseInBatch<
             : {}
 
           return {
-            ...parsedData,
             ...additionalFields,
           }
-        })
+        }) as T[]
       )
       batchNumber++
       totalProcessed += slice.length

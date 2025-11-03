@@ -894,6 +894,7 @@ export function getUpsertSaveDynamoCommand(
     entity: object
     tableName?: string
     key: Record<string, NativeAttributeValue>
+    propertiesToUnset?: string[]
   },
   options?: {
     versioned?: boolean
@@ -904,11 +905,12 @@ export function getUpsertSaveDynamoCommand(
   /* Todo: Ideally should reuse function  getUpdateAttributesUpdateItemInput 
    but it doesn't handle reserved keywords yet */
 
-  const { entity, tableName, key: dynamoKey } = data
+  const { entity, tableName, key: dynamoKey, propertiesToUnset } = data
   // Build UpdateExpression
   const expressionParts: string[] = []
   const expressionValues = {}
   const expressionNames = {}
+  const unsetExpressionParts: string[] = []
   for (const key of Object.keys(entity)) {
     if (
       entity[key] === undefined ||
@@ -921,6 +923,11 @@ export function getUpsertSaveDynamoCommand(
     expressionNames[`#${key}`] = key
   }
 
+  for (const key of propertiesToUnset ?? []) {
+    expressionNames[`#${key}`] = key
+    unsetExpressionParts.push(`#${key}`)
+  }
+
   if (options?.versioned) {
     // Add updateCount increment
     expressionParts.push(
@@ -930,7 +937,10 @@ export function getUpsertSaveDynamoCommand(
     expressionValues[':zero'] = 0
     expressionValues[':one'] = 1
   }
-  const updateExpression = 'SET ' + expressionParts.join(', ')
+  let updateExpression = 'SET ' + expressionParts.join(', ')
+  if (unsetExpressionParts.length > 0) {
+    updateExpression += ` REMOVE ${unsetExpressionParts.join(', ')}`
+  }
   const command: UpdateCommandInput & { UpdateExpression: string } = {
     TableName: tableName,
     Key: dynamoKey,
@@ -948,6 +958,7 @@ export async function upsertSaveDynamo(
     entity: object
     tableName?: string
     key: Record<string, NativeAttributeValue>
+    propertiesToUnset?: string[]
   },
   options?: {
     versioned?: boolean

@@ -20,7 +20,7 @@ export interface Props {
   innerRef?: React.RefObject<any>;
   allowClear?: boolean;
   clearNotAllowedReason?: string;
-  readOnly?: boolean;
+  isDisabled?: boolean;
   autoWidth?: boolean;
 }
 
@@ -36,7 +36,7 @@ export default function QuickFilterBase(props: Props) {
     onClear,
     innerRef,
     allowClear = true,
-    readOnly = false,
+    isDisabled = false,
     autoWidth = false,
   } = props;
 
@@ -83,6 +83,7 @@ export default function QuickFilterBase(props: Props) {
         placement="bottomLeft"
       >
         <QuickFilterButton
+          isDisabled={isDisabled}
           isActive={isOpen || onClear != null}
           buttonText={
             <>
@@ -98,9 +99,9 @@ export default function QuickFilterBase(props: Props) {
           icon={icon}
           analyticsName={analyticsName}
           autoWidth={autoWidth}
-          onClear={!readOnly && allowClear ? onClear : undefined}
+          onClear={!isDisabled && allowClear ? onClear : undefined}
           onClick={
-            !readOnly
+            !isDisabled
               ? () => {
                   onUpdateFilterClose && onUpdateFilterClose(isOpen);
                   setOpen((isOpen) => !isOpen);

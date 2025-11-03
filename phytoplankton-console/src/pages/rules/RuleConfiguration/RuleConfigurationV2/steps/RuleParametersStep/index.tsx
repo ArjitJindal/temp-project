@@ -99,7 +99,7 @@ function RiskBasedThresholds(props: Props) {
       const tabItem: TabItem = {
         title: (
           <div className={s.riskLevelTabLabel}>
-            {capitalize(getRiskLevelLabel(riskLevel, settings))}
+            {capitalize(getRiskLevelLabel(riskLevel, settings).riskLevelLabel)}
           </div>
         ),
         key: riskLevel,
@@ -117,7 +117,7 @@ function RiskBasedThresholds(props: Props) {
                 label={'Rule actions'}
                 description={`Select the action to perform if this rule is hit for ${
                   settings.userAlias
-                }s of ${toLower(getRiskLevelLabel(riskLevel, settings))} risk level`}
+                }s of ${toLower(getRiskLevelLabel(riskLevel, settings).riskLevelLabel)} risk level`}
               >
                 {(inputProps) => <RuleActionSelector {...inputProps} />}
               </InputField>

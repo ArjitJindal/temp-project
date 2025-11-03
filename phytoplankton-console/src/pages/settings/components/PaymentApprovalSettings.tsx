@@ -8,7 +8,7 @@ import { useHasResources } from '@/utils/user-utils';
 
 export const PaymentApprovalSettings = () => {
   const settings = useSettings();
-  const mutateTenantSettings = useUpdateTenantSettings();
+  const mutateTenantSettings = useUpdateTenantSettings({ enableReloadSettings: true });
   const handleDisable = () => {
     mutateTenantSettings.mutate({ isPaymentApprovalEnabled: false });
   };

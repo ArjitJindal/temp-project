@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import cn from 'clsx';
 import { nanoid } from 'nanoid';
 import RequestForm, { FormValues } from './RequestForm';
@@ -12,8 +12,6 @@ import { calcVisibleElements } from './History/helpers';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { scrollTo, useElementSize } from '@/utils/browser';
@@ -21,6 +19,7 @@ import { useIsChanged } from '@/utils/hooks';
 import { notEmpty } from '@/utils/array';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import PortalContainerProvider from '@/components/ui/PortalContainerProvider';
+import { useAlertCopilotQuestions, useAlertUpdates } from '@/utils/api/alerts';
 
 type HistoryItem = QuestionResponse | QuestionResponseSkeleton;
 
@@ -32,23 +31,13 @@ interface Props {
 export default function InvestigativeCoPilot(props: Props) {
   const { alertId, preloadedHistory } = props;
   const api = useApi();
-  const queryClient = useQueryClient();
-
+  const { updateAlertCopilotQuestionsData } = useAlertUpdates();
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
   const [isScrollEventDisabled, setScrollEventDisabled] = useState(false);
 
-  const historyQuery = useQuery(
-    COPILOT_ALERT_QUESTIONS(alertId),
-    async (): Promise<HistoryItem[]> => {
-      return parseQuestionResponse(
-        await api.getQuestions({
-          alertId: alertId,
-        }),
-      );
-    },
-  );
+  const historyQuery = useAlertCopilotQuestions(alertId);
 
   const [isScrollVisible, setScrollVisible] = useState(false);
   const [sizes, setSizes] = useState<{ [key: string]: number }>({});
@@ -58,14 +47,11 @@ export default function InvestigativeCoPilot(props: Props) {
   const history = getOr(historyRes, []);
   const setHistory = useCallback(
     (cb: (items: HistoryItem[]) => HistoryItem[]) => {
-      queryClient.setQueryData<HistoryItem[]>(
-        COPILOT_ALERT_QUESTIONS(alertId),
-        (oldData: HistoryItem[] | undefined) => {
-          return cb(oldData || []);
-        },
-      );
+      updateAlertCopilotQuestionsData(alertId, (oldData) => {
+        return cb(oldData || []);
+      });
     },
-    [queryClient, alertId],
+    [updateAlertCopilotQuestionsData, alertId],
   );
 
   const itemIds: string[] = useMemo(() => {

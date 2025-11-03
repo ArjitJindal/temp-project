@@ -7,12 +7,13 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
-import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo } from '@/utils/user-utils';
+import { useUsers } from '@/utils/api/auth';
 
 const helper = new ColumnHelper<DashboardTeamStatsItem>();
 
 const useColumns = (scope: 'CASES' | 'ALERTS') => {
-  const [users, loadingUsers] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
+  const { users, isLoading } = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
 
   return useMemo(
     () =>
@@ -24,7 +25,7 @@ const useColumns = (scope: 'CASES' | 'ALERTS') => {
           type: {
             render: (accountId) => <AccountTag accountId={accountId} />,
             stringify: (accountId) =>
-              (!loadingUsers && users != null && accountId
+              (!isLoading && users != null && accountId
                 ? getDisplayedUserInfo(users[accountId]).name
                 : accountId) ?? '',
           },
@@ -67,7 +68,7 @@ const useColumns = (scope: 'CASES' | 'ALERTS') => {
           type: DURATION,
         }),
       ]),
-    [users, loadingUsers, scope],
+    [users, isLoading, scope],
   );
 };
 

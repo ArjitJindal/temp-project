@@ -31,7 +31,6 @@ import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/Sancti
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { cursorPaginate } from '@/utils/pagination'
-import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { ProviderConfig } from '@/services/sanctions'
@@ -44,8 +43,6 @@ import { getOpensearchClient } from '@/utils/opensearch-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-
-const DEFAULT_EXPIRY_TIME = 168 // hours
 
 @traceable
 export class SanctionsSearchRepository {
@@ -89,9 +86,6 @@ export class SanctionsSearchRepository {
         response,
         createdAt: createdAt ?? Date.now(),
         updatedAt: updatedAt ?? Date.now(),
-        ...(!request.monitoring?.enabled && {
-          expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
-        }),
         ...(props.searchedBy && { searchedBy: props.searchedBy }),
         ...(props.providerConfigHash && {
           providerConfigHash: props.providerConfigHash,
@@ -212,9 +206,6 @@ export class SanctionsSearchRepository {
 
     const filters: Filter<SanctionsSearchHistory>[] = [
       { 'request.monitoring.enabled': request.monitoring?.enabled },
-      ...(!request.monitoring?.enabled
-        ? [{ expiresAt: { $exists: true, $gt: Date.now() } }]
-        : []),
       { 'request.fuzziness': fuzziness },
       { requestHash: mongoHash },
     ]

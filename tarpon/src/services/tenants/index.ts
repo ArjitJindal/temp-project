@@ -34,6 +34,7 @@ import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { CounterRepository } from '../counter/repository'
 import { BatchRerunUsersService } from '../batch-users-rerun'
+import { createDefaultWorkflow } from '../workflow/approval-utils'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -51,7 +52,11 @@ import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
 import { assertCurrentUserRole, isFlagrightInternalUser } from '@/@types/jwt'
-import { tenantSettings, updateTenantSettings } from '@/core/utils/context'
+import {
+  sanitizeTenantSettings,
+  tenantSettings,
+  updateTenantSettings,
+} from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
@@ -69,6 +74,7 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { WorkflowService } from '@/services/workflow'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -89,13 +95,6 @@ const secondaryQueueTenantsCache = createNonConsoleApiInMemoryCache<string[]>({
   max: 100,
   ttlMinutes: 10,
 })
-
-export const maskPassword = (password: string): string => {
-  if (!password) {
-    return password
-  }
-  return '*'.repeat(password.length)
-}
 
 @traceable
 export class TenantService {
@@ -431,7 +430,7 @@ export class TenantService {
         webhookSettings: {
           retryBackoffStrategy: 'LINEAR',
           retryOnlyFor: ['3XX', '4XX', '5XX'],
-          maxRetryHours: envIs('prod') ? 96 : 24,
+          maxRetryHours: 24,
           maxRetryReachedAction: envIs('prod') ? 'IGNORE' : 'DISABLE_WEBHOOK',
         },
         riskScoringAlgorithm: { type: 'FORMULA_SIMPLE_AVG' },
@@ -439,6 +438,7 @@ export class TenantService {
         ...(tenantData.features.includes('CRM') && {
           crmIntegrationName: 'ZENDESK',
         }),
+        isAiEnabled: true,
       }
 
       const dynamoDb = this.dynamoDb
@@ -478,6 +478,28 @@ export class TenantService {
         RISK_FACTORS.length
       ),
     ])
+
+    // Creating default workflows for new tenant
+    const workflowService = new WorkflowService(tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const defaultRiskFactorsApprovalWorkflow = await createDefaultWorkflow(
+      'risk-factors-approval'
+    )
+    const defaultRiskLevelsApprovalWorkflow = await createDefaultWorkflow(
+      'risk-levels-approval'
+    )
+    await workflowService.saveWorkflow(
+      'risk-factors-approval',
+      '_default',
+      defaultRiskFactorsApprovalWorkflow
+    )
+    await workflowService.saveWorkflow(
+      'risk-levels-approval',
+      '_default',
+      defaultRiskLevelsApprovalWorkflow
+    )
 
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',
@@ -886,28 +908,10 @@ export class TenantService {
   public async getTenantSettings(
     unmaskDowJonesPassword?: boolean
   ): Promise<TenantSettings> {
-    if (!unmaskDowJonesPassword) {
-      const contextTenantSettings = getContext()?.settings
-      if (contextTenantSettings) {
-        return contextTenantSettings
-      }
-    }
+    // this always contains dowjones password
+    const settings = await tenantSettings(this.tenantId)
 
-    const tenantRepository = new TenantRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-    const settings = await tenantRepository.getTenantSettings()
-
-    if (
-      settings.sanctions?.dowjonesCreds?.password &&
-      !unmaskDowJonesPassword
-    ) {
-      settings.sanctions.dowjonesCreds.password = maskPassword(
-        settings.sanctions.dowjonesCreds.password
-      )
-    }
-
-    return settings
+    return sanitizeTenantSettings(settings, !unmaskDowJonesPassword)
   }
 
   public async getTenantById(tenantId: string) {
