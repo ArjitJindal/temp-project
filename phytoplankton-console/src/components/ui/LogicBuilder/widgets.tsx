@@ -354,7 +354,7 @@ const customTextWidget: CoreWidgets['text'] = {
                     <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
                       <MultiListSelectDynamic
                         uniqueTypeProps={uniqueTypeProps}
-                        value={currentValue as any}
+                        value={Array.isArray(currentValue) ? currentValue : undefined}
                         onChange={(newValue) => {
                           const formattedValue = newValue?.map((v) => v.trim());
                           props.setValue(formattedValue as any);
@@ -408,7 +408,7 @@ const customTextWidget: CoreWidgets['text'] = {
           <WidgetWrapper widgetFactoryProps={{ ...props, allowCustomValues: true }}>
             <MultiListSelectDynamic
               uniqueTypeProps={uniqueTypeProps}
-              value={props.value as any}
+              value={Array.isArray(props.value) ? (props.value as string[]) : undefined}
               onChange={(newValue) => {
                 const formattedValue = newValue?.map((v) => v.trim());
                 props.setValue(formattedValue as any);
@@ -471,11 +471,11 @@ const customTextWidget: CoreWidgets['text'] = {
     if (isArrayType) {
       return (
         <WidgetWrapper widgetFactoryProps={props}>
-          <Select
+          <Select<string>
             mode={'MULTIPLE_DYNAMIC'}
             allowClear={true}
             options={[]}
-            value={(props.value as any) ?? undefined}
+            value={Array.isArray(props.value) ? (props.value as string[]) : []}
             onChange={(newValue) => {
               const formattedValue = newValue?.map((v) => v.trim());
               props.setValue(formattedValue as any);
@@ -644,16 +644,18 @@ function MultiSelectWidget(props: any) {
       return { label: x.title, value: x.value };
     }) ?? [];
 
-  const value: (string | number)[] | undefined =
-    isCountryField && isArray(props.value)
+  const value: (string | number)[] =
+    isCountryField && Array.isArray(props.value)
       ? deserializeCountries(props.value as string[])
-      : props.value ?? undefined;
+      : Array.isArray(props.value)
+      ? (props.value as (string | number)[])
+      : [];
 
   if (MULTI_SELECT_LIST_OPERATORS.includes(props.operator as LogicOperatorType)) {
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <ListSelect
-          value={(props.value as any) ?? undefined}
+          value={Array.isArray(props.value) ? (props.value as string[]) : []}
           onChange={(newValue) => {
             props.setValue(newValue as any);
           }}

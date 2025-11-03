@@ -260,9 +260,9 @@ const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
   }
   return (
     <span>
-      {value.values
+      {(Array.isArray(value.values) ? value.values : [])
+        .filter((x) => !!x.content)
         .map((item) => item.content)
-        .filter((x) => !!x)
         .join(', ')}
     </span>
   );

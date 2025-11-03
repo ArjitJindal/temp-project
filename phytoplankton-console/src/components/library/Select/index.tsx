@@ -164,7 +164,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         result.unshift({ label: value, value: value as Value, isVirtual: true });
       }
     } else if (mode === 'MULTIPLE_DYNAMIC') {
-      for (const valueItem of value ?? []) {
+      for (const valueItem of Array.isArray(value) ? value : []) {
         const isOptionExists = result.some((x) => compare(x.value, valueItem));
         if (!isOptionExists) {
           result.unshift({ label: valueItem, value: valueItem as Value, isVirtual: true });
@@ -267,7 +267,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       } else if (mode === 'MULTIPLE') {
         return value?.includes(option.value as Value) ?? false;
       } else if (mode === 'MULTIPLE_DYNAMIC') {
-        return value?.includes(option.value as string) ?? false;
+        return Array.isArray(value) ? value.includes(option.value) : false;
       } else {
         return false;
       }
@@ -304,7 +304,8 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       result = result.filter((x) => filterOption(searchText ?? '', x));
     }
     if (allowNewOptions) {
-      const values = props.mode === 'DYNAMIC' ? [props.value] : props.value ?? [];
+      const values =
+        props.mode === 'DYNAMIC' ? [props.value] : Array.isArray(props.value) ? props.value : [];
       if (searchText) {
         const isOptionExists = values.some((value) =>
           result.some((x) => compare(x.value, value) || compare(x.value, searchText)),
@@ -329,7 +330,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     if (props.mode === 'SINGLE' || props.mode === 'DYNAMIC' || props.mode == null) {
       values = props.value != null ? [props.value] : [];
     } else if (props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC') {
-      values = props.value ?? [];
+      values = Array.isArray(props.value) ? props.value : [];
     } else {
       values = neverReturn(props.mode, []);
     }
@@ -387,9 +388,10 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                       : [...(props.value ?? []), selectedValue];
                     props.onChange?.(newValue);
                   } else if (props.mode === 'MULTIPLE_DYNAMIC') {
-                    const newValue = props.value?.includes(selectedValue as string)
-                      ? props.value?.filter((v) => v !== selectedValue)
-                      : [...(props.value ?? []), selectedValue];
+                    const current = Array.isArray(props.value) ? props.value : [];
+                    const newValue = current.includes(selectedValue)
+                      ? current.filter((v) => v !== selectedValue)
+                      : [...current, selectedValue];
                     props.onChange?.(newValue as string[]);
                   } else if (props.mode === 'DYNAMIC') {
                     if (option.isVirtual) {
