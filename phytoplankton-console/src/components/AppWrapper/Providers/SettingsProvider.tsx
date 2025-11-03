@@ -319,17 +319,22 @@ export function useGetAlias() {
   const { transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias } = useSettings();
   return useCallback(
     (x: string, humanize: boolean = false) => {
-      const countryAlias = COUNTRIES[x.toUpperCase() as CountryCode];
-      const alias =
+      const humaniseF = humanize ? humanizeAuto : (x: string) => x;
+      let alias =
         kycStatusAlias?.find((item) => item.state === x)?.alias ||
         userStateAlias?.find((item) => item.state === x)?.alias ||
         transactionStateAlias?.find((item) => item.state === x)?.alias ||
-        riskLevelAlias?.find((item) => item.level === x)?.alias ||
-        (countryAlias
-          ? `${COUNTRIES[x.toUpperCase() as CountryCode]} (${x.toUpperCase()})`
-          : undefined) ||
-        x;
-      return humanize ? humanizeAuto(alias) : alias;
+        riskLevelAlias?.find((item) => item.level === x)?.alias;
+
+      if (!alias) {
+        if (COUNTRIES[x.toUpperCase() as CountryCode]) {
+          alias = `${COUNTRIES[x.toUpperCase() as CountryCode]} (${x.toUpperCase()}`;
+        } else {
+          alias = humaniseF(x);
+        }
+      }
+
+      return alias;
     },
     [transactionStateAlias, riskLevelAlias, kycStatusAlias, userStateAlias],
   );
