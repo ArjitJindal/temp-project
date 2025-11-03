@@ -53,7 +53,12 @@ function serve() {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    // Regex to check if host for request is flagright
+    const isFlagright = new RegExp('flagright\\.(local|com|dev)', 'i').test(req.get('host') || '');
+
+    if (!isFlagright) {
+      res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    }
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     // Use cross-origin for local development to allow Cypress tests, same-origin for production
     const corpValue = env.ENV === 'local' ? 'cross-origin' : 'same-origin';
@@ -87,11 +92,11 @@ function serve() {
   });
 
   /*
-  openssl genrsa -out build/certificates/self_priv.pem 2048
-  openssl req -new -key build/certificates/self_priv.pem -out build/certificates/certrequest.csr
-  openssl x509 -req -in build/certificates/certrequest.csr -signkey build/certificates/self_priv.pem -out build/certificates/self_cert.pem
-  rm build/certificates/certrequest.csr
-  */
+openssl genrsa -out build/certificates/self_priv.pem 2048
+openssl req -new -key build/certificates/self_priv.pem -out build/certificates/certrequest.csr
+openssl x509 -req -in build/certificates/certrequest.csr -signkey build/certificates/self_priv.pem -out build/certificates/self_cert.pem
+rm build/certificates/certrequest.csr
+*/
   const options = {
     passphrase: process.env.HTTPS_PASSPHRASE || '',
     key: fs.readFileSync(path.resolve(SCRIPT_DIR, 'certificates', 'self_priv.pem'), 'utf8'),
