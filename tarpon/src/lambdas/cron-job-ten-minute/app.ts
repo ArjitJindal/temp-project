@@ -466,7 +466,7 @@ const matchPrefixes = [
   'ltd_production_data/data_from_2025-04-08_to_2025-04-22_at',
 ]
 export async function triggerGoCardlessBackfillBatchJob(mongoDb: MongoClient) {
-  if (envIsNot('prod') && process.env.REGION !== 'eu-2') {
+  if (envIsNot('prod') || (envIs('prod') && process.env.REGION !== 'eu-2')) {
     logger.info(
       'Skipping GoCardless backfill batch job in non-production environment'
     )
