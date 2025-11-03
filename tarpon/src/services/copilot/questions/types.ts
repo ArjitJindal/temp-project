@@ -104,7 +104,7 @@ export type TableQuestion<V extends Variables> = {
   {
     items: (string | string[] | number | undefined)[][]
     total?: number
-    transactionCount?: number
+    transactionsCount?: number
   }
 >
 

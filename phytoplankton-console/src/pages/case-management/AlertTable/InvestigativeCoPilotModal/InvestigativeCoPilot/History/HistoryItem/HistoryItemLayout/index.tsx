@@ -13,7 +13,7 @@ interface Props {
   children: React.ReactNode;
   count?: number;
   hideTitle?: boolean;
-  transactionCount?: number;
+  transactionsCount?: number;
 }
 
 function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement | null>) {
@@ -25,7 +25,7 @@ function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement
     isUnread,
     children,
     count,
-    transactionCount,
+    transactionsCount,
     hideTitle = false,
   } = props;
   const { userAlias } = useSettings();
@@ -39,8 +39,8 @@ function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement
         <div className={s.header}>
           <div className={s.title}>
             {setUserAlias(title, userAlias)}
-            {transactionCount != null
-              ? ` (${transactionCount})`
+            {transactionsCount != null
+              ? ` (${transactionsCount})`
               : count != null
               ? ` (${count})`
               : ''}

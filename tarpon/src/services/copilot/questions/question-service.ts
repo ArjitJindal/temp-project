@@ -392,7 +392,7 @@ export class QuestionService {
         ...common,
         total: result.data.total,
         rows: result.data.items,
-        transactionCount: result.data.transactionCount,
+        transactionsCount: result.data.transactionsCount,
         summary: result.summary,
         headers: question.headers.map((c) => ({
           name: c.name,
