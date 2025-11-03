@@ -93,6 +93,10 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       ),
     });
 
+    // Determine CORP value based on stage (cross-origin for dev/test to allow Cypress)
+    const corpValue =
+      config.stage === 'dev' || config.stage === 'dev:user' ? 'cross-origin' : 'same-origin';
+
     const responseHeadersFunction = new cloudfront.Function(this, 'ResponseHeadersFunction', {
       code: cloudfront.FunctionCode.fromInline(`
         function handler(event) {
@@ -114,6 +118,10 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           } else if (uri.endsWith('.txt')) {
             headers['content-type'] = { value: 'text/plain; charset=UTF-8' };
           }
+          
+          // Ensure CORP header is set (in case ResponseHeadersPolicy doesn't apply it)
+          // Use lowercase header name as CloudFront normalizes headers
+          headers['cross-origin-resource-policy'] = { value: '${corpValue}' };
           
           return response;
         }
@@ -205,8 +213,9 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
                 override: true,
               },
               {
+                // Use cross-origin for dev/test environments to allow Cypress tests, same-origin for production
                 header: 'Cross-Origin-Resource-Policy',
-                value: 'same-origin',
+                value: corpValue,
                 override: true,
               },
               {
