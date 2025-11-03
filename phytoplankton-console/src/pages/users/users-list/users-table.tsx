@@ -244,7 +244,7 @@ export const UsersTable = (props: Props) => {
       : (getAllUserColumns(settings.userAlias) as TableColumn<AllUsersTableItem>[]);
 
   if (isRiskScoringEnabled) {
-    columns.push(...getRiskScoringColumns(riskClassificationValues));
+    columns.push(...getRiskScoringColumns(riskClassificationValues, settings.riskLevelAlias ?? []));
   }
 
   columns.push(getLastUpdatedColumn());

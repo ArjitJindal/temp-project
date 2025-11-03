@@ -2,11 +2,12 @@ import { isEmpty } from 'lodash';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { AllUsersTableItem, RiskClassificationScore, RiskLevel } from '@/apis';
+import { AllUsersTableItem, RiskClassificationScore, RiskLevel, RiskLevelAlias } from '@/apis';
 import { RISK_LEVEL, RISK_SCORE } from '@/components/library/Table/standardDataTypes';
 
 export function getRiskScoringColumns(
   riskClassificationValuesMap: RiskClassificationScore[],
+  riskLevelAlias: RiskLevelAlias[],
 ): TableColumn<AllUsersTableItem>[] {
   const helper = new ColumnHelper<AllUsersTableItem>();
 
@@ -18,7 +19,11 @@ export function getRiskScoringColumns(
       value: (entity): RiskLevel | undefined => {
         return !isEmpty(entity.manualRiskLevel)
           ? entity.manualRiskLevel
-          : getRiskLevelFromScore(riskClassificationValuesMap, entity.drsScore || null);
+          : getRiskLevelFromScore(
+              riskClassificationValuesMap,
+              entity.drsScore || null,
+              riskLevelAlias,
+            );
       },
     }),
     helper.derived({
@@ -42,7 +47,7 @@ export function getRiskScoringColumns(
       title: 'KRS risk level',
       value: (entity) => {
         const score = entity.krsScore;
-        return getRiskLevelFromScore(riskClassificationValuesMap, score || null);
+        return getRiskLevelFromScore(riskClassificationValuesMap, score || null, riskLevelAlias);
       },
       type: RISK_LEVEL,
       tooltip: 'Know your customer - accounts for KYC Risk Level',

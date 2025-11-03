@@ -1,15 +1,18 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import SettingsCard from '@/components/library/SettingsCard';
 import Table from '@/components/library/Table';
 import {
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { RiskLevel, RiskLevelAlias } from '@/apis';
+import { RiskLevel, RiskLevelAlias, RiskClassificationScore } from '@/apis';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { STRING, BOOLEAN } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
-import { RISK_LEVELS } from '@/utils/risk-levels';
+import { RISK_LEVELS, useRiskClassificationConfig } from '@/utils/risk-levels';
+import { useApi } from '@/api';
+import { RISK_CLASSIFICATION_VALUES } from '@/utils/queries/keys';
 
 interface TableItem {
   level: RiskLevel;
@@ -22,6 +25,9 @@ const helper = new ColumnHelper<TableItem>();
 export const RiskLevelSettings: React.FC = () => {
   const settings = useSettings();
   const mutateTenantSettings = useUpdateTenantSettings();
+  const api = useApi();
+  const queryClient = useQueryClient();
+  const riskClassificationConfig = useRiskClassificationConfig();
   const [savingLevel, setSavingLevel] = useState<RiskLevel | null>(null);
 
   const levelToAlias = useMemo<Map<RiskLevel, string>>(
@@ -70,11 +76,152 @@ export const RiskLevelSettings: React.FC = () => {
     [newLevelToAlias],
   );
 
-  const handleUpdateActive = useCallback(
-    (level: RiskLevel, newActive: boolean) => {
-      setNewLevelToActive(new Map(newLevelToActive).set(level, newActive));
+  const recalculateRiskClassificationBounds = useCallback(
+    (
+      currentValues: RiskClassificationScore[],
+      updatedLevelToActive: Map<RiskLevel, boolean>,
+      previousLevelToActive?: Map<RiskLevel, boolean>,
+    ): RiskClassificationScore[] => {
+      const valuesMap = new Map<RiskLevel, RiskClassificationScore>();
+      currentValues.forEach((value) => {
+        valuesMap.set(value.riskLevel, value);
+      });
+
+      const results: RiskClassificationScore[] = [];
+
+      RISK_LEVELS.forEach((level, index) => {
+        const isActive = updatedLevelToActive.get(level) ?? true;
+        const wasActive = previousLevelToActive?.get(level) ?? true;
+        const isNewlyEnabled = !wasActive && isActive;
+        const currentValue = valuesMap.get(level);
+        const defaultLower = index * 20;
+        const defaultUpper = index === RISK_LEVELS.length - 1 ? 100 : (index + 1) * 20;
+        const currentLower = currentValue?.lowerBoundRiskScore ?? defaultLower;
+        const currentUpper = currentValue?.upperBoundRiskScore ?? defaultUpper;
+
+        let lowerBound: number;
+        let upperBound: number;
+
+        if (isActive) {
+          if (isNewlyEnabled) {
+            const firstActiveLevel = RISK_LEVELS.find((l) => updatedLevelToActive.get(l) ?? true);
+            const firstActiveValue = firstActiveLevel ? valuesMap.get(firstActiveLevel) : undefined;
+            lowerBound =
+              firstActiveLevel === level ? 0 : firstActiveValue?.lowerBoundRiskScore ?? 0;
+            upperBound = lowerBound;
+          } else {
+            const previousActiveLevels = RISK_LEVELS.slice(0, index).filter(
+              (l) => updatedLevelToActive.get(l) ?? true,
+            );
+
+            if (previousActiveLevels.length === 0) {
+              lowerBound = 0;
+            } else {
+              const previousLevel = RISK_LEVELS[index - 1];
+              const isPreviousInactive = !(updatedLevelToActive.get(previousLevel) ?? true);
+
+              if (isPreviousInactive) {
+                const previousValue =
+                  results.find((v) => v.riskLevel === previousLevel) ||
+                  valuesMap.get(previousLevel);
+                lowerBound = previousValue?.lowerBoundRiskScore ?? currentLower;
+              } else {
+                const previousValue = results.find((v) => v.riskLevel === previousLevel);
+                lowerBound = previousValue?.upperBoundRiskScore ?? currentLower;
+              }
+            }
+
+            const nextActiveLevels = RISK_LEVELS.slice(index + 1).filter(
+              (l) => updatedLevelToActive.get(l) ?? true,
+            );
+
+            if (nextActiveLevels.length === 0) {
+              upperBound = 100;
+            } else if (currentUpper > lowerBound && currentUpper <= 100) {
+              upperBound = currentUpper;
+            } else {
+              const remainingRange = 100 - lowerBound;
+              const remainingLevels = nextActiveLevels.length + 1;
+              upperBound = lowerBound + Math.floor(remainingRange / remainingLevels);
+            }
+          }
+
+          lowerBound = Math.max(0, Math.min(lowerBound, 99));
+          upperBound = Math.max(lowerBound, Math.min(upperBound, 100));
+        } else {
+          lowerBound = currentLower;
+          upperBound = currentLower;
+        }
+
+        results.push({
+          riskLevel: level,
+          lowerBoundRiskScore: lowerBound,
+          upperBoundRiskScore: upperBound,
+        });
+      });
+
+      return results;
     },
-    [newLevelToActive],
+    [],
+  );
+
+  const handleUpdateActive = useCallback(
+    async (level: RiskLevel, newActive: boolean) => {
+      const updatedNewLevelToActive = new Map(newLevelToActive).set(level, newActive);
+      setNewLevelToActive(updatedNewLevelToActive);
+
+      const updatedLevelToAlias = new Map(savedLevelToAlias);
+      const updatedLevelToActive = new Map(savedLevelToActive).set(level, newActive);
+
+      const riskLevelAlias: RiskLevelAlias[] = RISK_LEVELS.map((l) => ({
+        level: l,
+        alias: updatedLevelToAlias.get(l) ?? '',
+        isActive: updatedLevelToActive.get(l) ?? true,
+      }));
+
+      try {
+        setSavingLevel(level);
+        await mutateTenantSettings.mutateAsync({ riskLevelAlias });
+
+        const currentClassificationValues = riskClassificationConfig.data.classificationValues;
+        if (currentClassificationValues?.length > 0) {
+          const recalculatedValues = recalculateRiskClassificationBounds(
+            currentClassificationValues,
+            updatedLevelToActive,
+            savedLevelToActive,
+          );
+
+          await api.postPulseRiskClassification({
+            RiskClassificationRequest: {
+              scores: recalculatedValues,
+              comment: `Risk classification bounds updated due to ${level} status change to ${
+                newActive ? 'active' : 'inactive'
+              }`,
+            },
+          });
+
+          await queryClient.invalidateQueries(RISK_CLASSIFICATION_VALUES());
+        }
+
+        setCommittedLevelToAlias(updatedLevelToAlias);
+        setCommittedLevelToActive(updatedLevelToActive);
+      } catch (error) {
+        setNewLevelToActive(new Map(newLevelToActive));
+        throw error;
+      } finally {
+        setSavingLevel(null);
+      }
+    },
+    [
+      newLevelToActive,
+      savedLevelToAlias,
+      savedLevelToActive,
+      mutateTenantSettings,
+      api,
+      queryClient,
+      riskClassificationConfig.data,
+      recalculateRiskClassificationBounds,
+    ],
   );
 
   const handleSaveRow = useCallback(
