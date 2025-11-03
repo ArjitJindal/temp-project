@@ -253,13 +253,8 @@ const TIMESTAMP_VARIABLES = [
   'timestamp',
   'originPaymentDetails.etaTimestamp',
   'destinationPaymentDetails.etaTimestamp',
-  'timestamp',
-  'createdTimestamp',
-  'activatedTimestamp',
-  'lastTransactionTimestamp',
   'legalDocuments.$i.documentIssuedDate',
   'legalDocuments.$i.documentExpirationDate',
-  'savedPaymentDetails.$i.etaTimestamp',
   'createdTimestamp',
   'activatedTimestamp',
   'lastTransactionTimestamp',
@@ -268,6 +263,7 @@ const TIMESTAMP_VARIABLES = [
   'directors.$i.legalDocuments.$i.documentIssuedDate',
   'directors.$i.legalDocuments.$i.documentExpirationDate',
   'savedPaymentDetails.$i.etaTimestamp',
+  'eoddDate',
 ]
 
 function isTimestampVariable(key: string): boolean {
