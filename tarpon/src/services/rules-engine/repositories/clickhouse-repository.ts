@@ -248,12 +248,13 @@ export class ClickhouseTransactionsRepository {
             "','"
           )}') AND length(nonShadowHitRules) > 0`
         )
+      } else if (
+        params.isPaymentApprovals &&
+        params.filterStatus.includes('BLOCK')
+      ) {
+        whereConditions.push(`derived_status = 'BLOCK_MANUAL'`)
       } else {
-        whereConditions.push(
-          `status IN ('${params.filterStatus.join(
-            "','"
-          )}') AND transactionState = 'SUSPENDED'` // Payment approvals for Blocked transactions should only show manually blocked transactions
-        )
+        whereConditions.push(`status IN ('${params.filterStatus.join("','")}')`)
       }
     }
 
