@@ -13,7 +13,7 @@ import { dayjs } from '@/utils/dayjs';
 import TransactionTagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { usePaginatedTransactionList } from '@/utils/api/transactions';
 
 interface Props {
   userId: string;
@@ -43,7 +43,7 @@ export default function TransactionsList(props: Props) {
     }));
   }, [selectorParams]);
 
-  const { queryResult, countQueryResult } = useTransactionsQuery(
+  const { queryResult, countQueryResult } = usePaginatedTransactionList(
     { ...tableParams, ...selectorParams, userId },
     { isReadyToFetch: true },
   );

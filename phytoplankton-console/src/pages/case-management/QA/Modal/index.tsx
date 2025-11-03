@@ -16,7 +16,7 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import { AllParams } from '@/components/library/Table/types';
 import { getOr } from '@/utils/asyncResource';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
-import { useAlertList } from '@/utils/api/alerts';
+import { usePaginatedAlertList } from '@/utils/api/alerts';
 
 const initialValues: QAFormValues = {
   samplingName: '',
@@ -100,7 +100,7 @@ export const QAModal = (props: QAModalProps) => {
 const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } }) => {
   const { type, params, formState, initialValues } = props;
 
-  const alertsQueryResult = useAlertList(
+  const alertsQueryResult = usePaginatedAlertList(
     {
       ...(type === 'CREATE' && params),
       pageSize: 1,

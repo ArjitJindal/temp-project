@@ -8,7 +8,7 @@ import PaymentApprovalButton from '@/pages/case-management/components/PaymentApp
 import { TransactionsResponse } from '@/apis';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { usePaginatedTransactionList } from '@/utils/api/transactions';
 import { useReasons } from '@/utils/reasons';
 
 interface Props {
@@ -24,7 +24,7 @@ export default function PaymentApprovalsTable(props: Props) {
   const filterStatus = params.status ?? 'SUSPEND';
   const closureReasons = useReasons('CLOSURE'); // Only CLOSURE reasons for payment approvals
 
-  const { queryResult, countQueryResult, cacheKey } = useTransactionsQuery(
+  const { queryResult, countQueryResult, cacheKey } = usePaginatedTransactionList(
     { ...params, status: filterStatus, isPaymentApprovals: true },
     { isReadyToFetch: true, debounce: 500 },
   );

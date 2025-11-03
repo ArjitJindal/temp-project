@@ -29,7 +29,7 @@ import Select, { Option } from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
-import { TRANSACTIONS_UNIQUES, USERS_UNIQUES } from '@/utils/queries/keys';
+import { USERS_UNIQUES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { BUSINESS_USER_SEGMENTS } from '@/apis/models-custom/BusinessUserSegment';
@@ -44,7 +44,7 @@ import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
-import { isTransactionType } from '@/utils/api/transactions';
+import { isTransactionType } from '@/utils/api/transactions/helper';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { hasOverlaps } from '@/utils/math';
@@ -52,6 +52,8 @@ import { convertToDays } from '@/utils/dayjs';
 import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { useSettingsData } from '@/utils/api/auth';
+import { useTransactionsUniques } from '@/utils/api/transactions';
+import { QueryResult } from '@/utils/queries/types';
 
 type InputRendererProps<T extends RiskValueType> = {
   isDisabled?: boolean;
@@ -202,7 +204,7 @@ const EXTENDED_DAY_RANGE_GRANULARITY: Option<RiskParameterValueDayRangeEndGranul
 
 const MultipleSelect: React.FC<
   InputRendererProps<'MULTIPLE'> & {
-    options: Array<{ value: string; label: string; alternativeLabels?: string[] }>;
+    options: Array<Option<string>>;
     mode?: 'MULTIPLE' | 'MULTIPLE_DYNAMIC';
   }
 > = (props) => {
@@ -420,22 +422,10 @@ export const INPUT_RENDERERS: { [key in RiskFactorDataType]: InputRenderer<any> 
     );
   }) as InputRenderer<'MULTIPLE'>,
   BANK_NAMES: ((props) => {
-    const api = useApi();
-    const result = useQuery(TRANSACTIONS_UNIQUES('BANK_NAMES'), () =>
-      api.getTransactionsUniques({
-        field: 'BANK_NAMES',
-      }),
-    );
-    return (
-      <MultipleSelect
-        options={getOr(result.data, []).map((entry) => ({
-          value: entry,
-          label: entry,
-        }))}
-        mode="MULTIPLE_DYNAMIC"
-        {...props}
-      />
-    );
+    const result = useTransactionsUniques({ field: 'BANK_NAMES', optionise: true }) as QueryResult<
+      Option<string>[]
+    >;
+    return <MultipleSelect options={getOr(result.data, [])} mode="MULTIPLE_DYNAMIC" {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
   CURRENCY: ((props) => {
     return <MultipleSelect options={CURRENCIES_SELECT_OPTIONS} {...props} />;

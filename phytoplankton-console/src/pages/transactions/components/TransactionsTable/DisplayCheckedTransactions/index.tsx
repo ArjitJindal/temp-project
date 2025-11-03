@@ -12,7 +12,7 @@ import TransactionsTable, {
 import InformationIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import COLORS from '@/components/ui/colors';
 import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
-import { useCheckedTransactionsQuery } from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions/helpers';
+import { usePaginatedTransactionList } from '@/utils/api/transactions';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type Props = {
@@ -32,8 +32,18 @@ const DisplayCheckedTransactions = (props: Props) => {
   const ruleActionOptions = RULE_ACTIONS.map((action) => {
     return { value: action, label: action };
   });
-
-  const { queryResult } = useCheckedTransactionsQuery(alert, caseUserId, params);
+  const hitDirections = alert.ruleHitMeta?.hitDirections;
+  const newParams: TransactionsTableParams = {
+    ...params,
+    filterRuleInstancesExecuted: [alert.ruleInstanceId],
+  };
+  if (hitDirections?.length === 1) {
+    newParams.direction = hitDirections?.includes('DESTINATION') ? 'incoming' : 'outgoing';
+  } else {
+    newParams.direction = 'all';
+  }
+  newParams.userId = caseUserId;
+  const { queryResult } = usePaginatedTransactionList(newParams);
 
   const count = useMemo(() => {
     const [count, limit] =

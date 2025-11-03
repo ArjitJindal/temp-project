@@ -9,13 +9,11 @@ import InsightCard from './components/InsightCard';
 import * as Card from '@/components/ui/Card';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TransactionsList from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsList';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
-import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
-import { QueryResult } from '@/utils/queries/types';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { dayjs } from '@/utils/dayjs';
+import { useTransactionStats } from '@/utils/api/transactions';
+import { QueryResult } from '@/utils/queries/types';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -41,8 +39,12 @@ export default function InsightsCard(props: Props) {
     aggregateBy: 'status' as AggregateByField,
     timeRange: [dayjs().subtract(3, 'month'), dayjs()],
   });
-  const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
-
+  const statsQueryResult = useTransactionStats({
+    type: 'by-type',
+    selectorParams,
+    referenceCurrency: selectorParams.currency,
+    userId,
+  }) as QueryResult<TransactionsStatsByTypesResponseData[]>;
   return (
     <Card.Root>
       <Card.Section className={s.root}>
@@ -78,29 +80,5 @@ export default function InsightsCard(props: Props) {
         </InsightCard>
       </Card.Section>
     </Card.Root>
-  );
-}
-
-function useStatsQuery(
-  selectorParams: Params,
-  userId: string,
-  referenceCurrency: Currency,
-): QueryResult<TransactionsStatsByTypesResponseData[]> {
-  const api = useApi();
-  return useQuery(
-    TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
-    async (): Promise<TransactionsStatsByTypesResponseData[]> => {
-      const response = await api.getTransactionsStatsByType({
-        ...FIXED_API_PARAMS,
-        pageSize: selectorParams.transactionsCount,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        filterTransactionState: selectorParams.selectedTransactionStates,
-        referenceCurrency,
-        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
-        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
-      });
-      return response.data;
-    },
   );
 }

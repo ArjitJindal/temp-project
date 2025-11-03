@@ -12,7 +12,7 @@ import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useRuleOptions } from '@/utils/rules';
 import { PRIORITY } from '@/components/library/Table/standardDataTypes';
-import { useAlertList } from '@/utils/api/alerts';
+import { usePaginatedAlertList } from '@/utils/api/alerts';
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
 interface Props {
@@ -25,7 +25,7 @@ export default function RuleAndCaseDetails(props: Props) {
 
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
 
-  const queryResults = useAlertList(params, {
+  const queryResults = usePaginatedAlertList(params, {
     filterRuleInstanceId: action
       ? transaction.hitRules
           .filter((rule) => rule.ruleInstanceId && rule.ruleAction === action)

@@ -66,13 +66,6 @@ export const TRANSACTIONS_ITEM = (transactionId: string): QueryKey => [
   transactionId,
 ];
 
-export const TRANSACTIONS_ALERTS_LIST = (transactionId: string): QueryKey => [
-  'transactions',
-  'item',
-  transactionId,
-  'alerts',
-  'list',
-];
 export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
 export const TRANSACTIONS_FIND = (search: string): QueryKey => [
   'transactions',
@@ -119,6 +112,12 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   searchParams,
 ];
 
+export const CASE_TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
+  'transactions',
+  'list',
+  searchParams,
+  'case-transactions',
+];
 export const TRANSACTIONS_COUNT = (searchParams: AnyParameters): QueryKey => [
   'transactions',
   'count',

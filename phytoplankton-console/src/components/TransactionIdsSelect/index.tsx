@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { useDebounce } from 'ahooks';
 import Select, { Props } from '../library/Select';
 import { getOr } from '@/utils/asyncResource';
-import { useApi } from '@/api';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { useTransactionList } from '@/utils/api/transactions';
 
 type LocalProps = Omit<
   Extract<Props<string>, { mode: 'SINGLE' | 'MULTIPLE' | 'MULTIPLE_DYNAMIC' }>,
@@ -14,14 +12,13 @@ type LocalProps = Omit<
 function TransactionIdsSelect(props: LocalProps) {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();
   const debouncedSearchTerm = useDebounce(searchTerm, { wait: 500 });
-  const api = useApi();
-  const queryResult = useQuery(TRANSACTIONS_LIST(debouncedSearchTerm), async () => {
-    return api.getTransactionsList({ filterId: debouncedSearchTerm });
+
+  const queryResult = useTransactionList({
+    params: {
+      filterId: debouncedSearchTerm ?? '',
+    },
   });
-  const options = getOr(queryResult.data, {
-    items: [],
-    count: 0,
-  }).items.map((val) => ({
+  const options = getOr(queryResult.data, { items: [], count: 0 }).items.map((val) => ({
     label: val.transactionId,
     value: val.transactionId,
   }));

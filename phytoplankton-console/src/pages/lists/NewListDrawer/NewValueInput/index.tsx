@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useDebounce } from 'ahooks';
-import { DefaultOptionType } from 'antd/es/select';
 import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import Select, { Option } from '@/components/library/Select';
@@ -8,15 +7,13 @@ import { AllUsersTableItemPreview, ListSubtypeInternal, TransactionsUniquesField
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import { QueryResult } from '@/utils/queries/types';
 import { getOr, isLoading } from '@/utils/asyncResource';
-import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { neverThrow } from '@/utils/lang';
 import { InputProps } from '@/components/library/Form';
 import Spinner from '@/components/library/Spinner';
 import { UserSearchParams } from '@/pages/users/users-list';
+import { useTransactionsUniques } from '@/utils/api/transactions';
 
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
@@ -101,7 +98,6 @@ function SearchInput(
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, { wait: 500 });
-  const api = useApi();
   const field: TransactionsUniquesField = useMemo((): TransactionsUniquesField => {
     switch (listSubtype) {
       case 'CARD_FINGERPRINT_NUMBER':
@@ -137,19 +133,12 @@ function SearchInput(
     }
   }, [listSubtype]);
 
-  const queryResult: QueryResult<DefaultOptionType[]> = useQuery(
-    [TRANSACTIONS_UNIQUES(field, { filter: debouncedSearch }), debouncedSearch],
-    async (): Promise<DefaultOptionType[]> => {
-      if (debouncedSearch.length < 3) {
-        return [];
-      }
-      const uniques = await api.getTransactionsUniques({
-        field,
-        filter: debouncedSearch,
-      });
-      return uniques.map((value) => ({ value: value, label: value }));
-    },
-  );
+  const queryResult = useTransactionsUniques({
+    field,
+    params: { filter: debouncedSearch },
+    optionise: true,
+  }) as QueryResult<Option<string>[]>;
+
   return (
     <Select
       onSearch={setSearch}

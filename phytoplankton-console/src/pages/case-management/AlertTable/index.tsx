@@ -104,7 +104,7 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
-import { useAlertList } from '@/utils/api/alerts';
+import { usePaginatedAlertList } from '@/utils/api/alerts';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
@@ -376,7 +376,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
   const { changeHitsStatusMutation } = useChangeSanctionsHitsStatusMutation();
 
-  const queryResults = useAlertList(params);
+  const queryResults = usePaginatedAlertList(params);
 
   const actionRef = useRef<TableRefType>(null);
 

@@ -1,10 +1,8 @@
 import React from 'react';
 import ApprovalDetails from './RuleAndCaseDetails';
-import { useApi } from '@/api';
-import { TRANSACTIONS_ITEM } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { InternalTransaction } from '@/apis';
+import { useTransactionDetails } from '@/utils/api/transactions';
 
 interface Props {
   transactionId: string;
@@ -13,10 +11,7 @@ interface Props {
 
 export default function ExpandedRowRenderer(props: Props) {
   const { transactionId, isPaymentApprovals } = props;
-  const api = useApi();
-  const queryResult = useQuery(TRANSACTIONS_ITEM(transactionId), () =>
-    api.getTransaction({ transactionId }),
-  );
+  const queryResult = useTransactionDetails(transactionId);
 
   return (
     <AsyncResourceRenderer<InternalTransaction> resource={queryResult.data}>
