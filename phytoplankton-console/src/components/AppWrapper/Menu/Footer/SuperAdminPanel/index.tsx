@@ -287,6 +287,11 @@ export const featureDescriptions: Record<
     tag: FeatureTag.ENG,
     description: 'Aggregate on custom fields such as name, email, or address.',
   },
+  MULTIPLEX_ASYNC_RULES_TX: {
+    title: 'Multiplex async rules',
+    description: 'Multiplex transaction/ transaction events for async rules',
+    tag: FeatureTag.ENG,
+  },
 };
 
 export default function SuperAdminPanel() {

@@ -25,12 +25,20 @@ import {
   isSenderUserVariable,
 } from '../variables'
 import { JSON_LOGIC_BUILT_IN_OPERATORS, LOGIC_OPERATORS } from '../operators'
+import { getPaymentDetailsIdentifiersKey } from '../variables/payment-details'
 import dayjs from '@/utils/dayjs'
 import { getTimeRangeByTimeWindows } from '@/services/rules-engine/utils/time-utils'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { LogicAggregationVariableTimeWindow } from '@/@types/openapi-internal/LogicAggregationVariableTimeWindow'
 import { removeEmptyKeys } from '@/utils/object'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { LogicAggregationType } from '@/@types/openapi-internal/LogicAggregationType'
+import {
+  getPaymentDetailsNameString,
+  getPaymentEmailId,
+  getPaymentMethodAddressString,
+} from '@/utils/payment-details'
 
 export function isChildVariable(varKey: string) {
   return varKey.length > 0 && !varKey.includes(VARIABLE_NAMESPACE_SEPARATOR)
@@ -394,4 +402,61 @@ export function canAggregate(timeWindow: LogicAggregationVariableTimeWindow) {
     )
   }
   return true
+}
+
+export function getUserKeyId(
+  transaction: Transaction,
+  direction: 'origin' | 'destination',
+  type: LogicAggregationType
+): string | undefined {
+  switch (type) {
+    case 'USER_TRANSACTIONS':
+      return direction === 'origin'
+        ? transaction.originUserId
+        : transaction.destinationUserId
+    case 'PAYMENT_DETAILS_TRANSACTIONS': {
+      const paymentDetails =
+        direction === 'origin'
+          ? transaction.originPaymentDetails
+          : transaction.destinationPaymentDetails
+      if (paymentDetails) {
+        return getPaymentDetailsIdentifiersKey(paymentDetails)
+      }
+
+      return undefined
+    }
+    case 'PAYMENT_DETAILS_NAME': {
+      const paymentDetails =
+        direction === 'origin'
+          ? transaction.originPaymentDetails
+          : transaction.destinationPaymentDetails
+      if (!paymentDetails) {
+        return undefined
+      }
+      const name = getPaymentDetailsNameString(paymentDetails)
+      return name
+    }
+    case 'PAYMENT_DETAILS_EMAIL': {
+      const paymentDetails =
+        direction === 'origin'
+          ? transaction.originPaymentDetails
+          : transaction.destinationPaymentDetails
+      if (!paymentDetails) {
+        return undefined
+      }
+      const email = getPaymentEmailId(paymentDetails)
+      return email
+    }
+    case 'PAYMENT_DETAILS_ADDRESS': {
+      const paymentDetails =
+        direction === 'origin'
+          ? transaction.originPaymentDetails
+          : transaction.destinationPaymentDetails
+      if (!paymentDetails) {
+        return undefined
+      }
+      const address = getPaymentMethodAddressString(paymentDetails)
+      return address
+    }
+  }
 }

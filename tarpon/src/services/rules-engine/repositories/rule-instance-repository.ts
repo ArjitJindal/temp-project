@@ -702,4 +702,26 @@ export class RuleInstanceRepository {
     })
     return Array.from(distinctShadowRuleInstanceIds).filter(Boolean) as string[]
   }
+
+  public async getAllAggregationVariables(): Promise<
+    LogicAggregationVariable[]
+  > {
+    const queryCommandInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression: 'attribute_exists(#aggVars)',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
+      },
+      ExpressionAttributeNames: {
+        '#aggVars': 'logicAggregationVariables',
+      },
+      ProjectionExpression: '#aggVars',
+    }
+    const result = await paginateQuery(this.dynamoDb, queryCommandInput)
+    if (!result.Items) {
+      return []
+    }
+    return result.Items.map((item) => item.logicAggregationVariables)
+  }
 }

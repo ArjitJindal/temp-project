@@ -295,6 +295,36 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const lowTrafficAsyncRuleMultiplexerQueue = this.createQueue(
+      SQSQueues.LOW_TRAFFIC_ASYNC_RULE_QUEUE.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT, // Todo: Maybe reduce this
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
+    const highTrafficAsyncRuleMultiplexerQueue = this.createQueue(
+      SQSQueues.HIGH_TRAFFIC_ASYNC_RULE_QUEUE.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
+    const asyncRuleProcessorQueue = this.createQueue(
+      SQSQueues.ASYNC_RULE_PROCESSOR_QUEUE.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const batchAsyncRuleQueue = this.createQueue(
       SQSQueues.BATCH_ASYNC_RULE_QUEUE_NAME.name,
       {
@@ -640,6 +670,11 @@ export class CdkTarponStack extends cdk.Stack {
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         SECONDARY_ASYNC_RULE_QUEUE_URL: secondaryAsyncRuleQueue.queueUrl,
+        HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL:
+          highTrafficAsyncRuleMultiplexerQueue.queueUrl,
+        LOW_TRAFFIC_ASYNC_RULE_QUEUE_URL:
+          lowTrafficAsyncRuleMultiplexerQueue.queueUrl,
+        ASYNC_RULE_PROCESSOR_QUEUE_URL: asyncRuleProcessorQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
         DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
@@ -747,6 +782,9 @@ export class CdkTarponStack extends cdk.Stack {
             actionProcessingQueue.queueArn,
             dynamoDbConsumerQueue.queueArn,
             batchRerunUsersQueue.queueArn,
+            highTrafficAsyncRuleMultiplexerQueue.queueArn,
+            lowTrafficAsyncRuleMultiplexerQueue.queueArn,
+            asyncRuleProcessorQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -1050,6 +1088,16 @@ export class CdkTarponStack extends cdk.Stack {
       heavyLibLayer
     )
 
+    const { alias: asyncRuleMultiplexer } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PRIMARY_ASYNC_RULE_MULTIPLEXER_NAME,
+        memorySize: config.resource.ASYNC_RULES_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
+
     // non-batch async rule
     asyncRuleAlias.addEventSource(
       new SqsEventSource(asyncRuleQueue, { maxConcurrency: 200, batchSize: 10 })
@@ -1066,6 +1114,24 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(secondaryAsyncRuleQueue, {
         maxConcurrency: 5,
         batchSize: 1,
+      })
+    )
+
+    asyncRuleMultiplexer.addEventSource(
+      new SqsEventSource(highTrafficAsyncRuleMultiplexerQueue, {
+        maxConcurrency: 10,
+        batchSize: 100,
+        maxBatchingWindow: Duration.seconds(30),
+        reportBatchItemFailures: true,
+      })
+    )
+
+    asyncRuleMultiplexer.addEventSource(
+      new SqsEventSource(lowTrafficAsyncRuleMultiplexerQueue, {
+        maxConcurrency: 30,
+        batchSize: 20,
+        maxBatchingWindow: Duration.seconds(10),
+        reportBatchItemFailures: true,
       })
     )
 

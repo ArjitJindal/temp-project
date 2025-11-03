@@ -594,7 +594,7 @@ export async function sendAsyncRuleTasks(
   }
 
   const isConcurrentAsyncRulesEnabled = hasFeature('CONCURRENT_ASYNC_RULES')
-
+  const isMultiplexed = hasFeature('MULTIPLEX_ASYNC_RULES_TX')
   const messages = tasks
     .filter((task) => !task.type.endsWith('_BATCH'))
     .map((task) => {
@@ -615,6 +615,17 @@ export async function sendAsyncRuleTasks(
         messageDeduplicationId = sanitizeDeduplicationId(
           `UE-${task.updatedUser.userId}-${task.userEventTimestamp}`
         )
+      }
+      if (
+        isMultiplexed &&
+        (task.type === 'TRANSACTION_EVENT' || task.type === 'TRANSACTION')
+      ) {
+        return {
+          MessageBody: JSON.stringify(task),
+          QueueUrl: process.env.HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL, // Currently only sending to HIGH_TRAFFIC queue (ToDo: Have system to keep tenants in high traffic or low traffic)
+          MessageGroupId: generateChecksum(task.tenantId),
+          MessageDeduplicationId: messageDeduplicationId,
+        }
       }
       return {
         MessageBody: JSON.stringify(task),

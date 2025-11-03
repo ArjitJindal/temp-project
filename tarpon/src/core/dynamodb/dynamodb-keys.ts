@@ -812,6 +812,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#cloudwatch_logs_sync`,
     SortKeyID: 'last_synced_timestamp',
   }),
+  ASYNC_RULE_PROCESSING_DETAILS: (tenantId: string, identifier: string) => ({
+    PartitionKeyID: `${tenantId}#async-rule-processing-status#identifier:${identifier}`,
+    SortKeyID: `${identifier}`,
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys

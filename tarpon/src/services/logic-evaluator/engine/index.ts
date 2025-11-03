@@ -50,6 +50,7 @@ import {
 import {
   canAggregate,
   getAggregationGranularity,
+  getUserKeyId,
   getVariableKeysFromLogic,
   transformJsonLogic,
   transformJsonLogicVars,
@@ -91,7 +92,6 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { LogicEntityVariableEntityEnum } from '@/@types/openapi-internal/LogicEntityVariable'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
-import { LogicAggregationType } from '@/@types/openapi-internal/LogicAggregationType'
 import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -100,10 +100,8 @@ import dayjs from '@/utils/dayjs'
 import { EntityData, TimestampSlice } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
-  getPaymentDetailsNameString,
   getPaymentEmailId,
   getPaymentMethodAddress,
-  getPaymentMethodAddressString,
 } from '@/utils/payment-details'
 import { formatConsumerName, getAddressString } from '@/utils/helpers'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -627,63 +625,6 @@ export class LogicEvaluator {
     (userId: string | undefined) => userId ?? ''
   )
 
-  private getUserKeyId(
-    transaction: Transaction,
-    direction: 'origin' | 'destination',
-    type: LogicAggregationType
-  ): string | undefined {
-    switch (type) {
-      case 'USER_TRANSACTIONS':
-        return direction === 'origin'
-          ? transaction.originUserId
-          : transaction.destinationUserId
-      case 'PAYMENT_DETAILS_TRANSACTIONS': {
-        const paymentDetails =
-          direction === 'origin'
-            ? transaction.originPaymentDetails
-            : transaction.destinationPaymentDetails
-        if (paymentDetails) {
-          return getPaymentDetailsIdentifiersKey(paymentDetails)
-        }
-
-        return undefined
-      }
-      case 'PAYMENT_DETAILS_NAME': {
-        const paymentDetails =
-          direction === 'origin'
-            ? transaction.originPaymentDetails
-            : transaction.destinationPaymentDetails
-        if (!paymentDetails) {
-          return undefined
-        }
-        const name = getPaymentDetailsNameString(paymentDetails)
-        return name
-      }
-      case 'PAYMENT_DETAILS_EMAIL': {
-        const paymentDetails =
-          direction === 'origin'
-            ? transaction.originPaymentDetails
-            : transaction.destinationPaymentDetails
-        if (!paymentDetails) {
-          return undefined
-        }
-        const email = getPaymentEmailId(paymentDetails)
-        return email
-      }
-      case 'PAYMENT_DETAILS_ADDRESS': {
-        const paymentDetails =
-          direction === 'origin'
-            ? transaction.originPaymentDetails
-            : transaction.destinationPaymentDetails
-        if (!paymentDetails) {
-          return undefined
-        }
-        const address = getPaymentMethodAddressString(paymentDetails)
-        return address
-      }
-    }
-  }
-
   /**
    * Aggregation related
    */
@@ -698,7 +639,7 @@ export class LogicEvaluator {
     }
     const { transaction } = data
 
-    const userKeyId = this.getUserKeyId(
+    const userKeyId = getUserKeyId(
       transaction,
       direction,
       aggregationVariable.type
@@ -1247,7 +1188,7 @@ export class LogicEvaluator {
 
     await Promise.all(
       directions.map(async (direction) => {
-        const userKeyId = this.getUserKeyId(
+        const userKeyId = getUserKeyId(
           transaction,
           direction,
           aggregationVariable.type
@@ -1693,11 +1634,7 @@ export class LogicEvaluator {
       // If the mode is DYNAMODB, we fetch the pre-built aggregation data
       const userKeyId =
         data.type === 'TRANSACTION'
-          ? this.getUserKeyId(
-              data.transaction,
-              direction,
-              aggregationVariable.type
-            )
+          ? getUserKeyId(data.transaction, direction, aggregationVariable.type)
           : data.user.userId
       if (!userKeyId) {
         return null

@@ -13190,6 +13190,7 @@ components:
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
+        - MULTIPLEX_ASYNC_RULES_TX
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
