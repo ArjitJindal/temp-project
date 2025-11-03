@@ -1120,8 +1120,7 @@ export class CdkTarponStack extends cdk.Stack {
     asyncRuleMultiplexer.addEventSource(
       new SqsEventSource(highTrafficAsyncRuleMultiplexerQueue, {
         maxConcurrency: 10,
-        batchSize: 100,
-        maxBatchingWindow: Duration.seconds(30),
+        batchSize: 10,
         reportBatchItemFailures: true,
       })
     )
@@ -1129,8 +1128,7 @@ export class CdkTarponStack extends cdk.Stack {
     asyncRuleMultiplexer.addEventSource(
       new SqsEventSource(lowTrafficAsyncRuleMultiplexerQueue, {
         maxConcurrency: 30,
-        batchSize: 20,
-        maxBatchingWindow: Duration.seconds(10),
+        batchSize: 10,
         reportBatchItemFailures: true,
       })
     )
