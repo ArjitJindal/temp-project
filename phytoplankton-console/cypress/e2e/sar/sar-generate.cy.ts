@@ -14,15 +14,14 @@ describe.skip('SAR Generate', () => {
     });
   });
   it('should open SAR report form', () => {
-    cy.intercept('GET', '**/alerts**').as('alerts');
     cy.visit(
-      '/case-management/cases?page=1&pageSize=100&sort=-createdTimestamp&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&originMethodFilter=ACH%2CGENERIC_BANK_ACCOUNT%2CIBAN%2CNPP%2CUPI%2CCHECK&caseStatus=OPEN',
     );
     cy.intercept('GET', '**/report-types').as('sarCountries');
-    cy.wait('@alerts').its('response.statusCode').should('be.oneOf', [200, 304]);
     cy.waitNothingLoading();
-    cy.get('a[data-cy="alert-id"]', { timeout: 15000 }).should('be.visible');
-    cy.get('a[data-cy="alert-id"]').eq(0).click();
+    cy.get('a[data-cy="case-id"]', { timeout: 15000 }).should('be.visible');
+    cy.get('a[data-cy="case-id"]').eq(0).click();
+    cy.waitNothingLoading();
 
     const SarCountrywithReports = [
       {
@@ -51,11 +50,6 @@ describe.skip('SAR Generate', () => {
       },
     ];
     SarCountrywithReports.map((item) => {
-      cy.get('div[id="rc-tabs-1-panel-transactions"] input[data-cy="row-table-checkbox"]', {
-        timeout: 15000,
-      })
-        .first()
-        .click();
       cy.get('button[data-cy="sar-button"]').first().click();
       cy.singleSelect('[data-cy="sar-country-select"]', item.countryName);
       cy.singleSelect('[data-cy="sar-report-type-select"]', item.reportType);
