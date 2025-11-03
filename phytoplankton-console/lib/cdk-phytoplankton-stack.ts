@@ -102,6 +102,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
         function handler(event) {
           var response = event.response;
           var headers = response.headers;
+          var request = event.request;
           var uri = event.request.uri;
 
           // Set Content-Type based on file extension
@@ -120,10 +121,11 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           }
 
           // Regex to check if host for request is flagright
-          const isFlagright =  new RegExp('flagright\\.(local|com|dev)', 'i').test(req.get('host') || '');
+          var hostHeader = request.headers.host ? request.headers.host.value : '';
+          var isFlagright = /flagright\\.(local|com|dev)/i.test(hostHeader);
 
           if (!isFlagright) {
-            res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+            headers['cross-origin-embedder-policy'] = { value: 'credentialless' };
           }
           // Ensure CORP header is set (in case ResponseHeadersPolicy doesn't apply it)
           // Use lowercase header name as CloudFront normalizes headers
