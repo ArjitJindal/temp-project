@@ -246,11 +246,26 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
               id: sanctionsEntity.id,
               provider: SanctionsDataProviders.OPEN_SANCTIONS,
             },
-            update: {
-              $addToSet: {
-                sanctionsSources: sanctionsSource,
+            update: [
+              {
+                $set: {
+                  sanctionsSources: {
+                    $cond: [
+                      { $isArray: '$sanctionsSources' },
+                      '$sanctionsSources',
+                      [],
+                    ],
+                  },
+                },
               },
-            },
+              {
+                $set: {
+                  sanctionsSources: {
+                    $setUnion: ['$sanctionsSources', [sanctionsSource]],
+                  },
+                },
+              },
+            ],
             upsert: false,
           },
         })
