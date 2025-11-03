@@ -13,7 +13,7 @@ import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { getSQSClient, getSQSQueueUrl } from '@/utils/sns-sqs-client'
 import {
   DynamoDbEntityType,
   DynamoDbEntityUpdate,
@@ -62,7 +62,7 @@ async function sendEntityToSQS({
   await sqsClient.send(
     new SendMessageCommand({
       MessageBody: JSON.stringify(entityData),
-      QueueUrl: process.env.DOWNSTREAM_TARPON_QUEUE_URL,
+      QueueUrl: getSQSQueueUrl(process.env.DOWNSTREAM_TARPON_QUEUE_URL),
     })
   )
 }

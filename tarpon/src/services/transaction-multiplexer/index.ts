@@ -11,6 +11,7 @@ import {
   FifoSqsMessage,
   bulkSendMessages,
   getSQSClient,
+  getSQSQueueUrl,
 } from '@/utils/sns-sqs-client'
 import {
   AsyncMessage,
@@ -74,7 +75,9 @@ export class TransactionMultiplexer {
               MessageDeduplicationId: getPrimaryRecordIdentifier(
                 recordGroup[0].record
               ),
-              QueueUrl: process.env.ASYNC_RULE_PROCESSOR_QUEUE_URL as string,
+              QueueUrl: getSQSQueueUrl(
+                process.env.ASYNC_RULE_PROCESSOR_QUEUE_URL as string
+              ),
             })
           )
           return
@@ -147,7 +150,7 @@ export class TransactionMultiplexer {
       }))
       await bulkSendMessages(
         sqsClient,
-        process.env.ASYNC_RULE_PROCESSOR_QUEUE_URL as string,
+        getSQSQueueUrl(process.env.ASYNC_RULE_PROCESSOR_QUEUE_URL as string),
         messages
       )
     } else {

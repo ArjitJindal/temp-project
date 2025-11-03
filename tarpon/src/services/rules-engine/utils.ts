@@ -22,6 +22,7 @@ import {
   bulkSendMessages,
   FifoSqsMessage,
   getSQSClient,
+  getSQSQueueUrl,
   sanitizeDeduplicationId,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
@@ -622,7 +623,9 @@ export async function sendAsyncRuleTasks(
       ) {
         return {
           MessageBody: JSON.stringify(task),
-          QueueUrl: process.env.HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL, // Currently only sending to HIGH_TRAFFIC queue (ToDo: Have system to keep tenants in high traffic or low traffic)
+          QueueUrl: getSQSQueueUrl(
+            process.env.HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL
+          ), // Currently only sending to HIGH_TRAFFIC queue (ToDo: Have system to keep tenants in high traffic or low traffic)
           MessageGroupId: generateChecksum(task.tenantId),
           MessageDeduplicationId: messageDeduplicationId,
         }
@@ -630,8 +633,8 @@ export async function sendAsyncRuleTasks(
       return {
         MessageBody: JSON.stringify(task),
         QueueUrl: secondaryQueue
-          ? process.env.SECONDARY_ASYNC_RULE_QUEUE_URL
-          : process.env.ASYNC_RULE_QUEUE_URL,
+          ? getSQSQueueUrl(process.env.SECONDARY_ASYNC_RULE_QUEUE_URL)
+          : getSQSQueueUrl(process.env.ASYNC_RULE_QUEUE_URL),
         MessageGroupId: generateChecksum(
           isConcurrentAsyncRulesEnabled
             ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
@@ -672,7 +675,7 @@ export async function sendAsyncRuleTasks(
         : task.tenantId
       return {
         MessageBody: JSON.stringify(task),
-        QueueUrl: process.env.BATCH_ASYNC_RULE_QUEUE_URL,
+        QueueUrl: getSQSQueueUrl(process.env.BATCH_ASYNC_RULE_QUEUE_URL),
         MessageGroupId: generateChecksum(messageGroupId, 10),
         MessageDeduplicationId: messageDeduplicationId,
       }
@@ -682,13 +685,13 @@ export async function sendAsyncRuleTasks(
     bulkSendMessages(
       sqs,
       secondaryQueue
-        ? (process.env.SECONDARY_ASYNC_RULE_QUEUE_URL as string)
-        : (process.env.ASYNC_RULE_QUEUE_URL as string),
+        ? getSQSQueueUrl(process.env.SECONDARY_ASYNC_RULE_QUEUE_URL as string)
+        : getSQSQueueUrl(process.env.ASYNC_RULE_QUEUE_URL as string),
       messages
     ),
     bulkSendMessages(
       sqs,
-      process.env.BATCH_ASYNC_RULE_QUEUE_URL as string,
+      getSQSQueueUrl(process.env.BATCH_ASYNC_RULE_QUEUE_URL as string),
       batchMessages
     ),
   ])

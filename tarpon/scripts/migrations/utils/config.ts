@@ -56,34 +56,34 @@ export function initializeEnvVars() {
     SQSQueues.TRANSACTION_EVENT_QUEUE_NAME.name
   const batchRerunUsersQueueName: string =
     SQSQueues.BATCH_RERUN_USERS_QUEUE_NAME.name
+  const sqsQueuePrefix = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}`
 
   process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${auditLogTopicName}`
   process.env.SHARED_ASSETS_BUCKET = getNameForGlobalResource(
     StackConstants.S3_SHARED_ASSETS_PREFIX,
     getConfig()
   )
-  process.env.DYNAMO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${dynamoDbConsumerQueueName}`
-  process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoUpdateConsumerQueueName}`
+  process.env.SQS_QUEUE_PREFIX = sqsQueuePrefix
   process.env.DOCUMENT_BUCKET = getNameForGlobalResource(
     StackConstants.S3_DOCUMENT_BUCKET_PREFIX,
     getConfig()
   )
 
-  process.env.NOTIFICATIONS_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${notificationsQueueName}`
-  process.env.WEBHOOK_DELIVERY_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${webhookDeliveryQueueName}`
-  process.env.BATCH_ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchAsyncRuleQueueName}`
-  process.env.MONGO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoDbConsumerQueueName}`
-  process.env.USER_EVENT_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${userEventQueueName}`
-  process.env.TRANSACTION_EVENT_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${transactionEventQueueName}`
-  process.env.REQUEST_LOGGER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${requestLoggerQueueName}`
-  process.env.SLACK_ALERT_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${slackAlertQueueName}`
-  process.env.DYNAMO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${dynamoDbConsumerQueueName}`
-  process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoUpdateConsumerQueueName}`
-  process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchJobQueueName}`
-  process.env.ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${asyncRuleQueueName}`
-  process.env.ACTION_PROCESSING_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${actionProcessingQueueName}`
-  process.env.AUDIT_LOG_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${auditLogQueueName}`
-  process.env.BATCH_RERUN_USERS_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchRerunUsersQueueName}`
-  process.env.DOWNSTREAM_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${downstreamTarponQueueName}`
-  process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${downstreamSecondaryTarponQueueName}`
+  process.env.NOTIFICATIONS_QUEUE_URL = `${notificationsQueueName}`
+  process.env.WEBHOOK_DELIVERY_QUEUE_URL = `${webhookDeliveryQueueName}`
+  process.env.BATCH_ASYNC_RULE_QUEUE_URL = `${batchAsyncRuleQueueName}`
+  process.env.MONGO_DB_CONSUMER_QUEUE_URL = `${mongoDbConsumerQueueName}`
+  process.env.USER_EVENT_QUEUE_URL = `${userEventQueueName}`
+  process.env.TRANSACTION_EVENT_QUEUE_URL = `${transactionEventQueueName}`
+  process.env.REQUEST_LOGGER_QUEUE_URL = `${requestLoggerQueueName}`
+  process.env.SLACK_ALERT_QUEUE_URL = `${slackAlertQueueName}`
+  process.env.DYNAMO_DB_CONSUMER_QUEUE_URL = `${dynamoDbConsumerQueueName}`
+  process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL = `${mongoUpdateConsumerQueueName}`
+  process.env.BATCH_JOB_QUEUE_URL = `${batchJobQueueName}`
+  process.env.ASYNC_RULE_QUEUE_URL = `${asyncRuleQueueName}`
+  process.env.ACTION_PROCESSING_QUEUE_URL = `${actionProcessingQueueName}`
+  process.env.AUDIT_LOG_QUEUE_URL = `${auditLogQueueName}`
+  process.env.BATCH_RERUN_USERS_QUEUE_URL = `${batchRerunUsersQueueName}`
+  process.env.DOWNSTREAM_TARPON_QUEUE_URL = `${downstreamTarponQueueName}`
+  process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL = `${downstreamSecondaryTarponQueueName}`
 }

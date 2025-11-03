@@ -45,7 +45,7 @@ import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { StackConstants } from '@lib/constants'
-import { getSQSClient } from './sns-sqs-client'
+import { getSQSClient, getSQSQueueUrl } from './sns-sqs-client'
 import { getCredentialsFromEvent } from './credentials'
 import { generateChecksum, removeUndefinedFields } from './object'
 import { addNewSubsegment } from '@/core/xray'
@@ -1139,7 +1139,7 @@ export async function sendMessageToDynamoDbConsumer(
 
   await sqs.send(
     new SendMessageCommand({
-      QueueUrl: process.env.DYNAMO_DB_CONSUMER_QUEUE_URL,
+      QueueUrl: getSQSQueueUrl(process.env.DYNAMO_DB_CONSUMER_QUEUE_URL),
       MessageBody: JSON.stringify(message),
     })
   )

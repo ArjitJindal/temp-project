@@ -152,6 +152,10 @@ import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
 import { CdkTarponPythonStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-python-stack'
 import { createTransactionFunctionPerformanceDashboard } from './dashboards/public-api-transaction-function'
 import { createVpcLogGroup } from './cdk-utils/cdk-log-group-utils'
+import {
+  getSQSQueuePrefix,
+  getSQSQueueName,
+} from './cdk-utils/cdk-common-utils'
 import { envIs, envIsNot } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -645,41 +649,73 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * Lambda Functions
      */
-
+    // queuePrefix is same for all queue urls, we are not storing this in environment vairable of a lambda to
+    // keep env size below 4KBs
+    const sqsQueuePrefix = getSQSQueuePrefix(webhookDeliveryQueue.queueUrl)
     this.functionProps = {
       securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
         ? [securityGroup, clickhouseSecurityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
       environment: {
+        SQS_QUEUE_PREFIX: sqsQueuePrefix,
         DOCUMENT_BUCKET: documentBucketName,
         IMPORT_BUCKET: importBucketName,
         TMP_BUCKET: tmpBucketName,
         SHARED_ASSETS_BUCKET: sharedAssetsBucketName,
-        WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
-        TRANSACTION_AGGREGATION_QUEUE_URL: transactionAggregationQueue.queueUrl,
-        SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
-        REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
+        // sns topics
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
-        BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
-        TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
-        SECONDARY_TARPON_QUEUE_URL: secondaryTarponEventQueue.queueUrl,
-        DOWNSTREAM_TARPON_QUEUE_URL: downstreamTarponEventQueue.queueUrl,
-        DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL:
-          downstreamSecondaryTarponEventQueue.queueUrl,
-        ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
-        BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
-        SECONDARY_ASYNC_RULE_QUEUE_URL: secondaryAsyncRuleQueue.queueUrl,
-        HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL:
-          highTrafficAsyncRuleMultiplexerQueue.queueUrl,
-        LOW_TRAFFIC_ASYNC_RULE_QUEUE_URL:
-          lowTrafficAsyncRuleMultiplexerQueue.queueUrl,
-        ASYNC_RULE_PROCESSOR_QUEUE_URL: asyncRuleProcessorQueue.queueUrl,
-        MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
-        DYNAMO_DB_CONSUMER_QUEUE_URL: dynamoDbConsumerQueue.queueUrl,
-        MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
-        ACTION_PROCESSING_QUEUE_URL: actionProcessingQueue.queueUrl,
-        BATCH_RERUN_USERS_QUEUE_URL: batchRerunUsersQueue.queueUrl,
+        // sqs queues
+        WEBHOOK_DELIVERY_QUEUE_URL: getSQSQueueName(
+          webhookDeliveryQueue.queueUrl
+        ),
+        TRANSACTION_AGGREGATION_QUEUE_URL: getSQSQueuePrefix(
+          transactionAggregationQueue.queueUrl
+        ),
+        SLACK_ALERT_QUEUE_URL: getSQSQueueName(slackAlertQueue.queueUrl),
+        REQUEST_LOGGER_QUEUE_URL: getSQSQueueName(requestLoggerQueue.queueUrl),
+        BATCH_JOB_QUEUE_URL: getSQSQueueName(batchJobQueue?.queueUrl),
+        TARPON_QUEUE_URL: getSQSQueueName(tarponEventQueue.queueUrl),
+        SECONDARY_TARPON_QUEUE_URL: getSQSQueueName(
+          secondaryTarponEventQueue.queueUrl
+        ),
+        DOWNSTREAM_TARPON_QUEUE_URL: getSQSQueueName(
+          downstreamTarponEventQueue.queueUrl
+        ),
+        DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL: getSQSQueueName(
+          downstreamSecondaryTarponEventQueue.queueUrl
+        ),
+        ASYNC_RULE_QUEUE_URL: getSQSQueueName(asyncRuleQueue.queueUrl),
+        BATCH_ASYNC_RULE_QUEUE_URL: getSQSQueueName(
+          batchAsyncRuleQueue.queueUrl
+        ),
+        SECONDARY_ASYNC_RULE_QUEUE_URL: getSQSQueueName(
+          secondaryAsyncRuleQueue.queueUrl
+        ),
+        HIGH_TRAFFIC_ASYNC_RULE_QUEUE_URL: getSQSQueueName(
+          highTrafficAsyncRuleMultiplexerQueue.queueUrl
+        ),
+        LOW_TRAFFIC_ASYNC_RULE_QUEUE_URL: getSQSQueueName(
+          lowTrafficAsyncRuleMultiplexerQueue.queueUrl
+        ),
+        ASYNC_RULE_PROCESSOR_QUEUE_URL: getSQSQueueName(
+          asyncRuleProcessorQueue.queueUrl
+        ),
+        MONGO_DB_CONSUMER_QUEUE_URL: getSQSQueueName(
+          mongoDbConsumerQueue.queueUrl
+        ),
+        DYNAMO_DB_CONSUMER_QUEUE_URL: getSQSQueueName(
+          dynamoDbConsumerQueue.queueUrl
+        ),
+        MONGO_UPDATE_CONSUMER_QUEUE_URL: getSQSQueueName(
+          mongoUpdateConsumerQueue.queueUrl
+        ),
+        ACTION_PROCESSING_QUEUE_URL: getSQSQueueName(
+          actionProcessingQueue.queueUrl
+        ),
+        BATCH_RERUN_USERS_QUEUE_URL: getSQSQueueName(
+          batchRerunUsersQueue.queueUrl
+        ),
       },
     }
 

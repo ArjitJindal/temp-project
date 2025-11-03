@@ -36,7 +36,7 @@ import {
 } from './clickhouse/utils'
 import { envIs, envIsNot } from './env'
 import { isDemoTenant } from './tenant-id'
-import { getSQSClient } from './sns-sqs-client'
+import { getSQSClient, getSQSQueueUrl } from './sns-sqs-client'
 import { generateChecksum } from './object'
 import { USERS_COLLECTION } from './mongo-table-names'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
@@ -745,7 +745,7 @@ export async function sendMessageToMongoUpdateConsumer<
   const sqs = getSQSClient()
 
   const messageCommand = new SendMessageCommand({
-    QueueUrl: process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL,
+    QueueUrl: getSQSQueueUrl(process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL),
     MessageBody: JSON.stringify(message),
     MessageGroupId: generateChecksum(message.filter, 10),
     MessageDeduplicationId: generateChecksum(message, 10),

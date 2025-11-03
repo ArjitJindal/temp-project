@@ -4,7 +4,11 @@ import { MongoClient } from 'mongodb'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { BatchRerunUsersService } from '../batch-users-rerun'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { getSQSClient, bulkSendMessages } from '@/utils/sns-sqs-client'
+import {
+  getSQSClient,
+  bulkSendMessages,
+  getSQSQueueUrl,
+} from '@/utils/sns-sqs-client'
 import { BatchRerunUsers } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongo-table-names'
@@ -45,7 +49,7 @@ export class BatchRerunUsersBatchJobRunner extends BatchJobRunner {
 
     await bulkSendMessages(
       sqsClient,
-      process.env.BATCH_RERUN_USERS_QUEUE_URL as string,
+      getSQSQueueUrl(process.env.BATCH_RERUN_USERS_QUEUE_URL as string),
       messages.map((message) => ({
         MessageBody: JSON.stringify(message),
       }))

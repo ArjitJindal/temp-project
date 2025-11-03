@@ -24,6 +24,10 @@ interface SenderClient {
   send: (command: any, options: any) => Promise<any>
 }
 
+export const getSQSQueueUrl = (queueSuffix: string = '') => {
+  return process.env.SQS_QUEUE_PREFIX + '/' + queueSuffix
+}
+
 function getRefreshingClient<T extends SenderClient>(client: T): T {
   client.send = wrap(
     client.send.bind(client),

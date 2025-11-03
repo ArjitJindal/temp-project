@@ -13,7 +13,11 @@ import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import dayjs, { Timezone, WEEKDAY_NUMBERS, duration } from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { generateChecksum } from '@/utils/object'
-import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
+import {
+  bulkSendMessages,
+  getSQSClient,
+  getSQSQueueUrl,
+} from '@/utils/sns-sqs-client'
 
 export function calculateCaseAvailableDate(
   now: number,
@@ -168,7 +172,7 @@ export async function sendActionProcessionTasks(
   }))
   await bulkSendMessages(
     sqsClient,
-    process.env.ACTION_PROCESSING_QUEUE_URL as string,
+    getSQSQueueUrl(process.env.ACTION_PROCESSING_QUEUE_URL as string),
     messages
   )
 }
