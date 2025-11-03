@@ -289,7 +289,7 @@ export const featureDescriptions: Record<
   },
   FLAT_FILES_IMPORT_TRANSACTIONS: {
     title: 'Flat files import for transactions (WIP)',
-    tag: FeatureTag.FLAT_FILES_IMPORT_TRANSACTIONS,
+    tag: FeatureTag.WIP,
     description: 'Enables button for importing transactions from  flat files',
   },
   MULTIPLEX_ASYNC_RULES_TX: {
