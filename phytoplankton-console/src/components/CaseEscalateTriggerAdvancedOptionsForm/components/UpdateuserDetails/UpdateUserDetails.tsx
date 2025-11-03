@@ -11,8 +11,8 @@ import { ModalWidth, isModalWidthGreatherThan } from '@/components/library/Modal
 import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
-import { useUserLists } from '@/utils/queries/hooks';
 import { getOr } from '@/utils/asyncResource';
+import { useLists } from '@/utils/api/lists';
 
 type UpdateUserDetailsProps = {
   size: ModalWidth | undefined;
@@ -21,7 +21,7 @@ type UpdateUserDetailsProps = {
 export const UpdateUserDetails = (props: UpdateUserDetailsProps) => {
   const { size } = props;
   const settings = useSettings();
-  const queryResults = useUserLists();
+  const queryResults = useLists({ listSubtype: 'USER_ID' });
 
   return (
     <div className={isModalWidthGreatherThan(size ?? 'M', 'M') ? s.rowLayout : s.columnLayout}>

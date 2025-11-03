@@ -4,7 +4,6 @@ import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
 import TagsInput from './components/TagsInput';
-import { useUserLists } from '@/utils/queries/hooks';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
 import Select from '@/components/library/Select';
@@ -27,6 +26,7 @@ import InputField from '@/components/library/Form/InputField';
 import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getOr, isLoading } from '@/utils/asyncResource';
+import { useLists } from '@/utils/api/lists';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';
@@ -62,7 +62,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
     };
   } = useFormContext();
 
-  const queryResults = useUserLists();
+  const queryResults = useLists({ listSubtype: 'USER_ID' });
 
   return (
     <>

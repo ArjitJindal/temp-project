@@ -1,26 +1,20 @@
 import React, { useImperativeHandle, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
-import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
-import { ListHeaderInternal, ListMetadata, ListType } from '@/apis';
-import { useApi } from '@/api';
+import { ListHeaderInternal, ListType } from '@/apis';
 import Button from '@/components/library/Button';
 import DeleteListModal from '@/pages/lists/ListTable/DeleteListModal';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
-import { getErrorMessage } from '@/utils/lang';
 import { TableColumn, ToolRenderer } from '@/components/library/Table/types';
-import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { LISTS_OF_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
-import { useAuth0User, useHasResources } from '@/utils/user-utils';
+import { useHasResources } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
-import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useListMutation, useLists } from '@/utils/api/lists';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -34,16 +28,8 @@ interface Props {
 function ListTable(props: Props, ref: ListTableRef) {
   const { listType, extraTools } = props;
   const settings = useSettings();
-  const api = useApi();
-  const auth0User = useAuth0User();
   const [listToDelete, setListToDelete] = useState<ListHeaderInternal | null>(null);
-  const queryClient = useQueryClient();
-  const queryResults = useQuery(LISTS_OF_TYPE(listType), () => {
-    if (listType === 'WHITELIST') {
-      return api.getWhitelist();
-    }
-    return api.getBlacklist();
-  });
+  const queryResults = useLists({ listType });
 
   const hasListWritePermissions = useHasResources([
     listType === 'WHITELIST' ? 'write:::lists/whitelist/*' : 'write:::lists/blacklist/*',
@@ -53,56 +39,7 @@ function ListTable(props: Props, ref: ListTableRef) {
     reload: queryResults.refetch,
   }));
 
-  const changeListMutation = useMutation<
-    unknown,
-    unknown,
-    { listId: string; metadata: ListMetadata },
-    { previousList: ListHeaderInternal[] | undefined }
-  >(
-    async (event) => {
-      const { listId, metadata } = event;
-      const hideMessage = message.loading('Updating list...');
-      try {
-        listType === 'WHITELIST'
-          ? await api.patchWhiteList({ listId, ListData: { metadata } })
-          : await api.patchBlacklist({ listId, ListData: { metadata } });
-
-        message.success(`List ${metadata.status ? 'enabled' : 'disabled'} successfully`, {
-          details: `${capitalizeNameFromEmail(auth0User?.name || '')} ${
-            metadata.status ? 'enabled' : 'disabled'
-          } the list ${metadata.name}`,
-          link: makeUrl('/lists/:type/:listId', {
-            type: stringifyListType(listType),
-            listId: listId,
-          }),
-          linkTitle: 'View list',
-          copyFeedback: 'List URL copied to clipboard',
-        });
-      } catch (e) {
-        message.fatal(`Unable to save list! ${getErrorMessage(e)}`, e);
-        throw e;
-      } finally {
-        hideMessage();
-      }
-    },
-    {
-      onMutate: async (event) => {
-        const { listId, metadata } = event;
-        const listsOfTypeKey = LISTS_OF_TYPE(listType);
-        const previousList = queryClient.getQueryData<ListHeaderInternal[]>(listsOfTypeKey);
-        queryClient.setQueryData<ListHeaderInternal[]>(listsOfTypeKey, (prevState) =>
-          prevState?.map((listHeader) =>
-            listHeader.listId === listId ? { ...listHeader, metadata } : listHeader,
-          ),
-        );
-        return { previousList };
-      },
-      // If the mutation fails, use the context we returned above
-      onError: (err, event, context) => {
-        queryClient.setQueryData(LISTS_OF_TYPE(listType), context?.previousList);
-      },
-    },
-  );
+  const changeListMutation = useListMutation({ listType });
 
   const helper = new ColumnHelper<ListHeaderInternal>();
   const columns: TableColumn<ListHeaderInternal>[] = helper.list([

@@ -10,10 +10,7 @@ import { TableParams } from './types';
 import { renderActionsColumn } from './ActionsColumn';
 import { useApi } from '@/api';
 import { ListHeaderInternal, ListSubtypeInternal, ListType } from '@/apis';
-import {
-  DefaultApiGetWhiteListItemsRequest,
-  DefaultApiPostWhiteListItemRequest,
-} from '@/apis/types/ObjectParamAPI';
+import { DefaultApiPostWhiteListItemRequest } from '@/apis/types/ObjectParamAPI';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
@@ -35,8 +32,8 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { notEmpty } from '@/utils/array';
 import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
-import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
-import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
+import { CursorPaginatedData } from '@/utils/queries/hooks';
+import { useListItems } from '@/utils/api/lists';
 import { QueryResult } from '@/utils/queries/types';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { NUMBER, DATE, STRING } from '@/components/library/Table/standardDataTypes';
@@ -401,37 +398,13 @@ export default function ItemsTable(props: Props) {
     return undefined;
   }, [listSubtype, params.userId, params.country, params.search]);
 
-  const listResult: QueryResult<CursorPaginatedData<TableItem>> = useCursorQuery(
-    LISTS_ITEM_TYPE(listId, listType, listSubtype, { ...params, filterKeys }),
-    async ({ from }) => {
-      const payload: DefaultApiGetWhiteListItemsRequest = {
-        listId,
-        start: params.from || from,
-        pageSize: params.pageSize,
-        filterKeys,
-      };
-
-      const response =
-        listType === 'WHITELIST'
-          ? await api.getWhiteListItems(payload)
-          : await api.getBlacklistItems(payload);
-
-      const data: TableItem[] = response.items.map(
-        ({ key, metadata }): TableItem => ({
-          rowKey: key,
-          type: 'EXISTED',
-          value: key,
-          reason: metadata?.reason ?? '',
-          meta: metadata ?? {},
-        }),
-      );
-      return {
-        ...response,
-        items: data,
-        total: response.count,
-      };
-    },
-  );
+  const listResult: QueryResult<CursorPaginatedData<TableItem>> = useListItems({
+    listId,
+    listType,
+    listSubType: listSubtype,
+    params,
+    filterKeys: filterKeys ?? [],
+  });
 
   const extraFilters = useExtraFilters(listSubtype);
 
