@@ -381,18 +381,20 @@ const DownloadAsPDF = async (props: Props) => {
     }
 
     // Add table if data is available
+    const hasTables = tableOptions && tableOptions.length > 0;
     addTable({ position: tableStartY, doc, tableOptions, logoImage, autoTable, documentTimestamp });
 
-    const pageCount = doc.internal.pages.length - 1;
-    for (let i = 1; i <= pageCount && !addRecurringPages; i++) {
-      if (addPageNumber) {
+    // Only add page numbers in main loop if not already added by tables via didDrawPage
+    if (addPageNumber && !addRecurringPages && !hasTables) {
+      const pageCount = doc.internal.pages.length - 1;
+      for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
+        addTopFormatting(doc, logoImage, orientation, documentTimestamp);
+        doc.setFontSize(10);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.text(`${i}`, pageWidth - 20, pageHeight - 5);
       }
-      addTopFormatting(doc, logoImage, orientation, documentTimestamp);
-      doc.setFontSize(10);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      doc.text(`${i}`, pageWidth - 20, pageHeight - 5);
     }
 
     doc.save(fileName);
@@ -505,16 +507,15 @@ const addTable = ({
         willDrawPage: () => {
           addTopFormatting(doc, logoImage, 'portrait', documentTimestamp);
         },
-        didDrawPage: () => {
-          addPageNumber({ doc });
+        didDrawPage: (data) => {
+          addPageNumber({ doc, pageNumber: data.pageNumber });
         },
       });
     });
   }
 };
 
-function addPageNumber({ doc }) {
-  const pageNumber = doc.internal.getNumberOfPages();
+function addPageNumber({ doc, pageNumber }: { doc: jsPDF; pageNumber: number }) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.text(`${pageNumber}`, pageWidth - 20, pageHeight - 5);
