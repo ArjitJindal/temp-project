@@ -669,7 +669,7 @@ export class CdkTarponStack extends cdk.Stack {
         WEBHOOK_DELIVERY_QUEUE_URL: getSQSQueueName(
           webhookDeliveryQueue.queueUrl
         ),
-        TRANSACTION_AGGREGATION_QUEUE_URL: getSQSQueuePrefix(
+        TRANSACTION_AGGREGATION_QUEUE_URL: getSQSQueueName(
           transactionAggregationQueue.queueUrl
         ),
         SLACK_ALERT_QUEUE_URL: getSQSQueueName(slackAlertQueue.queueUrl),
