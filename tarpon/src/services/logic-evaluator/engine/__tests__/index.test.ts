@@ -30,9 +30,21 @@ jest.mock('../../operators/starts-ends-with', () => {
     },
   }
 })
+
+jest.mock('../../operators/similar-to', () => {
+  const actualModule = jest.requireActual('../../operators/similar-to')
+  return {
+    ...actualModule,
+    SIMILAR_TO_OPERATOR: {
+      ...actualModule.SIMILAR_TO_OPERATOR,
+      run: jest.fn().mockImplementation(actualModule.SIMILAR_TO_OPERATOR.run),
+    },
+  }
+})
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { STARTS_WITH_OPERATOR } = require('../../operators/starts-ends-with')
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { SIMILAR_TO_OPERATOR } = require('../../operators/similar-to')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { LogicEvaluator } = require('..')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -2269,60 +2281,225 @@ describe('Test canAggregate function', () => {
 })
 
 describe('operators', () => {
-  let operatorSpy: jest.SpyInstance
-  beforeEach(() => {
-    operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
+  describe('startswith operator', () => {
+    let operatorSpy: jest.SpyInstance
+    beforeEach(() => {
+      operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
+    })
+    afterEach(() => {
+      operatorSpy.mockRestore()
+    })
+    test('be called multiple times for different lhs/rhs values', async () => {
+      const tenantId = 'tenant-id'
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      await evaluator.evaluate(
+        { and: [{ 'op:startswith': ['a', ['b']] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      await evaluator.evaluate(
+        { and: [{ 'op:startswith': ['b', ['b']] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(operatorSpy).toHaveBeenCalledTimes(2)
+    })
+    test('be called once for the same lhs/rhs values', async () => {
+      const tenantId = 'tenant-id'
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      await evaluator.evaluate(
+        { and: [{ 'op:startswith': ['a', ['b']] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      await evaluator.evaluate(
+        { and: [{ 'op:startswith': ['a', ['b']] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(operatorSpy).toHaveBeenCalledTimes(1)
+    })
   })
-  afterEach(() => {
-    operatorSpy.mockRestore()
-  })
-  test('be called multiple times for different lhs/rhs values', async () => {
-    const tenantId = 'tenant-id'
-    const dynamoDbClient = getDynamoDbClient()
-    const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
-    await evaluator.evaluate(
-      { and: [{ 'op:startswith': ['a', ['b']] }] },
-      {},
-      { baseCurrency: 'EUR', tenantId },
-      {
-        type: 'TRANSACTION',
-        transaction: getTestTransaction({ type: 'TRANSFER' }),
-      }
-    )
-    await evaluator.evaluate(
-      { and: [{ 'op:startswith': ['b', ['b']] }] },
-      {},
-      { baseCurrency: 'EUR', tenantId },
-      {
-        type: 'TRANSACTION',
-        transaction: getTestTransaction({ type: 'TRANSFER' }),
-      }
-    )
-    expect(operatorSpy).toHaveBeenCalledTimes(2)
-  })
-  test('be called once for the same lhs/rhs values', async () => {
-    const tenantId = 'tenant-id'
-    const dynamoDbClient = getDynamoDbClient()
-    const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
-    await evaluator.evaluate(
-      { and: [{ 'op:startswith': ['a', ['b']] }] },
-      {},
-      { baseCurrency: 'EUR', tenantId },
-      {
-        type: 'TRANSACTION',
-        transaction: getTestTransaction({ type: 'TRANSFER' }),
-      }
-    )
-    await evaluator.evaluate(
-      { and: [{ 'op:startswith': ['a', ['b']] }] },
-      {},
-      { baseCurrency: 'EUR', tenantId },
-      {
-        type: 'TRANSACTION',
-        transaction: getTestTransaction({ type: 'TRANSFER' }),
-      }
-    )
-    expect(operatorSpy).toHaveBeenCalledTimes(1)
+
+  describe('similar-to operator', () => {
+    const operatorSpy = () => SIMILAR_TO_OPERATOR.run as jest.Mock
+
+    beforeEach(() => {
+      operatorSpy().mockClear()
+    })
+    afterEach(() => {
+      operatorSpy().mockClear()
+    })
+    test('be called multiple times for different lhs/rhs values', async () => {
+      const operatorMock = operatorSpy()
+      operatorMock.mockClear()
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['apple', ['appl'], [20]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['orange', ['orang'], [20]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(operatorMock).toHaveBeenCalledTimes(2)
+    })
+    test('be called once for the same lhs/rhs values', async () => {
+      const operatorMock = operatorSpy()
+      operatorMock.mockClear()
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['apple', ['appl'], [20]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['apple', ['appl'], [20]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(operatorMock).toHaveBeenCalledTimes(1)
+    })
+    test('should return true when strings are similar within threshold', async () => {
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      const result = await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['apple', ['appl'], [20]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(result.hit).toBe(true)
+    })
+    test('should return false when strings are not similar within threshold', async () => {
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      const result = await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['banana', ['cat'], [10]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(result.hit).toBe(false)
+    })
+    test('should handle case-insensitive comparison', async () => {
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      const result = await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['Apple', ['appl'], [20]] }] },
+        {},
+        { baseCurrency: 'USD', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(result.hit).toBe(true)
+    })
+    test('should handle array of rhs values', async () => {
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      const result = await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['grape', ['grap', 'grpe'], [20]] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(result.hit).toBe(true)
+    })
+    test('should return false when fuzziness parameter is missing', async () => {
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      const result = await evaluator.evaluate(
+        { and: [{ 'op:similarto': ['cherry', ['cherr']] }] },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(result.hit).toBe(false)
+    })
+    test('should return false when lhs is null or undefined', async () => {
+      const tenantId = getTestTenantId()
+      const dynamoDbClient = getDynamoDbClient()
+      const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
+      const result = await evaluator.evaluate(
+        {
+          and: [
+            {
+              'op:similarto': [
+                { var: 'TRANSACTION:nonExistentField' },
+                ['banan'],
+                [20],
+              ],
+            },
+          ],
+        },
+        {},
+        { baseCurrency: 'EUR', tenantId },
+        {
+          type: 'TRANSACTION',
+          transaction: getTestTransaction({ type: 'TRANSFER' }),
+        }
+      )
+      expect(result.hit).toBe(false)
+    })
   })
 })
 

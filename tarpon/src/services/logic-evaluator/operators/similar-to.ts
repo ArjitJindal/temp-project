@@ -9,7 +9,7 @@ export const SIMILAR_TO_OPERATOR: TextLogicOperator = {
   key: 'op:similarto',
   uiDefinition: {
     label: 'Similar to',
-    valueTypes: ['text'],
+    valueTypes: ['text', 'multiselect'],
     valueSources: ['value', 'field', 'func'],
   },
   parameters: [FUZZINESS_PARAMETER],
@@ -23,10 +23,17 @@ export const SIMILAR_TO_OPERATOR: TextLogicOperator = {
       logger.error('Fuzziness parameter is required for similar to operator')
       return false
     }
-    return values.some(
-      (value) =>
-        getEditDistancePercentage(lhs.toLowerCase(), value.toLowerCase()) <=
-        percentageThreshold
+    return values.some((value) =>
+      isArray(lhs)
+        ? lhs.some(
+            (item) =>
+              getEditDistancePercentage(
+                item.toLowerCase(),
+                value.toLowerCase()
+              ) <= percentageThreshold
+          )
+        : getEditDistancePercentage(lhs.toLowerCase(), value.toLowerCase()) <=
+          percentageThreshold
     )
   },
 }
