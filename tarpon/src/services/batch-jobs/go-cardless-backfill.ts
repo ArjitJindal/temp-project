@@ -6,7 +6,11 @@ import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dyna
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { getSQSClient, bulkSendMessages } from '@/utils/sns-sqs-client'
+import {
+  getSQSClient,
+  bulkSendMessages,
+  getSQSQueueUrl,
+} from '@/utils/sns-sqs-client'
 import { GoCardlessBackfillBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -347,7 +351,9 @@ export class GoCardlessBackfillBatchJobRunner extends BatchJobRunner {
 
     await bulkSendMessages(
       sqsClient,
-      process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL as string,
+      getSQSQueueUrl(
+        process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL as string
+      ),
       dynamoDbMessages.map((m) => ({
         MessageBody: JSON.stringify(m),
         MessageGroupId: generateChecksum(m.entityId, 10),

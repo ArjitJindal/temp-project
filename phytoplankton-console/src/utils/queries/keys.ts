@@ -44,7 +44,6 @@ export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParamet
   'list',
   searchParams,
 ];
-export const LISTS_OF_TYPE = (type: ListType | undefined): QueryKey => ['lists', { type }, 'list'];
 export const LISTS_ITEM = (id?: string, type?: ListType): QueryKey => ['lists', 'item', id, type];
 export const LISTS_ITEM_TYPE = (
   id: string,
@@ -52,7 +51,11 @@ export const LISTS_ITEM_TYPE = (
   subtype: ListSubtypeInternal | null,
   params?: AnyParameters,
 ): QueryKey => ['lists', 'item', id, type, subtype, params];
-export const LISTS = (listSubtype?: ListSubtype): QueryKey => ['lists', { listSubtype }];
+export const LISTS = (
+  listType?: ListType,
+  listSubtype?: ListSubtype,
+  filters?: AnyParameters,
+): QueryKey => ['lists', { listType, listSubtype, filters }];
 export const USERS_ITEM_TRANSACTIONS_HISTORY = (
   userId: string,
   params: AnyParameters,
@@ -63,13 +66,6 @@ export const TRANSACTIONS_ITEM = (transactionId: string): QueryKey => [
   transactionId,
 ];
 
-export const TRANSACTIONS_ALERTS_LIST = (transactionId: string): QueryKey => [
-  'transactions',
-  'item',
-  transactionId,
-  'alerts',
-  'list',
-];
 export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
 export const TRANSACTIONS_FIND = (search: string): QueryKey => [
   'transactions',
@@ -116,6 +112,12 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   searchParams,
 ];
 
+export const CASE_TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
+  'transactions',
+  'list',
+  searchParams,
+  'case-transactions',
+];
 export const TRANSACTIONS_COUNT = (searchParams: AnyParameters): QueryKey => [
   'transactions',
   'count',

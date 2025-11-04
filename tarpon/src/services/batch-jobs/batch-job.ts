@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { BatchJob, BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { getSQSClient, getSQSQueueUrl } from '@/utils/sns-sqs-client'
 
 const sqsClient = getSQSClient()
 
@@ -25,7 +25,7 @@ export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
   await sqsClient.send(
     new SendMessageCommand({
       MessageBody: JSON.stringify(jobWithId),
-      QueueUrl: process.env.BATCH_JOB_QUEUE_URL as string,
+      QueueUrl: getSQSQueueUrl(process.env.BATCH_JOB_QUEUE_URL as string),
     })
   )
   logger.warn(`Sent batch job ${jobWithId.type}`, jobWithId)

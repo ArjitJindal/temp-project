@@ -8,17 +8,12 @@ import { TRANSACTION_STATE_COLORS } from './Chart/Column';
 import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import * as Form from '@/components/ui/Form';
-import { QueryResult } from '@/utils/queries/types';
 import {
   CurrencyCode,
   TransactionState as LastTransactionState,
   RuleAction,
   TransactionsStatsByTimeResponseData,
 } from '@/apis';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
-import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
@@ -29,6 +24,8 @@ import DatePicker from '@/components/ui/DatePicker';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Select from '@/components/library/Select';
 import { getOr } from '@/utils/asyncResource';
+import { useTransactionStats } from '@/utils/api/transactions';
+import { QueryResult } from '@/utils/queries/types';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -52,7 +49,12 @@ interface Props {
 
 export default function TransactionsSelector(props: Props) {
   const { userId, params, onChangeParams, currency } = props;
-  const response = useStatsQuery(params, userId, currency);
+  const response = useTransactionStats({
+    type: 'by-date',
+    selectorParams: params,
+    referenceCurrency: currency,
+    userId,
+  }) as QueryResult<TransactionsStatsByTimeResponseData[]>;
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const selectedKeys =
     params.aggregateBy === 'status' ? params.selectedRuleActions : params.selectedTransactionStates;
@@ -255,36 +257,5 @@ export default function TransactionsSelector(props: Props) {
         )}
       </ContainerWidthMeasure>
     </div>
-  );
-}
-
-function useStatsQuery(
-  selectorParams: Params,
-  userId: string,
-  currency: Currency,
-): QueryResult<TransactionsStatsByTimeResponseData[]> {
-  const api = useApi();
-  return useQuery(
-    TRANSACTIONS_STATS('by-date', {
-      ...selectorParams,
-      userId,
-      currency,
-      aggregateBy: selectorParams.aggregateBy,
-    }),
-    async (): Promise<TransactionsStatsByTimeResponseData[]> => {
-      const response = await api.getTransactionsStatsByTime({
-        ...FIXED_API_PARAMS,
-        pageSize: selectorParams.transactionsCount,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        filterTransactionState: selectorParams.selectedTransactionStates,
-        referenceCurrency: currency,
-        aggregateBy: selectorParams.aggregateBy,
-        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
-        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
-      });
-
-      return response.data;
-    },
   );
 }

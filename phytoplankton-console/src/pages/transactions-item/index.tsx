@@ -16,7 +16,6 @@ import Button from '@/components/library/Button';
 import { makeUrl } from '@/utils/routing';
 import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import { InternalTransaction } from '@/apis';
-import { useApi } from '@/api';
 import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { useElementSize } from '@/utils/browser';
@@ -28,36 +27,30 @@ import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import TransactionTags from '@/pages/transactions-item/TransactionTags';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_ALERTS_LIST, TRANSACTIONS_ITEM } from '@/utils/queries/keys';
+import { useTransactionDetails } from '@/utils/api/transactions';
+import { useAlertList } from '@/utils/api/alerts';
 
 export type RuleAlertMap = Map<string, { alertId: string; caseId: string }>;
 
 export default function TransactionsItem() {
   const { tab = 'transaction-details' } = useParams<'tab'>();
   const { id: transactionId } = useParams<'id'>();
-  const api = useApi();
   const navigate = useNavigate();
   const tenantSettings = useSettings();
   const riskClassificationValues = useRiskClassificationScores();
 
-  const queryResult = useQuery(TRANSACTIONS_ITEM(transactionId ?? ''), () => {
-    if (transactionId == null || transactionId === 'all') {
-      throw new Error('Transaction id is not defined');
-    }
-    return api.getTransaction({ transactionId });
-  });
+  const queryResult = useTransactionDetails(transactionId ?? '');
 
-  const alertsQueryResult = useQuery(TRANSACTIONS_ALERTS_LIST(transactionId ?? ''), () => {
-    if (transactionId == null || transactionId === 'all') {
-      throw new Error('Transaction id is not defined');
-    }
-    return api.getAlertList({
+  const alertsQueryResult = useAlertList(
+    {
       ...DEFAULT_PARAMS_STATE,
       pageSize: 100,
       filterTransactionIds: [transactionId],
-    });
-  });
+    },
+    {
+      enabled: !!transactionId,
+    },
+  );
 
   const ruleAlertMap: RuleAlertMap = useMemo(() => {
     const alertDetails = new Map<string, { alertId: string; caseId: string }>();

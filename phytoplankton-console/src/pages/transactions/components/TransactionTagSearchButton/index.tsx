@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TagSearchButton, { Value } from '@/components/ui/TagSearchButton';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
+import { useTransactionsUniques } from '@/utils/api/transactions';
+import { QueryResult } from '@/utils/queries/types';
 
 interface Props {
   initialState: Value;
@@ -13,29 +12,12 @@ interface Props {
 export default function TransactionTagSearchButton(props: Props) {
   const [selectedKey, setSelectedKey] = useState<string>();
 
-  const api = useApi();
+  const tagKeysResult = useTransactionsUniques({ field: 'TAGS_KEY' }) as QueryResult<string[]>;
 
-  const tagKeysResult = useQuery(TRANSACTIONS_UNIQUES('TAGS_KEY'), async () => {
-    return await api.getTransactionsUniques({
-      field: 'TAGS_KEY',
-    });
-  });
-
-  const tagValuesResult = useQuery(
-    TRANSACTIONS_UNIQUES('TAGS_VALUE', { filter: selectedKey }),
-    async () => {
-      if (!selectedKey) {
-        return [];
-      }
-      return await api.getTransactionsUniques({
-        field: 'TAGS_VALUE',
-        filter: selectedKey,
-      });
-    },
-    {
-      enabled: !!selectedKey,
-    },
-  );
+  const tagValuesResult = useTransactionsUniques({
+    field: 'TAGS_VALUE',
+    params: { filter: selectedKey },
+  }) as QueryResult<string[]>;
 
   return (
     <TagSearchButton

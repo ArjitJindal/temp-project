@@ -93,13 +93,18 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       ),
     });
 
+    // Determine CORP value based on stage (cross-origin for dev/test to allow Cypress)
+    const corpValue =
+      config.stage === 'dev' || config.stage === 'dev:user' ? 'cross-origin' : 'same-origin';
+
     const responseHeadersFunction = new cloudfront.Function(this, 'ResponseHeadersFunction', {
       code: cloudfront.FunctionCode.fromInline(`
         function handler(event) {
           var response = event.response;
           var headers = response.headers;
+          var request = event.request;
           var uri = event.request.uri;
-          
+
           // Set Content-Type based on file extension
           if (uri === '/' || uri.endsWith('.html') || uri === '/index.html') {
             headers['content-type'] = { value: 'text/html; charset=UTF-8' };
@@ -114,7 +119,18 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           } else if (uri.endsWith('.txt')) {
             headers['content-type'] = { value: 'text/plain; charset=UTF-8' };
           }
-          
+
+          // Regex to check if host for request is flagright
+          var hostHeader = request.headers.host ? request.headers.host.value : '';
+          var isFlagright = /flagright\\.(local|com|dev)/i.test(hostHeader);
+
+          if (!isFlagright) {
+            headers['cross-origin-embedder-policy'] = { value: 'credentialless' };
+          }
+          // Ensure CORP header is set (in case ResponseHeadersPolicy doesn't apply it)
+          // Use lowercase header name as CloudFront normalizes headers
+          headers['cross-origin-resource-policy'] = { value: '${corpValue}' };
+
           return response;
         }
       `),
@@ -195,18 +211,14 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           customHeadersBehavior: {
             customHeaders: [
               {
-                header: 'Cross-Origin-Embedder-Policy',
-                value: 'credentialless',
-                override: true,
-              },
-              {
                 header: 'Cross-Origin-Opener-Policy',
                 value: 'same-origin',
                 override: true,
               },
               {
+                // Use cross-origin for dev/test environments to allow Cypress tests, same-origin for production
                 header: 'Cross-Origin-Resource-Policy',
-                value: 'same-origin',
+                value: corpValue,
                 override: true,
               },
               {

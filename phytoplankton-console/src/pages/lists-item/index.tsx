@@ -1,7 +1,7 @@
 import { useLocation, useParams } from 'react-router';
 import { useState } from 'react';
 import { UnorderedListOutlined } from '@ant-design/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import s from './index.module.less';
 import ItemsTable from './ItemsTable';
@@ -10,19 +10,17 @@ import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
 import * as Card from '@/components/ui/Card';
-import { useApi } from '@/api';
 import * as Form from '@/components/ui/Form';
 import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
-import { useQuery } from '@/utils/queries/hooks';
-import { FLAT_FILE_PROGRESS, LISTS_ITEM, LISTS_ITEM_TYPE } from '@/utils/queries/keys';
+import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
-import { getErrorMessage } from '@/utils/lang';
 import Skeleton from '@/components/library/Skeleton';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 import { Progress } from '@/components/Simulation/Progress';
+import { useClearListItems, useFlatFileProgress, useListItem } from '@/utils/api/lists';
 
 export default function ListsItemPage() {
   const params = useParams<'id'>();
@@ -30,105 +28,61 @@ export default function ListsItemPage() {
   const listType = parseListType(location.pathname);
   const listId = params.id;
   const i18n = useI18n();
-  const api = useApi();
   const [showProgress, setShowProgress] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isFlatFileProgressLoading, setIsFlatFileProgressLoading] = useState(false);
 
-  const listHeaderQueryResult = useQuery(LISTS_ITEM(listId), async () => {
-    if (listId == null || listType == null) {
-      throw new Error(`listId and listType can not be null`);
-    }
-    const list =
-      listType === 'WHITELIST'
-        ? await api.getWhitelistListHeader({ listId })
-        : await api.getBlacklistListHeader({ listId });
-    return list;
-  });
+  const listHeaderQueryResult = useListItem(listId ?? '', listType);
   const listHeaderRes = listHeaderQueryResult.data;
   const listHeaderData = getOr(listHeaderRes, null);
 
-  const flatFileProgressQueryResult = useQuery(
-    FLAT_FILE_PROGRESS(listId ?? ''),
-    async () => {
-      if (listId == null || listType == null) {
-        throw new Error(`listId and listType can not be null`);
-      }
-      const flatFileProgress = await api.getFlatFilesProgress({
-        schema: 'CUSTOM_LIST_UPLOAD',
-        entityId: listId,
-      });
-      return flatFileProgress;
-    },
-    {
-      enabled: !!listId && isSuccess(listHeaderRes) && listHeaderData?.subtype === 'CUSTOM',
-      onSuccess: (data) => {
-        setShowProgress(['IN_PROGRESS'].includes(data.status ?? ''));
-        if (data.status === 'SUCCESS' || data.status === 'FAILED') {
-          queryClient.invalidateQueries({
-            queryKey: LISTS_ITEM_TYPE(params.id ?? '', listType, listHeaderData?.subtype ?? null),
-            exact: false,
-          });
-          setIsFlatFileProgressLoading(false);
-          setShowProgress(false);
-
-          if (!isInitialLoad) {
-            if (data.status === 'SUCCESS') {
-              message.success('List items uploaded successfully');
-            } else {
-              if (data.saved || data.total) {
-                message.error(
-                  `List items upload failed ${
-                    (data.saved || 0) < (data.total || 0) ? 'partially' : ''
-                  }`,
-                );
-              }
-            }
-          }
-
-          if (isInitialLoad) {
-            setIsInitialLoad(false);
-          }
-        }
-      },
-      onError: () => {
-        setShowProgress(false);
-        if (isInitialLoad) {
-          setIsInitialLoad(false);
-        }
-      },
-      refetchInterval: (data) => {
-        return ['IN_PROGRESS', 'PENDING'].includes(data?.status ?? '') ? 1000 : false;
-      },
-    },
-  );
-
-  const queryClient = useQueryClient();
-  const clearListMutation = useMutation(
-    LISTS_ITEM(listId, listType),
-    async () => {
-      if (!listId) {
-        throw new Error('List ID is required');
-      }
-      const promise =
-        listType === 'WHITELIST'
-          ? api.clearBlacklistItems({ listId })
-          : api.clearWhiteListItems({ listId });
-
-      await promise;
-    },
-    {
-      onSuccess: () => {
+  const flatFileProgressQueryResult = useFlatFileProgress('CUSTOM_LIST_UPLOAD', listId ?? '', {
+    enabled: !!listId && isSuccess(listHeaderRes) && listHeaderData?.subtype === 'CUSTOM',
+    onSuccess: (data) => {
+      setShowProgress(['IN_PROGRESS'].includes(data.status ?? ''));
+      if (data.status === 'SUCCESS' || data.status === 'FAILED') {
         queryClient.invalidateQueries({
           queryKey: LISTS_ITEM_TYPE(params.id ?? '', listType, listHeaderData?.subtype ?? null),
           exact: false,
         });
-        message.success('List items cleared successfully');
-      },
-      onError: (error) => {
-        message.fatal(`Unable to clear list items! ${getErrorMessage(error)}`, error);
-      },
+        setIsFlatFileProgressLoading(false);
+        setShowProgress(false);
+
+        if (!isInitialLoad) {
+          if (data.status === 'SUCCESS') {
+            message.success('List items uploaded successfully');
+          } else {
+            if (data.saved || data.total) {
+              message.error(
+                `List items upload failed ${
+                  (data.saved || 0) < (data.total || 0) ? 'partially' : ''
+                }`,
+              );
+            }
+          }
+        }
+
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
+      }
     },
+    onError: () => {
+      setShowProgress(false);
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    },
+    refetchInterval: (data) => {
+      return ['IN_PROGRESS', 'PENDING'].includes(data?.status ?? '') ? 1000 : false;
+    },
+  });
+
+  const queryClient = useQueryClient();
+  const clearListMutation = useClearListItems(
+    listId ?? '',
+    listType,
+    listHeaderData?.subtype ?? null,
   );
 
   if (listId == null) {

@@ -42,6 +42,7 @@ import {
   bulkSendMessages,
   FifoSqsMessage,
   getSQSClient,
+  getSQSQueueUrl,
   sanitizeDeduplicationId,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
@@ -406,7 +407,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         async (chunk) => {
           await bulkSendMessages(
             sqs,
-            process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
+            getSQSQueueUrl(
+              process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string
+            ),
             chunk,
             async (batch) => {
               // Mark the messages as sent to avoid being sent again on retries

@@ -77,10 +77,22 @@ function createServer(serverInfo: ServerInfo) {
     })
   )
 
-  function addCorsHeaders(res: Response) {
-    res.header('Access-Control-Allow-Headers', '*')
-    res.header('Access-Control-Allow-Methods', '*')
+  function addCorsHeaders(res: Response, req?: Request) {
+    const requestedHeaders = req?.header('Access-Control-Request-Headers')
+    const requestedMethod = req?.header('Access-Control-Request-Method')
+    const allowHeaders =
+      requestedHeaders ||
+      'authorization,x-fingerprint,content-type,accept,origin,x-requested-with,sentry-trace,baggage'
+    const allowMethods = requestedMethod || 'GET,POST,PUT,DELETE,OPTIONS'
+
+    res.header('Access-Control-Allow-Headers', allowHeaders)
+    res.header('Access-Control-Allow-Methods', allowMethods)
     res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Max-Age', '7200')
+    res.header(
+      'Vary',
+      'Origin, Access-Control-Request-Method, Access-Control-Request-Headers'
+    )
   }
 
   async function handler(req: Request, res: Response) {
@@ -126,8 +138,8 @@ function createServer(serverInfo: ServerInfo) {
   const connect = connector(handlers, apiDefinition)
   connect(app)
 
-  app.options('*', (_req, res) => {
-    addCorsHeaders(res)
+  app.options('*', (req, res) => {
+    addCorsHeaders(res, req)
     res.status(200)
     res.send()
   })

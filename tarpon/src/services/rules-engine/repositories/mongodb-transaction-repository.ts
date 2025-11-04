@@ -446,10 +446,37 @@ export class MongoDbTransactionRepository
       if (params.filterStatus.includes('ALLOW') && params.isPaymentApprovals) {
         params.filterStatus.splice(params.filterStatus.indexOf('ALLOW'), 1)
         conditions.push(this.getApproveTransactionsMongoQuery())
+      } else if (
+        params.filterStatus.includes('BLOCK') &&
+        params.isPaymentApprovals
+      ) {
+        params.filterStatus.splice(params.filterStatus.indexOf('BLOCK'), 1)
+        conditions.push({
+          $and: [
+            {
+              status: {
+                $in: ['BLOCK'],
+              },
+            },
+            {
+              hitRules: {
+                $elemMatch: { ruleAction: 'SUSPEND' },
+              },
+            },
+            {
+              $nor: [
+                {
+                  hitRules: {
+                    $elemMatch: { ruleAction: 'BLOCK' },
+                  },
+                },
+              ],
+            },
+          ],
+        })
       } else if (params.filterStatus.length > 0) {
         conditions.push({
           status: { $in: params.filterStatus },
-          transactionState: { $in: ['SUSPENDED'] }, // Payment approvals for Blocked transactions should only show manually blocked transactions
         })
       }
     }

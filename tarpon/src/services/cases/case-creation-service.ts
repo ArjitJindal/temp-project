@@ -37,7 +37,7 @@ import {
 } from '../../utils/payment-details'
 import { DynamoCaseRepository } from './dynamo-repository'
 import { CaseService } from '.'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { getSQSClient, getSQSQueueUrl } from '@/utils/sns-sqs-client'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -2221,7 +2221,7 @@ export class CaseCreationService {
         const sqs = getSQSClient()
         const sqsSendMessageCommand = new SendMessageCommand({
           MessageBody: JSON.stringify(payload),
-          QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
+          QueueUrl: getSQSQueueUrl(process.env.SLACK_ALERT_QUEUE_URL as string),
         })
 
         await sqs.send(sqsSendMessageCommand)

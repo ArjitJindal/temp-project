@@ -1,17 +1,16 @@
 import s from './index.module.less';
 import { ListHeaderInternal } from '@/apis';
-import { useApi } from '@/api';
 import Id from '@/components/ui/Id';
 import { TableColumn } from '@/components/library/Table/types';
-import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { LISTS } from '@/utils/queries/keys';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
 import Toggle from '@/components/library/Toggle';
 import * as Card from '@/components/ui/Card';
 import { stringifyListType } from '@/pages/lists/helpers';
 import { makeUrl } from '@/utils/routing';
+import { useLists } from '@/utils/api/lists';
+import { map } from '@/utils/queries/types';
 
 interface Props {
   userId: string;
@@ -19,13 +18,13 @@ interface Props {
 
 export default function UserLists(props: Props) {
   const { userId } = props;
-  const api = useApi();
 
-  const queryResults = useQuery([LISTS(), userId], async () => {
-    const response = await api.getLists({ filterUserIds: [userId] });
+  const queryResults = useLists({ filters: { filterUserIds: [userId] } });
+  const transformedQueryResults = map(queryResults, (items: ListHeaderInternal[]) => {
+    const itemsArray = Array.isArray(items) ? items : [];
     return {
-      items: Array.isArray(response) ? response : [],
-      total: Array.isArray(response) ? response.length : 0,
+      items: itemsArray,
+      total: itemsArray.length,
     };
   });
 
@@ -100,7 +99,7 @@ export default function UserLists(props: Props) {
     <Card.Root className={s.root}>
       <Card.Section>
         <QueryResultsTable
-          queryResults={queryResults}
+          queryResults={transformedQueryResults}
           rowKey="listId"
           columns={columns}
           pagination={false}

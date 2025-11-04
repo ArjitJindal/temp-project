@@ -6,7 +6,11 @@ import maxBy from 'lodash/maxBy'
 import memoize from 'lodash/memoize'
 import map from 'lodash/map'
 import groupBy from 'lodash/groupBy'
-import { bulkSendMessages, getSQSClient } from '../sns-sqs-client'
+import {
+  bulkSendMessages,
+  getSQSClient,
+  getSQSQueueUrl,
+} from '../sns-sqs-client'
 import { envIs } from '../env'
 import { generateColumnsFromModel } from './model-schema-parser'
 import {
@@ -498,7 +502,7 @@ export const sendMessageToMongoConsumer = async (
   await sqs.send(
     new SendMessageCommand({
       MessageBody: JSON.stringify(message),
-      QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
+      QueueUrl: getSQSQueueUrl(process.env.MONGO_DB_CONSUMER_QUEUE_URL),
     })
   )
 }
@@ -527,7 +531,7 @@ export async function sendBulkMessagesToMongoConsumer(
 
   await bulkSendMessages(
     sqs,
-    process.env.MONGO_DB_CONSUMER_QUEUE_URL as string,
+    getSQSQueueUrl(process.env.MONGO_DB_CONSUMER_QUEUE_URL as string),
     messages.map((message) => ({
       MessageBody: JSON.stringify(message),
     }))

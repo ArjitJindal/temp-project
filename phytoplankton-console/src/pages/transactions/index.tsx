@@ -3,7 +3,7 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { TRANSACTION_TYPES } from '@flagright/lib/utils';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import UniquesSearchButton from './components/UniquesSearchButton';
-import { useTransactionsQuery } from './utils';
+import { usePaginatedTransactionList } from '@/utils/api/transactions';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
@@ -67,7 +67,7 @@ const TableList = () => {
     [setParams],
   );
 
-  const { queryResult, countQueryResult } = useTransactionsQuery(params);
+  const { queryResult, countQueryResult } = usePaginatedTransactionList(params);
 
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>

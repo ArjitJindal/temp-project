@@ -165,8 +165,25 @@ export function getAugmentedOpenapi(
     #set($domains = [${allowedOrigins.map((v) => `"${v}"`).join(',')}])
     #set($origin = $input.params("origin"))
     #if($domains.contains($origin) || $domains.contains("*"))
-    #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
     #end
+
+    ## Echo requested method/headers when provided, else fallback to explicit safe lists
+    #set($reqMethod = $input.params("Access-Control-Request-Method"))
+    #set($reqHeaders = $input.params("Access-Control-Request-Headers"))
+    #if($reqMethod && $reqMethod != "")
+      #set($context.responseOverride.header.Access-Control-Allow-Methods="$reqMethod")
+    #else
+      #set($context.responseOverride.header.Access-Control-Allow-Methods="GET,POST,PUT,DELETE,OPTIONS")
+    #end
+    #if($reqHeaders && $reqHeaders != "")
+      #set($context.responseOverride.header.Access-Control-Allow-Headers="$reqHeaders")
+    #else
+      #set($context.responseOverride.header.Access-Control-Allow-Headers="authorization,x-fingerprint,content-type,accept,origin,x-requested-with,sentry-trace,baggage")
+    #end
+
+    #set($context.responseOverride.header.Access-Control-Max-Age="7200")
+    #set($context.responseOverride.header.Vary="Origin, Access-Control-Request-Method, Access-Control-Request-Headers")
 `
 
   // Labmda integrations
@@ -289,6 +306,16 @@ export function getAugmentedOpenapi(
                 type: 'string',
               },
             },
+            'Access-Control-Max-Age': {
+              schema: {
+                type: 'string',
+              },
+            },
+            Vary: {
+              schema: {
+                type: 'string',
+              },
+            },
           },
         },
       },
@@ -301,8 +328,14 @@ export function getAugmentedOpenapi(
           default: {
             statusCode: 200,
             responseParameters: {
-              'method.response.header.Access-Control-Allow-Headers': "'*'",
-              'method.response.header.Access-Control-Allow-Methods': "'*'",
+              'method.response.header.Access-Control-Allow-Headers':
+                "'authorization,x-fingerprint,content-type,accept,origin,x-requested-with,sentry-trace,baggage'",
+              'method.response.header.Access-Control-Allow-Methods':
+                "'GET,POST,PUT,DELETE,OPTIONS'",
+              'method.response.header.Access-Control-Max-Age': "'7200'",
+              'method.response.header.Vary':
+                "'Origin, Access-Control-Request-Method, " +
+                "Access-Control-Request-Headers'",
             },
           },
         },

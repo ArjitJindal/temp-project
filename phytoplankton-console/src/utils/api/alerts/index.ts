@@ -11,6 +11,7 @@ import {
   COPILOT_ALERT_QUESTIONS,
   ALERT_QA_SAMPLING,
   ALERT_CHECKLIST,
+  TRANSACTIONS_ITEM_RISKS_ARS,
 } from '../../queries/keys';
 import { usePaginatedQuery, useQuery, useCursorQuery } from '../../queries/hooks';
 import { useAuth0User } from '../../user-utils';
@@ -60,7 +61,7 @@ export const useAlertDetails = (alertId: string | undefined, options?: UseQueryO
   return alertDetailsQuery;
 };
 
-export const useAlertList = (
+export const usePaginatedAlertList = (
   params: AllParams<TableSearchParams>,
   defaultApiParams?: DefaultApiGetAlertListRequest,
 ) => {
@@ -86,6 +87,11 @@ export const useAlertList = (
     },
     { meta: { atf: true } },
   );
+};
+
+export const useAlertList = (params, options) => {
+  const api = useApi();
+  return useQuery(ALERT_LIST({ ...params }), () => api.getAlertList(params), options);
 };
 
 export const useAlertCopilotQuestions = (alertId: string) => {
@@ -205,6 +211,17 @@ export const useAlertChecklist = (alertId: string | undefined) => {
     },
     {
       enabled: !!alertId && isSuccess(alertDetailsQuery.data),
+    },
+  );
+};
+
+export const useTransactionARS = (transactionId: string) => {
+  const api = useApi();
+  return useQuery(
+    TRANSACTIONS_ITEM_RISKS_ARS(transactionId),
+    () => api.getArsValue({ transactionId }),
+    {
+      enabled: !!transactionId,
     },
   );
 };

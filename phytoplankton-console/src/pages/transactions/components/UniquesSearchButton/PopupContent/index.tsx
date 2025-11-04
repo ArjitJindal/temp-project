@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { uniq } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { Value } from '../types';
 import s from './style.module.less';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import Button from '@/components/library/Button';
-import Select from '@/components/library/Select';
+import Select, { Option } from '@/components/library/Select';
 import { TransactionsUniquesField } from '@/apis';
+import { useTransactionsUniques } from '@/utils/api/transactions';
+import { QueryResult } from '@/utils/queries/types';
 
 interface Props {
   initialState: Value;
@@ -22,12 +20,9 @@ interface Props {
 export default function PopupContent(props: Props) {
   const { initialState, onCancel, onConfirm, uniqueType, defaults = [] } = props;
 
-  const api = useApi();
-  const result = useQuery(TRANSACTIONS_UNIQUES(uniqueType), async () => {
-    return await api.getTransactionsUniques({
-      field: uniqueType,
-    });
-  });
+  const result = useTransactionsUniques({ field: uniqueType, optionise: true }) as QueryResult<
+    Option<string>[]
+  >;
 
   const [value, setValue] = useState(initialState.uniques);
 
@@ -36,13 +31,13 @@ export default function PopupContent(props: Props) {
       <Select
         allowClear={true}
         isLoading={isLoading(result.data)}
-        options={uniq(getOr(result.data, []).concat(defaults))
-          .filter((key) => key?.length > 0)
-          .map((key) => ({ label: humanizeAuto(key), value: key }))}
+        options={uniq(
+          getOr(result.data, []).concat(defaults.map((value) => ({ value, label: value }))),
+        )}
         mode="MULTIPLE_DYNAMIC"
         value={value}
-        onChange={(value) => {
-          setValue(value);
+        onChange={(newValue) => {
+          setValue(newValue ?? []);
         }}
       />
       <div className={s.footer}>

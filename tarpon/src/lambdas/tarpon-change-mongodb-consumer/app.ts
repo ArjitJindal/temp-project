@@ -69,6 +69,7 @@ import {
 import { WebhookConfiguration } from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
+import { getSQSQueueUrl } from '@/utils/sns-sqs-client'
 
 type RuleStats = {
   oldExecutedRules: ExecutedRulesResult[]
@@ -91,8 +92,8 @@ export class TarponChangeMongoDbConsumer {
     return (
       new StreamConsumerBuilder(
         path.basename(__dirname) + '-tarpon',
-        process.env.DOWNSTREAM_TARPON_QUEUE_URL ?? '',
-        process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL ?? '',
+        getSQSQueueUrl(process.env.DOWNSTREAM_TARPON_QUEUE_URL) ?? '',
+        getSQSQueueUrl(process.env.DOWNSTREAM_SECONDARY_TARPON_QUEUE_URL) ?? '',
         StackConstants.TARPON_DYNAMODB_TABLE_NAME
       )
         .setConcurrentGroupBy((update) => {

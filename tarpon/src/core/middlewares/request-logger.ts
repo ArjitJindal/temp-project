@@ -13,7 +13,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { envIs } from '@/utils/env'
 import { ApiRequestLog } from '@/@types/request-logger'
 import { getErrorMessage } from '@/utils/lang'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { getSQSClient, getSQSQueueUrl } from '@/utils/sns-sqs-client'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
@@ -88,7 +88,7 @@ async function logRequest(
     process.env.SOURCE = path
 
     const sqsMessage = new SendMessageCommand({
-      QueueUrl: process.env.REQUEST_LOGGER_QUEUE_URL as string,
+      QueueUrl: getSQSQueueUrl(process.env.REQUEST_LOGGER_QUEUE_URL as string),
       MessageBody: JSON.stringify(data),
     })
 

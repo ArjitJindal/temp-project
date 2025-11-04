@@ -21,7 +21,7 @@ import { useId } from '@/utils/hooks';
 import Label from '@/components/library/Label';
 import Select from '@/components/library/Select';
 import { getOr, isLoading } from '@/utils/asyncResource';
-import { useUserLists } from '@/utils/queries/hooks';
+import { useLists } from '@/utils/api/lists';
 import * as Card from '@/components/ui/Card';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -61,7 +61,7 @@ export const RiskFactorsSimulationForm = (props: FormProps) => {
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const formId = useId();
   const formRef = useRef<FormRef<FormValues>>();
-  const queryResults = useUserLists();
+  const queryResults = useLists({ listSubtype: 'USER_ID' });
   return (
     <div>
       <Card.Root className={s.cardRoot}>

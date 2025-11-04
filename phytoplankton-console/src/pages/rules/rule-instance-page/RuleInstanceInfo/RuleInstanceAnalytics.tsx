@@ -33,7 +33,7 @@ import { makeUrl } from '@/utils/routing';
 import { dayjs } from '@/utils/dayjs';
 import LineChart from '@/components/charts/Line';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
+import { usePaginatedTransactionList } from '@/utils/api/transactions';
 
 const HIT_RATE_SERIES = 'Hit rate';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate';
@@ -290,7 +290,7 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
     }
   }, [params, timestamp]);
 
-  const { queryResult, countQueryResult } = useTransactionsQuery(
+  const { queryResult, countQueryResult } = usePaginatedTransactionList(
     {
       ...params,
       filterShadowHit: checkShadowRule(ruleInstance),

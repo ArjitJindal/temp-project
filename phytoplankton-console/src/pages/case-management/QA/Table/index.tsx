@@ -35,7 +35,7 @@ import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import { useReasons } from '@/utils/reasons';
-import { useAlertList } from '@/utils/api/alerts';
+import { usePaginatedAlertList } from '@/utils/api/alerts';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -46,7 +46,7 @@ interface Props {
 
 export default function QaTable(props: Props) {
   const { params, onChangeParams, isSelectionEnabled, manuallyAddedAlerts } = props;
-  const queryResults = useAlertList(params);
+  const queryResults = usePaginatedAlertList(params);
   const user = useAuth0User();
   const [qaMode] = useQaMode();
   const tableRef = useRef<TableRefType>(null);

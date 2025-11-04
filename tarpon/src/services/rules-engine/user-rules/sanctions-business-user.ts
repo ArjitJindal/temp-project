@@ -51,7 +51,7 @@ const BUSINESS_USER_ENTITY_TYPES: Array<{
 ]
 
 export type SanctionsBusinessUserRuleParameters = {
-  entityTypes?: SanctionsDetailsEntityType[]
+  entityTypes: SanctionsDetailsEntityType[]
   screeningTypes?: GenericSanctionsSearchType[]
   fuzziness: number
   fuzzinessSetting: FuzzinessSettingOptions
@@ -81,7 +81,6 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
             enumNames: BUSINESS_USER_ENTITY_TYPES.map((v) => v.label),
           },
           uniqueItems: true,
-          nullable: true,
         },
         screeningTypes: GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA(),
@@ -103,6 +102,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         'ruleStages',
         'fuzzinessSetting',
         'screeningProfileId',
+        'entityTypes',
       ],
       additionalProperties: false,
     }
@@ -155,9 +155,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         dateOfBirth: person.generalDetails?.dateOfBirth,
         addresses: person.contactDetails?.addresses,
       })) ?? []),
-    ].filter(
-      (entity) => entity.name && entityTypes?.includes(entity.entityType)
-    )
+    ].filter((entity) => entity.name && entityTypes.includes(entity.entityType))
     if (!entities.length) {
       return
     }

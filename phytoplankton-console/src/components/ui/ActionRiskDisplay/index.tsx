@@ -1,8 +1,6 @@
 import React from 'react';
 import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg';
-import { useApi } from '@/api';
-import { TRANSACTIONS_ITEM_RISKS_ARS } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { useTransactionARS } from '@/utils/api/alerts';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import { useHasResources } from '@/utils/user-utils';
@@ -12,11 +10,7 @@ interface Props {
 }
 
 export default function ActionRiskDisplay({ transactionId }: Props) {
-  const api = useApi();
-
-  const queryResult = useQuery(TRANSACTIONS_ITEM_RISKS_ARS(transactionId), () =>
-    api.getArsValue({ transactionId }),
-  );
+  const queryResult = useTransactionARS(transactionId);
 
   const isArsPermissionEnabled = useHasResources(['read:::risk-scoring/risk-score-details/*']);
 

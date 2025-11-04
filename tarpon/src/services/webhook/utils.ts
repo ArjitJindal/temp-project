@@ -9,7 +9,11 @@ import { createSecret, deleteSecret, getSecret } from '@/utils/secrets-manager'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
-import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
+import {
+  bulkSendMessages,
+  getSQSClient,
+  getSQSQueueUrl,
+} from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 
@@ -140,7 +144,7 @@ async function sendWebhookTasksToWebhooks<T extends object = object>(
       const deduplicatedEntries = uniqBy(entries, 'Id')
       await bulkSendMessages(
         sqs,
-        process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
+        getSQSQueueUrl(process.env.WEBHOOK_DELIVERY_QUEUE_URL as string),
         deduplicatedEntries
       )
     }

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { CSPScriptLoader } from '@/utils/csp-utils';
 
 declare global {
   interface Window {
@@ -39,14 +40,7 @@ const FreshworkComponent: React.FC = () => {
       return;
     }
 
-    // Load the FreshDesk script
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = `https://widget.freshworks.com/widgets/${widgetId}.js`;
-    script.async = true;
-    script.defer = true;
-
-    // Set widget settings
+    // Set widget settings before loading script
     window.fwSettings = { widget_id: widgetId, locale: 'en' };
 
     // Create FreshworksWidget function if it doesn't exist
@@ -58,18 +52,19 @@ const FreshworkComponent: React.FC = () => {
       window.FreshworksWidget = n;
     }
 
-    document.head.appendChild(script);
+    // Load Freshworks widget using CSP-compliant method
+    CSPScriptLoader.loadFreshworksWidget(widgetId.toString())
+      .then(() => {
+        if (window.FreshworksWidget) {
+          window.FreshworksWidget('hide', 'launcher');
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load Freshworks widget:', error);
+      });
 
-    if (window.FreshworksWidget) {
-      window.FreshworksWidget('hide', 'launcher');
-      window.FreshworksWidget.bind;
-    }
-
-    // Cleanup script when component is unmounted
+    // Cleanup when component is unmounted
     return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
       if (window.FreshworksWidget) {
         window.FreshworksWidget('destroy');
       }

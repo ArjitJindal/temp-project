@@ -45,9 +45,9 @@ import TagSearchButton from '@/pages/transactions/components/TransactionTagSearc
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 import UniquesSearchButton from '@/pages/transactions/components/UniquesSearchButton';
-import { useTransactionsQuery } from '@/pages/transactions/utils';
 import { TableDataItem } from '@/components/library/Table/types';
 import { useCaseItems } from '@/utils/api/cases';
+import { usePaginatedTransactionList } from '@/utils/api/transactions';
 
 export type DataItem = {
   index: number;
@@ -94,7 +94,7 @@ export function Content(props: { userId: string }) {
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 
-  const { queryResult, countQueryResult } = useTransactionsQuery<TableDataItem<DataItem>>(
+  const { queryResult, countQueryResult } = usePaginatedTransactionList<TableDataItem<DataItem>>(
     { ...params, userId, includeRuleHitDetails: true, showDetailedView: showDetailsView },
     {
       isReadyToFetch: true,
