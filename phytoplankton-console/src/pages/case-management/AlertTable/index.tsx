@@ -502,6 +502,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                           onSaved={reload}
                           rounded
                           user={entity.user}
+                          ruleNature={entity.ruleNature}
                         />
                       )}
                   </div>
@@ -1018,6 +1019,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       setModalVisibility={setModalVisibility}
                       haveModal={false}
                       user={caseUser}
+                      alertsData={[{ alertId: entity.alertId, ruleNature: entity.ruleNature }]}
                     />
                   )}
                   {entity?.caseId &&
@@ -1041,6 +1043,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                         setModalVisibility={setModalVisibility}
                         haveModal={false}
                         user={caseUser}
+                        alertsData={[{ alertId: entity.alertId, ruleNature: entity.ruleNature }]}
                       />
                     )}
                   {entity?.caseId &&
@@ -1063,6 +1066,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                         setModalVisibility={setModalVisibility}
                         haveModal={false}
                         user={caseUser}
+                        alertsData={[{ alertId: entity.alertId, ruleNature: entity.ruleNature }]}
                       />
                     )}
                   {entity?.caseId && isInReview && canReview && entity.alertStatus && (
@@ -1507,6 +1511,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           setModalVisibility={setModalVisibility}
           haveModal={false}
           user={caseUser}
+          alertsData={selectedIds.map((id) => ({
+            alertId: id,
+            ruleNature: selectedItems[id]?.ruleNature,
+          }))}
         />
       );
     },
@@ -1557,6 +1565,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           setModalVisibility={setModalVisibility}
           haveModal={false}
           user={caseUser}
+          alertsData={selectedIds.map((id) => ({
+            alertId: id,
+            ruleNature: selectedItems[id]?.ruleNature,
+          }))}
         />
       );
     },
@@ -1604,6 +1616,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           setModalVisibility={setModalVisibility}
           haveModal={false}
           user={caseUser}
+          alertsData={selectedIds.map((id) => ({
+            alertId: id,
+            ruleNature: selectedItems[id]?.ruleNature,
+          }))}
         />
       );
     },
@@ -1658,6 +1674,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           setModalVisibility={setModalVisibility}
           haveModal={false}
           user={caseUser}
+          alertsData={selectedIds.map((id) => ({
+            alertId: id,
+            ruleNature: selectedItems[id]?.ruleNature,
+          }))}
         />
       );
     },
@@ -1722,6 +1742,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           setModalVisibility={setModalVisibility}
           haveModal={false}
           user={caseUser}
+          alertsData={selectedIds.map((id) => ({
+            alertId: id,
+            ruleNature: selectedItems[id]?.ruleNature,
+          }))}
         />
       ) : null;
     },
@@ -1768,6 +1792,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
           setModalVisibility={setModalVisibility}
           haveModal={false}
           user={caseUser}
+          alertsData={selectedIds.map((id) => ({
+            alertId: id,
+            ruleNature: selectedItems[id]?.ruleNature,
+          }))}
         />
       ) : null;
     },

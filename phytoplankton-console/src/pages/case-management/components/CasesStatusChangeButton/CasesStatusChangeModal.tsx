@@ -51,8 +51,23 @@ export default function CasesStatusChangeModal(props: Props) {
       });
       const assignees = getAssigneeName(users, assigneeIds, updates.caseStatus);
 
+      // Check if escalation went to review
       if (currentUser?.reviewerId) {
-        return;
+        const caseData = await api.getCase({ caseId: props.entityIds[0] });
+
+        if (caseData.caseStatus?.startsWith('IN_REVIEW_')) {
+          const reviewer =
+            users[currentUser.reviewerId]?.name ||
+            users[currentUser.reviewerId]?.email ||
+            currentUser.reviewerId;
+
+          message.warn(
+            `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
+              props.entityIds.length > 1 ? 'are' : 'is'
+            } sent to review ${reviewer}. Once approved, your case escalation will be performed successfully.`,
+          );
+          return;
+        }
       }
 
       message.success(`${pluralize('Case', props.entityIds.length)} escalated successfully`, {
@@ -82,6 +97,8 @@ export default function CasesStatusChangeModal(props: Props) {
           updates: updates,
         },
       });
+
+      // Note: Toasts are shown after this returns, in the mutation onSuccess handler
       if (props.newStatusActionLabel === 'Send back') {
         const c = await api.getCase({
           caseId: props.entityIds[0],
@@ -123,35 +140,76 @@ export default function CasesStatusChangeModal(props: Props) {
           copyFeedback: 'Case URL copied to clipboard',
         });
       } else {
-        let messageText = `${capitalizeNameFromEmail(
-          auth0User?.name || '',
-        )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
-          updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
-        }`;
+        // Fetch the case to check actual status (might be IN_REVIEW_ or direct)
+        const caseData = await api.getCase({
+          caseId: props.entityIds[0],
+        });
 
-        if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
-          messageText += ` All suspended transactions will be updated to '${
-            updates.updateTransactionStatus === 'ALLOW' ? 'Allowed' : 'Blocked'
-          }' shortly.`;
-        }
+        const actualStatus = caseData.caseStatus;
+        const wentToReview = actualStatus?.startsWith('IN_REVIEW_');
 
-        message.success(
-          `${pluralize(
+        if (wentToReview && currentUser?.reviewerId) {
+          // Case went to review
+          const reviewer =
+            users[currentUser.reviewerId]?.name ||
+            users[currentUser.reviewerId]?.email ||
+            currentUser.reviewerId;
+
+          let reviewMessageText = `${pluralize(
             'Case',
             props.entityIds.length,
-          )} ${props.newStatus.toLowerCase()} successfully`,
-          {
-            details: messageText,
-            link: makeUrl(`/case-management/case/:id`, {
-              id: props.entityIds[0],
-            }),
-            linkTitle: 'View case',
-            copyFeedback: 'Case URL copied to clipboard',
-          },
-        );
+            true,
+          )} ${props.entityIds.join(', ')} ${
+            props.entityIds.length > 1 ? 'are' : 'is'
+          } sent to review ${reviewer}. Once approved, your case action will be performed successfully.`;
+
+          if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+            reviewMessageText += ` All transactions which are suspended will be updated to ${
+              updates.updateTransactionStatus === 'ALLOW' ? 'allowed' : 'blocked'
+            } after the approval of your case action.`;
+          }
+
+          message.warn(reviewMessageText);
+        } else {
+          // Case closed/escalated directly
+          let messageText = `${capitalizeNameFromEmail(
+            auth0User?.name || '',
+          )} ${props.newStatus.toLowerCase()} the case ${props.entityIds[0]} ${
+            updates.reason.length ? `as '${updates.reason.join(', ')}'` : ''
+          }`;
+
+          if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+            messageText += ` All suspended transactions will be updated to '${
+              updates.updateTransactionStatus === 'ALLOW' ? 'Allowed' : 'Blocked'
+            }' shortly.`;
+          }
+
+          message.success(
+            `${pluralize(
+              'Case',
+              props.entityIds.length,
+            )} ${props.newStatus.toLowerCase()} successfully`,
+            {
+              details: messageText,
+              link: makeUrl(`/case-management/case/:id`, {
+                id: props.entityIds[0],
+              }),
+              linkTitle: 'View case',
+              copyFeedback: 'Case URL copied to clipboard',
+            },
+          );
+        }
       }
     },
-    [api, props.entityIds, props.newStatusActionLabel, props.newStatus, users, auth0User?.name],
+    [
+      api,
+      props.entityIds,
+      props.newStatusActionLabel,
+      props.newStatus,
+      users,
+      auth0User?.name,
+      currentUser?.reviewerId,
+    ],
   );
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
@@ -189,7 +247,7 @@ export default function CasesStatusChangeModal(props: Props) {
       onError: (e) => {
         message.fatal(`Failed to update the case! ${getErrorMessage(e)}`, e);
       },
-      onSuccess: async (_, variables) => {
+      onSuccess: async (_, _variables) => {
         await queryClient.invalidateQueries({
           predicate(query) {
             const checklistQueryKey = ALERT_CHECKLIST('');
@@ -201,27 +259,7 @@ export default function CasesStatusChangeModal(props: Props) {
         });
         await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(props.entityIds[0], {}));
 
-        if (currentUser?.reviewerId) {
-          let messageText = `${pluralize(
-            'Case',
-            props.entityIds.length,
-            true,
-          )} ${props.entityIds.join(', ')} ${
-            props.entityIds.length > 1 ? 'are' : 'is'
-          } sent to review ${
-            users[currentUser.reviewerId]?.name ||
-            users[currentUser.reviewerId]?.email ||
-            currentUser?.reviewerId
-          }. Once approved your case action will be performed successfully.`;
-
-          if (props.newStatus === 'CLOSED' && variables.updateTransactionStatus) {
-            messageText += ` All suspended transactions will be updated to '${
-              variables.updateTransactionStatus === 'ALLOW' ? 'Allowed' : 'Blocked'
-            }' on approval.`;
-          }
-
-          message.warn(messageText);
-        }
+        // Toast messages are now handled in statusChangeCallback based on actual case status
         props.onSaved();
       },
     },

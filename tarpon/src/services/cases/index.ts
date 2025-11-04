@@ -580,11 +580,13 @@ export class CaseService extends CaseAlertsCommonService {
   ): Promise<CaseUpdateAuditLogReturnData> {
     const {
       // cascadeAlertsUpdate = true,
-      skipReview = false,
+      skipReview: skipReviewOption = false,
       account,
       updateChecklistStatus = true,
       externalRequest = false,
     } = options ?? {}
+
+    let skipReview = skipReviewOption
     const statusChange = this.getStatusChange(
       updates,
       options?.bySystem,
@@ -621,6 +623,27 @@ export class CaseService extends CaseAlertsCommonService {
     const isInProgressOrOnHold =
       updates.caseStatus?.endsWith('IN_PROGRESS') ||
       updates.caseStatus?.endsWith('ON_HOLD')
+
+    if (hasFeature('PNB_DAY_2')) {
+      // PNB Phase 2: Skip review for cases where all alerts are sanctions when CLOSING
+      // Note: ESCALATED operations should always go through review for all alert types
+      const isClosingCase = updates.caseStatus === 'CLOSED'
+
+      if (isPNB && isClosingCase && !skipReview) {
+        const allAlerts = cases
+          .filter((c) => c.caseType === 'SYSTEM')
+          .flatMap((c) => c.alerts ?? [])
+
+        if (allAlerts.length > 0) {
+          const allAreSanctions = allAlerts.every(
+            (a) => a.ruleNature === 'SCREENING'
+          )
+          if (allAreSanctions) {
+            skipReview = true
+          }
+        }
+      }
+    }
 
     let isReview = false
     const isReviewRequired = accountUser?.reviewerId ?? false
@@ -801,6 +824,79 @@ export class CaseService extends CaseAlertsCommonService {
 
         const alertIds = alerts.map((a) => a.alertId ?? '')
 
+        // PNB Phase 2: Skip review for sanctions alerts when CLOSING only
+        // Note: ESCALATED operations should always go through review for all alert types
+        const isPNB = hasFeature('PNB')
+        const isPNB_DAY_2 = hasFeature('PNB_DAY_2')
+        const isClosingAlerts = updates.caseStatus === 'CLOSED'
+
+        // Split sanctions and non-sanctions alerts for separate processing when closing
+        if (
+          isPNB &&
+          isPNB_DAY_2 &&
+          isClosingAlerts &&
+          !skipReview &&
+          !isLastInReview
+        ) {
+          const sanctionsAlerts = alerts.filter(
+            (a) => a.ruleNature === 'SCREENING'
+          )
+          const nonSanctionsAlerts = alerts.filter(
+            (a) => a.ruleNature !== 'SCREENING'
+          )
+
+          // Process separately if we have a mix
+          if (sanctionsAlerts.length > 0 && nonSanctionsAlerts.length > 0) {
+            await Promise.all([
+              // Sanctions: skip review
+              this.alertsService.updateStatus(
+                sanctionsAlerts.map((a) => a.alertId ?? ''),
+                alertsStatusChange,
+                {
+                  bySystem: true,
+                  cascadeCaseUpdates: false,
+                  account,
+                  skipReview: true, // Skip review for sanctions
+                  updateChecklistStatus: false,
+                  externalRequest: externalRequest,
+                }
+              ),
+              // Non-sanctions: normal review flow
+              this.alertsService.updateStatus(
+                nonSanctionsAlerts.map((a) => a.alertId ?? ''),
+                alertsStatusChange,
+                {
+                  bySystem: true,
+                  cascadeCaseUpdates: false,
+                  account,
+                  skipReview: false,
+                  updateChecklistStatus: false,
+                  externalRequest: externalRequest,
+                }
+              ),
+            ])
+            return // Early return, already processed
+          }
+
+          // If all are sanctions, skip review
+          if (sanctionsAlerts.length === alerts.length) {
+            await this.alertsService.updateStatus(
+              alertIds,
+              alertsStatusChange,
+              {
+                bySystem: true,
+                cascadeCaseUpdates: false,
+                account,
+                skipReview: true, // Skip review for all sanctions
+                updateChecklistStatus: false,
+                externalRequest: externalRequest,
+              }
+            )
+            return // Early return
+          }
+        }
+
+        // Default: process all alerts together (non-PNB or non-sanctions)
         await this.alertsService.updateStatus(alertIds, alertsStatusChange, {
           bySystem: true,
           cascadeCaseUpdates: false,

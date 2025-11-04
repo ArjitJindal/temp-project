@@ -48,6 +48,11 @@ export const Recommendation = ({ alertId, pdfMode }: { alertId: string; pdfMode?
                     ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                   }}
                   haveModal={true}
+                  alertsData={
+                    alert.alertId
+                      ? [{ alertId: alert.alertId, ruleNature: alert.ruleNature }]
+                      : undefined
+                  }
                 />
               ) : (
                 <ApproveSendBackButton
@@ -78,6 +83,11 @@ export const Recommendation = ({ alertId, pdfMode }: { alertId: string; pdfMode?
                     ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
                   }}
                   haveModal={true}
+                  alertsData={
+                    alert.alertId
+                      ? [{ alertId: alert.alertId, ruleNature: alert.ruleNature }]
+                      : undefined
+                  }
                 />
               )}
               {alert.caseId && (
