@@ -1,14 +1,10 @@
 import { useMemo, useState } from 'react';
 import { EditOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
 import CreateScreeningProfileDrawer from './CreateScreeningProfileDrawer';
 import Tooltip from '@/components/library/Tooltip';
 import Toggle from '@/components/library/Toggle';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
 import { ScreeningProfileResponse } from '@/apis';
-import { SCREENING_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
 import { useUsers } from '@/utils/api/auth';
@@ -17,103 +13,27 @@ import SettingsCard from '@/components/library/SettingsCard';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { STRING, DATE } from '@/components/library/Table/standardDataTypes';
 import Id from '@/components/ui/Id';
-import { message } from '@/components/library/Message';
+import { isLoading as isAsyncLoading } from '@/utils/asyncResource';
 import Confirm from '@/components/utils/Confirm';
-import { getErrorMessage } from '@/utils/lang';
 import AccountTag from '@/components/AccountTag';
+import { useScreeningProfiles, useScreeningProfileMutations } from '@/utils/api/screening';
 
 export const ScreeningProfileList = ({ hasFeature }) => {
-  const api = useApi();
   const { users } = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [deleting, setDeleting] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ScreeningProfileResponse | undefined>(
     undefined,
   );
 
-  const queryResult = useQuery(SCREENING_PROFILES(), async () => {
-    try {
-      const response = await api.getScreeningProfiles();
-      return {
-        items: response.items || [],
-        total: response.items?.length || 0,
-      };
-    } catch (error) {
-      return {
-        items: [],
-        total: 0,
-      };
-    }
-  });
+  const queryResult = useScreeningProfiles({});
 
   const isReadOnly = false; // !useHasResources(['screening:screening-profiles:write']);
 
-  const updateStatusMutation = useMutation<
-    void,
-    Error,
-    {
-      screeningProfileId: string;
-      status: 'ENABLED' | 'DISABLED';
-      item: ScreeningProfileResponse;
-    }
-  >({
-    mutationFn: async ({ screeningProfileId, status, item }) => {
-      await api.updateScreeningProfile({
-        screeningProfileId,
-        ScreeningProfileRequest: {
-          screeningProfileName: item.screeningProfileName || '',
-          screeningProfileDescription: item.screeningProfileDescription || '',
-          screeningProfileStatus: status,
-          isDefault: item.isDefault || false,
-        },
-      });
-    },
-    onSuccess: () => {
-      message.success('Screening profile status updated successfully');
-      queryResult.refetch();
-    },
-    onError: (error) => {
-      message.fatal(getErrorMessage(error) || `Failed to update screening profile status`);
-    },
-  });
-
-  const deleteScreeningProfileMutation = useMutation<void, Error, string>({
-    mutationFn: async (screeningProfileId) => {
-      await api.deleteScreeningProfile({ screeningProfileId });
-    },
-    onSuccess: () => {
-      message.success('Screening profile deleted successfully');
-      queryResult.refetch();
-      setDeleting(false);
-    },
-    onError: (error) => {
-      message.fatal(getErrorMessage(error) || `Failed to delete screening profile`);
-      setDeleting(false);
-    },
-  });
-
-  const duplicateScreeningProfileMutation = useMutation<void, Error, ScreeningProfileResponse>({
-    mutationFn: async (item) => {
-      await api.postScreeningProfiles({
-        ScreeningProfileRequest: {
-          screeningProfileName: `${item.screeningProfileName} (Copy)`,
-          screeningProfileDescription: item.screeningProfileDescription || '',
-          screeningProfileStatus: item.screeningProfileStatus || 'DISABLED',
-          isDefault: false,
-          sanctions: item.sanctions,
-          pep: item.pep,
-          rel: item.rel,
-          adverseMedia: item.adverseMedia,
-        },
-      });
-    },
-    onSuccess: () => {
-      message.success('Screening profile duplicated successfully');
-      queryResult.refetch();
-    },
-    onError: (error) => {
-      message.fatal(getErrorMessage(error) || `Failed to duplicate screening profile`);
-    },
-  });
+  const {
+    updateStatusMutation,
+    deleteScreeningProfileMutation,
+    duplicateScreeningProfileMutation,
+  } = useScreeningProfileMutations(() => queryResult.refetch());
 
   const columns = useMemo<TableColumn<ScreeningProfileResponse>[]>(() => {
     const helper = new ColumnHelper<ScreeningProfileResponse>();
@@ -175,7 +95,7 @@ export const ScreeningProfileList = ({ hasFeature }) => {
             <div className={s.statusContainer}>
               <Toggle
                 value={value === 'ENABLED'}
-                isDisabled={isReadOnly || updateStatusMutation.isLoading}
+                isDisabled={isReadOnly || isAsyncLoading(updateStatusMutation.dataResource)}
                 onChange={(checked) => {
                   updateStatusMutation.mutate({
                     screeningProfileId: item.screeningProfileId || '',
@@ -211,7 +131,9 @@ export const ScreeningProfileList = ({ hasFeature }) => {
                 onConfirm={() => {
                   if (item.screeningProfileId && !deleting) {
                     setDeleting(true);
-                    deleteScreeningProfileMutation.mutate(item.screeningProfileId);
+                    deleteScreeningProfileMutation.mutate(item.screeningProfileId, {
+                      onSettled: () => setDeleting(false),
+                    });
                   }
                 }}
               >

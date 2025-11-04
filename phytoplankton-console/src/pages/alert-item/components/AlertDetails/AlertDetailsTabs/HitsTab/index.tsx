@@ -2,13 +2,11 @@ import { useState } from 'react';
 import SanctionDetailSelect from '../SanctionDetailSelect';
 import SanctionsHitsTable from '@/components/SanctionsHitsTable';
 import { Alert, SanctionsDetails, SanctionsHit, SanctionsHitStatus } from '@/apis';
-import {
-  SanctionsHitsTableParams,
-  useSanctionHitsQuery,
-} from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
+import { SanctionsHitsTableParams } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { SelectionInfo } from '@/components/library/Table';
 import { AllParams, SelectionAction } from '@/components/library/Table/types';
+import { useSanctionHitsQuery } from '@/utils/api/screening';
 
 interface Props {
   alert?: Alert;

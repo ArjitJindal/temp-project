@@ -10,13 +10,8 @@ import ActivityTab from './ActivityTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
-import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
-import {
-  ALERT_ITEM_COMMENTS,
-  SANCTIONS_HITS_ALL,
-  SANCTIONS_HITS_SEARCH,
-} from '@/utils/queries/keys';
-import { AllParams, SelectionAction, SelectionInfo } from '@/components/library/Table/types';
+import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
 import {
@@ -24,11 +19,10 @@ import {
   SanctionHitStatusUpdateRequest,
   SanctionsDetailsEntityType,
   SanctionsHit,
-  SanctionsHitListResponse,
   SanctionsHitStatus,
   TransactionTableItem,
 } from '@/apis';
-import { Mutation, QueryResult } from '@/utils/queries/types';
+import { Mutation } from '@/utils/queries/types';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -114,50 +108,6 @@ export interface SanctionsHitsTableParams {
   entityType?: SanctionsDetailsEntityType;
 }
 
-export function useSanctionHitsQuery(
-  params: AllParams<SanctionsHitsTableParams>,
-  alertId?: string,
-  enabled?: boolean,
-): QueryResult<CursorPaginatedData<SanctionsHit>> {
-  const api = useApi();
-  const filters = {
-    alertId: alertId,
-    filterStatus: params.statuses ?? ['OPEN' as const],
-    filterSearchId: params.searchIds,
-    filterPaymentMethodId: params.paymentMethodIds,
-    filterScreeningHitEntityType: params.entityType,
-  };
-  return useCursorQuery(
-    SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
-    async (paginationParams): Promise<SanctionsHitListResponse> => {
-      if (!filters.alertId) {
-        return {
-          items: [],
-          next: '',
-          prev: '',
-          last: '',
-          hasNext: false,
-          hasPrev: false,
-          count: 0,
-          limit: 100000,
-        };
-      }
-      const request = {
-        ...filters,
-        ...params,
-        ...paginationParams,
-      };
-      return await api.searchSanctionsHits({
-        ...request,
-        start: request.from,
-      });
-    },
-    {
-      enabled: enabled !== false,
-    },
-  );
-}
-
 export function useChangeSanctionsHitsStatusMutation(): {
   changeHitsStatusMutation: Mutation<
     unknown,
@@ -206,7 +156,6 @@ export function useChangeSanctionsHitsStatusMutation(): {
       },
       onSuccess: async (_, variables) => {
         message.success(`Done!`);
-        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
         for (const { alertId } of variables.toChange) {
           await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
         }

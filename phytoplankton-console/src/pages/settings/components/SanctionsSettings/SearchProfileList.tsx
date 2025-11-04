@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react';
 import { EditOutlined, CopyOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useMutation } from '@tanstack/react-query';
 import s from './styles.module.less';
 import CreateSearchProfileModal from './CreateSearchProfileModal';
+import { useSearchProfiles, useSearchProfileMutations } from '@/utils/api/screening';
 import Tooltip from '@/components/library/Tooltip';
 import Toggle from '@/components/library/Toggle';
-import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { SearchProfileResponse } from '@/apis';
-import { SEARCH_PROFILES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { TableColumn } from '@/components/library/Table/types';
 import { useHasResources } from '@/utils/user-utils';
@@ -21,6 +19,7 @@ import Id from '@/components/ui/Id';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
+import { isLoading as isAsyncLoading } from '@/utils/asyncResource';
 
 export const SearchProfileList = ({ hasFeature }) => {
   const api = useApi();
@@ -30,89 +29,12 @@ export const SearchProfileList = ({ hasFeature }) => {
     undefined,
   );
 
-  const queryResult = useQuery(SEARCH_PROFILES(), async () => {
-    try {
-      const response = await api.getSearchProfiles();
-      return {
-        items: response.items || [],
-        total: response.items?.length || 0,
-      };
-    } catch (error) {
-      return {
-        items: [],
-        total: 0,
-      };
-    }
-  });
+  const queryResult = useSearchProfiles({});
 
   const isReadOnly = !useHasResources(['write:::screening/search-profiles/*']);
 
-  const updateStatusMutation = useMutation<
-    void,
-    Error,
-    {
-      searchProfileId: string;
-      status: 'ENABLED' | 'DISABLED';
-      item: SearchProfileResponse;
-    }
-  >({
-    mutationFn: async ({ searchProfileId, status, item }) => {
-      await api.updateSearchProfile({
-        searchProfileId,
-        SearchProfileRequest: {
-          searchProfileName: item.searchProfileName || '',
-          searchProfileDescription: item.searchProfileDescription || '',
-          searchProfileStatus: status,
-          isDefault: item.isDefault || false,
-        },
-      });
-    },
-    onSuccess: () => {
-      message.success('Search profile status updated successfully');
-      queryResult.refetch();
-    },
-    onError: (error) => {
-      message.error(`Failed to update search profile status: ${error.message}`);
-    },
-  });
-
-  const deleteSearchProfileMutation = useMutation<void, Error, string>({
-    mutationFn: async (searchProfileId) => {
-      await api.deleteSearchProfile({ searchProfileId });
-    },
-    onSuccess: () => {
-      message.success('Search profile deleted successfully');
-      queryResult.refetch();
-      setDeleting(false);
-    },
-    onError: (error) => {
-      message.error(`Failed to delete search profile: ${error.message}`);
-      setDeleting(false);
-    },
-  });
-
-  const duplicateSearchProfileMutation = useMutation<void, Error, SearchProfileResponse>({
-    mutationFn: async (item) => {
-      await api.postSearchProfiles({
-        SearchProfileRequest: {
-          searchProfileName: `${item.searchProfileName} (Copy)`,
-          searchProfileDescription: item.searchProfileDescription || '',
-          searchProfileStatus: item.searchProfileStatus || 'DISABLED',
-          isDefault: false,
-          nationality: item.nationality || [],
-          types: item.types || [],
-          fuzziness: item.fuzziness,
-        },
-      });
-    },
-    onSuccess: () => {
-      message.success('Search profile duplicated successfully');
-      queryResult.refetch();
-    },
-    onError: (error) => {
-      message.error(`Failed to duplicate search profile: ${error.message}`);
-    },
-  });
+  const { updateStatusMutation, deleteSearchProfileMutation, duplicateSearchProfileMutation } =
+    useSearchProfileMutations(() => queryResult.refetch());
 
   const columns = useMemo<TableColumn<SearchProfileResponse>[]>(() => {
     const helper = new ColumnHelper<SearchProfileResponse>();
@@ -178,7 +100,7 @@ export const SearchProfileList = ({ hasFeature }) => {
             <div className={s.statusContainer}>
               <Toggle
                 value={value === 'ENABLED'}
-                isDisabled={isReadOnly || updateStatusMutation.isLoading}
+                isDisabled={isReadOnly || isAsyncLoading(updateStatusMutation.dataResource)}
                 onChange={(checked) => {
                   updateStatusMutation.mutate({
                     searchProfileId: item.searchProfileId || '',
@@ -214,7 +136,9 @@ export const SearchProfileList = ({ hasFeature }) => {
                 onConfirm={() => {
                   if (item.searchProfileId && !deleting) {
                     setDeleting(true);
-                    deleteSearchProfileMutation.mutate(item.searchProfileId);
+                    deleteSearchProfileMutation.mutate(item.searchProfileId, {
+                      onSettled: () => setDeleting(false),
+                    });
                   }
                 }}
               >

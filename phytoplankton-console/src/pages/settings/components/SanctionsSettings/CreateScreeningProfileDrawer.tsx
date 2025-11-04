@@ -25,12 +25,11 @@ import {
   TenantSettings,
 } from '@/apis';
 import Button from '@/components/library/Button';
-import { SCREENING_PROFILES, SANCTIONS_SOURCES } from '@/utils/queries/keys';
+import { SCREENING_PROFILES } from '@/utils/queries/keys';
 import Checkbox from '@/components/library/Checkbox';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { SANCTIONS_SOURCE_RELEVANCES } from '@/apis/models-custom/SanctionsSourceRelevance';
 import Select from '@/components/library/Select';
-import { useQuery } from '@/utils/queries/hooks';
 import { PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/PEPSourceRelevance';
 import { ADVERSE_MEDIA_SOURCE_RELEVANCES } from '@/apis/models-custom/AdverseMediaSourceRelevance';
 import { REL_SOURCE_RELEVANCES } from '@/apis/models-custom/RELSourceRelevance';
@@ -47,6 +46,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/GenericSanctionsSearchType';
 import { OPEN_SANCTIONS_PEP_SOURCE_RELEVANCES } from '@/apis/models-custom/OpenSanctionsPEPSourceRelevance';
 import { OPEN_SANCTIONS_CRIME_SOURCE_RELEVANCES } from '@/apis/models-custom/OpenSanctionsCrimeSourceRelevance';
+import { useSanctionsSources } from '@/utils/api/screening';
 
 const ScreeningTypeMap: {
   [key in GenericSanctionsSearchType]: string;
@@ -611,17 +611,14 @@ const SanctionsSourceTypeTab = ({
   provider?: SanctionsDataProviderName;
   onChange: (update: Partial<SourceConfiguration>) => void;
 }) => {
-  const api = useApi();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, { wait: 200 });
   const isDowJonesEnabled = useFeatureEnabled('DOW_JONES');
-  const response = useQuery(SANCTIONS_SOURCES(provider, type, debouncedSearch), async () => {
-    const response = await api.getSanctionsSources({
-      filterSourceType: type,
-      searchTerm: debouncedSearch,
-      provider: provider,
-    });
-    return response;
+
+  const response = useSanctionsSources({
+    provider,
+    filterSourceType: type,
+    searchTerm: debouncedSearch,
   });
   const showSourcesTable =
     type !== 'ADVERSE_MEDIA' &&

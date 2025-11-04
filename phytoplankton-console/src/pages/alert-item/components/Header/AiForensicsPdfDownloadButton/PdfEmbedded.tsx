@@ -12,11 +12,9 @@ import { Recommendation } from '@/pages/case-management/AlertTable/Investigative
 import { getOr } from '@/utils/asyncResource';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { AllParams } from '@/components/library/Table/types';
-import {
-  SanctionsHitsTableParams,
-  useSanctionHitsQuery,
-} from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
+import { SanctionsHitsTableParams } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import { useAlertDetails } from '@/utils/api/alerts';
+import { useSanctionHitsQuery } from '@/utils/api/screening';
 
 interface Props {
   item: QuestionResponseEmbedded;
