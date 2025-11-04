@@ -30,6 +30,7 @@ interface Props extends InputProps<FileInfo[]> {
   setUploading?: (uploading: boolean) => void;
   required?: boolean;
   accept?: string[]; // file mime types to accept, e.g. ["image/jpeg", "image/png", "application/pdf"]
+  onShowErrorMessages?: (errors: string[]) => void;
 }
 
 export default function FilesDraggerInput(props: Props) {
@@ -42,6 +43,8 @@ export default function FilesDraggerInput(props: Props) {
     required = false,
     setUploading,
     accept = DEFAULT_ALLOWED_TYPES,
+    onShowErrorMessages,
+    isDisabled,
   } = props;
   const acceptExtensions = accept.map((mimetype) => mime.getExtension(mimetype)).filter(notEmpty);
   const info =
@@ -69,7 +72,7 @@ export default function FilesDraggerInput(props: Props) {
   return (
     <div className={s.root}>
       <Upload.Dragger
-        disabled={uploadingCount > 0}
+        disabled={uploadingCount > 0 || isDisabled}
         multiple={!singleFile}
         showUploadList={false}
         accept={acceptExtensions.map((extension) => '.' + extension).join(',')}
@@ -81,11 +84,14 @@ export default function FilesDraggerInput(props: Props) {
           try {
             if (accept) {
               if (!file.type || !accept.includes(file.type)) {
-                message.error(
-                  `File type not allowed. Accepted types: ${acceptExtensions
-                    .map((x) => x.toUpperCase())
-                    .join(', ')}`,
-                );
+                const errorMessage = `File type not allowed. Accepted types: ${acceptExtensions
+                  .map((x) => x.toUpperCase())
+                  .join(', ')}`;
+                if (onShowErrorMessages) {
+                  onShowErrorMessages([errorMessage]);
+                } else {
+                  message.error(errorMessage);
+                }
                 return;
               }
             }
@@ -102,10 +108,15 @@ export default function FilesDraggerInput(props: Props) {
               onSuccess(s3Key);
             }
             const fileInfo = { s3Key, filename: file.name, size: file.size };
-            setState((prevState) => [...(prevState ?? []), fileInfo]);
+            setState((prevState) => (singleFile ? [fileInfo] : [...(prevState ?? []), fileInfo]));
             hideMessage();
           } catch (error) {
-            message.fatal(`Unable to upload the file. ${getErrorMessage(error)}`, error);
+            const errorMessage = `${getErrorMessage(error)}`;
+            if (onShowErrorMessages) {
+              onShowErrorMessages([errorMessage]);
+            } else {
+              message.fatal(errorMessage, error);
+            }
             if (onError) {
               onError(new Error());
             }
@@ -129,6 +140,7 @@ export default function FilesDraggerInput(props: Props) {
       </Upload.Dragger>
 
       <FilesList
+        disableMissingLinks={false}
         files={state ?? []}
         onDeleteFile={
           onChange

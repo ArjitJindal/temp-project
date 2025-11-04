@@ -22,6 +22,7 @@ export interface PageWrapperProps {
   children?: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+  enableTopPadding?: boolean;
 }
 
 export default function PageWrapper(props: PageWrapperProps) {
@@ -30,7 +31,10 @@ export default function PageWrapper(props: PageWrapperProps) {
       <Header {...props} />
       <div
         className={cn(s.body, 'print-container')}
-        style={{ padding: PAGE_WRAPPER_PADDING, paddingTop: 0 }}
+        style={{
+          padding: PAGE_WRAPPER_PADDING,
+          paddingTop: !props.enableTopPadding ? 0 : PAGE_WRAPPER_PADDING,
+        }}
       >
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>

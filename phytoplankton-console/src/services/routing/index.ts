@@ -36,16 +36,17 @@ import SanctionsPage from '@/pages/sanctions';
 import SettingsPage from '@/pages/settings';
 import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
+import UsersImport from '@/pages/users-import/UsersImport';
 import UsersItemPage from '@/pages/users-item';
 import UsersUsersListPage from '@/pages/users/users-list';
 import WorkflowsPage from '@/pages/workflows/workflows-page';
 import WorkflowsCreatePage from '@/pages/workflows/workflows-create-page';
 import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import {
+  hasMinimumPermission,
   isAtLeastAdmin,
   useAuth0User,
   useHasResources,
-  hasMinimumPermission,
 } from '@/utils/user-utils';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
@@ -53,6 +54,7 @@ import VersionHistoryPage from '@/components/VersionHistory';
 import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
 import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
 import ReportItem from '@/pages/report-item';
+import TransactionsImportPage from '@/pages/transactions-import';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -182,6 +184,15 @@ export function useRoutes(): RouteItem[] {
             path: '/transactions/list',
           },
           {
+            name: 'transactions-import',
+            component: TransactionsImportPage,
+            path: '/transactions/import/csv',
+          },
+          {
+            path: '/transactions/import',
+            redirect: '/transactions/import/csv',
+          },
+          {
             path: '/transactions',
             redirect: '/transactions/list',
           },
@@ -217,6 +228,12 @@ export function useRoutes(): RouteItem[] {
                 path: '/users/list/:list',
                 name: 'user-lists-all',
                 component: UsersUsersListPage,
+              },
+              {
+                path: '/users/list/:list/import',
+                name: 'user-import',
+                component: UsersImport,
+                hideInMenu: true,
               },
               {
                 path: '/users/list/:list/:id',

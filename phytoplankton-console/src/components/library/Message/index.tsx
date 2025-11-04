@@ -87,7 +87,6 @@ export const loading: ShowNotification = (
   return open(message, 'LOADING', {
     ...options,
     position: 'top-center',
-    duration: 0,
   });
 };
 

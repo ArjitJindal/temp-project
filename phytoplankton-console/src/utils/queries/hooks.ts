@@ -26,11 +26,13 @@ export function useQuery<
   options?: Omit<
     UseQueryOptions<TQueryFnData, string, TData, TQueryKey>,
     'queryKey' | 'queryFn' | 'initialData'
-  > & { initialData?: () => undefined },
+  > & { initialData?: () => undefined; backgroundFetch?: boolean },
 ): QueryResult<TData> {
-  const isQueryEnabled = options?.enabled ?? true;
   const results = useQueryRQ<TQueryFnData, string, TData, TQueryKey>(queryKey, queryFn, options);
-  return convertQueryResult(results, isQueryEnabled);
+  return convertQueryResult(results, {
+    isQueryEnabled: options?.enabled ?? true,
+    backgroundFetch: options?.backgroundFetch ?? false,
+  });
 }
 
 export function useQueries<T>({
@@ -41,7 +43,12 @@ export function useQueries<T>({
   context?: UseQueryOptions['context'];
 }): QueryResult<T>[] {
   const results = useQueriesRQ({ queries, context });
-  return results.map((x: any) => convertQueryResult(x));
+  return results.map((x: any) =>
+    convertQueryResult(x, {
+      isQueryEnabled: true,
+      backgroundFetch: false,
+    }),
+  );
 }
 
 export function useQueryDataUpdatedAt<TQueryKey extends QueryKey = QueryKey>(key: TQueryKey) {
@@ -61,8 +68,12 @@ export function useQueryDataUpdatedAt<TQueryKey extends QueryKey = QueryKey>(key
 
 function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
   results: UseQueryResult<TData, string>,
-  isQueryEnabled: boolean = true,
+  params: {
+    isQueryEnabled: boolean;
+    backgroundFetch: boolean;
+  },
 ): QueryResult<TData> {
+  const { isQueryEnabled, backgroundFetch } = params;
   if (!isQueryEnabled) {
     return {
       data: init(),
@@ -75,7 +86,7 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
       refetch: results.refetch,
     };
   }
-  if (results.isFetching) {
+  if (results.isFetching && !backgroundFetch) {
     return {
       data: loading<TData>(results.data),
       refetch: results.refetch,

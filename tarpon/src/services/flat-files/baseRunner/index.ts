@@ -65,7 +65,7 @@ export abstract class FlatFileBaseRunner<
 
   protected parseRecord(record: FlatFilesRecordsSchema): T {
     try {
-      return JSON.parse(record.initialRecord) as T
+      return JSON.parse(record.parsedRecord) as T
     } catch (error) {
       throw new Error(
         `Failed to parse record: ${

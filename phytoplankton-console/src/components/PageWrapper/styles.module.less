@@ -6,6 +6,7 @@
     display: flex;
     flex: 1;
     flex-direction: column;
+    position: relative;
   }
 
   .head {
@@ -65,11 +66,12 @@
 }
 
 .footer {
-  position: absolute;
+  position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
   padding: 16px;
   background: white;
   z-index: @sticky-z-index;
+  box-shadow: 2px 2px 36px 0 #0000001f;
 }

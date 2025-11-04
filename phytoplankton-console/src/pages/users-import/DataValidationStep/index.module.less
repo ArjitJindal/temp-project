@@ -1,0 +1,37 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .statsRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .statsIcon {
+      width: 14px;
+      height: 14px;
+
+      &.success {
+        color: @fr-colors-v2-alert-success;
+      }
+
+      &.warning {
+        color: @fr-colors-v2-alert-warning;
+      }
+
+      &.error {
+        color: @fr-colors-v2-alert-critical;
+      }
+    }
+  }
+}

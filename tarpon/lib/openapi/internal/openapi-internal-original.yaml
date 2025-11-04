@@ -8816,11 +8816,15 @@ components:
           type: number
         total:
           type: number
+        processed:
+          type: number
         status:
           $ref: '#/components/schemas/TaskStatusChangeStatusEnum'
+        isValidationJobFound:
+          type: boolean
         isValidationJobRunning:
           type: boolean
-        erroredRecrodS3Key:
+        erroredRecordsFileUrl:
           type: string
     FlatFileTemplateFormat:
       title: FlatFileTemplateFormat
@@ -13190,6 +13194,7 @@ components:
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
+        - FLAT_FILES_IMPORT_TRANSACTIONS
         - MULTIPLEX_ASYNC_RULES_TX
       description: ''
     NewRiskFactorIdResponse:

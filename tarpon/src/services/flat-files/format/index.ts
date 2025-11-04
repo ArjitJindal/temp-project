@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import Ajv, { ValidateFunction, ErrorObject } from 'ajv'
 import { JSONSchema } from 'json-schema-to-typescript'
 import { FlatFileBaseRunner } from '../baseRunner'
+import { ErrorRecord } from '../utils'
 import { EntityModel } from '@/@types/model'
 import { FlatFileTemplateFormat } from '@/@types/openapi-internal/FlatFileTemplateFormat'
 import { FlatFileTemplateResponse } from '@/@types/openapi-internal/FlatFileTemplateResponse'
@@ -51,6 +52,10 @@ export abstract class FlatFileFormat {
   static readonly format: FlatFileTemplateFormat
   abstract getTemplate(): FlatFileTemplateResponse
   abstract readAndParse(s3Key: string): AsyncGenerator<FlatFileRecord>
+  abstract preProcessFile(): string | undefined
+  abstract postProcessFile(): string | undefined
+  abstract handleErroredRecrod(error: ErrorRecord[]): string
+  abstract getErroredFileContentType(): string
 
   public generateJSONSchema(): JSONSchema {
     return generateJsonSchemaFromEntityClass(this.model)
@@ -151,7 +156,7 @@ export abstract class FlatFileFormat {
         fileId: this.s3Key,
         isError: !data.valid,
         isProcessed: false,
-        initialRecord: JSON.stringify(data.record.record),
+        initialRecord: data.record.initialRecord,
         parsedRecord: JSON.stringify(data.record.record),
         row: data.record.index,
         stage: 'VALIDATE',
@@ -208,7 +213,7 @@ export abstract class FlatFileFormat {
         fileId: this.s3Key,
         isError: true,
         isProcessed: true,
-        initialRecord: JSON.stringify(record.record),
+        initialRecord: record.initialRecord,
         row: record.index,
       })
 

@@ -1,0 +1,53 @@
+@import 'src/components/ui/colors.less';
+@import 'src/components/ui/animation.less';
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &.isUndefined {
+    .internalBar {
+      width: 30%;
+      animation-name: progress-bar-undefined-animation;
+      animation-duration: 1.5s;
+      animation-direction: alternate;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+    }
+  }
+}
+
+@keyframes progress-bar-undefined-animation {
+  0% {
+    left: 0;
+  }
+  100% {
+    left: 70%;
+  }
+}
+
+.percentage {
+  min-width: 37px;
+}
+
+.externalBar {
+  height: 8px;
+  max-height: 8px;
+  flex: 1;
+  border-radius: 4px;
+  background: @fr-colors-v2-unknown-colour;
+  position: relative;
+}
+
+.internalBar {
+  background: @fr-colors-v2-primary-flagrightBlue;
+  border-radius: 4px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  transition-property: width;
+}
