@@ -5,8 +5,9 @@ import {
 } from '@aws-sdk/client-s3'
 import memoize from 'lodash/memoize'
 import orderBy from 'lodash/orderBy'
-import { QueryCommandInput } from '@aws-sdk/lib-dynamodb'
+import { GetCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import pMap from 'p-map'
 import { AccountsService } from '../accounts'
 import {
   getNonUserReceiverKeys,
@@ -21,14 +22,23 @@ import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/execute'
 import { getClickhouseClient } from '@/utils/clickhouse/client'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
-import { allCollections, getMongoDbClient } from '@/utils/mongodb-utils'
+import {
+  allCollections,
+  getMongoDbClient,
+  processCursorInBatch,
+} from '@/utils/mongodb-utils'
 import {
   dangerouslyDeletePartition,
   dangerouslyDeletePartitionKey,
   dangerouslyQueryPaginateDelete,
   getDynamoDbClient,
 } from '@/utils/dynamodb'
-import { DynamoDbKeyEnum, DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import {
+  DynamoDbKeyEnum,
+  DynamoDbKeys,
+  TRANSACTION_ID_PREFIX,
+  TRANSACTION_PRIMARY_KEY_IDENTIFIER,
+} from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -852,6 +862,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteTransactions(tenantId: string) {
+    // Delete transactions with OLD partition key format (before switch timestamp)
+    // Format: {tenantId}#transaction#primary with sortKey = {transactionId}
     const transactionsQueryInput: QueryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -868,6 +880,62 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         return this.deleteTransaction(tenantId, transaction)
       }
     )
+
+    // Delete transactions with NEW partition key format (after switch timestamp)
+    // Format: {tenantId}#transaction#primary#transaction:{transactionId} with sortKey = '1'
+    const collection = (await this.mongoDb())
+      .db()
+      .collection(DYNAMODB_PARTITIONKEYS_COLLECTION(tenantId))
+
+    // To sanitise the tenantId containing some regex chars
+    function escapeRegex(s) {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }
+
+    const pattern = new RegExp(
+      `^${escapeRegex(
+        tenantId
+      )}#${TRANSACTION_PRIMARY_KEY_IDENTIFIER}#${TRANSACTION_ID_PREFIX}`
+    )
+
+    const cursor = collection.find({ _id: { $regex: pattern } } as any)
+
+    await processCursorInBatch(cursor, async (docsBatch: any[]) => {
+      await pMap(
+        docsBatch,
+        async (doc: any) => {
+          const partitionKey = doc._id.toString()
+
+          // Fetch transaction from DynamoDB
+          const result = await this.dynamoDb().send(
+            new GetCommand({
+              TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+              Key: {
+                PartitionKeyID: partitionKey,
+                SortKeyID: '1',
+              },
+            })
+          )
+
+          const transaction = result.Item as
+            | TransactionWithRulesResult
+            | undefined
+
+          if (transaction) {
+            // Use existing deleteTransaction to handle all cleanup
+            await this.deleteTransaction(tenantId, transaction)
+          }
+
+          // Remove the partition key from MongoDB
+          await collection.deleteOne({ _id: doc._id })
+        },
+        { concurrency: 10 }
+      ),
+        {
+          mongoBatchSize: 500,
+          processBatchSize: 50,
+        }
+    })
   }
 
   private async deleteS3Data(tenantId: string) {

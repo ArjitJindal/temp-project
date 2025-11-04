@@ -38,7 +38,7 @@ import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { formatConsumerName, getAddressString } from '@/utils/helpers'
 
-const TRANSACTION_ID_PREFIX = 'transaction:'
+export const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
