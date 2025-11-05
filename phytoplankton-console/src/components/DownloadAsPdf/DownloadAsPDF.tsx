@@ -381,18 +381,27 @@ const DownloadAsPDF = async (props: Props) => {
     }
 
     // Add table if data is available
-    const hasTables = tableOptions && tableOptions.length > 0;
-    addTable({ position: tableStartY, doc, tableOptions, logoImage, autoTable, documentTimestamp });
+    addTable({
+      position: tableStartY,
+      doc,
+      tableOptions,
+      logoImage,
+      autoTable,
+      documentTimestamp,
+      shouldAddPageNumber: addPageNumber,
+    });
 
-    // Only add page numbers in main loop if not already added by tables via didDrawPage
-    if (addPageNumber && !addRecurringPages && !hasTables) {
+    // Add page numbers to all pages when enabled
+    if (addPageNumber && !addRecurringPages) {
       const pageCount = doc.internal.pages.length - 1;
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         addTopFormatting(doc, logoImage, orientation, documentTimestamp);
-        doc.setFontSize(10);
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFont(FONT_FAMILY_REGULAR);
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
         doc.text(`${i}`, pageWidth - 20, pageHeight - 5);
       }
     }
@@ -474,6 +483,7 @@ const addTable = ({
   logoImage,
   autoTable,
   documentTimestamp,
+  shouldAddPageNumber,
 }: {
   position: number;
   doc: jsPDF;
@@ -481,6 +491,7 @@ const addTable = ({
   logoImage: HTMLImageElement;
   autoTable: any;
   documentTimestamp: string;
+  shouldAddPageNumber: boolean;
 }) => {
   if (tableOptions?.length) {
     const tableWidth = 180;
@@ -508,7 +519,9 @@ const addTable = ({
           addTopFormatting(doc, logoImage, 'portrait', documentTimestamp);
         },
         didDrawPage: (data) => {
-          addPageNumber({ doc, pageNumber: data.pageNumber });
+          if (shouldAddPageNumber) {
+            addPageNumber({ doc, pageNumber: data.pageNumber });
+          }
         },
       });
     });
@@ -518,6 +531,9 @@ const addTable = ({
 function addPageNumber({ doc, pageNumber }: { doc: jsPDF; pageNumber: number }) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  doc.setFont(FONT_FAMILY_REGULAR);
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
   doc.text(`${pageNumber}`, pageWidth - 20, pageHeight - 5);
 }
 
