@@ -1,11 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import s from './index.module.less';
-import { useApi } from '@/api';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import {
-  USERS_ENTITY_LINKED_ENTITIES_CHILD,
-  USERS_ENTITY_LINKED_ENTITIES_PARENT,
-} from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { AllUsersTableItem } from '@/apis';
@@ -15,14 +9,17 @@ import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getRiskScoringColumns } from '@/pages/users/users-list/risk-scoring-column';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import ExpandContainer from '@/components/utils/ExpandContainer';
-import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import {
+  useUserEntityLinkedEntitiesChild,
+  useUserEntityLinkedEntitiesParent,
+} from '@/utils/api/users';
 
 interface Props {
   userId: string;
 }
 
 export default function LinkedEntitiesTable({ userId }: Props) {
-  const api = useApi();
   const settings = useSettings();
   const [isExpanded, setIsExpanded] = useState(false);
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -32,32 +29,9 @@ export default function LinkedEntitiesTable({ userId }: Props) {
     ...DEFAULT_PARAMS_STATE,
   });
 
-  const parentUsersQueryResult = useQuery(USERS_ENTITY_LINKED_ENTITIES_PARENT(userId), async () => {
-    const result = await api.getUserEntityParentUser({
-      userId,
-    });
-    return {
-      items: result,
-      total: result.length,
-    };
-  });
+  const parentUsersQueryResult = useUserEntityLinkedEntitiesParent(userId);
 
-  const childUsersQueryResult = usePaginatedQuery(
-    USERS_ENTITY_LINKED_ENTITIES_CHILD(userId, params),
-    async (_) => {
-      const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = params;
-
-      const result = await api.getUserEntityChildUsers({
-        userId,
-        page,
-        pageSize,
-      });
-      return {
-        items: result.items,
-        total: result.count,
-      };
-    },
-  );
+  const childUsersQueryResult = useUserEntityLinkedEntitiesChild(userId, params);
 
   const columns: TableColumn<AllUsersTableItem>[] = getAllUserColumns(
     settings.userAlias,

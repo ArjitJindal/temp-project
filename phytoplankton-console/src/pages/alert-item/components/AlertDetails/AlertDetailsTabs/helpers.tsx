@@ -45,8 +45,8 @@ import {
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
-import { CRM_ICON_MAP, useConsoleUser } from '@/pages/users-item/UserDetails/utils';
-
+import { CRM_ICON_MAP } from '@/pages/users-item/UserDetails/utils';
+import { useUserDetails } from '@/utils/api/users';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords';
 import CRMDataComponent from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
@@ -293,7 +293,7 @@ export function useAlertTabs(props: Props): TabItem[] {
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const caseQueryResult = useCaseDetails(alert.caseId ?? undefined);
-  const userQueryResult = useConsoleUser(caseUserId);
+  const userQueryResult = useUserDetails(caseUserId);
 
   const tabs: TabItem[] = useMemo(() => {
     return tabList

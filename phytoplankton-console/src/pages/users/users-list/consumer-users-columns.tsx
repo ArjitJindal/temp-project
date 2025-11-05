@@ -11,7 +11,7 @@ import {
   USER_KYC_STATUS_TAG,
   USER_STATE_TAG,
 } from '@/components/library/Table/standardDataTypes';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import Id from '@/components/ui/Id';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';

@@ -30,7 +30,7 @@ import {
   TableRefType,
   TableRow,
 } from '@/components/library/Table/types';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';

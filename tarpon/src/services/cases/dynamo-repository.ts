@@ -1506,8 +1506,6 @@ export class DynamoCaseRepository {
       return
     }
 
-    const now = Date.now()
-
     const allOperationsAndKeyLists = await Promise.all(
       caseIdsToUpdate.map(async (caseId) => {
         const updateInfo = casesToUpdate.get(caseId)
@@ -1519,7 +1517,7 @@ export class DynamoCaseRepository {
           return { operations: [], keyLists: [] }
         }
 
-        const setClauses: string[] = ['updatedAt = :updatedAt']
+        const setClauses: string[] = []
         if (updateInfo.isOrigin) {
           setClauses.push('caseUsers.origin = :newUser')
         }
@@ -1534,7 +1532,6 @@ export class DynamoCaseRepository {
                 ':newUser': newUser,
               }
             : {}),
-          ':updatedAt': now,
         }
 
         return await createUpdateCaseQueries(this.tenantId, this.tableName, {
@@ -1656,19 +1653,16 @@ export class DynamoCaseRepository {
       return
     }
 
-    const now = Date.now()
     let updateExpression: string
-    const expressionAttributeValues: Record<string, any> = { ':updatedAt': now }
+    const expressionAttributeValues: Record<string, any> = {}
     let scoreToUpdate: number | undefined | null = null
 
     if (prefix === 'origin' && originDrsScore != null) {
-      updateExpression =
-        'SET caseUsers.originUserDrsScore = :drsScore, updatedAt = :updatedAt'
+      updateExpression = 'SET caseUsers.originUserDrsScore = :drsScore'
       scoreToUpdate = originDrsScore
       expressionAttributeValues[':drsScore'] = scoreToUpdate
     } else if (prefix === 'destination' && destinationDrsScore != null) {
-      updateExpression =
-        'SET caseUsers.destinationUserDrsScore = :drsScore, updatedAt = :updatedAt'
+      updateExpression = 'SET caseUsers.destinationUserDrsScore = :drsScore'
       scoreToUpdate = destinationDrsScore
       expressionAttributeValues[':drsScore'] = scoreToUpdate
     } else {

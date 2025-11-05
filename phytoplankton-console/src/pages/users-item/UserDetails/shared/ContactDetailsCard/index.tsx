@@ -9,7 +9,7 @@ import {
   FAX,
   PHONE,
 } from '@/components/library/Table/standardDataTypes';
-import { formatConsumerName } from '@/utils/api/users';
+import { formatConsumerName } from '@/utils/api/users/helpers';
 import TagList from '@/components/library/Tag/TagList';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 

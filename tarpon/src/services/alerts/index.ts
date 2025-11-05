@@ -1585,14 +1585,16 @@ export class AlertsService extends CaseAlertsCommonService {
     const {
       bySystem,
       // cascadeCaseUpdates = true,
-      skipReview = false,
+      skipReview: skipReviewOption = false,
       account,
       updateChecklistStatus = true,
       externalRequest = false,
     } = options ?? {}
+    let skipReview = skipReviewOption
+
+    const isPNB = hasFeature('PNB')
 
     // override the case updates as a quickfix for PNB bugs
-    const isPNB = hasFeature('PNB')
     const isClosing = statusUpdateRequest.alertStatus === 'CLOSED'
     const cascadeCaseUpdates =
       isPNB && !isClosing ? false : options?.cascadeCaseUpdates ?? true
@@ -1632,6 +1634,82 @@ export class AlertsService extends CaseAlertsCommonService {
 
     if (alertsNotFound.length) {
       throw new NotFound(`Alerts not found: ${alertsNotFound.join(', ')}`)
+    }
+
+    // PNB Phase 2: Skip review for sanctions alerts when CLOSING
+    // Note: ESCALATED operations should always go through review for all alert types
+    const alertStatus = statusUpdateRequest.alertStatus as string
+    const isClosingStatus =
+      alertStatus === 'CLOSED' || alertStatus === 'IN_REVIEW_CLOSED'
+    const isPNB_DAY_2 = hasFeature('PNB_DAY_2')
+
+    if (isPNB && isPNB_DAY_2 && isClosingStatus && !skipReview) {
+      const sanctionsAlerts = alerts.filter(
+        (alert) => alert.ruleNature === 'SCREENING'
+      )
+      const nonSanctionsAlerts = alerts.filter(
+        (alert) => alert.ruleNature !== 'SCREENING'
+      )
+
+      // If we have a mix, process them separately
+      if (sanctionsAlerts.length > 0 && nonSanctionsAlerts.length > 0) {
+        // For non-sanctions, create options without skipReview to let normal flow decide
+        const { skipReview: _removed, ...nonSanctionsOptions } = options ?? {}
+
+        // For sanctions, strip IN_REVIEW_ prefix if present
+        const sanctionsStatus = statusUpdateRequest.alertStatus.replace(
+          /^IN_REVIEW_/,
+          ''
+        ) as CaseStatus
+
+        const [sanctionsResult, nonSanctionsResult] = await Promise.all([
+          this.updateStatus(
+            sanctionsAlerts.map((a) => a.alertId ?? ''),
+            {
+              ...statusUpdateRequest,
+              alertStatus: sanctionsStatus, // Use base status without IN_REVIEW_
+            },
+            {
+              ...options,
+              skipReview: true, // Skip review for sanctions
+              account: userAccount,
+            }
+          ),
+          this.updateStatus(
+            nonSanctionsAlerts.map((a) => a.alertId ?? ''),
+            statusUpdateRequest,
+            {
+              ...nonSanctionsOptions,
+              // Don't set skipReview - let normal logic handle it
+              account: userAccount,
+            }
+          ),
+        ])
+
+        // Combine results
+        return {
+          result: undefined,
+          entities: [
+            ...sanctionsResult.entities,
+            ...nonSanctionsResult.entities,
+          ],
+          publishAuditLog: () =>
+            sanctionsResult.publishAuditLog?.() ||
+            nonSanctionsResult.publishAuditLog?.() ||
+            true,
+        }
+      }
+
+      // If all are sanctions, set skipReview to true and strip IN_REVIEW_ prefix
+      if (sanctionsAlerts.length === alerts.length) {
+        skipReview = true
+        // Strip IN_REVIEW_ prefix if present
+        statusUpdateRequest.alertStatus =
+          statusUpdateRequest.alertStatus.replace(
+            /^IN_REVIEW_/,
+            ''
+          ) as CaseStatus
+      }
     }
 
     const isInProgressOrOnHold =

@@ -23,6 +23,7 @@ export interface AlertsStatusChangeButtonProps {
   isDisabled?: boolean;
   skipReasonsModal?: boolean;
   user?: TableUser;
+  alertsData?: Array<{ alertId: string; ruleNature?: string }>;
 }
 
 interface AlertsStatusChangeButtonWithoutModalProps extends AlertsStatusChangeButtonProps {
@@ -82,6 +83,7 @@ export default function AlertsStatusChangeButton(
               newStatusActionLabel={status && statusTransitions?.[status]?.actionLabel}
               initialValues={initialValues}
               user={user}
+              alertsData={props.alertsData}
               onClose={() => {
                 setVisible(false);
               }}
@@ -111,6 +113,7 @@ export default function AlertsStatusChangeButton(
               initialValues: initialValues,
               skipReasonsModal: props.skipReasonsModal,
               user: user,
+              alertsData: props.alertsData,
               onClose: () =>
                 (props as AlertsStatusChangeButtonWithoutModalProps).setModalVisibility(false),
             });

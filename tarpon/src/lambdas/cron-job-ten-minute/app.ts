@@ -247,22 +247,6 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       const opensearchClient = await getOpensearchClient()
       await keepAlive(opensearchClient)
     }
-
-    if (now.minute() % 20 < 10) {
-      try {
-        logger.info(
-          'Triggering GoCardless backfill batch job at 20 minute interval'
-        )
-        await triggerGoCardlessBackfillBatchJob(mongoDbClient)
-      } catch (e) {
-        logger.error(
-          `Failed to trigger GoCardless backfill batch job: ${
-            (e as Error)?.message
-          }`,
-          e
-        )
-      }
-    }
   } catch (error) {
     logger.error('Error in 10 minute cron job handler', error)
     throw error

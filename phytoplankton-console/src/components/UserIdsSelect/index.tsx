@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDebounce } from 'ahooks';
 import Select, { Props } from '../library/Select';
-import { useUsersSearch } from '@/pages/transactions/components/UserSearchPopup/helpers';
+import { useUsersFind } from '@/utils/api/users';
 import { getOr } from '@/utils/asyncResource';
 
 type LocalProps = Omit<
@@ -12,7 +12,7 @@ type LocalProps = Omit<
 function UserIdsSelect(props: LocalProps) {
   const [searchTerm, setSearchTerm] = useState<string | undefined>();
   const debouncedSearchTerm = useDebounce(searchTerm, { wait: 500 });
-  const users = useUsersSearch(debouncedSearchTerm ?? '');
+  const users = useUsersFind({ search: debouncedSearchTerm ?? '' });
   const options = getOr(users.data, { total: 0, users: [] }).users.map((val) => ({
     label: val.userId,
     value: val.userId,

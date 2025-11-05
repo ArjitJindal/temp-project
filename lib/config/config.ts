@@ -342,6 +342,7 @@ export type Config = {
       MAX_PROVISIONED_CONCURRENCY: number
       MIN_PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
+      AUTO_SCALING_ENABLED?: boolean
     }
     TRANSACTION_AGGREGATION_LAMBDA: {
       MEMORY_SIZE?: number

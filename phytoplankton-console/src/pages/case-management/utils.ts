@@ -7,7 +7,7 @@ import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { getStatuses } from '@/utils/case-utils';
 import { AlertListResponseItem, ChecklistStatus } from '@/apis';
 import dayjs from '@/utils/dayjs';
-import { getUserName } from '@/utils/api/users';
+import { getUserName } from '@/utils/api/users/helpers';
 import { TableSearchParams } from '@/pages/case-management/types';
 
 export const getAlertsQueryParams = (

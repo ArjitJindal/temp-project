@@ -19,14 +19,12 @@ import {
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { USERS_ITEM_RISKS_DRS, USERS_ITEM_RISKS_KRS } from '@/utils/queries/keys';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import { AsyncResource, all, map } from '@/utils/asyncResource';
 import { sortByDate } from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CommentType } from '@/utils/user-utils';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { useUserDrsRiskScore, useUserKrsRiskScore } from '@/utils/api/users';
 
 export interface RiskScores {
   kycRiskScore?: RiskScore | null;
@@ -50,17 +48,11 @@ interface Props {
 export const HeaderMenu = (props: Props) => {
   const { user, onNewComment, onNewTags } = props;
   const userId = user.userId;
-  const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskLevelEnabled = useFeatureEnabled('RISK_LEVELS');
   const riskClassificationValues = useRiskClassificationScores();
-  const api = useApi();
   const settings = useSettings();
-  const drsQueryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => {
-    return isRiskScoringEnabled ? api.getDrsValue({ userId }) : null;
-  });
-  const kycQueryResult = useQuery(USERS_ITEM_RISKS_KRS(userId), () => {
-    return isRiskScoringEnabled ? api.getKrsValue({ userId }) : null;
-  });
+  const drsQueryResult = useUserDrsRiskScore(userId);
+  const kycQueryResult = useUserKrsRiskScore(userId);
   const drsRiskScore: AsyncResource<RiskScore | null> = useMemo(
     () =>
       map(drsQueryResult.data, (v) => {

@@ -784,7 +784,6 @@ export class TransactionService {
           this.tenantId
         )
 
-      const data = await clickhouseTransactionsRepository.getStatsByType(params)
       const currencyService = new CurrencyService(this.dynamoDb)
       const exchangeRateWithUsd =
         referenceCurrency !== 'USD'
@@ -793,18 +792,10 @@ export class TransactionService {
               referenceCurrency
             )
           : 1
-
-      return data.map((item) => ({
-        ...item,
-        sum: (item?.sum ?? 0) * exchangeRateWithUsd,
-        min: (item?.min ?? 0) * exchangeRateWithUsd,
-        max: (item?.max ?? 0) * exchangeRateWithUsd,
-        median: (item?.median ?? 0) * exchangeRateWithUsd,
-        average: (item?.average ?? 0) * exchangeRateWithUsd,
-        count: item?.count ?? 0,
-        transactionType:
-          item.transactionType === '' ? undefined : item.transactionType,
-      }))
+      return await clickhouseTransactionsRepository.getStatsByType(
+        params,
+        exchangeRateWithUsd
+      )
     }
 
     return await this.transactionRepository.getStatsByType(
@@ -826,13 +817,25 @@ export class TransactionService {
           this.dynamoDb,
           this.tenantId
         )
+      const currencyService = new CurrencyService(this.dynamoDb)
+      const exchangeRateWithUsd =
+        referenceCurrency !== 'USD'
+          ? await currencyService.getCurrencyExchangeRate(
+              'USD',
+              referenceCurrency
+            )
+          : 1
 
       return await clickhouseTransactionsRepository.getStatsByTime(
         params,
-        referenceCurrency
+        exchangeRateWithUsd
       )
     }
-
+    if (!params.pageSize) {
+      throw new createHttpError.BadRequest(
+        'All data aggregation is not supported for MongoDB'
+      )
+    }
     if (aggregateBy === 'originCurrency' && !isClickhouseEnabled()) {
       throw new createHttpError.BadRequest(
         'Origin currency is not supported for MongoDB'

@@ -35,7 +35,7 @@ export interface Params {
   selectedTransactionStates?: LastTransactionState[];
   displayBy: DisplayByType;
   currency: Currency;
-  transactionsCount: number;
+  transactionsCount?: number;
   aggregateBy: AggregateByField;
   timeRange: RangeValue<Dayjs>;
 }
@@ -168,12 +168,12 @@ export default function TransactionsSelector(props: Props) {
           />
           <Select<string>
             mode="SINGLE"
-            value={`${params.transactionsCount}`}
+            value={params.transactionsCount ? `${params.transactionsCount}` : 'all'}
             onChange={(value) => {
               if (value) {
                 onChangeParams({
                   ...params,
-                  transactionsCount: parseInt(value) || 10,
+                  transactionsCount: value === 'all' ? undefined : parseInt(value) || 10,
                 });
               }
             }}
@@ -181,6 +181,7 @@ export default function TransactionsSelector(props: Props) {
               { value: '10', label: 'Last 10 transactions' },
               { value: '50', label: 'Last 50 transactions' },
               { value: '1000', label: 'Last 1000 transactions' },
+              { value: 'all', label: 'All transactions' },
             ]}
           />
           <Form.Layout.Label title="Display by" orientation="horizontal">

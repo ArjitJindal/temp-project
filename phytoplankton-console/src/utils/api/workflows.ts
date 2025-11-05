@@ -11,7 +11,6 @@ import {
   RiskLevelApprovalWorkflowWorkflowTypeEnum,
   RuleApprovalWorkflow,
   RuleApprovalWorkflowWorkflowTypeEnum,
-  UserApproval,
   UserUpdateApprovalWorkflow,
   UserUpdateApprovalWorkflowWorkflowTypeEnum,
   WorkflowRef,
@@ -19,12 +18,7 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import { useQueries, useQuery } from '@/utils/queries/hooks';
-import {
-  USER_CHANGES_PROPOSALS_BY_ID,
-  USER_FIELDS_CHANGES_PROPOSALS,
-  WORKFLOWS_ITEM,
-  WORKFLOWS_ITEM_BY_REF,
-} from '@/utils/queries/keys';
+import { WORKFLOWS_ITEM, WORKFLOWS_ITEM_BY_REF } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { AsyncResource, getOr, map, success } from '@/utils/asyncResource';
@@ -177,45 +171,6 @@ export function useWorkflows(
 /*
   User approvals
  */
-export function useUserChangesPendingApprovals(userId: string): QueryResult<UserApproval[]> {
-  const api = useApi();
-  return useQuery(USER_CHANGES_PROPOSALS_BY_ID(userId), async () => {
-    return await api.getUserApprovalProposals({
-      userId,
-    });
-  });
-}
-
-export function useUserFieldChangesPendingApprovals(
-  userId: string,
-  fields: (keyof WorkflowSettingsUserApprovalWorkflows)[],
-): AsyncResource<UserApproval[]> {
-  const api = useApi();
-  const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
-  const result = useQuery(
-    USER_FIELDS_CHANGES_PROPOSALS(
-      userId,
-      fields.map((x) => `${x}`),
-    ),
-    async () => {
-      const approvals = await api.getUserApprovalProposals({
-        userId,
-      });
-      return approvals.filter((approval) =>
-        approval.proposedChanges.some((change) =>
-          fields.includes(change.field as keyof WorkflowSettingsUserApprovalWorkflows),
-        ),
-      );
-    },
-    {
-      enabled: isUserChangesApprovalEnabled,
-    },
-  );
-  if (!isUserChangesApprovalEnabled) {
-    return success([]);
-  }
-  return result.data;
-}
 
 export function useUserFieldChangesStrategy(
   field: keyof WorkflowSettingsUserApprovalWorkflows,

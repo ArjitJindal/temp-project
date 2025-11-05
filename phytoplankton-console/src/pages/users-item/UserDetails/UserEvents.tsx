@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk';
 import s from './index.module.less';
-import { useApi } from '@/api';
-import { InternalUserEvent, RiskLevel, SortOrder } from '@/apis';
+import { InternalUserEvent, RiskLevel } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -14,14 +13,13 @@ import {
   RISK_SCORE,
 } from '@/components/library/Table/standardDataTypes';
 import { CommonParams } from '@/components/library/Table/types';
-import { useQuery } from '@/utils/queries/hooks';
-import { USER_EVENTS_LIST } from '@/utils/queries/keys';
 import * as Card from '@/components/ui/Card';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { processTagsRecursively } from '@/utils/object';
+import { useUserEventsList } from '@/utils/api/users';
 
 type Props = {
   userId: string;
@@ -63,7 +61,6 @@ const UserEventActions = ({ item }: { item: InternalUserEvent | undefined }) => 
 export const UserEvents = (props: Props) => {
   const { userId } = props;
   const helper = new ColumnHelper<InternalUserEvent>();
-  const api = useApi();
   const settings = useSettings();
   const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
   const [params, setParams] = useState<CommonParams>({
@@ -73,21 +70,7 @@ export const UserEvents = (props: Props) => {
 
   const riskClassificationValues = useRiskClassificationScores();
 
-  const queryResults = useQuery(
-    USER_EVENTS_LIST({
-      userId,
-      params,
-    }),
-    async () => {
-      return await api.getEventsList({
-        userId: userId,
-        page: params.page,
-        pageSize: params.pageSize,
-        sortField: params.sort[0]?.[0],
-        sortOrder: params.sort[0]?.[1] as SortOrder,
-      });
-    },
-  );
+  const queryResults = useUserEventsList(userId, params);
 
   const columns = helper.list([
     helper.simple({

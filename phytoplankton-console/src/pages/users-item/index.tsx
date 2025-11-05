@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router';
-import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import ExpectedTransactionLimits from './UserDetails/shared/TransactionLimits';
@@ -8,23 +7,16 @@ import Header from './Header';
 import s from './index.module.less';
 import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
-import { CRM_ICON_MAP, useConsoleUser } from './UserDetails/utils';
+import { CRM_ICON_MAP } from './UserDetails/utils';
 import CRMRecords from './UserDetails/CRMMonitoring/CRMRecords';
 import CRMData from './UserDetails/CRMMonitoring/CRMResponse';
 import UserLists from './UserLists';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
-import {
-  Comment,
-  InternalBusinessUser,
-  InternalConsumerUser,
-  PersonAttachment,
-  UserTag,
-} from '@/apis';
+import { Comment, InternalBusinessUser, PersonAttachment, UserTag } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
-import { USERS_ITEM } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
@@ -42,95 +34,77 @@ import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelis
 import { CommentType } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import Alert from '@/components/library/Alert';
+import { useUserDetails, useUserUpdates } from '@/utils/api/users';
 
 export default function UserItem() {
   const { list, id: userId, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
   const api = useApi();
   const isFreshDeskCrmEnabled = useFreshdeskCrmEnabled();
 
-  const queryClient = useQueryClient();
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
   const settings = useSettings();
   const isCrmEnabled = useFeatureEnabled('CRM');
-
+  const { updateUserQueryData } = useUserUpdates();
   const handleNewTags = (tags: UserTag[]) => {
-    queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM(userId),
-      (user) => {
+    updateUserQueryData(userId ?? '', (user) => {
+      if (user == null) {
+        return user;
+      }
+      return { ...user, tags: tags };
+    });
+  };
+
+  const handleNewComment = (newComment: Comment, commentType: CommentType, personId?: string) => {
+    if (commentType === CommentType.COMMENT) {
+      updateUserQueryData(userId ?? '', (user) => {
+        if (user == null) {
+          return user;
+        }
+        return { ...user, comments: [...(user?.comments ?? []), newComment] };
+      });
+    }
+    if (commentType === CommentType.USER) {
+      updateUserQueryData(userId ?? '', (user) => {
         if (user == null) {
           return user;
         }
         return {
           ...user,
-          tags: tags,
+          comments: [...(user?.comments ?? []), newComment],
+          attachments: [...(user?.attachments ?? []), newComment as PersonAttachment],
         };
-      },
-    );
-  };
-
-  const handleNewComment = (newComment: Comment, commentType: CommentType, personId?: string) => {
-    if (commentType === CommentType.COMMENT) {
-      queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-        USERS_ITEM(userId),
-        (user) => {
-          if (user == null) {
-            return user;
-          }
-          return {
-            ...user,
-            comments: [...(user?.comments ?? []), newComment],
-          };
-        },
-      );
-    }
-    if (commentType === CommentType.USER) {
-      queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-        USERS_ITEM(userId),
-        (user) => {
-          if (user == null) {
-            return user;
-          }
-          return {
-            ...user,
-            comments: [...(user?.comments ?? []), newComment],
-            attachments: [...(user?.attachments ?? []), newComment as PersonAttachment],
-          };
-        },
-      );
+      });
     }
     if (commentType === CommentType.SHAREHOLDERDIRECTOR && personId) {
-      queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-        USERS_ITEM(userId),
-        (user) => {
-          if (user == null) {
-            return user;
-          }
-          return {
-            ...user,
-            comments: [...(user?.comments ?? []), newComment],
-            shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
-              if (shareHolder.userId === personId) {
-                return shareHolder;
-              }
-              return {
-                ...shareHolder,
-                attachments: [...(shareHolder.attachments ?? []), newComment as PersonAttachment],
-              };
-            }),
-            directors: (user as InternalBusinessUser).directors?.map((director) => {
-              if (director.userId === personId) {
-                return director;
-              }
-              return {
-                ...director,
-                attachments: [...(director.attachments ?? []), newComment as PersonAttachment],
-              };
-            }),
-          };
-        },
-      );
+      updateUserQueryData(userId ?? '', (user) => {
+        if (user == null) {
+          return user;
+        }
+        return {
+          ...user,
+          comments: [...(user?.comments ?? []), newComment],
+          shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
+            if (shareHolder.userId === personId) {
+              return shareHolder;
+            }
+            return {
+              ...shareHolder,
+              attachments: [...(shareHolder.attachments ?? []), newComment as PersonAttachment],
+            };
+          }),
+          directors: (user as InternalBusinessUser).directors?.map((director) => {
+            if (director.userId === personId) {
+              return director;
+            }
+            return {
+              ...director,
+              attachments: [...(director.attachments ?? []), newComment as PersonAttachment],
+            };
+          }),
+        };
+      });
     }
   };
 
@@ -154,7 +128,7 @@ export default function UserItem() {
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
 
-  const queryResult = useConsoleUser(userId);
+  const queryResult = useUserDetails(userId ?? '');
 
   if (userId == null) {
     return <Alert type={'ERROR'}>{`${firstLetterUpper(settings.userAlias)} id not defined`}</Alert>;

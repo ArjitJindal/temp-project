@@ -30,6 +30,7 @@ export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'upda
   caseId?: string;
   transactionIds?: { [alertId: string]: string[] };
   onSaved: () => void;
+  alertsData?: Array<{ alertId: string; ruleNature?: string }>;
 }
 
 const isEscatedTimes = (caseId: string, times: number) => {
@@ -43,6 +44,8 @@ export default function AlertsStatusChangeModal(props: Props) {
   const auth0User = useAuth0User();
   const currentUser = useCurrentUser();
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
+  const isPNB = useFeatureEnabled('PNB');
+  const isPNB_DAY_2 = useFeatureEnabled('PNB_DAY_2');
 
   const escalatedCaseCallback = useCallback(
     async (formValues: FormValues, updates: AlertStatusUpdateRequest) => {
@@ -68,7 +71,10 @@ export default function AlertsStatusChangeModal(props: Props) {
       const assignees = getAssigneeName(users, assigneeIds, updates.alertStatus);
 
       const entities = props.entityIds.join(', ');
+
+      // Show appropriate message based on whether user has a reviewer
       if (!currentUser?.reviewerId) {
+        // No reviewer - show direct success messages
         if (isEmpty(transactionIds)) {
           if (childCaseId) {
             message.success(
@@ -122,6 +128,26 @@ export default function AlertsStatusChangeModal(props: Props) {
             );
           }
         }
+      } else {
+        // Has reviewer - show review message for PNB maker/checker workflow
+        const reviewer =
+          users[currentUser.reviewerId]?.name ||
+          users[currentUser.reviewerId]?.email ||
+          currentUser.reviewerId;
+
+        if (childCaseId) {
+          message.warn(
+            `${pluralize('Alert', props.entityIds.length, true)} ${entities} ${
+              props.entityIds.length > 1 ? 'are' : 'is'
+            } added to new child case '${childCaseId}' and sent to review ${reviewer}. Once approved, the escalation will be performed successfully.`,
+          );
+        } else {
+          message.warn(
+            `${pluralize('Alert', props.entityIds.length, true)} ${entities} ${
+              props.entityIds.length > 1 ? 'are' : 'is'
+            } sent to review ${reviewer}. Once approved, the escalation will be performed successfully.`,
+          );
+        }
       }
       await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId) });
       for (const alertId of props.entityIds) {
@@ -142,16 +168,54 @@ export default function AlertsStatusChangeModal(props: Props) {
 
   const statusChangeCallback = useCallback(
     async (updates: AlertStatusUpdateRequest) => {
+      // PNB Phase 2: Split processing for mixed sanctions/non-sanctions alerts
+      const isClosingOrEscalating = ['CLOSED', 'ESCALATED', 'ESCALATED_L2'].includes(
+        props.newStatus,
+      );
+
+      // Split alerts into sanctions and non-sanctions
+      const sanctionsAlertIds: string[] = [];
+      const nonSanctionsAlertIds: string[] = [];
+
+      if (
+        props.alertsData &&
+        isPNB &&
+        isPNB_DAY_2 &&
+        isClosingOrEscalating &&
+        currentUser?.reviewerId
+      ) {
+        props.entityIds.forEach((id) => {
+          const alertData = props.alertsData?.find((a) => a.alertId === id);
+          if (alertData?.ruleNature === 'SCREENING') {
+            sanctionsAlertIds.push(id);
+          } else {
+            nonSanctionsAlertIds.push(id);
+          }
+        });
+      }
+
       await api.alertsStatusChange({
         AlertsStatusUpdateRequest: {
           alertIds: props.entityIds,
           updates,
         },
       });
+
       props.entityIds.forEach((alertId) => {
         queryClient.refetchQueries({ queryKey: ALERT_ITEM(alertId) });
       });
-      if (!currentUser?.reviewerId) {
+
+      // Determine which message(s) to show
+      const hasReviewer = !!currentUser?.reviewerId;
+      const hasSanctions = sanctionsAlertIds.length > 0;
+      const hasNonSanctions = nonSanctionsAlertIds.length > 0;
+
+      // When PNB_DAY_2 is disabled, arrays are empty, so all alerts need review
+      const allNeedReview = hasReviewer && !isPNB_DAY_2 && isPNB && isClosingOrEscalating;
+      const showSuccess = !hasReviewer || (hasSanctions && !hasNonSanctions);
+      const showReview = hasReviewer && (allNeedReview || hasNonSanctions);
+
+      if (showSuccess && !allNeedReview) {
         let messageText = `${capitalizeNameFromEmail(
           auth0User?.name || '',
         )} ${props.newStatus.toLowerCase()} the alert ${props.entityIds[0]} ${
@@ -174,24 +238,51 @@ export default function AlertsStatusChangeModal(props: Props) {
         });
       }
 
-      if (currentUser?.reviewerId) {
-        const alertCount = props.entityIds.length;
-        const alertLabel = pluralize('Alert', alertCount, true);
-        const alertIds = props.entityIds.join(', ');
-        const verb = alertCount > 1 ? 'are' : 'is';
+      if (showReview && currentUser.reviewerId) {
         const reviewer =
           users[currentUser.reviewerId]?.name ||
           users[currentUser.reviewerId]?.email ||
-          currentUser?.reviewerId;
+          currentUser.reviewerId;
 
-        let messageText = `${alertLabel} ${alertIds} ${verb} sent to review ${reviewer}. Once approved, your alert action will be performed successfully.`;
+        // Mixed batch: show success for sanctions, review for non-sanctions
+        if (hasSanctions && hasNonSanctions) {
+          message.success(
+            `${pluralize('alert', sanctionsAlertIds.length, true)} ${sanctionsAlertIds.join(
+              ', ',
+            )} ${props.newStatus.toLowerCase()} successfully`,
+          );
 
-        if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
-          messageText += ` All transactions which are suspended will be updated to ${
-            updates.updateTransactionStatus === 'ALLOW' ? 'allowed' : 'blocked'
-          } after the approval of your alert action.`;
+          let reviewMessageText = `${pluralize(
+            'alert',
+            nonSanctionsAlertIds.length,
+            true,
+          )} ${nonSanctionsAlertIds.join(', ')} ${
+            nonSanctionsAlertIds.length > 1 ? 'are' : 'is'
+          } sent to review ${reviewer}. Once approved, your alert action will be performed successfully.`;
+
+          if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+            reviewMessageText += ` All transactions which are suspended will be updated to ${
+              updates.updateTransactionStatus === 'ALLOW' ? 'allowed' : 'blocked'
+            } after the approval of your alert action.`;
+          }
+          message.warn(reviewMessageText);
+        } else {
+          // All alerts need review
+          let messageText = `${pluralize(
+            'Alert',
+            props.entityIds.length,
+            true,
+          )} ${props.entityIds.join(', ')} ${
+            props.entityIds.length > 1 ? 'are' : 'is'
+          } sent to review ${reviewer}. Once approved, your alert action will be performed successfully.`;
+
+          if (props.newStatus === 'CLOSED' && updates.updateTransactionStatus) {
+            messageText += ` All transactions which are suspended will be updated to ${
+              updates.updateTransactionStatus === 'ALLOW' ? 'allowed' : 'blocked'
+            } after the approval of your alert action.`;
+          }
+          message.warn(messageText);
         }
-        message.warn(messageText);
 
         return;
       }
@@ -204,6 +295,9 @@ export default function AlertsStatusChangeModal(props: Props) {
       queryClient,
       auth0User?.name,
       users,
+      isPNB,
+      isPNB_DAY_2,
+      props.alertsData,
     ],
   );
 

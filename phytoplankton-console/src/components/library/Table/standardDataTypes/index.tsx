@@ -41,7 +41,7 @@ import {
   UserState,
   TenantSettings,
 } from '@/apis';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users/helpers';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';

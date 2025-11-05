@@ -85,6 +85,7 @@ function useOptions(props: Props): DropdownOption[] {
             }}
             isDisabled={props.isDisabled}
             haveModal={true}
+            alertsData={[{ alertId, ruleNature: alertItem.ruleNature }]}
           />
         ),
       });
@@ -108,6 +109,7 @@ function useOptions(props: Props): DropdownOption[] {
               ESCALATED_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
             }}
             haveModal={true}
+            alertsData={[{ alertId, ruleNature: alertItem.ruleNature }]}
           />
         ),
       });

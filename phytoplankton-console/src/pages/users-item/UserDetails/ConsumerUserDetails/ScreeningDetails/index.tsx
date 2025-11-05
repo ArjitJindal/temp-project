@@ -22,11 +22,8 @@ import { message } from '@/components/library/Message';
 import { getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Confirm from '@/components/utils/Confirm';
 import { USER_CHANGES_PROPOSALS, USER_CHANGES_PROPOSALS_BY_ID } from '@/utils/queries/keys';
-import {
-  WorkflowChangesStrategy,
-  useUserFieldChangesPendingApprovals,
-  useUserFieldChangesStrategy,
-} from '@/utils/api/workflows';
+import { WorkflowChangesStrategy, useUserFieldChangesStrategy } from '@/utils/api/workflows';
+import { useUserChangesPendingApprovals } from '@/utils/api/users';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 
@@ -200,10 +197,10 @@ export default function ScreeningDetails(props: Props) {
     },
   );
 
-  const pendingProposals = useUserFieldChangesPendingApprovals(user.userId, ['PepStatus']);
+  const pendingProposals = useUserChangesPendingApprovals(user.userId, ['PepStatus']);
 
   const lockedByPendingProposals =
-    !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+    !isSuccess(pendingProposals.data) || pendingProposals.data.value.length > 0;
 
   return (
     <EntityPropertiesCard
@@ -211,7 +208,7 @@ export default function ScreeningDetails(props: Props) {
       extraControls={
         !lockedByPendingProposals ? (
           <EditIcon className={s.icon} onClick={() => setIsOpen(true)} />
-        ) : !isLoading(pendingProposals) ? (
+        ) : !isLoading(pendingProposals.data) ? (
           <PendingApprovalTag
             renderModal={({ isOpen, setIsOpen }) => (
               <UserPendingApprovalsModal
@@ -220,7 +217,7 @@ export default function ScreeningDetails(props: Props) {
                 onCancel={() => {
                   setIsOpen(false);
                 }}
-                pendingProposalsRes={pendingProposals}
+                pendingProposalsRes={pendingProposals.data}
                 requiredResources={['write:::users/user-pep-status/*']}
               />
             )}

@@ -20,9 +20,6 @@ import { map, QueryResult } from '@/utils/queries/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { USER_CHANGES_PROPOSALS } from '@/utils/queries/keys';
 import {
   failed,
   init,
@@ -35,6 +32,7 @@ import {
 import { AllUserTableItem } from '@/pages/users/users-list/data';
 import { humanizeKYCStatus } from '@/components/utils/humanizeKYCStatus';
 import { humanizeUserStatus } from '@/components/utils/humanizeUserStatus';
+import { useUserApprovalProposals } from '@/utils/api/users';
 
 type Props = {
   type: 'all' | 'business' | 'consumer';
@@ -251,17 +249,7 @@ export const UsersTable = (props: Props) => {
 
   const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
 
-  const api = useApi();
-  const { data: pendingProposalRes } = useQuery(
-    USER_CHANGES_PROPOSALS(),
-    async () => {
-      const proposals = await api.getAllUserApprovalProposals();
-      return proposals;
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
+  const { data: pendingProposalRes } = useUserApprovalProposals();
 
   // Merging query results with pending proposals
   const queryResultsWithProposals: QueryResult<TableData<AllUserTableItem>> = useMemo(() => {

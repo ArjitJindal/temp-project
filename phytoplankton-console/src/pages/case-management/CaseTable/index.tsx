@@ -31,7 +31,7 @@ import {
   useTableData,
 } from '@/pages/case-management/CaseTable/helpers';
 import { isSpecificUserTableItem, TableItem } from '@/pages/case-management/CaseTable/types';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
 import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import UserStateTag from '@/components/library/Tag/UserStateTag';

@@ -97,6 +97,7 @@ export default function AlertDetailsTabs(props: Props) {
             }}
             isDisabled={isDisabled}
             haveModal={true}
+            alertsData={[{ alertId, ruleNature: alert.ruleNature }]}
           />
         );
       }),

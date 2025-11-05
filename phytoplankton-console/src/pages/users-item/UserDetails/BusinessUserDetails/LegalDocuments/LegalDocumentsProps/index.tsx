@@ -3,7 +3,7 @@ import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import { ConsumerName, LegalDocument, CountryCode, Tag } from '@/apis';
-import { formatConsumerName } from '@/utils/api/users';
+import { formatConsumerName } from '@/utils/api/users/helpers';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import TagList from '@/components/library/Tag/TagList';

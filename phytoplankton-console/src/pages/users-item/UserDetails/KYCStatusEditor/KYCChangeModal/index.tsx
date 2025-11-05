@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
@@ -22,7 +22,6 @@ import TextInput from '@/components/library/TextInput';
 import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';
-import { USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 import Label from '@/components/library/Label';
 import { KYC_STATUSS } from '@/apis/models-custom/KYCStatus';
@@ -90,7 +89,6 @@ export default function KYCChangeModal(props: Props) {
 
   let messageLoading: CloseMessage | undefined;
 
-  const queryClient = useQueryClient();
   const mutation = useMutation(
     async (values: FormValues) => {
       const { files, comment, otherReason, reason, kycStatus } = values;
@@ -140,13 +138,12 @@ export default function KYCChangeModal(props: Props) {
       return { kycStatus, updatedComment };
     },
     {
-      onSuccess: async (data) => {
+      onSuccess: (data) => {
         message.success('KYC status updated successfully');
         ref.current?.setValues(DEFAULT_INITIAL_VALUES);
         onOkay(data.kycStatus, data.updatedComment);
         onClose();
         messageLoading?.();
-        await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
       },
       onError: (error: Error) => {
         message.error(`Error Changing KYC Status: ${error.message}`);

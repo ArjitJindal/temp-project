@@ -18,6 +18,7 @@ interface Props {
   isBlue?: boolean;
   rounded?: boolean;
   user?: TableUser;
+  ruleNature?: string;
 }
 
 const reasons: string[] = [
@@ -49,7 +50,7 @@ const FalsePostiveLabel = (props: { confidence: number; onClick?: () => void }) 
 };
 
 export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
-  const { alertId, caseIds, onSaved, newCaseStatus, confidence, user } = props;
+  const { alertId, caseIds, onSaved, newCaseStatus, confidence, user, ruleNature } = props;
   const [isModalVisible, setModalVisible] = useState(false);
 
   const [isDemoMode] = useDemoMode();
@@ -88,6 +89,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
         onClose={() => {
           setModalVisible(false);
         }}
+        alertsData={alertId ? [{ alertId, ruleNature }] : undefined}
       />
     </>
   );

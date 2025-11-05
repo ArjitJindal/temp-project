@@ -12,7 +12,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { isSuccess } from '@/utils/asyncResource';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import { getCurrentDomain } from '@/utils/routing';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useSafeLocalStorageState } from '@/utils/hooks';

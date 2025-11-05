@@ -177,6 +177,11 @@ export default function Header(props: Props) {
                       (caseItem?.caseUsers?.destination as TableUser) ||
                       undefined
                     }
+                    alertsData={
+                      alertId && alertItem?.ruleNature
+                        ? [{ alertId, ruleNature: alertItem.ruleNature }]
+                        : undefined
+                    }
                   />
                 )}
               </AsyncResourceRenderer>
@@ -254,6 +259,11 @@ function useActions(
                 (caseItem?.caseUsers?.origin as TableUser) ||
                 (caseItem?.caseUsers?.destination as TableUser) ||
                 undefined
+              }
+              alertsData={
+                alertId && alertItem?.ruleNature
+                  ? [{ alertId, ruleNature: alertItem.ruleNature }]
+                  : undefined
               }
             />
           )}

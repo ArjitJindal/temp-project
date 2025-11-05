@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {

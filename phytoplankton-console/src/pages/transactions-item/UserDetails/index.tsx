@@ -15,7 +15,7 @@ import {
 } from '@/apis';
 import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
-import { getUserName } from '@/utils/api/users';
+import { getUserName } from '@/utils/api/users/helpers';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';

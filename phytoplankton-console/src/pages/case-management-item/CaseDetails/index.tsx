@@ -46,7 +46,7 @@ import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/Tra
 import Linking from '@/pages/users-item/UserDetails/Linking';
 import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords';
 import { notEmpty } from '@/utils/array';
-import { isExistedUser } from '@/utils/api/users';
+import { isExistedUser } from '@/utils/api/users/helpers';
 import PaymentIdentifierDetailsCard from '@/pages/case-management-item/CaseDetails/PaymentIdentifierDetailsCard';
 import ActivityCard, { getLogData } from '@/components/ActivityCard';
 import { TabItem } from '@/components/library/Tabs';

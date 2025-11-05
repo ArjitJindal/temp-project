@@ -8,7 +8,7 @@ import { TableItem } from './types';
 import { generateAlertsListUrl } from './utils';
 import { Dayjs } from '@/utils/dayjs';
 import UserLink from '@/components/UserLink';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import { TableColumn } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';

@@ -21,7 +21,7 @@ import Tag from '@/components/library/Tag';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Link from '@/components/ui/Link';
 import { H4 } from '@/components/ui/Typography';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';
 import { CommonParams } from '@/components/library/Table/types';

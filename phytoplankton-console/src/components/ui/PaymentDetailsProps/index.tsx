@@ -18,7 +18,7 @@ import {
 } from '@/apis';
 import { notNullish } from '@/utils/array';
 import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
-import { formatConsumerName } from '@/utils/api/users';
+import { formatConsumerName } from '@/utils/api/users/helpers';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentDetails, PaymentDetailsKey } from '@/utils/api/payment-details';
 import GeneralDetails from '@/pages/users-item/UserDetails/BusinessUserDetails/PersonsCard/PersonDetails/GeneralDetails';

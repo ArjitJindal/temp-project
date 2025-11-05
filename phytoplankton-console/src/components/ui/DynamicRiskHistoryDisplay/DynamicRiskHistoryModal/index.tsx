@@ -34,8 +34,8 @@ import {
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ExportDataRow } from '@/utils/data-export';
 import { downloadAsCSV } from '@/utils/csv';
-import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
 import { isSuccess } from '@/utils/asyncResource';
+import { useUserDetails } from '@/utils/api/users';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
@@ -75,7 +75,7 @@ function DynamicRiskHistoryModal(props: Props) {
     pageSize: 10,
   });
   const settings = useSettings();
-  const consoleUser = useConsoleUser(userId);
+  const consoleUser = useUserDetails(userId);
   const riskClassificationValues = useRiskClassificationScores();
   const queryResult = usePaginatedQuery<ExtendedDrsScoreWithRowId>(
     USER_DRS_VALUES(userId, params),

@@ -11,7 +11,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import Id from '@/components/ui/Id';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import Tag from '@/components/library/Tag';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB_ITERATION_RESULT } from '@/utils/queries/keys';

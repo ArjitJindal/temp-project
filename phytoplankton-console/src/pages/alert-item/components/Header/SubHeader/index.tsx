@@ -5,7 +5,7 @@ import { Alert, Case } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import { neverReturn } from '@/utils/lang';
 import Id from '@/components/ui/Id';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users/helpers';
 import { getPaymentMethodTitle } from '@/utils/payments';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import { AsyncResource, isSuccess } from '@/utils/asyncResource';

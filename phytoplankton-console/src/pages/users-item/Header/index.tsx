@@ -7,7 +7,7 @@ import CommentButton from '@/components/CommentButton';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import Id from '@/components/ui/Id';
-import { getUserName } from '@/utils/api/users';
+import { getUserName } from '@/utils/api/users/helpers';
 import { SarButton } from '@/components/Sar';
 import { CommentType } from '@/utils/user-utils';
 import { AsyncResource, isSuccess, map } from '@/utils/asyncResource';

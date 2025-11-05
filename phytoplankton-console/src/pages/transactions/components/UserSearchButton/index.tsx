@@ -3,7 +3,7 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import UserProfileIcon from './user_profile.react.svg';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { useApi } from '@/api';
-import { getUserName } from '@/utils/api/users';
+import { getUserName } from '@/utils/api/users/helpers';
 import { getErrorMessage } from '@/utils/lang';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 import PopupContent from '@/pages/transactions/components/UserSearchPopup/PopupContent';

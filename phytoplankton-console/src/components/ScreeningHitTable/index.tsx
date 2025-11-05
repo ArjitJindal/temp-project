@@ -109,6 +109,7 @@ export default function SanctionsSearchTable(props: Props) {
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const hasFeatureLSEG = useFeatureEnabled('LSEG');
+  const hasFeaturePNB = useFeatureEnabled('PNB');
   const isScreeningProfileEnabled =
     hasFeatureAcuris || hasFeatureDowJones || hasFeatureOpenSanctions;
 
@@ -468,14 +469,15 @@ export default function SanctionsSearchTable(props: Props) {
         },
       });
     }
-
-    extraFilters.push({
-      title: 'Document ID',
-      key: 'documentId',
-      renderer: {
-        kind: 'string',
-      },
-    });
+    if (hasFeaturePNB) {
+      extraFilters.push({
+        title: 'Document ID',
+        key: 'documentId',
+        renderer: {
+          kind: 'string',
+        },
+      });
+    }
   }
   extraFilters.push({
     title: 'Matched type',
