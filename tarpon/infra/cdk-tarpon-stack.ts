@@ -963,20 +963,22 @@ export class CdkTarponStack extends cdk.Stack {
       heavyLibLayer
     )
 
-    // Configure AutoScaling for Tx Function
-    const txAutoScaling = {
-      minCapacity:
-        config.resource.TRANSACTION_LAMBDA.MIN_PROVISIONED_CONCURRENCY,
-      maxCapacity:
-        config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
-    }
+    // Configure AutoScaling for Tx Function (conditionally enabled)
+    if (config.resource.TRANSACTION_LAMBDA.AUTO_SCALING_ENABLED !== false) {
+      const txAutoScaling = {
+        minCapacity:
+          config.resource.TRANSACTION_LAMBDA.MIN_PROVISIONED_CONCURRENCY,
+        maxCapacity:
+          config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
+      }
 
-    transactionAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
-      utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
-    })
-    transactionEventAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
-      utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
-    })
+      transactionAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
+        utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
+      })
+      transactionEventAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
+        utilizationTarget: config.region === 'eu-2' ? 0.2 : 0.5,
+      })
+    }
 
     /*  User Event */
     createFunction(

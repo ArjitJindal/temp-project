@@ -30,6 +30,10 @@ export const config: Config = {
   },
   resource: {
     ...configProdEu2.resource,
+    TRANSACTION_LAMBDA: {
+      ...configProdEu2.resource.TRANSACTION_LAMBDA,
+      AUTO_SCALING_ENABLED: false,
+    },
     CLOUDWATCH_LOGS_INGESTION: {
       ENABLED: false,
     },
