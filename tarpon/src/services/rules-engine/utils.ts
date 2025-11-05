@@ -511,7 +511,7 @@ export async function sendTransactionAggregationTasks(
     const finalMessages = [...messages]
     await bulkSendMessages(
       sqs,
-      process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
+      getSQSQueueUrl(process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string),
       uniqBy(finalMessages, 'MessageDeduplicationId')
     )
     logger.debug(`Sent transaction aggregation tasks to SQS`)
