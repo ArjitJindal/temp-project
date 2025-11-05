@@ -161,7 +161,9 @@ export const useTransactionStats = ({
     > => {
       const response = await api.getTransactionsStatsByType({
         ...FIXED_API_PARAMS,
-        pageSize: selectorParams.transactionsCount,
+        ...(selectorParams.transactionsCount !== undefined && {
+          pageSize: selectorParams.transactionsCount,
+        }),
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
         filterTransactionState: selectorParams.selectedTransactionStates,

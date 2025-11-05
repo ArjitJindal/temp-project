@@ -37,7 +37,6 @@ import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 import { OriginFundsInfo } from '@/@types/openapi-internal/OriginFundsInfo'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
-import { CurrencyService } from '@/services/currency'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
@@ -62,11 +61,10 @@ type MinMax = {
 }
 
 type StatsByTime = {
-  timedata: string
+  label: string
   count: number
-  sum: number
+  amount: number
   aggregateBy: string
-  timestamp: number
 }
 const CLICKHOUSE_DATA_FILE = 'clickhouse_results.json'
 
@@ -733,28 +731,34 @@ export class ClickhouseTransactionsRepository {
   }
 
   public async getStatsByType(
-    params: DefaultApiGetTransactionsStatsByTypeRequest
+    params: DefaultApiGetTransactionsStatsByTypeRequest,
+    exchangeRateWithUsd: number
   ): Promise<StatsByType[]> {
     const { pageSize, sortField, sortOrder } = params
 
     const { whereClause } = await this.getTransactionsWhereConditions(params)
-
+    let paginationClause = ''
+    if (pageSize) {
+      paginationClause = `
+      ORDER BY ${sortField} ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}
+      LIMIT ${pageSize}
+      `
+    }
     const query = `
       WITH txn AS (
         SELECT type as transactionType, originAmountDetails_amountInUsd
         FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-        WHERE ${whereClause} ORDER BY ${sortField} ${
-      sortOrder === 'ascend' ? 'ASC' : 'DESC'
-    } LIMIT ${pageSize}
+        WHERE ${whereClause} 
+        ${paginationClause}
       )
       SELECT
         transactionType,
-        avg(originAmountDetails_amountInUsd) as average,
+        avg(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as average,
         count() as count,
-        sum(originAmountDetails_amountInUsd) as sum,
-        min(originAmountDetails_amountInUsd) as min,
-          max(originAmountDetails_amountInUsd) as max,
-        median(originAmountDetails_amountInUsd) as median
+        sum(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as sum,
+        min(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as min,
+        max(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as max,
+        median(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as median
       FROM txn
       WHERE transactionType != ''
       GROUP BY transactionType
@@ -855,19 +859,29 @@ export class ClickhouseTransactionsRepository {
 
   public async getStatsByTime(
     params: DefaultApiGetTransactionsStatsByTimeRequest,
-    referenceCurrency: CurrencyCode
+    exchangeRateWithUsd: number
   ): Promise<TransactionsStatsByTimeResponse['data']> {
     const { pageSize, sortField, sortOrder } = params
-
+    let sortClause = ''
+    if (sortField && sortOrder) {
+      sortClause = `ORDER BY ${sortField} ${
+        sortOrder === 'ascend' ? 'ASC' : 'DESC'
+      }`
+    }
     const { whereClause } = await this.getTransactionsWhereConditions(params)
-
+    let paginationClause = ''
+    if (pageSize && sortClause) {
+      paginationClause = `
+      ${sortClause}
+      LIMIT ${pageSize}
+      `
+    }
     const minMaxQuery = `
       WITH txn AS (
         SELECT timestamp
-        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-        WHERE ${whereClause} ORDER BY ${sortField} ${
-      sortOrder === 'ascend' ? 'ASC' : 'DESC'
-    } LIMIT ${pageSize}
+        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+        WHERE ${whereClause} 
+        ${paginationClause}
       )
       SELECT min(timestamp) as min, max(timestamp) as max
       FROM txn
@@ -886,23 +900,29 @@ export class ClickhouseTransactionsRepository {
     const duration = dayjsLib.duration(difference)
 
     let clickhouseFormat: string
-    let seriesFormat: string
     let labelFormat: string
 
     if (duration.asMonths() > 1) {
-      clickhouseFormat = 'toStartOfMonth(toDateTime(timestamp / 1000))'
-      seriesFormat = 'YYYY/MM/01 00:00 Z'
-      labelFormat = 'YYYY/MM'
+      clickhouseFormat = `toStartOfMonth(toDateTime(timestamp / 1000, '${timezone}'))`
+      labelFormat = '%Y/%m'
     } else if (duration.asDays() > 1) {
-      clickhouseFormat = 'toStartOfDay(toDateTime(timestamp / 1000))'
-      seriesFormat = 'YYYY/MM/DD 00:00 Z'
-      labelFormat = 'MM/DD'
+      clickhouseFormat = `toStartOfDay(toDateTime(timestamp / 1000, '${timezone}'))`
+      labelFormat = '%m/%d'
     } else {
-      clickhouseFormat = 'toStartOfHour(toDateTime(timestamp / 1000))'
-      seriesFormat = 'YYYY/MM/DD HH:00 Z'
-      labelFormat = 'MM/DD HH:00'
+      clickhouseFormat = `toStartOfHour(toDateTime(timestamp / 1000, '${timezone}'))`
+      labelFormat = '%m/%d %H:00'
     }
-
+    if (sortClause) {
+      if (sortField === 'timestamp') {
+        sortClause = `ORDER BY label ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}`
+      }
+    }
+    if (pageSize && sortClause) {
+      paginationClause = `
+      ${sortClause}
+      LIMIT ${pageSize}
+      `
+    }
     const aggregateByField =
       params.aggregateBy === 'originCurrency'
         ? 'originAmountDetails_transactionCurrency'
@@ -912,64 +932,41 @@ export class ClickhouseTransactionsRepository {
 
     const query = `
       SELECT
-        ${clickhouseFormat} as timedata,
+        formatDateTime(${clickhouseFormat}, '${labelFormat}') as label,
         count() as count,
-        timestamp,
-        sum(originAmountDetails_amountInUsd) as sum,
+        sum(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as amount,
         ${aggregateByField} as aggregateBy
       FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE ${whereClause}
-      GROUP BY timestamp, timedata, aggregateBy
-      ORDER BY timedata ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}
-      LIMIT ${pageSize}
+      GROUP BY label, aggregateBy
+      ${paginationClause}
     `
 
     const data = await executeClickhouseQuery<StatsByTime[]>(
       this.clickhouseClient,
       query
     )
-    const currencyService = new CurrencyService(this.dynamoDb)
-    const exchangeRateWithUsd =
-      referenceCurrency !== 'USD'
-        ? await currencyService.getCurrencyExchangeRate(
-            'USD',
-            referenceCurrency
-          )
-        : 1
 
-    const result: TransactionsStatsByTimeResponse['data'] = []
-    for await (const transaction of data) {
-      const series = dayjsLib
-        .tz(transaction.timestamp, timezone)
-        .format(seriesFormat)
-      const label = dayjsLib
-        .tz(transaction.timestamp, timezone)
-        .format(labelFormat)
-
-      const amount = (transaction.sum ?? 0) * exchangeRateWithUsd
-
-      let counters = result.find((x) => x.series === series)
-      if (counters == null) {
-        counters = {
-          series,
-          label,
+    const result = new Map<string, TransactionsStatsByTimeResponse['data'][0]>()
+    for await (const row of data) {
+      let entry = result.get(row.label)
+      if (!entry) {
+        entry = {
+          series: row.label,
+          label: row.label,
           values: {},
         }
-        result.push(counters)
+        result.set(row.label, entry)
       }
-      const key = transaction.aggregateBy
-      if (key) {
-        const ruleActionCounter = counters.values[key] ?? {
-          count: 0,
-          amount: 0,
-        }
-        counters.values[key] = ruleActionCounter
 
-        ruleActionCounter.count = ruleActionCounter.count + transaction.count
-        ruleActionCounter.amount = ruleActionCounter.amount + amount
+      if (row.aggregateBy) {
+        entry.values[row.aggregateBy] = {
+          count: row.count,
+          amount: row.amount,
+        }
       }
     }
-    return result
+    return Array.from(result.values())
   }
   private getTranformStream() {
     return new Transform({
