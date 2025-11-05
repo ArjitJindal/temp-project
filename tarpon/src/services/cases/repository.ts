@@ -1942,7 +1942,6 @@ export class CaseRepository {
                   else: '$caseUsers.destinationUserDrsScore',
                 },
               },
-              updatedAt: Date.now(),
             },
           },
         },
