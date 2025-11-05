@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tag, UserDetails } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
-import { formatConsumerName } from '@/utils/api/users';
+import { formatConsumerName } from '@/utils/api/users/helpers';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import TagList from '@/components/library/Tag/TagList';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';

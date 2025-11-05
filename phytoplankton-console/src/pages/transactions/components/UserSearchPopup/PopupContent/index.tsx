@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'ahooks';
-import { useLastSearches, useUsersSearch } from '../helpers';
+import { useLastSearches } from '../helpers';
 import s from './style.module.less';
 import UserList from './UserList';
 import LastSearchList from './LastSearchList';
+import { useUsersFind } from '@/utils/api/users';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
 import { AllUsersTableItemPreview, UserType } from '@/apis';
@@ -40,7 +41,7 @@ export default function PopupContent(props: Props) {
   const [search, setSearch] = useState(initialSearch);
 
   const debouncedSearch = useDebounce(search, { wait: 500 });
-  const usersRes = useUsersSearch(debouncedSearch, userType, filterType);
+  const usersRes = useUsersFind({ search: debouncedSearch, userType, filterType });
   const { onAdd } = useLastSearches();
 
   const usersCount = isSuccess(usersRes.data) ? usersRes.data.value.total : null;

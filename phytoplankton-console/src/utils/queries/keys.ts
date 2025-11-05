@@ -65,8 +65,15 @@ export const TRANSACTIONS_ITEM = (transactionId: string): QueryKey => [
   'item',
   transactionId,
 ];
-
-export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
+export const TRANSACTIONS_ALERTS_LIST = (transactionId: string): QueryKey => [
+  'transactions',
+  'item',
+  transactionId,
+  'alerts',
+  'list',
+];
+export const USERS_FIND = (search: string, params?: AnyParameters): QueryKey =>
+  ['users', 'list', 'search', search, params].filter(Boolean);
 export const TRANSACTIONS_FIND = (search: string): QueryKey => [
   'transactions',
   'list',
@@ -135,12 +142,6 @@ export const TRANSACTIONS_ITEM_RISKS_ARS = (transactionId: string): QueryKey => 
   'ars-score',
 ];
 export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [
-  'audit-logs',
-  searchParams,
-];
-export const USER_AUDIT_LOGS_LIST = (userId: string, searchParams: AnyParameters): QueryKey => [
-  'users',
-  userId,
   'audit-logs',
   searchParams,
 ];
@@ -264,13 +265,10 @@ export const USER_EVENTS_LIST = (params: AnyParameters): QueryKey => [
 ];
 export const USERS_ITEM = (userId: string | undefined): QueryKey => ['users', 'item', userId];
 export const USERS_ENTITY = (userId: string | undefined): QueryKey => ['users', 'entity', userId];
-export const USERS_ENTITY_LINKED_ENTITIES_PARENT = (userId: string | undefined): QueryKey => [
-  'users',
-  'entity',
-  userId,
-  'linked-entities',
-  'parent',
-];
+export const USERS_ENTITY_LINKED_ENTITIES_PARENT = (
+  userId: string | undefined,
+  params?: AnyParameters,
+): QueryKey => ['users', 'entity', userId, 'linked-entities', 'parent', params];
 export const USERS_ENTITY_LINKED_ENTITIES_CHILD = (
   userId: string | undefined,
   params?: AnyParameters,

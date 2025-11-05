@@ -10,7 +10,7 @@ import {
   USER_STATE_TAG,
 } from '@/components/library/Table/standardDataTypes';
 import Id from '@/components/ui/Id';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import Tag from '@/components/library/Tag';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import { BusinessUserTableItem } from '@/pages/users/users-list/data';

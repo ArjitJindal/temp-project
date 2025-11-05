@@ -1,20 +1,15 @@
-import React from 'react';
 import GroupUserIcon from '@/components/ui/icons/group-user.react.svg';
-import { useApi } from '@/api';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
-import { useQuery } from '@/utils/queries/hooks';
-import { USERS_ITEM_RISKS_KRS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useHasResources } from '@/utils/user-utils';
+import { useUserKrsRiskScore } from '@/utils/api/users';
 
 interface Props {
   userId: string;
 }
 
 export default function KycRiskDisplay({ userId }: Props) {
-  const api = useApi();
-
-  const queryResult = useQuery(USERS_ITEM_RISKS_KRS(userId), () => api.getKrsValue({ userId }));
+  const queryResult = useUserKrsRiskScore(userId);
   const isKycPermissionEnabled = useHasResources(['read:::risk-scoring/risk-score-details/*']);
 
   return (

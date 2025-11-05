@@ -28,7 +28,7 @@ import {
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users/helpers';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import { getPaymentMethodTitle } from '@/utils/payments';
 import { TableUser } from '@/pages/case-management/CaseTable/types';

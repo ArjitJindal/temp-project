@@ -23,9 +23,9 @@ import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl, useNavigationParams } from '@/utils/routing';
 import { CommonParams } from '@/components/library/Table/types';
-import { USER_CHANGES_PROPOSALS, USERS } from '@/utils/queries/keys';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { USERS } from '@/utils/queries/keys';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import {
@@ -33,7 +33,8 @@ import {
   DefaultApiGetBusinessUsersListRequest,
   DefaultApiGetConsumerUsersListRequest,
 } from '@/apis/types/ObjectParamAPI';
-import { AsyncResource, getOr, map, success } from '@/utils/asyncResource';
+import { getOr, map, success } from '@/utils/asyncResource';
+import { useUserApprovalProposals } from '@/utils/api/users';
 
 type DefaultParams = DefaultApiGetAllUsersListRequest &
   DefaultApiGetConsumerUsersListRequest &
@@ -88,7 +89,13 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     [setParams],
   );
 
-  const pendingProposalsUserIdsRes = usePendingProposalsUserIds(params);
+  const { data: pendingProposalRes } = useUserApprovalProposals();
+  const pendingProposalsUserIdsRes = useMemo(() => {
+    if (params.pendingApproval) {
+      return map(pendingProposalRes, (approvals) => approvals.map((x) => x.userId));
+    }
+    return success(undefined);
+  }, [pendingProposalRes, params.pendingApproval]);
 
   const offsetPaginateQueryResult = usePaginatedQuery<AllUsersTableItem>(
     USERS(type, { ...params, pendingProposalsUserIds: pendingProposalsUserIdsRes }),
@@ -234,28 +241,4 @@ export default function UsersList() {
       />
     </PageWrapper>
   );
-}
-
-/*
-  Helpers
- */
-function usePendingProposalsUserIds(params: UserSearchParams): AsyncResource<string[] | undefined> {
-  const api = useApi();
-  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
-  const { data: pendingProposalRes } = useQuery(
-    USER_CHANGES_PROPOSALS(),
-    async () => {
-      const proposals = await api.getAllUserApprovalProposals();
-      return proposals;
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
-  return useMemo(() => {
-    if (isApprovalWorkflowsEnabled && params.pendingApproval === 'true') {
-      return map(pendingProposalRes, (approvals) => approvals.map((x) => x.userId));
-    }
-    return success(undefined);
-  }, [pendingProposalRes, params.pendingApproval, isApprovalWorkflowsEnabled]);
 }

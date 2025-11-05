@@ -11,7 +11,7 @@ import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
-import { getUserName } from '@/utils/api/users';
+import { getUserName } from '@/utils/api/users/helpers';
 import UserLink from '@/components/UserLink';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAlertDetails } from '@/utils/api/alerts';

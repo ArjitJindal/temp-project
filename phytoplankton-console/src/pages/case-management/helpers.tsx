@@ -36,7 +36,7 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';
+import { useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
@@ -47,6 +47,8 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { isPaymentMethod } from '@/utils/payments';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 import { useCombinedReasons } from '@/utils/reasons';
+import { useUsersUniques } from '@/utils/api/users';
+import { getOr } from '@/utils/asyncResource';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -264,7 +266,7 @@ export const useCaseAlertFilters = (
   const isCaseSlaEnabled = useFeatureEnabled('PNB');
   const ruleOptions = useRuleOptions({ onlyWithAlerts: true });
   const ruleQueues = useRuleQueues();
-  const businessIndustries = useBusinessIndustries();
+  const businessIndustries = useUsersUniques('BUSINESS_INDUSTRY');
   const allowedCaseStatuses = useDerivedStatusesFromPermissions();
   const allowedAlertStatuses = useDerivedAlertStatusesFromPermissions();
 
@@ -387,7 +389,7 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: businessIndustries.map((x) => ({ value: x, label: x })),
+        options: getOr(businessIndustries.data, []).map((x) => ({ value: x, label: x })),
         closeOnSingleSelect: true,
       },
     },

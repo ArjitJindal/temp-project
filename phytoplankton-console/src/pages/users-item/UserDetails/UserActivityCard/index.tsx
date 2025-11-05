@@ -1,6 +1,4 @@
 import { flatten } from 'lodash';
-import React from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import ActivityCard from '@/components/ActivityCard';
 import { useApi } from '@/api';
 import { CommentType } from '@/utils/user-utils';
@@ -26,7 +24,6 @@ import {
 import { success } from '@/utils/asyncResource';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
-import { USERS_ITEM } from '@/utils/queries/keys';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { FormValues } from '@/components/CommentEditor';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
@@ -35,6 +32,7 @@ import {
   ActivityLogFilterParams,
   DEFAULT_ACTIVITY_LOG_PARAMS,
 } from '@/pages/case-management-item/CaseDetails';
+import { useUserUpdates } from '@/utils/api/users';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -52,7 +50,6 @@ export default function UserActivityCard(props: Props) {
   const { user, comments } = props;
   const api = useApi({ debounce: 500 });
   const { users } = useUsers();
-  const queryClient = useQueryClient();
   const riskClassificationValues = useRiskClassificationScores();
 
   const settings = useSettings();
@@ -64,6 +61,8 @@ export default function UserActivityCard(props: Props) {
       riskLevelAlias[entry.level] = entry.alias;
     }
   });
+
+  const { updateUserQueryData } = useUserUpdates();
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -79,37 +78,34 @@ export default function UserActivityCard(props: Props) {
     {
       onSuccess: (data, variables) => {
         message.success('Comment deleted successfully');
-        queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-          USERS_ITEM(user.userId),
-          (user) => {
-            if (user == null) {
-              return user;
-            }
-            return {
-              ...user,
-              comments: (user?.comments ?? []).filter((x) => x.id !== variables.commentId),
-              shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
-                return {
-                  ...shareHolder,
-                  attachments: shareHolder.attachments?.filter(
-                    (attachment) => attachment.id !== variables.commentId,
-                  ),
-                };
-              }),
-              directors: (user as InternalBusinessUser).directors?.map((director) => {
-                return {
-                  ...director,
-                  attachments: director.attachments?.filter(
-                    (attachment) => attachment.id !== variables.commentId,
-                  ),
-                };
-              }),
-              attachments: user.attachments?.filter(
-                (attachment) => attachment.id != variables.commentId,
-              ),
-            };
-          },
-        );
+        updateUserQueryData(user.userId, (user) => {
+          if (user == null) {
+            return user;
+          }
+          return {
+            ...user,
+            comments: (user?.comments ?? []).filter((x) => x.id !== variables.commentId),
+            shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
+              return {
+                ...shareHolder,
+                attachments: shareHolder.attachments?.filter(
+                  (attachment) => attachment.id !== variables.commentId,
+                ),
+              };
+            }),
+            directors: (user as InternalBusinessUser).directors?.map((director) => {
+              return {
+                ...director,
+                attachments: director.attachments?.filter(
+                  (attachment) => attachment.id !== variables.commentId,
+                ),
+              };
+            }),
+            attachments: user.attachments?.filter(
+              (attachment) => attachment.id != variables.commentId,
+            ),
+          };
+        });
       },
       onError: (e) => {
         console.error(e);

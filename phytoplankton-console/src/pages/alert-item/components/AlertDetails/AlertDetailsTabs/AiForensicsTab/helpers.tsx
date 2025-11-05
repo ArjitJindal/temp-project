@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils';
-import { Alert, InternalBusinessUser, InternalConsumerUser, RuleInstance } from '@/apis';
-import { useQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
+import { Alert, RuleInstance } from '@/apis';
 import { AsyncResource, isSuccess, loading, map, success } from '@/utils/asyncResource';
-import { USERS_ITEM } from '@/utils/queries/keys';
 import {
   QuestionResponse,
   QuestionResponseRuleHit,
@@ -12,6 +9,7 @@ import {
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { useRules } from '@/utils/rules';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useUserDetails } from '@/utils/api/users';
 
 export function usePreloadedHistory(
   alert: Alert,
@@ -25,16 +23,7 @@ export function usePreloadedHistory(
 
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   const riskEnabled = useFeatureEnabled('RISK_LEVELS');
-  const api = useApi();
-  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM(caseUserId),
-    () => {
-      if (caseUserId == null) {
-        throw new Error(`Id is not defined`);
-      }
-      return api.getUsersItem({ userId: caseUserId });
-    },
-  );
+  const queryResult = useUserDetails(caseUserId ?? '');
 
   const riskLevelRes = map(queryResult.data, (x) => {
     return x.drsScore?.manualRiskLevel ?? x.drsScore?.derivedRiskLevel ?? DEFAULT_RISK_LEVEL;

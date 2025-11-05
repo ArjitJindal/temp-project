@@ -5,7 +5,7 @@ import { LegalDocument } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
-import { formatConsumerName } from '@/utils/api/users';
+import { formatConsumerName } from '@/utils/api/users/helpers';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import TagList from '@/components/library/Tag/TagList';

@@ -5,7 +5,7 @@ import Breadcrumbs from '@/components/library/Breadcrumbs';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useReportDetails } from '@/utils/api/sar';
 import { getOr } from '@/utils/asyncResource';
-import { getUserLink } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users/helpers';
 import { getCaseUrl } from '@/utils/routing';
 
 interface IProps {

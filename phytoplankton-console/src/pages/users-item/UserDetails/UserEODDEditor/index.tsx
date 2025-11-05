@@ -11,14 +11,12 @@ import Tooltip from '@/components/library/Tooltip';
 import { AsyncResource, getOr, isLoading, isSuccess } from '@/utils/asyncResource';
 import Skeleton from '@/components/library/Skeleton';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import {
-  useUserFieldChangesPendingApprovals,
-  useUserFieldChangesStrategy,
-} from '@/utils/api/workflows';
+import { useUserFieldChangesStrategy } from '@/utils/api/workflows';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import Confirm from '@/components/utils/Confirm';
 import { dayjs } from '@/utils/dayjs';
+import { useUserChangesPendingApprovals } from '@/utils/api/users';
 
 interface Props {
   title: string;
@@ -72,7 +70,7 @@ function HeaderTools(props: {
   setNewUserEODDDate: (value: string | null) => void;
 }) {
   const { user, setNewUserEODDDate } = props;
-  const pendingProposals = useUserFieldChangesPendingApprovals(user.userId, ['eoddDate']);
+  const { data: pendingProposals } = useUserChangesPendingApprovals(user.userId, ['eoddDate']);
   const hasUserOveviewWritePermissions = useHasResources(['write:::users/user-overview/*']);
 
   const [modalVisible, setModalVisible] = useState(false);

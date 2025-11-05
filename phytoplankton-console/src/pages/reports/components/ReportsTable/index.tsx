@@ -25,7 +25,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { REPORT_SCHEMAS, REPORTS_LIST } from '@/utils/queries/keys';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users/helpers';
 import { getOr } from '@/utils/asyncResource';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { dayjs } from '@/utils/dayjs';

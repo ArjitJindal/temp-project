@@ -1,7 +1,6 @@
 import BusinessUserDetails from './BusinessUserDetails';
 import ConsumerUserDetails from './ConsumerUserDetails';
 import s from './index.module.less';
-import { useConsoleUser } from './utils';
 import { Authorized } from '@/components/utils/Authorized';
 import { Comment } from '@/apis';
 import { Small } from '@/components/ui/Typography';
@@ -9,6 +8,8 @@ import * as Card from '@/components/ui/Card';
 import { CommentType } from '@/utils/user-utils';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useUserDetails } from '@/utils/api/users';
+
 interface Props {
   userId?: string;
   onNewComment?: (newComment: Comment, commentType: CommentType, personId?: string) => void;
@@ -37,7 +38,7 @@ const UserDetailData = (props: {
 }) => {
   const { userId, onNewComment } = props;
 
-  const userQueryResults = useConsoleUser(userId);
+  const userQueryResults = useUserDetails(userId);
 
   return (
     <AsyncResourceRenderer resource={userQueryResults.data}>

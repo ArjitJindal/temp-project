@@ -11,7 +11,6 @@ import { dayjs } from '@/utils/dayjs';
 import { UserUpdateRequest } from '@/apis/models/UserUpdateRequest';
 import { InternalConsumerUser, InternalBusinessUser } from '@/apis';
 import {
-  USER_AUDIT_LOGS_LIST,
   USER_CHANGES_PROPOSALS,
   USER_CHANGES_PROPOSALS_BY_ID,
   USERS_ITEM,
@@ -175,7 +174,6 @@ export function useEODDChangeMutation(
         } else {
           message.success('EODD date updated successfully');
           await queryClient.invalidateQueries(USERS_ITEM(user.userId));
-          await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(user.userId, {}));
         }
       },
       onError: (error: Error) => {

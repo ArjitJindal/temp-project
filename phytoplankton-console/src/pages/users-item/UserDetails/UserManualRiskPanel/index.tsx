@@ -24,9 +24,7 @@ import {
 import { DrsScore } from '@/apis';
 import LockLineIcon from '@/components/ui/icons/Remix/system/lock-line.react.svg';
 import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.react.svg';
-import { useQuery } from '@/utils/queries/hooks';
 import {
-  USER_AUDIT_LOGS_LIST,
   USER_CHANGES_PROPOSALS,
   USER_CHANGES_PROPOSALS_BY_ID,
   USERS_ITEM_RISKS_DRS,
@@ -35,15 +33,12 @@ import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/RiskFactorC
 import { useHasResources } from '@/utils/user-utils';
 import { useSettings, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import {
-  useUserFieldChangesPendingApprovals,
-  useUserFieldChangesStrategy,
-  WorkflowChangesStrategy,
-} from '@/utils/api/workflows';
+import { useUserFieldChangesStrategy, WorkflowChangesStrategy } from '@/utils/api/workflows';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 import Confirm from '@/components/utils/Confirm';
+import { useUserChangesPendingApprovals, useUserDrsRiskScore } from '@/utils/api/users';
 
 interface Props {
   userId: string;
@@ -60,7 +55,7 @@ export default function UserManualRiskPanel(props: Props) {
   // Feature flags
   const hasTimerFeature = useFeatureEnabled('CRA_LOCK_TIMER');
   const hasApprovalFeature = useFeatureEnabled('USER_CHANGES_APPROVAL');
-  const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const queryResult = useUserDrsRiskScore(userId);
   const settings = useSettings();
   const canUpdateManualRiskLevel = useHasResources(['write:::users/user-manual-risk-levels/*']);
   const drsScore = useMemo(() => {
@@ -114,7 +109,7 @@ export default function UserManualRiskPanel(props: Props) {
   const craChangesStrategyRes = useUserFieldChangesStrategy('Cra');
   const craLockChangesStrategyRes = useUserFieldChangesStrategy('CraLock');
 
-  const pendingProposals = useUserFieldChangesPendingApprovals(userId, ['CraLock', 'Cra']);
+  const { data: pendingProposals } = useUserChangesPendingApprovals(userId, ['CraLock', 'Cra']);
 
   const lockingAndUnlockingMutation = useMutation<
     unknown,
@@ -205,7 +200,6 @@ export default function UserManualRiskPanel(props: Props) {
       } else {
         message.success(`${userAlias} risk level unlocked successfully!`);
       }
-      await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
     }
   });
 
@@ -289,7 +283,6 @@ export default function UserManualRiskPanel(props: Props) {
         message.success(
           `${firstLetterUpper(settings.userAlias)} risk updated and locked successfully`,
         );
-        await queryClient.invalidateQueries(USER_AUDIT_LOGS_LIST(userId, {}));
       }
     } catch (e) {
       console.error(e);

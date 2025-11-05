@@ -1,13 +1,10 @@
 import { UserCard } from '../UserCard';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { USERS_ITEM } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import { makeUrl } from '@/utils/routing';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useUserDetails } from '@/utils/api/users';
 type UserPanelProps = {
   userId: string;
   followed: string[];
@@ -16,20 +13,10 @@ type UserPanelProps = {
 };
 
 export const UserPanel = (props: UserPanelProps) => {
-  const api = useApi();
   const settings = useSettings();
   const { followed, onFollow, userId, isFollowEnabled } = props;
 
-  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM(userId),
-    () => {
-      if (userId == null) {
-        throw new Error(`Id is not defined`);
-      }
-
-      return api.getUsersItem({ userId });
-    },
-  );
+  const queryResult = useUserDetails(userId);
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>

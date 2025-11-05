@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
-import { RULE_QUEUE, RULE_QUEUES, USERS_UNIQUES } from '@/utils/queries/keys';
+import { RULE_QUEUE, RULE_QUEUES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { RuleQueue } from '@/apis';
 
@@ -28,12 +28,4 @@ export function useRuleQueues(): RuleQueue[] {
     return await api.getRuleQueues(params);
   });
   return isSuccess(queryResult.data) ? queryResult.data.value.data : [];
-}
-
-export function useBusinessIndustries(): string[] {
-  const api = useApi();
-  const result = useQuery(USERS_UNIQUES('BUSINESS_INDUSTRY'), () =>
-    api.getUsersUniques({ field: 'BUSINESS_INDUSTRY' }),
-  );
-  return isSuccess(result.data) ? result.data.value : [];
 }

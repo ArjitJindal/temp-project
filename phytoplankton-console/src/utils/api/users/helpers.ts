@@ -1,4 +1,4 @@
-import { neverReturn } from '../lang';
+import { neverReturn } from '../../lang';
 import {
   ConsumerName,
   InternalBusinessUser,

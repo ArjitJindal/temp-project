@@ -2,7 +2,7 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import * as Form from '@/components/ui/Form';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users/helpers';
 import User3Line from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
