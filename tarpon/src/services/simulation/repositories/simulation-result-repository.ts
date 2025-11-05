@@ -1,5 +1,10 @@
-import { AggregationCursor, Filter, MongoClient, Document } from 'mongodb'
-import pMap from 'p-map'
+import {
+  AggregationCursor,
+  Filter,
+  MongoClient,
+  Document,
+  AnyBulkWriteOperation,
+} from 'mongodb'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import { SIMULATION_RESULT_COLLECTION } from '@/utils/mongo-table-names'
 import { SimulationRiskLevelsResult } from '@/@types/openapi-internal/SimulationRiskLevelsResult'
@@ -41,23 +46,26 @@ export class SimulationResultRepository {
     }
 
     const db = this.mongoDb.db()
-    const collection = db.collection(
+    const collection = db.collection<SimulationResult>(
       SIMULATION_RESULT_COLLECTION(this.tenantId)
     )
 
     if (isDemoTenant(this.tenantId)) {
-      await pMap(
-        results,
-        async (result) => {
-          const filter =
-            'userId' in result
-              ? { taskId: result.taskId, userId: result.userId }
-              : { taskId: result.taskId, transactionId: result.transactionId }
-
-          await collection.findOneAndReplace(filter, result, { upsert: true })
-        },
-        { concurrency: 100 }
-      )
+      const bulkOps: AnyBulkWriteOperation<SimulationResult>[] = []
+      for (const result of results) {
+        const filter =
+          'userId' in result
+            ? { taskId: result.taskId, userId: result.userId }
+            : { taskId: result.taskId, transactionId: result.transactionId }
+        bulkOps.push({
+          replaceOne: {
+            filter,
+            replacement: result,
+            upsert: true,
+          },
+        })
+      }
+      await collection.bulkWrite(bulkOps)
     } else {
       await collection.insertMany(results)
     }
