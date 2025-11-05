@@ -154,23 +154,28 @@ export const useTransactionStats = ({
   userId: string;
 }): QueryResult<TransactionsStatsByTypesResponseData[] | TransactionsStatsByTimeResponseData[]> => {
   const api = useApi();
+  const requestParams = {
+    ...FIXED_API_PARAMS,
+    ...(selectorParams.transactionsCount !== undefined && {
+      pageSize: selectorParams.transactionsCount,
+    }),
+    filterUserId: userId,
+    filterStatus: selectorParams.selectedRuleActions,
+    filterTransactionState: selectorParams.selectedTransactionStates,
+    referenceCurrency,
+    afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
+    beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
+  };
   return useQuery(
     TRANSACTIONS_STATS(type, { ...selectorParams, referenceCurrency, userId }),
     async (): Promise<
-      TransactionsStatsByTypesResponseData[] | TransactionsStatsByTimeResponseData[]
+      TransactionsStatsByTimeResponseData[] | TransactionsStatsByTypesResponseData[]
     > => {
-      const response = await api.getTransactionsStatsByType({
-        ...FIXED_API_PARAMS,
-        ...(selectorParams.transactionsCount !== undefined && {
-          pageSize: selectorParams.transactionsCount,
-        }),
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        filterTransactionState: selectorParams.selectedTransactionStates,
-        referenceCurrency,
-        afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
-        beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
-      });
+      if (type === 'by-date') {
+        const response = await api.getTransactionsStatsByTime(requestParams);
+        return response.data;
+      }
+      const response = await api.getTransactionsStatsByType(requestParams);
       return response.data;
     },
   );
