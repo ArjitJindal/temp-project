@@ -172,7 +172,10 @@ export const useTransactionStats = ({
       TransactionsStatsByTimeResponseData[] | TransactionsStatsByTypesResponseData[]
     > => {
       if (type === 'by-date') {
-        const response = await api.getTransactionsStatsByTime(requestParams);
+        const response = await api.getTransactionsStatsByTime({
+          ...requestParams,
+          aggregateBy: selectorParams.aggregateBy,
+        });
         return response.data;
       }
       const response = await api.getTransactionsStatsByType(requestParams);
