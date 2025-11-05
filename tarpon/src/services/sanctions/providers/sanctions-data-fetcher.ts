@@ -748,6 +748,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               },
             },
           ],
+          minimumShouldMatch: 1,
         },
       })
     }
