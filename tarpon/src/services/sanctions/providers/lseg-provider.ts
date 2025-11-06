@@ -13,6 +13,11 @@ import { COUNTRIES } from '@flagright/lib/constants'
 import { SanctionsDataProviders, Gender } from '../types'
 import { LSEG_COUNTRY_CODES } from '../constants/lseg-country-code'
 import { LSEGKeywordInfo } from '../constants/lseg-keyword-type'
+import {
+  EXTERNAL_TO_INTERNAL_MAPPINGS,
+  RELATIVE_OR_CLOSE_ASSOCIATE_TYPES,
+} from '../constants/lseg-constants'
+import { normalizeSource } from '../utils'
 import { SanctionsDataFetcher } from './sanctions-data-fetcher'
 import { SanctionsRepository, Action } from './types'
 import { getNameAndAka } from './utils'
@@ -34,6 +39,7 @@ import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/LS
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
 import { processCursorInBatch } from '@/utils/mongodb-utils'
 import { SANCTIONS_COLLECTION } from '@/utils/mongo-table-names'
+import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
 
 @traceable
 export class LSEGProvider extends SanctionsDataFetcher {
@@ -399,16 +405,42 @@ export class LSEGProvider extends SanctionsDataFetcher {
     return [...new Set(sanctionsSearchTypes)]
   }
 
-  private getOccupations(pepRoleDetails: any): any[] {
+  private getOccupationsAndPepDetails(
+    pepRoleDetails: any,
+    subCategory: string
+  ): {
+    occupations: Array<SanctionsOccupation>
+    pepSources: SanctionsSource[]
+    pepTypes: string[]
+  } {
     if (!pepRoleDetails || !pepRoleDetails.pep_role_detail) {
-      return []
+      return {
+        occupations: [],
+        pepSources: [],
+        pepTypes: [],
+      }
     }
-
     const pepRoleDetailsList = Array.isArray(pepRoleDetails.pep_role_detail)
       ? pepRoleDetails.pep_role_detail
       : [pepRoleDetails.pep_role_detail]
 
-    return pepRoleDetailsList.map((roleDetail: any) => {
+    const occupations: Array<SanctionsOccupation> = []
+    const pepSources: SanctionsSource[] = []
+    const pepTypesSet = new Set<string>()
+
+    if (
+      subCategory &&
+      RELATIVE_OR_CLOSE_ASSOCIATE_TYPES.includes(subCategory)
+    ) {
+      pepTypesSet.add('Relative or close associate')
+      pepSources.push({
+        name: EXTERNAL_TO_INTERNAL_MAPPINGS[subCategory],
+        category: 'PEP',
+        sourceName: 'pep by associations',
+      })
+    }
+
+    pepRoleDetailsList.forEach((roleDetail: any) => {
       const termStartDate =
         roleDetail.pep_role_term_start_date?.['#text'] ||
         roleDetail.pep_role_term_start_date
@@ -416,7 +448,8 @@ export class LSEGProvider extends SanctionsDataFetcher {
         roleDetail.pep_role_term_end_date?.['#text'] ||
         roleDetail.pep_role_term_end_date
 
-      return {
+      // Map occupations (keep existing logic)
+      occupations.push({
         title: roleDetail.pep_position,
         // occupationCode: roleDetail.pep_role_level || undefined,
         // rank: roleDetail.pep_role_level || undefined,
@@ -426,8 +459,35 @@ export class LSEGProvider extends SanctionsDataFetcher {
         dateTo: termEndDate
           ? dayjs(termEndDate).format('YYYY-MM-DD')
           : undefined,
+      })
+
+      // Map pepTypes based on pep_role_status
+      const pepRoleStatus = roleDetail.pep_role_status
+      if (pepRoleStatus === 'current') {
+        pepTypesSet.add('Current PEP')
+      } else if (pepRoleStatus === 'former') {
+        pepTypesSet.add('Former PEP')
+      }
+      // Map pepSources
+      const pepRoleLevel = roleDetail.pep_role_level
+      const pepRoleBio = roleDetail.pep_role_bio
+
+      if (pepRoleLevel) {
+        const source = new SanctionsSource()
+        source.name =
+          EXTERNAL_TO_INTERNAL_MAPPINGS[pepRoleLevel] || pepRoleLevel
+        source.description = pepRoleBio
+        source.category = 'PEP'
+        source.sourceName = normalizeSource(pepRoleLevel)
+        pepSources.push(source)
       }
     })
+
+    return {
+      occupations,
+      pepSources,
+      pepTypes: Array.from(pepTypesSet),
+    }
   }
 
   private getDocuments(record: any): SanctionsIdDocument[] {
@@ -536,16 +596,13 @@ export class LSEGProvider extends SanctionsDataFetcher {
 
   private getSources(
     keywords: string[],
-    subCategory: string,
     specialInterestCategories: string[]
   ): {
     sanctionsSources: SanctionsSource[]
-    pepSources: SanctionsSource[]
     mediaSources: SanctionsSource[]
     otherSources: SanctionsEntityOtherSources[]
   } {
     const sanctionsSources: SanctionsSource[] = []
-    const pepSources: SanctionsSource[] = []
     const mediaSources: SanctionsSource[] = []
     const regulatorySources: SanctionsSource[] = []
 
@@ -576,14 +633,6 @@ export class LSEGProvider extends SanctionsDataFetcher {
       })
     })
 
-    // Process sub-category for PEP sources
-    if (subCategory?.startsWith('PEP')) {
-      pepSources.push({
-        name: subCategory,
-        category: 'PEP',
-      })
-    }
-
     const otherSources: SanctionsEntityOtherSources[] = []
     if (regulatorySources.length > 0) {
       otherSources.push({
@@ -592,7 +641,7 @@ export class LSEGProvider extends SanctionsDataFetcher {
       })
     }
 
-    return { sanctionsSources, pepSources, mediaSources, otherSources }
+    return { sanctionsSources, mediaSources, otherSources }
   }
 
   private getScreeningSources(record: any): SanctionsSource[] {
@@ -672,14 +721,20 @@ export class LSEGProvider extends SanctionsDataFetcher {
       (keyword: any) =>
         keyword && typeof keyword === 'string' && keyword['@_nil'] !== 'true'
     )
-    const specialInterestCategories =
+    // add check for @nil: "true" to special interest categories
+    const specialInterestCategories = (
       record.details?.special_interest_categories?.special_interest_category ||
       []
+    ).filter(
+      (category: any) =>
+        category && typeof category === 'object' && category['@_nil'] !== 'true'
+    )
     const sanctionsSearchTypes = this.getSanctionsSearchType(
       subCategory,
       keywords,
       specialInterestCategories
     )
+
     // Extract person data
     const person = record.person
 
@@ -813,7 +868,8 @@ export class LSEGProvider extends SanctionsDataFetcher {
     const pepRoleDetails = record.details?.pep_role_details
     const pepStatus = pepRoleDetails?.pep_status
     const isActivePep = pepStatus === 'active'
-    const occupations = this.getOccupations(pepRoleDetails)
+    const { occupations, pepSources, pepTypes } =
+      this.getOccupationsAndPepDetails(pepRoleDetails, subCategory)
 
     // Extract sanctions information
     const isSanctioned = keywords.some(
@@ -830,9 +886,10 @@ export class LSEGProvider extends SanctionsDataFetcher {
 
     // Extract associates
     const associates: SanctionsAssociate[] = this.getAssociates(record)
-
-    const { sanctionsSources, pepSources, mediaSources, otherSources } =
-      this.getSources(keywords, subCategory, specialInterestCategories)
+    const { sanctionsSources, mediaSources, otherSources } = this.getSources(
+      keywords,
+      specialInterestCategories
+    )
 
     // Extract screening sources
     const screeningSources: SanctionsSource[] = this.getScreeningSources(record)
@@ -851,7 +908,10 @@ export class LSEGProvider extends SanctionsDataFetcher {
       documents: documents,
       occupations: occupations,
       associates: associates,
-      types: sanctionsSearchTypes.map((type) => humanizeAuto(type)),
+      types: [
+        ...sanctionsSearchTypes.map((type) => humanizeAuto(type)),
+        ...pepTypes,
+      ],
       dateOfBirths: dateOfBirths,
       yearOfBirth: yearOfBirth,
       countries: countries,

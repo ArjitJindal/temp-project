@@ -189,32 +189,38 @@ export class MongoSanctionsRepository implements SanctionsRepository {
               },
             },
           },
-          {
-            updateOne: {
-              filter: {
-                id: entityId,
-                provider,
-                version,
-              },
-              update: {
-                $push: {
-                  pepSources: {
-                    category: 'PEP',
-                    createdAt: Date.now(),
-                    sourceName: normalizeSource(
-                      LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS
-                    ),
-                    internalId: generateHashFromString(
-                      normalizeSource(LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS)
-                    ),
+          // Only add pepSources for non-LSEG providers
+          // LSEG provider handles pepSources in getOccupationsAndPepDetails
+          ...(provider !== 'lseg'
+            ? [
+                {
+                  updateOne: {
+                    filter: {
+                      id: entityId,
+                      provider,
+                      version,
+                    },
+                    update: {
+                      $push: {
+                        pepSources: {
+                          category: 'PEP',
+                          createdAt: Date.now(),
+                          sourceName: normalizeSource(
+                            LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS
+                          ),
+                          internalId: generateHashFromString(
+                            normalizeSource(LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS)
+                          ),
+                        },
+                        aggregatedSourceIds: `${generateHashFromString(
+                          normalizeSource(LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS)
+                        )}-PEP`,
+                      },
+                    },
                   },
-                  aggregatedSourceIds: `${generateHashFromString(
-                    normalizeSource(LEVEL_TIER_MAP.PEP_BY_ASSOCIATIONS)
-                  )}-PEP`,
                 },
-              },
-            },
-          },
+              ]
+            : []),
         ]
         return operations
       }
