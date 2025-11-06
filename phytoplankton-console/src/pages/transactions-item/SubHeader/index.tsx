@@ -19,7 +19,6 @@ interface Props {
 
 export default function SubHeader(props: Props) {
   const { transactionId, transactionRes } = props;
-
   return (
     <div className={s.root}>
       <div className={s.attributes}>
@@ -62,6 +61,11 @@ export default function SubHeader(props: Props) {
         </Form.Layout.Label>
         <Form.Layout.Label title="Reference" className={s.attribute}>
           <Skeleton res={transactionRes}>{(transaction) => transaction.reference ?? '-'}</Skeleton>
+        </Form.Layout.Label>
+        <Form.Layout.Label title="Jurisdiction" className={s.attribute}>
+          <Skeleton res={transactionRes}>
+            {(transaction) => transaction.jurisdiction ?? '-'}
+          </Skeleton>
         </Form.Layout.Label>
       </div>
       <Feature name="RISK_SCORING">

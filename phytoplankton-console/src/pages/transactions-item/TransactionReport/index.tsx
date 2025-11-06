@@ -71,6 +71,10 @@ const getTransactionWidgetsProps = (
       value: `${alertCreatedForUserIds.join(', ')}`,
       id: { cellId: 'link' },
     },
+    {
+      title: `Jurisdiction`,
+      value: `${transaction.jurisdiction}`,
+    },
   ];
 };
 

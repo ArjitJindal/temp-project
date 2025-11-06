@@ -2456,6 +2456,9 @@ components:
             $ref: '#/components/schemas/PersonAttachment'
         metaData:
           $ref: '#/components/schemas/DeviceData'
+        jurisdiction:
+          type: string
+          description: Legal authority or region governing the transaction
         updateCount:
           x-fern-ignore: true
           type: number
@@ -2961,6 +2964,9 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+        jurisdiction:
+          type: string
+          description: Legal authority or region governing the transaction
         updateCount:
           x-fern-ignore: true
           type: number
@@ -4591,6 +4597,9 @@ components:
             $ref: '#/components/schemas/PersonAttachment'
         metaData:
           $ref: '#/components/schemas/DeviceData'
+        jurisdiction:
+          type: string
+          description: Legal authority or region governing the transaction
         updateCount:
           x-fern-ignore: true
           type: number

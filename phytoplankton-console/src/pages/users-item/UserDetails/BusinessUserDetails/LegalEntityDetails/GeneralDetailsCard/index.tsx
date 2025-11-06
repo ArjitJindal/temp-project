@@ -149,6 +149,7 @@ export default function GeneralDetailsCard(props: Props) {
           label: 'Acquisition channel',
           value: <GenericConstantTag>{user.acquisitionChannel}</GenericConstantTag>,
         },
+        ...(user.jurisdiction ? [{ label: 'Jurisdiction', value: user.jurisdiction }] : []),
       ]}
     />
   );

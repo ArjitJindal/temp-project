@@ -110,6 +110,14 @@ export default function GeneralDetails(props: Props) {
           label: 'Alias',
           value: user.userDetails?.alias,
         },
+        ...(user.jurisdiction
+          ? [
+              {
+                label: 'Jurisdiction',
+                value: user.jurisdiction ?? '-',
+              },
+            ]
+          : []),
       ]}
     />
   );

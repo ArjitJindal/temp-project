@@ -82,6 +82,7 @@ const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTransaction
     alertIds: 'SKIP',
     updateCount: 'SKIP',
     paymentApprovalTimestamp: 'INCLUDE',
+    jurisdiction: 'INCLUDE',
   }
 
 export const transactionsViewHandler = lambdaApi()(
