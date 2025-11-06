@@ -8,7 +8,7 @@ import s from './styles.module.less';
 import { getProviderScreeningInfo, getProvidersOptions } from './utils';
 import TextInput from '@/components/library/TextInput';
 import { useApi } from '@/api';
-import { message } from '@/components/library/Message';
+import { CloseMessage, message } from '@/components/library/Message';
 import Form from '@/components/library/Form';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import InputField from '@/components/library/Form/InputField';
@@ -244,6 +244,7 @@ export default function CreateScreeningProfileDrawer({ isOpen, onClose, initialV
 
   const [allSourcesCount, _setAllSourcesCount] = useState<number | undefined>(undefined);
 
+  let updatingScreeningProfileMessage: CloseMessage | undefined;
   const mutation = useMutation({
     mutationFn: async (values: ScreeningProfileRequest) => {
       const requestPayload: ScreeningProfileRequest = {
@@ -284,7 +285,7 @@ export default function CreateScreeningProfileDrawer({ isOpen, onClose, initialV
         requestPayload.rel?.relevance?.length === REL_SOURCE_RELEVANCES.length;
 
       const action = initialValues ? 'Updating' : 'Creating';
-      message.loading(`${action} screening profile...`);
+      updatingScreeningProfileMessage = message.loading(`${action} screening profile...`);
       if (initialValues?.screeningProfileId) {
         return api.updateScreeningProfile({
           screeningProfileId: initialValues.screeningProfileId,
@@ -298,6 +299,7 @@ export default function CreateScreeningProfileDrawer({ isOpen, onClose, initialV
     },
     onSuccess: async () => {
       const action = initialValues ? 'updated' : 'created';
+      updatingScreeningProfileMessage?.();
       message.success(`Screening profile ${action} successfully`);
       await queryClient.invalidateQueries(SCREENING_PROFILES());
       await queryClient.invalidateQueries(
