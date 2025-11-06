@@ -680,21 +680,15 @@ export async function sendAsyncRuleTasks(
         MessageDeduplicationId: messageDeduplicationId,
       }
     })
-
-  await Promise.all([
-    bulkSendMessages(
-      sqs,
-      secondaryQueue
-        ? getSQSQueueUrl(process.env.SECONDARY_ASYNC_RULE_QUEUE_URL as string)
-        : getSQSQueueUrl(process.env.ASYNC_RULE_QUEUE_URL as string),
-      messages
-    ),
-    bulkSendMessages(
-      sqs,
-      getSQSQueueUrl(process.env.BATCH_ASYNC_RULE_QUEUE_URL as string),
-      batchMessages
-    ),
-  ])
+  const queueGroupedMessages = groupBy(
+    messages.concat(batchMessages),
+    (message) => message.QueueUrl
+  )
+  await Promise.all(
+    Object.entries(queueGroupedMessages).map(async ([queueUrl, messages]) =>
+      bulkSendMessages(sqs, queueUrl, messages)
+    )
+  )
 }
 
 export function mergeUserTags(
