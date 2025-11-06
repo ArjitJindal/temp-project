@@ -145,6 +145,60 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           }
         : {};
 
+    // cloudfront security header policy
+    let securityHeadersPolicy: cloudfront.IResponseHeadersPolicy;
+
+    if (isQaDeployment) {
+      // 20 security headers policy are allowed on a account level
+      securityHeadersPolicy = securityHeadersPolicy =
+        cloudfront.ResponseHeadersPolicy.fromResponseHeadersPolicyId(
+          this,
+          'ImportedSecurityHeadersPolicy',
+          'f6ede8bf-a0d9-4ab2-b4d7-d65338708075', // dev policy id
+        );
+    } else {
+      securityHeadersPolicy = new cloudfront.ResponseHeadersPolicy(this, 'SecurityHeadersPolicy', {
+        securityHeadersBehavior: {
+          strictTransportSecurity: {
+            accessControlMaxAge: Duration.seconds(31536000),
+            includeSubdomains: true,
+            override: true,
+          },
+          contentTypeOptions: {
+            override: true,
+          },
+          frameOptions: {
+            frameOption: cloudfront.HeadersFrameOption.DENY,
+            override: true,
+          },
+          referrerPolicy: {
+            referrerPolicy: cloudfront.HeadersReferrerPolicy.NO_REFERRER,
+            override: true,
+          },
+        },
+        customHeadersBehavior: {
+          customHeaders: [
+            {
+              header: 'Cross-Origin-Opener-Policy',
+              value: 'same-origin',
+              override: true,
+            },
+            {
+              // Use cross-origin for dev/test environments to allow Cypress tests, same-origin for production
+              header: 'Cross-Origin-Resource-Policy',
+              value: corpValue,
+              override: true,
+            },
+            {
+              header: 'Permissions-Policy',
+              value: 'geolocation=(), camera=(), microphone=()',
+              override: true,
+            },
+          ],
+        },
+      });
+    }
+
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       priceClass: config.CLOUDFRONT_PRICE_CLASS,
@@ -189,46 +243,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
             function: responseHeadersFunction,
           },
         ],
-        responseHeadersPolicy: new cloudfront.ResponseHeadersPolicy(this, 'SecurityHeadersPolicy', {
-          securityHeadersBehavior: {
-            strictTransportSecurity: {
-              accessControlMaxAge: Duration.seconds(31536000),
-              includeSubdomains: true,
-              override: true,
-            },
-            contentTypeOptions: {
-              override: true,
-            },
-            frameOptions: {
-              frameOption: cloudfront.HeadersFrameOption.DENY,
-              override: true,
-            },
-            referrerPolicy: {
-              referrerPolicy: cloudfront.HeadersReferrerPolicy.NO_REFERRER,
-              override: true,
-            },
-          },
-          customHeadersBehavior: {
-            customHeaders: [
-              {
-                header: 'Cross-Origin-Opener-Policy',
-                value: 'same-origin',
-                override: true,
-              },
-              {
-                // Use cross-origin for dev/test environments to allow Cypress tests, same-origin for production
-                header: 'Cross-Origin-Resource-Policy',
-                value: corpValue,
-                override: true,
-              },
-              {
-                header: 'Permissions-Policy',
-                value: 'geolocation=(), camera=(), microphone=()',
-                override: true,
-              },
-            ],
-          },
-        }),
+        responseHeadersPolicy: securityHeadersPolicy,
         ...extraBehaviours,
       },
     });
