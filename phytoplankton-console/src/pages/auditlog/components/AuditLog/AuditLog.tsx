@@ -6,6 +6,7 @@ import RuleAuditLogModal from '../RuleAuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import AuditLogModal from '../AuditLogModal';
 import RiskFactorAuditLogModal from '../RiskFactorAuditLogModal';
+import TenantAuditLogModal from '../TenantAuditLogModal';
 import { TableItem, TableSearchParams } from './types';
 import { auditLogQueryAdapter, useTableData } from './helpers';
 import s from './index.module.less';
@@ -176,6 +177,9 @@ export default function AuditLogTable() {
           }
           if (item.type === 'RISK_FACTOR') {
             return <RiskFactorAuditLogModal data={item} />;
+          }
+          if (item.type === 'TENANT') {
+            return <TenantAuditLogModal data={item} />;
           }
           return (
             <AuditLogModal
