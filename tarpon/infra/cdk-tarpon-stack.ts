@@ -2489,7 +2489,6 @@ export class CdkTarponStack extends cdk.Stack {
 
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
     })
 
     // Create DynamoDB Gateway VPC endpoint with explicit route table association
@@ -2528,7 +2527,6 @@ export class CdkTarponStack extends cdk.Stack {
 
     const privateSubnets = vpc.selectSubnets({
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
     })
 
     // Create S3 Gateway VPC endpoint with explicit route table association
