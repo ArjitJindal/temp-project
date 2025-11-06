@@ -16,11 +16,11 @@ import {
   SanctionsHitsTableParams,
   updateSanctionsData,
   useChangeSanctionsHitsStatusMutation,
-  useSanctionHitsQuery,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 
 import { SanctionsDetailsEntityType } from '@/apis/models/SanctionsDetailsEntityType';
 import { useAlertDetails } from '@/utils/api/alerts';
+import { useSanctionHitsQuery } from '@/utils/api/screening';
 
 interface Props {
   item: QuestionResponseEmbedded;

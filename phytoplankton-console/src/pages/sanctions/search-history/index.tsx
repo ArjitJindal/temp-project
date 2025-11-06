@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { humanizeCamelCase } from '@flagright/lib/utils/humanize';
-import { useCursorQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { SANCTIONS_SEARCH } from '@/utils/queries/keys';
 import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
 import Id from '@/components/ui/Id';
 import { Dayjs } from '@/utils/dayjs';
@@ -18,6 +15,7 @@ import AccountTag from '@/components/AccountTag';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { GenericSanctionsSearchType } from '@/apis';
 import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/GenericSanctionsSearchType';
+import { useSanctionsSearch } from '@/utils/api/screening';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
@@ -29,7 +27,6 @@ type TableSearchParams = CommonParams & {
 const sanctionsSearchLink = (searchId: string) => `/screening/manual-screening/${searchId}`;
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
-  const api = useApi();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
   const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
@@ -40,25 +37,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
     }));
   };
 
-  const queryResults = useCursorQuery<SanctionsSearchHistory>(
-    SANCTIONS_SEARCH(params),
-    async ({ from }) => {
-      const { createdAt, searchTerm, types, searchedBy, ...rest } = params;
-      const [start, end] = createdAt ?? [];
-      const response = await api.getSanctionsSearch({
-        afterTimestamp: start ? start.startOf('day').valueOf() : 0,
-        beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
-        searchTerm,
-        types,
-        start: from,
-        filterSearchedBy: searchedBy,
-        filterManualSearch: true,
-        ...rest,
-      });
-
-      return response;
-    },
-  );
+  const queryResults = useSanctionsSearch(params);
 
   const helper = new ColumnHelper<SanctionsSearchHistory>();
   const columns: TableColumn<SanctionsSearchHistory>[] = [

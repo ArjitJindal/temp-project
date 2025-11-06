@@ -4,18 +4,18 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import s from './styles.module.less';
 import { getSanctionsSearchTypeOptions } from './utils';
 import SettingsCard from '@/components/library/SettingsCard';
-import { useQuery } from '@/utils/queries/hooks';
-import { DEFAULT_MANUAL_SCREENING_FILTERS, SCREENING_PROFILES } from '@/utils/queries/keys';
-import { useApi } from '@/api';
+import { getOr, isSuccess, isLoading as isAsyncLoading } from '@/utils/asyncResource';
 import Filter from '@/components/library/Filter';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { getOr, isSuccess } from '@/utils/asyncResource';
 import { GenericSanctionsSearchType } from '@/apis/models/GenericSanctionsSearchType';
-import { getErrorMessage } from '@/utils/lang';
-import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { ENTITY_TYPE_OPTIONS } from '@/components/ScreeningHitTable';
 import { sanitizeFuzziness } from '@/components/ScreeningHitTable/utils';
+import {
+  useDefaultManualScreeningFilters,
+  useScreeningProfiles,
+  useUpdateDefaultManualScreeningFilters,
+} from '@/utils/api/screening';
 
 type ScreeningProfileDefaultFiltersParams = {
   screeningProfileId?: string;
@@ -27,7 +27,7 @@ type ScreeningProfileDefaultFiltersParams = {
   entityType?: string;
 };
 const ScreeningProfileDefaultFilters = () => {
-  const api = useApi();
+  const updateDefaultFiltersMutation = useUpdateDefaultManualScreeningFilters();
   const settings = useSettings();
   const hasSetDefaultFilters = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,58 +41,30 @@ const ScreeningProfileDefaultFilters = () => {
     );
   }, [settings]);
 
-  const screeningProfileResult = useQuery(
-    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getScreeningProfiles({
-          filterScreeningProfileStatus: 'ENABLED',
-        });
-        const searchProfiles = response && response.items ? response.items : [];
-        return {
-          items: searchProfiles,
-          total: searchProfiles.length,
-        };
-      } catch (error) {
-        console.error(error);
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-  );
+  const defaultManualScreeningFilters = useDefaultManualScreeningFilters();
 
-  const defaultManualScreeningFilters = useQuery(
-    DEFAULT_MANUAL_SCREENING_FILTERS(),
-    async () => {
-      try {
-        const response = await api.getDefaultManualScreeningFilters();
-        if (response) {
-          const updatedParams: ScreeningProfileDefaultFiltersParams = {
-            yearOfBirth: response.yearOfBirth,
-            fuzziness: sanitizeFuzziness(response.fuzziness, 'hundred'),
-            nationality: response.nationality,
-            documentId: response.documentId,
-            types: response.types,
-          };
-          setParams(updatedParams);
-        }
-        return response;
-      } catch (error) {
-        console.error(error);
+  const screeningProfileResult = useScreeningProfiles({ filterScreeningProfileStatus: 'ENABLED' });
+
+  useEffect(() => {
+    if (isSuccess(defaultManualScreeningFilters.data)) {
+      const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, {});
+      if (defaultScreeningFilters) {
+        const updatedParams: ScreeningProfileDefaultFiltersParams = {
+          yearOfBirth: defaultScreeningFilters.yearOfBirth,
+          fuzziness: sanitizeFuzziness(defaultScreeningFilters.fuzziness, 'hundred'),
+          nationality: defaultScreeningFilters.nationality,
+          documentId: defaultScreeningFilters.documentId,
+          types: defaultScreeningFilters.types,
+        };
+        setParams(updatedParams);
       }
-    },
-    {
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
-    },
-  );
+    }
+  }, [defaultManualScreeningFilters.data]);
 
   const handleSave = () => {
     setIsSaving(true);
-    api
-      .postDefaultManualScreeningFilters({
+    updateDefaultFiltersMutation.mutate(
+      {
         DefaultManualScreeningFiltersRequest: {
           ...params,
           fuzziness: sanitizeFuzziness(params.fuzziness, 'one'),
@@ -100,18 +72,13 @@ const ScreeningProfileDefaultFilters = () => {
             ? Array.isArray(params.documentId)
               ? params.documentId
               : [params.documentId]
-            : [],
+            : undefined,
         },
-      })
-      .then(() => {
-        message.success('Default filters updated successfully');
-      })
-      .catch((error) => {
-        message.fatal(`Failed to update default filters: ${getErrorMessage(error)}`);
-      })
-      .finally(() => {
-        setIsSaving(false);
-      });
+      },
+      {
+        onSettled: () => setIsSaving(false),
+      },
+    );
   };
 
   useEffect(() => {
@@ -265,7 +232,11 @@ const ScreeningProfileDefaultFilters = () => {
             />
           ))}
           <div className={s.actionsContainer}>
-            <Button type="PRIMARY" onClick={handleSave} isLoading={isSaving}>
+            <Button
+              type="PRIMARY"
+              onClick={handleSave}
+              isLoading={isSaving || isAsyncLoading(updateDefaultFiltersMutation.dataResource)}
+            >
               Save
             </Button>
           </div>

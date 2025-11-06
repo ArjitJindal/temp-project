@@ -35,16 +35,14 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSancti
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/LSEGSanctionsSearchType';
-import { useQuery } from '@/utils/queries/hooks';
-import {
-  DEFAULT_MANUAL_SCREENING_FILTERS,
-  SEARCH_PROFILES,
-  SCREENING_PROFILES,
-} from '@/utils/queries/keys';
-import { useApi } from '@/api';
 import { getOr, match } from '@/utils/asyncResource';
 import { useHasResources } from '@/utils/user-utils';
 import { getErrorMessage } from '@/utils/lang';
+import {
+  useDefaultManualScreeningFilters,
+  useScreeningProfiles,
+  useSearchProfiles,
+} from '@/utils/api/screening';
 
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -99,7 +97,6 @@ export default function SanctionsSearchTable(props: Props) {
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
   const settings = useSettings();
-  const api = useApi();
   const isSanctionsEnabledWithDataProvider = !useHasNoSanctionsProviders();
   const canEditManualScreeningFilters = useHasResources([
     'write:::screening/manual-screening/manual-screening-filters/*',
@@ -113,53 +110,9 @@ export default function SanctionsSearchTable(props: Props) {
   const isScreeningProfileEnabled =
     hasFeatureAcuris || hasFeatureDowJones || hasFeatureOpenSanctions;
 
-  const searchProfileResult = useQuery(
-    SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getSearchProfiles({
-          filterSearchProfileStatus: 'ENABLED',
-        });
-        return {
-          items: response.items || [],
-          total: response.items?.length || 0,
-        };
-      } catch (error) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-    {
-      enabled: !isScreeningProfileEnabled,
-      staleTime: 300000, // 5 minutes
-    },
-  );
+  const searchProfileResult = useSearchProfiles({ filterSearchProfileStatus: 'ENABLED' });
 
-  const screeningProfilesResult = useQuery(
-    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getScreeningProfiles({
-          filterScreeningProfileStatus: 'ENABLED',
-        });
-        return {
-          items: response.items || [],
-          total: response.items?.length || 0,
-        };
-      } catch (error) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-    {
-      enabled: isScreeningProfileEnabled,
-      staleTime: 300000, // 5 minutes
-    },
-  );
+  const screeningProfilesResult = useScreeningProfiles({ filterScreeningProfileStatus: 'ENABLED' });
   const helper = new ColumnHelper<SanctionsEntity>();
   const columns: TableColumn<SanctionsEntity>[] = helper.list([
     // Data fields
@@ -499,11 +452,7 @@ export default function SanctionsSearchTable(props: Props) {
     'registrationId',
   ]);
 
-  const defaultManualScreeningFilters = useQuery(
-    DEFAULT_MANUAL_SCREENING_FILTERS(),
-    async () => api.getDefaultManualScreeningFilters(),
-    { enabled: isScreeningProfileEnabled, refetchOnMount: true, refetchOnWindowFocus: true },
-  );
+  const defaultManualScreeningFilters = useDefaultManualScreeningFilters();
 
   const isFilterLockedByPermission = (key: string): boolean => {
     // Never lock gender filter

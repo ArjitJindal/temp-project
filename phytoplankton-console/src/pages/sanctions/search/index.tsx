@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ScreeningHitTable from '@/components/ScreeningHitTable';
-import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import {
   OccupationCode,
@@ -12,12 +11,6 @@ import { getOr, isLoading, isSuccess, map } from '@/utils/asyncResource';
 import { map as mapQuery } from '@/utils/queries/types';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import {
-  DEFAULT_MANUAL_SCREENING_FILTERS,
-  SANCTIONS_SEARCH_HISTORY,
-  SCREENING_PROFILES,
-  SEARCH_PROFILES,
-} from '@/utils/queries/keys';
 import { isSuperAdmin, useAuth0User, useHasResources } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import { message } from '@/components/library/Message';
@@ -26,6 +19,12 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { getErrorMessage } from '@/utils/lang';
 import { ScreeningSearchBar } from '@/components/ScreeningHitTable/ScreeningSearchBar';
 import { sanitizeFuzziness } from '@/components/ScreeningHitTable/utils';
+import {
+  useDefaultManualScreeningFilters,
+  useSanctionsSearchHistory,
+  useScreeningProfiles,
+  useSearchProfiles,
+} from '@/utils/api/screening';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -69,62 +68,13 @@ export function SearchResultTable(props: Props) {
     'write:::screening/manual-screening/*',
   ]);
 
-  const searchProfilesResult = useQuery(
-    SEARCH_PROFILES({ filterSearchProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getSearchProfiles({
-          filterSearchProfileStatus: 'ENABLED',
-        });
-        return {
-          items: response.items || [],
-          total: response.items?.length || 0,
-        };
-      } catch (error) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-    {
-      enabled: !isScreeningProfileEnabled,
-    },
-  );
+  const searchProfilesResult = useSearchProfiles({
+    filterSearchProfileStatus: 'ENABLED',
+  });
 
-  const screeningProfilesResult = useQuery(
-    SCREENING_PROFILES({ filterScreeningProfileStatus: 'ENABLED' }),
-    async () => {
-      try {
-        const response = await api.getScreeningProfiles({
-          filterScreeningProfileStatus: 'ENABLED',
-        });
-        return {
-          items: response.items || [],
-          total: response.items?.length || 0,
-        };
-      } catch (error) {
-        return {
-          items: [],
-          total: 0,
-        };
-      }
-    },
-    {
-      enabled: isScreeningProfileEnabled,
-    },
-  );
+  const screeningProfilesResult = useScreeningProfiles({ filterScreeningProfileStatus: 'ENABLED' });
 
-  const defaultManualScreeningFilters = useQuery(
-    DEFAULT_MANUAL_SCREENING_FILTERS(),
-    async () => {
-      return api.getDefaultManualScreeningFilters();
-    },
-    {
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
-    },
-  );
+  const defaultManualScreeningFilters = useDefaultManualScreeningFilters();
 
   useEffect(() => {
     if (hasSetDefaultManualFilters.current) {
@@ -197,20 +147,10 @@ export function SearchResultTable(props: Props) {
     }
   }, [isScreeningProfileEnabled, screeningProfilesResult.data]);
 
-  const historyItemQueryResults = useQuery(
-    SANCTIONS_SEARCH_HISTORY(searchId, { page: params.page, pageSize: params.pageSize }),
-    () => {
-      if (searchId == null) {
-        throw new Error(`Unable to get search, searchId is empty!`);
-      }
-      return api.getSanctionsSearchSearchId({
-        searchId: searchId,
-        page: params.page,
-        pageSize: params.pageSize,
-      });
-    },
-    { enabled: searchId != null },
-  );
+  const historyItemQueryResults = useSanctionsSearchHistory(searchId ?? '', {
+    page: params.page,
+    pageSize: params.pageSize,
+  });
 
   const historyItem = getOr(historyItemQueryResults.data, null);
 
@@ -245,23 +185,12 @@ export function SearchResultTable(props: Props) {
 
   const searchEnabled = !!params.searchTerm;
 
-  const selectedSearchProfileResult = useQuery(
-    ['selected-search-profile', params.searchProfileId],
-    async () => {
-      if (!params.searchProfileId) {
-        return null;
-      }
-      const response = await api.getSearchProfiles({
-        filterSearchProfileId: [params.searchProfileId],
-      });
-      return response.items?.[0] || null;
-    },
-    {
-      enabled: !!params.searchProfileId,
-    },
-  );
+  const selectedSearchProfileResult = useSearchProfiles({
+    filterSearchProfileId: [params.searchProfileId],
+  });
 
-  const selectedSearchProfile = getOr(selectedSearchProfileResult.data, null);
+  const selectedSearchProfile = getOr(selectedSearchProfileResult.data, { items: [], total: 0 })
+    .items[0];
 
   const newSearchMutation = useMutation(
     (searchParams: TableSearchParams) => {

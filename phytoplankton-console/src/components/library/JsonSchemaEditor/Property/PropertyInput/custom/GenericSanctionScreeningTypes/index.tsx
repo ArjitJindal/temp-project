@@ -12,9 +12,8 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSancti
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
-import { useApi } from '@/api';
-import { SCREENING_PROFILES } from '@/utils/queries/keys';
-import { useQuery } from '@/utils/queries/hooks';
+import { useScreeningProfiles } from '@/utils/api/screening';
+import { map } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { LSEG_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/LSEGSanctionsSearchType';
 import { getProviders } from '@/pages/settings/components/SanctionsSettings/utils';
@@ -33,19 +32,15 @@ export const GenericSanctionScreeningTypes = (props: Props) => {
   const formContext = useFormContext();
   const screeningProfileId = formContext?.values?.['screeningProfileId'];
   const features = useFeatures();
-  const api = useApi();
-  const screeningProfileProvider = useQuery(
-    SCREENING_PROFILES({ screeningProfileId }),
-    async () => {
-      if (!screeningProfileId) {
-        return getProviders(features)?.[0] ?? UNKNOWN_PROVIDER_NAME;
-      }
-      const response = await api.getScreeningProfiles({
-        filterScreeningProfileId: [screeningProfileId],
-      });
-      return response.items[0]?.provider ?? UNKNOWN_PROVIDER_NAME;
-    },
+  const screeningProfilesResult = useScreeningProfiles(
+    screeningProfileId ? { filterScreeningProfileId: [screeningProfileId] } : {},
   );
+  const screeningProfileProvider = map(screeningProfilesResult, (data) => {
+    if (!screeningProfileId) {
+      return getProviders(features)?.[0] ?? UNKNOWN_PROVIDER_NAME;
+    }
+    return data.items[0]?.provider ?? UNKNOWN_PROVIDER_NAME;
+  });
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
   const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
