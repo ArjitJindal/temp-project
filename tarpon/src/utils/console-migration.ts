@@ -14,7 +14,9 @@ export async function isTenantMigratedToDynamo(
     (tenantId === 'sia-partners' ||
       tenantId === 'sia-partners-test' ||
       tenantId === 'ffe367a89f' ||
-      tenantId === 'ffe367a89f-test')
+      tenantId === 'ffe367a89f-test' ||
+      tenantId === 'pnb' ||
+      tenantId === 'pnb-test')
   )
 }
 
@@ -24,6 +26,8 @@ export function isTenantConsoleMigrated(tenantId: string) {
     (tenantId === 'sia-partners' ||
       tenantId === 'sia-partners-test' ||
       tenantId === 'ffe367a89f' ||
-      tenantId === 'ffe367a89f-test')
+      tenantId === 'ffe367a89f-test' ||
+      tenantId === 'pnb' ||
+      tenantId === 'pnb-test')
   )
 }

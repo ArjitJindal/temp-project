@@ -9,12 +9,7 @@ import { ClickhouseTableDefinition } from '@/@types/clickhouse'
 import { logger } from '@/core/logger'
 
 async function migrateTenant(tenant: Tenant) {
-  if (
-    tenant.id !== 'sia-partners' &&
-    tenant.id !== 'sia-partners-test' &&
-    tenant.id !== 'flagright' &&
-    tenant.id !== 'flagright-test'
-  ) {
+  if (tenant.id !== 'pnb' && tenant.id !== 'pnb-test') {
     return
   }
   if (!isClickhouseEnabledInRegion()) {

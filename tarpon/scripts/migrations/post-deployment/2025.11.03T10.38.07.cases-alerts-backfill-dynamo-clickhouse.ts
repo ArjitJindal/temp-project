@@ -4,12 +4,7 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/checks'
 
 async function migrateTenant(tenant: Tenant) {
-  if (
-    tenant.id !== 'sia-partners' &&
-    tenant.id !== 'sia-partners-test' &&
-    tenant.id !== 'ffe367a89f' &&
-    tenant.id !== 'ffe367a89f-test'
-  ) {
+  if (tenant.id !== 'pnb' && tenant.id !== 'pnb-test') {
     return
   }
 
