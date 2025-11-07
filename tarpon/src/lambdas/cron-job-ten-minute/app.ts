@@ -437,7 +437,7 @@ type TempGoCardlessBackfillDocument = {
   jobId: string
 }
 
-const PAUSE_GOCARDLESS_BACKFILL = false
+const PAUSE_GOCARDLESS_BACKFILL = true
 
 const matchPrefixes = [
   'ltd_production_data/data_from_2025-01-01_to_2025-01-14_at',
