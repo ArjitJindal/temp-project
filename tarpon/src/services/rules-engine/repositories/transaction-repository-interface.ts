@@ -26,7 +26,7 @@ export type AuxiliaryIndexTransaction = Omit<
 
 export type AuxiliaryIndexTransactionData = {
   transaction: AuxiliaryIndexTransaction
-  lastTxEvent: TransactionEventWithRulesResult
+  lastTxEvent?: TransactionEventWithRulesResult
 }
 
 export type TimeRange = {

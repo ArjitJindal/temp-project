@@ -9,7 +9,7 @@ import {
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TransactionMultiplexer } from '@/services/transaction-multiplexer'
 
-export const AsyncRuleMultiplexer = lambdaConsumer()(
+export const asyncRuleMultiplexer = lambdaConsumer()(
   async (event: SQSEvent) => {
     const asyncMessages = event.Records.map((record) => ({
       messageId: record.messageId,

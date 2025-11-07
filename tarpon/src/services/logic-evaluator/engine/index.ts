@@ -140,7 +140,7 @@ export type AuxiliaryIndexTransactionWithDirection =
   }
 export type AuxiliaryIndexTransactionDataWithDirection = {
   transaction: AuxiliaryIndexTransactionWithDirection
-  lastTxEvent: TransactionEventWithRulesResult
+  lastTxEvent?: TransactionEventWithRulesResult
 }
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: LogicEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
@@ -959,7 +959,7 @@ export class LogicEvaluator {
           targetTransactionsCount++
           targetTransactionData.push({
             transaction: transaction,
-            lastTxEvent: data.transactionEvents[0],
+            lastTxEvent: data.transactionEvents?.[0],
           })
           if (
             (transaction.timestamp ?? 0) >= threeDaysBeforeTimestamp &&
@@ -1016,7 +1016,7 @@ export class LogicEvaluator {
               ) => {
                 const { transaction, lastTxEvent } = transactionData
                 const timestampToUse = aggregationVariable.useEventTimestamp
-                  ? lastTxEvent.timestamp
+                  ? lastTxEvent?.timestamp ?? transaction.timestamp
                   : transaction.timestamp
                 // TODO: support tx event for aggregation variable
                 const entityVariable =

@@ -362,7 +362,9 @@ export async function groupTransactionsByGranularity<T>(
     transactionsData,
     (transactionData) => {
       const timestampToUse = useEventTimestamp
-        ? transactionData.lastTxEvent.timestamp
+        ? transactionData.lastTxEvent?.timestamp ??
+          transactionData.transaction.timestamp ??
+          0
         : transactionData.transaction.timestamp ?? 0
       return getTransactionStatsTimeGroupLabel(timestampToUse, granularity)
     },
