@@ -65,6 +65,9 @@ import {
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
 import { AlertParams } from '@/@types/alert/alert-params'
+import { CaseAddress } from '@/@types/openapi-internal/CaseAddress'
+import { CaseEmail } from '@/@types/openapi-internal/CaseEmail'
+import { CasePaymentDetails } from '@/@types/openapi-internal/CasePaymentDetails'
 
 @traceable
 export class AlertsRepository {
@@ -227,6 +230,11 @@ export class AlertsRepository {
           age: parseInt(
             alertMetadataMap.get(alert.alertId as string)?.age ?? '0'
           ),
+          address: caseMap.get(alert.caseId as string)?.address as CaseAddress,
+          email: caseMap.get(alert.caseId as string)?.email as CaseEmail,
+          name: caseMap.get(alert.caseId as string)?.name as CaseEmail,
+          paymentDetails: caseMap.get(alert.caseId as string)
+            ?.paymentDetails as CasePaymentDetails,
         })),
       }
     } else if (!hasFeature('PNB')) {
@@ -1009,6 +1017,10 @@ export class AlertsRepository {
             'caseUsers.destination.pepStatus': 1,
             'caseUsers.destination.sanctionsStatus': 1,
             'caseUsers.destination.adverseMediaStatus': 1,
+            address: 1,
+            email: 1,
+            name: 1,
+            paymentDetails: 1,
           },
         })
       }

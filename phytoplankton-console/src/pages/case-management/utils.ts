@@ -133,6 +133,10 @@ export function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[
         otherReason: alert.lastStatusChange?.otherReason ?? null,
       },
       proposedAction: alert.lastStatusChange?.caseStatus,
+      address: rest.address,
+      email: rest.email,
+      name: rest.name,
+      paymentDetails: rest.paymentDetails,
     };
     if (alertData.lastStatusChangeReasons.reasons.length === 0) {
       const inReviewChange = alert.statusChanges?.find((change) =>

@@ -14234,6 +14234,56 @@ components:
                 $ref: '#/components/schemas/CaseType'
               age:
                 type: number
+              address:
+                type: object
+                properties:
+                  origin:
+                    $ref: '#/components/schemas/Address'
+                  destination:
+                    $ref: '#/components/schemas/Address'
+              email:
+                type: object
+                properties:
+                  origin:
+                    type: string
+                  destination:
+                    type: string
+              name:
+                type: object
+                properties:
+                  origin:
+                    type: string
+                  destination:
+                    type: string
+              paymentDetails:
+                type: object
+                properties:
+                  origin:
+                    oneOf:
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/NPPDetails
+                  destination:
+                    oneOf:
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+                      - $ref: ../public/openapi-public-original.yaml#/components/schemas/NPPDetails
             required:
               - alert
               - caseCreatedTimestamp

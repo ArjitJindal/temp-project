@@ -105,9 +105,42 @@ import {
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
 import { usePaginatedAlertList } from '@/utils/api/alerts';
+import { getPaymentDetailsIdString } from '@/utils/payments';
+import { getAddressString } from '@/utils/address';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;
+};
+
+const getEntityNameString = (entity: TableAlertItem): string => {
+  if (entity.email?.origin) {
+    return entity.email.origin;
+  }
+  if (entity.email?.destination) {
+    return entity.email.destination;
+  }
+  if (entity.paymentDetails?.origin) {
+    return getPaymentDetailsIdString(entity.paymentDetails.origin);
+  }
+  if (entity.paymentDetails?.destination) {
+    return getPaymentDetailsIdString(entity.paymentDetails.destination);
+  }
+  if (entity.address?.origin) {
+    return getAddressString(entity.address.origin);
+  }
+  if (entity.address?.destination) {
+    return getAddressString(entity.address.destination);
+  }
+  if (entity.name?.origin) {
+    return entity.name.origin;
+  }
+  if (entity.name?.destination) {
+    return entity.name.destination;
+  }
+  if (entity.caseUserId) {
+    return entity.caseUserId ?? '-';
+  }
+  return '-';
 };
 
 const getSelectedCaseIdsForAlerts = (selectedItems: Record<string, TableAlertItem>) => {
@@ -278,6 +311,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const { data: accounts } = useAccounts();
   const capitalizeUserAlias = firstLetterUpper(settings.userAlias);
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const customAggregationFieldsEnabled = useFeatureEnabled('CUSTOM_AGGREGATION_FIELDS');
   const isPNBDay2Enabled = useFeatureEnabled('PNB_DAY_2');
   const sarEnabled = useFeatureEnabled('SAR');
   const slaEnabled = useFeatureEnabled('ALERT_SLA');
@@ -457,6 +491,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
       qaEnabled: boolean,
     ): TableColumn<TableAlertItem>[] => {
       const helper = new ColumnHelper<TableAlertItem>();
+
       return helper.list(
         [
           helper.simple<'priority'>({
@@ -523,6 +558,19 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             type: CASEID,
             sorting: true,
           }),
+          ...(customAggregationFieldsEnabled
+            ? [
+                helper.derived({
+                  title: 'Entity name',
+                  type: {
+                    render: (_, { item: entity }) => {
+                      return <>{getEntityNameString(entity)}</>;
+                    },
+                  },
+                  value: (item) => getEntityNameString(item),
+                }),
+              ]
+            : []),
           helper.simple<'createdTimestamp'>({
             title: 'Created at',
             key: 'createdTimestamp',
@@ -1182,6 +1230,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     capitalizeUserAlias,
     isPNBDay2Enabled,
     accounts,
+    customAggregationFieldsEnabled,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
