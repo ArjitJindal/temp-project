@@ -12,6 +12,9 @@ import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 
 const SESSION_TIMEOUT_HOURS = 48
+// JWT access token lifetime should be short-lived per OWASP recommendations (5 minutes to 1 hour)
+// https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/06-Session_Management_Testing/10-Testing_JSON_Web_Tokens
+const JWT_TOKEN_LIFETIME_SECONDS = 3600 // 1 hour (upper bound of OWASP recommendation)
 
 function getTenantResourceId(tenantName: string, id: string) {
   return `${tenantName}::${id}`
@@ -179,8 +182,9 @@ export const createAuth0TenantResources = (
       identifier: config.application.AUTH0_AUDIENCE,
       signingAlg: 'RS256',
       allowOfflineAccess: false,
-      tokenLifetime: SESSION_TIMEOUT_HOURS * 60 * 60,
-      tokenLifetimeForWeb: 24 * 60 * 60, // max allowed value: 86400
+      // JWT access token lifetime set to 1 hour per OWASP security recommendations
+      tokenLifetime: JWT_TOKEN_LIFETIME_SECONDS,
+      tokenLifetimeForWeb: JWT_TOKEN_LIFETIME_SECONDS, // 1 hour per OWASP recommendations
       skipConsentForVerifiableFirstPartyClients: true,
       enforcePolicies: true,
       tokenDialect: 'access_token_authz',
