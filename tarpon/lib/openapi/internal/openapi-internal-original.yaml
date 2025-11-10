@@ -14881,6 +14881,13 @@ components:
             $ref: '#/components/schemas/OccupationCode'
         yearOfBirth:
           type: number
+        yearOfBirthRange:
+          type: object
+          properties:
+            minYear:
+              type: number
+            maxYear:
+              type: number
         types:
           type: array
           items:
@@ -15039,6 +15046,13 @@ components:
             $ref: '#/components/schemas/GenericSanctionsSearchType'
         yearOfBirth:
           type: number
+        yearOfBirthRange:
+          type: object
+          properties:
+            minYear:
+              type: number
+            maxYear:
+              type: number
         documentId:
           type: array
           items:
@@ -15063,6 +15077,13 @@ components:
             $ref: '#/components/schemas/GenericSanctionsSearchType'
         yearOfBirth:
           type: number
+        yearOfBirthRange:
+          type: object
+          properties:
+            minYear:
+              type: number
+            maxYear:
+              type: number
         documentId:
           type: array
           items:

@@ -531,6 +531,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchYearOfBirthCondition)
       }
     }
+    if (request.yearOfBirthRange) {
+      const matchYearOfBirthRangeCondition = {
+        yearOfBirth: {
+          $gte: `${request.yearOfBirthRange.minYear}`,
+          $lte: `${request.yearOfBirthRange.maxYear}`,
+        },
+      }
+      andConditions.push(matchYearOfBirthRangeCondition)
+    }
     if (request.gender) {
       const matchGenderCondition = {
         gender: {
@@ -689,6 +698,32 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andFilters.push({
           compound: {
             should: yearOfBirthMatch,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      if (minYear && maxYear) {
+        const years = [
+          {
+            range: {
+              path: 'yearOfBirth',
+              gte: `${minYear}`,
+              lte: `${maxYear}`,
+            },
+          },
+          {
+            equals: {
+              value: null,
+              path: 'yearOfBirth',
+            },
+          },
+        ]
+        andFilters.push({
+          compound: {
+            should: years,
             minimumShouldMatch: 1,
           },
         })
@@ -1547,6 +1582,28 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         mustConditions.push({
           bool: {
             should: yearOfBirthCondition,
+            minimum_should_match: 1,
+          },
+        })
+      }
+    }
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      if (minYear && maxYear) {
+        const yearOfBirthRangeMatch = [
+          {
+            range: {
+              yearOfBirth: {
+                gte: `${minYear}`,
+                lte: `${maxYear}`,
+              },
+            },
+          },
+          { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
+        ]
+        mustConditions.push({
+          bool: {
+            should: yearOfBirthRangeMatch,
             minimum_should_match: 1,
           },
         })

@@ -104,7 +104,7 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
         type: 'string',
       },
       yearOfBirth: {
-        type: 'string',
+        type: 'token',
       },
       entityType: {
         type: 'string',

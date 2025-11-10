@@ -279,6 +279,26 @@ export class SanctionsService {
     return !!yearOfBirth && (yearOfBirth < 1900 || yearOfBirth > dayjs().year())
   }
 
+  private isYearOfBirthRangeInvalid(
+    yearOfBirthRange: { minYear?: number; maxYear?: number } | undefined
+  ): boolean {
+    if (!yearOfBirthRange) {
+      return false
+    }
+    const currentYear = dayjs().year()
+    const { minYear, maxYear } = yearOfBirthRange
+    if (minYear && (minYear < 1900 || minYear > currentYear)) {
+      return true
+    }
+    if (maxYear && (maxYear < 1900 || maxYear > currentYear)) {
+      return true
+    }
+    if (minYear && maxYear && minYear > maxYear) {
+      return true
+    }
+    return false
+  }
+
   private async getBackfillStatus(): Promise<boolean> {
     const key = DynamoDbKeys.SANCTIONS_SEARCH_BATCH_JOB_STATUS(this.tenantId)
     const command = new GetCommand({
@@ -319,7 +339,8 @@ export class SanctionsService {
     if (
       this.isSearchTermInvalid(request.searchTerm) ||
       !providerName ||
-      this.isYearOfBirthInvalid(request.yearOfBirth)
+      this.isYearOfBirthInvalid(request.yearOfBirth) ||
+      this.isYearOfBirthRangeInvalid(request.yearOfBirthRange)
     ) {
       return {
         providerSearchId: 'invalid_search',

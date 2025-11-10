@@ -19,7 +19,7 @@ import {
 
 type ScreeningProfileDefaultFiltersParams = {
   screeningProfileId?: string;
-  yearOfBirth?: number;
+  yearOfBirthRange?: [string, string];
   fuzziness?: number;
   nationality?: string[];
   documentId?: string[];
@@ -50,7 +50,14 @@ const ScreeningProfileDefaultFilters = () => {
       const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, {});
       if (defaultScreeningFilters) {
         const updatedParams: ScreeningProfileDefaultFiltersParams = {
-          yearOfBirth: defaultScreeningFilters.yearOfBirth,
+          yearOfBirthRange:
+            defaultScreeningFilters.yearOfBirthRange?.minYear &&
+            defaultScreeningFilters.yearOfBirthRange.maxYear
+              ? [
+                  defaultScreeningFilters.yearOfBirthRange.minYear.toString(),
+                  defaultScreeningFilters.yearOfBirthRange.maxYear.toString(),
+                ]
+              : undefined,
           fuzziness: sanitizeFuzziness(defaultScreeningFilters.fuzziness, 'hundred'),
           nationality: defaultScreeningFilters.nationality,
           documentId: defaultScreeningFilters.documentId,
@@ -67,6 +74,16 @@ const ScreeningProfileDefaultFilters = () => {
       {
         DefaultManualScreeningFiltersRequest: {
           ...params,
+          yearOfBirthRange: params.yearOfBirthRange
+            ? {
+                minYear: params.yearOfBirthRange[0]
+                  ? parseInt(params.yearOfBirthRange[0])
+                  : undefined,
+                maxYear: params.yearOfBirthRange[1]
+                  ? parseInt(params.yearOfBirthRange[1])
+                  : undefined,
+              }
+            : undefined,
           fuzziness: sanitizeFuzziness(params.fuzziness, 'one'),
           documentId: params.documentId
             ? Array.isArray(params.documentId)
@@ -89,7 +106,14 @@ const ScreeningProfileDefaultFilters = () => {
       const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, {});
       if (defaultScreeningFilters) {
         const updatedParams: ScreeningProfileDefaultFiltersParams = {
-          yearOfBirth: defaultScreeningFilters.yearOfBirth,
+          yearOfBirthRange:
+            defaultScreeningFilters.yearOfBirthRange?.minYear &&
+            defaultScreeningFilters.yearOfBirthRange.maxYear
+              ? [
+                  defaultScreeningFilters.yearOfBirthRange.minYear.toString(),
+                  defaultScreeningFilters.yearOfBirthRange.maxYear.toString(),
+                ]
+              : undefined,
           fuzziness: sanitizeFuzziness(defaultScreeningFilters.fuzziness, 'hundred'),
           nationality: defaultScreeningFilters.nationality,
           documentId: defaultScreeningFilters.documentId,
@@ -144,10 +168,11 @@ const ScreeningProfileDefaultFilters = () => {
       : []),
     {
       title: 'Year of birth',
-      key: 'yearOfBirth',
+      key: 'yearOfBirthRange',
       readOnly: false,
       renderer: {
-        kind: 'year',
+        kind: 'dateRange',
+        picker: 'year',
       },
     },
     {
