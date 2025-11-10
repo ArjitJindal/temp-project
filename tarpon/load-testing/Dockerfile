@@ -1,8 +1,9 @@
-FROM alpine
+FROM alpine:3.20
 
 ENV JMETER_SHA512=5978a1a35edb5a7d428e270564ff49d2b1b257a65e17a759d259a9283fc17093e522fe46f474a043864aea6910683486340706d745fcdf3db1505fd71e689083
-# Install Java, curl, unzip, ca-certs
-RUN apk add --no-cache \
+# Install Java, curl, unzip, ca-certs, and update OpenSSL to fix CVE-2025-9232
+RUN apk update && apk upgrade --no-cache openssl && \
+    apk add --no-cache \
     openjdk11 \
     curl \
     unzip \
