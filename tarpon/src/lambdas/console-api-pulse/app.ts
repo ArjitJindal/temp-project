@@ -149,7 +149,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       return (
         await riskService.createOrUpdateRiskFactor(
           request.RiskFactorsPostRequest,
-          request.RiskFactorsPostRequest.riskFactorId
+          undefined
         )
       ).result
     })
