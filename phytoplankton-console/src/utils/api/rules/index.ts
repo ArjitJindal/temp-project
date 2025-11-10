@@ -36,17 +36,11 @@ import { RULE_ACTION_VALUES } from '@/utils/rules';
 
 export const useNewRuleId = (ruleInstanceId?: string) => {
   const api = useApi();
-  return useQuery(
-    NEW_RULE_ID(ruleInstanceId),
-    async () => {
-      return await api.getRuleInstancesNewRuleId({
-        ruleId: ruleInstanceId,
-      });
-    },
-    {
-      enabled: !!ruleInstanceId,
-    },
-  );
+  return useQuery(NEW_RULE_ID(ruleInstanceId), async () => {
+    return await api.getRuleInstancesNewRuleId({
+      ruleId: ruleInstanceId,
+    });
+  });
 };
 
 export const useRuleFilters = () => {
@@ -94,9 +88,18 @@ export const useRuleInstanceRecommendation = (ruleInstanceId: string) => {
 
 export const useRuleDetails = (ruleId: string) => {
   const api = useApi();
-  return useQuery(GET_RULE(ruleId), () => api.getRule({ ruleId }), {
-    enabled: !!ruleId && ruleId !== 'create',
-  });
+  return useQuery(
+    GET_RULE(ruleId),
+    () => {
+      if (ruleId === 'create') {
+        return null;
+      }
+      return api.getRule({ ruleId });
+    },
+    {
+      enabled: !!ruleId,
+    },
+  );
 };
 
 export const useRuleInstanceDetails = (ruleInstanceId: string) => {
