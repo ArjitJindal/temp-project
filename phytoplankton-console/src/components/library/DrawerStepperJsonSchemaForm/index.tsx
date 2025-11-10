@@ -134,7 +134,10 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
           }
         }}
         onChange={({ values }) => {
-          setHasChanges(true);
+          const mergedCurrent = merge({}, ...Object.values(values));
+          const mergedInitial = merge({}, ...Object.values(formInitialValues));
+          const hasChanged = JSON.stringify(mergedCurrent) !== JSON.stringify(mergedInitial);
+          setHasChanges(hasChanged);
           onChange?.(merge({}, ...Object.values(values)) as Entity);
         }}
       >
