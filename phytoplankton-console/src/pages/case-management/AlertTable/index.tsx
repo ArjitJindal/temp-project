@@ -90,7 +90,6 @@ import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/Invest
 import { getOr, map } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { denseArray, neverReturn } from '@/utils/lang';
-import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import { SLA_POLICY_LIST } from '@/utils/queries/keys';
@@ -105,6 +104,7 @@ import {
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 import dayjs from '@/utils/dayjs';
 import { usePaginatedAlertList } from '@/utils/api/alerts';
+import { useRuleQueues } from '@/utils/api/rules';
 import { getPaymentDetailsIdString } from '@/utils/payments';
 import { getAddressString } from '@/utils/address';
 

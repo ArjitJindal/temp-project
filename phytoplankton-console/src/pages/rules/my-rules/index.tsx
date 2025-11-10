@@ -3,7 +3,7 @@ import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
-import { getRuleInstanceDisplayId, useRulesResults, useUpdateRuleInstance } from '../utils';
+import { getRuleInstanceDisplayId } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
 import RuleActionsMenu from '../components/RuleActionsMenu';
 import s from './style.module.less';
@@ -16,7 +16,7 @@ import {
   TableColumn,
   TableRefType,
 } from '@/components/library/Table/types';
-import { useRules } from '@/utils/rules';
+import { useRules, useUpdateRuleInstance, useRulesResults } from '@/utils/api/rules';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getErrorMessage } from '@/utils/lang';

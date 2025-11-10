@@ -55,7 +55,7 @@ import { SelectionInfo } from '@/components/library/Table';
 import { dayjs } from '@/utils/dayjs';
 import { useHasResources } from '@/utils/user-utils';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
-import { useRuleOptions } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/api/rules';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';

@@ -234,10 +234,10 @@ export const RULES_HIT_STATS = (
 ): QueryKey => ['rules-hit-stats', dateRange, page, pageSize];
 
 export const RULES_UNIVERSAL_SEARCH = (
-  search: string,
+  search?: string,
   params?: AnyParameters,
   aiSearch?: boolean,
-): QueryKey => ['rules-universal-search', search, params, aiSearch];
+): QueryKey => ['rules-universal-search', search, params, aiSearch].filter(Boolean);
 
 export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey =>
   ['transaction-files', params].filter(Boolean);

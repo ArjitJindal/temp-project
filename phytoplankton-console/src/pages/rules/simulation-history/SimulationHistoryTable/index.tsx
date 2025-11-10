@@ -13,7 +13,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, NUMBER, SIMULATION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
-import { useRules } from '@/utils/rules';
+import { useRules } from '@/utils/api/rules';
 import { makeUrl } from '@/utils/routing';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 

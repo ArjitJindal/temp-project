@@ -40,7 +40,7 @@ import { PAYMENT_DETAILS_OR_METHOD } from '@/pages/transactions/components/Trans
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
-import { useRuleOptions } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/api/rules';
 import TagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';

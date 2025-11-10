@@ -2,13 +2,11 @@ import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import StepHeader from '../../StepHeader';
 import { Rule } from '@/apis';
 import PropertyList from '@/components/library/JsonSchemaEditor/PropertyList';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULE_FILTERS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useApi } from '@/api';
 import { ExtendedSchema, PropertyItems } from '@/components/library/JsonSchemaEditor/types';
 import { getUiSchema, getOrderedProps } from '@/components/library/JsonSchemaEditor/utils';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useRuleFilters } from '@/utils/api/rules';
 
 export interface FormValues extends Record<string, any> {}
 
@@ -23,8 +21,7 @@ interface Props {
 export default function StandardFiltersStep(props: Props) {
   const { activeTab, standardFilters } = props;
 
-  const api = useApi();
-  const queryResults = useQuery(RULE_FILTERS(), () => api.getRuleFilters());
+  const queryResults = useRuleFilters();
 
   return (
     <AsyncResourceRenderer resource={queryResults.data}>

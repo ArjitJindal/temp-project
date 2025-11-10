@@ -2,50 +2,28 @@ import React, { useMemo } from 'react';
 import { useParams } from 'react-router';
 import RuleConfiguration from 'src/pages/rules/RuleConfiguration';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@/utils/queries/hooks';
-import { GET_RULE_INSTANCE, GET_RULE } from '@/utils/queries/keys';
-import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { RuleInstance, Rule } from '@/apis';
 import { Mode } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8';
 import { makeUrl } from '@/utils/routing';
-import { getRuleInstanceTitle } from '@/utils/api/rules';
+import { getRuleInstanceTitle } from '@/utils/api/rules/helper';
 import { map, getOr } from '@/utils/asyncResource';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import PageWrapper from '@/components/PageWrapper';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { useRuleDetails, useRuleInstanceDetails } from '@/utils/api/rules';
 
 export default function RulesItemPage() {
   const { id: ruleInstanceId = 'rules-library', mode = 'read' } = useParams<
     'tab' | 'id' | 'mode'
   >();
   const [isSimulationEnabled] = useSafeLocalStorageState<boolean>('SIMULATION_RULES', false);
-  const api = useApi();
-  const ruleInstanceResult = useQuery<RuleInstance>(
-    GET_RULE_INSTANCE(ruleInstanceId),
-    async (_paginationParams) => {
-      if (ruleInstanceId == null) {
-        throw new Error(`ruleInstanceId can not be null`);
-      }
-      const ruleInstance = await api.getRuleInstancesItem({
-        ruleInstanceId: ruleInstanceId,
-      });
-      return ruleInstance;
-    },
-  );
+  const ruleInstanceResult = useRuleInstanceDetails(ruleInstanceId ?? '');
   const ruleId = getOr(
     map(ruleInstanceResult.data, (x) => x.ruleId),
     undefined,
   );
-  const ruleResult = useQuery<Rule | null>(GET_RULE(ruleId), async () => {
-    if (ruleId == null) {
-      return null;
-    }
-    const rule = await api.getRule({
-      ruleId: ruleId,
-    });
-    return rule;
-  });
+  const ruleResult = useRuleDetails(ruleId ?? '');
 
   const ruleInstanceRes = ruleInstanceResult.data;
   const ruleRes = ruleResult.data;

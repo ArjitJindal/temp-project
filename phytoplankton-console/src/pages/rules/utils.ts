@@ -1,15 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
-import {
-  capitalizeNameFromEmail,
-  firstLetterUpper,
-  humanizeConstant,
-} from '@flagright/lib/utils/humanize';
-import { useAuth0User } from '@/utils/user-utils';
+import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { Option } from '@/components/library/SelectionGroup';
 import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
-import { useApi } from '@/api';
 import {
   CurrencyCode,
   Priority,
@@ -18,22 +11,15 @@ import {
   RuleInstance,
   RuleLabels,
   RuleNature,
-  RuleRunMode,
   RuleType,
   TenantSettings,
   TriggersOnHit,
 } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
-import { RuleInstanceMap, RulesMap } from '@/utils/rules';
-import { message } from '@/components/library/Message';
-import { getErrorMessage } from '@/utils/lang';
+import { RuleInstanceMap, RulesMap } from '@/utils/api/rules/types';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { GET_RULE_INSTANCE, GET_RULE_INSTANCES, RULES } from '@/utils/queries/keys';
-import { makeUrl } from '@/utils/routing';
-import { CommonParams } from '@/components/library/Table/types';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -589,93 +575,6 @@ export function formValuesToRuleInstanceV8(
   };
 }
 
-export function useUpdateRuleInstance(
-  onRuleInstanceUpdated?: (ruleInstance: RuleInstance) => void,
-) {
-  const api = useApi();
-  const queryClient = useQueryClient();
-  const auth0User = useAuth0User();
-  return useMutation<RuleInstance, unknown, RuleInstance>(
-    async (ruleInstance: RuleInstance) => {
-      if (ruleInstance.id == null) {
-        throw new Error(`Rule instance ID is not defined, unable to update rule instance`);
-      }
-      return api.putRuleInstancesRuleInstanceId({
-        ruleInstanceId: ruleInstance.id,
-        RuleInstance: ruleInstance,
-      });
-    },
-    {
-      onSuccess: async (updatedRuleInstance) => {
-        if (onRuleInstanceUpdated) {
-          onRuleInstanceUpdated(updatedRuleInstance);
-        }
-        await queryClient.invalidateQueries(GET_RULE_INSTANCE(updatedRuleInstance.id as string));
-        await queryClient.invalidateQueries(GET_RULE_INSTANCES());
-        await queryClient.invalidateQueries(RULES());
-
-        if (updatedRuleInstance.status === 'DEPLOYING') {
-          message.success(
-            `Rule ${updatedRuleInstance.id} has been successfully updated and will be live once deployed.`,
-          );
-        } else {
-          message.success(`Rule updated successfully`, {
-            details: `${capitalizeNameFromEmail(auth0User?.name || '')} updated the rule ${
-              updatedRuleInstance.id
-            }`,
-            link: makeUrl('/rules/my-rules/:id/:mode', {
-              id: updatedRuleInstance.id,
-              mode: 'view',
-            }),
-            linkTitle: 'View rule',
-            copyFeedback: 'Rule URL copied to clipboard',
-          });
-        }
-      },
-      onError: async (err) => {
-        message.fatal(`Unable to update the rule - ${getErrorMessage(err)}`, err);
-      },
-    },
-  );
-}
-
-export function useCreateRuleInstance(
-  onRuleInstanceCreated?: (ruleInstance: RuleInstance) => void,
-) {
-  const api = useApi();
-  const auth0User = useAuth0User();
-  const queryClient = useQueryClient();
-  return useMutation<RuleInstance, unknown, RuleInstance>(
-    async (ruleInstance: RuleInstance) => {
-      return api.postRuleInstances({
-        RuleInstance: ruleInstance,
-      });
-    },
-    {
-      onSuccess: async (newRuleInstance) => {
-        if (onRuleInstanceCreated) {
-          onRuleInstanceCreated(newRuleInstance);
-        }
-        await queryClient.invalidateQueries(GET_RULE_INSTANCES());
-        message.success(`A new rule has been created successfully`, {
-          details: `${capitalizeNameFromEmail(auth0User?.name || '')} created the rule ${
-            newRuleInstance.id
-          }`,
-          link: makeUrl('/rules/my-rules/:id/:mode', {
-            id: newRuleInstance.id,
-            mode: 'view',
-          }),
-          linkTitle: 'View rule',
-          copyFeedback: 'Rule URL copied to clipboard',
-        });
-      },
-      onError: async (err) => {
-        message.fatal(`Unable to create the rule - Some parameters are missing`, err);
-      },
-    },
-  );
-}
-
 export function useShouldUseV8Configuration(rule?: Rule, ruleInstance?: RuleInstance): boolean {
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
@@ -690,7 +589,7 @@ export function isV8RuleInstance(v8Enabled: boolean, ruleInstance?: RuleInstance
     ruleInstance.ruleId?.startsWith('RC')
   );
 }
-
+// API hooks moved to '@/utils/api/rules'.
 export function useIsV8RuleInstance(ruleInstance?: RuleInstance | null): boolean {
   const v8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
   return isV8RuleInstance(v8Enabled, ruleInstance);
@@ -724,68 +623,4 @@ export const getRuleInstanceDescription = (
 export function isShadowRule(ruleInstance: RuleInstance) {
   return ruleInstance.ruleRunMode === 'SHADOW';
 }
-
-type RulesResultInput = {
-  params: CommonParams;
-  ruleMode?: RuleRunMode;
-  focusId?: string;
-  onViewRule?: (ruleInstance: RuleInstance) => void;
-};
-
-export function useRulesResults({ params, ruleMode, focusId, onViewRule }: RulesResultInput) {
-  const api = useApi();
-  const rulesResult = usePaginatedQuery(
-    GET_RULE_INSTANCES({ ruleMode, params }),
-    async (paginationParams) => {
-      const ruleInstances = await api.getRuleInstances({ ...paginationParams, mode: ruleMode });
-      if (focusId) {
-        const ruleInstance = ruleInstances.find((r) => r.id === focusId);
-        if (ruleInstance) {
-          onViewRule?.(ruleInstance);
-        }
-      }
-
-      // TODO: To be refactored by FR-2677
-      const result = [...ruleInstances];
-      if (params.sort.length > 0) {
-        const [key, order] = params.sort[0];
-        result.sort((a, b) => {
-          let result = 0;
-          if (key === 'ruleId') {
-            result =
-              (a.ruleId ? parseInt(a.ruleId.split('-')[1]) : 0) -
-              (b.ruleId ? parseInt(b.ruleId.split('-')[1]) : 0);
-          } else if (key === 'hitCount') {
-            result =
-              (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
-              (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0);
-          } else if (key === 'createdAt') {
-            result =
-              a.createdAt !== undefined && b.createdAt !== undefined
-                ? a.createdAt - b.createdAt
-                : -1;
-          } else if (key === 'updatedAt') {
-            result =
-              a.updatedAt !== undefined && b.updatedAt !== undefined
-                ? a.updatedAt - b.updatedAt
-                : -1;
-          } else if (key === 'queueId') {
-            result = (b.queueId || 'default') > (a.queueId || 'default') ? 1 : -1;
-          } else {
-            result = a[key] > b[key] ? 1 : -1;
-          }
-
-          result *= order === 'descend' ? -1 : 1;
-          return result;
-        });
-      }
-
-      return {
-        items: result,
-        total: result.length,
-      };
-    },
-  );
-
-  return rulesResult;
-}
+// API hooks moved to '@/utils/api/rules'.

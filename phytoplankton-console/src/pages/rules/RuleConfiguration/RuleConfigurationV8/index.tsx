@@ -1,11 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
-import {
-  formValuesToRuleInstanceV8,
-  ruleInstanceToFormValuesV8,
-  useCreateRuleInstance,
-  useUpdateRuleInstance,
-} from '../../utils';
+import { formValuesToRuleInstanceV8, ruleInstanceToFormValuesV8 } from '../../utils';
 import { RuleModeModal } from '../components/RuleModeModal';
 import s from './style.module.less';
 import RuleConfigurationFormV8, {
@@ -19,12 +14,10 @@ import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-
 import Button from '@/components/library/Button';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { NEW_RULE_ID } from '@/utils/queries/keys';
-import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
+import { isLoading } from '@/utils/asyncResource';
 import Spinner from '@/components/library/Spinner';
+import { useNewRuleId, useCreateRuleInstance, useUpdateRuleInstance } from '@/utils/api/rules';
 
 export type Mode = 'EDIT' | 'CREATE' | 'DUPLICATE' | 'READ';
 
@@ -50,12 +43,7 @@ export default function RuleConfigurationV8(props: Props) {
   const settings = useSettings();
   const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance, settings);
   const [isValuesSame, setIsValuesSame] = useState(true);
-  const api = useApi();
-  const queryResult = useQuery(NEW_RULE_ID(ruleInstance?.ruleId), async () => {
-    return await api.getRuleInstancesNewRuleId({
-      ruleId: ruleInstance?.ruleId,
-    });
-  });
+  const queryResult = useNewRuleId(ruleInstance?.ruleId);
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
   const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
   const handleSubmit = useCallback(
@@ -126,9 +114,10 @@ export default function RuleConfigurationV8(props: Props) {
               newRuleId={type === 'EDIT' || type === 'READ' ? ruleInstance?.id : ruleInstanceId}
             />
             <RuleModeModal
-              submitRes={getMutationAsyncResource(
-                type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation,
-              )}
+              submitRes={
+                (type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation)
+                  .dataResource
+              }
               ruleId={rule?.id ?? ruleInstance?.ruleId ?? ruleInstanceId ?? ''}
               isOpen={isRuleModeModalOpen}
               onOk={() => {
@@ -192,7 +181,7 @@ export default function RuleConfigurationV8(props: Props) {
               ) : (
                 <Button
                   htmlType="submit"
-                  isLoading={createRuleInstanceMutation.isLoading}
+                  isLoading={isLoading(createRuleInstanceMutation.dataResource)}
                   isDisabled={readOnly}
                   onClick={() => {
                     if (!formRef?.current?.validate()) {
@@ -212,7 +201,10 @@ export default function RuleConfigurationV8(props: Props) {
         {!readOnly && type === 'EDIT' && (
           <Button
             htmlType="submit"
-            isLoading={updateRuleInstanceMutation.isLoading || createRuleInstanceMutation.isLoading}
+            isLoading={
+              isLoading(updateRuleInstanceMutation.dataResource) ||
+              isLoading(createRuleInstanceMutation.dataResource)
+            }
             isDisabled={readOnly || isValuesSame}
             onClick={() => {
               formRef?.current?.submit();

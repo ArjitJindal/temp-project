@@ -15,7 +15,8 @@ import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
-import { isRuleAction, isTransactionState, useRuleOptions } from '@/utils/rules';
+import { isRuleAction, isTransactionState } from '@/utils/rules';
+import { useRuleOptions, useRuleQueues } from '@/utils/api/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
@@ -36,7 +37,6 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
