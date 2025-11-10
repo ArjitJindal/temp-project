@@ -1,7 +1,10 @@
 import { ImmutableTree } from '@react-awesome-query-builder/ui';
+import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
 
 /**
- * Collects all used variables from the ImmutableTree structure
+ * Collects all used variables from the ImmutableTree structure. We need to use it, since this way
+ * we can collect variables from partially filled tree, for example when second operator is not yet
+ * selected.
  * @param tree - The tree to collect variables from
  * @returns An array of used variables
  */
@@ -27,5 +30,33 @@ export function collectVarNamesFromTree(tree: ImmutableTree): string[] {
   }
   const treeJS = tree.toJS();
   traverse(treeJS);
+  return result;
+}
+
+/**
+ * Collects all used variables from the json-logic structure
+ * @param tree - The tree to collect variables from
+ * @returns An array of used variables
+ */
+export function collectVarNamesFromJsonLogic(tree: RuleLogic): string[] {
+  const result: string[] = [];
+  function traverse(tree: unknown): void {
+    if (tree == null || typeof tree !== 'object') {
+      return;
+    }
+    if ('var' in tree && typeof tree.var === 'string') {
+      result.push(tree.var);
+      return;
+    }
+    if (Array.isArray(tree)) {
+      for (const item of tree) {
+        traverse(item);
+      }
+      return;
+    }
+    Object.values(tree).forEach(traverse);
+  }
+  traverse(tree);
+  result.sort();
   return result;
 }

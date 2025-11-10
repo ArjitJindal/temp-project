@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Settings } from '@react-awesome-query-builder/ui';
-import { isEqual } from 'lodash';
 import { useRuleLogicBuilderConfig } from '../../../helpers';
-import { collectVarNamesFromTree } from './helpers';
+import { collectVarNamesFromJsonLogic, collectVarNamesFromTree } from './helpers';
 import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
 import {
   LogicBuilderConfig,
@@ -20,6 +19,7 @@ import {
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
 import Spinner from '@/components/library/Spinner';
 import { jsonLogicFormat, jsonLogicParse } from '@/components/ui/LogicBuilder/virtual-fields';
+import { isEqual } from '@/utils/lang';
 
 interface Props {
   ruleType: RuleType;
@@ -39,7 +39,7 @@ export default function FiltersLogicBuilder(props: Props) {
   const [state, setState] = useState<State>(null);
 
   const [mentionedVariables, setMentionedVariables] = useState<string[] | undefined>(
-    props.entityVariablesInUse?.map((item) => item.key) ?? undefined,
+    jsonLogic == null ? [] : collectVarNamesFromJsonLogic(jsonLogic),
   );
 
   // Initialize state when config is loaded or changed
