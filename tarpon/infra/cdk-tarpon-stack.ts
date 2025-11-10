@@ -184,6 +184,7 @@ export class CdkTarponStack extends cdk.Stack {
   zendutyCloudWatchTopic: Topic
   functionProps: Partial<FunctionProps>
   sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
+  snsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
 
   private addTagsToResource(
     resource: IConstruct,
@@ -913,6 +914,7 @@ export class CdkTarponStack extends cdk.Stack {
       vpc,
       vpcCidr
     )
+    this.snsInterfaceVpcEndpoint = this.createSnsVpcEndpoint(vpc, vpcCidr)
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
@@ -2460,6 +2462,111 @@ export class CdkTarponStack extends cdk.Stack {
     return stream
   }
 
+  private createSqsInterfaceVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null
+  ): InterfaceVpcEndpoint | null {
+    return this.createInterfaceVpcEndpoint(
+      vpc,
+      vpcCidr,
+      InterfaceVpcEndpointAwsService.SQS,
+      {
+        endpointName: 'SqsInterfaceEndpoint',
+        endpointSecurityGroupName: 'SqsInterfaceEndpointSecurityGroup',
+        description: 'Security group for SQS Interface Endpoint',
+      },
+      { Name: 'SqsInterfaceEndpoint', Service: 'SQS' }
+    )
+  }
+
+  private createSnsVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null
+  ): InterfaceVpcEndpoint | null {
+    return this.createInterfaceVpcEndpoint(
+      vpc,
+      vpcCidr,
+      InterfaceVpcEndpointAwsService.SNS,
+      {
+        endpointName: 'SnsInterfaceEndpoint',
+        endpointSecurityGroupName: 'SnsInterfaceEndpointSecurityGroup',
+        description: 'Security group for SNS Interface Endpoint',
+      },
+      { Name: 'SnsInterfaceEndpoint', Service: 'SNS' }
+    )
+  }
+
+  private createInterfaceVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null,
+    service: InterfaceVpcEndpointAwsService,
+    options: {
+      endpointName: string
+      endpointSecurityGroupName: string
+      description: string
+    },
+    tags: { Name: string; Service: string }
+  ): InterfaceVpcEndpoint | null {
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      (envIsNot('prod') && envIsNot('sandbox'))
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true,
+    })
+
+    const endpointSecurityGroup = new SecurityGroup(
+      this,
+      getResourceNameForTarpon(options.endpointSecurityGroupName),
+      {
+        vpc,
+        allowAllOutbound: true,
+        description: options.description,
+      }
+    )
+
+    if (vpcCidr) {
+      endpointSecurityGroup.addIngressRule(
+        Peer.ipv4(vpcCidr),
+        Port.tcp(443),
+        'Allow HTTPS from within VPC'
+      )
+    }
+
+    const interfaceVpcEndpoint = vpc.addInterfaceEndpoint(
+      getResourceNameForTarpon(options.endpointName),
+      {
+        service,
+        subnets: { subnets: privateSubnets.subnets },
+        securityGroups: [endpointSecurityGroup],
+        privateDnsEnabled: true,
+      }
+    )
+
+    this.addTagsToResource(endpointSecurityGroup, {
+      Name: options.endpointSecurityGroupName,
+      Stage: this.config.stage,
+    })
+
+    this.addTagsToResource(interfaceVpcEndpoint, {
+      ...tags,
+      Stage: this.config.stage,
+    })
+
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, `${tags.Service} Interface VPC Endpoint ID`, {
+        value: interfaceVpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return interfaceVpcEndpoint
+  }
+
   private createKinesisEventSource(
     alias: Alias,
     stream: IStream,
@@ -2549,71 +2656,6 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     return s3VpcEndpoint
-  }
-
-  private createSqsInterfaceVpcEndpoint(
-    vpc: Vpc | null,
-    vpcCidr: string | null
-  ): InterfaceVpcEndpoint | null {
-    if (
-      !vpc ||
-      !this.config.resource.LAMBDA_VPC_ENABLED ||
-      (envIsNot('prod') && envIsNot('sandbox'))
-    ) {
-      return null
-    }
-
-    const privateSubnets = vpc.selectSubnets({
-      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
-    })
-
-    const sqsEndpointSecurityGroup = new SecurityGroup(
-      this,
-      getResourceNameForTarpon('SqsInterfaceEndpointSecurityGroup'),
-      {
-        vpc,
-        allowAllOutbound: true,
-        description: 'Security group for SQS Interface Endpoint',
-      }
-    )
-
-    if (vpcCidr) {
-      sqsEndpointSecurityGroup.addIngressRule(
-        Peer.ipv4(vpcCidr),
-        Port.tcp(443),
-        'Allow HTTPS from within VPC'
-      )
-    }
-
-    const sqsInterfaceVpcEndpoint = vpc.addInterfaceEndpoint(
-      getResourceNameForTarpon('SqsInterfaceEndpoint'),
-      {
-        service: InterfaceVpcEndpointAwsService.SQS,
-        subnets: { subnets: privateSubnets.subnets },
-        securityGroups: [sqsEndpointSecurityGroup],
-        privateDnsEnabled: true,
-      }
-    )
-
-    this.addTagsToResource(sqsEndpointSecurityGroup, {
-      Name: 'SqsInterfaceEndpointSecurityGroup',
-      Stage: this.config.stage,
-    })
-
-    this.addTagsToResource(sqsInterfaceVpcEndpoint, {
-      Name: 'SqsInterfaceEndpoint',
-      Service: 'SQS',
-      Stage: this.config.stage,
-    })
-
-    if (this.config.resource.LAMBDA_VPC_ENABLED) {
-      new CfnOutput(this, 'SQS Interface VPC Endpoint ID', {
-        value: sqsInterfaceVpcEndpoint.vpcEndpointId,
-      })
-    }
-
-    return sqsInterfaceVpcEndpoint
   }
 
   private createMongoAtlasVpc() {

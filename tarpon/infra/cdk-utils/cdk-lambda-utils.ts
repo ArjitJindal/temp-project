@@ -181,22 +181,13 @@ function createLambdaFunction(
   // This is needed to allow using ${Function.Arn} in openapi.yaml
   ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
 
-  // Add SQS VPC endpoint URL if it exists
+  // Add SQS and SNS VPC endpoint URLs if they exist
   // We do this after function creation to avoid passing tokens through nested stack parameters
   const contextWithVpcEndpoint = context as Construct & {
     config: Config
     functionProps: Partial<FunctionProps>
     sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint
-  }
-  if (contextWithVpcEndpoint.sqsInterfaceVpcEndpoint) {
-    // VPC endpoint DNS entries are in format: "hostedZoneId:dnsName"
-    // We need to extract just the DNS name (after the colon)
-    const firstDnsEntry = Fn.select(
-      0,
-      contextWithVpcEndpoint.sqsInterfaceVpcEndpoint.vpcEndpointDnsEntries
-    )
-    const dnsName = Fn.select(1, Fn.split(':', firstDnsEntry))
-    func.addEnvironment('SQS_VPC_ENDPOINT_URL', `https://${dnsName}`)
+    snsInterfaceVpcEndpoint?: InterfaceVpcEndpoint
   }
 
   let lambdaOptions: {
@@ -208,6 +199,27 @@ function createLambdaFunction(
     version: func.currentVersion,
     provisionedConcurrentExecutions: provisionedConcurrency,
   }
+
+  const vpcEndpoints = new Map<string, InterfaceVpcEndpoint>()
+  if (contextWithVpcEndpoint.sqsInterfaceVpcEndpoint) {
+    vpcEndpoints.set(
+      'SQS_VPC_ENDPOINT_URL',
+      contextWithVpcEndpoint.sqsInterfaceVpcEndpoint
+    )
+  }
+  if (contextWithVpcEndpoint.snsInterfaceVpcEndpoint) {
+    vpcEndpoints.set(
+      'SNS_VPC_ENDPOINT_URL',
+      contextWithVpcEndpoint.snsInterfaceVpcEndpoint
+    )
+  }
+
+  vpcEndpoints.forEach((endpoint, envName) => {
+    const dnsEntry = Fn.select(0, endpoint.vpcEndpointDnsEntries)
+    const dnsName = Fn.select(1, Fn.split(':', dnsEntry))
+    func.addEnvironment(envName, `https://${dnsName}`)
+  })
+
   // Check for autoscaling lambda - currrently only transaction lambda
   if (autoScalingLambdaNames.includes(name)) {
     lambdaOptions = {
