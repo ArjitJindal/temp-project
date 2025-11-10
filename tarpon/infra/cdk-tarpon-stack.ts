@@ -1150,7 +1150,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
     secondaryAsyncRule.addEventSource(
       new SqsEventSource(secondaryAsyncRuleQueue, {
-        maxConcurrency: 5,
+        maxConcurrency: 700,
         batchSize: 1,
       })
     )
