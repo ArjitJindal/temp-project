@@ -68,8 +68,6 @@ import {
 import { Address } from '@/@types/openapi-public/Address'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
-export const MAX_TRANSACTION_IN_A_CASE = 50_000
-
 export function getRuleQueueFilter(ruleQueueIds: string[]) {
   return {
     $or: [

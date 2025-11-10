@@ -11,7 +11,7 @@ import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongo-table-names'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 

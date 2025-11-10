@@ -13,7 +13,7 @@ import {
 } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'

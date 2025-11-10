@@ -40,9 +40,13 @@ import { CaseService } from '.'
 import { getSQSClient, getSQSQueueUrl } from '@/utils/sns-sqs-client'
 import {
   CaseRepository,
-  MAX_TRANSACTION_IN_A_CASE,
   SubjectCasesQueryParams,
 } from '@/services/cases/repository'
+import {
+  MAX_ALERTS_IN_A_CASE,
+  MAX_TRANSACTION_IN_A_CASE,
+  DEFAULT_CASE_AGGREGATES,
+} from '@/constants/case-creation'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
@@ -75,7 +79,7 @@ import { AlertsRepository } from '@/services/alerts/repository'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
-import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'
+import { generateCaseAggreates } from '@/utils/case'
 import {
   hasFeature,
   tenantSettings,
@@ -118,7 +122,6 @@ import { CaseSubject } from '@/@types/cases/CasesInternal'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { isConsoleMigrationEnabled } from '@/utils/clickhouse/checks'
-
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { envIs } from '@/utils/env'
 import { getPaymentEmailId } from '@/utils/payment-details'
@@ -663,7 +666,7 @@ export class CaseCreationService {
     latestTransaction?: InternalTransaction,
     latestTransactionArrivalTimestamp?: number,
     checkListTemplates?: ChecklistTemplate[]
-  ) {
+  ): Promise<Alert[]> {
     if (alerts) {
       const { existingAlerts, newAlerts } =
         await this.separateExistingAndNewAlerts(
@@ -1775,11 +1778,14 @@ export class CaseCreationService {
     // Process each delay group
     for (const group of delayTimestampsGroups) {
       const { availableAfterTimestamp, hitRules, ruleInstances } = group
-      const casesForTimestamp = existingCases.filter(
-        (x) =>
-          x.availableAfterTimestamp === availableAfterTimestamp ||
-          (x.availableAfterTimestamp == null && availableAfterTimestamp == null)
-      )
+      const casesForTimestamp = existingCases
+        .filter(
+          (x) =>
+            x.availableAfterTimestamp === availableAfterTimestamp ||
+            (x.availableAfterTimestamp == null &&
+              availableAfterTimestamp == null)
+        )
+        .sort((a, b) => (b.createdTimestamp ?? 0) - (a.createdTimestamp ?? 0))
 
       if (casesForTimestamp?.length) {
         // Update existing case
@@ -1790,7 +1796,24 @@ export class CaseCreationService {
           params,
           filteredTransaction
         )
-        result.push(updatedCase)
+
+        if (
+          updatedCase.alerts &&
+          updatedCase.alerts.length > MAX_ALERTS_IN_A_CASE
+        ) {
+          const { originalCase, newCase } =
+            await this.splitCaseWithTooManyAlerts(
+              updatedCase,
+              subject,
+              direction,
+              availableAfterTimestamp
+            )
+
+          result.push(originalCase)
+          result.push(newCase)
+        } else {
+          result.push(updatedCase)
+        }
       } else {
         // Create new case
         const newCase = await this.createNewCase(
@@ -1802,7 +1825,21 @@ export class CaseCreationService {
           filteredTransaction,
           availableAfterTimestamp
         )
-        result.push(newCase)
+
+        // Check if the new case has more than 1000 alerts and split if necessary
+        if (newCase.alerts && newCase.alerts.length > 1000) {
+          const { originalCase, newCase: splitNewCase } =
+            await this.splitCaseWithTooManyAlerts(
+              newCase,
+              subject,
+              direction,
+              availableAfterTimestamp
+            )
+          result.push(originalCase)
+          result.push(splitNewCase)
+        } else {
+          result.push(newCase)
+        }
       }
     }
 
@@ -1964,6 +2001,85 @@ export class CaseCreationService {
       alerts: caseAlerts,
       updatedAt: now,
     }
+  }
+
+  /**
+   * Splits a case that has more than 1000 alerts into two cases.
+   * The original case keeps the first 1000 alerts, and a new case is created with the remaining alerts.
+   */
+  private async splitCaseWithTooManyAlerts(
+    caseWithTooManyAlerts: Case,
+    subject: CaseSubject,
+    direction: RuleHitDirection,
+    availableAfterTimestamp?: number
+  ): Promise<{ originalCase: Case; newCase: Case }> {
+    logger.debug(`Splitting case with too many alerts`, {
+      caseId: caseWithTooManyAlerts.caseId,
+      alertCount: caseWithTooManyAlerts.alerts?.length,
+    })
+
+    if (
+      !caseWithTooManyAlerts.alerts ||
+      caseWithTooManyAlerts.alerts.length <= MAX_ALERTS_IN_A_CASE
+    ) {
+      throw new Error('Case does not have more than 1000 alerts to split')
+    }
+
+    // Split alerts: first 1000 for original case, rest for new case
+    const originalAlerts = caseWithTooManyAlerts.alerts.slice(
+      0,
+      MAX_ALERTS_IN_A_CASE
+    )
+    const excessAlerts =
+      caseWithTooManyAlerts.alerts.slice(MAX_ALERTS_IN_A_CASE)
+
+    // Update the original case with only the first 1000 alerts
+    const originalCase: Case = {
+      ...caseWithTooManyAlerts,
+      alerts: originalAlerts,
+      caseTransactionsIds: uniq(
+        compact(originalAlerts?.flatMap((a) => a.transactionIds))
+      ),
+      caseTransactionsCount: uniq(
+        compact(originalAlerts?.flatMap((a) => a.transactionIds))
+      ).length,
+      priority: minBy(originalAlerts, 'priority')?.priority ?? last(PRIORITYS),
+      updatedAt: Date.now(),
+    }
+
+    // Create a new case with the excess alerts
+    const newCase: Case = {
+      ...this.getPartialCase(subject, direction, 'OPEN'),
+      caseId: undefined, // Will be generated by the repository
+      createdTimestamp: caseWithTooManyAlerts.createdTimestamp,
+      latestTransactionArrivalTimestamp:
+        caseWithTooManyAlerts.latestTransactionArrivalTimestamp,
+      caseAggregates: caseWithTooManyAlerts.caseAggregates,
+      caseTransactionsIds: uniq(
+        compact(excessAlerts?.flatMap((a) => a.transactionIds))
+      ),
+      caseTransactionsCount: uniq(
+        compact(excessAlerts?.flatMap((a) => a.transactionIds))
+      ).length,
+      priority: minBy(excessAlerts, 'priority')?.priority ?? last(PRIORITYS),
+      availableAfterTimestamp,
+      alerts: excessAlerts,
+      updatedAt: Date.now(),
+      relatedCases: compact(
+        originalCase.caseId
+          ? (originalCase.relatedCases ?? []).concat(originalCase.caseId)
+          : originalCase.relatedCases
+      ),
+    }
+
+    logger.debug(`Case split completed`, {
+      originalCaseId: originalCase.caseId,
+      newCaseId: newCase.caseId,
+      originalAlertCount: originalCase.alerts?.length,
+      newCaseAlertCount: newCase.alerts?.length,
+    })
+
+    return { originalCase, newCase }
   }
 
   /**

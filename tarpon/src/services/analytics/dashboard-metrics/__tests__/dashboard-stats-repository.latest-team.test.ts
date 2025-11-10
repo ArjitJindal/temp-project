@@ -5,7 +5,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()

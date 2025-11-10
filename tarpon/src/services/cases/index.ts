@@ -25,10 +25,8 @@ import { ListService } from '../list'
 import { getPaymentMethodId } from '@/utils/payment-details'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
-import {
-  CaseRepository,
-  MAX_TRANSACTION_IN_A_CASE,
-} from '@/services/cases/repository'
+import { CaseRepository } from '@/services/cases/repository'
+import { MAX_TRANSACTION_IN_A_CASE } from '@/constants/case-creation'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import {
