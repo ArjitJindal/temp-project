@@ -109,7 +109,7 @@ const RiskClassificationTable = (props: Props) => {
           : prevVal + 1;
 
         const minValue = ai === 0 ? 1 : prevVal + (ai === activeIdxs.length - 1 ? 0 : 1);
-        const suggested = Math.min(100, Math.max(currVal, minValue, prevVal + 10));
+        const suggested = Math.min(100, Math.max(currVal, minValue, prevVal + 1));
 
         const nextVal = nextActiveIdx !== null ? updated[nextActiveIdx] ?? 100 : 100;
         const finalVal =

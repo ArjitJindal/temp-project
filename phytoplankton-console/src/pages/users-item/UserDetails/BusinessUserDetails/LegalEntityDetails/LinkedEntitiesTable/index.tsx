@@ -38,7 +38,7 @@ export default function LinkedEntitiesTable({ userId }: Props) {
   ) as TableColumn<AllUsersTableItem>[];
 
   if (isRiskScoringEnabled) {
-    columns.push(...getRiskScoringColumns(riskClassificationValues));
+    columns.push(...getRiskScoringColumns(riskClassificationValues, settings.riskLevelAlias ?? []));
   }
 
   return (
