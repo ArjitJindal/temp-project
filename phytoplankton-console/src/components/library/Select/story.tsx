@@ -186,7 +186,7 @@ export default function (): JSX.Element {
         }}
       >
         {([state, setState]) => (
-          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}>
+          <PropertyMatrix yLabel="mode" y={MODES}>
             {(_, mode) => (
               <Component<string>
                 mode={mode}
@@ -212,12 +212,7 @@ export default function (): JSX.Element {
         initialState={{ value: 'option1', values: ['option1', 'option2'] }}
       >
         {([state, setState]) => (
-          <PropertyMatrix
-            xLabel="isEmpty"
-            yLabel="mode"
-            x={[true, false] as const}
-            y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
-          >
+          <PropertyMatrix xLabel="isEmpty" yLabel="mode" x={[true, false] as const} y={MODES}>
             {(isEmpty, mode) => (
               <Component
                 mode={mode}
@@ -247,7 +242,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'Error'} initialState={{}}>
         {([state, setState]) => (
-          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}>
+          <PropertyMatrix yLabel="mode" y={MODES}>
             {(isEmpty, mode) => (
               <Component
                 mode={mode}
@@ -316,12 +311,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'Fixed width'}>
         {([state, setState]) => (
-          <PropertyMatrix
-            xLabel={'width'}
-            x={[200, '100px', '50%']}
-            yLabel="mode"
-            y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
-          >
+          <PropertyMatrix xLabel={'width'} x={[200, '100px', '50%']} yLabel="mode" y={MODES}>
             {(width, mode) => (
               <Component
                 width={width}

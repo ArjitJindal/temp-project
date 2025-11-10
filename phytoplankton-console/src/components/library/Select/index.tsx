@@ -184,7 +184,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         const parsedValues = parseSearchString<Value>(
           availableOptions,
           searchString,
-          mode !== 'MULTIPLE_DYNAMIC',
+          !searchString.includes(SEPARATOR),
         );
         newValue = uniq([...((value as Value[]) ?? []), ...parsedValues] as Value[]);
       } else if (mode === 'SINGLE' || mode === 'DYNAMIC' || mode == null) {
