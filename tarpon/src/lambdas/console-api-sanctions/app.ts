@@ -20,6 +20,7 @@ import {
   DefaultApiDeleteScreeningProfileRequest,
   DefaultApiPostDefaultManualScreeningFiltersRequest,
   DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest,
+  DefaultApiGetMediaCheckArticlesRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { SearchProfileService } from '@/services/search-profile'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -304,6 +305,12 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
           request,
           s3
         )
+      }
+    )
+
+    handlers.registerGetMediaCheckArticles(
+      async (_ctx, request: DefaultApiGetMediaCheckArticlesRequest) => {
+        return await sanctionsService.getMediaCheckArticles(request)
       }
     )
 

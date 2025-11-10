@@ -582,6 +582,18 @@ export type UpdateTransactionStatusBatchJob = {
     | AlertUpdateTransactionStatusBatchJobParameters
 }
 
+export type FetchLsegMediaCheckResultsBatchJob = {
+  type: 'FETCH_LSEG_MEDIA_CHECK_RESULTS'
+  tenantId: string
+  parameters: {
+    caseId: string
+    dateRange: {
+      startDate: string
+      endDate: string
+    }
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationBeaconBatchJob
@@ -645,6 +657,7 @@ export type BatchJob =
   | UpdateTransactionStatusBatchJob
   | BackfillSearchHitsBatchJob
   | BackfillWhitelistEntitiesBatchJob
+  | FetchLsegMediaCheckResultsBatchJob
 
 /* CRA Lock Timer */
 export type CraLockUntimerBatchJob = {

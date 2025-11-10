@@ -131,6 +131,10 @@ export interface UiSchemaGenericSanctionsScreeningTypes extends UiSchemaCommon {
   'ui:subtype': 'GENERIC_SANCTIONS_SCREENING_TYPES';
 }
 
+export interface UiSchemaLSEGMediaCheck extends UiSchemaCommon {
+  'ui:subtype': 'LSEG_MEDIA_CHECK';
+}
+
 export interface UiSchemaFuzzinessSettings extends UiSchemaCommon {
   'ui:subtype': 'FUZZINESS_SETTINGS';
 }
@@ -200,7 +204,8 @@ export type UiSchema =
   | UiSchemaKeyValuePair
   | UiSchemaTransactionType
   | UiSchemaTransactionTypes
-  | UiSchemaScreeningProfileId;
+  | UiSchemaScreeningProfileId
+  | UiSchemaLSEGMediaCheck;
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;

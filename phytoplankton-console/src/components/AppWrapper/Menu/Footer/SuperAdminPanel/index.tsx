@@ -163,6 +163,10 @@ export const featureDescriptions: Record<
     title: 'LSEG',
     description: 'Enables using LSEG for sanctions',
   },
+  LSEG_API: {
+    title: 'LSEG API',
+    description: 'Enable LSEG API for screening.',
+  },
   OPEN_SANCTIONS: {
     title: 'Open sanctions',
     description: 'Use OpenSanctions as the sanctions data provider.',

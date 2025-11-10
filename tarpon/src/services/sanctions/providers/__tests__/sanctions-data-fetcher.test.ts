@@ -10,10 +10,7 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context-storage'
-import {
-  SANCTIONS_COLLECTION,
-  SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
-} from '@/utils/mongo-table-names'
+import { SANCTIONS_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -62,7 +59,6 @@ class TestSanctionsDataFetcher extends SanctionsDataFetcher {
 describe('SanctionsDataFetcher Integration Tests', () => {
   let client: MongoClient
   let sanctionsCollection: Collection<SanctionsEntity>
-  let searchCollection: Collection<SanctionsProviderResponse>
 
   beforeAll(async () => {
     ;(getContext as jest.Mock).mockReturnValue({ tenantId: 'test-tenant' })
@@ -72,9 +68,6 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     const db = client.db()
 
     sanctionsCollection = db.collection(SANCTIONS_COLLECTION('test-tenant'))
-    searchCollection = db.collection(
-      SANCTIONS_PROVIDER_SEARCHES_COLLECTION('test-tenant')
-    )
 
     // Seed some data
     await sanctionsCollection.insertMany([
@@ -97,28 +90,6 @@ describe('SanctionsDataFetcher Integration Tests', () => {
 
   afterAll(async () => {
     await sanctionsCollection.drop()
-  })
-
-  test('setMonitoring should update the monitoring field', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant', {
-      mongoDb: client,
-      dynamoDb: getDynamoDbClient(),
-    })
-
-    const providerSearchId = 'monitoring-test-id'
-    await searchCollection.insertOne({
-      providerSearchId,
-      hitsCount: 1,
-      data: [{ id: '30', entityType: 'PERSON', name: 'Jane Smith' }],
-      createdAt: new Date().getTime(),
-      monitor: false,
-    })
-
-    // Set monitoring to true
-    await sanctionsFetcher.setMonitoring(providerSearchId, true)
-
-    const updatedSearch = await searchCollection.findOne({ providerSearchId })
-    expect(updatedSearch?.monitor).toBe(true)
   })
 
   test('search should return results with 100 fuzziness', async () => {

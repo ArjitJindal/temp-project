@@ -904,6 +904,57 @@ export const PARTIAL_MATCH_SCHEMA = {
   ),
 } as const
 
+export const LSEG_MEDIA_CHECK_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...options,
+    type: 'object',
+    title: 'LSEG media check',
+    description: 'Enable LSEG media check screening',
+    properties: {
+      enabled: { type: 'boolean', title: 'Enabled', nullable: true },
+      timeWindow: {
+        type: 'object',
+        title: 'Time window',
+        nullable: true,
+        properties: {
+          startGranularity: {
+            type: 'string',
+            title: 'Start time granularity',
+            enum: ['now', 'all_time', 'year', 'month'],
+            enumNames: ['Now', 'All time', 'Year', 'Month'],
+            nullable: true,
+          },
+          endGranularity: {
+            type: 'string',
+            title: 'End time granularity',
+            enum: ['now', 'all_time', 'year', 'month'],
+            enumNames: ['Now', 'All time', 'Year', 'Month'],
+            nullable: true,
+          },
+          startUnits: {
+            type: 'integer',
+            title: 'Number of time unit',
+            minimum: 0,
+            nullable: true,
+          },
+          endUnits: {
+            type: 'integer',
+            title: 'Number of time unit',
+            minimum: 0,
+            nullable: true,
+          },
+        },
+        required: [],
+      },
+    },
+    required: [],
+    nullable: true,
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'LSEG_MEDIA_CHECK',
+      requiredFeatures: ['LSEG_API'],
+    }),
+  } as const)
+
 export const FUZZINESS_RANGE_SCHEMA = (options?: NumberSliderSchemaOptions) =>
   ({
     type: 'object',

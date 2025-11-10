@@ -37,6 +37,13 @@ export type Secrets = {
   perplexity: {
     apiKey: string
   }
+  lsegApiCreds: {
+    [key: string]: {
+      keyId: string
+      secret: string
+      groupId: string
+    }
+  }
 }
 
 export type SecretName = keyof Secrets

@@ -48,6 +48,4 @@ export interface SanctionsDataProvider {
   getSearch(providerSearchId: string): Promise<SanctionsProviderResponse>
 
   deleteSearch(providerSearchId: string): Promise<void>
-
-  setMonitoring(providerSearchId: string, monitor: boolean): Promise<void>
 }

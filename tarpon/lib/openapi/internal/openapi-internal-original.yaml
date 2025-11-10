@@ -7335,6 +7335,40 @@ paths:
                 required:
                   - url
       description: Get a presigned URL for downloading a file
+  /sanctions/media-check/articles:
+    get:
+      summary: Get media check articles
+      tags: []
+      operationId: get-media-check-articles
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaCheckArticleResponse'
+      parameters:
+        - schema:
+            type: string
+          name: searchId
+          in: query
+          required: true
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          in: query
+          name: fromCursorKey
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: sortField
   /webhooks/auth0:
     post:
       summary: Receive webhook events from Auth0
@@ -13196,6 +13230,7 @@ components:
         - EDD
         - FLAT_FILES_IMPORT_TRANSACTIONS
         - MULTIPLEX_ASYNC_RULES_TX
+        - LSEG_API
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -14612,6 +14647,7 @@ components:
         - open-sanctions
         - acuris
         - lseg
+        - lseg-api
     SanctionsDataProviderScreeningInfo:
       title: SanctionsDataProviderScreeningInfo
       type: object
@@ -14951,8 +14987,35 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/Address
+        lsegMediaCheck:
+          $ref: '#/components/schemas/LSEGMediaCheckParameters'
       required:
         - searchTerm
+    LSEGMediaCheckParameters:
+      title: LSEGMediaCheckParameters
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        timeWindow:
+          type: object
+          properties:
+            startGranularity:
+              $ref: '#/components/schemas/TimeWindowGranularity'
+            endGranularity:
+              $ref: '#/components/schemas/TimeWindowGranularity'
+            startUnits:
+              type: number
+            endUnits:
+              type: number
+    TimeWindowGranularity:
+      title: TimeWindowGranularity
+      type: string
+      enum:
+        - now
+        - all_time
+        - year
+        - month
     ListSearchProfileResponse:
       title: ListSearchProfileResponse
       type: object
@@ -15466,6 +15529,10 @@ components:
           type: number
         totalPages:
           type: number
+        providerReferenceIds:
+          type: array
+          items:
+            type: string
       required:
         - hitsCount
         - searchId
@@ -16117,6 +16184,747 @@ components:
             - gender
             - documentId
             - yearOfBirth
+    MediaCheckArticleResponseItem:
+      type: object
+      properties:
+        lsegCaseId:
+          type: string
+        lsegArticleId:
+          type: string
+        id:
+          type: string
+        articleSummary:
+          $ref: '#/components/schemas/MediaCheckArticleSummary'
+        articleContent:
+          $ref: '#/components/schemas/MediaCheckArticleContent'
+    MediaCheckArticleResponse:
+      type: object
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckArticleResponseItem'
+      required:
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
+    MediaCheckCaseDetails:
+      type: object
+      required:
+        - smartFilter
+      properties:
+        smartFilter:
+          type: boolean
+    ProviderType:
+      type: string
+      description: Provider type enumeration.
+      enum:
+        - WATCHLIST
+        - PASSPORT_CHECK
+        - MEDIA_CHECK
+        - CLIENT_WATCHLIST
+        - UBO_CHECK
+    CaseEntityType:
+      type: string
+      description: Case Entity Type Enumeration.
+      enum:
+        - INDIVIDUAL
+        - ORGANISATION
+        - VESSEL
+        - UNSPECIFIED
+    ScreeningResultCollection:
+      type: object
+      required:
+        - results
+        - name
+        - providerTypes
+        - groupId
+        - entityType
+      properties:
+        caseId:
+          type: string
+        name:
+          type: string
+        providerTypes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ProviderType'
+        groupId:
+          type: string
+        entityType:
+          $ref: '#/components/schemas/CaseEntityType'
+        caseSystemId:
+          type: string
+        caseScreeningState:
+          type: object
+          properties:
+            WATCHLIST:
+              type: string
+            MEDIA_CHECK:
+              type: string
+          required:
+            - WATCHLIST
+            - MEDIA_CHECK
+        lifecycleState:
+          type: string
+          enum:
+            - ARCHIVED
+            - UNARCHIVED
+        creationDate:
+          type: string
+        modificationDate:
+          type: string
+        nameTransposition:
+          type: boolean
+        outstandingActions:
+          type: boolean
+        lastScreenedDatesByProviderType:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 255
+        lastIndexDatesByProviderType:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 255
+        providerTypeDetails:
+          $ref: '#/components/schemas/MediaCheckCaseDetails'
+        caseRating:
+          type: string
+          enum:
+            - NO_RISK
+            - LOW
+            - MEDIUM
+            - HIGH
+            - UNKNOWN
+            - NOT_RATED
+        parentCaseSystemId:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbstractScreeningResult'
+        caseResultsSummary:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CaseResultsSummary'
+    CaseResultsSummary:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - NOT_SCREENED
+            - SCREENED
+        totalMatches:
+          type: integer
+          format: int64
+        reviewRequiredCount:
+          type: integer
+          format: int64
+        reviewRequired:
+          type: boolean
+        unresolved:
+          type: integer
+          format: int64
+        resolvedPositive:
+          type: integer
+          format: int64
+        resolvedPossible:
+          type: integer
+          format: int64
+        resolvedFalse:
+          type: integer
+          format: int64
+        resolvedUnspecified:
+          type: integer
+          format: int64
+    MatchedTerm:
+      type: object
+      properties:
+        term:
+          type: string
+        type:
+          type: string
+          enum:
+            - PRIMARY
+            - AKA
+            - AKAENHANCED
+            - FKA
+            - DBA
+            - MAIDEN
+            - LANG_VARIATION
+            - PREVIOUS
+            - VEHICLE_ID
+            - LOW_QUALITY_AKA
+            - NATIVE_AKA
+            - DOCUMENT_ID
+    RecordDate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - INITIAL_PUBLISHED_DATE
+            - LAST_PUBLISHED_DATE
+        value:
+          type: string
+    RecordType:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - COUNTRY
+            - INDIVIDUAL
+            - ORGANISATION
+            - VESSEL
+            - PORT
+            - WEBSITE
+            - AIRCRAFT
+            - GEOGRAPHY
+        recordSubTypes:
+          type: array
+          items:
+            type: string
+    RecordGender:
+      type: object
+      properties:
+        value:
+          type: string
+          default: UNKNOWN
+          enum:
+            - MALE
+            - FEMALE
+            - UNKNOWN
+    RecordEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - ACQUISTION_DATE
+            - BANKRUPTCY_DATE
+            - BIRTH
+            - CALCULATED_YOB
+            - CESSATION_DATE
+            - COMMENCEMENT_DATE
+            - DEATH
+            - DECEASED_DATE
+            - INCORP_DATE
+            - NATIONALISATION_DATE
+            - PRIVATISATION_DATE
+            - REGISTRATION_DATE
+            - REPORTED_DOB
+        value:
+          type: string
+    RecordLocation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - AFFILIATION
+            - AGENCY
+            - BRANCH
+            - COMMISSION
+            - FINANCIAL_HQ
+            - HQ
+            - ISSUER
+            - LOCATION
+            - NATIONALITY
+            - OPERATESIN
+            - OWNERSHIP
+            - PEP
+            - POB
+            - POD
+            - REGISTEREDIN
+            - RESIDENT
+            - UNDETERMINED
+            - VESSELFLAG
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - FREE_TEXT
+                  - REGION
+                  - STREET
+                  - CITY
+                  - STATE_OR_PROVINCE
+                  - POSTCODE
+              value:
+                type: string
+        country:
+          type: object
+          required:
+            - code
+            - name
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+    RecordName:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - PRIMARY
+            - AKA
+            - AKAENHANCED
+            - FKA
+            - DBA
+            - MAIDEN
+            - LANG_VARIATION
+            - PREVIOUS
+            - VEHICLE_ID
+            - LOW_QUALITY_AKA
+            - NATIVE_AKA
+            - DOCUMENT_ID
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - FULL_NAME
+                  - FIRST_NAME
+                  - LAST_NAME
+                  - PREFIX
+                  - ORIGINAL_NAME
+                  - SUFFIX
+              value:
+                type: string
+    RecordIdentityDocument:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        expiryDate:
+          type: string
+        issueDate:
+          type: string
+        issuer:
+          type: string
+        idCategory:
+          type: object
+          properties:
+            type:
+              type: string
+            name:
+              type: string
+        entityTypes:
+          type: array
+          items:
+            type: string
+        value:
+          type: string
+    AbstractScreeningResult:
+      type: object
+      required:
+        - referenceId
+      properties:
+        genders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordGender'
+        entityType:
+          enum:
+            - INDIVIDUAL
+            - ORGANISATION
+        recordDates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordDate'
+        recordType:
+          $ref: '#/components/schemas/RecordType'
+        dates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordEvent'
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordLocation'
+        names:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordName'
+        identifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordIdentityDocument'
+        resultId:
+          type: string
+        referenceId:
+          type: string
+        matchStrength:
+          type: string
+          enum:
+            - WEAK
+            - MEDIUM
+            - STRONG
+            - EXACT
+        matchScore:
+          type: number
+        matchedTerms:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedTerm'
+        submittedTerm:
+          type: string
+        providerType:
+          $ref: '#/components/schemas/ProviderType'
+        sources:
+          type: array
+          items:
+            type: string
+        sourceCategories:
+          type: array
+          items:
+            type: string
+        creationDate:
+          type: string
+        modificationDate:
+          type: string
+        lastAlertDate:
+          type: string
+    AbstractCase:
+      type: object
+      properties:
+        caseId:
+          type: string
+        name:
+          type: string
+        providerTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderType'
+        caseScreeningState:
+          type: object
+          properties:
+            WATCHLIST:
+              type: string
+              enum:
+                - ANONYMOUS
+                - ONGOING
+                - INITIAL
+            MEDIA_CHECK:
+              type: string
+              enum:
+                - ANONYMOUS
+                - ONGOING
+                - INITIAL
+        nameTransposition:
+          type: boolean
+    NewCase:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AbstractCase'
+        - type: object
+          required:
+            - name
+            - groupId
+            - entityType
+            - providerTypes
+          properties:
+            parentCaseSystemId:
+              type: string
+            groupId:
+              type: string
+            entityType:
+              $ref: '#/components/schemas/CaseEntityType'
+    LSEGCaseCreationRequest:
+      title: LSEGMediaCheckSearchRequest
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/NewCase'
+        - type: object
+          properties:
+            startScreeningDate:
+              type: string
+            endScreeningDate:
+              type: string
+    MediaCheckSortCriterion:
+      type: object
+      properties:
+        columnName:
+          type: string
+          enum:
+            - publicationDate
+        order:
+          type: string
+          enum:
+            - ASCENDING
+            - DESCENDING
+    MediaCheckResultsPagination:
+      properties:
+        itemsPerPage:
+          minimum: 1
+          maximum: 100
+          default: 100
+          type: integer
+          format: int32
+        pageReference:
+          type: string
+    LSEGMediaCheckRequest:
+      type: object
+      properties:
+        drilldownKeys:
+          type: array
+          items:
+            type: string
+        baseFilter:
+          $ref: '#/components/schemas/MediaCheckBaseFilter'
+        sort:
+          $ref: '#/components/schemas/MediaCheckSortCriterion'
+        pagination:
+          $ref: '#/components/schemas/MediaCheckResultsPagination'
+        facets:
+          $ref: '#/components/schemas/MediaCheckFacetsRequest'
+    MediaCheckFacetsRequest:
+      type: object
+      properties:
+        publicationTypes:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+        phases:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+        geographies:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+        topics:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+    MediaCheckRegularFacetRequest:
+      type: object
+      properties:
+        limit:
+          minimum: 1
+          maximum: 100
+          type: integer
+          format: int32
+    MediaCheckPublicationDateRange:
+      type: object
+      properties:
+        min:
+          type: string
+        max:
+          type: string
+    MediaCheckBaseFilter:
+      type: object
+      properties:
+        publicationDate:
+          $ref: '#/components/schemas/MediaCheckPublicationDateRange'
+        query:
+          type: string
+        reviewRequiredArticles:
+          type: boolean
+          default: true
+        smartFilter:
+          type: boolean
+        deduplicatedArticles:
+          type: string
+          enum:
+            - STRICT
+            - COMPOSITE
+            - DISABLED
+    MediaCheckResultsPaginationReference:
+      type: object
+      properties:
+        current:
+          type: string
+        first:
+          type: string
+        last:
+          type: string
+        next:
+          type: string
+        previous:
+          type: string
+    MediaCheckResultsPaginationResponse:
+      type: object
+      properties:
+        itemsPerPage:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        pageReferences:
+          $ref: '#/components/schemas/MediaCheckResultsPaginationReference'
+    MediaCheckPublicationDetails:
+      type: object
+      properties:
+        code:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        publicationTypes:
+          type: array
+          items:
+            type: string
+        regions:
+          type: array
+          items:
+            type: string
+        sectors:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+    MediaCheckArticleSummary:
+      type: object
+      properties:
+        articleId:
+          type: string
+        articleFound:
+          type: boolean
+        contentType:
+          type: string
+        language:
+          type: string
+        publicationDate:
+          type: string
+        publication:
+          $ref: '#/components/schemas/MediaCheckPublicationDetails'
+        author:
+          type: string
+        topics:
+          type: array
+          items:
+            type: string
+        phases:
+          type: array
+          items:
+            type: string
+        duplicatesKey:
+          type: string
+        title:
+          type: string
+        snippet:
+          type: string
+        geographies:
+          type: array
+          items:
+            type: string
+        wordCount:
+          type: integer
+          format: int32
+    MediaCheckArticleContent:
+      type: object
+      properties:
+        content:
+          type: string
+        copyrightHolder:
+          type: string
+        copyrightNotice:
+          type: string
+    MediaCheckResult:
+      type: object
+      properties:
+        articleContent:
+          $ref: '#/components/schemas/MediaCheckArticleContent'
+        articleSummary:
+          $ref: '#/components/schemas/MediaCheckArticleSummary'
+    MediaCheckResultsResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/MediaCheckResultsPaginationResponse'
+        totalResultCount:
+          type: integer
+          format: int64
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckResult'
+        facets:
+          $ref: '#/components/schemas/MediaCheckFacetsResponse'
+    MediaCheckFacetsResponse:
+      type: object
+      properties:
+        publicationTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        geographies:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        matchingEntities:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckMatchingEntitiesFacetResponse'
+    MediaCheckRegularFacetResponse:
+      type: object
+      properties:
+        drilldownKey:
+          type: string
+        facetLabel:
+          type: string
+        articleCount:
+          type: integer
+          format: int64
+    MediaCheckMatchingEntitiesFacetResponse:
+      type: object
+      properties:
+        drilldownKey:
+          type: string
+        facetLabel:
+          type: string
+        articleCount:
+          type: integer
+          format: int64
+        matchStrength:
+          type: number
+          format: double
     Auth0WebhookEvent:
       title: Auth0WebhookEvent
       type: object

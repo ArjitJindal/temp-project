@@ -74,6 +74,9 @@ export function getDefaultProviders(): SanctionsDataProviderName[] {
   if (hasFeature('LSEG')) {
     providers.push(SanctionsDataProviders.LSEG)
   }
+  if (hasFeature('LSEG_API')) {
+    providers.push(SanctionsDataProviders.LSEG_API)
+  }
   return providers
 }
 

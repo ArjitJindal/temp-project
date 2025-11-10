@@ -28,6 +28,7 @@ import { GenericSanctionScreeningTypes } from './custom/GenericSanctionScreening
 import { FuzzinessSettingsInput } from './custom/FuzzinessSettings';
 import FreeTextEnumInput from './custom/FreeTextEnum';
 import KeyValuePairInput from './custom/keyValuePair';
+import { LSEGMediaCheckInput } from './custom/LSEGMediaCheckInput';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -169,6 +170,10 @@ export default function PropertyInput(props: Props) {
 
   if (uiSchema['ui:subtype'] === 'SCREENING_PROFILE_ID') {
     return <ScreeningProfileSelect {...props} />;
+  }
+
+  if (uiSchema['ui:subtype'] === 'LSEG_MEDIA_CHECK') {
+    return <LSEGMediaCheckInput {...props} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

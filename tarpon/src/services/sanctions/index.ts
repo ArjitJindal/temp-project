@@ -32,6 +32,8 @@ import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-sc
 import { AcurisProvider } from './providers/acuris-provider'
 import { MongoSanctionSourcesRepository } from './repositories/sanction-source-repository'
 import { LSEGProvider } from './providers/lseg-provider'
+import { LSEGAPIDataProvider } from './providers/lseg-api-provider'
+import { SanctionsDataProviders, ProviderConfig } from './types'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
@@ -39,6 +41,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest,
+  DefaultApiGetMediaCheckArticlesRequest,
   DefaultApiGetSanctionsScreeningActivityDetailsRequest,
   DefaultApiGetSanctionsSearchRequest,
 } from '@/@types/openapi-internal/RequestParameters'
@@ -58,12 +61,13 @@ import {
 } from '@/@types/pagination'
 import {
   GenericSanctionsSearchType,
-  UserRuleStage,
   SanctionsDataProviderName,
   SanctionsHit,
   SanctionsSearchResponse,
   SanctionsSourceListResponse,
   SourceDocument,
+  MediaCheckArticleResponse,
+  MediaCheckArticleResponseItem,
 } from '@/@types/openapi-internal/all'
 import { SanctionsDataProvider } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
@@ -87,14 +91,10 @@ import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/Sa
 import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
 import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { LSEG_API_MEDIA_CHECK_RESULT_COLLECTION } from '@/utils/mongo-table-names'
+import { cursorPaginate } from '@/utils/pagination'
 
 const DEFAULT_FUZZINESS = 0.5
-
-export type ProviderConfig = {
-  providerName?: SanctionsDataProviderName
-  stage: UserRuleStage
-  listId?: string
-}
 
 @traceable
 export class SanctionsService {
@@ -183,6 +183,8 @@ export class SanctionsService {
           providerConfig.listId,
           connections
         )
+      case 'lseg-api':
+        return LSEGAPIDataProvider.build(this.tenantId)
     }
   }
 
@@ -353,7 +355,6 @@ export class SanctionsService {
 
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
     request.types = this.getSanctionsSearchType(request.types, providers)
-    let searchId: string = uuidv4()
     const createdAt: number | undefined = undefined
 
     const provider = await this.getProvider(
@@ -364,27 +365,65 @@ export class SanctionsService {
       },
       providerOverrides
     )
+
     const mongoHash = generateChecksum(
-      getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+      getSortedObject(
+        omit(request, ['fuzzinessRange', 'fuzziness', 'lsegMediaCheck'])
+      )
     )
     const isBackfillDone = await this.getBackfillStatus()
-    const dynamoHash = generateChecksum(getSortedObject(request))
-    const [sanctionsSearchResponse, existingSearchId] = await Promise.all([
+    const dynamoHash = generateChecksum(
+      getSortedObject(omit(request, ['lsegMediaCheck']))
+    )
+
+    const lsegApiProvider: LSEGAPIDataProvider | undefined =
+      hasFeature('LSEG_API') && request.lsegMediaCheck?.enabled
+        ? ((await this.getProvider(SanctionsDataProviders.LSEG_API, {
+            dynamoDb: this.dynamoDb,
+            opensearchClient: this.opensearchClient,
+          })) as LSEGAPIDataProvider)
+        : undefined
+
+    const [
+      sanctionsSearchResponse,
+      historySearchResponse,
+      lsegApiSearchResponse,
+    ] = await Promise.all([
       provider.search(request),
-      this.sanctionsSearchRepository.getSearchResultByParams(
-        providerName,
-        request,
-        mongoHash,
-        dynamoHash,
-        isBackfillDone,
-        providerOverrides
-      ),
+      lsegApiProvider &&
+        this.sanctionsSearchRepository.getSearchResultByParams({
+          provider: providerName,
+          request,
+          mongoHash,
+          dynamoHash,
+          isBackfillDone,
+          providerConfig: providerOverrides,
+        }),
+      lsegApiProvider &&
+        lsegApiProvider.startSearch(
+          {
+            provider: providerName,
+            request,
+            mongoHash,
+            dynamoHash,
+            isBackfillDone,
+            providerConfig: providerOverrides,
+          },
+          this.sanctionsSearchRepository
+        ),
     ])
-    searchId = existingSearchId ?? searchId
+    const searchId =
+      (lsegApiProvider
+        ? lsegApiSearchResponse?.searchId
+        : historySearchResponse?.searchId) ?? uuidv4()
     const providerSearchId = sanctionsSearchResponse.providerSearchId
+    const hits = [
+      ...(sanctionsSearchResponse.data ?? []),
+      ...(lsegApiSearchResponse?.data ?? []),
+    ]
     const filteredHits =
       await this.sanctionsHitsRepository.filterWhitelistedHits(
-        sanctionsSearchResponse.data ?? [],
+        hits,
         context,
         providerName
       )
@@ -395,6 +434,9 @@ export class SanctionsService {
       hitsCount: filteredHits.length,
       providerSearchId: providerSearchId,
       createdAt: createdAt ?? Date.now(),
+      providerReferenceIds: lsegApiProvider
+        ? lsegApiSearchResponse?.providerReferenceIds
+        : historySearchResponse?.providerReferenceIds,
     }
 
     await this.sanctionsSearchRepository.saveSearchResult({
@@ -763,5 +805,43 @@ export class SanctionsService {
         throw error
       }
     }
+  }
+
+  public async getMediaCheckArticles(
+    params: DefaultApiGetMediaCheckArticlesRequest
+  ): Promise<MediaCheckArticleResponse> {
+    const {
+      searchId,
+      pageSize = 10,
+      fromCursorKey,
+      sortOrder,
+      sortField = '_id',
+    } = params
+    const mongoDb = this.mongoDb ?? (await getMongoDbClient())
+    const collection = mongoDb
+      .db()
+      .collection<MediaCheckArticleResponseItem>(
+        LSEG_API_MEDIA_CHECK_RESULT_COLLECTION(this.tenantId)
+      )
+    const search = await this.sanctionsSearchRepository.getSearchResult(
+      searchId
+    )
+    const filterCaseId = search?.response?.providerReferenceIds?.[0]
+    if (!filterCaseId) {
+      throw new Error('Search not found')
+    }
+    const result = await cursorPaginate(
+      collection,
+      {
+        lsegCaseId: filterCaseId,
+      },
+      {
+        pageSize: pageSize,
+        fromCursorKey: fromCursorKey,
+        sortOrder: sortOrder,
+        sortField: sortField,
+      }
+    )
+    return result
   }
 }

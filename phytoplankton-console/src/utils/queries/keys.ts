@@ -613,3 +613,8 @@ export const AIF_SEARCH_KEY = (
   variableKey: string,
   debouncedSearch: string,
 ): QueryKey => ['aif-search', questionId, variableKey, debouncedSearch];
+
+export const MEDIA_CHECK_ARTICLES_SEARCH = (
+  searchId: string | undefined,
+  params: AnyParameters,
+): QueryKey => ['media-check-articles', 'search', searchId ?? 'invalid', params];

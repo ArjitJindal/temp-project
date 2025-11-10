@@ -11295,7 +11295,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"escape-html@npm:~1.0.3":
+"escape-html@npm:^1.0.3, escape-html@npm:~1.0.3":
   version: 1.0.3
   resolution: "escape-html@npm:1.0.3"
   checksum: 6213ca9ae00d0ab8bccb6d8d4e0a98e76237b2410302cf7df70aaa6591d509a2a37ce8998008cbecae8fc8ffaadf3fb0229535e6a145f3ce0b211d060decbb24
@@ -13588,6 +13588,17 @@ __metadata:
   version: 0.7.0
   resolution: "intersection-observer@npm:0.7.0"
   checksum: 40fec6bca05bf37eaf75870d5bdcbc2a7409e517520cf113a26b46e1356e794c872d7f34ef45728201c964bc691ed6fa53117569c6e7e8a7ecc19c55ee9abb89
+  languageName: node
+  linkType: hard
+
+"interweave@npm:^13.1.1":
+  version: 13.1.1
+  resolution: "interweave@npm:13.1.1"
+  dependencies:
+    escape-html: "npm:^1.0.3"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: d58f7897cf7d777b6ee43136cf0888fea2e7cf02d8058df866d2703ca774d4ed0c2ca5aac17c72e7ace99730f9e51ab90d7b98b69b9f3e8aeaff958c62ae27af
   languageName: node
   linkType: hard
 
@@ -17279,6 +17290,7 @@ __metadata:
     html2pdf.js: "npm:^0.10.3"
     husky: "npm:^8.0.3"
     identity-obj-proxy: "npm:^3.0.0"
+    interweave: "npm:^13.1.1"
     jest: "npm:^29.2.2"
     jest-environment-jsdom: "npm:^29.5.0"
     jotai: "npm:^2.12.5"

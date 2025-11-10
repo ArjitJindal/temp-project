@@ -17,7 +17,7 @@ import {
   sanitizeEntities,
 } from '../providers/utils'
 import { OPENSEARCH_NON_PROJECTED_FIELDS } from '../providers/sanctions-data-fetcher'
-import { SanctionsSearchProps } from '../types'
+import { ProviderConfig, SanctionsSearchProps } from '../types'
 import {
   getMongoDbClient,
   prefixRegexMatchFilter,
@@ -33,7 +33,6 @@ import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/R
 import { cursorPaginate } from '@/utils/pagination'
 import { traceable } from '@/core/xray'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { ProviderConfig } from '@/services/sanctions'
 import { generateChecksum } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
@@ -175,23 +174,45 @@ export class SanctionsSearchRepository {
     }
   }
 
-  public async getSearchResultByParams(
-    provider: SanctionsDataProviderName,
-    request: SanctionsSearchRequest,
-    mongoHash: string,
-    dynamoHash: string,
-    isBackfillDone: boolean,
+  public async getSearchResultByParams(params: {
+    provider: SanctionsDataProviderName
+    request: SanctionsSearchRequest
+    mongoHash: string
+    dynamoHash: string
+    isBackfillDone: boolean
     providerConfig?: ProviderConfig
-  ): Promise<string | null> {
+    fetchResponse?: boolean
+  }): Promise<SanctionsSearchResponse | null> {
+    const {
+      provider,
+      request,
+      mongoHash,
+      dynamoHash,
+      isBackfillDone,
+      providerConfig,
+      fetchResponse = false,
+    } = params
     if (isBackfillDone) {
       const key = DynamoDbKeys.SANCTION_SEARCHES(this.tenantId, dynamoHash)
       const command = new GetCommand({
         TableName: this.tableName,
         Key: key,
-        ProjectionExpression: 'searchId',
+        ...(fetchResponse
+          ? {
+              ProjectionExpression: '#response',
+              ExpressionAttributeNames: { '#response': 'response' },
+            }
+          : {
+              ProjectionExpression: '#searchId',
+              ExpressionAttributeNames: { '#searchId': 'searchId' },
+            }),
       })
       const result = await this.dynamoDb.send(command)
-      return result.Item?.searchId as string | null
+      return fetchResponse
+        ? (result.Item?.response as SanctionsSearchResponse | null)
+        : ({
+            searchId: result.Item?.searchId,
+          } as SanctionsSearchResponse | null)
     }
     const db = (await this.getMongoDbClient()).db()
     const collection = db.collection<SanctionsSearchHistory>(
@@ -238,9 +259,18 @@ export class SanctionsSearchRepository {
 
     const result = await collection.findOne(
       { $and: filters },
-      { projection: { _id: 1 } }
+      {
+        projection: {
+          _id: 1,
+          ...(fetchResponse ? { response: 1 } : {}),
+        },
+      }
     )
-    return result?._id as string | null
+    return fetchResponse
+      ? (result?.response as SanctionsSearchResponse | null)
+      : ({
+          searchId: result?._id,
+        } as SanctionsSearchResponse | null)
   }
 
   private getSanctionsSearchHistoryCondition(

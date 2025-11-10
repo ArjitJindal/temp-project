@@ -14,7 +14,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3'
-import { marked } from 'marked'
+// import { marked } from 'marked'
 import { v4 as uuidv4 } from 'uuid'
 import { ReportRepository } from '../sar/repositories/report-repository'
 import { PDFExtractionService } from '../pdf-extraction'
@@ -1899,6 +1899,7 @@ ${financialInformationText}
         .map((r) => `- [${r.title}](${r.url})`)
         .join('\n')}
       `
+      const { default: marked } = await import('marked')
       const html = await marked.parse(finalText)
 
       this.executionLogs.push(

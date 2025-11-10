@@ -2064,11 +2064,4 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async deleteSearch(providerSearchId: string): Promise<void> {
     await this.searchRepository.deleteSearchResult(providerSearchId)
   }
-
-  async setMonitoring(
-    providerSearchId: string,
-    monitor: boolean
-  ): Promise<void> {
-    await this.searchRepository.setMonitoring(providerSearchId, monitor)
-  }
 }

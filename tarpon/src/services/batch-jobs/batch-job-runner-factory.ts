@@ -47,6 +47,7 @@ import { ScreeningAlertsExportBatchJobRunner } from './screening-alerts-export-b
 import { UpdateTransactionStatusBatchJobRunner } from './update-transaction-status'
 import { BackfillSearchHitsBatchJobRunner } from './backfill-search-hits-batch-job-runner'
 import { BackfillWhitelistEntitiesBatchJobRunner } from './backfill-whitelist-entities-batch-job-runner'
+import { FetchLsegMediaCheckResultsBatchJobRunner } from './fetch-lseg-media-check-data-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -165,6 +166,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     CRA_LOCK_UNTIMER: (jobId) => new CraLockUntimerBatchJobRunner(jobId),
     UPDATE_TRANSACTION_STATUS: (jobId) =>
       new UpdateTransactionStatusBatchJobRunner(jobId),
+    FETCH_LSEG_MEDIA_CHECK_RESULTS: (jobId) =>
+      new FetchLsegMediaCheckResultsBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

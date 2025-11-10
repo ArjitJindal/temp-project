@@ -217,6 +217,10 @@ export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-whitelist-entities`
 }
 
+export const LSEG_API_MEDIA_CHECK_RESULT_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-lseg-api-media-check-results`
+}
+
 export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS}`
 }

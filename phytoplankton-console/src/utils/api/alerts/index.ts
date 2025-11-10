@@ -12,8 +12,14 @@ import {
   ALERT_QA_SAMPLING,
   ALERT_CHECKLIST,
   TRANSACTIONS_ITEM_RISKS_ARS,
+  MEDIA_CHECK_ARTICLES_SEARCH,
 } from '../../queries/keys';
-import { usePaginatedQuery, useQuery, useCursorQuery } from '../../queries/hooks';
+import {
+  usePaginatedQuery,
+  useQuery,
+  useCursorQuery,
+  CursorPaginationParams,
+} from '../../queries/hooks';
 import { useAuth0User } from '../../user-utils';
 import { HistoryItem, ChecklistCategory, ChecklistItem, HydratedChecklist } from './types';
 import { Alert } from '@/apis';
@@ -271,4 +277,24 @@ export const useAlertUpdates = () => {
     updateAlertCopilotQuestionsData,
     updateAlertChecklistData,
   };
+};
+
+export const useMediaCheckArticles = (
+  searchId: string | undefined,
+  params: AllParams<CursorPaginationParams>,
+) => {
+  const api = useApi();
+  return useCursorQuery(
+    MEDIA_CHECK_ARTICLES_SEARCH(searchId, { ...params }),
+    async () => {
+      return await api.getMediaCheckArticles({
+        pageSize: params.pageSize,
+        searchId: searchId ?? '',
+        fromCursorKey: params.from,
+      });
+    },
+    {
+      enabled: !!searchId,
+    },
+  );
 };

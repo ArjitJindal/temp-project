@@ -7,6 +7,7 @@ import Checklist from './ChecklistTab';
 import TransactionsTab from './TransactionsTab';
 import CommentsTab from './CommentsTab';
 import ActivityTab from './ActivityTab';
+import { MediaCheckArticlesTab } from './MediaCheckArticlesTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
@@ -60,6 +61,7 @@ export enum AlertTabs {
   TRANSACTION_INSIGHTS = 'transaction-insights',
   EXPECTED_TRANSACTION_LIMITS = 'expected-transaction-limits',
   CRM = 'crm',
+  MEDIA_CHECK_ARTICLES = 'media-check-articles',
 }
 
 const DEFAULT_TAB_LISTS: AlertTabs[] = [
@@ -79,6 +81,7 @@ const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.AI_FORENSICS,
   AlertTabs.MATCH_LIST,
   AlertTabs.CLEARED_MATCH_LIST,
+  AlertTabs.MEDIA_CHECK_ARTICLES,
   AlertTabs.CHECKLIST,
   AlertTabs.TRANSACTIONS,
   AlertTabs.COMMENTS,
@@ -244,6 +247,8 @@ export function useAlertTabs(props: Props): TabItem[] {
   const caseQueryResult = useCaseDetails(alert.caseId ?? undefined);
   const userQueryResult = useUserDetails(caseUserId);
 
+  const isMediaCheckArticlesEnabled = useFeatureEnabled('LSEG_API');
+
   const tabs: TabItem[] = useMemo(() => {
     return tabList
       .map((tab): TabItem | null => {
@@ -341,6 +346,13 @@ export function useAlertTabs(props: Props): TabItem[] {
                 fitHeight={fitTables}
               />
             ),
+          };
+        }
+        if (tab === AlertTabs.MEDIA_CHECK_ARTICLES && isMediaCheckArticlesEnabled) {
+          return {
+            title: 'Media check articles',
+            key: tab,
+            children: <MediaCheckArticlesTab alert={alert} />,
           };
         }
         if (tab === AlertTabs.USER_DETAILS) {
@@ -453,6 +465,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     settings.crmIntegrationName,
     isFreshDeskCrmEnabled,
     isEmbedded,
+    isMediaCheckArticlesEnabled,
   ]);
 
   return tabs;

@@ -38,6 +38,7 @@ import {
   SANCTIONS_COLLECTION,
   SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
+  LSEG_API_MEDIA_CHECK_RESULT_COLLECTION,
 } from './mongo-table-names'
 import {
   getAllGlobalSanctionsCollectionDefinition,
@@ -722,6 +723,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_COLLECTION(tenantId)]: {
       getIndexes: () => SANCTIONS_INDEX_DEFINITION,
       getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION(false),
+    },
+    [LSEG_API_MEDIA_CHECK_RESULT_COLLECTION(tenantId)]: {
+      getIndexes: () => [
+        { index: { lsegCaseId: 1 } },
+        { index: { lsegArticleId: 1 } },
+      ],
     },
   }
 }
