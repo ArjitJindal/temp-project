@@ -192,7 +192,7 @@ export class SanctionsSearchRepository {
       providerConfig,
       fetchResponse = false,
     } = params
-    if (isBackfillDone) {
+    if (isBackfillDone && !hasFeature('LSEG_API')) {
       const key = DynamoDbKeys.SANCTION_SEARCHES(this.tenantId, dynamoHash)
       const command = new GetCommand({
         TableName: this.tableName,

@@ -390,15 +390,16 @@ export class SanctionsService {
       lsegApiSearchResponse,
     ] = await Promise.all([
       provider.search(request),
-      lsegApiProvider &&
-        this.sanctionsSearchRepository.getSearchResultByParams({
-          provider: providerName,
-          request,
-          mongoHash,
-          dynamoHash,
-          isBackfillDone,
-          providerConfig: providerOverrides,
-        }),
+      !lsegApiProvider
+        ? this.sanctionsSearchRepository.getSearchResultByParams({
+            provider: providerName,
+            request,
+            mongoHash,
+            dynamoHash,
+            isBackfillDone,
+            providerConfig: providerOverrides,
+          })
+        : Promise.resolve(null),
       lsegApiProvider &&
         lsegApiProvider.startSearch(
           {
