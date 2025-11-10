@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty, toLower } from 'lodash';
 import { capitalizeWords, humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -56,6 +56,7 @@ export const StatementsProvider: React.FC<{ children: React.ReactNode }> = ({
   const queryResult = usePermissions();
 
   const settingsResults = useSettingsData();
+  const refetchSettings = settingsResults.refetch;
 
   const previousSettingsResults = usePrevious(settingsResults);
 
@@ -73,9 +74,31 @@ export const StatementsProvider: React.FC<{ children: React.ReactNode }> = ({
     return !isEmpty(settings) ? (settings.features || []).concat(globalFeatures ?? []) : null;
   }, [settings, globalFeatures]);
 
-  const reloadSettings = () => {
-    settingsResults.refetch();
-  };
+  const scrollPositionRef = useRef<number | null>(null);
+
+  const reloadSettings = useCallback(() => {
+    // Save scroll position before refetch
+    scrollPositionRef.current = window.scrollY;
+    refetchSettings();
+  }, [refetchSettings, scrollPositionRef]);
+
+  // Restore scroll position when settings data changes after a reload
+  useEffect(() => {
+    if (scrollPositionRef.current !== null && isSuccess(settingsResults.data)) {
+      const savedPosition = scrollPositionRef.current;
+      // Restore scroll position with multiple frames to catch delayed scrolling
+      requestAnimationFrame(() => {
+        window.scrollTo(0, savedPosition);
+        requestAnimationFrame(() => {
+          window.scrollTo(0, savedPosition);
+          requestAnimationFrame(() => {
+            window.scrollTo(0, savedPosition);
+            scrollPositionRef.current = null;
+          });
+        });
+      });
+    }
+  }, [settingsResults.data]);
 
   if (isFailed(settingsResults.data)) {
     return (
