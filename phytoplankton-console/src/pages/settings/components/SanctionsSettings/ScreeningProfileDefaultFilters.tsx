@@ -41,13 +41,12 @@ const ScreeningProfileDefaultFilters = () => {
     );
   }, [settings]);
 
-  const defaultManualScreeningFilters = useDefaultManualScreeningFilters();
-
   const screeningProfileResult = useScreeningProfiles({ filterScreeningProfileStatus: 'ENABLED' });
+  const defaultManualScreeningFilters = useDefaultManualScreeningFilters();
 
   useEffect(() => {
     if (isSuccess(defaultManualScreeningFilters.data)) {
-      const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, {});
+      const defaultScreeningFilters = getOr(defaultManualScreeningFilters.data, null);
       if (defaultScreeningFilters) {
         const updatedParams: ScreeningProfileDefaultFiltersParams = {
           yearOfBirthRange:
@@ -66,7 +65,8 @@ const ScreeningProfileDefaultFilters = () => {
         setParams(updatedParams);
       }
     }
-  }, [defaultManualScreeningFilters.data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultManualScreeningFilters.data.kind]);
 
   const handleSave = () => {
     setIsSaving(true);
