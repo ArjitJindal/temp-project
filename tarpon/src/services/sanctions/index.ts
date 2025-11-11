@@ -3,6 +3,7 @@ import intersection from 'lodash/intersection'
 import omit from 'lodash/omit'
 import pick from 'lodash/pick'
 import uniq from 'lodash/uniq'
+import compact from 'lodash/compact'
 import dayjs from '@flagright/lib/utils/dayjs'
 import {
   getSourceUrl,
@@ -247,17 +248,19 @@ export class SanctionsService {
   ): GenericSanctionsSearchType[] {
     const providerScreeningTypes =
       getContext()?.settings?.sanctions?.providerScreeningTypes
-    return intersection(
-      uniq(
-        providers.flatMap((p) => {
-          const providerSettings = providerScreeningTypes?.find(
-            (t) => t.provider === p
-          )
-          return (providerSettings?.screeningTypes ??
-            DEFAULT_PROVIDER_TYEPS_MAP[p]) as GenericSanctionsSearchType[]
-        })
-      ),
-      types ?? uniq(providers.flatMap((p) => DEFAULT_PROVIDER_TYEPS_MAP[p]))
+    return compact(
+      intersection(
+        uniq(
+          providers.flatMap((p) => {
+            const providerSettings = providerScreeningTypes?.find(
+              (t) => t.provider === p
+            )
+            return (providerSettings?.screeningTypes ??
+              DEFAULT_PROVIDER_TYEPS_MAP[p]) as GenericSanctionsSearchType[]
+          })
+        ),
+        types ?? uniq(providers.flatMap((p) => DEFAULT_PROVIDER_TYEPS_MAP[p]))
+      )
     )
   }
 
