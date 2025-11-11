@@ -55,7 +55,7 @@ import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { hasFeature } from '@/core/utils/context'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
@@ -1811,7 +1811,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     props: SanctionsSearchPropsWithRequest
   ) {
     const { request } = props
-    const client = this.opensearchClient ?? (await getOpensearchClient())
+    const client = this.opensearchClient ?? (await getSharedOpensearchClient())
     const searchTerm = normalize(request.searchTerm)
     const providers = getDefaultProviders()
     const { shouldConditions, mustConditions } =

@@ -25,7 +25,7 @@ import {
   bulkUpdate,
   createIndexIfNotExists,
   deleteByQuery,
-  getOpensearchClient,
+  getSharedOpensearchClient,
 } from '@/utils/opensearch-utils'
 import { SANCTIONS_SEARCH_INDEX_DEFINITION } from '@/utils/opensearch-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -60,7 +60,7 @@ export class ScreeningProfileDataFetcherBatchJobRunner extends BatchJobRunner {
       )
       return
     }
-    const openSearchClient = await getOpensearchClient()
+    const openSearchClient = await getSharedOpensearchClient()
     await runScreeningProfileDataFetcherBatchJob(
       dynamoDb,
       client,

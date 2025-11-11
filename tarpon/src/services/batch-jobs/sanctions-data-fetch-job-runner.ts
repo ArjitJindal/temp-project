@@ -17,8 +17,8 @@ import {
 } from '@/utils/mongodb-utils'
 import {
   deleteIndexAfterDataLoad,
-  getOpensearchClient,
   isOpensearchAvailableInRegion,
+  getSharedOpensearchClient,
   syncOpensearchIndex,
 } from '@/utils/opensearch-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -64,7 +64,7 @@ export async function runSanctionsDataFetchJob(
 ) {
   const { tenantId, providers, settings } = job
   const opensearchClient = !isOpensearchAvailableInRegion()
-    ? await getOpensearchClient()
+    ? await getSharedOpensearchClient()
     : undefined
   const runFullLoad = job.parameters?.from
     ? new Date(job.parameters.from).getDay() === 0

@@ -38,7 +38,7 @@ import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
 import { hasFeature } from '@/core/utils/context'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -410,7 +410,7 @@ export class SanctionsSearchRepository {
     if (!entityIds.length) {
       return result
     }
-    const opensearchClient = await getOpensearchClient()
+    const opensearchClient = await getSharedOpensearchClient()
     const collectionNames = getCollectionNames(
       result.request,
       getDefaultProviders(),
