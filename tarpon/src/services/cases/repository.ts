@@ -1924,24 +1924,27 @@ export class CaseRepository {
       {
         updateMany: {
           filter: { caseId: { $in: caseIds } },
-          update: {
-            $set: {
-              'caseUsers.originUserDrsScore': {
-                $cond: {
-                  if: { $ne: ['$caseUsers.origin', null] },
-                  then: drsScore,
-                  else: '$caseUsers.originUserDrsScore',
+          update: [
+            {
+              $set: {
+                'caseUsers.originUserDrsScore': {
+                  $cond: {
+                    if: { $ne: ['$caseUsers.origin', null] },
+                    then: drsScore,
+                    else: '$caseUsers.originUserDrsScore',
+                  },
                 },
-              },
-              'caseUsers.destinationUserDrsScore': {
-                $cond: {
-                  if: { $eq: ['$caseUsers.origin', null] },
-                  then: drsScore,
-                  else: '$caseUsers.destinationUserDrsScore',
+                'caseUsers.destinationUserDrsScore': {
+                  $cond: {
+                    if: { $eq: ['$caseUsers.origin', null] },
+                    then: drsScore,
+                    else: '$caseUsers.destinationUserDrsScore',
+                  },
                 },
+                updatedAt: Date.now(),
               },
             },
-          },
+          ],
         },
       },
     ])
