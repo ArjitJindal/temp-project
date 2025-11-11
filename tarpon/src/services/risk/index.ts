@@ -10,10 +10,8 @@ import {
 import intersection from 'lodash/intersection'
 import padStart from 'lodash/padStart'
 import pick from 'lodash/pick'
-import {
-  RiskLevelApprovalWorkflowMachine,
-  RiskFactorsApprovalWorkflowMachine,
-} from '@flagright/lib/classes/workflow-machine'
+import { ApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
+import { ApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import { createV8FactorFromV2 } from '../risk-scoring/risk-factors'
 import { isDefaultRiskFactor } from '../risk-scoring/utils'
 import { CounterRepository } from '../counter/repository'
@@ -42,9 +40,7 @@ import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/Risk
 import { getContext } from '@/core/utils/context-storage'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { WorkflowRef } from '@/@types/openapi-internal/WorkflowRef'
-import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
 import { RiskFactorApproval } from '@/@types/openapi-internal/RiskFactorApproval'
-import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
 import { RiskClassificationApprovalRequestActionEnum } from '@/@types/openapi-internal/RiskClassificationApprovalRequest'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
@@ -834,14 +830,60 @@ export class RiskService {
       )
     }
 
-    // fetch the workflow definition
-    const workflowDefinition = await this.workflowService.getWorkflow(
-      'risk-levels-approval',
-      '_default'
-    )
+    // Fetch tenant settings to get workflow reference
+    const settings = await tenantSettings(this.tenantId)
+    const workflowId = settings.workflowSettings?.riskLevelsApprovalWorkflow
+
+    if (!workflowId) {
+      // No workflow configured - automatically apply the changes
+      console.log(
+        'No workflow configured for risk levels. Auto-approving risk level change'
+      )
+
+      // Apply the risk level changes directly
+      await this.createOrUpdateRiskClassificationConfig(
+        riskClassificationValues,
+        comment
+      )
+
+      // Return a mock approval object indicating the change was auto-approved
+      const proposerId = getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER
+      const autoApproval: RiskClassificationConfigApproval = {
+        riskClassificationConfig: {
+          id: 'auto-approved',
+          classificationValues: riskClassificationValues,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        comment,
+        workflowRef: { id: 'auto-approved', version: 1 },
+        approvalStatus: 'APPROVED',
+        approvalStep: 0,
+        createdAt: Date.now(),
+        createdBy: proposerId,
+      }
+
+      return {
+        entities: [
+          {
+            newImage: autoApproval,
+            entityId: 'RISK_CLASSIFICATION_APPROVAL',
+          },
+        ],
+        result: autoApproval,
+      }
+    }
+
+    // Fetch the workflow definition using the ID from tenant settings
+    const workflowDefinition = (await this.workflowService.getWorkflow(
+      'change-approval',
+      workflowId
+    )) as ApprovalWorkflow
 
     if (!workflowDefinition) {
-      throw new BadRequest('Risk level approval workflow not found')
+      throw new BadRequest(
+        `Risk level approval workflow ${workflowId} not found`
+      )
     }
 
     const workflowRef: WorkflowRef = {
@@ -1009,14 +1051,13 @@ export class RiskService {
     if (!wRef) {
       throw new BadRequest('No workflow reference found')
     }
-    // TODO: make types uniform and get rid of toString() cast
     const workflow = await this.workflowService.getWorkflowVersion(
-      'risk-levels-approval',
+      'change-approval',
       wRef.id,
-      wRef.version.toString()
+      wRef.version
     )
-    const workflowMachine = new RiskLevelApprovalWorkflowMachine(
-      workflow as RiskLevelApprovalWorkflow
+    const workflowMachine = new ApprovalWorkflowMachine(
+      workflow as ApprovalWorkflow
     )
 
     // ensure the user performing the action has the role referenced in the current step of the workflow
@@ -1144,6 +1185,103 @@ export class RiskService {
   }
 
   /**
+   * Auto-applies pending risk level approval when workflow is removed
+   * This is called when a risk levels approval workflow is disabled or deleted
+   */
+  async autoApplyPendingRiskLevelApprovals(): Promise<number> {
+    console.log('Auto-applying pending risk level approvals')
+
+    // Get the pending risk level approval
+    const pendingApproval =
+      await this.riskRepository.getPendingRiskClassificationConfig()
+
+    if (!pendingApproval || pendingApproval.approvalStatus !== 'PENDING') {
+      console.log('No pending risk level approvals to auto-apply')
+      return 0
+    }
+
+    try {
+      console.log(
+        `Auto-applying risk level approval for ${pendingApproval.riskClassificationConfig.id}`
+      )
+
+      // Apply the risk level changes directly
+      await this.createOrUpdateRiskClassificationConfig(
+        pendingApproval.riskClassificationConfig.classificationValues,
+        pendingApproval.comment
+      )
+
+      // Delete the approval object from database
+      await this.riskRepository.deletePendingRiskClassificationConfig()
+
+      console.log('Successfully auto-applied risk level approval')
+      return 1
+    } catch (error) {
+      console.error('Failed to auto-apply risk level approval:', error)
+      return 0
+    }
+  }
+
+  /**
+   * Auto-applies pending risk factor approvals when workflow is removed
+   * This is called when a risk factors approval workflow is disabled or deleted
+   */
+  async autoApplyPendingRiskFactorApprovals(): Promise<number> {
+    console.log('Auto-applying pending risk factor approvals')
+
+    // Get all pending risk factor approvals
+    const pendingApprovals = await this.riskRepository.getPendingRiskFactors()
+
+    if (!pendingApprovals || pendingApprovals.length === 0) {
+      console.log('No pending risk factor approvals to auto-apply')
+      return 0
+    }
+
+    let appliedCount = 0
+
+    // Auto-apply each pending approval
+    for (const approval of pendingApprovals) {
+      if (approval.approvalStatus !== 'PENDING') {
+        continue
+      }
+
+      try {
+        console.log(
+          `Auto-applying risk factor approval for ${approval.riskFactor.id}`
+        )
+
+        // Apply the risk factor changes based on the action type
+        if (approval.action === 'create' || approval.action === 'update') {
+          await this.createOrUpdateRiskFactor(
+            approval.riskFactor,
+            approval.riskFactor.id
+          )
+        } else if (approval.action === 'delete') {
+          await this.deleteRiskFactor(approval.riskFactor.id)
+        }
+
+        // Delete the approval object from database
+        await this.riskRepository.deletePendingRiskFactorConfig(
+          approval.riskFactor.id
+        )
+
+        appliedCount++
+        console.log(
+          `Successfully auto-applied risk factor approval for ${approval.riskFactor.id}`
+        )
+      } catch (error) {
+        console.error(
+          `Failed to auto-apply risk factor approval for ${approval.riskFactor.id}:`,
+          error
+        )
+      }
+    }
+
+    console.log(`Auto-applied ${appliedCount} risk factor approvals`)
+    return appliedCount
+  }
+
+  /**
    * Proposes a change to risk factors (creates a pending approval)
    */
   // This method is used to propose a change to a risk factor
@@ -1154,18 +1292,9 @@ export class RiskService {
     action: 'create' | 'update' | 'delete',
     comment: string
   ): Promise<RiskFactorApprovalAuditLogReturnData> {
-    // fetch the workflow definition
-    const workflowDefinition = await this.workflowService.getWorkflow(
-      'risk-factors-approval',
-      '_default'
-    )
-    if (!workflowDefinition) {
-      throw new BadRequest('Risk factors approval workflow not found')
-    }
-    const workflowRef: WorkflowRef = {
-      id: workflowDefinition.id,
-      version: workflowDefinition.version,
-    }
+    // Fetch tenant settings to get workflow reference
+    const settings = await tenantSettings(this.tenantId)
+    const workflowId = settings.workflowSettings?.riskFactorsApprovalWorkflow
 
     // validate the request and set variables for the approval object
     let riskFactorId: string
@@ -1244,6 +1373,59 @@ export class RiskService {
     }
 
     const proposerId = getContext()?.user?.id ?? FLAGRIGHT_SYSTEM_USER
+
+    // If no workflow configured, auto-approve the changes
+    if (!workflowId) {
+      console.log(
+        `No workflow configured for risk factors. Auto-approving ${action} for risk factor ${riskFactorId}`
+      )
+
+      // Perform the appropriate operation based on the action
+      if (action === 'delete') {
+        await this.deleteRiskFactor(riskFactorId)
+      } else if (action === 'create' || action === 'update') {
+        await this.createOrUpdateRiskFactor(riskFactorConfig, riskFactorId)
+      }
+
+      // Return a mock approval object indicating the change was auto-approved
+      const autoApproval: RiskFactorApproval = {
+        action,
+        riskFactor: riskFactorConfig,
+        comment,
+        workflowRef: { id: 'auto-approved', version: 1 },
+        approvalStatus: 'APPROVED',
+        approvalStep: 0,
+        createdAt: Date.now(),
+        createdBy: proposerId,
+      }
+
+      return {
+        entities: [
+          {
+            newImage: autoApproval,
+            entityId: 'RISK_FACTORS_APPROVAL',
+          },
+        ],
+        result: autoApproval,
+      }
+    }
+
+    // Fetch the workflow definition using the ID from tenant settings
+    const workflowDefinition = (await this.workflowService.getWorkflow(
+      'change-approval',
+      workflowId
+    )) as ApprovalWorkflow
+
+    if (!workflowDefinition) {
+      throw new BadRequest(
+        `Risk factors approval workflow ${workflowId} not found`
+      )
+    }
+
+    const workflowRef: WorkflowRef = {
+      id: workflowDefinition.id,
+      version: workflowDefinition.version,
+    }
 
     // Check if the proposer should skip the first approval step
     const autoSkipResult = await shouldSkipFirstApprovalStep(
@@ -1403,14 +1585,13 @@ export class RiskService {
     if (!wRef) {
       throw new BadRequest('No workflow reference found')
     }
-    // TODO: make types uniform and get rid of toString() cast
     const workflow = await this.workflowService.getWorkflowVersion(
-      'risk-factors-approval',
+      'change-approval',
       wRef.id,
-      wRef.version.toString()
+      wRef.version
     )
-    const workflowMachine = new RiskFactorsApprovalWorkflowMachine(
-      workflow as RiskFactorsApprovalWorkflow
+    const workflowMachine = new ApprovalWorkflowMachine(
+      workflow as ApprovalWorkflow
     )
 
     // ensure the user performing the action has the role referenced in the current step of the workflow

@@ -12144,17 +12144,30 @@ components:
     WorkflowSettings:
       type: object
       properties:
+        riskLevelsApprovalWorkflow:
+          type: string
+          nullable: true
+          description: ID of the change-approval workflow to use for risk level changes
+        riskFactorsApprovalWorkflow:
+          type: string
+          nullable: true
+          description: ID of the change-approval workflow to use for risk factor changes
         userApprovalWorkflows:
           type: object
+          description: Map of user field names to change-approval workflow IDs
           properties:
             Cra:
               type: string
+              nullable: true
             CraLock:
               type: string
+              nullable: true
             eoddDate:
               type: string
+              nullable: true
             PepStatus:
               type: string
+              nullable: true
     UserApprovalUpdateRequest:
       type: object
       title: UserApprovalUpdateRequest

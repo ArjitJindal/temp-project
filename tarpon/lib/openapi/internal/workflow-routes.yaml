@@ -98,7 +98,9 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
+            format: int64
+          description: Workflow version (timestamp)
       responses:
         '200':
           description: Specific workflow version retrieved successfully
@@ -203,7 +205,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [case, alert]
+            enum: [case, alert, change-approval]
           description: Optional parameter to filter workflows by type
       responses:
         '200':
@@ -243,14 +245,8 @@ components:
           $ref: 'workflow-models.yaml#/components/schemas/CreateCaseWorkflow'
         alertWorkflow:
           $ref: 'workflow-models.yaml#/components/schemas/CreateAlertWorkflow'
-        riskLevelApprovalWorkflow:
-          $ref: 'workflow-models.yaml#/components/schemas/CreateRiskLevelApprovalWorkflow'
-        riskFactorsApprovalWorkflow:
-          $ref: 'workflow-models.yaml#/components/schemas/CreateRiskFactorsApprovalWorkflow'
-        userUpdateApprovalWorkflow:
-          $ref: 'workflow-models.yaml#/components/schemas/CreateUserUpdateApprovalWorkflow'
-        ruleApprovalWorkflow:
-          $ref: 'workflow-models.yaml#/components/schemas/CreateRuleApprovalWorkflow'
+        approvalWorkflow:
+          $ref: 'workflow-models.yaml#/components/schemas/CreateApprovalWorkflow'
 
     UpdateWorkflowEnabledRequest:
       type: object
@@ -278,8 +274,9 @@ components:
                 type: string
                 description: Workflow ID
               version:
-                type: string
-                description: Version of the workflow
+                type: integer
+                format: int64
+                description: Version of the workflow (timestamp)
             required:
               - type
               - id

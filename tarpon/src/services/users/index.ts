@@ -17,8 +17,8 @@ import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
 import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
-import { UserUpdateApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
-import { UserUpdateApprovalWorkflow } from '@flagright/lib/@types/workflow'
+import { ApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
+import { ApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import has from 'lodash/has'
 import pickBy from 'lodash/pickBy'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -2511,10 +2511,10 @@ export class UserService {
     }
 
     // Workflow exists - proceed with normal approval process
-    const workflow = await this.workflowService.getWorkflow(
-      'user-update-approval',
+    const workflow = (await this.workflowService.getWorkflow(
+      'change-approval',
       workflowId
-    )
+    )) as ApprovalWorkflow
 
     // Check if the proposer should skip the first approval step
     const autoSkipResult = await shouldSkipFirstApprovalStep(
@@ -2854,12 +2854,12 @@ export class UserService {
     }
 
     const workflow = await this.workflowService.getWorkflowVersion(
-      'user-update-approval',
+      'change-approval',
       wRef.id,
-      wRef.version.toString()
+      wRef.version
     )
-    const workflowMachine = new UserUpdateApprovalWorkflowMachine(
-      workflow as UserUpdateApprovalWorkflow
+    const workflowMachine = new ApprovalWorkflowMachine(
+      workflow as ApprovalWorkflow
     )
 
     // ensure the user performing the action has the role referenced in the current step of the workflow

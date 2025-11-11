@@ -31,6 +31,7 @@ export interface CommonButtonProps extends React.HTMLAttributes<HTMLButtonElemen
   isLogout?: boolean;
   requiredResources?: Resource[];
   loadingTooltip?: string;
+  disabledTooltip?: string;
 }
 
 export interface ButtonProps extends CommonButtonProps {
@@ -159,6 +160,8 @@ const Button = React.forwardRef<ButtonRef, Props>((props, ref) => {
     tooltipTitle = `You don't have enough permissions to perform this action`;
   } else if (baseProps.loadingTooltip != null && baseProps.isLoading) {
     tooltipTitle = baseProps.loadingTooltip;
+  } else if (baseProps.disabledTooltip != null && baseProps.isDisabled) {
+    tooltipTitle = baseProps.disabledTooltip;
   }
   return (
     <Tooltip title={tooltipTitle}>

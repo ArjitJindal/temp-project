@@ -142,7 +142,7 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' updated '}
         <Entity {...props} />
-        {'and waiting for approval'}
+        {'and is waiting for approval'}
         <AsyncResourceRenderer resource={isPendingApprovalRes}>
           {(isPendingApproval) =>
             isPendingApproval ? (
@@ -185,7 +185,7 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' updated '}
         <Entity {...props} />
-        {'and waiting for approval'}
+        {'and is waiting for approval'}
         {riskFactorId && (
           <div
             className={s.buttons}
@@ -229,7 +229,7 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' updated '}
         <Entity {...props} />
-        {'and waiting for approval'}
+        {'and is waiting for approval'}
         {approvalId && userId && (
           <div
             className={s.buttons}
@@ -271,7 +271,7 @@ function Entity(props: Props) {
   } else if (notification.entityType === 'USER') {
     label = 'a user ';
   } else if (notification.entityType === 'RISK_LEVELS') {
-    label = 'a risk levels ';
+    label = 'risk levels ';
   } else if (notification.entityType === 'RISK_FACTORS') {
     label = 'a risk factor ';
   } else {
@@ -288,7 +288,17 @@ function Entity(props: Props) {
 
 function EntityId(props: Props) {
   const { notification } = props;
-  return <b>‘{notification.entityId}’</b>;
+
+  // For approval notifications, don't show the entity ID as it's not meaningful
+  if (
+    notification.notificationType === 'RISK_CLASSIFICATION_APPROVAL' ||
+    notification.notificationType === 'RISK_FACTORS_APPROVAL' ||
+    notification.notificationType === 'USER_CHANGES_APPROVAL'
+  ) {
+    return null;
+  }
+
+  return <b>'{notification.entityId}'</b>;
 }
 
 function Author(props: Props) {

@@ -19,7 +19,7 @@ import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
 import { neverReturn } from '@/utils/lang';
 import { useWorkflows, WorkflowItem } from '@/utils/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
+import { useCurrentUserId } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';
 import { notEmpty } from '@/utils/array';
 import Button from '@/components/library/Button';
@@ -38,6 +38,8 @@ import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import Skeleton from '@/components/library/Skeleton';
 import { dayjs } from '@/utils/dayjs';
 import AccountTag from '@/components/AccountTag';
+import { useRoles } from '@/utils/api/auth';
+import { useCurrentUserRoleId } from '@/utils/role-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -58,7 +60,7 @@ export default function UserPendingApprovalsModal(props: Props) {
 
   const pendingProposals = getOr(pendingProposalsRes, []);
   const workflowsQueryResults = useWorkflows(
-    'user-update-approval',
+    'change-approval',
     pendingProposals.map((x) => x.workflowRef),
   );
 
@@ -342,24 +344,28 @@ function useErrors(
   }[]
 > {
   const currentUserId = useCurrentUserId();
-  const currentRole = useAccountRawRole();
+  const currentUserRoleId = useCurrentUserRoleId();
+  const { roles: rolesRes } = useRoles();
 
   return useMemo(() => {
-    if (!isSuccess(pendingProposalsRes) || !isSuccess(workflowsRes)) {
+    if (!isSuccess(pendingProposalsRes) || !isSuccess(workflowsRes) || !isSuccess(rolesRes.data)) {
       return loading();
     }
     const pendingProposals = pendingProposalsRes.value;
     const workflows = workflowsRes.value;
+    const roles = rolesRes.data.value.items;
 
     return success(
       pendingProposals
         .map((pendingProposal, i) => {
           const workflow = workflows[i];
-          if (workflow.workflowType !== 'user-update-approval') {
+          if (workflow.workflowType !== 'change-approval') {
             throw new Error('Invalid workflow type');
           }
-          const currentStepRole = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
-          const isRoleMatching = currentRole === currentStepRole;
+          const currentStepRoleId = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
+          const currentStepRoleName =
+            roles.find((r) => r.id === currentStepRoleId)?.name ?? currentStepRoleId;
+          const isRoleMatching = currentUserRoleId === currentStepRoleId;
           const isCurrentUserAuthor = currentUserId === pendingProposal.createdBy;
           if (isCurrentUserAuthor) {
             const isCancelUnavailable =
@@ -369,7 +375,7 @@ function useErrors(
               rejectBlocked: true,
               cancelBlocked: isCancelUnavailable,
               messages: [
-                `Before your changes take effect, they need to be approved by a user with a "${currentStepRole}" role`,
+                `Before your changes take effect, they need to be approved by a user with a "${currentStepRoleName}" role`,
                 ...(isCancelUnavailable
                   ? [
                       'This proposal has already passed first approval step, it is not possible to discard it now',
@@ -382,7 +388,9 @@ function useErrors(
               acceptBlocked: true,
               rejectBlocked: true,
               cancelBlocked: true,
-              messages: [`You need to have a "${currentStepRole}" role to approve these changes`],
+              messages: [
+                `You need to have a "${currentStepRoleName}" role to approve these changes`,
+              ],
             };
           }
           return {
@@ -394,7 +402,7 @@ function useErrors(
         })
         .filter(notEmpty),
     );
-  }, [pendingProposalsRes, workflowsRes, currentUserId, currentRole]);
+  }, [pendingProposalsRes, workflowsRes, currentUserId, currentUserRoleId, rolesRes.data]);
 }
 
 function getFieldName(field: keyof WorkflowSettingsUserApprovalWorkflows): string {

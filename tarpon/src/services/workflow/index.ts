@@ -6,34 +6,113 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
-import { NotFound } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { StackConstants } from '@lib/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
-import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
-import { UserUpdateApprovalWorkflow } from '@/@types/openapi-internal/UserUpdateApprovalWorkflow'
+import { ApprovalWorkflow } from '@/@types/openapi-internal/ApprovalWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 import { getContext } from '@/core/utils/context-storage'
 import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
 import { CounterRepository, CounterEntity } from '@/services/counter/repository'
-import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
+import { tenantSettings } from '@/core/utils/context'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { RiskService } from '@/services/risk'
+import { UserService } from '@/services/users'
 
 interface WorkflowServiceDeps {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
 }
 
-export type Workflow =
-  | CaseWorkflow
-  | AlertWorkflow
-  | RiskLevelApprovalWorkflow
-  | RiskFactorsApprovalWorkflow
-  | UserUpdateApprovalWorkflow
+export type Workflow = CaseWorkflow | AlertWorkflow | ApprovalWorkflow
 
 type InternalWorkflow = Workflow & {
   PartitionKeyID: string
   SortKeyID: string
+}
+
+/**
+ * Helper function to convert camelCase string to readable format
+ * Examples:
+ *   "riskLevelsApprovalWorkflow" -> "Risk Levels Approval Workflow"
+ *   "eoddDate" -> "Eodd Date"
+ */
+function formatCamelCaseToReadable(text: string): string {
+  return text
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim()
+}
+
+/**
+ * Checks if a workflow is referenced in tenant workflow settings
+ * @returns Object containing arrays of direct references and user fields
+ */
+function findWorkflowReferences(
+  workflowSettings: any,
+  workflowId: string
+): { directReferences: string[]; userFields: string[] } {
+  const directReferences: string[] = []
+  const userFields: string[] = []
+
+  if (!workflowSettings) {
+    return { directReferences, userFields }
+  }
+
+  for (const [settingKey, settingValue] of Object.entries(workflowSettings)) {
+    if (typeof settingValue === 'string' && settingValue === workflowId) {
+      // Direct reference (e.g., riskLevelsApprovalWorkflow, riskFactorsApprovalWorkflow)
+      const readableName = formatCamelCaseToReadable(settingKey).replace(
+        /Approval$/,
+        ''
+      ) // Remove redundant "Approval" suffix
+      directReferences.push(readableName)
+    } else if (typeof settingValue === 'object' && settingValue !== null) {
+      // Nested object (e.g., userApprovalWorkflows)
+      for (const [nestedKey, nestedValue] of Object.entries(settingValue)) {
+        if (nestedValue === workflowId) {
+          if (settingKey === 'userApprovalWorkflows') {
+            // Format user field names
+            userFields.push(formatCamelCaseToReadable(nestedKey))
+          } else {
+            // Generic fallback for other nested objects
+            const parentName = formatCamelCaseToReadable(settingKey)
+            directReferences.push(`${parentName}: ${nestedKey}`)
+          }
+        }
+      }
+    }
+  }
+
+  return { directReferences, userFields }
+}
+
+/**
+ * Formats workflow setting references into a user-friendly error message
+ */
+function formatWorkflowReferences(
+  workflowId: string,
+  directReferences: string[],
+  userFields: string[]
+): string {
+  const parts: string[] = []
+
+  // Add direct references
+  if (directReferences.length > 0) {
+    parts.push(...directReferences)
+  }
+
+  // Add grouped user fields
+  if (userFields.length > 0) {
+    parts.push(`User Field Approval (${userFields.join(', ')})`)
+  }
+
+  return `Cannot disable workflow ${workflowId} because it is currently used in settings for the following actions:\n\n${parts.join(
+    ', '
+  )}.`
 }
 
 export class WorkflowService {
@@ -63,6 +142,14 @@ export class WorkflowService {
   }
 
   private async getNextWorkflowId(workflowType: WorkflowType): Promise<string> {
+    // Special handling for change-approval to avoid conflict with case (WC)
+    if (workflowType === 'change-approval') {
+      const nextNumber = await this.counterRepo.getNextCounterAndUpdate(
+        'WorkflowChangeApproval'
+      )
+      return `WCA-${nextNumber}`
+    }
+
     // build the prefix from the workflow type (first letter capitalized)
     const prefix = `W${workflowType.charAt(0).toUpperCase()}`
     // build the counter entity from the workflow type (ie: case -> WorkflowCase)
@@ -78,7 +165,7 @@ export class WorkflowService {
   async getWorkflows(workflowType?: WorkflowType): Promise<Workflow[]> {
     const workflowTypes: WorkflowType[] = workflowType
       ? [workflowType]
-      : ['case', 'alert']
+      : ['case', 'alert', 'change-approval'] // Include unified approval workflows
 
     const results = await Promise.all(
       workflowTypes.map(async (type) => {
@@ -145,7 +232,7 @@ export class WorkflowService {
   async getWorkflowVersion(
     workflowType: WorkflowType,
     workflowId: string,
-    version: string
+    version: number
   ): Promise<Workflow> {
     const getInput = {
       TableName: this.tableName,
@@ -153,7 +240,7 @@ export class WorkflowService {
         this.tenantId,
         workflowType,
         workflowId,
-        version.toString()
+        version.toString() // DynamoDB keys require strings
       ),
       ConsistentRead: true,
     }
@@ -223,47 +310,110 @@ export class WorkflowService {
     return this.cleanWorkflow(item as InternalWorkflow)
   }
 
+  /**
+   * Updates all pending approvals to use a new workflow version
+   * This is called when a workflow is updated (new version created)
+   *
+   * For change-approval workflows, this method:
+   * - Queries tenant settings to determine which approval contexts use this workflow
+   * - Updates risk level approvals if this workflow is configured for risk levels
+   * - Updates risk factor approvals if this workflow is configured for risk factors
+   * - Updates user approvals if this workflow is configured for any user fields
+   * - Returns the total count of updated approvals
+   */
   async updatePendingApprovalsForWorkflow(
     workflowType: WorkflowType,
     newWorkflowRef: { id: string; version: number }
   ): Promise<number> {
     // Update pending approvals based on workflow type
     switch (workflowType) {
-      case 'risk-levels-approval': {
-        // Import and call risk service to update pending approvals
-        const { RiskService } = await import('@/services/risk')
-        const riskService = new RiskService(this.tenantId, {
-          dynamoDb: this.docClient,
+      case 'change-approval': {
+        console.log(
+          `Updating pending approvals for unified workflow ${newWorkflowRef.id} to version ${newWorkflowRef.version}`
+        )
+
+        // Get tenant settings to determine which approval contexts use this workflow
+        const settings = await tenantSettings(this.tenantId)
+        if (!settings?.workflowSettings) {
+          console.log('No workflow settings found in tenant settings')
+          return 0
+        }
+
+        let totalUpdated = 0
+        const { workflowSettings } = settings
+
+        // Initialize repositories
+        const riskRepository = new RiskRepository(this.tenantId, {
+          dynamoDb: this.deps.dynamoDb,
           mongoDb: this.deps.mongoDb,
         })
-        return await riskService.updatePendingRiskLevelApprovalsWorkflow(
-          newWorkflowRef
-        )
-      }
-      case 'risk-factors-approval': {
-        // Import and call risk service to update pending approvals
-        const { RiskService: RiskService2 } = await import('@/services/risk')
-        const riskService2 = new RiskService2(this.tenantId, {
-          dynamoDb: this.docClient,
+        const userRepository = new UserRepository(this.tenantId, {
+          dynamoDb: this.deps.dynamoDb,
           mongoDb: this.deps.mongoDb,
         })
-        return await riskService2.updatePendingRiskFactorApprovalsWorkflow(
-          newWorkflowRef
+
+        // Check if this workflow is used for risk levels approval
+        if (workflowSettings.riskLevelsApprovalWorkflow === newWorkflowRef.id) {
+          console.log(
+            `Workflow ${newWorkflowRef.id} is used for risk levels approval`
+          )
+          const updated =
+            await riskRepository.bulkUpdateRiskLevelApprovalsWorkflow(
+              newWorkflowRef
+            )
+          console.log(`Updated ${updated} risk level approval(s)`)
+          totalUpdated += updated
+        }
+
+        // Check if this workflow is used for risk factors approval
+        if (
+          workflowSettings.riskFactorsApprovalWorkflow === newWorkflowRef.id
+        ) {
+          console.log(
+            `Workflow ${newWorkflowRef.id} is used for risk factors approval`
+          )
+          const updated =
+            await riskRepository.bulkUpdateRiskFactorApprovalsWorkflow(
+              newWorkflowRef
+            )
+          console.log(`Updated ${updated} risk factor approval(s)`)
+          totalUpdated += updated
+        }
+
+        // Check if this workflow is used for any user field approvals
+        const userApprovalWorkflows = workflowSettings.userApprovalWorkflows
+        if (userApprovalWorkflows) {
+          const userFields: string[] = []
+          for (const [field, workflowId] of Object.entries(
+            userApprovalWorkflows
+          )) {
+            if (workflowId === newWorkflowRef.id) {
+              userFields.push(field)
+            }
+          }
+
+          if (userFields.length > 0) {
+            console.log(
+              `Workflow ${
+                newWorkflowRef.id
+              } is used for user field(s): ${userFields.join(', ')}`
+            )
+            const updated =
+              await userRepository.bulkUpdateUserApprovalsWorkflow(
+                newWorkflowRef
+              )
+            console.log(`Updated ${updated} user approval(s)`)
+            totalUpdated += updated
+          }
+        }
+
+        console.log(
+          `Total pending approvals updated for workflow ${newWorkflowRef.id}: ${totalUpdated}`
         )
-      }
-      case 'user-update-approval': {
-        // Import and call user service to update pending approvals
-        const { UserService } = await import('@/services/users')
-        const userService = new UserService(this.tenantId, {
-          dynamoDb: this.docClient,
-          mongoDb: this.deps.mongoDb,
-        })
-        return await userService.updatePendingUserApprovalsWorkflow(
-          newWorkflowRef
-        )
+        return totalUpdated
       }
       default:
-        // Other workflow types don't have pending approvals to update
+        // Other workflow types (case, alert) don't have pending approvals to update
         return 0
     }
   }
@@ -277,6 +427,22 @@ export class WorkflowService {
     const workflow = await this.getWorkflow(workflowType, workflowId)
     if (!workflow) {
       throw new NotFound('Workflow not found')
+    }
+
+    // If disabling a change-approval workflow, check if it's referenced in tenant settings
+    if (!enabled && workflowType === 'change-approval') {
+      const settings = await tenantSettings(this.tenantId)
+      const { directReferences, userFields } = findWorkflowReferences(
+        settings.workflowSettings,
+        workflowId
+      )
+
+      // Throw error if workflow is in use
+      if (directReferences.length > 0 || userFields.length > 0) {
+        throw new BadRequest(
+          formatWorkflowReferences(workflowId, directReferences, userFields)
+        )
+      }
     }
 
     // Perform partial update to only modify the enabled field
@@ -323,36 +489,105 @@ export class WorkflowService {
     return Array.from(statusesSet)
   }
 
+  /**
+   * Auto-applies pending approvals when a workflow is disabled or deleted
+   * This is called when a workflow is removed from the system
+   *
+   * For change-approval workflows, this method:
+   * - Queries tenant settings to determine which approval contexts use this workflow
+   * - Auto-applies risk level approvals if this workflow was configured for risk levels
+   * - Auto-applies risk factor approvals if this workflow was configured for risk factors
+   * - Auto-applies user approvals if this workflow was configured for any user fields
+   * - Returns the total count of auto-applied approvals
+   */
   async autoApplyPendingApprovalsForRemovedWorkflows(
     workflowType: WorkflowType,
+    workflowId: string,
     fieldsWithRemovedWorkflows?: string[]
   ): Promise<number> {
     console.log(
-      `Auto-applying pending approvals for removed workflow type: ${workflowType}`
+      `Auto-applying pending approvals for removed workflow ${workflowId} of type: ${workflowType}`
     )
 
     // Auto-apply pending approvals based on workflow type
     switch (workflowType) {
-      // NOTE: when necessary here we can add auto-apply logic for other approval workflow types
-      case 'user-update-approval': {
-        if (
-          !fieldsWithRemovedWorkflows ||
-          fieldsWithRemovedWorkflows.length === 0
-        ) {
-          console.log(
-            'No fields specified for user workflow removal, skipping auto-apply'
-          )
+      case 'change-approval': {
+        console.log(
+          `Determining which approval contexts use workflow ${workflowId}`
+        )
+
+        // Get tenant settings to determine which approval contexts use this workflow
+        const settings = await tenantSettings(this.tenantId)
+        if (!settings?.workflowSettings) {
+          console.log('No workflow settings found in tenant settings')
           return 0
         }
-        // Import and call user service to auto-apply pending user approvals
-        const { UserService } = await import('@/services/users')
-        const userService = new UserService(this.tenantId, {
-          dynamoDb: this.docClient,
+
+        let totalAutoApplied = 0
+        const { workflowSettings } = settings
+
+        // Initialize repositories
+        const riskService = new RiskService(this.tenantId, {
+          dynamoDb: this.deps.dynamoDb,
           mongoDb: this.deps.mongoDb,
         })
-        return await userService.autoApplyPendingUserApprovals(
-          fieldsWithRemovedWorkflows
+        const userService = new UserService(this.tenantId, {
+          dynamoDb: this.deps.dynamoDb,
+          mongoDb: this.deps.mongoDb,
+        })
+
+        // Check if this workflow was used for risk levels approval
+        if (workflowSettings.riskLevelsApprovalWorkflow === workflowId) {
+          console.log(
+            `Workflow ${workflowId} was used for risk levels approval`
+          )
+          const applied = await riskService.autoApplyPendingRiskLevelApprovals()
+          console.log(`Auto-applied ${applied} risk level approval(s)`)
+          totalAutoApplied += applied
+        }
+
+        // Check if this workflow was used for risk factors approval
+        if (workflowSettings.riskFactorsApprovalWorkflow === workflowId) {
+          console.log(
+            `Workflow ${workflowId} was used for risk factors approval`
+          )
+          const applied =
+            await riskService.autoApplyPendingRiskFactorApprovals()
+          console.log(`Auto-applied ${applied} risk factor approval(s)`)
+          totalAutoApplied += applied
+        }
+
+        // Check if this workflow was used for any user field approvals
+        const userApprovalWorkflows = workflowSettings.userApprovalWorkflows
+        if (userApprovalWorkflows && fieldsWithRemovedWorkflows) {
+          const userFields: string[] = []
+          for (const [field, wfId] of Object.entries(userApprovalWorkflows)) {
+            if (
+              wfId === workflowId &&
+              fieldsWithRemovedWorkflows.includes(field)
+            ) {
+              userFields.push(field)
+            }
+          }
+
+          if (userFields.length > 0) {
+            console.log(
+              `Workflow ${workflowId} was used for user field(s): ${userFields.join(
+                ', '
+              )}`
+            )
+            const applied = await userService.autoApplyPendingUserApprovals(
+              userFields
+            )
+            console.log(`Auto-applied ${applied} user approval(s)`)
+            totalAutoApplied += applied
+          }
+        }
+
+        console.log(
+          `Total pending approvals auto-applied for workflow ${workflowId}: ${totalAutoApplied}`
         )
+        return totalAutoApplied
       }
       default:
         // Other workflow types don't have pending approvals to auto-apply

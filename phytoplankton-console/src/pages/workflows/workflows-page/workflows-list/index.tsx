@@ -1,29 +1,23 @@
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import s from './index.module.less';
-import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
-import { useApi } from '@/api';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { ID, NUMBER, TAG } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Id from '@/components/ui/Id';
-import { WorkflowItem } from '@/utils/api/workflows';
-import { useQuery } from '@/utils/queries/hooks';
-import { WORKFLOWS_LIST } from '@/utils/queries/keys';
+import {
+  useAllWorkflowList,
+  useChangeWorkflowEnableMutation,
+  WorkflowItem,
+  WorkflowType,
+} from '@/utils/api/workflows';
 import { map } from '@/utils/queries/types';
 import { makeUrl } from '@/utils/routing';
-import Button from '@/components/library/Button';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import Toggle from '@/components/library/Toggle';
+import { isLoading } from '@/utils/asyncResource';
 
 export default function WorkflowsList() {
-  const api = useApi();
-  const workflowsQueryResult = useQuery(WORKFLOWS_LIST({}), async (): Promise<WorkflowItem[]> => {
-    const workflowResponse = await api.getAllWorkflowTypes();
-    return workflowResponse.workflows ?? [];
-  });
-
-  const navigate = useNavigate();
+  const workflowsQueryResult = useAllWorkflowList();
 
   const columns = useMemo(() => {
     const helper = new ColumnHelper<WorkflowItem>();
@@ -46,18 +40,15 @@ export default function WorkflowsList() {
           },
         },
         key: 'id',
+        defaultWidth: 100,
       }),
       helper.simple<'workflowType'>({
         title: 'Category',
         key: 'workflowType',
         type: TAG as ColumnDataType<
-          | 'case'
-          | 'alert'
-          | 'risk-levels-approval'
-          | 'risk-factors-approval'
-          | 'rule-approval'
-          | 'user-update-approval'
+          'case' | 'alert' | 'change-approval' // Unified approval workflow type
         >,
+        defaultWidth: 180,
       }),
       helper.simple<'version'>({
         title: 'Last version',
@@ -82,41 +73,42 @@ export default function WorkflowsList() {
       }),
       // helper.simple<'category'>({ title: 'Category', key: 'category' }),
       helper.simple<'name'>({ title: 'Name', key: 'name' }),
-      // helper.simple<'description'>({ title: 'Description', key: 'description' }),
+      helper.simple<'description'>({
+        title: 'Description',
+        key: 'description',
+        defaultWidth: 350,
+      }),
       // helper.simple<'workflowType'>({
       //   title: 'Type',
       //   key: 'workflowType',
       //   type: TAG as ColumnDataType<'case' | 'alert'>,
       // }),
       // helper.simple<'createdAt'>({ title: 'Created At', key: 'createdAt' }),
-      // helper.simple<'status'>({ title: 'Status', key: 'status' }),
-      helper.display({
-        title: 'Actions',
+      helper.simple<'enabled'>({
+        title: 'Status',
+        key: 'enabled',
+        defaultEditState: true,
         defaultSticky: 'RIGHT',
-        render: (item) => {
-          return (
-            <div className={s.actions}>
-              <Button
-                type="TETRIARY"
-                icon={<EditLineIcon />}
-                onClick={() => {
-                  navigate(
-                    makeUrl(`/workflows/:type/item/:id`, {
-                      type: item.workflowType.toLowerCase(),
-                      id: item.id,
-                    }),
-                  );
-                }}
+        defaultWidth: 80,
+        enableResizing: false,
+        type: {
+          render: (value, item) => {
+            return (
+              <StatusToggle
+                workflowId={item.item.id}
+                workflowType={item.item.workflowType}
+                value={value}
               />
-            </div>
-          );
+            );
+          },
         },
       }),
     ];
-  }, [navigate]);
+  }, []);
 
   return (
     <QueryResultsTable<WorkflowItem>
+      tableId={'workflow-list'}
       rowKey="id"
       queryResults={map(workflowsQueryResult, (workflows) => ({
         items: workflows,
@@ -124,6 +116,43 @@ export default function WorkflowsList() {
       }))}
       columns={columns}
       pagination={false}
+      rowEditing={{
+        isEditable: () => true,
+        onSave: () => {},
+      }}
+    />
+  );
+}
+
+/*
+  Helpers
+ */
+function StatusToggle(props: {
+  workflowId: string;
+  workflowType: WorkflowType;
+  value: boolean | undefined;
+}) {
+  const statePair = useState<boolean | undefined>(props.value);
+  const [value, setValue] = statePair;
+
+  useEffect(() => {
+    setValue(props.value);
+  }, [props.value, setValue]);
+
+  const enabledStatusMutation = useChangeWorkflowEnableMutation(statePair);
+
+  return (
+    <Toggle
+      isLoading={isLoading(enabledStatusMutation.dataResource)}
+      value={value}
+      onChange={(newValue) => {
+        setValue(newValue);
+        enabledStatusMutation.mutateAsync({
+          workflowType: props.workflowType,
+          workflowId: props.workflowId,
+          enabled: newValue ?? false,
+        });
+      }}
     />
   );
 }

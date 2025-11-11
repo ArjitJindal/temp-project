@@ -4,7 +4,7 @@ import HeaderLayout from './HeaderLayout';
 import { Props } from '.';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useWorkflow } from '@/utils/api/workflows';
-import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
+import { useCurrentUserId } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';
 import Button from '@/components/library/Button';
 import RiskLevelsDownloadButton from '@/pages/risk-levels/configure/components/RiskLevelsDownloadButton';
@@ -14,6 +14,7 @@ import { RiskClassificationConfigApproval } from '@/apis';
 import { StatePair } from '@/utils/state';
 import Label from '@/components/library/Label';
 import Toggle from '@/components/library/Toggle';
+import { useRoleNameFromId, useIsCurrentUserRole } from '@/utils/role-utils';
 
 import { useSendProposalActionMutation } from '@/pages/risk-levels/configure/RiskClassification/helpers';
 
@@ -39,11 +40,8 @@ function PendingProposalActions(
 ) {
   const { riskValues, pendingProposal, showProposalState, requiredResources } = props;
 
-  const workflowsQueryResult = useWorkflow('risk-levels-approval', pendingProposal.workflowRef);
-
+  const workflowsQueryResult = useWorkflow('change-approval', pendingProposal.workflowRef);
   const currentUserId = useCurrentUserId();
-  const currentRole = useAccountRawRole();
-
   const sendProposalActionMutation = useSendProposalActionMutation();
 
   const [showProposal] = showProposalState;
@@ -53,7 +51,7 @@ function PendingProposalActions(
   return (
     <AsyncResourceRenderer resource={workflowsQueryResult.data}>
       {(workflow) => {
-        if (workflow.workflowType !== 'risk-levels-approval') {
+        if (workflow.workflowType !== 'change-approval') {
           throw new Error('Invalid workflow type');
         }
         // If current proposal is not in pending state, only show information about it to the author
@@ -74,134 +72,170 @@ function PendingProposalActions(
           );
         }
 
-        const currentStepRole = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
-        const isRoleMatching = currentRole === currentStepRole;
+        const currentStepRoleId = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
         const isCurrentUserAuthor = currentUserId === pendingProposal.createdBy;
 
-        // If proposal created by current user - show specific UI and discard button
-        if (isCurrentUserAuthor) {
-          return (
-            <HeaderLayout
-              left={
-                <Alert type="WARNING">
-                  {`Your changes are pending approval. It must be approved by a user with the "${currentStepRole}" role`}
-                </Alert>
-              }
-              subheader={
-                showComment && (
-                  <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
-                )
-              }
-            >
-              {showingProposalState && (
-                <Confirm
-                  text={'Are you sure you want to cancel this proposal?'}
-                  onConfirm={() => {
-                    sendProposalActionMutation.mutate({ action: 'cancel' });
-                  }}
-                >
-                  {({ onClick }) => {
-                    const isRejectUnavailable =
-                      pendingProposal.approvalStep != null && pendingProposal.approvalStep > 0;
-                    let tooltipMessage: string | null = null;
-                    if (isRejectUnavailable) {
-                      tooltipMessage =
-                        'This proposal has already passed first approval step, it is not possible to discard it now';
-                    }
-                    return (
-                      <Tooltip trigger={'hover'} title={tooltipMessage}>
-                        <Button
-                          type="DANGER"
-                          onClick={onClick}
-                          isDisabled={isRejectUnavailable || !showingProposalState}
-                        >
-                          Discard proposal
-                        </Button>
-                      </Tooltip>
-                    );
-                  }}
-                </Confirm>
-              )}
-              <ShowProposalButton showProposalState={showProposalState} />
-              <RiskLevelsDownloadButton
-                classificationValues={riskValues.classificationValues}
-                isDisabled={showingProposalState}
-              />
-            </HeaderLayout>
-          );
-        }
-
-        // Approval actions if current role matches next required
-        if (isRoleMatching) {
-          return (
-            <HeaderLayout
-              left={
-                <Alert type="WARNING">
-                  There is a pending proposal for risk classification, you need to accept or reject
-                  it.
-                </Alert>
-              }
-              subheader={
-                showComment && (
-                  <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
-                )
-              }
-            >
-              {showingProposalState && (
-                <>
-                  <Button
-                    type="PRIMARY"
-                    onClick={() => {
-                      sendProposalActionMutation.mutate({ action: 'accept' });
-                    }}
-                    requiredResources={requiredResources}
-                    isDisabled={!showingProposalState}
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    type="DANGER"
-                    onClick={() => {
-                      sendProposalActionMutation.mutate({ action: 'reject' });
-                    }}
-                    requiredResources={requiredResources}
-                    isDisabled={!showingProposalState}
-                  >
-                    Reject
-                  </Button>
-                </>
-              )}
-              <ShowProposalButton showProposalState={showProposalState} />
-              <RiskLevelsDownloadButton
-                classificationValues={riskValues.classificationValues}
-                isDisabled={showingProposalState}
-              />
-            </HeaderLayout>
-          );
-        }
-
         return (
-          <HeaderLayout
-            left={
-              <Alert type="WARNING">
-                {`There is a pending proposal for risk classification. You need to have a "${currentStepRole}" role to reject or approve it.`}
-              </Alert>
-            }
-            subheader={
-              showComment && (
-                <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
-              )
-            }
-          >
-            <ShowProposalButton showProposalState={showProposalState} />
-            <RiskLevelsDownloadButton
-              classificationValues={riskValues.classificationValues}
-              isDisabled={showingProposalState}
-            />
-          </HeaderLayout>
+          <PendingProposalActionsInner
+            riskValues={riskValues}
+            requiredResources={requiredResources}
+            currentStepRoleId={currentStepRoleId}
+            isCurrentUserAuthor={isCurrentUserAuthor}
+            workflow={workflow}
+            pendingProposal={pendingProposal}
+            showProposalState={showProposalState}
+            showingProposalState={showingProposalState}
+            showComment={showComment}
+            sendProposalActionMutation={sendProposalActionMutation}
+          />
         );
       }}
     </AsyncResourceRenderer>
+  );
+}
+
+function PendingProposalActionsInner(props: {
+  riskValues: Props['riskValues'];
+  requiredResources: Props['requiredResources'];
+  currentStepRoleId: string;
+  isCurrentUserAuthor: boolean;
+  workflow: any;
+  pendingProposal: RiskClassificationConfigApproval;
+  showProposalState: StatePair<boolean>;
+  showingProposalState: boolean;
+  showComment: boolean;
+  sendProposalActionMutation: any;
+}) {
+  const {
+    riskValues,
+    requiredResources,
+    currentStepRoleId,
+    isCurrentUserAuthor,
+    pendingProposal,
+    showProposalState,
+    showingProposalState,
+    showComment,
+    sendProposalActionMutation,
+  } = props;
+
+  // Use shared hooks for role name lookup and matching
+  const currentStepRoleName = useRoleNameFromId(currentStepRoleId);
+  const isRoleMatching = useIsCurrentUserRole(currentStepRoleId);
+
+  // If proposal created by current user - show specific UI and discard button
+  if (isCurrentUserAuthor) {
+    return (
+      <HeaderLayout
+        left={
+          <Alert type="WARNING">
+            {`Your changes are pending approval. It must be approved by a user with the "${currentStepRoleName}" role`}
+          </Alert>
+        }
+        subheader={
+          showComment && <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
+        }
+      >
+        {showingProposalState && (
+          <Confirm
+            text={'Are you sure you want to cancel this proposal?'}
+            onConfirm={() => {
+              sendProposalActionMutation.mutate({ action: 'cancel' });
+            }}
+          >
+            {({ onClick }) => {
+              const isRejectUnavailable =
+                pendingProposal.approvalStep != null && pendingProposal.approvalStep > 0;
+              let tooltipMessage: string | null = null;
+              if (isRejectUnavailable) {
+                tooltipMessage =
+                  'This proposal has already passed first approval step, it is not possible to discard it now';
+              }
+              return (
+                <Tooltip trigger={'hover'} title={tooltipMessage}>
+                  <Button
+                    type="DANGER"
+                    onClick={onClick}
+                    isDisabled={isRejectUnavailable || !showingProposalState}
+                  >
+                    Discard proposal
+                  </Button>
+                </Tooltip>
+              );
+            }}
+          </Confirm>
+        )}
+        <ShowProposalButton showProposalState={showProposalState} />
+        <RiskLevelsDownloadButton
+          classificationValues={riskValues.classificationValues}
+          isDisabled={showingProposalState}
+        />
+      </HeaderLayout>
+    );
+  }
+
+  // Approval actions if current role matches next required
+  if (isRoleMatching) {
+    return (
+      <HeaderLayout
+        left={
+          <Alert type="WARNING">
+            There is a pending proposal for risk classification, you need to accept or reject it.
+          </Alert>
+        }
+        subheader={
+          showComment && <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
+        }
+      >
+        {showingProposalState && (
+          <>
+            <Button
+              type="PRIMARY"
+              onClick={() => {
+                sendProposalActionMutation.mutate({ action: 'accept' });
+              }}
+              requiredResources={requiredResources}
+              isDisabled={!showingProposalState}
+            >
+              Accept
+            </Button>
+            <Button
+              type="DANGER"
+              onClick={() => {
+                sendProposalActionMutation.mutate({ action: 'reject' });
+              }}
+              requiredResources={requiredResources}
+              isDisabled={!showingProposalState}
+            >
+              Reject
+            </Button>
+          </>
+        )}
+        <ShowProposalButton showProposalState={showProposalState} />
+        <RiskLevelsDownloadButton
+          classificationValues={riskValues.classificationValues}
+          isDisabled={showingProposalState}
+        />
+      </HeaderLayout>
+    );
+  }
+
+  return (
+    <HeaderLayout
+      left={
+        <Alert type="WARNING">
+          {`There is a pending proposal for risk classification. You need to have a "${currentStepRoleName}" role to reject or approve it.`}
+        </Alert>
+      }
+      subheader={
+        showComment && <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
+      }
+    >
+      <ShowProposalButton showProposalState={showProposalState} />
+      <RiskLevelsDownloadButton
+        classificationValues={riskValues.classificationValues}
+        isDisabled={showingProposalState}
+      />
+    </HeaderLayout>
   );
 }
 

@@ -6,9 +6,7 @@ import { BadRequest } from 'http-errors'
 import {
   CaseWorkflowMachine,
   AlertWorkflowMachine,
-  RiskLevelApprovalWorkflowMachine,
-  RiskFactorsApprovalWorkflowMachine,
-  UserUpdateApprovalWorkflowMachine,
+  ApprovalWorkflowMachine,
 } from '@flagright/lib/classes/workflow-machine'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -18,17 +16,10 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CaseWorkflow } from '@/@types/openapi-internal/CaseWorkflow'
 import { AlertWorkflow } from '@/@types/openapi-internal/AlertWorkflow'
-import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
-import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
-import { UserUpdateApprovalWorkflow } from '@/@types/openapi-internal/UserUpdateApprovalWorkflow'
+import { ApprovalWorkflow } from '@/@types/openapi-internal/ApprovalWorkflow'
 import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
 
-type GenericWorkflow =
-  | CaseWorkflow
-  | AlertWorkflow
-  | RiskLevelApprovalWorkflow
-  | RiskFactorsApprovalWorkflow
-  | UserUpdateApprovalWorkflow
+type GenericWorkflow = CaseWorkflow | AlertWorkflow | ApprovalWorkflow
 
 function parseWorkflow(request): GenericWorkflow {
   let workflow: GenericWorkflow
@@ -53,31 +44,10 @@ function parseWorkflow(request): GenericWorkflow {
         'Invalid workflow definition: ' + (error as Error).message
       )
     }
-  } else if (request.workflowType === 'risk-levels-approval') {
-    workflow =
-      inlineObject.riskLevelApprovalWorkflow as RiskLevelApprovalWorkflow
+  } else if (request.workflowType === 'change-approval') {
+    workflow = inlineObject.approvalWorkflow as ApprovalWorkflow
     try {
-      RiskLevelApprovalWorkflowMachine.validate(workflow)
-    } catch (error) {
-      throw new BadRequest(
-        'Invalid workflow definition: ' + (error as Error).message
-      )
-    }
-  } else if (request.workflowType === 'risk-factors-approval') {
-    workflow =
-      inlineObject.riskFactorsApprovalWorkflow as RiskFactorsApprovalWorkflow
-    try {
-      RiskFactorsApprovalWorkflowMachine.validate(workflow)
-    } catch (error) {
-      throw new BadRequest(
-        'Invalid workflow definition: ' + (error as Error).message
-      )
-    }
-  } else if (request.workflowType === 'user-update-approval') {
-    workflow =
-      inlineObject.userUpdateApprovalWorkflow as UserUpdateApprovalWorkflow
-    try {
-      UserUpdateApprovalWorkflowMachine.validate(workflow)
+      ApprovalWorkflowMachine.validate(workflow)
     } catch (error) {
       throw new BadRequest(
         'Invalid workflow definition: ' + (error as Error).message

@@ -2068,9 +2068,11 @@ export class UserRepository {
   /**
    * Bulk updates all pending user approvals to use a new workflow reference and reset approval step to 0
    * This is used when a workflow is updated to restart all pending approval flows
+   *
+   * Note: With unified change-approval workflows, a single workflow can be used for multiple user fields.
+   * This method updates ALL user approvals that reference the old workflow, regardless of which field
+   * they're for. The WorkflowService determines which workflow is used before calling this method.
    */
-  // TODO: the logic of this method needs to be updated once implementing
-  //       workflow builder and workflows are referenced by their id in tenant settings
   async bulkUpdateUserApprovalsWorkflow(newWorkflowRef: {
     id: string
     version: number
@@ -2078,35 +2080,31 @@ export class UserRepository {
     console.log(`Updating user approvals workflow to:`, newWorkflowRef)
 
     // Use a query with a filter to find items that need updating
+    // This will find all user approvals that either:
+    // 1. Don't have a workflow ref (shouldn't happen in practice)
+    // 2. Have a different workflow ID
+    // 3. Have the same workflow ID but different version
     const result = await this.dynamoDb.send(
       new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         KeyConditionExpression: 'PartitionKeyID = :pk',
         FilterExpression:
-          'attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion',
+          'attribute_exists(workflowRef) AND (workflowRef.id = :oldWorkflowId OR (workflowRef.id = :newWorkflowId AND workflowRef.version <> :newWorkflowVersion))',
         ExpressionAttributeValues: {
           ':pk': DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '').PartitionKeyID,
+          ':oldWorkflowId': newWorkflowRef.id, // Find approvals using this workflow (any version)
           ':newWorkflowId': newWorkflowRef.id,
           ':newWorkflowVersion': newWorkflowRef.version,
         },
       })
     )
 
-    // get the field associated to the workflowRef
-    const userField = newWorkflowRef.id.split('_').pop()
-    console.log(`User field:`, userField)
-
-    // filter the result to only include items where the user field is not null
-    const filteredResult = result.Items?.filter((item) => {
-      const proposedChanges = item.proposedChanges
-      return proposedChanges.some((change) => change.field === userField)
-    })
-
-    if (!filteredResult || !filteredResult.length) {
+    if (!result.Items || !result.Items.length) {
+      console.log('No user approvals found that need updating')
       return 0
     }
 
-    console.log(`Filtered result:`, filteredResult.length)
+    console.log(`Found ${result.Items.length} user approval(s) to update`)
 
     console.log(
       `User approvals query result:`,
@@ -2114,12 +2112,14 @@ export class UserRepository {
         {
           partitionKey: DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '')
             .PartitionKeyID,
-          totalItems: filteredResult.length,
-          items: filteredResult.map((item) => ({
+          totalItems: result.Items.length,
+          items: result.Items.map((item) => ({
             SortKeyID: item.SortKeyID,
             workflowRef: item.workflowRef,
             approvalStep: item.approvalStep,
-            proposedChanges: item.proposedChanges.map((change) => change.field),
+            proposedChanges: item.proposedChanges.map(
+              (change: any) => change.field
+            ),
           })),
         },
         null,
@@ -2131,8 +2131,8 @@ export class UserRepository {
     const batchSize = 25
     let updatedCount = 0
 
-    for (let i = 0; i < filteredResult.length; i += batchSize) {
-      const batch = filteredResult.slice(i, i + batchSize)
+    for (let i = 0; i < result.Items.length; i += batchSize) {
+      const batch = result.Items.slice(i, i + batchSize)
 
       const batchWriteInput = {
         RequestItems: {

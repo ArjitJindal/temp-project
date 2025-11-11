@@ -51,12 +51,22 @@ export class Handlers {
                     ctx,
                     {
                         {{#pathParams}}
+                            {{#isLong}}
+                        {{paramName}}: parseInt(event.pathParameters?.{{paramName}} as string, 10),
+                            {{/isLong}}
+                            {{^isLong}}
+                            {{#isInteger}}
+                        {{paramName}}: parseInt(event.pathParameters?.{{paramName}} as string, 10),
+                            {{/isInteger}}
+                            {{^isInteger}}
                             {{#isNumber}}
-                        {{paramName}}: event.pathParameters?.{{paramName}} ? parseInt(event.pathParameters?.{{paramName}}) : undefined,
+                        {{paramName}}: parseInt(event.pathParameters?.{{paramName}} as string),
                             {{/isNumber}}
                             {{^isNumber}}
                         {{paramName}}: event.pathParameters?.{{paramName}} as string,
                             {{/isNumber}}
+                            {{/isInteger}}
+                            {{/isLong}}
                         {{/pathParams}}
                         {{#queryParams}}
                             {{#isArray}}

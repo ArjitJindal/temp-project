@@ -34,7 +34,6 @@ import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { CounterRepository } from '../counter/repository'
 import { BatchRerunUsersService } from '../batch-users-rerun'
-import { createDefaultWorkflow } from '../workflow/approval-utils'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -74,7 +73,6 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { WorkflowService } from '@/services/workflow'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -480,26 +478,8 @@ export class TenantService {
     ])
 
     // Creating default workflows for new tenant
-    const workflowService = new WorkflowService(tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
-    })
-    const defaultRiskFactorsApprovalWorkflow = await createDefaultWorkflow(
-      'risk-factors-approval'
-    )
-    const defaultRiskLevelsApprovalWorkflow = await createDefaultWorkflow(
-      'risk-levels-approval'
-    )
-    await workflowService.saveWorkflow(
-      'risk-factors-approval',
-      '_default',
-      defaultRiskFactorsApprovalWorkflow
-    )
-    await workflowService.saveWorkflow(
-      'risk-levels-approval',
-      '_default',
-      defaultRiskLevelsApprovalWorkflow
-    )
+    // NOTE: This might not be needed but should be replaced by templates.
+    // TODO: IMPLEMENT THIS!
 
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',
@@ -807,10 +787,13 @@ export class TenantService {
     })
 
     // Check for removed workflows and auto-apply pending approvals
-    if (newTenantSettings.workflowSettings) {
+    if (
+      newTenantSettings.workflowSettings &&
+      existingTenantSettings?.workflowSettings
+    ) {
       await this.handleWorkflowRemovals(
-        existingTenantSettings?.workflowSettings,
-        newTenantSettings.workflowSettings
+        existingTenantSettings.workflowSettings as Record<string, unknown>,
+        newTenantSettings.workflowSettings as Record<string, unknown>
       )
     }
 
@@ -1059,17 +1042,10 @@ export class TenantService {
    * Handles workflow removals by auto-applying pending approvals when workflows are set to undefined
    */
   private async handleWorkflowRemovals(
-    oldWorkflowSettings: any,
-    newWorkflowSettings: any
+    oldWorkflowSettings: Record<string, unknown>,
+    newWorkflowSettings: Record<string, unknown>
   ): Promise<void> {
     try {
-      // Import WorkflowService to call auto-apply methods
-      const { WorkflowService } = await import('@/services/workflow')
-      const workflowService = new WorkflowService(this.tenantId, {
-        dynamoDb: this.dynamoDb,
-        mongoDb: this.mongoDb,
-      })
-
       // Check for removed user approval workflows
       if (
         oldWorkflowSettings?.userApprovalWorkflows &&
@@ -1095,14 +1071,15 @@ export class TenantService {
               ', '
             )}`
           )
-          const appliedCount =
-            await workflowService.autoApplyPendingApprovalsForRemovedWorkflows(
-              'user-update-approval',
-              removedUserFields
-            )
-          console.log(
-            `Auto-applied ${appliedCount} pending user approvals for removed workflows`
-          )
+          // TODO: IMPLEMENT THIS!
+          // const appliedCount =
+          // await workflowService.autoApplyPendingApprovalsForRemovedWorkflows(
+          //   'user-update-approval',
+          //   removedUserFields
+          // )
+          // console.log(
+          //   `Auto-applied ${appliedCount} pending user approvals for removed workflows`
+          // )
         }
       }
     } catch (error) {

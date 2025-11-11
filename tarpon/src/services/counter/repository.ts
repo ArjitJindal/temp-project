@@ -25,6 +25,7 @@ export type CounterEntity =
   | 'ScreeningProfile'
   | 'WorkflowCase'
   | 'WorkflowAlert'
+  | 'WorkflowChangeApproval'
   | 'RiskLevel'
   | 'ScreeningDetails'
   | 'RiskFactors'
@@ -43,6 +44,7 @@ export const COUNTER_ENTITIES: CounterEntity[] = [
   'ScreeningProfile',
   'WorkflowCase',
   'WorkflowAlert',
+  'WorkflowChangeApproval',
   'RiskLevel',
   'ScreeningDetails',
   'RiskFactors',

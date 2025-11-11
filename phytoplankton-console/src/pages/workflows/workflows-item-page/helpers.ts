@@ -1,31 +1,35 @@
 import { Dispatch, useReducer } from 'react';
 import { AsyncResource, init, map } from '@/utils/asyncResource';
-import { WorkflowBuilderAction, WorkflowBuilderState } from '@/components/WorkflowBuilder/types';
-import { WORKFLOW_BUILDER_STATE_REDUCER } from '@/components/WorkflowBuilder/helpers';
 
-type LoadAsyncResourceAction = {
+type LoadAsyncResourceAction<T> = {
   type: 'LOAD_ASYNC_RESOURCE';
-  payload: AsyncResource<WorkflowBuilderState>;
+  payload: AsyncResource<T>;
 };
 
-export function useReducerWrapper(
-  initialValue?: AsyncResource<WorkflowBuilderState>,
-): [
-  AsyncResource<WorkflowBuilderState>,
-  Dispatch<WorkflowBuilderAction | LoadAsyncResourceAction>,
-] {
+function isLoadAsyncResourceAction<T>(
+  action: unknown | LoadAsyncResourceAction<T>,
+): action is LoadAsyncResourceAction<T> {
+  return (
+    action != null &&
+    typeof action === 'object' &&
+    'type' in action &&
+    action.type === 'LOAD_ASYNC_RESOURCE'
+  );
+}
+
+export function useReducerWrapper<State, Actions>(
+  reducer: (state: State, action: Actions) => State,
+  initialValue?: AsyncResource<State>,
+): [AsyncResource<State>, Dispatch<Actions | LoadAsyncResourceAction<State>>] {
   return useReducer(
-    (
-      state: AsyncResource<WorkflowBuilderState>,
-      action: WorkflowBuilderAction | LoadAsyncResourceAction,
-    ) => {
-      if (action.type === 'LOAD_ASYNC_RESOURCE') {
+    (state: AsyncResource<State>, action: Actions | LoadAsyncResourceAction<State>) => {
+      if (isLoadAsyncResourceAction(action)) {
         return action.payload;
       }
       return map(state, (state) => {
-        return WORKFLOW_BUILDER_STATE_REDUCER(state, action);
+        return reducer(state, action);
       });
     },
-    initialValue ?? init<WorkflowBuilderState>(),
+    initialValue ?? init<State>(),
   );
 }

@@ -21,7 +21,7 @@ export default function WorkflowsPage() {
         }}
         items={[
           {
-            title: 'My workflows',
+            title: 'Active',
             key: 'list',
             children: (
               <PageWrapperContentContainer>

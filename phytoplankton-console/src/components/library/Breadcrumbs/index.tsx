@@ -29,7 +29,11 @@ export default function Breadcrumbs(props: Props) {
               React.createElement(
                 x.to == null ? 'span' : Link,
                 {
-                  className: cn(s.link, i === items.length - 1 && s.isLast),
+                  className: cn(
+                    s.link,
+                    i === items.length - 1 && s.isLast,
+                    x.to != null && s.isClickable,
+                  ),
                   to: x.to ?? '',
                   id: 'breadcrumb-link',
                   onClick: x.onClick,
