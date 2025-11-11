@@ -287,23 +287,6 @@ type ApiGatewayConfig = {
 
 export type FlagrightCPUArchitecture = 'arm64' | 'x86_64'
 
-export type ClickhouseInstanceConfig = {
-  id: string
-  name?: string
-  ipAccess?: { source: string; description: string }[]
-  passwordSecretId?: string
-  passwordSecretKey?: string
-  minTotalMemoryGb?: number
-  maxTotalMemoryGb?: number
-  numReplicas?: number
-  tier?: 'development' | 'production'
-  idleScaling?: boolean
-  idleTimeoutMinutes?: number
-  privateLinkServiceName?: string
-  useSharedPrivateLinkService?: boolean
-  vpcEndpointNameTag?: string
-}
-
 export type Config = {
   stage: Stage
   region?: FlagrightRegion
@@ -448,8 +431,6 @@ export type Config = {
     minTotalMemoryGb?: number
     maxTotalMemoryGb?: number
     numReplicas?: number
-    vpcEndpointNameTag?: string
-    instances?: ClickhouseInstanceConfig[]
   }
   application: {
     MONGO_ATLAS_PROJECT?: string

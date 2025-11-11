@@ -3,7 +3,7 @@ import { Construct } from 'constructs'
 import * as cdktf from 'cdktf'
 import * as aws from '@cdktf/providers/aws'
 import * as clickhouse from '@cdktf/providers/clickhouse'
-import { ClickhouseInstanceConfig, Config } from '@flagright/lib/config/config'
+import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { CONFIG_MAP } from '../../lib/constants/config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
@@ -122,158 +122,82 @@ export class CdktfTarponStack extends TerraformStack {
 
     const clickhouseAwsRegion = CONFIG_MAP[config.stage][regionOrDefault].env
       .region as string
+    const clickhousePassword =
+      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+        this,
+        getClickhouseName('clickhouse-password', regionOrDefault),
+        {
+          secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`,
+        }
+      )
+
     if (config.stage === 'sandbox') {
       allIps.push(...sandboxVpnIp)
     } else if (config.stage === 'prod') {
       allIps.push(...prodVpnIp)
     }
 
-    const sharedClickhouseConfig = config.clickhouse
-    const defaultSecretArn = `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`
-
-    const customInstances = sharedClickhouseConfig.instances ?? []
-    const hasCustomInstances = customInstances.length > 0
-
-    const instances: ClickhouseInstanceConfig[] = hasCustomInstances
-      ? customInstances
-      : [
-          {
-            id: 'default',
-            ipAccess: sharedClickhouseConfig.ipAccess,
-            minTotalMemoryGb: sharedClickhouseConfig.minTotalMemoryGb,
-            maxTotalMemoryGb: sharedClickhouseConfig.maxTotalMemoryGb,
-            numReplicas: sharedClickhouseConfig.numReplicas,
-            tier: config.stage === 'dev' ? 'development' : 'production',
-            idleScaling: true,
-            idleTimeoutMinutes: 30,
-          },
-        ]
-
-    const today = new Date()
-    const yyyy = today.getUTCFullYear()
-    const mm = String(today.getUTCMonth() + 1).padStart(2, '0')
-    const dd = String(today.getUTCDate()).padStart(2, '0')
-    const formattedDate = `${yyyy}${mm}${dd}`
-    const baseDisplayName = `Flagright ${config.stage} (${clickhouseAwsRegion}) ${formattedDate}`
-
-    instances.forEach((instance) => {
-      const passwordSecret =
-        new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
-          this,
-          getClickhouseName(
-            hasCustomInstances
-              ? `clickhouse-password-${instance.id}`
-              : 'clickhouse-password',
-            regionOrDefault
-          ),
-          {
-            secretId: instance.passwordSecretId || defaultSecretArn,
-          }
-        )
-
-      const clickhouseService = new clickhouse.service.Service(
-        this,
-        getClickhouseName(
-          hasCustomInstances
-            ? `${instance.id}-clickhouse-service`
-            : 'clickhouse-service',
-          regionOrDefault
+    const clickhouseService = new clickhouse.service.Service(
+      this,
+      getClickhouseName('clickhouse-service', regionOrDefault),
+      {
+        provider: clickhouseProvider,
+        cloudProvider: 'aws',
+        ipAccess: config.clickhouse?.ipAccess || allIps,
+        name: `Flagright ${config.stage} (${clickhouseAwsRegion})`,
+        region: clickhouseAwsRegion,
+        tier: config.stage === 'dev' ? 'development' : 'production',
+        password: Fn.lookup(
+          Fn.jsondecode(clickhousePassword.secretString),
+          'password'
         ),
-        {
-          provider: clickhouseProvider,
-          cloudProvider: 'aws',
-          ipAccess:
-            instance.ipAccess || sharedClickhouseConfig.ipAccess || allIps,
-          name:
-            instance.name ||
-            (hasCustomInstances
-              ? `${baseDisplayName} - ${instance.id}`
-              : baseDisplayName),
-          region: clickhouseAwsRegion,
-          tier:
-            instance.tier ||
-            (config.stage === 'dev' ? 'development' : 'production'),
-          password: Fn.lookup(
-            Fn.jsondecode(passwordSecret.secretString),
-            instance.passwordSecretKey || 'password'
-          ),
-          idleScaling: instance.idleScaling ?? true,
-          idleTimeoutMinutes: instance.idleTimeoutMinutes ?? 30,
-          ...(config.stage !== 'dev' && {
-            minTotalMemoryGb:
-              instance.minTotalMemoryGb ??
-              sharedClickhouseConfig.minTotalMemoryGb ??
-              24,
-            maxTotalMemoryGb:
-              instance.maxTotalMemoryGb ??
-              sharedClickhouseConfig.maxTotalMemoryGb ??
-              24,
-            numReplicas:
-              instance.numReplicas ?? sharedClickhouseConfig.numReplicas ?? 3,
-          }),
-        }
-      )
-
-      if (!config.resource.LAMBDA_VPC_ENABLED) {
-        return
+        idleScaling: true,
+        idleTimeoutMinutes: 30,
+        ...(config.stage !== 'dev' && {
+          minTotalMemoryGb: config.clickhouse.minTotalMemoryGb || 24,
+          maxTotalMemoryGb: config.clickhouse.maxTotalMemoryGb || 24,
+          numReplicas: config.clickhouse.numReplicas || 3,
+        }),
       }
-      const serviceNameOverride = instance.privateLinkServiceName
-      const serviceName =
-        serviceNameOverride === undefined
-          ? sharedClickhouseConfig.awsPrivateLinkEndpointName
-          : serviceNameOverride
-
-      const endpoint = new aws.dataAwsVpcEndpoint.DataAwsVpcEndpoint(
+    )
+    if (!config.resource.LAMBDA_VPC_ENABLED) {
+      return
+    }
+    const endpoint = new aws.dataAwsVpcEndpoint.DataAwsVpcEndpoint(
+      this,
+      getClickhouseName('clickhouse-vpc-endpoint', regionOrDefault),
+      {
+        tags: {
+          Name: 'ClickhouseEndpoint',
+        },
+      }
+    )
+    const privateEndpoint =
+      new clickhouse.privateEndpointRegistration.PrivateEndpointRegistration(
         this,
         getClickhouseName(
-          hasCustomInstances
-            ? `${instance.id}-clickhouse-vpc-endpoint`
-            : 'clickhouse-vpc-endpoint',
+          'clickhouse-private-endpoint-registration',
           regionOrDefault
         ),
         {
-          tags: {
-            Name:
-              instance.vpcEndpointNameTag ||
-              sharedClickhouseConfig.vpcEndpointNameTag ||
-              (hasCustomInstances
-                ? `ClickhouseEndpoint-${instance.id}`
-                : 'ClickhouseEndpoint'),
-          },
-          ...(serviceName && { serviceName }),
-        }
-      )
-      const privateEndpoint =
-        new clickhouse.privateEndpointRegistration.PrivateEndpointRegistration(
-          this,
-          getClickhouseName(
-            hasCustomInstances
-              ? `${instance.id}-clickhouse-private-endpoint-registration`
-              : 'clickhouse-private-endpoint-registration',
-            regionOrDefault
-          ),
-          {
-            cloudProvider: 'aws',
-            privateEndpointId: endpoint.id,
-            region: clickhouseAwsRegion,
-            provider: clickhouseProvider,
-          }
-        )
-
-      new clickhouse.servicePrivateEndpointsAttachment.ServicePrivateEndpointsAttachment(
-        this,
-        getClickhouseName(
-          hasCustomInstances
-            ? `${instance.id}-clickhouse-service-private-endpoints-attachment`
-            : 'clickhouse-service-private-endpoints-attachment',
-          regionOrDefault
-        ),
-        {
-          serviceId: clickhouseService.id,
-          privateEndpointIds: [privateEndpoint.privateEndpointId],
+          cloudProvider: 'aws',
+          privateEndpointId: endpoint.id,
+          region: clickhouseAwsRegion,
           provider: clickhouseProvider,
         }
       )
-    })
+
+    new clickhouse.servicePrivateEndpointsAttachment.ServicePrivateEndpointsAttachment(
+      this,
+      getClickhouseName(
+        'clickhouse-service-private-endpoints-attachment',
+        regionOrDefault
+      ),
+      {
+        serviceId: clickhouseService.id,
+        privateEndpointIds: [privateEndpoint.privateEndpointId],
+        provider: clickhouseProvider,
+      }
+    )
   }
 }

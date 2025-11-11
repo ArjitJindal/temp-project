@@ -100,22 +100,6 @@ export const config: Config = {
   },
   clickhouse: {
     ipAccess: [{ source: '0.0.0.0/0', description: 'Allow all IP addresses' }],
-    instances: [
-      {
-        id: 'analytics',
-        minTotalMemoryGb: 24,
-        maxTotalMemoryGb: 24,
-        idleScaling: true,
-        idleTimeoutMinutes: 30,
-      },
-      {
-        id: 'ops',
-        minTotalMemoryGb: 12,
-        maxTotalMemoryGb: 12,
-        idleScaling: true,
-        idleTimeoutMinutes: 30,
-      },
-    ],
   },
   viper: {
     ADMIN_EMAILS: ALL_ENGINEERS,

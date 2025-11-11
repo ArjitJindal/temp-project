@@ -2376,13 +2376,12 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.clickhouse.awsPrivateLinkEndpointName
           ),
           privateDnsEnabled: true,
+
           securityGroups: [clickhouseSecurityGroup, securityGroup],
         }
       )
-      const nameTag =
-        this.config.clickhouse.vpcEndpointNameTag || 'ClickhouseEndpoint'
       this.addTagsToResource(vpcEndpoint, {
-        Name: nameTag,
+        Name: 'ClickhouseEndpoint',
       })
     }
 
