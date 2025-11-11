@@ -170,7 +170,10 @@ export class UserRepository {
 
   public async getMongoUsersPaginate(
     params: OptionalPagination<Params>,
-    mapper: (user: InternalUser) => AllUsersTableItem,
+    mapper: (
+      user: InternalUser,
+      trimNameComponents?: boolean
+    ) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
   ): Promise<AllUsersTableItem[]> {
@@ -259,7 +262,9 @@ export class UserRepository {
         })
       : users
 
-    return updatedItems.map(mapper)
+    return updatedItems.map((user: InternalUser) => {
+      return mapper(user, true)
+    })
   }
 
   public async getMongoUsersCount(

@@ -1008,7 +1008,8 @@ export class UserService {
   }
 
   private mapAllUserToTableItem(
-    user: InternalUser | InternalBusinessUser | InternalConsumerUser
+    user: InternalUser | InternalBusinessUser | InternalConsumerUser,
+    trimNameComponents: boolean = false
   ): AllUsersTableItem {
     return {
       isRiskLevelLocked: !user.drsScore?.isUpdatable,
@@ -1016,7 +1017,7 @@ export class UserService {
       kycStatus: user.kycStatusDetails?.status,
       krsScore: user.krsScore?.krsScore,
       createdTimestamp: user.createdTimestamp,
-      name: getUserName(user),
+      name: getUserName(user, trimNameComponents),
       userState: user.userStateDetails?.state,
       type: user.type,
       drsScore: user.drsScore?.drsScore,

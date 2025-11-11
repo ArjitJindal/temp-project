@@ -35,12 +35,26 @@ export const handleSmallNumber = (value: number) => {
 
 export function formatConsumerName(
   name: ConsumerName | undefined,
-  ignoreMiddleName = false
+  ignoreMiddleName = false,
+  trimNameComponents = false
 ): string | undefined {
+  const firstName = name?.firstName
+    ? trimNameComponents
+      ? name.firstName.trim()
+      : name.firstName
+    : undefined
+  const middleName = name?.middleName
+    ? trimNameComponents
+      ? name.middleName.trim()
+      : name.middleName
+    : undefined
+  const lastName = name?.lastName
+    ? trimNameComponents
+      ? name.lastName.trim()
+      : name.lastName
+    : undefined
   const result = (
-    ignoreMiddleName
-      ? [name?.firstName, name?.lastName]
-      : [name?.firstName, name?.middleName, name?.lastName]
+    ignoreMiddleName ? [firstName, lastName] : [firstName, middleName, lastName]
   )
     .filter(Boolean)
     .join(' ')
@@ -55,8 +69,18 @@ export function neverReturn<T>(obj: never, defaultValue: T): T {
   return defaultValue
 }
 
-export function consumerName(user?: User, ignoreMiddleName = false): string {
-  return formatConsumerName(user?.userDetails?.name, ignoreMiddleName) ?? ''
+export function consumerName(
+  user?: User,
+  ignoreMiddleName = false,
+  trimNameComponents = false
+): string {
+  return (
+    formatConsumerName(
+      user?.userDetails?.name,
+      ignoreMiddleName,
+      trimNameComponents
+    ) ?? ''
+  )
 }
 
 export function businessName(user?: Business): string {
@@ -64,13 +88,14 @@ export function businessName(user?: Business): string {
 }
 
 export function getUserName(
-  user?: InternalConsumerUser | InternalBusinessUser | MissingUser | null
+  user?: InternalConsumerUser | InternalBusinessUser | MissingUser | null,
+  trimNameComponents: boolean = false
 ) {
   if (user == null || !('type' in user)) {
     return '-'
   }
   if (user.type === 'CONSUMER') {
-    return consumerName(user)
+    return consumerName(user, false, trimNameComponents)
   }
   if (user.type === 'BUSINESS') {
     return businessName(user)

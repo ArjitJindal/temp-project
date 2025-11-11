@@ -2233,6 +2233,23 @@ paths:
           in: query
           name: responseType
           description: Type of response - 'data' for table data only, 'count' for count only
+    post:
+      summary: Users - Flat File Upload
+      operationId: post-users-flat-file-upload
+      tags: []
+      x-flagright:
+        resources:
+          - write:::users/user-overview
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserFlatFileUploadRequest'
+        required: true
+    parameters: []
   /users-preview:
     get:
       summary: All Users - List (Lite)
@@ -2285,23 +2302,6 @@ paths:
             type: boolean
           in: query
           name: includeCasesCount
-    post:
-      summary: Users - Flat File Upload
-      operationId: post-users-flat-file-upload
-      tags: []
-      x-flagright:
-        resources:
-          - write:::users/user-overview
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserFlatFileUploadRequest'
-        required: true
-    parameters: []
   /users/{userId}/comments:
     parameters:
       - schema:
