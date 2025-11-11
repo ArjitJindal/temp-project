@@ -15,7 +15,7 @@ async function migrateTenant(tenant: Tenant) {
       instance.alertCreationLogic =
         instance.screeningAlertCreationLogic === 'PER_SEARCH_ALERT'
           ? 'PER_COUNTERPARTY_ALERT'
-          : instance.alertCreationLogic === 'SINGLE_ALERT'
+          : instance.screeningAlertCreationLogic === 'SINGLE_ALERT'
           ? 'SINGLE_ALERT'
           : undefined
 
