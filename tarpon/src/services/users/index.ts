@@ -112,6 +112,12 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { RiskService } from '@/services/risk'
 
+interface CraProposalValue {
+  riskLevel?: RiskLevel
+  isUpdatable?: boolean
+  releaseAt?: number
+}
+
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
   FAILED: 1,
@@ -2649,74 +2655,66 @@ export class UserService {
     proposedChanges: any[]
   ): Promise<void> {
     // Handle CRA fields through the risk service
-    // Cra = risk level value, CraLock = isUpdatable flag
+    // Cra now contains an object with riskLevel, isUpdatable, and optional releaseAt (like PEP status)
     const craChange = proposedChanges.find((change) => change.field === 'Cra')
-    const craLockChange = proposedChanges.find(
-      (change) => change.field === 'CraLock'
-    )
 
-    // Handle CRA level changes (requires account to be unlocked)
     if (craChange) {
       const riskService = new RiskService(this.tenantId, {
         dynamoDb: this.dynamoDb,
         mongoDb: this.mongoDb,
       })
 
-      // Check if the account is currently locked
+      // Unwrap the CRA object (like PEP status)
+      const craValue = craChange.value as CraProposalValue
+      const newRiskLevel = craValue.riskLevel
+      const newIsUpdatable = craValue.isUpdatable
+      const releaseAt = craValue.releaseAt
+
       const currentRiskAssignment = await riskService.getRiskAssignment(userId)
-      if (currentRiskAssignment?.isUpdatable === false) {
+
+      // Determine if risk level is being changed (only if riskLevel is provided)
+      const currentEffectiveRiskLevel =
+        currentRiskAssignment?.manualRiskLevel ||
+        currentRiskAssignment?.derivedRiskLevel
+      const isRiskLevelChanging =
+        newRiskLevel !== undefined && currentEffectiveRiskLevel !== newRiskLevel
+
+      if (currentRiskAssignment?.isUpdatable === false && isRiskLevelChanging) {
         throw new BadRequest(
           'Cannot change CRA level when the account is locked. Please unlock the account first.'
         )
       }
 
-      const newRiskLevel = craChange.value as RiskLevel
-      const newIsUpdatable =
-        (craLockChange?.value as boolean) ??
-        currentRiskAssignment?.isUpdatable ??
-        true
-
-      await riskService.createOrUpdateRiskAssignment(
-        userId,
-        newRiskLevel,
-        newIsUpdatable
-      )
-      console.log(
-        `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${newIsUpdatable}`
-      )
-    }
-
-    // Handle CRA lock changes (independent of CRA level)
-    if (craLockChange) {
-      const riskService = new RiskService(this.tenantId, {
-        dynamoDb: this.dynamoDb,
-        mongoDb: this.mongoDb,
-      })
-
-      const newIsUpdatable = craLockChange.value as boolean
-
-      // Check for releaseAt timestamp in proposed changes (for approval workflow)
-      const releaseAtChange = proposedChanges.find(
-        (change) => change.field === 'CraLockReleaseAt'
-      )
-      const releaseAt = releaseAtChange?.value as number | undefined
-
-      await riskService.updateRiskAssignmentLock(
-        userId,
-        newIsUpdatable,
-        releaseAt
-      )
-      console.log(
-        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
-      )
+      // If risk level is provided and changing, use createOrUpdateRiskAssignment
+      // If only lock status is changing, use updateRiskAssignmentLock
+      if (isRiskLevelChanging && newRiskLevel) {
+        const isUpdatable =
+          newIsUpdatable ?? currentRiskAssignment?.isUpdatable ?? true
+        await riskService.createOrUpdateRiskAssignment(
+          userId,
+          newRiskLevel,
+          isUpdatable,
+          releaseAt
+        )
+        console.log(
+          `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${isUpdatable}, releaseAt=${releaseAt}`
+        )
+      } else if (newIsUpdatable !== undefined) {
+        // Only lock status is changing
+        await riskService.updateRiskAssignmentLock(
+          userId,
+          newIsUpdatable,
+          releaseAt
+        )
+        console.log(
+          `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
+        )
+      }
     }
 
     // Handle other fields through the standard updateUser method
     const otherFields = proposedChanges.filter(
-      (change) =>
-        change.field !== 'Cra' &&
-        change.field !== 'CraLock' &&
-        change.field !== 'CraLockReleaseAt'
+      (change) => change.field !== 'Cra'
     )
 
     if (otherFields.length > 0) {

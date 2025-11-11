@@ -32,7 +32,6 @@ export const UserUpdateApprovalSettings: React.FC = () => {
 
   const [state, setState] = useState<Values>({
     Cra: null,
-    CraLock: null,
     eoddDate: null,
     PepStatus: null,
   });
@@ -46,7 +45,6 @@ export const UserUpdateApprovalSettings: React.FC = () => {
     if (data) {
       const newState: Values = {
         Cra: data.Cra?.id ?? null,
-        CraLock: data.CraLock?.id ?? null,
         eoddDate: data.eoddDate?.id ?? null,
         PepStatus: data.PepStatus?.id ?? null,
       };
@@ -85,7 +83,6 @@ export const UserUpdateApprovalSettings: React.FC = () => {
           workflowSettings: {
             userApprovalWorkflows: {
               Cra: state['Cra'] as string | undefined,
-              CraLock: state['CraLock'] as string | undefined,
               eoddDate: state['eoddDate'] as string | undefined,
               PepStatus: state['PepStatus'] as string | undefined,
             },
@@ -140,12 +137,7 @@ export const UserUpdateApprovalSettings: React.FC = () => {
                   toolsOptions={false}
                   pagination={false}
                   data={{
-                    items: [
-                      { field: 'Cra' },
-                      { field: 'CraLock' },
-                      { field: 'eoddDate' },
-                      { field: 'PepStatus' },
-                    ],
+                    items: [{ field: 'Cra' }, { field: 'eoddDate' }, { field: 'PepStatus' }],
                   }}
                   columns={[
                     columnHelper.display({
@@ -225,8 +217,6 @@ function getFieldName(field: keyof WorkflowSettingsUserApprovalWorkflows): strin
   switch (field) {
     case 'Cra':
       return 'CRA';
-    case 'CraLock':
-      return 'CRA lock';
     case 'eoddDate':
       return 'EODD';
     case 'PepStatus':

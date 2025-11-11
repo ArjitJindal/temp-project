@@ -12159,9 +12159,6 @@ components:
             Cra:
               type: string
               nullable: true
-            CraLock:
-              type: string
-              nullable: true
             eoddDate:
               type: string
               nullable: true

@@ -443,7 +443,6 @@ export function useDispositionApprovalWarnings(): DispositionApprovalWarnings {
   const eoddChainRes = useUserFieldChain('eoddDate');
   const pepChainRes = useUserFieldChain('PepStatus');
   const craChainRes = useUserFieldChain('Cra');
-  const craLockChainRes = useUserFieldChain('CraLock');
 
   return useMemo(() => {
     if (!isUserChangesApprovalEnabled) {
@@ -479,13 +478,6 @@ export function useDispositionApprovalWarnings(): DispositionApprovalWarnings {
         requiresApproval: false,
         isAutoApprove: false,
         approvalChain: getOr(craChainRes, []),
-      },
-      {
-        field: 'CraLock',
-        fieldDisplayName: 'CRA Lock',
-        requiresApproval: false,
-        isAutoApprove: false,
-        approvalChain: getOr(craLockChainRes, []),
       },
     ];
 
@@ -524,14 +516,7 @@ export function useDispositionApprovalWarnings(): DispositionApprovalWarnings {
       autoApprovalFields,
       directFields,
     };
-  }, [
-    isUserChangesApprovalEnabled,
-    currentUserRoleId,
-    eoddChainRes,
-    pepChainRes,
-    craChainRes,
-    craLockChainRes,
-  ]);
+  }, [isUserChangesApprovalEnabled, currentUserRoleId, eoddChainRes, pepChainRes, craChainRes]);
 }
 
 export function useWorkflowListByType(
