@@ -424,7 +424,9 @@ export default function AccountForm(props: Props) {
               label={'Email'}
               labelProps={{ required: { value: true, showHint: true } }}
             >
-              {(inputProps) => <TextInput {...inputProps} testName="accounts-email" />}
+              {(inputProps) => (
+                <TextInput {...inputProps} isDisabled={isEdit} testName="accounts-email" />
+              )}
             </InputField>
             <Feature name="NEW_FEATURES">
               <ExpandContentButton suffixText="options">
