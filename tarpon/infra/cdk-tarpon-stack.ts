@@ -179,6 +179,8 @@ const FEATURES = {
 // TODO make this equal to !isQaEnv before merge
 const deployKinesisConsumer = !isQaEnv()
 
+type ExtendedFlagrightRegion = FlagrightRegion | 'asia-2'
+
 export class CdkTarponStack extends cdk.Stack {
   config: Config
   zendutyCloudWatchTopic: Topic
@@ -1503,7 +1505,8 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Cron jobs */
-    if (!isDevUserStack) {
+    // do not run cron jobs for asia-2 region or on dev user stack
+    if (config.region !== 'asia-2' && !isDevUserStack) {
       // Monthly
       const { func: cronJobMonthlyHandler } = createFunction(
         this,
@@ -1557,7 +1560,10 @@ export class CdkTarponStack extends cdk.Stack {
       let triggerMinute: string = '0'
 
       if (envIs('prod') && config.region) {
-        const triggerTime: Record<FlagrightRegion, Record<string, string>> = {
+        const triggerTime: Record<
+          ExtendedFlagrightRegion,
+          Record<string, string>
+        > = {
           'eu-1': { hour: '22', minute: '15' }, // 10:15 PM UTC
           'eu-2': { hour: '00', minute: '15' }, // 12:00 AM UTC
           'asia-2': { hour: '18', minute: '45' }, // 06:45 PM UTC
@@ -1588,6 +1594,7 @@ export class CdkTarponStack extends cdk.Stack {
       apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobDailyHandler))
 
       // Every ten minutes
+
       const { func: cronJobTenMinuteHandler } = createFunction(
         this,
         lambdaExecutionRole,
@@ -1622,7 +1629,7 @@ export class CdkTarponStack extends cdk.Stack {
         let minute = '0'
 
         if (envIs('prod') && config.region) {
-          const triggerTime: Record<FlagrightRegion, string> = {
+          const triggerTime: Record<ExtendedFlagrightRegion, string> = {
             'eu-1': '0',
             'eu-2': '5',
             'asia-2': '10',

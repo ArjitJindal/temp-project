@@ -289,7 +289,7 @@ export type FlagrightCPUArchitecture = 'arm64' | 'x86_64'
 
 export type Config = {
   stage: Stage
-  region?: FlagrightRegion
+  region?: FlagrightRegion | 'asia-2' // Added it since asia-2 is not supported anymore
   env: Environment
   resource: {
     CLOUD_WATCH: {

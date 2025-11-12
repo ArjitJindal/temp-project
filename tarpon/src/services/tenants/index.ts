@@ -217,7 +217,7 @@ export class TenantService {
 
   public static getAllTenants = async (
     stage?: Stage,
-    region?: FlagrightRegion,
+    region?: FlagrightRegion | 'asia-2',
     useCache: boolean = false
   ): Promise<TenantInfo[]> => {
     const cacheKey = getInMemoryCacheKey(stage, region, 'tenants-cache')

@@ -7,4 +7,5 @@
         "**/dist": true,
         "coverage": true
     },
+    "typescript.tsserver.maxTsServerMemory": 8192
 }

@@ -16,7 +16,7 @@ import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@flagright/lib/config/config'
 import { Duration, Fn } from 'aws-cdk-lib'
-import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import { ExtendedFlagrightRegion } from '@flagright/lib/constants/deploy'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { InterfaceVpcEndpoint } from 'aws-cdk-lib/aws-ec2'
 
@@ -28,7 +28,7 @@ export type InternalFunctionProps = {
 }
 
 /* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
-const LAMBDA_LAYER_ARN_BY_REGION: Record<FlagrightRegion, string> = {
+const LAMBDA_LAYER_ARN_BY_REGION: Record<ExtendedFlagrightRegion, string> = {
   'asia-1':
     'arn:aws:lambda:ap-southeast-1:580247275435:layer:LambdaInsightsExtension:38',
   'asia-2':
