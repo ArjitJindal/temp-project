@@ -82,9 +82,9 @@ export const UserUpdateApprovalSettings: React.FC = () => {
         await mutateTenantSettings.mutateAsync({
           workflowSettings: {
             userApprovalWorkflows: {
-              Cra: state['Cra'] as string | undefined,
-              eoddDate: state['eoddDate'] as string | undefined,
-              PepStatus: state['PepStatus'] as string | undefined,
+              Cra: state['Cra'] || undefined,
+              eoddDate: state['eoddDate'] || undefined,
+              PepStatus: state['PepStatus'] || undefined,
             },
           },
         });
