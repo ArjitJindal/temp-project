@@ -298,7 +298,7 @@ function EntityId(props: Props) {
     return null;
   }
 
-  return <b>'{notification.entityId}'</b>;
+  return <b>‘{notification.entityId}’</b>;
 }
 
 function Author(props: Props) {
