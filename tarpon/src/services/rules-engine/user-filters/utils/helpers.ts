@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash'
+import isEmpty from 'lodash/isEmpty'
 import { TimeRange } from '../../repositories/user-repository-interface'
 import { UserCreationAgeRange } from '../../utils/rule-parameter-schemas'
 import dayjs from '@/utils/dayjs'

@@ -514,7 +514,6 @@ export const tenantsHandler = lambdaApi()(
       mongoDb,
       dynamoDb: getDynamoDbClientByEvent(event),
     })
-
     handlers.registerGetRuleQueue(async (ctx, request) => {
       return ruleQueueService.getRuleQueue(request.ruleQueueId)
     })
@@ -767,6 +766,18 @@ export const tenantsHandler = lambdaApi()(
       return {
         tenants: request.SecondaryQueueTenants?.tenants ?? [],
       }
+    })
+
+    // handler for rotation api key
+    handlers.registerRotateApiKey(async (ctx, request) => {
+      const { tenantId } = ctx
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const tenantService = new TenantService(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
+      const apiKeyId = request.RotateApiKeyRequest.apiKeyId
+      await tenantService.rotateApiKey(apiKeyId)
     })
 
     return await handlers.handle(event)

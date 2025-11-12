@@ -46,6 +46,10 @@ export const apiKeyGeneratorHandler = lambdaApi()(
         awsCredentials: getCredentialsFromEvent(event),
       })
     }
-    return createNewApiKeyForTenant(fullTenantId, usagePlanId)
+    const { newApiKey } = await createNewApiKeyForTenant(
+      fullTenantId,
+      usagePlanId
+    )
+    return newApiKey
   }
 )

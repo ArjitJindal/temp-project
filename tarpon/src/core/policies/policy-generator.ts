@@ -3,6 +3,7 @@ import { StackConstants } from '@lib/constants'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 import {
+  DEACTIVATION_MARKED_API_KEY_IDENTIFIER,
   SHARED_AUTH0_PARTITION_KEY_PREFIX,
   SHARED_PARTITION_KEY_PREFIX,
 } from '../dynamodb/dynamodb-keys'
@@ -31,6 +32,7 @@ export default class PolicyBuilder {
             `${this.tenantId}*`,
             `${SHARED_PARTITION_KEY_PREFIX}*`,
             `${SHARED_AUTH0_PARTITION_KEY_PREFIX}*`,
+            `${DEACTIVATION_MARKED_API_KEY_IDENTIFIER}*`,
             `${getNonDemoTenantId(this.tenantId)}*`,
           ],
         },

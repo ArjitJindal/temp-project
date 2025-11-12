@@ -372,6 +372,7 @@ export const ConsoleApiPathToLambda: any = {
   // TODO: rename CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME to make it generic
   '/sanctions/acuris-copywrited-source/download':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/rotate-api-key': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/intercomm-token': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
 }
 

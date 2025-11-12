@@ -30,6 +30,7 @@ import { CaseStatusUpdate } from './subscriptions/case-status-update'
 import { RiskClassificationApproval } from './subscriptions/risk-classification-approval'
 import { RiskFactorsApproval } from './subscriptions/risk-factors-approval'
 import { UserChangesApproval } from './subscriptions/user-changes-approval'
+import { ApiKeyExpiring } from './subscriptions/api-key-expiring'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
@@ -114,6 +115,7 @@ export class NotificationsService {
       new RiskClassificationApproval(),
       new RiskFactorsApproval(),
       new UserChangesApproval(),
+      new ApiKeyExpiring(),
     ]
 
     // Mapping from notification type to entity type for approval notifications
@@ -251,6 +253,7 @@ export class NotificationsService {
     const USER_DETAILS_READ: Resource = `read:::users/user-details/*`
     const RISK_LEVELS_READ: Resource = `read:::risk-scoring/risk-levels/*`
     const RISK_FACTORS_READ: Resource = `read:::risk-scoring/risk-factors/*`
+    const API_KEY_READ: Resource = `read:::settings/developers/api-keys/*`
     const notificationTypeToPermission: Record<NotificationType, Resource[]> = {
       ALERT_ASSIGNMENT: [CASE_OVERVIEW_READ],
       CASE_ASSIGNMENT: [CASE_OVERVIEW_READ],
@@ -270,6 +273,7 @@ export class NotificationsService {
       RISK_CLASSIFICATION_APPROVAL: [RISK_LEVELS_READ],
       RISK_FACTORS_APPROVAL: [RISK_FACTORS_READ],
       USER_CHANGES_APPROVAL: [USER_DETAILS_READ],
+      API_KEY_EXPIRING: [API_KEY_READ],
     }
 
     const [allUsers, allRoles] = await Promise.all([

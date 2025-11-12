@@ -180,6 +180,9 @@ function sampleNotification(notificationType: NotificationType, users: Account[]
     case 'USER_CHANGES_APPROVAL':
       entityType = 'USER';
       break;
+    case 'API_KEY_EXPIRING':
+      entityType = 'API_KEY';
+      break;
     default:
       entityType = neverReturn(notificationType, null);
   }

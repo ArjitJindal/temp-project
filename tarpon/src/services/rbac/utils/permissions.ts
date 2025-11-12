@@ -709,7 +709,7 @@ export const PERMISSIONS_LIBRARY: Permissions = [
           {
             id: 'api-keys',
             name: 'API keys',
-            actions: ['read'],
+            actions: ['read', 'write'],
             type: 'STATIC',
           },
           {

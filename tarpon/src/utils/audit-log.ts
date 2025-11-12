@@ -17,6 +17,7 @@ export type AuditLogEntity<
   entityId: string
   oldImage?: O
   newImage?: N
+  tenantId?: string // TODO: remove once we spawn tenant specific cron jobs
   logMetadata?: object
   entityType?: AuditLogType
   entitySubtype?: AuditLogSubtypeEnum
@@ -69,7 +70,10 @@ export function auditLog<
                 entityId: entity.entityId,
                 logMetadata: entity.logMetadata,
               }
-              return publishAuditLog(getContext()?.tenantId as string, auditLog)
+              return publishAuditLog(
+                entity.tenantId ?? (getContext()?.tenantId as string),
+                auditLog
+              )
             })
           )
         }

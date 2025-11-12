@@ -250,6 +250,14 @@ export default function NotificationMessage(props: Props) {
         )}
       </>
     );
+  } else if (notification.notificationType === 'API_KEY_EXPIRING') {
+    const apiKeyId = notification.entityId;
+
+    return (
+      <>
+        API key <b>'{apiKeyId}'</b> is approaching its deactivation date.
+      </>
+    );
   } else {
     return neverReturn(
       notification.notificationType,
@@ -274,6 +282,8 @@ function Entity(props: Props) {
     label = 'risk levels ';
   } else if (notification.entityType === 'RISK_FACTORS') {
     label = 'a risk factor ';
+  } else if (notification.entityType === 'API_KEY') {
+    label = 'a api key ';
   } else {
     label = neverReturn(notification.entityType, 'unknown object');
   }

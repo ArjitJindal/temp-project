@@ -23,7 +23,7 @@ export function createNewApiKey(tenantId: string) {
 export async function createNewApiKeyForTenant(
   tenantId: string,
   usagePlanId: string
-): Promise<string> {
+): Promise<{ newApiKey: string; apiKeyId: string }> {
   // TODO: Verify tenantId exists (in DB and Usage Plan)
   const newApiKey = createNewApiKey(tenantId)
   const apiGateway = new APIGateway({
@@ -44,5 +44,5 @@ export async function createNewApiKeyForTenant(
 
   await apiGateway.send(createUsagePlanCommand)
 
-  return newApiKey
+  return { newApiKey, apiKeyId: apiKeyResult.id as string }
 }

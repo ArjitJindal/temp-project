@@ -8661,6 +8661,22 @@ paths:
             schema:
               $ref: '#/components/schemas/FlatFileTemplateRequest'
         required: true
+  /rotate-api-key:
+    post:
+      summary: Rotate api key
+      operationId: rotate-api-key
+      x-flagright:
+        resources:
+          - write:::settings/developers/api-keys
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateApiKeyRequest'
+        required: true
   /intercomm-token:
     get:
       summary: Generate intercomm JWT token
@@ -8891,6 +8907,14 @@ components:
       required:
         - schema
         - format
+    RotateApiKeyRequest:
+      title: RotateApiKeyRequest
+      type: object
+      properties:
+        apiKeyId:
+          type: string
+      required:
+        - apiKeyId
     FlatFileTemplateResponse:
       title: FlatFileTemplateResponse
       type: object
@@ -10313,11 +10337,16 @@ components:
           type: number
         updatedAt:
           type: number
+        deactivationTimestamp:
+          type: number
+        enabled:
+          type: boolean
       required:
         - id
         - key
         - createdAt
         - updatedAt
+        - enabled
     CrmSummary:
       title: CrmSummary
       type: object
@@ -17306,6 +17335,8 @@ components:
         - CALCULATE
         - UPDATE
         - ESCALATE
+        - ROTATE
+        - APPROACHING_DEACTIVATION
     Page:
       title: Page
       type: number
@@ -17380,6 +17411,7 @@ components:
             - USER_VIEW
             - RULE_INSTANCES
             - RULE_LIBRARY
+            - API_KEY_ROTATE
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
@@ -19317,6 +19349,7 @@ components:
         - RISK_CLASSIFICATION_APPROVAL
         - RISK_FACTORS_APPROVAL
         - USER_CHANGES_APPROVAL
+        - API_KEY_EXPIRING
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -19456,6 +19489,7 @@ components:
             - USER
             - RISK_LEVELS
             - RISK_FACTORS
+            - API_KEY
         notificationData:
           type: object
         consoleNotificationStatuses:

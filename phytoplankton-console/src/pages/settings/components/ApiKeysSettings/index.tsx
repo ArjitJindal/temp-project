@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import pluralize from 'pluralize';
 import s from './index.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
@@ -18,12 +19,37 @@ import { useAuth0User } from '@/utils/user-utils';
 import { isWhiteLabeled } from '@/utils/branding';
 import { copyTextToClipboard } from '@/utils/browser';
 import { getErrorMessage } from '@/utils/lang';
+import Button from '@/components/library/Button';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import Tag from '@/components/library/Tag';
+import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';
+import Confirm from '@/components/utils/Confirm';
+
+const getDaysLeftForDeactivation = (timestamp: number) => {
+  const now = Date.now();
+  const deletionDate = dayjs(timestamp);
+  const daysDiff = deletionDate.diff(now, 'day');
+  return {
+    message: `API key will be deactivated in ${daysDiff} ${pluralize('day', daysDiff)}`,
+    daysToDeactivate: daysDiff,
+  };
+};
+
+const getDeactivationInfo = (deactivationTimestamp?: number) => {
+  if (!deactivationTimestamp) {
+    return { daysToDeactivate: 0, message: '' };
+  }
+
+  const { daysToDeactivate, message } = getDaysLeftForDeactivation(deactivationTimestamp);
+  return { daysToDeactivate, message };
+};
 
 export const ApiKeysSettings = () => {
   const api = useApi();
   const user = useAuth0User();
   const [unmaskingId, setUnmaskingId] = useState<string | null>(null);
   const [unmaskedApiKey, setUnmaskedApiKey] = useState<string | undefined>(undefined);
+  const hasDefaultRole = isValidManagedRoleName(user.role);
 
   const queryResult = useQuery(
     ['apiKeys', { unmaskedApiKey }],
@@ -33,6 +59,28 @@ export const ApiKeysSettings = () => {
       }),
     {
       refetchOnWindowFocus: false,
+    },
+  );
+
+  const rotateApiKeyMutation = useMutation<unknown, unknown, { apiKeyId: string }>(
+    async ({ apiKeyId }): Promise<void> => {
+      await api.rotateApiKey({
+        RotateApiKeyRequest: {
+          apiKeyId,
+        },
+      });
+    },
+    {
+      onMutate: () => {
+        message.info(`Marking API key for rotation and deactivation`);
+      },
+      onSuccess: () => {
+        message.success(`This API key was rotated and will be deactivated in 7 days`);
+        queryResult.refetch();
+      },
+      onError: (error) => {
+        message.fatal(`Unable to rotate api key! ${getErrorMessage(error)}`, error);
+      },
     },
   );
 
@@ -73,7 +121,38 @@ export const ApiKeysSettings = () => {
                   title: 'Header name',
                   key: 'id',
                   type: {
-                    render: () => <>{'x-api-key'}</>,
+                    render: (_, { item: entity }) => {
+                      const { daysToDeactivate, message } = getDeactivationInfo(
+                        entity.deactivationTimestamp,
+                      );
+                      return (
+                        <div className={s.headerName}>
+                          <span>{'x-api-key'}</span>
+                          {(() => {
+                            const isDeactivated =
+                              !entity.enabled ||
+                              (entity.deactivationTimestamp && daysToDeactivate <= 0);
+                            const isPendingDeactivation = daysToDeactivate > 0;
+
+                            if (isDeactivated) {
+                              return <Tag>Deactivated</Tag>;
+                            }
+
+                            if (isPendingDeactivation) {
+                              return (
+                                <Tooltip title={message}>
+                                  <span>
+                                    <Tag>Pending deactivation</Tag>
+                                  </span>
+                                </Tooltip>
+                              );
+                            }
+
+                            return null;
+                          })()}
+                        </div>
+                      );
+                    },
                   },
                 }),
                 ...(!isWhiteLabeled()
@@ -96,6 +175,9 @@ export const ApiKeysSettings = () => {
                         0,
                       );
 
+                      const { daysToDeactivate, message: deactivationTooltip } =
+                        getDeactivationInfo(data.item.deactivationTimestamp);
+
                       return (
                         <div className={s.root}>
                           <div>
@@ -105,11 +187,25 @@ export const ApiKeysSettings = () => {
                             <div>
                               {key?.includes('********') ? (
                                 <Tooltip
-                                  title={
-                                    timesLeft
-                                      ? `You can only view this key ${timesLeft} more times`
-                                      : 'You have reached the maximum number of views for this key'
-                                  }
+                                  title={(() => {
+                                    const isDeactivated =
+                                      !data.item.enabled ||
+                                      (data.item.deactivationTimestamp && daysToDeactivate <= 0);
+
+                                    if (isDeactivated) {
+                                      return 'Deactivated';
+                                    }
+
+                                    if (data.item.deactivationTimestamp) {
+                                      return deactivationTooltip;
+                                    }
+
+                                    if (timesLeft) {
+                                      return `You can only view this key ${timesLeft} more times`;
+                                    }
+
+                                    return 'You have reached the maximum number of views for this key';
+                                  })()}
                                 >
                                   <EyeOutlined
                                     height={16}
@@ -119,7 +215,11 @@ export const ApiKeysSettings = () => {
                                       cursor: unmaskingId ? 'wait' : 'pointer',
                                     }}
                                     onClick={async () => {
-                                      if (!timesLeft || unmaskingId) {
+                                      if (
+                                        !timesLeft ||
+                                        unmaskingId ||
+                                        data.item.deactivationTimestamp
+                                      ) {
                                         return;
                                       }
                                       setUnmaskingId(data.item.id);
@@ -141,6 +241,9 @@ export const ApiKeysSettings = () => {
                                   height={16}
                                   width={16}
                                   onClick={async () => {
+                                    if (data.item.deactivationTimestamp) {
+                                      return;
+                                    }
                                     try {
                                       await copyTextToClipboard(key ?? '');
                                       message.success('API key copied to clipboard');
@@ -171,6 +274,40 @@ export const ApiKeysSettings = () => {
                     },
                     defaultWrapMode: 'WRAP',
                   },
+                }),
+                columnHelper.display({
+                  title: 'Actions',
+                  defaultSticky: 'RIGHT',
+                  render: (_, { item: entity }) => (
+                    // only allow user with default role with api key developer write permisssion
+                    <Confirm
+                      title="Rotate API key"
+                      text={'This will deactive your current API key in one week. Are you sure?'}
+                      onConfirm={async () => {
+                        if (entity.id) {
+                          rotateApiKeyMutation.mutate({ apiKeyId: entity.id });
+                        }
+                      }}
+                    >
+                      {({ onClick }) => (
+                        <div className={s.actionsContainer}>
+                          <Button
+                            type="SECONDARY"
+                            size="SMALL"
+                            onClick={onClick}
+                            // requiredResources={['write:::settings/developers/api-keys/*']}
+                            isDisabled={
+                              !!entity.deactivationTimestamp ||
+                              !hasDefaultRole ||
+                              rotateApiKeyMutation.dataResource.kind === 'LOADING'
+                            }
+                          >
+                            Rotate
+                          </Button>
+                        </div>
+                      )}
+                    </Confirm>
+                  ),
                 }),
               ]}
               rowKey="id"

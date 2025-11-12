@@ -47,5 +47,9 @@ export const NOTIFICATION_TYPES: {
       label: 'When a change to a user field requires approval.',
       value: ['USER_CHANGES_APPROVAL'],
     },
+    {
+      label: 'When a api key is about to be deactivated.',
+      value: ['API_KEY_EXPIRING'],
+    },
   ],
 };

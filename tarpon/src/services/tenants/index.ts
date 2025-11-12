@@ -1,5 +1,13 @@
 import { MongoClient } from 'mongodb'
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  GetCommandInput,
+  PutCommand,
+  PutCommandInput,
+  QueryCommand,
+  QueryCommandInput,
+} from '@aws-sdk/lib-dynamodb'
 import {
   APIGatewayClient,
   ApiKey,
@@ -11,10 +19,11 @@ import {
   GetUsagePlanKeysCommand,
   RestApi,
   ThrottleSettings,
+  UpdateApiKeyCommand,
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
-import createHttpError, { BadRequest } from 'http-errors'
+import createHttpError, { BadRequest, InternalServerError } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import {
@@ -28,6 +37,7 @@ import isEmpty from 'lodash/isEmpty'
 import uniq from 'lodash/uniq'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
+import pMap from 'p-map'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
@@ -57,7 +67,7 @@ import {
   updateTenantSettings,
 } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
-import { isDemoTenant } from '@/utils/tenant-id'
+import { getNonDemoTenantId, isDemoTenant } from '@/utils/tenant-id'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongo-table-names'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { Feature } from '@/@types/openapi-internal/Feature'
@@ -65,14 +75,24 @@ import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { logger } from '@/core/logger'
+import {
+  batchWrite,
+  BatchWriteRequestInternal,
+  getDynamoDbClient,
+} from '@/utils/dynamodb'
 import { Tenant } from '@/@types/tenant'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanctionsSearchType'
 import {
   createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { auditLog } from '@/utils/audit-log'
+import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
+import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
+import { AuditLogRecord } from '@/@types/audit-log'
+import { generateChecksum } from '@/utils/object'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -322,6 +342,19 @@ export class TenantService {
     )
   }
 
+  private async generateTenantApiKey(tenantId: string, usagePlanId: string) {
+    try {
+      const { newApiKey: apiKey, apiKeyId } = await createNewApiKeyForTenant(
+        tenantId,
+        usagePlanId
+      )
+      return { apiKey, usagePlanId, apiKeyId }
+    } catch (e) {
+      logger.error(`Unable to create api key ${e}`)
+      throw new InternalServerError('Unable to create api key')
+    }
+  }
+
   async createTenant(
     tenantData: TenantCreationRequest
   ): Promise<TenantCreationResponse> {
@@ -398,11 +431,7 @@ export class TenantService {
       throw new Error('Unable to create usage plan')
     }
 
-    const apiKey = await createNewApiKeyForTenant(tenantId, usagePlanId)
-
-    if (!apiKey) {
-      throw new Error('Unable to create api key')
-    }
+    await this.generateTenantApiKey(tenantId, usagePlanId)
 
     const organization = await accountsService.createAuth0Organization(
       tenantData,
@@ -549,15 +578,10 @@ export class TenantService {
     return `tarpon:${tenantId}:${tenantName}`
   }
 
-  public async getApiKeys(unmaskingOptions?: {
-    unmask: boolean
-    apiKeyId: string
-  }): Promise<TenantApiKey[]> {
+  private async getTenantApiKeys() {
     const allUsagePlans = await getAllUsagePlans(region)
 
-    const tenantId = this.tenantId.endsWith('-test')
-      ? this.tenantId.replace('-test', '')
-      : this.tenantId
+    const tenantId = getNonDemoTenantId(this.tenantId)
 
     const usagePlan = allUsagePlans?.find(
       (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
@@ -592,16 +616,50 @@ export class TenantService {
       }) ?? []
     )
 
+    return allApiKeys
+  }
+
+  public async getApiKeys(unmaskingOptions?: {
+    unmask: boolean
+    apiKeyId: string
+  }): Promise<TenantApiKey[]> {
+    const tenantId = getNonDemoTenantId(this.tenantId)
+
+    const allApiKeys = await this.getTenantApiKeys()
+    const partitionKey = DynamoDbKeys.DEACTIVATION_MARKED_API_KEY(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    const getQueryCommand: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      KeyConditionExpression:
+        'PartitionKeyID = :pk and begins_with(SortKeyID, :tenantPrefix)',
+      ExpressionAttributeValues: {
+        ':pk': partitionKey,
+        ':tenantPrefix': `${tenantId}#`,
+      },
+    }
+    const response = await this.dynamoDb.send(new QueryCommand(getQueryCommand))
+    // map of apiKeyId and its deletion timstamp
+    const data =
+      response.Items?.reduce((acc, d) => {
+        acc[d.apiKeyId] = d.deactivationTimestamp
+        return acc
+      }, {}) ?? {}
+
     const apiKeys: TenantApiKey[] = allApiKeys.map((x) => ({
       id: x.id ?? '',
       createdAt: dayjs(x.createdDate).valueOf(),
       key: x.value ?? '',
       updatedAt: dayjs(x.lastUpdatedDate).valueOf(),
+      deactivationTimestamp: data[x.id ?? ''] ?? undefined,
+      enabled: x.enabled ?? false,
     }))
 
     if (unmaskingOptions?.apiKeyId && unmaskingOptions.unmask) {
       const apiKeysProcessed = await this.processApiKeys(
         allApiKeys,
+        data,
         unmaskingOptions
       )
 
@@ -613,11 +671,14 @@ export class TenantService {
       createdAt: x.createdAt,
       key: x.key?.replace(/.(?=.{4})/g, '*'),
       updatedAt: x.updatedAt,
+      deactivationTimestamp: data[x.id ?? ''] ?? undefined,
+      enabled: x.enabled,
     }))
   }
 
   private async processApiKeys(
     apiKeys: ApiKey[],
+    deactivationTimeMap: { [key: string]: number },
     unmaskingOptions: {
       unmask: boolean
       apiKeyId: string
@@ -655,6 +716,8 @@ export class TenantService {
         createdAt: dayjs(x.createdDate).valueOf(),
         key: value ?? '',
         updatedAt: dayjs(x.lastUpdatedDate).valueOf(),
+        deactivationTimestamp: deactivationTimeMap[x.id ?? ''] ?? undefined,
+        enabled: x.enabled ?? false,
       }
     })
 
@@ -682,12 +745,9 @@ export class TenantService {
     return apiKeysProcessed
   }
 
-  public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {
+  private async getTenantUsagePlanId(tenantId: string) {
+    tenantId = getNonDemoTenantId(tenantId)
     const usagePlans = await getAllUsagePlans(region)
-
-    if (tenantId.endsWith('-test')) {
-      tenantId = tenantId.replace('-test', '')
-    }
     const usagePlan = usagePlans?.find(
       (x) => x.name?.match(USAGE_PLAN_REGEX)?.[1] === tenantId
     )
@@ -695,6 +755,13 @@ export class TenantService {
     if (!usagePlan) {
       throw new Error(`Usage plan for tenant ${tenantId} not found`)
     }
+    return usagePlan
+  }
+
+  public async getUsagePlanData(tenantId: string): Promise<TenantUsageData> {
+    tenantId = getNonDemoTenantId(tenantId)
+
+    const usagePlan = await this.getTenantUsagePlanId(tenantId)
 
     const apigateway = new APIGatewayClient({
       region,
@@ -1085,6 +1152,261 @@ export class TenantService {
     } catch (error) {
       console.error('Error handling workflow removals:', error)
       // Don't throw - we don't want to block tenant settings updates if auto-apply fails
+    }
+  }
+
+  private async deactivateApiKeys(
+    apiKeyIds: { apiKeyId: string; tenantId: string }[]
+  ) {
+    const apigateway = new APIGatewayClient({
+      region: process.env.AWS_REGION,
+      maxAttempts: 2,
+    })
+
+    const batchWriteRequest: { [key: string]: BatchWriteRequestInternal[] } = {}
+
+    for await (const { apiKeyId, tenantId } of apiKeyIds) {
+      await apigateway.send(
+        new UpdateApiKeyCommand({
+          apiKey: apiKeyId,
+          patchOperations: [
+            {
+              op: 'replace',
+              path: '/enabled',
+              value: 'false',
+            },
+          ],
+        })
+      )
+      const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      if (!batchWriteRequest[tableName]) {
+        batchWriteRequest[tableName] = []
+      }
+      batchWriteRequest[tableName].push({
+        DeleteRequest: {
+          Key: {
+            ...DynamoDbKeys.DEACTIVATION_MARKED_API_KEY(tenantId, apiKeyId),
+          },
+        },
+      })
+    }
+
+    const keys = Object.keys(batchWriteRequest)
+
+    for await (const tableName of keys) {
+      await batchWrite(this.dynamoDb, batchWriteRequest[tableName], tableName)
+    }
+  }
+
+  private async notifyApiKeysDeactivation(
+    apiKeyIds: { apiKeyId: string; tenantId: string }[]
+  ) {
+    const tasks: AuditLogRecord[] = apiKeyIds.map((apiKeyInfo) => ({
+      tenantId: apiKeyInfo.tenantId,
+      payload: {
+        entityId: apiKeyInfo.apiKeyId,
+        type: 'API-KEY',
+        action: 'ROTATE',
+      },
+    }))
+    if (envIs('local', 'test')) {
+      const { notificationsConsumerHandler } = await import(
+        '@/core/local-handlers/auditlog'
+      )
+      await pMap(
+        tasks,
+        async (task) => {
+          await notificationsConsumerHandler(task)
+        },
+        { concurrency: 10 }
+      )
+      return
+    }
+    const sqsClient = getSQSClient()
+    const messages = tasks.map((task) => ({
+      MessageBody: JSON.stringify(task),
+      MessageDeduplicationId: generateChecksum(task.payload.entityId),
+    }))
+    await bulkSendMessages(
+      sqsClient,
+      process.env.NOTIFICATIONS_QUEUE_URL as string,
+      messages
+    )
+  }
+
+  @auditLog('API-KEY', 'API_KEY_ROTATE', 'CREATE')
+  public async rotateApiKey(apiKeyId: string) {
+    const tenantId = getNonDemoTenantId(this.tenantId)
+    // check if rotation in progress
+    const getCommandInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      Key: {
+        ...DynamoDbKeys.DEACTIVATION_MARKED_API_KEY(tenantId, apiKeyId),
+      },
+    }
+
+    const response = await this.dynamoDb.send(new GetCommand(getCommandInput))
+
+    if (response?.Item?.length > 0) {
+      throw new BadRequest('API key already marked for deletion')
+    }
+
+    // fetch all api keys
+    const apiKeys = await this.getTenantApiKeys()
+
+    // get usage plan
+    const usagePlan = await this.getTenantUsagePlanId(tenantId)
+
+    if (!usagePlan.id) {
+      throw new Error(`Can't find usage plan id`)
+    }
+
+    let toMarkApiKey = false
+    let newApiKeyId = ''
+    // generate new api keys
+    for (let i = 0; i < apiKeys.length; i++) {
+      if (apiKeys[i].id !== apiKeyId) {
+        continue
+      }
+      try {
+        const { apiKeyId } = await this.generateTenantApiKey(
+          tenantId,
+          usagePlan.id
+        )
+        newApiKeyId = apiKeyId
+        toMarkApiKey = true
+      } catch (error) {
+        logger.error(`Error while generating api key ${error}`)
+      }
+    }
+
+    if (toMarkApiKey) {
+      // mark older api key for deletion
+      const deactivationTimestamp = dayjs()
+        .add(8, 'days')
+        .startOf('day')
+        .valueOf() // as we deactivate api key in daily cron job we add 7 days and set time to midnight, so the job running at 12:15 will pick this and deactive it
+      // we run cron job daily at 12:15 for each region thus this will be picked
+      const putItemInput: PutCommandInput = {
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        Item: {
+          ...DynamoDbKeys.DEACTIVATION_MARKED_API_KEY(tenantId, apiKeyId),
+          apiKeyId: apiKeyId,
+          tenantId: tenantId,
+          deactivationTimestamp,
+        },
+      }
+      await this.dynamoDb.send(new PutCommand(putItemInput))
+    }
+
+    return {
+      result: undefined,
+      entities: [
+        { entityId: newApiKeyId, entityAction: 'CREATE' as AuditLogActionEnum },
+        { entityId: apiKeyId, entityAction: 'ROTATE' as AuditLogActionEnum },
+      ],
+      publishAuditLog: () => toMarkApiKey,
+    }
+  }
+
+  private getDeletionMarkedApiKeyQuery(tenantId: string, timestamp: number) {
+    const partitionKey = DynamoDbKeys.DEACTIVATION_MARKED_API_KEY(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    const getItemQuery: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression: '#ts < :now',
+      ExpressionAttributeNames: {
+        '#ts': 'deactivationTimestamp',
+      },
+      ExpressionAttributeValues: {
+        ':pk': partitionKey,
+        ':now': timestamp,
+      },
+    }
+
+    return getItemQuery
+  }
+
+  @auditLog('API-KEY', 'API_KEY_ROTATE', 'DEACTIVATE')
+  public async deactivateApiKeyMarkedForDeletion(tenantInfos: TenantInfo[]) {
+    const [stage, region] = stageAndRegion()
+
+    // api keys about to expire in 2 days
+    const currentTimestamp = dayjs().utc().valueOf()
+    const filterTimestamp = dayjs().utc().add(2, 'days').valueOf()
+
+    // non silo tenants
+    const getItemQuery = this.getDeletionMarkedApiKeyQuery(
+      FLAGRIGHT_TENANT_ID,
+      filterTimestamp
+    )
+    const response = await this.dynamoDb.send(new QueryCommand(getItemQuery))
+
+    const apiKeysToNotify: { apiKeyId: string; tenantId: string }[] =
+      response.Items?.filter((data) => {
+        return data?.deactivationTimestamp >= currentTimestamp
+      }).map((data) => ({
+        apiKeyId: data?.apiKeyId as string,
+        tenantId: data?.tenantId as string,
+      })) ?? []
+
+    const apiKeysToDelete: { apiKeyId: string; tenantId: string }[] =
+      response.Items?.filter((data) => {
+        return data?.deactivationTimestamp < currentTimestamp
+      }).map((data) => ({
+        apiKeyId: data?.apiKeyId as string,
+        tenantId: data?.tenantId as string,
+      })) ?? []
+
+    // silo tenant api keys
+    for await (const tenant of tenantInfos) {
+      const tenantId = tenant.tenant.id
+      if (siloDataTenants[stage]?.[region]?.includes(tenantId)) {
+        const getItemQuery = this.getDeletionMarkedApiKeyQuery(
+          tenantId,
+          filterTimestamp
+        )
+        const response = await this.dynamoDb.send(
+          new QueryCommand(getItemQuery)
+        )
+
+        const siloTenantapiKeysToNotify: {
+          apiKeyId: string
+          tenantId: string
+        }[] =
+          response.Items?.filter((data) => {
+            return data?.deactivationTimestamp >= filterTimestamp
+          }).map((data) => ({
+            apiKeyId: data?.apiKeyId as string,
+            tenantId: data?.tenantId as string,
+          })) ?? []
+
+        const siloTenantApiKeyToDelete: {
+          apiKeyId: string
+          tenantId: string
+        }[] =
+          response.Items?.map((data) => ({
+            apiKeyId: data?.apiKeyId as string,
+            tenantId: data?.tenantId as string,
+          })) ?? []
+
+        apiKeysToDelete.push(...siloTenantApiKeyToDelete)
+        apiKeysToNotify.push(...siloTenantapiKeysToNotify)
+      }
+    }
+    await this.deactivateApiKeys(apiKeysToDelete)
+    await this.notifyApiKeysDeactivation(apiKeysToNotify)
+
+    return {
+      result: undefined,
+      entities: apiKeysToDelete.map((apiKeyInfo) => ({
+        entityId: apiKeyInfo.apiKeyId,
+        tenantId: apiKeyInfo.tenantId,
+      })),
+      publishAuditLog: () => false,
     }
   }
 }

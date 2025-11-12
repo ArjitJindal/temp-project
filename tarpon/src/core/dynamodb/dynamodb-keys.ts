@@ -101,6 +101,8 @@ export const DYNAMO_CLICKHOUSE_KEY_IDENTIFIER =
   '#dynamo-clickhouse-console-backfill'
 export const CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER =
   'clickhouse-sync-checksum'
+export const DEACTIVATION_MARKED_API_KEY_IDENTIFIER =
+  'deactivation-marked-api-keys'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -816,6 +818,10 @@ export const DynamoDbKeys = {
   CLICKHOUSE_SYNC_CHECKSUM: (tenantId: string) => ({
     PartitionKeyID: `${CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER}`,
     SortKeyID: tenantId,
+  }),
+  DEACTIVATION_MARKED_API_KEY: (tenantId: string, apiKeyId: string) => ({
+    PartitionKeyID: `${DEACTIVATION_MARKED_API_KEY_IDENTIFIER}`,
+    SortKeyID: `${tenantId}#${apiKeyId}`,
   }),
   CLOUDWATCH_LOGS_SYNC_STATE: () => ({
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#cloudwatch_logs_sync`,
