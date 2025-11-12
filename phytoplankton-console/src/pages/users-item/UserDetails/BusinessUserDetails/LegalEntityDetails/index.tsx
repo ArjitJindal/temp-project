@@ -3,6 +3,7 @@ import ContactDetailsCard from '../../shared/ContactDetailsCard';
 import Tags from '../../shared/Tags';
 import SavedPaymentDetailsCard from '../../shared/SavedPaymentDetailsCard';
 import Attachment from '../../Attachments';
+import { OtherDetailsCard } from '../../shared/OtherDetails';
 import GeneralDetailsCard from './GeneralDetailsCard';
 import RegistrationDetailsCard from './RegistrationDetailsCard';
 import FinancialDetailsCard from './FinancialDetailsCard';
@@ -54,6 +55,9 @@ export default function LegalEntityDetails(props: Props) {
 
       <EntityInfoGrid.Cell columnSpan={1} rowSpan={2} maxHeight={350}>
         <Tags tags={user.tags ?? []} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell columnSpan={1} rowSpan={2} maxHeight={350}>
+        <OtherDetailsCard user={user} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={1}>
         <EntityInfoGrid.ColumnGroup

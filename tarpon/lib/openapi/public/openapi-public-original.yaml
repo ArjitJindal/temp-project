@@ -2462,6 +2462,16 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        productsEnabled:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductsEnabled'
+    ProductsEnabled:
+      title: ProductsEnabled
+      type: object
+      properties:
+        productName:
+          type: string
     ConsumerUserSegment:
       title: ConsumerUserSegment
       type: string
@@ -4603,6 +4613,10 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        productsEnabled:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductsEnabled'
     BusinessUserMonitoringResult:
       title: BusinessUserMonitoringResult
       type: object
