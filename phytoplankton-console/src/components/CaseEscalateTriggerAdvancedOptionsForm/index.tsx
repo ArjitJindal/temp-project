@@ -9,7 +9,6 @@ import { UpdateUserTags } from './components/UpdateUserTags';
 import { UpdateUserDetails } from './components/UpdateuserDetails/UpdateUserDetails';
 import { ScreeningDetailsUpdateForm } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/UpdateForm';
 import { DispositionApprovalWarnings } from '@/components/DispositionApprovalWarnings';
-import { useDispositionApprovalWarnings } from '@/utils/api/workflows';
 import { KYCStatus, KYCAndUserStatusChangeReason, UserState } from '@/apis';
 import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
@@ -37,15 +36,6 @@ export const CaseEscalateTriggerAdvancedOptionsForm = (props: { user?: TableUser
 
   // Check if USER_CHANGES_APPROVAL feature is enabled
   const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
-
-  // Check if any fields require approval to make reason required
-  const approvalWarnings = useDispositionApprovalWarnings();
-  const requiresReason =
-    approvalWarnings.hasFieldsRequiringApproval || approvalWarnings.hasFieldsWithAutoApproval;
-
-  // Show reason field if USER_CHANGES_APPROVAL is enabled OR if any disposition changes are made
-  // (since actionReason is also used for KYC/User state changes regardless of approval workflows)
-  const shouldShowReasonField = isUserChangesApprovalEnabled;
 
   return (
     <>
@@ -79,29 +69,11 @@ export const CaseEscalateTriggerAdvancedOptionsForm = (props: { user?: TableUser
           )}
         </>
       </div>
-      {shouldShowReasonField && (
-        <InputField<FormValues, 'actionReason'>
-          name="actionReason"
-          label={requiresReason ? 'Reason for user field changes' : 'Reason'}
-          labelProps={{
-            required: {
-              value: requiresReason,
-              showHint: requiresReason,
-            },
-          }}
-        >
-          {(inputProps) => (
-            <TextArea
-              {...inputProps}
-              placeholder={
-                requiresReason
-                  ? 'Required: Add a reason explaining the user field changes for approval'
-                  : 'Add a reason for the updates made'
-              }
-            />
-          )}
-        </InputField>
-      )}
+      <InputField<FormValues, 'actionReason'> name="actionReason" label={'Reason'}>
+        {(inputProps) => (
+          <TextArea {...inputProps} placeholder={'Add a reason for the updates made'} />
+        )}
+      </InputField>
     </>
   );
 };
