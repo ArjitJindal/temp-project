@@ -6,7 +6,6 @@ import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Construct } from 'constructs'
 import { Alarm, ComparisonOperator, Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
-  DYNAMODB_TABLE_NAMES,
   getDeadLetterQueueName,
   SQSQueues,
   StackConstants,
@@ -15,10 +14,8 @@ import { LAMBDAS } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
 
 import { CANARIES } from '@lib/canaries'
-import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import {
   createAPIGatewayAlarm,
-  createDynamoDBAlarm,
   createKinesisAlarm,
   createLambdaConsumerIteratorAgeAlarm,
   createLambdaDurationAlarm,
@@ -27,8 +24,6 @@ import {
   createLambdaThrottlingAlarm,
   createSQSOldestMessageAgeAlarm,
   createTarponOverallLambdaAlarm,
-  dynamoTableOperationMetrics,
-  dynamoTableOperations,
   createCanarySuccessPercentageAlarm,
   createRuleHitRateAlarm,
   createStateMachineAlarm,
@@ -38,6 +33,9 @@ import {
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
 const allLambdas = Object.keys(LAMBDAS)
+const allPublicAPILambdas = allLambdas.filter((lambda) =>
+  lambda.startsWith('Public')
+)
 
 const KINESIS_CONSUMER_LAMBDAS = [
   StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
@@ -54,26 +52,6 @@ const API_GATEWAY_NAMES = [
   StackConstants.TARPON_MANAGEMENT_API_NAME,
   StackConstants.CONSOLE_API_NAME,
 ]
-
-const dynamoTables = (config: Config) => {
-  const tables = [...Object.values(DYNAMODB_TABLE_NAMES)]
-  const siloTables =
-    siloDataTenants?.[config.stage]?.[config.region ?? 'eu-1'] ?? []
-
-  if (siloTables?.length) {
-    tables.push(
-      ...siloTables.flatMap((id) => [
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(id),
-        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(id),
-      ])
-    )
-  }
-  return tables.filter(
-    (val) =>
-      val !== DYNAMODB_TABLE_NAMES.AGGREGATION ||
-      (config.region === 'eu-2' && config.stage === 'prod') // Currently only for eu-2
-  )
-}
 
 const KINESIS_STREAM_NAMES = [
   {
@@ -100,7 +78,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     createTarponOverallLambdaAlarm(this, this.zendutyCloudWatchTopic)
     createRuleErrorCountAlarm(this, this.zendutyCloudWatchTopic)
 
-    for (const lambdaName of allLambdas) {
+    for (const lambdaName of allPublicAPILambdas) {
       createLambdaDurationAlarm(
         this,
         this.zendutyCloudWatchTopic,
@@ -164,68 +142,6 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         streamDetails.streamName,
         20
       )
-    }
-    for (const tableName of dynamoTables(this.config)) {
-      dynamoTableOperationMetrics.map((metric) => {
-        dynamoTableOperations.map((operation) => {
-          createDynamoDBAlarm(
-            this,
-            this.zendutyCloudWatchTopic,
-            `Dynamo${tableName}${operation}${metric}`,
-            tableName,
-            metric,
-            {
-              threshold: 1,
-              period: Duration.minutes(5),
-              dimensions: { Operation: operation },
-            }
-          )
-        })
-      })
-
-      if (this.config.stage === 'prod' || this.config.stage === 'dev') {
-        // We only monitor consumed read/write capacity for production as we use on-demand
-        // mode only in production & dev right now
-
-        createDynamoDBAlarm(
-          this,
-          this.zendutyCloudWatchTopic,
-          `Dynamo${tableName}ConsumedReadCapacityUnits`,
-          tableName,
-          'ConsumedReadCapacityUnits',
-          this.config.stage === 'prod'
-            ? {
-                threshold: 600,
-                statistic: 'Maximum',
-                period: Duration.minutes(1),
-              }
-            : {
-                threshold: 50,
-                statistic: 'Average',
-                period: Duration.minutes(5),
-              }
-        )
-        createDynamoDBAlarm(
-          this,
-          this.zendutyCloudWatchTopic,
-          `Dynamo${tableName}ConsumedWriteCapacityUnits`,
-          tableName,
-          'ConsumedWriteCapacityUnits',
-          this.config.stage === 'prod'
-            ? {
-                threshold:
-                  props.config.resource.DYNAMO_WRITE_CAPACITY_THRESHOLD ?? 300,
-                statistic: 'Maximum',
-                period: Duration.minutes(1),
-              }
-            : {
-                threshold:
-                  props.config.resource.DYNAMO_WRITE_CAPACITY_THRESHOLD ?? 100,
-                statistic: 'Average',
-                period: Duration.minutes(15),
-              }
-        )
-      }
     }
 
     for (const sqsQueue of Object.values(SQSQueues)) {

@@ -135,6 +135,8 @@ import {
 import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
+import { CdkTarponDynamoDBAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-dynamodb-alarms-stack'
+import { CdkTarponLambdaAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-lambda-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import {
@@ -1897,6 +1899,23 @@ export class CdkTarponStack extends cdk.Stack {
         batchJobStateMachineArn: batchJobStateMachine.stateMachineArn,
         zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       })
+
+      new CdkTarponDynamoDBAlarmsStack(
+        this,
+        `${config.stage}-tarpon-dynamodb-alarms`,
+        {
+          config,
+          zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
+        }
+      )
+
+      new CdkTarponLambdaAlarmsStack(
+        this,
+        `${config.stage}-tarpon-lambda-alarms`,
+        {
+          zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
+        }
+      )
 
       if (this.config.region !== 'me-1' && this.config.region !== 'asia-3') {
         new CdkBudgetStack(this, `${config.stage}-tarpon-budget`, {

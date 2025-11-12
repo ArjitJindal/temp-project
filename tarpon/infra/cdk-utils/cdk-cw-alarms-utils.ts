@@ -284,7 +284,8 @@ export const createAPIGatewayThrottlingAlarm = (
 export const createLambdaErrorPercentageAlarm = (
   context: Construct,
   zendutyCloudWatchTopic: Topic,
-  lambdaName: string
+  lambdaName: string,
+  isNewAlarm: boolean = false
 ) => {
   if (isDevUserStack) {
     return null
@@ -294,7 +295,7 @@ export const createLambdaErrorPercentageAlarm = (
     threshold: 10,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
-    alarmName: `Lambda-${lambdaName}ErrorPercentage`,
+    alarmName: `Lambda-${lambdaName}ErrorPercentage${isNewAlarm ? '-New' : ''}`,
     alarmDescription: `Covers Error percentage in ${lambdaName} in the AWS account. 
     Alarm triggers when Error percentage 10%  for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
     metric: new MathExpression({
@@ -361,7 +362,8 @@ export const createLambdaDurationAlarm = (
   context: Construct,
   zendutyCloudWatchTopic: Topic,
   lambdaName: string,
-  duration: Duration
+  duration: Duration,
+  isNewAlarm: boolean = false
 ) => {
   if (isDevUserStack) {
     return null
@@ -372,7 +374,7 @@ export const createLambdaDurationAlarm = (
     evaluationPeriods: 6,
     datapointsToAlarm: 3,
     treatMissingData: TreatMissingData.NOT_BREACHING,
-    alarmName: `Lambda-${lambdaName}Duration`,
+    alarmName: `Lambda-${lambdaName}Duration${isNewAlarm ? '-New' : ''}`,
     alarmDescription: `Covers Duration in ${lambdaName} in the AWS account. 
     Alarm triggers when Maximum Duration exceedes ${duration.toSeconds()}s for 3 consecutive data points in 30 mins (Checked every 5 minutes). `,
     metric: new Metric({
@@ -418,7 +420,8 @@ export const createRuleHitRateAlarm = (
 export const createLambdaThrottlingAlarm = (
   context: Construct,
   zendutyCloudWatchTopic: Topic,
-  lambdaName: string
+  lambdaName: string,
+  isNewAlarm: boolean = false
 ) => {
   if (isDevUserStack) {
     return null
@@ -428,7 +431,7 @@ export const createLambdaThrottlingAlarm = (
     threshold: 5,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
-    alarmName: `Lambda-${lambdaName}Throttling`,
+    alarmName: `Lambda-${lambdaName}Throttling${isNewAlarm ? '-New' : ''}`,
     alarmDescription: `Covers Throttle percentage in ${lambdaName} in the AWS account. 
     Alarm triggers when Throttle percentage 5% exceedes for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
     metric: new MathExpression({
@@ -464,7 +467,8 @@ export const createLambdaThrottlingAlarm = (
 export const createLambdaMemoryUtilizationAlarm = (
   context: Construct,
   zendutyCloudWatchTopic: Topic,
-  lambdaName: string
+  lambdaName: string,
+  isNewAlarm: boolean = false
 ) => {
   if (isDevUserStack) {
     return null
@@ -474,7 +478,9 @@ export const createLambdaMemoryUtilizationAlarm = (
     threshold: 95,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
-    alarmName: `Lambda-${lambdaName}MemoryUtilization`,
+    alarmName: `Lambda-${lambdaName}MemoryUtilization${
+      isNewAlarm ? '-New' : ''
+    }`,
     alarmDescription: `Covers memory utilization percentage in ${lambdaName} in the AWS account. 
     Alarm triggers when memory utilization percentage exceedes 95% for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
     metric: new MathExpression({
