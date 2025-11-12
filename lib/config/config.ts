@@ -354,6 +354,11 @@ export type Config = {
       PROVISIONED_CONCURRENCY?: number
       BATCH_SIZE?: number
     }
+    USER_AGGREGATION_LAMBDA: {
+      MEMORY_SIZE?: number
+      PROVISIONED_CONCURRENCY?: number
+    }
+    USER_AGGREGATION_MAX_CONCURRENCY: number
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number

@@ -55,6 +55,7 @@ export type V8LogicAggregationRebuildTask = {
   userId?: string
   paymentDetails?: PaymentDetails
   entityData?: EntityData
+  isConsumer?: boolean
 }
 
 export type TransactionAggregationTaskEntry = {

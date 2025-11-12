@@ -62,6 +62,8 @@ import { NotificationRepository } from '@/services/notifications/notifications-r
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import {
   applyNewVersion,
   updateInMongoWithVersionCheck,
@@ -354,6 +356,64 @@ export class TarponChangeMongoDbConsumer {
       )
     }
     await casesRepo.syncCaseUsers(internalUser)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const deployingRuleInstances =
+      await ruleInstancesRepo.getDeployingRuleInstances()
+    const riskService = new RiskService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    const deployingFactorsSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleUser deployingFactors'
+    )
+    const deployingFactors = isRiskScoringEnabled
+      ? (await riskService.getAllRiskFactors()).filter(
+          (factor) => factor.status === 'DEPLOYING'
+        )
+      : []
+    deployingFactorsSubSegment?.close()
+    // Update rule and risk factor aggregation data for the user/ events created when the rule is still deploying
+    if (deployingRuleInstances.length > 0 || deployingFactors.length > 0) {
+      const userEventRepository = new UserEventRepository(tenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+      const latestUserEvent = await userEventRepository.getLatestUserEvent(
+        isConsumerUser(internalUser) ? 'CONSUMER' : 'BUSINESS',
+        internalUser.userId
+      )
+      const v8AggregationSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction v8Aggregation'
+      )
+      await Promise.all([
+        ...deployingRuleInstances.map(async (ruleInstance) => {
+          if (!runOnV8Engine(ruleInstance)) {
+            return
+          }
+          await logicEvaluator.handleV8Aggregation(
+            'RULES',
+            ruleInstance.logicAggregationVariables ?? [],
+            {
+              user: internalUser,
+              userEvent: latestUserEvent || undefined,
+            }
+          )
+        }),
+        ...deployingFactors.map(async (factor) => {
+          await logicEvaluator.handleV8Aggregation(
+            'RISK',
+            factor.logicAggregationVariables ?? [],
+            {
+              user: internalUser,
+              userEvent: latestUserEvent || undefined,
+            }
+          )
+        }),
+      ])
+      v8AggregationSubSegment?.close()
+    }
 
     const sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(tenantId, {
@@ -460,16 +520,17 @@ export class TarponChangeMongoDbConsumer {
           await logicEvaluator.handleV8Aggregation(
             'RULES',
             ruleInstance.logicAggregationVariables ?? [],
-            transaction,
-            transactionEvents
+            {
+              transaction,
+              transactionEvents,
+            }
           )
         }),
         ...deployingFactors.map(async (factor) => {
           await logicEvaluator.handleV8Aggregation(
             'RISK',
             factor.logicAggregationVariables ?? [],
-            transaction,
-            transactionEvents
+            { transaction, transactionEvents }
           )
         }),
       ])

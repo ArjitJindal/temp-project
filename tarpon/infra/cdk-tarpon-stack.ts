@@ -258,6 +258,14 @@ export class CdkTarponStack extends cdk.Stack {
         retentionPeriod: Duration.days(7),
       }
     )
+    const userAggregationQueue = this.createQueue(
+      SQSQueues.USER_AGGREGATION_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        fifo: true,
+        retentionPeriod: Duration.days(7),
+      }
+    )
 
     const auditLogTopic = new Topic(this, StackConstants.AUDIT_LOG_TOPIC_NAME, {
       displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
@@ -668,6 +676,9 @@ export class CdkTarponStack extends cdk.Stack {
         IMPORT_BUCKET: importBucketName,
         TMP_BUCKET: tmpBucketName,
         SHARED_ASSETS_BUCKET: sharedAssetsBucketName,
+        USER_AGGREGATION_QUEUE_URL: getSQSQueueName(
+          userAggregationQueue.queueUrl
+        ),
         // sns topics
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         // sqs queues
@@ -809,6 +820,7 @@ export class CdkTarponStack extends cdk.Stack {
             webhookDeliveryQueue.queueArn,
             slackAlertQueue.queueArn,
             transactionAggregationQueue.queueArn,
+            userAggregationQueue.queueArn,
             requestLoggerQueue.queueArn,
             notificationQueue.queueArn,
             tarponEventQueue.queueArn,
@@ -1211,6 +1223,24 @@ export class CdkTarponStack extends cdk.Stack {
         batchSize: 1,
         maxConcurrency:
           this.config.resource.TRANSACTION_AGGREGATION_MAX_CONCURRENCY,
+      })
+    )
+
+    /* User Aggregation */
+    const { alias: userAggregatorAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.USER_AGGREGATION_FUNCTION_NAME,
+        memorySize: this.config.resource.USER_AGGREGATION_LAMBDA?.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
+
+    userAggregatorAlias.addEventSource(
+      new SqsEventSource(userAggregationQueue, {
+        batchSize: 1,
+        maxConcurrency: this.config.resource.USER_AGGREGATION_MAX_CONCURRENCY,
       })
     )
 

@@ -227,6 +227,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.USER_AGGREGATION_FUNCTION_NAME]: {
+    codePath: 'user-aggregation',
+    handlerName: 'userAggregationHandler',
+    expectedMaxSeconds: ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME]: {
     codePath: 'console-api-webhook',
     handlerName: 'webhookConfigurationHandler',

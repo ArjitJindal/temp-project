@@ -189,6 +189,7 @@ export async function bulkVerifyUsers(
   for (const user of users) {
     const { monitoringResult } = await rulesEngine.verifyUser(
       user,
+      user.createdTimestamp,
       ongoingScreeningMode ? 'ONGOING' : 'INITIAL'
     )
     results.push(monitoringResult)

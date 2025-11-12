@@ -458,5 +458,8 @@ export function getUserKeyId(
       const address = getPaymentMethodAddressString(paymentDetails)
       return address
     }
+    case 'USER_DETAILS': {
+      return ''
+    }
   }
 }

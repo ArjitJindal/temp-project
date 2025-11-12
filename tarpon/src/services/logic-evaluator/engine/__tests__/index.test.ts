@@ -17,6 +17,9 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { getTestUserEvent } from '@/test-utils/user-event-test-utils'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { Address } from '@/@types/openapi-public/Address'
 import { getAddressString } from '@/utils/helpers'
 
@@ -2614,6 +2617,19 @@ describe('V8 aggregator', () => {
     } as LogicAggregationVariable
   }
 
+  const getUserAggVar = (
+    aggregationFieldKey: string,
+    aggregationFunc: string,
+    granularity: string
+  ) => {
+    return {
+      ...getAggVar(aggregationFieldKey, aggregationFunc, granularity),
+      userDirection: 'SENDER',
+      type: 'USER_DETAILS',
+      transactionDirection: 'SENDING',
+    } as LogicAggregationVariable
+  }
+
   test('Should rebuild the aggregation data for the user for granularity day - checks count', async () => {
     const tenantId = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
@@ -2665,6 +2681,88 @@ describe('V8 aggregator', () => {
       beforeTimestamp + 1,
       '1',
       undefined
+    )
+
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'day'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01-01', value: 1 },
+      { time: '2023-01-02', value: 1 },
+      { time: '2023-01-03', value: 2 },
+    ])
+  })
+
+  test('Should rebuild the user aggregation data for the user for granularity day - checks count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const userEventRepository = new UserEventRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-03T12:00:10.000Z').valueOf()
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const AGG_VARIABLE = getUserAggVar(
+      'CONSUMER_USER:occupation__SENDER',
+      'COUNT',
+      'day'
+    )
+    const users = [
+      getTestUser({
+        userId: '1',
+        createdTimestamp: afterTimestamp,
+        occupation: 'Software Engineer1',
+      }),
+    ] as InternalConsumerUser[]
+    const userEvent0 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer1',
+      },
+    })
+    const userEvent1 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-02T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer2',
+      },
+      eventId: 'eventId1',
+    })
+    const userEvent2 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-03T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer3',
+      },
+      eventId: 'eventId2',
+    })
+    const userEvent3 = getTestUserEvent({
+      userId: '1',
+      timestamp: beforeTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer4',
+      },
+      eventId: 'eventId3',
+    })
+    await userRepository.saveConsumerUser(users[0])
+    await userEventRepository.saveUserEvent(userEvent0, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent1, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent2, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent3, 'CONSUMER', undefined)
+    await logicEvaluator.rebuildUserAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      true
     )
 
     const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
@@ -2753,6 +2851,88 @@ describe('V8 aggregator', () => {
     ])
   })
 
+  test('Should rebuild the user aggregation data for the user for granularity month - checks count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const userEventRepository = new UserEventRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-03-01T12:00:10.000Z').valueOf()
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const AGG_VARIABLE = getUserAggVar(
+      'CONSUMER_USER:occupation__SENDER',
+      'COUNT',
+      'month'
+    )
+    const users = [
+      getTestUser({
+        userId: '1',
+        createdTimestamp: afterTimestamp,
+        occupation: 'Software Engineer1',
+      }),
+    ] as InternalConsumerUser[]
+    const userEvent0 = getTestUserEvent({
+      userId: '1',
+      timestamp: afterTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer1',
+      },
+    })
+    const userEvent1 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-02-01T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer2',
+      },
+      eventId: 'eventId1',
+    })
+    const userEvent2 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-03-01T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer3',
+      },
+      eventId: 'eventId2',
+    })
+    const userEvent3 = getTestUserEvent({
+      userId: '1',
+      timestamp: beforeTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer4',
+      },
+      eventId: 'eventId3',
+    })
+    await userRepository.saveConsumerUser(users[0])
+    await userEventRepository.saveUserEvent(userEvent0, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent1, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent2, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent3, 'CONSUMER', undefined)
+    await logicEvaluator.rebuildUserAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      true
+    )
+
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'month'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01', value: 1 },
+      { time: '2023-02', value: 1 },
+      { time: '2023-03', value: 2 },
+    ])
+  })
+
   test('Should rebuild the aggregation data for the user for granularity year - checks count', async () => {
     const tenantId = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
@@ -2820,6 +3000,87 @@ describe('V8 aggregator', () => {
     ])
   })
 
+  test('Should rebuild the user aggregation data for the user for granularity year - checks count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const userEventRepository = new UserEventRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2025-01-01T12:00:10.000Z').valueOf()
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const AGG_VARIABLE = getUserAggVar(
+      'CONSUMER_USER:occupation__SENDER',
+      'COUNT',
+      'year'
+    )
+    const users = [
+      getTestUser({
+        userId: '1',
+        createdTimestamp: afterTimestamp,
+        occupation: 'Software Engineer1',
+      }),
+    ] as InternalConsumerUser[]
+    const userEvent0 = getTestUserEvent({
+      userId: '1',
+      timestamp: afterTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer1',
+      },
+    })
+    const userEvent1 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2024-01-01T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer2',
+      },
+      eventId: 'eventId1',
+    })
+    const userEvent2 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2025-01-01T12:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer3',
+      },
+      eventId: 'eventId2',
+    })
+    const userEvent3 = getTestUserEvent({
+      userId: '1',
+      timestamp: beforeTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer4',
+      },
+      eventId: 'eventId3',
+    })
+    await userRepository.saveConsumerUser(users[0])
+    await userEventRepository.saveUserEvent(userEvent0, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent1, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent2, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent3, 'CONSUMER', undefined)
+    await logicEvaluator.rebuildUserAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      true
+    )
+
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'year'
+    )
+    expect(aggData).toEqual([
+      { time: '2023', value: 1 },
+      { time: '2024', value: 1 },
+      { time: '2025', value: 2 },
+    ])
+  })
   test('Should rebuild the aggregation data for Address', async () => {
     const tenantId = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
@@ -2965,6 +3226,88 @@ describe('V8 aggregator', () => {
     ])
   })
 
+  test('Should rebuild the user aggregation data for the user for granularity hour - checks count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const userEventRepository = new UserEventRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-01T14:00:10.000Z').valueOf()
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const AGG_VARIABLE = getUserAggVar(
+      'CONSUMER_USER:occupation__SENDER',
+      'COUNT',
+      'hour'
+    )
+    const users = [
+      getTestUser({
+        userId: '1',
+        createdTimestamp: afterTimestamp,
+        occupation: 'Software Engineer1',
+      }),
+    ] as InternalConsumerUser[]
+    const userEvent0 = getTestUserEvent({
+      userId: '1',
+      timestamp: afterTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer1',
+      },
+    })
+    const userEvent1 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-01T13:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer2',
+      },
+      eventId: 'eventId1',
+    })
+    const userEvent2 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-01T14:00:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer3',
+      },
+      eventId: 'eventId2',
+    })
+    const userEvent3 = getTestUserEvent({
+      userId: '1',
+      timestamp: beforeTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer4',
+      },
+      eventId: 'eventId3',
+    })
+    await userRepository.saveConsumerUser(users[0])
+    await userEventRepository.saveUserEvent(userEvent0, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent1, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent2, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent3, 'CONSUMER', undefined)
+    await logicEvaluator.rebuildUserAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      true
+    )
+
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'hour'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01-01-12', value: 1 },
+      { time: '2023-01-01-13', value: 1 },
+      { time: '2023-01-01-14', value: 2 },
+    ])
+  })
+
   test('Should rebuild the aggregation data for the user for granularity minute - checks count', async () => {
     const tenantId = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
@@ -3022,6 +3365,88 @@ describe('V8 aggregator', () => {
       '1',
       undefined
     )
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'minute'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01-01-12-0', value: 2 },
+      { time: '2023-01-01-12-2', value: 1 },
+      { time: '2023-01-01-12-3', value: 1 },
+    ])
+  })
+
+  test('Should rebuild the user aggregation data for the user for granularity minute - checks count', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const userEventRepository = new UserEventRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-01T12:30:10.000Z').valueOf()
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
+    const AGG_VARIABLE = getUserAggVar(
+      'CONSUMER_USER:occupation__SENDER',
+      'COUNT',
+      'minute'
+    )
+    const users = [
+      getTestUser({
+        userId: '1',
+        createdTimestamp: afterTimestamp,
+        occupation: 'Software Engineer1',
+      }),
+    ] as InternalConsumerUser[]
+    const userEvent0 = getTestUserEvent({
+      userId: '1',
+      timestamp: afterTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer1',
+      },
+    })
+    const userEvent1 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-01T12:05:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer2',
+      },
+      eventId: 'eventId1',
+    })
+    const userEvent2 = getTestUserEvent({
+      userId: '1',
+      timestamp: dayjs('2023-01-01T12:25:00.000Z').valueOf(),
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer3',
+      },
+      eventId: 'eventId2',
+    })
+    const userEvent3 = getTestUserEvent({
+      userId: '1',
+      timestamp: beforeTimestamp,
+      updatedConsumerUserAttributes: {
+        occupation: 'Software Engineer4',
+      },
+      eventId: 'eventId3',
+    })
+    await userRepository.saveConsumerUser(users[0])
+    await userEventRepository.saveUserEvent(userEvent0, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent1, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent2, 'CONSUMER', undefined)
+    await userEventRepository.saveUserEvent(userEvent3, 'CONSUMER', undefined)
+    await logicEvaluator.rebuildUserAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      true
+    )
+
     const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
     const aggData = await aggregationRepository.getUserLogicTimeAggregations(
       '1',

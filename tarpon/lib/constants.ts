@@ -206,6 +206,9 @@ export const StackConstants = {
   TRANSACTION_AGGREGATION_FUNCTION_NAME: getResourceNameForTarpon(
     'TransactionAggregationFunction'
   ),
+  USER_AGGREGATION_FUNCTION_NAME: getResourceNameForTarpon(
+    'UserAggregationFunction'
+  ),
   CONSOLE_API_SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSanctionsFunction'
   ),
@@ -393,6 +396,10 @@ export const SQSQueues: {
   },
   TRANSACTION_AGGREGATION_QUEUE_NAME: {
     name: getResourceName('TransactionAggregationQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 120,
+  },
+  USER_AGGREGATION_QUEUE_NAME: {
+    name: getResourceName('UserAggregationQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 120,
   },
   SLACK_ALERT_QUEUE_NAME: {

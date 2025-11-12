@@ -17,6 +17,12 @@ import {
 } from '@/services/rules-engine/repositories/transaction-repository-interface'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { UsersUniquesField } from '@/@types/openapi-internal/UsersUniquesField'
+import { UserOptional } from '@/@types/openapi-public/UserOptional'
+import { BusinessOptional } from '@/@types/openapi-public/BusinessOptional'
+import {
+  AuxiliaryIndexUserEvent,
+  UserEvent,
+} from '@/services/rules-engine/repositories/user-repository-interface'
 
 export type LogicValueTypesEnum =
   | 'string'
@@ -71,6 +77,15 @@ export interface TransactionLogicVariable<ReturnType = unknown>
     context: LogicVariableContext
   ) => Promise<ReturnType>
   sourceField: keyof TransactionWithRiskDetails
+}
+export interface UserLogicVariable<ReturnType = unknown>
+  extends LogicVariableBase {
+  entity: 'USER'
+  load: (
+    userEvent: AuxiliaryIndexUserEvent | UserEvent | undefined,
+    context: LogicVariableContext
+  ) => Promise<ReturnType>
+  sourceField: keyof UserOptional | keyof BusinessOptional
 }
 
 export interface TransactionEventLogicVariable<ReturnType = unknown>

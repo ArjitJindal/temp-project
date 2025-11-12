@@ -40,6 +40,7 @@ import { formatConsumerName, getAddressString } from '@/utils/helpers'
 
 export const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
+const USER_EVENT_ID_PREFIX = 'user-event:'
 const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
 const QUESTION_ID_PREFIX = 'question:'
@@ -494,6 +495,14 @@ export const DynamoDbKeys = {
     transactionId: string
   ) => ({
     PartitionKeyID: `${tenantId}#rule-agg#${direction}#${version}#${transactionId}`,
+    SortKeyID: '1',
+  }),
+  V8_LOGIC_USER_TIME_AGGREGATION_USER_EVENT_MARKER: (
+    tenantId: string,
+    version: string,
+    eventId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#rule-agg#${version}#${USER_EVENT_ID_PREFIX}${eventId}`,
     SortKeyID: '1',
   }),
   // TODO (V8): Improve user key ID format for V8 only

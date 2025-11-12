@@ -108,12 +108,15 @@ export abstract class ScreeningUserRuleBatchJobRunnerBase extends BatchJobRunner
         await pMap(
           usersChunk,
           async (user) => {
-            const result = await this.rulesEngineService?.verifyUserByRules(
-              user,
-              ruleInstances,
-              rules,
-              'ONGOING'
-            )
+            const monitoringResult =
+              await this.rulesEngineService?.verifyUserByRules(
+                user,
+                ruleInstances,
+                rules,
+                'ONGOING',
+                Date.now()
+              )
+            const result = monitoringResult?.monitoringResult
 
             // We only update when there are no hit rules else we will update the user in consumer
             if (!result?.hitRules?.length) {

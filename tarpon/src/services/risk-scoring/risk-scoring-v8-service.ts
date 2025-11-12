@@ -15,6 +15,7 @@ import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { UserRepository } from '../users/repositories/user-repository'
+import { UserEvent } from '../rules-engine/repositories/user-repository-interface'
 import { RiskRepository } from './repositories/risk-repository'
 import { extractParamValues } from './risk-factors'
 import { isDefaultRiskFactor } from './utils'
@@ -151,8 +152,19 @@ export class RiskScoringV8Service {
       await this.logicEvaluator.handleV8Aggregation(
         'RISK',
         factor.logicAggregationVariables ?? [],
-        riskData.transaction,
-        riskData.transactionEvents
+        {
+          transaction: riskData.transaction,
+          transactionEvents: riskData.transactionEvents,
+        }
+      )
+    } else if (riskData.type === 'USER' && factor.logicAggregationVariables) {
+      await this.logicEvaluator.handleV8Aggregation(
+        'RISK',
+        factor.logicAggregationVariables ?? [],
+        {
+          user: riskData.user,
+          userEvent: riskData.userEvent,
+        }
       )
     }
     const riskClassificationValues = await this.getRiskClassificationValues()
@@ -225,8 +237,10 @@ export class RiskScoringV8Service {
           await this.logicEvaluator.handleV8Aggregation(
             'RISK',
             factor.logicAggregationVariables ?? [],
-            riskData.transaction,
-            riskData.transactionEvents
+            {
+              transaction: riskData.transaction,
+              transactionEvents: riskData.transactionEvents,
+            }
           )
         })
       )
@@ -637,16 +651,25 @@ export class RiskScoringV8Service {
 
   public async calculateKrsScore(
     user: User | Business,
-    riskFactors: RiskFactor[]
+    riskFactors: RiskFactor[],
+    userEvent?: UserEvent
   ): Promise<RiskFactorsResult> {
     const { riskFactorsResult: newKrsScore } =
-      await this.calculateRiskFactorsScore({ user, type: 'USER' }, riskFactors)
+      await this.calculateRiskFactorsScore(
+        {
+          user,
+          type: 'USER',
+          userEvent: userEvent,
+        },
+        riskFactors
+      )
     return newKrsScore
   }
 
   public async calculateAndUpdateKrsScore(
     user: User | Business,
     riskClassificationValues: RiskClassificationScore[],
+    userEvent?: UserEvent,
     manualKrsRiskLevel?: RiskLevel,
     existingKrs?: KrsScore | null,
     lockKrs?: boolean
@@ -682,7 +705,11 @@ export class RiskScoringV8Service {
         isOverriddenScore: false,
       }
     }
-    const newKrsScore = await this.calculateKrsScore(user, riskFactors)
+    const newKrsScore = await this.calculateKrsScore(
+      user,
+      riskFactors,
+      userEvent
+    )
     await this.riskRepository.createOrUpdateKrsScore(
       user.userId,
       newKrsScore.score,
@@ -695,6 +722,7 @@ export class RiskScoringV8Service {
 
   public async handleUserUpdate(params: {
     user: User | Business
+    userEvent?: UserEvent
     manualRiskLevel?: RiskLevel
     isDrsUpdatable?: boolean
     manualKrsRiskLevel?: RiskLevel
@@ -706,6 +734,7 @@ export class RiskScoringV8Service {
       isDrsUpdatable,
       manualKrsRiskLevel,
       lockKrs,
+      userEvent,
     } = params
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
@@ -716,6 +745,7 @@ export class RiskScoringV8Service {
     const newKrsScore = await this.calculateAndUpdateKrsScore(
       user,
       riskClassificationValues,
+      userEvent,
       manualKrsRiskLevel,
       krsScore,
       lockKrs

@@ -9,7 +9,7 @@ import {
   LogicBuilderValue,
   QueryBuilderConfig,
 } from '@/components/ui/LogicBuilder/types';
-import { isSuccess, useFinishedSuccessfully } from '@/utils/asyncResource';
+import { isSuccess } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import {
   LogicEntityVariableEntityEnum,
@@ -54,9 +54,8 @@ export default function FiltersLogicBuilder(props: Props) {
     settings,
   );
 
-  const isFinishedSuccessfully = useFinishedSuccessfully(configRes);
   useEffect(() => {
-    if ((isFinishedSuccessfully || state == null) && isSuccess(configRes)) {
+    if (isSuccess(configRes)) {
       setState((prevState) =>
         prevState
           ? {
@@ -73,7 +72,7 @@ export default function FiltersLogicBuilder(props: Props) {
             },
       );
     }
-  }, [state, isFinishedSuccessfully, jsonLogic, configRes]);
+  }, [jsonLogic, configRes, props.entityVariableTypes]);
 
   const handleChangeLogic = useCallback(
     (newState: State) => {
@@ -118,7 +117,6 @@ export default function FiltersLogicBuilder(props: Props) {
     }
     handleChangeLogic(state);
   }, [state, handleChangeLogic]);
-
   return (
     <AsyncResourceRenderer resource={configRes}>
       {() =>

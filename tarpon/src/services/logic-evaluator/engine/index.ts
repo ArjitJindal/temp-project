@@ -38,6 +38,7 @@ import {
   LogicVariableContext,
   TransactionEventLogicVariable,
   TransactionLogicVariable,
+  UserLogicVariable,
 } from '../variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../variables/payment-details'
 import { CUSTOM_INTERNAL_OPERATORS, LOGIC_OPERATORS } from '../operators'
@@ -45,6 +46,7 @@ import {
   AggregationData,
   AggregationRepository,
   BulkApplyMarkerTransactionData,
+  BulkApplyMarkerUserData,
   getAggVarHash,
 } from './aggregation-repository'
 import {
@@ -97,6 +99,17 @@ import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
 import dayjs from '@/utils/dayjs'
+import {
+  getUserEventsGenerator,
+  groupUsersByGranularity,
+  isBusinessUser,
+  isConsumerUser,
+} from '@/services/rules-engine/utils/user-rule-utils'
+import {
+  AuxiliaryIndexUserEvent,
+  UserEvent,
+  UserEventAttributes,
+} from '@/services/rules-engine/repositories/user-repository-interface'
 import { EntityData, TimestampSlice } from '@/@types/tranasction/aggregation'
 import {
   getPaymentDetailsName,
@@ -123,6 +136,7 @@ export type TransactionLogicData = {
 export type UserLogicData = {
   type: 'USER'
   user: User | Business
+  userEvent?: UserEvent
 }
 export type LogicData = TransactionLogicData | UserLogicData
 
@@ -321,25 +335,40 @@ export class LogicEvaluator {
       traceNamespace,
       'Aggregation Variable Data'
     )
+
     const aggVarData = await Promise.all(
       aggVariables.map(async (aggVariable) => {
         const aggregationVarLoader = this.aggregationVarLoader(data)
-        return {
-          variable: aggVariable,
-          ORIGIN:
-            aggVariable.userDirection !== 'RECEIVER'
-              ? await aggregationVarLoader({
-                  direction: 'origin',
-                  aggVariable,
-                })
+        const aggregationVarLoaderUser =
+          data.type === 'USER' ? this.aggregationVarLoaderUser(data) : null
+        if (aggVariable.type === 'USER_DETAILS') {
+          return {
+            variable: aggVariable,
+            ORIGIN: aggregationVarLoaderUser
+              ? await aggregationVarLoaderUser({ aggVariable })
               : null,
-          DESTINATION:
-            aggVariable.userDirection !== 'SENDER'
-              ? await aggregationVarLoader({
-                  direction: 'destination',
-                  aggVariable,
-                })
+            DESTINATION: aggregationVarLoaderUser
+              ? await aggregationVarLoaderUser({ aggVariable })
               : null,
+          }
+        } else {
+          return {
+            variable: aggVariable,
+            ORIGIN:
+              aggVariable.userDirection !== 'RECEIVER'
+                ? await aggregationVarLoader({
+                    direction: 'origin',
+                    aggVariable,
+                  })
+                : null,
+            DESTINATION:
+              aggVariable.userDirection !== 'SENDER'
+                ? await aggregationVarLoader({
+                    direction: 'destination',
+                    aggVariable,
+                  })
+                : null,
+          }
         }
       })
     )
@@ -388,7 +417,6 @@ export class LogicEvaluator {
         direction,
         value: varValue,
       })
-
       const jsonLogicEngine = getJsonLogicEngine({
         tenantId: this.tenantId,
         dynamoDb: this.dynamoDb,
@@ -585,6 +613,33 @@ export class LogicEvaluator {
     },
     (a, b) => isEqual(a[0], b[0])
   )
+  private aggregationVarLoaderUser = memoizeOne(
+    (data: UserLogicData) => {
+      return memoize(
+        async ({ aggVariable }) => {
+          for (let i = 0; i < 2; i++) {
+            try {
+              return await this.loadAggregationDataUser(aggVariable, data)
+            } catch (e) {
+              if (e instanceof RebuildSyncRetryError) {
+                // try one more time after the rebuild is done
+                if (i === 0) {
+                  continue
+                }
+                logger.error('Still get RebuildSyncRetryError after rebuild')
+                return null
+              }
+              throw e
+            }
+          }
+        },
+        ({ aggVariable }) => {
+          return `${getAggVarHash(aggVariable)}`
+        }
+      )
+    },
+    (a, b) => isEqual(a[0], b[0])
+  )
 
   private isTransactionApplied = memoize(
     async (
@@ -608,6 +663,26 @@ export class LogicEvaluator {
       `${getAggVarHash(aggregationVariable)}-${direction}-${
         transaction.transactionId
       }`
+  )
+
+  private isUserEventApplied = memoize(
+    async (
+      aggregationVariable: LogicAggregationVariable,
+      eventId: string
+    ): Promise<boolean> => {
+      if (this.mode !== 'DYNAMODB') {
+        return false
+      }
+      const isUserEventApplied =
+        await this.aggregationRepository.isUserEventApplied(
+          aggregationVariable,
+          eventId
+        )
+
+      return isUserEventApplied
+    },
+    (aggregationVariable, eventId) =>
+      `${getAggVarHash(aggregationVariable)}-${eventId}`
   )
 
   private userLoader = memoize(
@@ -672,6 +747,33 @@ export class LogicEvaluator {
       userKeyId
     )
   }
+  public async rebuildOrUpdateUserAggregationVariable(
+    aggregationVariable: LogicAggregationVariable,
+    data: UserLogicData
+  ) {
+    if (this.mode !== 'DYNAMODB') {
+      return
+    }
+    const { user } = data
+
+    const userKeyId = user.userId
+    if (!userKeyId) {
+      return
+    }
+    const userType = isBusinessUser(user as User | Business)
+    await this.rebuildUserAggregationVariable(
+      aggregationVariable,
+      data.userEvent?.timestamp ?? Date.now(),
+      user.userId,
+      !userType
+    )
+
+    await this.updateUserAggregationVariableInternalIfNeeded(
+      aggregationVariable,
+      data,
+      userKeyId
+    )
+  }
 
   private getEntityData(
     aggregationVariable: LogicAggregationVariable,
@@ -731,6 +833,9 @@ export class LogicEvaluator {
               : formatConsumerName(entityData.name)
             : undefined
         break
+
+      case 'USER_DETAILS':
+        return false
     }
 
     if (this.mode !== 'DYNAMODB' || !userKeyId) {
@@ -827,6 +932,104 @@ export class LogicEvaluator {
       timeRange?.sliceNumber
     )
     logger.debug('Rebuilt aggregation for time window', timeRange)
+    return true
+  }
+  public async rebuildUserAggregationVariable(
+    aggregationVariable: LogicAggregationVariable,
+    currentTimestamp: number,
+    userId: string,
+    isConsumer?: boolean
+  ): Promise<boolean> {
+    const userKeyId =
+      aggregationVariable.type === 'USER_DETAILS' ? userId : undefined
+
+    if (this.mode !== 'DYNAMODB' || !userKeyId) {
+      return false
+    }
+
+    const { ready } =
+      await this.aggregationRepository.isAggregationVariableReady(
+        aggregationVariable,
+        userKeyId
+      )
+    if (ready) {
+      return false
+    }
+
+    logger.debug('Rebuilding aggregation...')
+    const { afterTimestamp } = getTimeRangeByTimeWindows(
+      currentTimestamp,
+      aggregationVariable.timeWindow.start as TimeWindow,
+      aggregationVariable.timeWindow.end as TimeWindow
+    )
+    const {
+      result: aggregationResult,
+      lastTransactionTimestamp,
+      applyMarkerUserData,
+    } = await this.getRebuiltUserAggregationVariableResult(
+      aggregationVariable,
+      userId,
+      {
+        afterTimestamp,
+        beforeTimestamp: currentTimestamp,
+      },
+      isConsumer
+    )
+    logger.debug('Prepared rebuild result')
+    if (aggregationVariable.aggregationGroupByFieldKey) {
+      const groups = uniq(
+        Object.values(aggregationResult).flatMap((v) =>
+          Object.keys(v.value as { [group: string]: unknown })
+        )
+      )
+      const writeRequests: BatchWriteRequestInternal[] = []
+      for (const group of groups) {
+        const groupAggregationResult = omitBy(
+          mapValues(aggregationResult, (v) => ({
+            value: (
+              v.value as { [group: string]: { value: unknown; entities } }
+            )[group]?.value,
+            entities: aggregationVariable.lastNEntities
+              ? (v.value as { [group: string]: { value: unknown; entities } })[
+                  group
+                ]?.entities
+              : undefined,
+          })),
+          (v) => !v.value
+        )
+        const groupWriteRequests =
+          this.aggregationRepository.getUserTimeAggregationsRebuildWriteRequests(
+            userKeyId,
+            aggregationVariable,
+            groupAggregationResult,
+            group
+          )
+        writeRequests.push(...groupWriteRequests)
+      }
+      logger.debug(`Saving aggregation for ${groups.length} groups`)
+      await batchWrite(
+        this.dynamoDb,
+        writeRequests,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+      )
+    } else {
+      await this.aggregationRepository.rebuildUserTimeAggregations(
+        userKeyId,
+        aggregationVariable,
+        aggregationResult,
+        undefined
+      )
+    }
+    await this.aggregationRepository.bulkMarkUserEventApplied(
+      aggregationVariable,
+      applyMarkerUserData
+    )
+    await this.aggregationRepository.setUserAggregationVariableReady(
+      aggregationVariable,
+      userKeyId,
+      lastTransactionTimestamp
+    )
+    logger.debug('Rebuilt aggregation')
     return true
   }
 
@@ -1163,6 +1366,280 @@ export class LogicEvaluator {
       applyMarkerTransactionData,
     }
   }
+  private async getRebuiltUserAggregationVariableResult(
+    aggregationVariable: LogicAggregationVariable,
+    userId: string,
+    timeRange: { afterTimestamp: number; beforeTimestamp: number },
+    isConsumer?: boolean
+  ): Promise<{
+    result: { [time: string]: AggregationData }
+    lastTransactionTimestamp: number
+    applyMarkerUserData: BulkApplyMarkerUserData
+  }> {
+    const userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    let user
+    if (isConsumer === undefined) {
+      user =
+        ((await userRepository.getConsumerUser(userId)) as User) ??
+        ((await userRepository.getBusinessUser(userId)) as Business)
+    } else if (isConsumer) {
+      user = (await userRepository.getConsumerUser(userId)) as User
+    } else {
+      user = (await userRepository.getBusinessUser(userId)) as Business
+    }
+    isConsumer = isConsumerUser(user)
+    const aggregator = getLogicVariableAggregator(
+      aggregationVariable.aggregationFunc
+    )
+
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVariable.timeWindow,
+      this.tenantId
+    )
+    const fieldsToFetch = this.getUserEventsFieldsToFetch(aggregationVariable)
+    const generator = getUserEventsGenerator(
+      userId,
+      userRepository, // TODO update
+      {
+        afterTimestamp: timeRange.afterTimestamp,
+        beforeTimestamp: timeRange.beforeTimestamp,
+        filters: {},
+      },
+      fieldsToFetch as Array<UserEventAttributes>,
+      isConsumer
+    )
+
+    const threeDaysBeforeTimestamp = subtractTime(
+      dayjs(timeRange.beforeTimestamp),
+      {
+        granularity: 'day',
+        units: 3,
+      }
+    )
+    const applyMarkerUserData: BulkApplyMarkerUserData = []
+    // NOTE: As we're still using lambda to rebuild aggregation, there's a hard 15 minuites timeout.
+    // As we support 'all time' time window, it's possible that it takes more than 15 minutes to rebuild as
+    // we need to fetch all the transaction of a user.
+    // For now, as a workaround, we stop fetching transactions if the timeout is reached to avoid repeatedly
+    // retrying to rebuild and fail.
+    // TODO: Proper fix by FR-5225
+    const isFargate = process.env.AWS_FUNCTION_NAME == null
+    let timeoutReached = false
+    let timeout: NodeJS.Timeout | undefined
+
+    if (!isFargate) {
+      timeout = setTimeout(() => {
+        timeoutReached = true
+      }, 10 * 60 * 1000)
+    }
+
+    let timeAggregatedResult: {
+      [time: string]: AggregationData
+    } = {}
+
+    let targetUsersCount = 0
+    const entitiesByGroupValue: { [key: string]: number } = {}
+    const lastTransactionTimestamp = 0
+    for await (const data of generator) {
+      const userEvents: AuxiliaryIndexUserEvent[] = data.userEvents
+
+      // Filter events by filtersLogic
+      const targetUsers: AuxiliaryIndexUserEvent[] = []
+      for (const userEvent of userEvents) {
+        const isUserFiltered = await this.isDataIncludedInAggregationVariable(
+          aggregationVariable,
+          {
+            type: 'USER',
+            user: isConsumer ? (user as User) : (user as Business),
+            userEvent: userEvent,
+          }
+        )
+        if (isUserFiltered) {
+          targetUsersCount++
+          targetUsers.push(userEvent)
+          if (
+            (userEvent.timestamp ?? 0) >= threeDaysBeforeTimestamp &&
+            userEvent.userId &&
+            userEvent.userKeyId
+          ) {
+            applyMarkerUserData.push({
+              userId: userEvent.userId ?? '',
+            })
+          }
+          if (
+            !aggregationVariable.aggregationGroupByFieldKey &&
+            aggregationVariable.lastNEntities &&
+            targetUsersCount === aggregationVariable.lastNEntities
+          ) {
+            break
+          }
+        }
+      }
+      // Update aggregation result
+      const userEntityVariableKey = aggregationVariable.aggregationFieldKey
+      const userEntityVariable = getLogicVariableByKey(userEntityVariableKey)
+      if (!userEntityVariable) {
+        logger.error('User entity variable not found', userEntityVariableKey)
+        break
+      }
+      const userGroupByEntityVariable =
+        aggregationVariable.aggregationGroupByFieldKey
+          ? (getLogicVariableByKey(
+              aggregationVariable.aggregationGroupByFieldKey
+            ) as UserLogicVariable)
+          : undefined
+      const context: LogicVariableContext = {
+        baseCurrency: aggregationVariable.baseCurrency as
+          | CurrencyCode
+          | 'ORIGINAL_CURRENCY',
+        dynamoDb: this.dynamoDb,
+        tenantId: this.tenantId,
+      }
+      const hasGroups = Boolean(userGroupByEntityVariable)
+      const partialTimeAggregatedResult = await groupUsersByGranularity(
+        targetUsers,
+        async (groupUsers) => {
+          const aggregateValues = await Promise.all(
+            groupUsers.map(async (userEvent: AuxiliaryIndexUserEvent) => {
+              let value = await userEntityVariable.load(userEvent, context)
+              if (
+                aggregationVariable.aggregationFilterFieldKey &&
+                aggregationVariable.aggregationFilterFieldValue &&
+                value
+              ) {
+                value = (value as { [key: string]: unknown }[])
+                  .filter(
+                    (v) =>
+                      v.key === aggregationVariable.aggregationFilterFieldValue
+                  )
+                  ?.map((v) => v.value)
+              }
+              const groupValue =
+                hasGroups && userGroupByEntityVariable
+                  ? await userGroupByEntityVariable.load(userEvent, context)
+                  : undefined
+
+              return {
+                value,
+                groupValue: {
+                  value: groupValue,
+                  entity: {
+                    timestamp: userEvent.timestamp,
+                    value,
+                  },
+                },
+                ...(!hasGroups
+                  ? {
+                      entity: {
+                        timestamp: userEvent.timestamp,
+                        value,
+                      },
+                    }
+                  : {}),
+              }
+            })
+          )
+          let filteredAggregateValues = [...aggregateValues]
+
+          if (hasGroups) {
+            filteredAggregateValues.sort(
+              (a, b) =>
+                (b.groupValue.entity.timestamp as number) -
+                (a.groupValue.entity.timestamp as number)
+            )
+          }
+
+          filteredAggregateValues = filteredAggregateValues.filter((v) => {
+            if (!hasGroups) {
+              return v.value
+            }
+            if (aggregationVariable.lastNEntities && v?.groupValue?.value) {
+              const val = v.groupValue.value as string
+              entitiesByGroupValue[val] = (entitiesByGroupValue[val] ?? 0) + 1
+              return (
+                v.value &&
+                v.groupValue &&
+                entitiesByGroupValue[val] <= aggregationVariable.lastNEntities
+              )
+            }
+            return v.value && v.groupValue
+          })
+          const values = filteredAggregateValues.flatMap((v) => v.value)
+          const entities = filteredAggregateValues.map((v) => v.entity)
+          return {
+            value: hasGroups
+              ? mapValues(
+                  groupBy(filteredAggregateValues, (v) => v.groupValue.value),
+                  (groupValues) => {
+                    return {
+                      value: aggregator.aggregate(
+                        groupValues.map((v) => v.value)
+                      ),
+                      entities: groupValues.map((v) => v.groupValue.entity),
+                    }
+                  }
+                )
+              : aggregator.aggregate(values),
+            ...(aggregationVariable.lastNEntities && !hasGroups
+              ? { entities }
+              : {}),
+          }
+        },
+        aggregationGranularity
+      )
+      timeAggregatedResult = mergeWith(
+        timeAggregatedResult,
+        partialTimeAggregatedResult,
+        (a: AggregationData | undefined, b: AggregationData | undefined) => {
+          return {
+            value: hasGroups
+              ? mergeGroups(
+                  aggregator,
+                  a?.value as { [key: string]: unknown },
+                  b?.value as { [key: string]: unknown }
+                )
+              : mergeValues(aggregator, a?.value, b?.value),
+            ...(aggregationVariable.lastNEntities && !hasGroups
+              ? {
+                  entities: (a?.entities ?? []).concat(b?.entities ?? []),
+                }
+              : {}),
+          }
+        }
+      )
+      if (
+        !hasGroups &&
+        aggregationVariable.lastNEntities &&
+        targetUsersCount === aggregationVariable.lastNEntities
+      ) {
+        break
+      }
+      if (hasGroups && aggregationVariable.lastNEntities) {
+        const flag = Object.entries(entitiesByGroupValue).every(
+          ([_key, value]) => value >= (aggregationVariable.lastNEntities ?? 0)
+        )
+        if (flag) {
+          break
+        }
+      }
+      if (timeoutReached) {
+        logger.error('Timeout reached while rebuilding aggregation (FR-5225)')
+        break
+      }
+    }
+
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+
+    return {
+      result: timeAggregatedResult,
+      lastTransactionTimestamp,
+      applyMarkerUserData,
+    }
+  }
 
   public async updateAggregationVariable(
     aggregationVariable: LogicAggregationVariable,
@@ -1222,6 +1699,24 @@ export class LogicEvaluator {
     )
   }
 
+  public async updateUserAggregationVariable(
+    aggregationVariable: LogicAggregationVariable,
+    data: UserLogicData
+  ) {
+    const { user } = data
+    const userKeyId = user.userId
+
+    if (!userKeyId) {
+      return
+    }
+
+    await this.updateUserAggregationVariableInternalIfNeeded(
+      aggregationVariable,
+      data,
+      userKeyId
+    )
+  }
+
   private async updateAggregationVariableInternalIfNeeded(
     aggregationVariable: LogicAggregationVariable,
     data: TransactionLogicData,
@@ -1262,8 +1757,8 @@ export class LogicEvaluator {
     // Acquire lock before updating the aggregation data to avoid double-counting issue
     // when multiple events are processed at the same time.
     /* Lock based on direction to release the lock faster for next transaction event,
-      rather than just transaction as previous transactions
-       */
+    rather than just transaction as previous transactions
+     */
     const lockKey = generateChecksum(
       `agg:${transaction.transactionId}-${getAggVarHash(
         aggregationVariable
@@ -1287,6 +1782,50 @@ export class LogicEvaluator {
     )
 
     await releaseLock(this.dynamoDb, lockKey)
+  }
+
+  private async updateUserAggregationVariableInternalIfNeeded(
+    aggregationVariable: LogicAggregationVariable,
+    data: UserLogicData,
+    userKeyId: string
+  ) {
+    if (this.mode !== 'DYNAMODB') {
+      return
+    }
+    const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
+      aggregationVariable,
+      data
+    )
+    const entityVarDataloader = this.entityVarLoader(data, {
+      baseCurrency: aggregationVariable.baseCurrency as
+        | CurrencyCode
+        | 'ORIGINAL_CURRENCY',
+      tenantId: this.tenantId,
+      dynamoDb: this.dynamoDb,
+    })
+    const newDataValue = await this.getNewDataValueForAggregation(
+      aggregationVariable,
+      entityVarDataloader
+    )
+    const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
+    const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
+      ? await entityVarDataloader({
+          key: aggregationVariable.aggregationGroupByFieldKey,
+          entityKey: aggregationVariable.aggregationGroupByFieldKey,
+        })
+      : undefined
+    if (!isNewDataFiltered || !newDataValue || (hasGroups && !newGroupValue)) {
+      return
+    }
+    await this.updateUserAggregationVariableInternal(
+      aggregationVariable,
+      data,
+      userKeyId,
+      {
+        newGroupValue,
+        newDataValue,
+      }
+    )
   }
   private async updateAggregationVariableInternal(
     aggregationVariable: LogicAggregationVariable,
@@ -1416,7 +1955,6 @@ export class LogicEvaluator {
         }
       )
     }
-
     if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
       await this.aggregationRepository.rebuildUserTimeAggregations(
         userKeyId,
@@ -1438,13 +1976,160 @@ export class LogicEvaluator {
     logger.debug('Updated aggregation')
   }
 
+  private async updateUserAggregationVariableInternal(
+    aggregationVariable: LogicAggregationVariable,
+    data: UserLogicData,
+    userKeyId: string,
+    newData: {
+      newGroupValue?: any
+      newDataValue?: any
+    }
+  ) {
+    const { userEvent } = data
+    if (!userEvent) {
+      return
+    }
+    const shouldSkipUpdateAggregation = await this.isUserEventApplied(
+      aggregationVariable,
+      userEvent?.eventId ?? ''
+    )
+    if (shouldSkipUpdateAggregation) {
+      logger.warn(
+        `Skip updating aggregations for user:${userKeyId} for aggvarKey: ${aggregationVariable.key}.`
+      )
+      return
+    }
+
+    logger.debug('Updating aggregation...')
+    const aggregator = getLogicVariableAggregator(
+      aggregationVariable.aggregationFunc
+    )
+
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVariable.timeWindow,
+      this.tenantId
+    )
+    let updatedAggregationData:
+      | ({
+          time: string
+        } & AggregationData)
+      | null = null
+
+    let targetAggregation: ({ time: string } & AggregationData) | undefined
+
+    if (aggregationVariable.lastNEntities) {
+      const aggregations =
+        await this.aggregationRepository.getUserLogicTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          userEvent.timestamp,
+          userEvent.timestamp + 1,
+          aggregationGranularity,
+          newData.newGroupValue
+        )
+      const entitiesCountInAggregation =
+        aggregations?.reduce(
+          (acc, curr) => (curr?.entities ?? []).length + acc,
+          1
+        ) ?? 1
+      const groupLabel = getTransactionStatsTimeGroupLabel(
+        userEvent.timestamp,
+        aggregationGranularity
+      )
+      targetAggregation = find(aggregations, (obj) =>
+        isEqual(obj.time, groupLabel)
+      )
+      if (
+        entitiesCountInAggregation > aggregationVariable.lastNEntities &&
+        aggregations
+      ) {
+        const {
+          newUpdatedAggregationData,
+          targetAggregationToUpdate,
+          targetEntities,
+        } = this.getLastNMinusOneAggregationResult(aggregations)
+
+        if (isUndefined(targetAggregationToUpdate)) {
+          throw new Error('targetAggregationToUpdate is undefined')
+        }
+        if (isEqual(targetAggregationToUpdate, targetAggregation)) {
+          targetAggregation = {
+            ...targetAggregationToUpdate,
+            value: aggregator.aggregate(newUpdatedAggregationData ?? []),
+            entities: targetEntities,
+          }
+        } else if (!isEqual(targetAggregationToUpdate, targetAggregation)) {
+          updatedAggregationData = {
+            ...targetAggregationToUpdate,
+            value: aggregator.aggregate(newUpdatedAggregationData ?? []),
+            entities: targetEntities,
+          }
+        }
+      }
+    } else {
+      const targetAggregations =
+        await this.aggregationRepository.getUserLogicTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          userEvent.timestamp,
+          userEvent.timestamp + 1,
+          aggregationGranularity,
+          newData.newGroupValue
+        )
+      if (size(targetAggregations) > 1) {
+        throw new Error('Should only get one target aggregation')
+      }
+      targetAggregation = targetAggregations?.[0]
+    }
+
+    targetAggregation = targetAggregation ?? {
+      time: getTransactionStatsTimeGroupLabel(
+        userEvent.timestamp,
+        aggregationGranularity
+      ),
+      value: aggregator.init(),
+    }
+
+    const newTargetAggregation: AggregationData = {
+      value: aggregator.reduce(targetAggregation.value, newData.newDataValue),
+    }
+
+    if (aggregationVariable.lastNEntities) {
+      newTargetAggregation.entities = (targetAggregation.entities ?? []).concat(
+        {
+          timestamp: userEvent.timestamp,
+          value: newData.newDataValue,
+        }
+      )
+    }
+
+    if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
+      await this.aggregationRepository.rebuildUserTimeAggregations(
+        userKeyId,
+        aggregationVariable,
+        {
+          [targetAggregation.time]: newTargetAggregation,
+          ...(updatedAggregationData
+            ? { [updatedAggregationData.time]: updatedAggregationData }
+            : {}),
+        },
+        newData.newGroupValue
+      )
+    }
+    await this.aggregationRepository.setUserEventApplied(
+      aggregationVariable,
+      userEvent?.eventId ?? ''
+    )
+    logger.debug('Updated user aggregation')
+  }
+
   private async getNewDataValueForAggregation(
     aggregationVariable: LogicAggregationVariable,
     entityVarDataloader: ((
       entityVariable: EntityVariableWithoutName
     ) => Promise<any>) &
       MemoizedFunction,
-    direction: 'origin' | 'destination'
+    direction: 'origin' | 'destination' = 'origin'
   ) {
     const { aggregationFilterFieldValue, aggregationFilterFieldKey } =
       aggregationVariable
@@ -1529,6 +2214,36 @@ export class LogicEvaluator {
       'transactionId',
     ])
   }
+  private getUserEventsFieldsToFetch(
+    aggregationVariable: LogicAggregationVariable
+  ): string[] {
+    const fieldsToFetch: Set<string> = new Set()
+
+    const addFieldToFetch = (variableKey: string) => {
+      const entityVar = getLogicVariableByKey(variableKey)
+      if (entityVar?.entity === 'USER') {
+        fieldsToFetch.add((entityVar as UserLogicVariable).sourceField)
+      }
+    }
+    if (aggregationVariable.filtersLogic) {
+      getVariableKeysFromLogic(
+        aggregationVariable.filtersLogic
+      ).entityVariableKeys.forEach((variable) => {
+        addFieldToFetch(variable)
+      })
+    }
+    if (aggregationVariable.aggregationFieldKey) {
+      addFieldToFetch(aggregationVariable.aggregationFieldKey)
+    }
+    if (aggregationVariable.aggregationGroupByFieldKey) {
+      addFieldToFetch(aggregationVariable.aggregationGroupByFieldKey)
+    }
+    if (aggregationVariable.secondaryAggregationFieldKey) {
+      addFieldToFetch(aggregationVariable.secondaryAggregationFieldKey)
+    }
+
+    return uniq([...Array.from(fieldsToFetch), 'createdTimestamp', 'userId'])
+  }
 
   private getLastNMinusOneAggregationResult(
     aggregations: Array<{ time: string } & AggregationData>
@@ -1584,7 +2299,6 @@ export class LogicEvaluator {
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
-
     const aggregationGranularity = getAggregationGranularity(
       aggregationVariable.timeWindow,
       this.tenantId
@@ -1648,7 +2362,6 @@ export class LogicEvaluator {
           aggregationGranularity,
           newGroupValue
         )
-
       if (!userAggData) {
         if (
           ((hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') ||
@@ -1773,6 +2486,147 @@ export class LogicEvaluator {
     return aggregator.compute(result)
   }
 
+  private async loadAggregationDataUser(
+    aggregationVariable: LogicAggregationVariable,
+    data: UserLogicData
+  ) {
+    const { aggregationFunc } = aggregationVariable
+    const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
+      data.userEvent?.timestamp ?? Date.now(),
+      aggregationVariable.timeWindow.start as TimeWindow,
+      aggregationVariable.timeWindow.end as TimeWindow
+    )
+    const isConsumer = isConsumerUser(data.user)
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVariable.timeWindow,
+      this.tenantId
+    )
+    const userIdentifier: UserIdentifier = { userId: data.user.userId }
+
+    const aggregator = getLogicVariableAggregator(aggregationFunc)
+    const entityVarDataloader = this.entityVarLoader(data, {
+      baseCurrency: aggregationVariable.baseCurrency as
+        | CurrencyCode
+        | 'ORIGINAL_CURRENCY',
+      tenantId: this.tenantId,
+      dynamoDb: this.dynamoDb,
+    })
+    const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
+      ? ((await entityVarDataloader(
+          getEntityVariableLoaderKey({
+            key: aggregationVariable.aggregationGroupByFieldKey,
+            entityKey: aggregationVariable.aggregationGroupByFieldKey,
+          })
+        )) as string)
+      : undefined
+    let aggData: Array<{ time: string } & AggregationData> = []
+    if (canAggregate(aggregationVariable.timeWindow)) {
+      // If the mode is DYNAMODB, we fetch the pre-built aggregation data
+      const userKeyId = data.user.userId
+      if (!userKeyId) {
+        return null
+      }
+      const userAggData =
+        await this.aggregationRepository.getUserLogicTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          afterTimestamp,
+          beforeTimestamp,
+          aggregationGranularity,
+          newGroupValue
+        )
+      if (!userAggData) {
+        if (
+          (hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') ||
+            this.backfillNamespace) &&
+          data.type === 'USER'
+        ) {
+          const isRebuilt =
+            data.type === 'USER'
+              ? await this.rebuildUserAggregationVariable(
+                  aggregationVariable,
+                  data.userEvent?.timestamp ?? Date.now(),
+                  data.user.userId,
+                  isConsumer
+                )
+              : null
+
+          if (isRebuilt) {
+            throw new RebuildSyncRetryError()
+          }
+        }
+      }
+
+      aggData = userAggData ?? []
+    } else {
+      // If the mode is MONGODB, we rebuild the fresh aggregation data (without persisting the aggregation data)
+      aggData = await this.loadAggregationDataFromRawData(
+        aggregationVariable,
+        userIdentifier,
+        afterTimestamp,
+        beforeTimestamp,
+        newGroupValue
+      )
+    }
+    let aggregationEntitiesCount = aggData.reduce(
+      (acc, cur: AggregationData) => {
+        return acc + (cur.entities?.length ?? 0)
+      },
+      0
+    )
+
+    let result = aggregator.init()
+    let shouldIncludeNewData = false
+    let shouldSkipUpdateAggregation = false
+    let newDataValue: any | undefined
+    if (
+      data.type === 'USER' &&
+      aggregationVariable.includeCurrentEntity &&
+      this.isNewDataWithinTimeWindowUser(data, afterTimestamp, beforeTimestamp)
+    ) {
+      ;[shouldIncludeNewData, shouldSkipUpdateAggregation] = await Promise.all([
+        this.isDataIncludedInAggregationVariable(aggregationVariable, data),
+        this.isUserEventApplied(
+          aggregationVariable,
+          data.userEvent?.eventId ?? ''
+        ),
+      ])
+      if (shouldIncludeNewData && !shouldSkipUpdateAggregation) {
+        newDataValue = await this.getNewDataValueForAggregation(
+          aggregationVariable,
+          entityVarDataloader
+        )
+      }
+    }
+    if (
+      aggregationVariable.lastNEntities &&
+      aggregationEntitiesCount === aggregationVariable.lastNEntities &&
+      aggregationVariable.includeCurrentEntity &&
+      !shouldSkipUpdateAggregation && // Skip removing the last entity in the N entity aggregation if we are not adding a new entity
+      shouldIncludeNewData
+    ) {
+      const aggResult = this.getLastNMinusOneAggregationResult(aggData)
+      result =
+        aggregator.aggregate(aggResult?.newValuesToAggregate ?? []) ??
+        aggregator.init()
+    } else {
+      result = aggData.reduce((acc: unknown, cur: AggregationData) => {
+        return mergeValues(aggregator, acc, cur.value ?? aggregator.init())
+      }, aggregator.init())
+    }
+
+    // NOTE: Merge the incoming transaction/user into the aggregation result
+    if (newDataValue) {
+      result = aggregator.reduce(result, newDataValue)
+      aggregationEntitiesCount++
+    }
+
+    if (aggregationEntitiesCount < (aggregationVariable.lastNEntities ?? 0)) {
+      return null
+    }
+    return aggregator.compute(result)
+  }
+
   private async loadAggregationDataFromRawData(
     aggregationVariable: LogicAggregationVariable,
     userIdentifier: {
@@ -1869,6 +2723,18 @@ export class LogicEvaluator {
       dataTimestampToCheck <= beforeTimestamp
     )
   }
+  private isNewDataWithinTimeWindowUser(
+    data: UserLogicData,
+    afterTimestamp: number,
+    beforeTimestamp: number
+  ): boolean {
+    const inputTimestamp = data.userEvent?.timestamp ?? Date.now()
+    return (
+      inputTimestamp !== undefined &&
+      inputTimestamp >= afterTimestamp &&
+      inputTimestamp <= beforeTimestamp
+    )
+  }
 
   private getAggregationVarFieldKey(
     aggregationVariable: LogicAggregationVariable,
@@ -1888,9 +2754,16 @@ export class LogicEvaluator {
   public async handleV8Aggregation(
     type: 'RULES' | 'RISK',
     logicAggregationVariables: LogicAggregationVariable[],
-    transaction: TransactionWithRiskDetails,
-    transactionEvents: TransactionEvent[]
-  ) {
+    data:
+      | {
+          transaction: TransactionWithRiskDetails
+          transactionEvents: TransactionEvent[]
+        }
+      | {
+          user: User | Business
+          userEvent?: UserEvent
+        }
+  ): Promise<void> {
     if (
       (!hasFeature('RULES_ENGINE_V8') && type === 'RULES') ||
       (!hasFeature('RISK_SCORING') && type === 'RISK') ||
@@ -1899,20 +2772,39 @@ export class LogicEvaluator {
       return
     }
 
-    const promises =
-      logicAggregationVariables?.flatMap((aggVar) => {
-        const hash = getAggVarHash(aggVar)
-        if (this.updatedAggregationVariables.has(hash)) {
-          return
-        }
+    const promises: Promise<any>[] = []
 
+    for (const aggVar of logicAggregationVariables ?? []) {
+      const hash = getAggVarHash(aggVar)
+
+      if (this.updatedAggregationVariables.has(hash)) {
+        continue
+      }
+
+      if (aggVar.type === 'USER_DETAILS' && 'user' in data) {
+        promises.push(
+          this.updateUserAggregationVariable(aggVar, {
+            type: 'USER',
+            user: data.user,
+            userEvent: data.userEvent,
+          })
+        )
         this.updatedAggregationVariables.add(hash)
-        return this.updateAggregationVariable(aggVar, {
-          transaction,
-          transactionEvents,
-          type: 'TRANSACTION',
-        })
-      }) ?? []
+      } else if (
+        'transaction' in data &&
+        'transactionEvents' in data &&
+        aggVar.type !== 'USER_DETAILS'
+      ) {
+        promises.push(
+          this.updateAggregationVariable(aggVar, {
+            transaction: data.transaction,
+            transactionEvents: data.transactionEvents,
+            type: 'TRANSACTION',
+          })
+        )
+        this.updatedAggregationVariables.add(hash)
+      }
+    }
 
     await Promise.all(promises)
     this.isTransactionApplied.cache.clear?.()

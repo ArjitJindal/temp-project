@@ -645,6 +645,24 @@ export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
+export interface TimeRangeHourAndMinute {
+  utcHours: number
+  utcMinutes: number
+}
+export interface TransactionTimeRange {
+  startTime: TimeRangeHourAndMinute
+  endTime: TimeRangeHourAndMinute
+}
+
+type Age = {
+  units: number
+  granularity: 'day' | 'month' | 'year'
+}
+export interface UserCreationAgeRange {
+  minAge?: Age
+  maxAge?: Age
+}
+
 export const TRANSACTION_TIME_RANGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',

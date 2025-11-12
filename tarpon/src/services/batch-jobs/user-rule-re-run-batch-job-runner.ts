@@ -56,13 +56,15 @@ async function runRulesForUser(
         async (u) => {
           try {
             const user = pickKnownEntityFields(u, UserWithRulesResult)
-            const { hitRules, executedRules } =
+            const { monitoringResult } =
               await rulesEngineService.verifyUserByRules(
                 user,
                 ruleInstances,
                 rules,
-                'UPDATE'
+                'UPDATE',
+                user.createdTimestamp
               )
+            const { hitRules, executedRules } = monitoringResult
             const userToSave = {
               ...user,
               hitRules: mergeRules(user?.hitRules || [], hitRules || []),

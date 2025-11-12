@@ -60,6 +60,7 @@ import { TransactionWithRiskDetails } from './repositories/transaction-repositor
 import { mergeRules } from './utils/rule-utils'
 import { getTransactionRiskScoreDetailsForPNB } from './pnb-custom-logic'
 import { isRuleInstanceUpdateOrOnboarding } from './utils/user-rule-utils'
+import { UserEvent } from './repositories/user-repository-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -773,13 +774,16 @@ export class RulesEngineService {
 
   public async verifyUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
+    eventTimestamp: number,
     stage: RuleStage,
+    userEvent?: UserEvent,
     options?: { async?: boolean }
   ): Promise<{
     monitoringResult:
       | ConsumerUserMonitoringResult
       | BusinessUserMonitoringResult
     isAnyAsyncRules: boolean
+    aggregationMessages: FifoSqsMessage[]
   }> {
     const { async = false } = options ?? {}
     const ruleInstances =
@@ -795,14 +799,20 @@ export class RulesEngineService {
         .map((ruleInstance) => ruleInstance.ruleId)
         .filter(Boolean) as string[]
     )
+    // have aggregation messages
+    const monitoringResult = await this.verifyUserByRules(
+      user,
+      targetRuleInstances,
+      rules,
+      stage,
+      eventTimestamp,
+      userEvent
+    )
+    const isAnyAsyncRules = ruleInstances.some(isAsyncRule)
     return {
-      monitoringResult: await this.verifyUserByRules(
-        user,
-        targetRuleInstances,
-        rules,
-        stage
-      ),
-      isAnyAsyncRules: ruleInstances.some(isAsyncRule),
+      monitoringResult: monitoringResult.monitoringResult,
+      isAnyAsyncRules,
+      aggregationMessages: monitoringResult.aggregationMessages ?? [],
     }
   }
 
@@ -810,8 +820,15 @@ export class RulesEngineService {
     user: UserWithRulesResult | BusinessWithRulesResult,
     ruleInstances: readonly RuleInstance[],
     rules: readonly Rule[],
-    stage: RuleStage
-  ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
+    stage: RuleStage,
+    eventTimestamp: number,
+    userEvent?: UserEvent
+  ): Promise<{
+    monitoringResult:
+      | ConsumerUserMonitoringResult
+      | BusinessUserMonitoringResult
+    aggregationMessages?: FifoSqsMessage[]
+  }> {
     const rulesById = keyBy(rules, 'id')
     logger.debug(`Running rules`)
     const { riskLevel: userRiskLevel } = await this.getUserRiskLevelAndScore(
@@ -828,15 +845,25 @@ export class RulesEngineService {
             user,
             userRiskLevel,
             stage,
+            eventTimestamp,
+            userEvent,
           })
         )
       )
-    ).filter(Boolean) as ExecutedRulesResult[]
+    )
+      .filter(Boolean)
+      .map((result) => result?.result)
+      .filter(Boolean) as (ExecutedRulesResult & {
+      aggregationMessages?: FifoSqsMessage[]
+    })[]
 
     const executionResult = getExecutedAndHitRulesResult(ruleResults)
+    const aggregationMessages = ruleResults.flatMap(
+      (result) => result?.aggregationMessages ?? []
+    )
     return {
-      userId: user.userId,
-      ...executionResult,
+      monitoringResult: { userId: user.userId, ...executionResult },
+      aggregationMessages,
     }
   }
 
@@ -1240,8 +1267,7 @@ export class RulesEngineService {
           return this.ruleLogicEvaluator.handleV8Aggregation(
             'RULES',
             ruleInstance.logicAggregationVariables ?? [],
-            transaction,
-            transactionEvents
+            { transaction, transactionEvents }
           )
         })
       ),
@@ -1295,8 +1321,10 @@ export class RulesEngineService {
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
     receiverUser?: User | Business
+    eventTimestamp?: number
     tracing?: boolean
     stage: RuleStage
+    userEvent?: UserEvent
   }): Promise<{
     ruleClassInstance: TransactionRuleBase | UserRuleBase | undefined
     isTransactionHistoricalFiltered: boolean
@@ -1313,7 +1341,10 @@ export class RulesEngineService {
       receiverUser,
       database,
       tracing,
+      eventTimestamp,
+      userEvent,
     } = options
+
     const riskLevelForLogic = this.getRiskLevelForLogic(
       ruleInstance,
       senderUserRiskLevel,
@@ -1367,7 +1398,12 @@ export class RulesEngineService {
             receiverUser,
           } as TransactionLogicData)
         : senderUser
-        ? ({ type: 'USER', user: senderUser } as UserLogicData)
+        ? ({
+            type: 'USER',
+            user: senderUser,
+            eventTimestamp: eventTimestamp,
+            userEvent,
+          } as UserLogicData)
         : null
       if (data) {
         const {
@@ -1603,8 +1639,10 @@ export class RulesEngineService {
             await this.ruleLogicEvaluator.handleV8Aggregation(
               'RULES',
               ruleInstance.logicAggregationVariables ?? [],
-              options.transaction,
-              options.transactionEvents
+              {
+                transaction: options.transaction,
+                transactionEvents: options.transactionEvents,
+              }
             )
           } else {
             aggregationMessages =
@@ -1712,6 +1750,8 @@ export class RulesEngineService {
     userRiskLevel: RiskLevel | undefined
     user: User | Business
     stage: RuleStage
+    eventTimestamp: number
+    userEvent?: UserEvent
   }) {
     return withContext(async () => {
       try {
@@ -1729,12 +1769,29 @@ export class RulesEngineService {
           senderUserRiskLevel: options.userRiskLevel,
           database: 'DYNAMODB',
           stage: options.stage,
+          eventTimestamp: options.eventTimestamp,
+          userEvent: options.userEvent,
         })
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric
         publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
         logger.debug(`Completed rule`)
-        return result
+        const aggregationMessages: FifoSqsMessage[] = []
+        if (runOnV8Engine(options.ruleInstance)) {
+          await this.ruleLogicEvaluator.handleV8Aggregation(
+            'RULES',
+            options.ruleInstance.logicAggregationVariables ?? [],
+            {
+              user: options.user,
+              userEvent: options.userEvent,
+            }
+          )
+        }
+
+        return {
+          result,
+          aggregationMessages,
+        }
       } catch (e) {
         logger.error(e)
       }

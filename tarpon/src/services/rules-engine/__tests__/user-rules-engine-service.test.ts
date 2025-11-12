@@ -43,6 +43,12 @@ describe('Verify User', () => {
       ...user,
       status: 'ALLOW',
       executedRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
       hitRules: [],
     })
   })
@@ -147,6 +153,12 @@ describe('Verify User', () => {
           },
         ],
         status: 'FLAG',
+        riskScoreDetails: {
+          craRiskLevel: 'VERY_HIGH',
+          craRiskScore: 90,
+          kycRiskLevel: 'VERY_HIGH',
+          kycRiskScore: 90,
+        },
       })
 
       await rulesEngineService.verifyAsyncRulesUser('CONSUMER', user)
@@ -432,6 +444,12 @@ describe('Verify User', () => {
           },
         ],
         status: 'FLAG',
+        riskScoreDetails: {
+          craRiskLevel: 'VERY_HIGH',
+          craRiskScore: 90,
+          kycRiskLevel: 'VERY_HIGH',
+          kycRiskScore: 90,
+        },
       })
     })
     test('Verify business user event with V8 user rule', async () => {
@@ -625,7 +643,7 @@ describe('Verify User', () => {
     })
   })
 })
-describe('Verify user with V8 rule with aggregation variables', () => {
+describe('Verify user with V8 rule with transaction aggregation variables', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
   setUpRulesHooks(TEST_TENANT_ID, [
     {
@@ -664,7 +682,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       },
     },
   ])
-  test('Verify consumer user event with V8 user rule with aggregation variables', async () => {
+  test('Verify consumer user event with V8 user rule with transaction aggregation variables', async () => {
     const mongoDb = await getMongoDbClient()
     const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const userRulesEngineService = new UserManagementService(
@@ -709,6 +727,12 @@ describe('Verify user with V8 rule with aggregation variables', () => {
         },
       ],
       hitRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
     const rulesEngineService = new RulesEngineService(
       TEST_TENANT_ID,
@@ -785,7 +809,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
     })
   })
 
-  test('Verify business user event with V8 user rule with aggregation variables', async () => {
+  test('Verify business user event with V8 user rule with transaction aggregation variables', async () => {
     const mongoDb = await getMongoDbClient()
     const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const userRulesEngineService = new UserManagementService(
@@ -829,6 +853,12 @@ describe('Verify user with V8 rule with aggregation variables', () => {
         },
       ],
       hitRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
     const rulesEngineService = new RulesEngineService(
       TEST_TENANT_ID,
@@ -906,6 +936,384 @@ describe('Verify user with V8 rule with aggregation variables', () => {
   })
 })
 
+describe('Verify Consumer user with V8 rule with transaction aggregation variables', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'RC-test-rule-user-agg',
+      type: 'USER',
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:142',
+          aggregationFunc: 'UNIQUE_COUNT',
+          aggregationFieldKey: 'CONSUMER_USER:occupation__SENDER',
+          type: 'USER_DETAILS',
+          timeWindow: {
+            start: {
+              granularity: 'hour',
+              units: 2,
+            },
+            end: {
+              granularity: 'hour',
+              units: 0,
+            },
+          },
+          includeCurrentEntity: true,
+        },
+      ],
+      defaultLogic: {
+        and: [
+          {
+            '>=': [
+              {
+                var: 'agg:142',
+              },
+              2,
+            ],
+          },
+        ],
+      },
+    },
+    {
+      id: 'RC-test-rule-user-agg-1',
+      type: 'USER',
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:132',
+          aggregationFunc: 'UNIQUE_COUNT',
+          aggregationFieldKey: 'CONSUMER_USER:occupation__SENDER',
+          type: 'USER_DETAILS',
+          timeWindow: {
+            start: {
+              granularity: 'hour',
+              units: 1,
+            },
+            end: {
+              granularity: 'hour',
+              units: 0,
+            },
+          },
+          includeCurrentEntity: true,
+        },
+      ],
+      defaultLogic: {
+        and: [
+          {
+            '>=': [
+              {
+                var: 'agg:132',
+              },
+              1,
+            ],
+          },
+        ],
+      },
+    },
+  ])
+  test('Verify Consumer user with user details aggregation variable', async () => {
+    const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const userRulesEngineService = new UserManagementService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      mongoDb,
+      logicEvaluator
+    )
+    const user = getTestUser({ occupation: 'abc' })
+    const result = await userRulesEngineService.verifyUser(user, 'CONSUMER')
+    expect(result.hitRules).toEqual([
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-1',
+        ruleId: 'RC-test-rule-user-agg-1',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+    ])
+  })
+
+  test('Verify Consumer user event with user details aggregation variable', async () => {
+    const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const userRulesEngineService = new UserManagementService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      mongoDb,
+      logicEvaluator
+    )
+    const user = getTestUser({ occupation: 'abc' })
+    const result = await userRulesEngineService.verifyUser(user, 'CONSUMER')
+    expect(result.hitRules).toEqual([
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-1',
+        ruleId: 'RC-test-rule-user-agg-1',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+    ])
+    const userEvent = getTestUserEvent({
+      userId: user.userId,
+      updatedConsumerUserAttributes: { occupation: 'bcd' },
+      timestamp: user.createdTimestamp + 10,
+    })
+    const result2 = await userRulesEngineService.verifyConsumerUserEvent(
+      userEvent
+    )
+    expect(result2.hitRules?.length).toEqual(2)
+    expect(result2.hitRules).toEqual([
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg',
+        ruleId: 'RC-test-rule-user-agg',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-1',
+        ruleId: 'RC-test-rule-user-agg-1',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+    ])
+  })
+})
+describe('Verify Business user with V8 rule with transaction aggregation variables', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'RC-test-rule-user-agg-bus',
+      type: 'USER',
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:142',
+          aggregationFunc: 'UNIQUE_COUNT',
+          aggregationFieldKey: 'BUSINESS_USER:mccDetails-code__SENDER',
+          type: 'USER_DETAILS',
+          timeWindow: {
+            start: {
+              granularity: 'hour',
+              units: 2,
+            },
+            end: {
+              granularity: 'hour',
+              units: 0,
+            },
+          },
+          includeCurrentEntity: true,
+        },
+      ],
+      defaultLogic: {
+        and: [
+          {
+            '>=': [
+              {
+                var: 'agg:142',
+              },
+              2,
+            ],
+          },
+        ],
+      },
+    },
+    {
+      id: 'RC-test-rule-user-agg-bus-1',
+      type: 'USER',
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:132',
+          aggregationFunc: 'UNIQUE_COUNT',
+          aggregationFieldKey: 'BUSINESS_USER:mccDetails-code__SENDER',
+          type: 'USER_DETAILS',
+          timeWindow: {
+            start: {
+              granularity: 'hour',
+              units: 1,
+            },
+            end: {
+              granularity: 'hour',
+              units: 0,
+            },
+          },
+          includeCurrentEntity: true,
+        },
+      ],
+      defaultLogic: {
+        and: [
+          {
+            '>=': [
+              {
+                var: 'agg:132',
+              },
+              1,
+            ],
+          },
+        ],
+      },
+    },
+  ])
+  test('Verify Business user with user details aggregation variable', async () => {
+    const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const userRulesEngineService = new UserManagementService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      mongoDb,
+      logicEvaluator
+    )
+    const user = getTestBusiness({
+      mccDetails: {
+        code: 1,
+      },
+    })
+    const result = await userRulesEngineService.verifyUser(user, 'BUSINESS')
+    expect(result.hitRules).toEqual([
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-bus-1',
+        ruleId: 'RC-test-rule-user-agg-bus-1',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+    ])
+  })
+
+  test('Verify Business user event with user details aggregation variable', async () => {
+    const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const userRulesEngineService = new UserManagementService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      mongoDb,
+      logicEvaluator
+    )
+    const user = getTestBusiness({
+      mccDetails: {
+        code: 1,
+      },
+    })
+    const result = await userRulesEngineService.verifyUser(user, 'BUSINESS')
+    expect(result.hitRules).toEqual([
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-bus-1',
+        ruleId: 'RC-test-rule-user-agg-bus-1',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+    ])
+    const userEvent = getTestBusinessEvent({
+      userId: user.userId,
+      updatedBusinessUserAttributes: {
+        mccDetails: {
+          code: 2,
+        },
+      },
+      timestamp: user.createdTimestamp + 10,
+    })
+    const result2 = await userRulesEngineService.verifyBusinessUserEvent(
+      userEvent
+    )
+    expect(result2.hitRules?.length).toEqual(2)
+    expect(result2.hitRules).toEqual([
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-bus',
+        ruleId: 'RC-test-rule-user-agg-bus',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+      {
+        ruleInstanceId: 'RC-test-rule-user-agg-bus-1',
+        ruleId: 'RC-test-rule-user-agg-bus-1',
+        ruleName: 'test rule name',
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+      },
+    ])
+  })
+})
 describe('Create a consumer user event with risk scoring V8', () => {
   const TEST_TENANT_ID = getTestTenantId()
   beforeAll(async () => {
@@ -1014,7 +1422,6 @@ describe('Create a consumer user event with risk scoring V8', () => {
     })
   })
 })
-
 describe('Create a business user event with risk scoring V8', () => {
   const TEST_TENANT_ID = getTestTenantId()
   beforeAll(async () => {

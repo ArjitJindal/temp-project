@@ -32,6 +32,7 @@ import omit from 'lodash/omit'
 import set from 'lodash/set'
 import uniq from 'lodash/uniq'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import pickBy from 'lodash/pickBy'
 import {
   getUsersFilterByRiskLevel,
   insertRiskScores,
@@ -96,9 +97,23 @@ import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
-import { batchGet, upsertSaveDynamo } from '@/utils/dynamodb'
+import {
+  batchGet,
+  dynamoDbQueryHelper,
+  paginateQueryGenerator,
+  upsertSaveDynamo,
+} from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
+import {
+  AuxiliaryIndexUserEvent,
+  RulesEngineUserRepositoryInterface,
+  TimeRange,
+  UserEventAttributes,
+  UsersFilterOptions,
+} from '@/services/rules-engine/repositories/user-repository-interface'
+import { mergeObjects } from '@/utils/object'
+import { userEventTimeRangeRuleFilterPredicate } from '@/services/rules-engine/user-filters/utils/helpers'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { UserApproval } from '@/@types/openapi-internal/UserApproval'
 import { runLocalChangeHandler } from '@/utils/local-change-handler'
@@ -113,7 +128,7 @@ type Params = OptionalPaginationParams &
   }
 
 @traceable
-export class UserRepository {
+export class UserRepository implements RulesEngineUserRepositoryInterface {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
@@ -1562,6 +1577,330 @@ export class UserRepository {
       updatePipeline,
       { arrayFilters }
     )
+  }
+
+  public async *getGenericUserEventsGenerator(
+    userId: string | undefined,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexUserEvent>> {
+    if (userId) {
+      yield* this.getUserEventsGenerator(
+        userId,
+        timeRange,
+        filterOptions,
+        attributesToFetch,
+        isConsumer
+      )
+    } else {
+      yield []
+    }
+  }
+
+  public async *getUserEventsGenerator(
+    userId: string,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexUserEvent>> {
+    yield* this.getDynamoDBUserEventsGenerator(
+      isConsumer
+        ? DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId).PartitionKeyID
+        : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId)
+            .PartitionKeyID,
+      timeRange,
+      filterOptions,
+      attributesToFetch,
+      isConsumer
+    )
+  }
+
+  private async *getDynamoDBUserEventsGenerator(
+    partitionKeyId: string,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexUserEvent>> {
+    const generator = paginateQueryGenerator(
+      this.dynamoDb,
+      this.getUserEventsQuery(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        uniq([...attributesToFetch, 'timestamp']),
+        isConsumer
+      )
+    )
+
+    for await (const data of generator) {
+      const userEvents = (data.Items?.map((item) => {
+        const source = isConsumer
+          ? item.updatedConsumerUserAttributes
+          : item.updatedBusinessUserAttributes
+
+        return source
+          ? {
+              ...source,
+              userId: item.userId,
+              timestamp: item.timestamp
+                ? new Date(item.timestamp).getTime()
+                : undefined,
+            }
+          : {
+              ...omit(item, ['PartitionKeyID', 'SortKeyID']),
+              userId: item.userId,
+              timestamp: item.timestamp
+                ? new Date(item.timestamp).getTime()
+                : undefined,
+            }
+      }) || []) as Array<AuxiliaryIndexUserEvent>
+
+      const userEventTimeRange = filterOptions.userEventTimeRange
+
+      yield userEventTimeRange
+        ? userEvents.filter(
+            (userEvent) =>
+              userEvent.timestamp &&
+              userEventTimeRangeRuleFilterPredicate(
+                userEvent.timestamp,
+                userEventTimeRange
+              )
+          )
+        : userEvents
+    }
+  }
+
+  private getUserEventsQuery(
+    partitionKeyId: string,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): QueryCommandInput {
+    const userFilterQuery = this.getUserEventsFilterQueryInput(
+      filterOptions,
+      attributesToFetch,
+      isConsumer
+    )
+    //TODO
+    const queryInput: QueryCommandInput = dynamoDbQueryHelper({
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      filterExpression: userFilterQuery.FilterExpression,
+      expressionAttributeNames: userFilterQuery.ExpressionAttributeNames,
+      expressionAttributeValues: userFilterQuery.ExpressionAttributeValues,
+      scanIndexForward: false,
+      projectionExpression: userFilterQuery.ProjectionExpression,
+      partitionKey: partitionKeyId,
+      sortKey: {
+        from: `${timeRange.afterTimestamp}`,
+        to: `${timeRange.beforeTimestamp - 1}`,
+      },
+    })
+
+    return queryInput
+  }
+
+  private getUserEventsFilterQueryInput(
+    filterOptions: UsersFilterOptions = {},
+    rawAttributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): Partial<QueryCommandInput> {
+    const attributesToFetch = [...rawAttributesToFetch]
+    if (
+      attributesToFetch.length > 0 &&
+      !attributesToFetch.includes('timestamp')
+    ) {
+      attributesToFetch.push('timestamp')
+    }
+
+    const prefix = isConsumer
+      ? '#updatedConsumerUserAttributes'
+      : '#updatedBusinessUserAttributes'
+
+    const buildParams = <T>(
+      values: T[] | undefined,
+      key: string
+    ): [string, T][] | undefined =>
+      values?.map((val, index) => [`:${key}${index}`, val])
+
+    const buildKeys = (params?: [string, any][]) => params?.map((p) => p[0])
+
+    const userIdsParams = buildParams(filterOptions.userIds, 'userIds')
+    const userIdsKeys = buildKeys(userIdsParams)
+
+    const userResidenceCountriesParams = buildParams(
+      filterOptions.userResidenceCountries,
+      'userResidenceCountries'
+    )
+    const userResidenceCountriesKeys = buildKeys(userResidenceCountriesParams)
+
+    const userNationalityCountriesParams = buildParams(
+      filterOptions.userNationalityCountries,
+      'userNationalityCountries'
+    )
+    const userNationalityCountriesKeys = buildKeys(
+      userNationalityCountriesParams
+    )
+
+    const userRegistrationCountriesParams = buildParams(
+      filterOptions.userRegistrationCountries,
+      'userRegistrationCountries'
+    )
+    const userRegistrationCountriesKeys = buildKeys(
+      userRegistrationCountriesParams
+    )
+
+    const acquisitionChannelsParams = buildParams(
+      filterOptions.acquisitionChannels,
+      'acquisitionChannels'
+    )
+    const acquisitionChannelsKeys = buildKeys(acquisitionChannelsParams)
+
+    const consumerUserSegmentsParams = buildParams(
+      filterOptions.consumerUserSegments,
+      'consumerUserSegments'
+    )
+    const consumerUserSegmentsKeys = buildKeys(consumerUserSegmentsParams)
+
+    const businessUserSegmentsParams = buildParams(
+      filterOptions.businessUserSegments,
+      'businessUserSegments'
+    )
+    const businessUserSegmentsKeys = buildKeys(businessUserSegmentsParams)
+
+    const kycStatusParams = buildParams(filterOptions.kycStatus, 'kycStatus')
+    const kycStatusKeys = buildKeys(kycStatusParams)
+
+    const userStatusParams = buildParams(filterOptions.userStatus, 'userStatus')
+    const userStatusKeys = buildKeys(userStatusParams)
+
+    const userTagsParams = Object.entries(filterOptions.userTags || {}).flatMap(
+      ([tagKey, tagValues]) =>
+        tagValues.map((tagValue, index) => [
+          `:userTags_${tagKey}_${index}`,
+          tagValue,
+        ])
+    )
+    const userTagsKeys = userTagsParams?.map((params) => params[0])
+
+    const filters: string[] = []
+
+    if (userIdsKeys?.length) {
+      filters.push(`${prefix}.#userId IN (${userIdsKeys.join(',')})`)
+    }
+    if (userResidenceCountriesKeys?.length) {
+      filters.push(
+        `${prefix}.#userResidenceCountry IN (${userResidenceCountriesKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (userNationalityCountriesKeys?.length) {
+      filters.push(
+        `${prefix}.#userNationalityCountry IN (${userNationalityCountriesKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (userRegistrationCountriesKeys?.length) {
+      filters.push(
+        `${prefix}.#userRegistrationCountry IN (${userRegistrationCountriesKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (acquisitionChannelsKeys?.length) {
+      filters.push(
+        `${prefix}.#acquisitionChannel IN (${acquisitionChannelsKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (isConsumer && consumerUserSegmentsKeys?.length) {
+      filters.push(
+        `${prefix}.#userSegment IN (${consumerUserSegmentsKeys.join(',')})`
+      )
+    }
+    if (!isConsumer && businessUserSegmentsKeys?.length) {
+      filters.push(
+        `${prefix}.#userSegment IN (${businessUserSegmentsKeys.join(',')})`
+      )
+    }
+    if (kycStatusKeys?.length) {
+      filters.push(`${prefix}.#kycStatus IN (${kycStatusKeys.join(',')})`)
+    }
+    if (userStatusKeys?.length) {
+      filters.push(`${prefix}.#userStatus IN (${userStatusKeys.join(',')})`)
+    }
+    if (userTagsKeys?.length) {
+      filters.push(`${prefix}.#userTags IN (${userTagsKeys.join(',')})`)
+    }
+
+    const filterExpression = isEmpty(filters)
+      ? undefined
+      : filters.map((f) => (filters.length > 1 ? `(${f})` : f)).join(' AND ')
+
+    const expressionAttributeNames = mergeObjects(
+      pickBy(
+        {
+          '#updatedConsumerUserAttributes': 'updatedConsumerUserAttributes',
+          '#updatedBusinessUserAttributes': 'updatedBusinessUserAttributes',
+          '#userCreationAgeRange': 'userCreationAgeRange',
+          '#userType': 'userType',
+          '#userAgeRange': 'userAgeRange',
+          '#userId': 'userId',
+          '#userResidenceCountry': 'userResidenceCountry',
+          '#userNationalityCountry': 'userNationalityCountry',
+          '#userRegistrationCountry': 'userRegistrationCountry',
+          '#acquisitionChannel': 'acquisitionChannel',
+          '#userSegment': 'userSegment',
+          '#kycStatus': 'kycStatus',
+          '#userStatus': 'userStatus',
+          '#userTags': 'userTags',
+          '#timestamp': 'timestamp',
+          '#createdTimestamp': 'createdTimestamp',
+        },
+        (_value, key) => filterExpression?.includes(key)
+      ),
+      attributesToFetch &&
+        Object.fromEntries(attributesToFetch.map((name) => [`#${name}`, name]))
+    ) as Record<string, string>
+
+    return {
+      FilterExpression: filterExpression,
+      ExpressionAttributeNames: isEmpty(expressionAttributeNames)
+        ? undefined
+        : {
+            ...omit(expressionAttributeNames, ['#userId']),
+            '#uid': 'userId',
+            [isConsumer
+              ? '#updatedConsumerUserAttributes'
+              : '#updatedBusinessUserAttributes']: isConsumer
+              ? 'updatedConsumerUserAttributes'
+              : 'updatedBusinessUserAttributes',
+          },
+      ExpressionAttributeValues: isEmpty(filters)
+        ? undefined
+        : {
+            ...Object.fromEntries(userIdsParams || []),
+            ...Object.fromEntries(userResidenceCountriesParams || []),
+            ...Object.fromEntries(userNationalityCountriesParams || []),
+            ...Object.fromEntries(userRegistrationCountriesParams || []),
+            ...Object.fromEntries(acquisitionChannelsParams || []),
+            ...Object.fromEntries(consumerUserSegmentsParams || []),
+            ...Object.fromEntries(businessUserSegmentsParams || []),
+            ...Object.fromEntries(kycStatusParams || []),
+            ...Object.fromEntries(userStatusParams || []),
+            ...Object.fromEntries(userTagsParams || []),
+          },
+      ProjectionExpression: isEmpty(attributesToFetch)
+        ? undefined
+        : `#uid, ${prefix}, #timestamp, #createdTimestamp`,
+    }
   }
 
   public async updateAvgTrsScoreOfUser(
