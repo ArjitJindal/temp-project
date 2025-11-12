@@ -63,7 +63,7 @@ export async function runSanctionsDataFetchJob(
   dynamoDb: DynamoDBDocumentClient
 ) {
   const { tenantId, providers, settings } = job
-  const opensearchClient = !isOpensearchAvailableInRegion()
+  const opensearchClient = isOpensearchAvailableInRegion()
     ? await getSharedOpensearchClient()
     : undefined
   const runFullLoad = job.parameters?.from
