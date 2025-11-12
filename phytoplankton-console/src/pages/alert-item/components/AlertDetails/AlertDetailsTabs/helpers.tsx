@@ -11,7 +11,7 @@ import { MediaCheckArticlesTab } from './MediaCheckArticlesTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
-import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL } from '@/utils/queries/keys';
 import { SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
@@ -159,6 +159,8 @@ export function useChangeSanctionsHitsStatusMutation(): {
       },
       onSuccess: async (_, variables) => {
         message.success(`Done!`);
+        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
+
         for (const { alertId } of variables.toChange) {
           await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
         }

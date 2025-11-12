@@ -114,7 +114,7 @@ export const useSanctionsScreeningDetails = (params) => {
   });
 };
 
-export const useSanctionHitsQuery = (params, alertId?: string, enabled?: boolean) => {
+export const useSanctionHitsQuery = (params, alertId?: string) => {
   const api = useApi();
   const filters = {
     alertId: alertId,
@@ -147,9 +147,6 @@ export const useSanctionHitsQuery = (params, alertId?: string, enabled?: boolean
         ...request,
         start: request.from,
       });
-    },
-    {
-      enabled: enabled !== false,
     },
   );
 };

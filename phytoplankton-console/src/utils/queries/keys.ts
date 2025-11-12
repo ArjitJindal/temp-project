@@ -302,6 +302,7 @@ export const SANCTIONS_SEARCH_LIST = (searchIds: string[]): QueryKey => [
   'list-by-ids',
   searchIds,
 ];
+export const SANCTIONS_HITS_ALL = (): QueryKey => ['sanctions', 'hits', 'search'];
 export const SANCTIONS_HITS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',
   'hits',
