@@ -614,7 +614,11 @@ export const AIF_SEARCH_KEY = (
   debouncedSearch: string,
 ): QueryKey => ['aif-search', questionId, variableKey, debouncedSearch];
 
+export const INTERCOMM_TOKEN = (): QueryKey => ['intercomm', 'token'];
+
 export const MEDIA_CHECK_ARTICLES_SEARCH = (
   searchId: string | undefined,
   params: AnyParameters,
 ): QueryKey => ['media-check-articles', 'search', searchId ?? 'invalid', params];
+
+export const CLUESO_TOKEN = ['clueso-token'];

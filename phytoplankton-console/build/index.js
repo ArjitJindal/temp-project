@@ -177,6 +177,7 @@ async function main() {
       'wss://nexus-websocket-a.intercom.io/',
       'https://widget.freshworks.com',
       'https://flagright.freshdesk.com',
+      'https://internet-up-realtime.intercom-messenger.com',
     ],
     frameSrc: [
       "'self'",

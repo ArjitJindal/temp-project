@@ -4,9 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { Updater } from '@tanstack/react-table';
 import { keyBy } from 'lodash';
+import { INTERCOMM_TOKEN_EXPIRY_TIME } from '@flagright/lib/utils/time';
+import { getCookie } from './helper';
 import { useQuery } from '@/utils/queries/hooks';
 import {
   ACCOUNT_LIST,
+  CLUESO_TOKEN,
+  INTERCOMM_TOKEN,
   PERMISSIONS_STATEMENTS,
   ROLES_LIST,
   SETTINGS,
@@ -25,6 +29,7 @@ import {
 import { Account, ApiException, Permission } from '@/apis';
 import { useApi } from '@/api';
 import { getOr, isLoading } from '@/utils/asyncResource';
+import { dayjs } from '@/utils/dayjs';
 
 export const useFlagrightUser = () => {
   const { getAccessTokenSilently } = useAuth0();
@@ -196,4 +201,57 @@ export const useAuthUpdates = () => {
   );
 
   return { updateAccounts };
+};
+
+export const useIntercommToken = () => {
+  const api = useApi();
+  const { logout } = useAuth0();
+
+  return useQuery(
+    INTERCOMM_TOKEN(),
+    async () => {
+      const existingToken = getCookie('intercomm-token');
+      if (existingToken) {
+        return existingToken;
+      }
+
+      // Only make API call if token hasn't been fetched yet
+      try {
+        const { token } = await api.getIntercommToken();
+        const expiryTime = dayjs()
+          .add(INTERCOMM_TOKEN_EXPIRY_TIME, 'milliseconds')
+          .utc()
+          .format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+        document.cookie = `intercomm-token=${token}; path=/; secure; samesite=strict; Expires=${expiryTime}`;
+        return token;
+      } catch (e) {
+        if ((e as ApiException<unknown>).httpMessage === 'Unauthorized') {
+          logout({
+            returnTo: window.location.origin,
+          });
+        }
+        throw e;
+      }
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
+};
+
+export const useCluesoToken = (chatbotEnabled: boolean = false) => {
+  const api = useApi();
+  return useQuery(
+    [CLUESO_TOKEN],
+    async () => {
+      if (chatbotEnabled) {
+        return '';
+      }
+      const { token } = await api.getCluesoAuthToken();
+      return token;
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
 };

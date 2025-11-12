@@ -8661,6 +8661,17 @@ paths:
             schema:
               $ref: '#/components/schemas/FlatFileTemplateRequest'
         required: true
+  /intercomm-token:
+    get:
+      summary: Generate intercomm JWT token
+      operationId: get-intercomm-token
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntercommTokenResponse'
 components:
   schemas:
     FilterCondition:
@@ -8893,6 +8904,14 @@ components:
       required:
         - keys
         - formatString
+    IntercommTokenResponse:
+      title: IntercommTokenResponse
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
     CaseClosure:
       title: CaseClosure
       type: object
