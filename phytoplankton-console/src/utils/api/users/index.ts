@@ -27,6 +27,7 @@ import {
   UserType,
   WorkflowSettingsUserApprovalWorkflows,
 } from '@/apis';
+import { success } from '@/utils/asyncResource';
 
 export const useUsersUniques = (field: UsersUniquesField, filter?: string) => {
   const api = useApi();
@@ -172,21 +173,40 @@ export const useUserApprovalProposals = () => {
   const api = useApi();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
 
-  return useQuery(USER_CHANGES_PROPOSALS(), () => api.getAllUserApprovalProposals(), {
+  const queryResult = useQuery(USER_CHANGES_PROPOSALS(), () => api.getAllUserApprovalProposals(), {
     enabled: isApprovalWorkflowsEnabled,
   });
+
+  if (!isApprovalWorkflowsEnabled) {
+    return {
+      data: success([]),
+      refetch: queryResult.refetch,
+    };
+  }
+
+  return queryResult;
 };
 
 export const useUserApprovalProposalsById = (userId: string) => {
   const api = useApi();
+  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
 
-  return useQuery(
+  const queryResult = useQuery(
     USER_CHANGES_PROPOSALS_BY_ID(userId),
     () => api.getUserApprovalProposals({ userId }),
     {
-      enabled: !!userId,
+      enabled: isApprovalWorkflowsEnabled && !!userId,
     },
   );
+
+  if (!isApprovalWorkflowsEnabled) {
+    return {
+      data: success([]),
+      refetch: queryResult.refetch,
+    };
+  }
+
+  return queryResult;
 };
 
 export const useUserChangesPendingApprovals = (
@@ -196,7 +216,7 @@ export const useUserChangesPendingApprovals = (
   const api = useApi();
   const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
 
-  return useQuery(
+  const queryResult = useQuery(
     USER_FIELDS_CHANGES_PROPOSALS(
       userId,
       fields.map((x) => `${x}`),
@@ -215,6 +235,15 @@ export const useUserChangesPendingApprovals = (
       enabled: isApprovalWorkflowsEnabled && !!userId,
     },
   );
+
+  if (!isApprovalWorkflowsEnabled) {
+    return {
+      data: success([]),
+      refetch: queryResult.refetch,
+    };
+  }
+
+  return queryResult;
 };
 
 export const useUserUpdates = () => {
