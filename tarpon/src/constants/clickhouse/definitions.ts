@@ -22,22 +22,6 @@ export const CLICKHOUSE_DEFINITIONS = {
         viewName: ClickhouseTableMaterializedViews.TransactionsById,
         table: ClickhouseTableNames.TransactionsByid,
       },
-      TRANSACTION_MONTHLY_STATS: {
-        viewName: ClickhouseTableMaterializedViews.TransactionsMonthlyStats,
-        table: ClickhouseTableNames.TransactionsMonthlyStats,
-      },
-      TRANSACTION_HOURLY_STATS: {
-        viewName: ClickhouseTableMaterializedViews.TransactionsHourlyStats,
-        table: ClickhouseTableNames.TransactionsHourlyStats,
-      },
-      TRANSACTION_DAILY_STATS: {
-        viewName: ClickhouseTableMaterializedViews.TransactionsDailyStats,
-        table: ClickhouseTableNames.TransactionsDailyStats,
-      },
-      RULE_STATS_HOURLY: {
-        viewName: ClickhouseTableMaterializedViews.RuleStatsHourlyTransactions,
-        table: ClickhouseTableNames.RuleStatsHourlyTransactions,
-      },
       BY_TYPE: {
         viewName: ClickhouseTableMaterializedViews.TransactionsByType,
         table: ClickhouseTableNames.TransactionsByType,
@@ -66,18 +50,6 @@ export const CLICKHOUSE_DEFINITIONS = {
         viewName: ClickhouseTableMaterializedViews.UsersById,
         table: ClickhouseTableNames.UsersById,
       },
-      USER_MONTHLY_STATS: {
-        viewName: ClickhouseTableMaterializedViews.UserMonthlyStats,
-        table: ClickhouseTableNames.UserMonthlyStats,
-      },
-      USER_HOURLY_STATS: {
-        viewName: ClickhouseTableMaterializedViews.UserHourlyStats,
-        table: ClickhouseTableNames.UserHourlyStats,
-      },
-      USER_DAILY_STATS: {
-        viewName: ClickhouseTableMaterializedViews.UserDailyStats,
-        table: ClickhouseTableNames.UserDailyStats,
-      },
     },
   },
   TRANSACTION_EVENTS: {
@@ -88,13 +60,6 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   CASES: {
     tableName: ClickhouseTableNames.Cases,
-    materializedViews: {
-      INVESTIGATION_TIMES_HOURLY_STATS: {
-        viewName:
-          ClickhouseTableMaterializedViews.CasesInvestigationTimesHourly,
-        table: ClickhouseTableNames.CasesInvestigationTimesHourly,
-      },
-    },
   },
   REPORTS: {
     tableName: ClickhouseTableNames.Reports,
