@@ -1180,6 +1180,7 @@ describe('Cases (User hit)', () => {
 describe('Screening user rules', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setupRules(TEST_TENANT_ID, { ruleType: 'USER' })
+  setupUsers(TEST_TENANT_ID)
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: `TRANSACTION-R-0`,
@@ -1205,7 +1206,7 @@ describe('Screening user rules', () => {
       const transaction = getTestTransaction({
         transactionId: '111',
         originUserId: TEST_USER_1.userId,
-        originPaymentDetails: {
+        destinationPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -1216,7 +1217,7 @@ describe('Screening user rules', () => {
           transactionReferenceField: 'DEPOSIT',
           '3dsDone': true,
         },
-        destinationPaymentDetails: {
+        originPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -1255,7 +1256,7 @@ describe('Screening user rules', () => {
       const transaction = getTestTransaction({
         transactionId: '222',
         originUserId: TEST_USER_1.userId,
-        originPaymentDetails: {
+        destinationPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -1267,7 +1268,7 @@ describe('Screening user rules', () => {
           '3dsDone': true,
         },
         destinationUserId: undefined,
-        destinationPaymentDetails: {
+        originPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
