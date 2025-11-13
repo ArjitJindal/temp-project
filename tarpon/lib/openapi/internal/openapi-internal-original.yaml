@@ -9472,6 +9472,7 @@ components:
         - op:!contains_in_lists
         - op:similar_to_in_lists
         - op:!similar_to_in_lists
+        - op:contains_in_lists_subtype
     LogicFunction:
       title: LogicFunction
       type: object

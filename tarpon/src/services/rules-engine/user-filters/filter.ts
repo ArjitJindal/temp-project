@@ -34,7 +34,11 @@ export abstract class UserRuleFilter<P> extends RuleFilter {
     const migratedFilter = getMigratedV8Config(
       '',
       undefined,
-      this.parameters as LegacyFilters
+      this.parameters as LegacyFilters,
+      {
+        tenantId: this.tenantId,
+        dynamoDb: this.dynamoDb,
+      }
     )
     return (
       await new LogicEvaluator(this.tenantId, this.dynamoDb).evaluate(

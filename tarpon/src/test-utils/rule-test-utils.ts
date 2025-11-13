@@ -281,7 +281,11 @@ export function setUpRulesHooks(
         } = getMigratedV8Config(
           libraryRuleV8.id,
           r.defaultParameters,
-          filters
+          filters,
+          {
+            tenantId,
+            dynamoDb: getDynamoDbClient(),
+          }
         ) ?? {}
 
         v8Rule.defaultLogic = logic
