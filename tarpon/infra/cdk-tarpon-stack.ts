@@ -6,6 +6,7 @@ import {
   BillingMode,
   ITable,
   Table,
+  TableProps,
 } from 'aws-cdk-lib/aws-dynamodb'
 import {
   BlockPublicAccess,
@@ -185,10 +186,11 @@ type ExtendedFlagrightRegion = FlagrightRegion | 'asia-2'
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
-  zendutyCloudWatchTopic: Topic
+  zendutyCloudWatchTopic?: Topic
   functionProps: Partial<FunctionProps>
   sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
   snsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
+  isMinimumInfraStack: boolean = false
 
   private addTagsToResource(
     resource: IConstruct,
@@ -204,28 +206,32 @@ export class CdkTarponStack extends cdk.Stack {
       env: config.env,
     })
     this.config = config
+    this.isMinimumInfraStack =
+      config.env.region === 'asia-2' && config.stage === 'prod'
 
     /**
      * SQS & SNS
      */
 
-    const ZendutyCloudWatchTopic = new Topic(
-      this,
-      StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
-      {
-        displayName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
-        topicName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
-      }
-    )
-    this.zendutyCloudWatchTopic = ZendutyCloudWatchTopic
+    if (!this.isMinimumInfraStack) {
+      const ZendutyCloudWatchTopic = new Topic(
+        this,
+        StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+        {
+          displayName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+          topicName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+        }
+      )
+      this.zendutyCloudWatchTopic = ZendutyCloudWatchTopic
 
-    new Subscription(this, StackConstants.ZENDUTY_SUBSCRIPTION_NAME, {
-      topic: this.zendutyCloudWatchTopic,
-      endpoint: config.application.ZENDUTY_WEBHOOK_URL
-        ? config.application.ZENDUTY_WEBHOOK_URL
-        : '',
-      protocol: SubscriptionProtocol.HTTPS,
-    })
+      new Subscription(this, StackConstants.ZENDUTY_SUBSCRIPTION_NAME, {
+        topic: this.zendutyCloudWatchTopic,
+        endpoint: config.application.ZENDUTY_WEBHOOK_URL
+          ? config.application.ZENDUTY_WEBHOOK_URL
+          : '',
+        protocol: SubscriptionProtocol.HTTPS,
+      })
+    }
 
     const actionProcessingQueue = this.createQueue(
       SQSQueues.ACTION_PROCESSING_QUEUE_NAME.name,
@@ -457,29 +463,32 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * DynamoDB
      */
+
+    const enableContributorInsights: boolean = !this.isMinimumInfraStack
+
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.TARPON,
       tarponStream,
       true,
-      true
+      enableContributorInsights
     )
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.TARPON_RULE,
       undefined,
       undefined,
-      true
+      enableContributorInsights
     )
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.HAMMERHEAD,
       tarponStream,
       undefined,
-      true
+      enableContributorInsights
     )
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.TRANSIENT,
       undefined,
       true,
-      true
+      enableContributorInsights
     )
     // Currently only creating for eu-2
     if (config.region === 'eu-2' && envIs('prod')) {
@@ -487,7 +496,7 @@ export class CdkTarponStack extends cdk.Stack {
         DYNAMODB_TABLE_NAMES.AGGREGATION,
         undefined,
         true,
-        true
+        enableContributorInsights
       )
     }
 
@@ -742,7 +751,7 @@ export class CdkTarponStack extends cdk.Stack {
     // On production the role name was set without a suffix, it's dangerous for us
     // to change without downtime.
     if (
-      (this.config.stage === 'prod' && config.region !== 'asia-2') ||
+      (this.config.stage === 'prod' && !this.isMinimumInfraStack) ||
       (this.config.stage === 'sandbox' && config.region !== 'eu-1')
     ) {
       lambdaRoleName += `-${config.region}`
@@ -1354,15 +1363,18 @@ export class CdkTarponStack extends cdk.Stack {
         heavyLibLayer
       )
     const batchJobRunnerLogGroupName = batchJobRunnerHandler.logGroup
-    createFinCENSTFPConnectionAlarm(
-      this,
-      this.zendutyCloudWatchTopic,
-      batchJobRunnerLogGroupName,
-      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
-        'Alarm',
-      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
-        'Metric'
-    )
+
+    if (this.zendutyCloudWatchTopic) {
+      createFinCENSTFPConnectionAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        batchJobRunnerLogGroupName,
+        StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
+          'Alarm',
+        StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
+          'Metric'
+      )
+    }
     let ecsBatchJobTask: Chain | null = null
     if (!isQaEnv() || enableFargateBatchJob) {
       const fargateBatchJobTaskDefinition = createFargateTaskDefinition(
@@ -1538,7 +1550,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Cron jobs */
     // do not run cron jobs for asia-2 region or on dev user stack
-    if (config.region !== 'asia-2' && !isDevUserStack) {
+    if (!this.isMinimumInfraStack && !isDevUserStack) {
       // Monthly
       const { func: cronJobMonthlyHandler } = createFunction(
         this,
@@ -1826,13 +1838,15 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.zendutyCloudWatchTopic,
-      publicApiLogGroup,
-      StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicApi.restApiName
-    )
+    if (this.zendutyCloudWatchTopic) {
+      createAPIGatewayThrottlingAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        publicApiLogGroup,
+        StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
+        publicApi.restApiName
+      )
+    }
 
     // Public Console API
     const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
@@ -1844,13 +1858,15 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.zendutyCloudWatchTopic,
-      publicConsoleApiLogGroup,
-      StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicConsoleApi.restApiName
-    )
+    if (this.zendutyCloudWatchTopic) {
+      createAPIGatewayThrottlingAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        publicConsoleApiLogGroup,
+        StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
+        publicConsoleApi.restApiName
+      )
+    }
 
     if (isDevUserStack) {
       const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKeyId())
@@ -1923,7 +1939,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     // Nested stacks
-    if (!isDevUserStack) {
+    if (!isDevUserStack && this.zendutyCloudWatchTopic) {
       new CdkTarponAlarmsStack(this, `${config.stage}-tarpon-alarms`, {
         config,
         batchJobStateMachineArn: batchJobStateMachine.stateMachineArn,
@@ -2474,7 +2490,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (isDevUserStack) {
       return Table.fromTableName(this, tableName, tableName)
     }
-    const tableProps: any = {
+    const tableProps: TableProps = {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
       sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
@@ -2483,7 +2499,7 @@ export class CdkTarponStack extends cdk.Stack {
       billingMode: this.config.resource.DYNAMODB
         .BILLING_MODE as unknown as BillingMode,
       kinesisStream,
-      pointInTimeRecovery: true,
+      pointInTimeRecovery: !this.isMinimumInfraStack,
       removalPolicy:
         this.config.stage === 'dev'
           ? RemovalPolicy.DESTROY
@@ -2716,7 +2732,10 @@ export class CdkTarponStack extends cdk.Stack {
 
   private createMongoAtlasVpc() {
     // Enable VPC forsandbox, and prod stages
-    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
+    if (
+      (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') ||
+      this.isMinimumInfraStack
+    ) {
       return {
         vpc: null,
         vpcCidr: null,
