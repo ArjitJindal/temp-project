@@ -4,11 +4,14 @@ import { Updater } from '@tanstack/react-table';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import { UseQueryOptions } from '@/utils/api/types';
 import { useQuery, usePaginatedQuery } from '@/utils/queries/hooks';
-import { CASES_ITEM, CASES_LIST, CASES_USERS_CASEIDS } from '@/utils/queries/keys';
+import { CASES_ITEM, CASES_LIST, CASES_UNIQUES, CASES_USERS_CASEIDS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
-import { Case, CaseType } from '@/apis';
+import { Case, CasesUniquesField, CaseType } from '@/apis';
 import { notFound } from '@/utils/errors';
-import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
+import {
+  DefaultApiGetCaseListRequest,
+  DefaultApiGetCasesUniquesRequest,
+} from '@/apis/types/ObjectParamAPI';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
@@ -116,4 +119,12 @@ export const useCreateNewCaseMutation = ({
       },
     },
   );
+};
+
+export const useCasesUniques = (
+  field: CasesUniquesField,
+  params: DefaultApiGetCasesUniquesRequest,
+) => {
+  const api = useApi();
+  return useQuery(CASES_UNIQUES(field, params), async () => api.getCasesUniques(params));
 };

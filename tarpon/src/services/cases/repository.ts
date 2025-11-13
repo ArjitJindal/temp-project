@@ -30,7 +30,10 @@ import {
   withTransaction,
   internalMongoBulkUpdate,
 } from '@/utils/mongodb-utils'
-import { CASES_COLLECTION } from '@/utils/mongo-table-names'
+import {
+  CASES_COLLECTION,
+  UNIQUE_TAGS_COLLECTION,
+} from '@/utils/mongo-table-names'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -66,6 +69,8 @@ import {
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
 import { Address } from '@/@types/openapi-public/Address'
+import { CasesUniquesField } from '@/@types/openapi-internal/CasesUniquesField'
+import { uniqObjects } from '@/utils/object'
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
 export function getRuleQueueFilter(ruleQueueIds: string[]) {
@@ -317,6 +322,14 @@ export class CaseRepository {
       if (caseToSave._id && typeof caseToSave._id === 'string') {
         caseToSave._id = new ObjectId(caseToSave._id)
       }
+
+      await this.syncUniqueTags(
+        uniqObjects(caseEntity.caseAggregates?.tags ?? []).map((t) => ({
+          type: 'CASE',
+          key: t.key,
+          value: t.value,
+        }))
+      )
 
       await internalMongoReplace(
         this.mongoDb,
@@ -1969,5 +1982,68 @@ export class CaseRepository {
         entityType: 'CASE',
       }
     })
+  }
+
+  public async getUniques(params: {
+    field: CasesUniquesField
+    filter?: string
+    type: 'CASE' | 'ALERT'
+  }): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const uniqueTagsCollection = db.collection(
+      UNIQUE_TAGS_COLLECTION(this.tenantId)
+    )
+    const pipeline: Document[] = []
+    if (params.field === 'TAGS_KEY') {
+      pipeline.push(
+        {
+          $match: {
+            type: params.type,
+            tag: { $ne: null },
+          },
+        },
+        {
+          $group: { _id: '$tag' },
+        }
+      )
+    }
+    if (params.field === 'TAGS_VALUE') {
+      pipeline.push(
+        {
+          $match: {
+            type: params.type,
+            ...(params.filter ? { tag: params.filter } : {}),
+            value: { $ne: null },
+          },
+        },
+        {
+          $group: { _id: '$value' },
+        }
+      )
+    }
+    const uniqueTags = await uniqueTagsCollection
+      .aggregate<{ _id: string }>(pipeline)
+      .toArray()
+    return uniqueTags.map((doc) => doc._id)
+  }
+  public async syncUniqueTags(
+    tags: { type: 'CASE' | 'ALERT'; key: string; value: string }[]
+  ): Promise<void> {
+    if (tags.length === 0) {
+      return
+    }
+    const db = this.mongoDb.db()
+    const uniqueTagsCollection = db.collection(
+      UNIQUE_TAGS_COLLECTION(this.tenantId)
+    )
+    // ordered: false because we want to continue with remaining inserts when one fails
+    // it fails if the tag already exists
+    await uniqueTagsCollection
+      .insertMany(tags, { ordered: false })
+      .catch((err) => {
+        if (err.code !== 11000) {
+          throw err
+        }
+      })
   }
 }

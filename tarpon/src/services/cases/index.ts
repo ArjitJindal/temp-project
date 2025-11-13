@@ -97,6 +97,7 @@ import {
 import { getUserUpdateRequest } from '@/utils/case'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import { updateUserDetails } from '@/utils/user-update-utils'
+import { CasesUniquesField } from '@/@types/openapi-internal/CasesUniquesField'
 
 // Custom AuditLogReturnData types
 type CaseUpdateAuditLogReturnData = AuditLogReturnData<
@@ -1546,5 +1547,13 @@ export class CaseService extends CaseAlertsCommonService {
       result: undefined,
       entities: auditLogEntity,
     }
+  }
+
+  public async getUniques(params: {
+    field: CasesUniquesField
+    filter?: string
+    type: 'CASE' | 'ALERT'
+  }): Promise<string[]> {
+    return await this.caseRepository.getUniques(params)
   }
 }

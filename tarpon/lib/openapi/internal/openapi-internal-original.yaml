@@ -2846,6 +2846,41 @@ paths:
                 items:
                   type: string
       operationId: get-users-uniques
+  /cases/uniques:
+    get:
+      summary: Cases - Unique values for different fields
+      tags: []
+      x-flagright:
+        resources:
+          - read:::case-management/case-overview
+      parameters:
+        - name: field
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CasesUniquesField'
+        - name: filter
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - CASE
+              - ALERT
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      operationId: get-cases-uniques
   /users/{userId}/update-proposal:
     post:
       summary: User Approval - Create Proposal
@@ -17220,6 +17255,12 @@ components:
         - 314A_INDIVIDUAL
         - 314A_BUSINESS
         - TRANSACTION_TYPES
+    CasesUniquesField:
+      title: CasesUniquesField
+      type: string
+      enum:
+        - TAGS_KEY
+        - TAGS_VALUE
     ProductType:
       title: ProductType
       type: string

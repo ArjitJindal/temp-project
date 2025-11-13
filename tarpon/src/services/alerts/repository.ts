@@ -65,6 +65,7 @@ import {
   isTenantConsoleMigrated,
 } from '@/utils/console-migration'
 import { AlertParams } from '@/@types/alert/alert-params'
+import { uniqObjects } from '@/utils/object'
 import { CaseAddress } from '@/@types/openapi-internal/CaseAddress'
 import { CaseEmail } from '@/@types/openapi-internal/CaseEmail'
 import { CasePaymentDetails } from '@/@types/openapi-internal/CasePaymentDetails'
@@ -2185,7 +2186,17 @@ export class AlertsRepository {
       await this.dynamoAlertRepository.addAlertToDynamo(caseId, alert, caseData)
     }
     const { caseAggregates, caseTransactionsIds } = caseData
-
+    const caseRepository = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
+    await caseRepository.syncUniqueTags(
+      uniqObjects(alert.tags ?? []).map((t) => ({
+        type: 'ALERT',
+        key: t.key,
+        value: t.value,
+      }))
+    )
     await this.updateOneAlert(
       { caseId },
       {

@@ -1262,7 +1262,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     'filterClosingReason',
     'alertSla',
   ]);
-  const filters = useCaseAlertFilters(filterIds);
+  const filters = useCaseAlertFilters(filterIds, 'ALERT');
 
   const getSelectionInfo = () => {
     const selectedTransactions = [

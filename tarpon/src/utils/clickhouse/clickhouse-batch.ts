@@ -42,7 +42,15 @@ export async function processClickhouseInBatch<
     const query = `
       SELECT ${additionalSelect ? `${additionalSelect},` : ''} id, timestamp
       FROM ${tableName} FINAL
-      ${additionalJoin ? `ARRAY JOIN ${additionalJoin}` : ''}
+      ${
+        additionalJoin
+          ? `${
+              Array.isArray(additionalJoin)
+                ? additionalJoin.map((j) => `ARRAY JOIN ${j}`).join('\n')
+                : `ARRAY JOIN ${additionalJoin}`
+            }`
+          : ''
+      }
       ${whereClause}
       ORDER BY timestamp, id
       LIMIT ${clickhouseBatchSize}
