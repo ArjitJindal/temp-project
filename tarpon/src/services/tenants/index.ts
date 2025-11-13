@@ -90,7 +90,11 @@ import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { auditLog } from '@/utils/audit-log'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
-import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
+import {
+  bulkSendMessages,
+  getSQSClient,
+  getSQSQueueUrl,
+} from '@/utils/sns-sqs-client'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { generateChecksum } from '@/utils/object'
 
@@ -1229,7 +1233,7 @@ export class TenantService {
     }))
     await bulkSendMessages(
       sqsClient,
-      process.env.NOTIFICATIONS_QUEUE_URL as string,
+      getSQSQueueUrl(process.env.NOTIFICATIONS_QUEUE_URL as string),
       messages
     )
   }
