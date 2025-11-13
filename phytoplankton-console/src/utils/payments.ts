@@ -99,7 +99,7 @@ export function getPaymentDetailsIdString(paymentDetails: PaymentDetails): strin
   } else if (paymentDetails.method === 'UPI') {
     return paymentDetails.upiID ?? '-';
   } else if (paymentDetails.method === 'CARD') {
-    return `XXXX ${paymentDetails.cardLast4Digits ?? '-'}`;
+    return paymentDetails.cardFingerprint ?? '-';
   } else if (paymentDetails.method === 'MPESA') {
     return paymentDetails.businessShortCode ?? '-';
   } else if (paymentDetails.method === 'CHECK') {
