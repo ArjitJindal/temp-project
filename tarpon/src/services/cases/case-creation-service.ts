@@ -162,6 +162,12 @@ type ExtendedHitRulesDetails = HitRulesDetails & {
   destinationPaymentMethodId?: string
 }
 
+type CaseGroup = {
+  subject: CaseSubject
+  direction: RuleHitDirection
+  ruleInstancesForGroup: RuleInstance[]
+}
+
 @traceable
 export class CaseCreationService {
   caseRepository: CaseRepository
@@ -1539,16 +1545,8 @@ export class CaseCreationService {
     hitSubjects: Array<{ subject: CaseSubject; direction: RuleHitDirection }>,
     flattenedHitRules: ExtendedHitRulesDetails[],
     ruleInstances: ReadonlyArray<RuleInstance>
-  ): Array<{
-    subject: CaseSubject
-    direction: RuleHitDirection
-    ruleInstancesForGroup: RuleInstance[]
-  }> {
-    const caseGroups: Array<{
-      subject: CaseSubject
-      direction: RuleHitDirection
-      ruleInstancesForGroup: RuleInstance[]
-    }> = []
+  ): CaseGroup[] {
+    const caseGroups: CaseGroup[] = []
 
     // Group by direction first
     const subjectsByDirection = new Map<RuleHitDirection, CaseSubject[]>()
@@ -1588,7 +1586,21 @@ export class CaseCreationService {
       }
     }
 
-    return caseGroups
+    return caseGroups.reduce((acc, curr) => {
+      const existingGroup = acc.find(
+        (group) =>
+          group.subject.type === curr.subject.type &&
+          group.direction === curr.direction
+      )
+      if (existingGroup) {
+        existingGroup.ruleInstancesForGroup = [
+          ...existingGroup.ruleInstancesForGroup,
+          ...curr.ruleInstancesForGroup,
+        ]
+        return acc
+      }
+      return [...acc, curr]
+    }, [] as CaseGroup[])
   }
 
   /**
