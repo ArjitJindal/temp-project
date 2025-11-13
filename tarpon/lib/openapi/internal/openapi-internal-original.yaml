@@ -8863,6 +8863,9 @@ components:
           description:
             Timestamp (Unix epoch ms) when CRA lock should expire (only used
             when isUpdatable is false)
+        comment:
+          type: string
+          description: Optional comment/reason for the risk assignment or lock change
     DynamoDbClickhouseBackfillBatchJobEntity:
       title: DynamoDbClickhouseBackfillBatchJobEntity
       type: string
@@ -12157,14 +12160,14 @@ components:
             - DAILY
             - WEEKLY
             - MONTHLY
-        craLockTimerHours:
+        craLockTimerDays:
           type: number
-          minimum: 1
-          maximum: 8760
+          minimum: 0
+          maximum: 10000
           description:
-            Default duration in hours for CRA locks. Used as the default value
-            when users lock CRAs. When undefined/omitted, no default is provided
-            and users must specify duration.
+            Default duration in days for CRA locks. When set (>= 1), it's
+            suggested as default CRA Lock expiry. When set to 0, the setting is
+            unset (perpetual lock is suggested).
         narrativeMode:
           $ref: '#/components/schemas/NarrativeMode'
         allowManualNarrativeModeUpdates:
@@ -12220,12 +12223,14 @@ components:
       properties:
         riskLevelsApprovalWorkflow:
           type: string
-          nullable: true
-          description: ID of the change-approval workflow to use for risk level changes
+          description:
+            ID of the change-approval workflow to use for risk level changes.
+            Use empty string to unset.
         riskFactorsApprovalWorkflow:
           type: string
-          nullable: true
-          description: ID of the change-approval workflow to use for risk factor changes
+          description:
+            ID of the change-approval workflow to use for risk factor changes.
+            Use empty string to unset.
         userApprovalWorkflows:
           type: object
           description: Map of user field names to change-approval workflow IDs

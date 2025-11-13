@@ -125,31 +125,38 @@ export class TenantRepository {
       const workflowSettings = newTenantSettings.workflowSettings
       const setExpressions: string[] = []
 
+      // Build cleaned workflowSettings object with only non-null values
+      // This approach avoids REMOVE operations which fail if paths don't exist
+      const cleanedWorkflowSettings: Record<string, any> = {}
       for (const [key, value] of Object.entries(workflowSettings)) {
         if (value === null || value === undefined) {
-          // Remove top-level attribute
-          removeExpression.push(`#ws.#${key}`)
-          expressionAttributeNames['#ws'] = 'workflowSettings'
-          expressionAttributeNames[`#${key}`] = key
+          // Skip null/undefined values - they will be removed by setting the cleaned object
+          continue
         } else if (typeof value === 'object' && !Array.isArray(value)) {
-          // Nested object - SET entire object with only non-null values
-          // This naturally removes any null fields
+          // Nested object - include only non-null values
           const cleanedObject = Object.fromEntries(
             Object.entries(value).filter(
               ([, v]) => v !== null && v !== undefined
             )
           )
-          setExpressions.push(`#ws.#${key} = :${key}`)
-          expressionAttributeNames['#ws'] = 'workflowSettings'
-          expressionAttributeNames[`#${key}`] = key
-          expressionAttributeValues[`:${key}`] = cleanedObject
+          if (Object.keys(cleanedObject).length > 0) {
+            cleanedWorkflowSettings[key] = cleanedObject
+          }
         } else {
-          // Simple value
-          setExpressions.push(`#ws.#${key} = :${key}`)
-          expressionAttributeNames['#ws'] = 'workflowSettings'
-          expressionAttributeNames[`#${key}`] = key
-          expressionAttributeValues[`:${key}`] = value
+          // Simple value - include it
+          cleanedWorkflowSettings[key] = value
         }
+      }
+
+      // SET the entire workflowSettings object (this will remove null fields naturally)
+      if (Object.keys(cleanedWorkflowSettings).length > 0) {
+        setExpressions.push(`#ws = :ws`)
+        expressionAttributeNames['#ws'] = 'workflowSettings'
+        expressionAttributeValues[':ws'] = cleanedWorkflowSettings
+      } else {
+        // If all values are null, remove the entire workflowSettings attribute
+        removeExpression.push(`#ws`)
+        expressionAttributeNames['#ws'] = 'workflowSettings'
       }
 
       if (setExpressions.length > 0) {

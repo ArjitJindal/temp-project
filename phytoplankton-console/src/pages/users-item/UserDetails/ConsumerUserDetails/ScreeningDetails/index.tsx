@@ -200,7 +200,9 @@ export default function ScreeningDetails(props: Props) {
   const pendingProposals = useUserChangesPendingApprovals(user.userId, ['PepStatus']);
 
   const lockedByPendingProposals =
-    !isSuccess(pendingProposals.data) || pendingProposals.data.value.length > 0;
+    isSuccess(proposalChangesStrategyRes) &&
+    proposalChangesStrategyRes.value === 'APPROVE' &&
+    (!isSuccess(pendingProposals.data) || pendingProposals.data.value.length > 0);
 
   return (
     <EntityPropertiesCard

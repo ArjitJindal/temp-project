@@ -178,7 +178,8 @@ export class RiskService {
     userId: string,
     riskLevel: RiskLevel | undefined,
     isUpdatable?: boolean,
-    releaseAt?: number
+    releaseAt?: number,
+    comment?: string
   ): Promise<DrsRiskItemAuditLogReturnData> {
     if (!riskLevel) {
       throw new BadRequest('Invalid request - please provide riskLevel')
@@ -197,6 +198,7 @@ export class RiskService {
       type: 'MANUAL',
       transactionId: newDrsRiskItem?.transactionId,
       createdAt: newDrsRiskItem?.createdAt,
+      comment,
     }
 
     return {
@@ -216,7 +218,8 @@ export class RiskService {
   async updateRiskAssignmentLock(
     userId: string,
     isUpdatable: boolean,
-    releaseAt?: number
+    releaseAt?: number,
+    comment?: string
   ): Promise<DrsRiskItemAuditLogReturnData> {
     console.log(
       `updateRiskAssignmentLock called for user ${userId} with isUpdatable=${isUpdatable}`
@@ -257,6 +260,7 @@ export class RiskService {
       type: 'MANUAL',
       transactionId: newDrsRiskItem?.transactionId,
       createdAt: newDrsRiskItem?.createdAt,
+      comment,
     }
 
     return {

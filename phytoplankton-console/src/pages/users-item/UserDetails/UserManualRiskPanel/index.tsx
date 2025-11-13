@@ -116,6 +116,10 @@ export default function UserManualRiskPanel(props: Props) {
 
   const { data: pendingProposals } = useUserChangesPendingApprovals(userId, ['Cra']);
 
+  // Check if approval workflow is enabled for Cra (which includes CRA Lock)
+  const isApprovalWorkflowEnabled =
+    isSuccess(craChangesStrategyRes) && craChangesStrategyRes.value === 'APPROVE';
+
   const lockingAndUnlockingMutation = useMutation<
     unknown,
     unknown,
@@ -181,6 +185,7 @@ export default function UserManualRiskPanel(props: Props) {
             ),
             isUpdatable: vars.isUpdatable,
             releaseAt: vars.releaseAt,
+            comment: vars.comment,
           },
         });
         setSyncState(success(response));
@@ -266,6 +271,7 @@ export default function UserManualRiskPanel(props: Props) {
             riskLevel: newRiskLevel,
             isUpdatable: false, // Always lock when setting CRA level
             releaseAt: releaseAt, // Include timer if provided
+            comment: comment,
           },
         });
         setSyncState(success(response));
@@ -289,7 +295,8 @@ export default function UserManualRiskPanel(props: Props) {
   });
 
   const lockedByPendingProposals =
-    !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+    isApprovalWorkflowEnabled &&
+    (!isSuccess(pendingProposals) || pendingProposals.value.length > 0);
 
   // Extract lock data for the modal
   const lockData: CraLockModalData | undefined = useMemo(() => {
@@ -376,12 +383,10 @@ export default function UserManualRiskPanel(props: Props) {
         {({ onClick }) => (
           <RiskLevelSwitch
             isDisabled={
-              isLocked ||
               isLoading(syncState) ||
               isLoading(craChangesStrategyRes) ||
               isFailed(syncState) ||
-              !canUpdateManualRiskLevel ||
-              lockedByPendingProposals
+              !canUpdateManualRiskLevel
             }
             value={
               !isSuccess(queryResult.data)
@@ -395,12 +400,12 @@ export default function UserManualRiskPanel(props: Props) {
                     defaultRiskLevel,
                   )
             }
-            onChange={onClick}
+            onChange={isLocked ? undefined : onClick}
           />
         )}
       </Confirm>
 
-      {isSuccess(queryResult.data) && isSuccess(craChangesStrategyRes) && (
+      {isSuccess(queryResult.data) && (
         <Tooltip
           title={
             lockedByPendingProposals
@@ -417,11 +422,11 @@ export default function UserManualRiskPanel(props: Props) {
               'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
             }
             res={lockingAndUnlockingMutation.dataResource}
-            skipConfirm={craChangesStrategyRes.value !== 'APPROVE'}
+            skipConfirm={getOr(craChangesStrategyRes, 'DIRECT') !== 'APPROVE'}
             commentRequired={true}
             onConfirm={({ args: isUpdatable, comment }) => {
               lockingAndUnlockingMutation.mutate({
-                changesStrategy: craChangesStrategyRes.value,
+                changesStrategy: getOr(craChangesStrategyRes, 'DIRECT'),
                 isUpdatable,
                 comment,
               });

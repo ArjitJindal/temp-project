@@ -46,6 +46,7 @@ import { CounterRepository } from '../counter/repository'
 import { BatchRerunUsersService } from '../batch-users-rerun'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
+import { TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
@@ -934,6 +935,37 @@ export class TenantService {
     )
 
     return updatedResult
+  }
+
+  async unsetTenantSettings(
+    settingsToUnset: TenantSettingName[]
+  ): Promise<void> {
+    const existingTenantSettings = getContext()?.settings
+
+    // Filter to only unset properties that actually exist
+    const propertiesToUnset = settingsToUnset.filter(
+      (key) =>
+        existingTenantSettings?.[key] !== undefined &&
+        existingTenantSettings?.[key] !== null
+    )
+
+    if (propertiesToUnset.length === 0) {
+      return
+    }
+
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+
+    await tenantRepository.deleteTenantSettings(propertiesToUnset)
+
+    // Update context to remove the unset properties
+    const updatedSettings = { ...existingTenantSettings }
+    for (const key of propertiesToUnset) {
+      delete updatedSettings[key]
+    }
+    updateTenantSettings(updatedSettings)
   }
 
   public static async getAllTenantIds() {

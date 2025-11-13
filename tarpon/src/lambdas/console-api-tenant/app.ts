@@ -56,6 +56,7 @@ import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhous
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { logger } from '@/core/logger'
+import { TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -199,23 +200,54 @@ export const tenantsHandler = lambdaApi()(
     handlers.registerPostTenantsSettings(async (ctx, request) => {
       const newTenantSettings = request.TenantSettings
 
-      // setting 0 as undefined, to reset maxActiveSession
-      if (newTenantSettings.maxActiveSessions === 0) {
-        newTenantSettings.maxActiveSessions = undefined
+      // Convert sentinel values to null for processing
+      const processedSettings: TenantSettings = { ...newTenantSettings }
+
+      // Convert sentinel value 0 to null for craLockTimerDays
+      if (processedSettings.craLockTimerDays === 0) {
+        processedSettings.craLockTimerDays = null as any
       }
+
+      // Convert sentinel empty string to null for workflow settings
+      if (processedSettings.workflowSettings) {
+        const workflowSettings = { ...processedSettings.workflowSettings }
+        if (workflowSettings.riskLevelsApprovalWorkflow === '') {
+          workflowSettings.riskLevelsApprovalWorkflow = null as any
+        }
+        if (workflowSettings.riskFactorsApprovalWorkflow === '') {
+          workflowSettings.riskFactorsApprovalWorkflow = null as any
+        }
+        processedSettings.workflowSettings = workflowSettings
+      }
+
+      const settingsToUnset: TenantSettingName[] = []
+      // setting 0 as undefined, to reset maxActiveSession
+      if (processedSettings.maxActiveSessions === 0) {
+        settingsToUnset.push('maxActiveSessions')
+      }
+
+      // setting null (converted from sentinel 0) to undefined, to reset craLockTimerDays
+      if (processedSettings.craLockTimerDays === null) {
+        settingsToUnset.push('craLockTimerDays')
+      }
+      // Note: workflowSettings null values are handled automatically by createOrUpdateTenantSettings
+      // which removes null fields from nested objects
 
       const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
       const changedTenantSettings: TenantSettings = Object.fromEntries(
-        Object.entries(newTenantSettings).filter(
-          ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
+        Object.entries(processedSettings).filter(
+          ([key, value]) =>
+            !settingsToUnset.includes(key as TenantSettingName) && // skip unset settings
+            !isEqual(value, tenantSettingsCurrent[key])
         )
       )
+
       const statements = await userStatements()
 
       assertSettings(changedTenantSettings, statements)
       const dynamoDb = getDynamoDbClientByEvent(event)
 
-      if (isEmpty(changedTenantSettings)) {
+      if (isEmpty(changedTenantSettings) && settingsToUnset.length === 0) {
         return tenantSettingsCurrent
       }
 
@@ -253,9 +285,19 @@ export const tenantsHandler = lambdaApi()(
         dynamoDb,
         mongoDb,
       })
-      const updatedResult = await tenantService.createOrUpdateTenantSettings(
-        changedTenantSettings
-      )
+
+      // set settings to create or update
+      if (!isEmpty(changedTenantSettings)) {
+        await tenantService.createOrUpdateTenantSettings(changedTenantSettings)
+      }
+
+      // unset settings if any
+      if (settingsToUnset.length > 0) {
+        await tenantService.unsetTenantSettings(settingsToUnset)
+      }
+
+      // fetch updated settings from the context
+      const updatedResult = await tenantSettings(ctx.tenantId)
 
       // toggling usage plan
       if (changedTenantSettings.isAccountSuspended != null) {
@@ -267,7 +309,7 @@ export const tenantsHandler = lambdaApi()(
         action: 'UPDATE',
         timestamp: Date.now(),
         oldImage: tenantSettingsCurrent,
-        newImage: { ...tenantSettingsCurrent, ...changedTenantSettings },
+        newImage: updatedResult,
       }
       await publishAuditLog(tenantId, auditLog)
 

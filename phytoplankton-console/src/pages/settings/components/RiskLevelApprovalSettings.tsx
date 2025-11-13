@@ -40,7 +40,7 @@ export const RiskLevelApprovalSettings: React.FC = () => {
       try {
         await mutateTenantSettings.mutateAsync({
           workflowSettings: {
-            riskLevelsApprovalWorkflow: workflowId as string | undefined,
+            riskLevelsApprovalWorkflow: workflowId ?? '', // Use empty string as sentinel to unset
           },
         });
         return workflowId; // Return the saved value
