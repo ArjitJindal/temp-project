@@ -100,13 +100,7 @@ export class RuleHitsStatsDashboardMetric {
             ruleInstanceId: '$alerts.ruleInstanceId',
           },
           ruleHitCount: {
-            $sum: {
-              $cond: {
-                if: { $eq: ['$alerts.numberOfTransactionsHit', 0] },
-                then: 1,
-                else: 0,
-              },
-            },
+            $sum: 0,
           },
           openAlertsCount: {
             $sum: {
@@ -518,7 +512,7 @@ export class RuleHitsStatsDashboardMetric {
             count() as hitCount,
             0 as openAlertsCount,
             0 as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
           ARRAY JOIN nonShadowHitRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
@@ -532,7 +526,7 @@ export class RuleHitsStatsDashboardMetric {
             count() as hitCount,
             0 as openAlertsCount,
             0 as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
           ARRAY JOIN nonShadowHitRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
@@ -547,7 +541,7 @@ export class RuleHitsStatsDashboardMetric {
             0 as hitCount,
             0 as openAlertsCount,
             count() as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
           ARRAY JOIN nonShadowExecutedRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
@@ -563,7 +557,7 @@ export class RuleHitsStatsDashboardMetric {
             0 as hitCount,
             0 as openAlertsCount,
             count() as runCount
-          FROM ${CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName} FINAL
+          FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
           ARRAY JOIN nonShadowExecutedRuleIdPairs AS rule
           WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
             AND rule.1 != '' AND rule.2 != ''
@@ -575,7 +569,7 @@ export class RuleHitsStatsDashboardMetric {
           SELECT
             alert.ruleInstanceId,
             alert.ruleId,
-            countIf(alert.numberOfTransactionsHit = 0) as hitCount,
+            0 as hitCount,
             countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
             0 as runCount
           FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL

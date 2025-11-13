@@ -469,6 +469,17 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `hitRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
         JSONExtract(JSONExtractRaw(data, 'hitRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
       `linkedEntities_parentUserId String MATERIALIZED JSONExtractString(data, 'linkedEntities', 'parentUserId')`,
+      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+        arrayMap(
+          x -> (
+            JSONExtractString(x, 'ruleInstanceId'),
+            JSONExtractString(x, 'ruleId')
+          ),
+          arrayFilter(
+            x -> JSONExtractBool(x, 'isShadow') != true,
+            JSONExtractArrayRaw(data, 'hitRules')
+          )
+        )`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -539,26 +550,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         splitByChar(',', JSON_VALUE(data, '$.reason')),
         []
       )`,
-      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-      arrayMap(x -> (
-        JSONExtractString(x, 'ruleInstanceId'),
-        JSONExtractString(x, 'ruleId')
-      ),
-      arrayFilter(
-        x -> JSONExtractBool(x, 'isShadow') != true,
-        JSONExtractArrayRaw(data, 'executedRules')
-      )
-    )`,
-      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-    arrayMap(x -> (
-      JSONExtractString(x, 'ruleInstanceId'),
-      JSONExtractString(x, 'ruleId')
-    ),
-    arrayFilter(
-      x -> JSONExtractBool(x, 'isShadow') != true,
-      JSONExtractArrayRaw(data, 'hitRules')
-    )
-  )`,
     ],
   },
   {
@@ -571,26 +562,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     mongoIdColumn: true,
     materializedColumns: [
       "userId String MATERIALIZED JSON_VALUE(data, '$.userId')",
-      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-      arrayMap(x -> (
-        JSONExtractString(x, 'ruleInstanceId'),
-        JSONExtractString(x, 'ruleId')
-      ),
-      arrayFilter(
-        x -> JSONExtractBool(x, 'isShadow') != true,
-        JSONExtractArrayRaw(data, 'executedRules')
-      )
-    )`,
-      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-    arrayMap(x -> (
-      JSONExtractString(x, 'ruleInstanceId'),
-      JSONExtractString(x, 'ruleId')
-    ),
-    arrayFilter(
-      x -> JSONExtractBool(x, 'isShadow') != true,
-      JSONExtractArrayRaw(data, 'hitRules')
-    )
-  )`,
     ],
   },
   {
