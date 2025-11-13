@@ -358,8 +358,6 @@ export class SanctionsService {
 
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
     request.types = this.getSanctionsSearchType(request.types, providers)
-    const createdAt: number | undefined = undefined
-
     const provider = await this.getProvider(
       providerName,
       {
@@ -425,6 +423,8 @@ export class SanctionsService {
       ...(sanctionsSearchResponse.data ?? []),
       ...(lsegApiSearchResponse?.data ?? []),
     ]
+    const createdAt: number | undefined = historySearchResponse?.createdAt
+
     const filteredHits =
       await this.sanctionsHitsRepository.filterWhitelistedHits(
         hits,
