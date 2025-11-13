@@ -67,7 +67,8 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
 
   const analyticsQueryResult = useRuleStats({
     ruleInstanceId: ruleInstance.id,
-    ...timeRange,
+    afterTimestamp: timeRange.startTimestamp ?? DEFAULT_TIME_RANGE.startTimestamp,
+    beforeTimestamp: timeRange.endTimestamp ?? DEFAULT_TIME_RANGE.endTimestamp,
   });
 
   const dataRes = analyticsQueryResult.data;
