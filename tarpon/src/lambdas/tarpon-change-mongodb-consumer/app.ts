@@ -18,6 +18,7 @@ import { NangoRepository } from '../../services/nango/repository'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongo-table-names'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -27,7 +28,11 @@ import {
   DbClients,
   StreamConsumerBuilder,
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
-import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
+import {
+  hasFeature,
+  tenantSettings,
+  updateLogMetadata,
+} from '@/core/utils/context'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
@@ -50,7 +55,7 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskService } from '@/services/risk'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
-import { envIsNot } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
@@ -71,6 +76,14 @@ import {
 import { WebhookConfiguration } from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
+import { getOngoingScreeningRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
+import { getBusinessUserNames, hasAnyNameChanged } from '@/utils/user'
+import {
+  getSharedOpensearchClient,
+  opensearchUpdateOne,
+} from '@/utils/opensearch-utils'
+import { getUserName } from '@/utils/helpers'
+import { getSearchIndexName } from '@/utils/mongodb-definitions'
 import { getSQSQueueUrl } from '@/utils/sns-sqs-client'
 
 type RuleStats = {
@@ -424,6 +437,42 @@ export class TarponChangeMongoDbConsumer {
       newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
         []
     )
+
+    // Add user name to opensearch index for ongoing screening
+    const hasOngoingScreeningRule =
+      getOngoingScreeningRuleInstances(
+        activeRuleInstances,
+        hasFeature('RISK_LEVELS')
+      ).length > 0
+    if (
+      envIs('prod') &&
+      hasOngoingScreeningRule &&
+      hasFeature('SANCTIONS') &&
+      hasAnyNameChanged(newUser, oldUser, savedUser.type)
+    ) {
+      const client = await getSharedOpensearchClient()
+      if (savedUser.type === 'BUSINESS') {
+        const businessUserNames = getBusinessUserNames(savedUser)
+        await opensearchUpdateOne(
+          {
+            id: savedUser.userId,
+            ...businessUserNames,
+          },
+          getSearchIndexName(USERS_COLLECTION(tenantId)),
+          client
+        )
+      } else {
+        const consumerUserName = getUserName(savedUser)
+        await opensearchUpdateOne(
+          {
+            id: savedUser.userId,
+            userName: consumerUserName,
+          },
+          getSearchIndexName(USERS_COLLECTION(tenantId)),
+          client
+        )
+      }
+    }
     subSegment?.close()
   }
 

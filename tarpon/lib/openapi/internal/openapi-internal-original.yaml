@@ -16162,6 +16162,26 @@ components:
         - id
         - name
         - entityType
+    UserSearchEntity:
+      title: UserSearchEntity
+      type: object
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        legalEntityName:
+          type: string
+        shareHoldersNames:
+          type: array
+          items:
+            type: string
+        directorsNames:
+          type: array
+          items:
+            type: string
+      required:
+        - id
     SanctionsField:
       type: object
       properties:
