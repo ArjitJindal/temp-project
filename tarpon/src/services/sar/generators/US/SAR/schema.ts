@@ -368,7 +368,9 @@ export const FilingInstitution = {
           {
             // ref: https://github.com/moov-io/fincen/blob/eeeed6e18ba6710474db14d0ec51441b26d75b1c/pkg/suspicious_activity/activity.go#L267
             PartyIdentificationTypeCode: pickPartyIdentificationTypeCodeSubset([
+              '1',
               '2',
+              '4',
             ]),
           }
         ),
@@ -489,17 +491,19 @@ export const FinancialInstitution = {
       AlternateName: arraySchema(FlagrightAlternatePartyName),
       Address: pickAddressFields(
         [
-          'CityUnknownIndicator',
-          'CountryCodeUnknownIndicator',
           'RawCityText',
           'RawCountryCodeText',
           'RawStateCodeText',
           'RawStreetAddress1Text',
           'RawZIPCode',
-          'StreetAddressUnknownIndicator',
-          'ZIPCodeUnknownIndicator',
         ],
-        []
+        [
+          'RawCityText',
+          'RawCountryCodeText',
+          'RawStateCodeText',
+          'RawStreetAddress1Text',
+          'RawZIPCode',
+        ]
       ),
       FlagrightPartyIdentificationTin: {
         ...pickPartyIdentificationFields(

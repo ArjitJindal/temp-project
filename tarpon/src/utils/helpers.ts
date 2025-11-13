@@ -306,7 +306,11 @@ export const getPaymentDetailsNameString = (
 }
 
 export const isValidSARRequest = (tenantId: string) => {
-  return !isDemoTenant(tenantId) && (envIs('sandbox') || envIs('prod'))
+  // remove dev after testing
+  return (
+    !isDemoTenant(tenantId) &&
+    (envIs('sandbox') || envIs('prod') || envIs('dev'))
+  )
 }
 
 export const getPersonName = (person?: Person) => {

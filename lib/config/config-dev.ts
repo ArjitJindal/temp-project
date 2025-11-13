@@ -132,6 +132,8 @@ export const config: Config = {
     POSTHOG_API_KEY: 'phc_12mxZXckh9t0LlosLIlraJl5xALKwOc8he1R6Jxwhus',
     POSTHOG_HOST: 'https://eu.i.posthog.com',
     MONGO_EVENT_TRIGGER_RULE_ID: '66d9d1170604e3825f395f1c',
+    FINCEN_SFTP_IP: '164.95.10.143',
+    FINCEN_SFTP_PORT: '2222',
   },
   opensearch: {
     deploy: true,

@@ -54,7 +54,7 @@ export function partyNameByCompanyGeneralDetails(
 ): PartyNameType {
   return {
     PartyNameTypeCode: 'L',
-    RawPartyFullName: details.legalName,
+    RawIndividualFirstName: details.legalName,
   }
 }
 
@@ -75,7 +75,7 @@ export function financialInstitutionByPaymentDetails(
     PayLocationIndicator: indicator(directions.includes('ORIGIN')),
     SellingLocationIndicator: indicator(directions.includes('DESTINATION')),
     OrganizationClassificationTypeSubtype: orgType ? [orgType] : undefined,
-    Address: address ? [address] : undefined,
+    Address: address ? address : undefined,
     // PrimaryRegulatorTypeCode: null,
   }
 }

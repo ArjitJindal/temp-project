@@ -154,7 +154,7 @@ const report: Report = {
         SuspiciousActivityToDateText: '20230329',
         SuspiciousActivityClassification: [
           {
-            SuspiciousActivitySubtypeID: '1005',
+            SuspiciousActivitySubtypeID: '1101',
             SuspiciousActivityTypeID: '11',
           },
         ],
@@ -211,6 +211,7 @@ const report: Report = {
       },
     ],
   },
+  id: 'RP-test-1',
   name: 'RP-1',
   description: 'Test report for tests',
   status: 'COMPLETE',
@@ -235,7 +236,7 @@ describe('FinCEN SAR Generation', () => {
   test('Should generate valid XML file', async () => {
     const generator = new UsSarReportGenerator()
     const testInputParams = generator.getAugmentedReportParams(report)
-    const xml = await generator.generate(testInputParams)
+    const xml = await generator.generate(testInputParams, report)
     const expectedOutput = fs.readFileSync(
       path.join(__dirname, 'expected-test-output.xml'),
       'utf8'
