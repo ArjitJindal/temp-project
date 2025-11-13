@@ -555,6 +555,7 @@ export const AggregationVariableFormContent: React.FC<
                 type: aggregationType === 'USER' ? 'USER_DETAILS' : 'USER_TRANSACTIONS',
               });
             }}
+            testName="variable-type-v8"
             isDisabled={readOnly}
           />
         </Label>
