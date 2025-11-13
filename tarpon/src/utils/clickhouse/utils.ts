@@ -762,3 +762,40 @@ export const createDbIfNotExists = async (tenantId: string) => {
     )
   })
 }
+
+export const getPaymentDetailAddressFilter = (address: string) => {
+  const filters = (direction: 'origin' | 'destination') => {
+    return [
+      `${direction}PaymentDetails_address_address = '${address}'`,
+      `${direction}PaymentDetails_address_shippingAddress = '${address}'`,
+      `${direction}PaymentDetails_address_bankAddress = '${address}'`,
+    ]
+  }
+
+  return {
+    origin: filters('origin'),
+    destination: filters('destination'),
+  }
+}
+
+export const getPaymentDetailEmailFilter = (email: string) => {
+  const filters = (direction: 'origin' | 'destination') => {
+    return [`${direction}PaymentDetails_email = '${email}'`]
+  }
+
+  return {
+    origin: filters('origin'),
+    destination: filters('destination'),
+  }
+}
+
+export const getPaymentDetailMethodFilter = (paymentId: string) => {
+  const filters = (direction: 'origin' | 'destination') => {
+    return [`${direction}PaymentMethodId = '${paymentId}'`]
+  }
+
+  return {
+    origin: filters('origin'),
+    destination: filters('destination'),
+  }
+}

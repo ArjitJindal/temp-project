@@ -22,7 +22,12 @@ import {
 import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { OptionalPagination } from '@/@types/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
-import { getSortedData } from '@/utils/clickhouse/utils'
+import {
+  getPaymentDetailAddressFilter,
+  getPaymentDetailEmailFilter,
+  getPaymentDetailMethodFilter,
+  getSortedData,
+} from '@/utils/clickhouse/utils'
 import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -86,6 +91,56 @@ export class ClickhouseTransactionsRepository {
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<{ whereClause: string; countWhereClause: string }> {
     const whereConditions: string[] = []
+
+    const subjectType = params.caseSubject
+
+    if (subjectType) {
+      // if caseId is present we need to filter transactions according to subject type of case
+      const entityId = params.entityId ?? ''
+
+      let filters: {
+        origin: string[]
+        destination: string[]
+      } = {
+        origin: [],
+        destination: [],
+      }
+
+      switch (subjectType) {
+        case 'USER': {
+          params.filterUserId = entityId
+          break
+        }
+        case 'PAYMENT': {
+          filters = getPaymentDetailMethodFilter(entityId)
+          params.filterOriginPaymentMethodId = undefined
+          params.filterDestinationPaymentMethodId = undefined
+          break
+        }
+        case 'ADDRESS': {
+          filters = getPaymentDetailAddressFilter(entityId)
+          break
+        }
+        case 'EMAIL': {
+          filters = getPaymentDetailEmailFilter(entityId)
+          break
+        }
+        case 'NAME': {
+          // overidding paymentDetailName filter
+          params.filterPaymentDetailName = entityId
+          break
+        }
+        default:
+      }
+
+      const combinedFilters = [...filters.origin, ...filters.destination].join(
+        ' OR '
+      )
+      if (combinedFilters.length > 0) {
+        whereConditions.push(`(${combinedFilters})`)
+      }
+    }
+
     const sortField = params.sortField ?? 'timestamp'
     const timestampFilterField =
       sortField === 'timestamp' && params.sortOrder === 'descend'
@@ -367,7 +422,6 @@ export class ClickhouseTransactionsRepository {
         )
       `)
     }
-
     const queryWhereConditions = [...whereConditions]
     if (
       queryWhereConditions.length === timestampFilterCount &&

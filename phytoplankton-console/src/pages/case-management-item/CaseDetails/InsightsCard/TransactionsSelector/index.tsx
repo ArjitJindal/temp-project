@@ -9,6 +9,7 @@ import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import * as Form from '@/components/ui/Form';
 import {
+  CaseSubjectType,
   CurrencyCode,
   TransactionState as LastTransactionState,
   RuleAction,
@@ -38,6 +39,8 @@ export interface Params {
   transactionsCount?: number;
   aggregateBy: AggregateByField;
   timeRange: RangeValue<Dayjs>;
+  caseSubject?: CaseSubjectType;
+  entityId?: string;
 }
 
 interface Props {

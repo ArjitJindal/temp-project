@@ -23,6 +23,7 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { ADDRESS_SEPARATOR } from '@flagright/lib/utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
 import { filterOutInternalRules } from '../pnb-custom-logic'
@@ -120,7 +121,7 @@ export class MongoDbTransactionRepository
   ) {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const dynamoDb = await getDynamoDbClientByEvent(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     return new MongoDbTransactionRepository(tenantId, mongoDb, dynamoDb)
   }
@@ -216,12 +217,122 @@ export class MongoDbTransactionRepository
     }
   }
 
+  private createPaymentDetailAddressFilter = (
+    prefix: string,
+    key: string,
+    address: Address
+  ) => {
+    return {
+      [`${prefix}PaymentDetails.${key}.addressLines`]: address.addressLines,
+      [`${prefix}PaymentDetails.${key}.city`]: address.city,
+      [`${prefix}PaymentDetails.${key}.state`]: address.state,
+      [`${prefix}PaymentDetails.${key}.postcode`]: address.postcode,
+      [`${prefix}PaymentDetails.${key}.country`]: address.country,
+    }
+  }
+
   public getTransactionsMongoQuery(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
     additionalFilters: Filter<InternalTransaction>[] = [],
     alert?: Alert | null
   ): Filter<InternalTransaction> {
     const conditions: Filter<InternalTransaction>[] = additionalFilters
+
+    const subjectType = params.caseSubject
+
+    if (subjectType) {
+      const entityId = params.entityId ?? ''
+
+      switch (subjectType) {
+        case 'USER': {
+          // overridding filterUserId parameter
+          params.filterUserId = entityId
+          break
+        }
+        case 'PAYMENT': {
+          conditions.push({
+            $or: [
+              {
+                originPaymentMethodId: entityId,
+              },
+              {
+                destinationPaymentMethodId: entityId,
+              },
+            ],
+          })
+          params.filterOriginPaymentMethodId = undefined
+          params.filterDestinationPaymentMethodId = undefined
+          break
+        }
+        case 'ADDRESS': {
+          const splittedAddress = entityId.split(ADDRESS_SEPARATOR)
+          let currIdx = splittedAddress.length
+          const country =
+            splittedAddress[--currIdx] === ''
+              ? undefined
+              : splittedAddress[currIdx]
+          const postcode =
+            splittedAddress[--currIdx] === ''
+              ? undefined
+              : splittedAddress[currIdx]
+          const state =
+            splittedAddress[--currIdx] === ''
+              ? undefined
+              : splittedAddress[currIdx]
+          const city =
+            splittedAddress[--currIdx] === ''
+              ? undefined
+              : splittedAddress[currIdx]
+          const addressLines =
+            currIdx - 1 === 0 ? [] : splittedAddress.slice(0, currIdx)
+
+          const filters = ['origin', 'destination'].map((prefix) => {
+            const addressFields = ['address', 'shippingAddress', 'bankAddress']
+            return {
+              $or: [
+                ...addressFields.map((addressField) => {
+                  return this.createPaymentDetailAddressFilter(
+                    prefix,
+                    addressField,
+                    {
+                      addressLines,
+                      city,
+                      country,
+                      state,
+                      postcode,
+                    }
+                  )
+                }),
+              ],
+            }
+          })
+          conditions.push({
+            $or: filters,
+          })
+
+          break
+        }
+        case 'EMAIL': {
+          conditions.push({
+            $or: [
+              {
+                'originPaymentDetails.email': entityId,
+              },
+              {
+                'destinationPaymentMethodId.email': entityId,
+              },
+            ],
+          })
+          break
+        }
+        case 'NAME': {
+          // overiding the filterPaymentDetailName filter
+          params.filterPaymentDetailName = entityId
+          break
+        }
+        default:
+      }
+    }
 
     if (params.filterDestinationCountries) {
       conditions.push({

@@ -1,5 +1,5 @@
 import uniq from 'lodash/uniq'
-
+import { ADDRESS_SEPARATOR } from '@flagright/lib/utils'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
@@ -41,6 +41,46 @@ const generatePaymentDetailColumns = (prefix: string) =>
           `${prefix}PaymentDetails_${field} String MATERIALIZED JSONExtractString(data, '${prefix}PaymentDetails', '${field}')`
       )
   )
+
+const generatePaymentDetailAddressColums = () => {
+  // example materialed key originPaymentDetails_address_bankAddress -> Origin address1{{*}}Origin address2{{*}}city1{{*}}{{*}}{{*}}
+  // address field will change based on payment method id
+  return ['origin', 'destination']
+    .map((direction) => {
+      const addressFields = ['address', 'shippingAddress', 'bankAddress']
+      return addressFields.map((addressField) => {
+        return `${direction}PaymentDetails_address_${addressField} String MATERIALIZED
+      trimBoth(
+        replaceRegexpAll(
+          concat(
+            arrayStringConcat(
+              JSONExtract(data, '${direction}PaymentDetails', '${addressField}', 'addressLines', 'Array(String)'),
+              '${ADDRESS_SEPARATOR}'
+            ),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.city'), ''),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.state'), ''),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.postcode'), ''),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.country'), '')
+          ),
+          '\\s+', ' '
+        )
+      )
+      `
+      })
+    })
+    .flat()
+}
+
+const generatePaymentDetailEmailColums = () => {
+  // example materialed key originPaymentDetails_email -> baran@flagright.com
+  return ['origin', 'destination'].map((direction) => {
+    return `${direction}PaymentDetails_email String MATERIALIZED COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.emailId'), '')`
+  })
+}
 
 export const userNameMaterilizedColumn = `username String MATERIALIZED 
         IF(
@@ -263,6 +303,10 @@ const sharedTransactionMaterializedColumns = [
   `createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')`,
   `updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')`,
   `paymentApprovalTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'paymentApprovalTimestamp')`,
+
+  // columns for filtering based on caseSubjectType
+  ...generatePaymentDetailAddressColums(),
+  ...generatePaymentDetailEmailColums(),
 ]
 
 const businessIndustryMaterializedColumn = (

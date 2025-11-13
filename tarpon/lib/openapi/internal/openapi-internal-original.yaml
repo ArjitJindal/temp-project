@@ -1444,6 +1444,14 @@ paths:
             type: number
           in: query
           name: beforePaymentApprovalTimestamp
+        - schema:
+            $ref: '#/components/schemas/CaseSubjectType'
+          in: query
+          name: caseSubject
+        - schema:
+            type: string
+          in: query
+          name: entityId
     post:
       summary: Flat file upload transaction
       operationId: post-transaction-flat-file-upload
@@ -1692,6 +1700,14 @@ paths:
           in: query
           name: referenceCurrency
           required: true
+        - schema:
+            $ref: '#/components/schemas/CaseSubjectType'
+          in: query
+          name: caseSubject
+        - schema:
+            type: string
+          in: query
+          name: entityId
   /transactions/stats/by-time:
     get:
       summary: Transaction - Stats
@@ -1769,6 +1785,14 @@ paths:
               - originCurrency
           in: query
           name: aggregateBy
+        - schema:
+            $ref: '#/components/schemas/CaseSubjectType'
+          in: query
+          name: caseSubject
+        - schema:
+            type: string
+          in: query
+          name: entityId
   /users/{userId}/crm:
     get:
       summary: CRM Account - List

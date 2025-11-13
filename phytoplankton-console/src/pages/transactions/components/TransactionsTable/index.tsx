@@ -18,6 +18,7 @@ import {
   TransactionTableItemUser,
   UserType,
   TransactionTableItemPayment,
+  CaseSubjectType,
 } from '@/apis';
 import {
   AllParams,
@@ -102,6 +103,8 @@ export interface TransactionsTableParams extends CommonParams {
   reference?: string;
   paymentApprovalTimestamp?: string[];
   filterActionReasons?: string[];
+  caseSubject?: CaseSubjectType;
+  entityId?: string;
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -159,6 +162,8 @@ export const transactionParamsToRequest = (
     responseType,
     reference,
     paymentApprovalTimestamp,
+    caseSubject,
+    entityId,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? DEFAULT_TRANSACTIONS_SORTING;
   const requestParams: DefaultApiGetTransactionsListRequest = {
@@ -214,6 +219,8 @@ export const transactionParamsToRequest = (
     filterActionReasons: params.filterActionReasons?.length
       ? params.filterActionReasons
       : undefined,
+    caseSubject,
+    entityId,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
+import { ADDRESS_SEPARATOR } from '@flagright/lib/utils';
 import styles from './index.module.less';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
@@ -47,6 +48,7 @@ import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords'
 import CRMDataComponent from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
 import Tooltip from '@/components/library/Tooltip';
 import { useCaseDetails } from '@/utils/api/cases';
+import { getPaymentDetailsIdString } from '@/utils/payments';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -387,10 +389,67 @@ export function useAlertTabs(props: Props): TabItem[] {
           };
         }
         if (tab === AlertTabs.TRANSACTION_INSIGHTS) {
+          if (!isSuccess(caseQueryResult.data)) {
+            return null;
+          }
+          const caseItem = caseQueryResult.data.value;
+          let entityId: string = '';
+
+          switch (caseItem.subjectType) {
+            case 'USER': {
+              const user =
+                caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
+              entityId = user?.userId ?? '';
+              break;
+            }
+            case 'PAYMENT': {
+              const pm =
+                caseItem?.paymentDetails?.origin ??
+                caseItem?.paymentDetails?.destination ??
+                undefined;
+
+              const paymentId = pm ? getPaymentDetailsIdString(pm) : '';
+              entityId = paymentId === '-' ? '' : paymentId;
+              break;
+            }
+            case 'NAME': {
+              entityId = caseItem?.name?.origin ?? caseItem?.name?.destination ?? '';
+              break;
+            }
+            case 'ADDRESS': {
+              const address =
+                caseItem?.address?.origin ?? caseItem?.address?.destination ?? undefined;
+              // don't change the order in which we concat the addresses, they are seperated based on this order during filtering
+              entityId = address
+                ? [
+                    address.addressLines.length > 0
+                      ? address.addressLines.join(ADDRESS_SEPARATOR)
+                      : '',
+                    address.city ?? '',
+                    address.state ?? '',
+                    address.postcode ?? '',
+                    address.country ?? '',
+                  ].join(ADDRESS_SEPARATOR)
+                : '';
+              break;
+            }
+            case 'EMAIL': {
+              entityId = caseItem?.email?.origin ?? caseItem?.email?.destination ?? '';
+              break;
+            }
+            default:
+          }
+
           return {
             title: 'Transaction insights',
             key: tab,
-            children: <InsightsCard userId={caseUserId} />,
+            children: (
+              <InsightsCard
+                userId={caseUserId}
+                caseSubject={caseItem.subjectType}
+                entityId={entityId}
+              />
+            ),
             captureEvents: true,
           };
         }
