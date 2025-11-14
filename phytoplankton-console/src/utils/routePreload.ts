@@ -64,35 +64,8 @@ function findComponentForPath(routes: RouteItem[], path: string): LazyComponent 
 }
 
 function preloadLazyComponent(component: LazyComponent): void {
-  const lazyComponent = component as any;
-  const payload = lazyComponent._payload;
-
-  if (payload?._result && typeof payload._result.then === 'function') {
-    payload._result.then(() => {}).catch(() => {});
-    return;
-  }
-
-  if (payload?._result && typeof payload._result === 'function') {
-    try {
-      const promise = payload._result();
-      if (promise && typeof promise.then === 'function') {
-        promise.then(() => {}).catch(() => {});
-      }
-      return;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  if (lazyComponent._init && typeof lazyComponent._init === 'function') {
-    try {
-      const promise = lazyComponent._init.call(lazyComponent);
-      if (promise && typeof promise.then === 'function') {
-        promise.then(() => {}).catch(() => {});
-      }
-    } catch (error) {
-      console.error(error);
-    }
+  if ((component as any).preload && typeof (component as any).preload === 'function') {
+    (component as any).preload().catch(() => {});
   }
 }
 

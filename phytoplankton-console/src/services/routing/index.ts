@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Resource } from '@flagright/lib/utils';
 import { PermissionStatements } from '@/apis';
 import {
@@ -13,62 +13,69 @@ import {
   useHasResources,
 } from '@/utils/user-utils';
 import { useSafeLocalStorageState } from '@/utils/hooks';
+import { lazyWithPreload } from '@/utils/lazyWithPreload';
 
-const RulesItemPage = React.lazy(() => import('src/pages/rules/rules-item'));
-const RulesLibraryItemPage = React.lazy(() => import('src/pages/rules/rules-library-item'));
-const WorkflowsItemPage = React.lazy(() => import('src/pages/workflows/workflows-item-page'));
-const ForbiddenPage = React.lazy(() => import('@/pages/403'));
-const Page404 = React.lazy(() => import('@/pages/404'));
-const AccountsPage = React.lazy(() => import('@/pages/accounts'));
-const AlertItemPage = React.lazy(() => import('@/pages/alert-item'));
-const AuditLogPage = React.lazy(() => import('@/pages/auditlog'));
-const Clueso = React.lazy(() => import('@/pages/auth/clueso'));
-const CaseManagementPage = React.lazy(() => import('@/pages/case-management'));
-const CaseManagementItemPage = React.lazy(() => import('@/pages/case-management-item'));
-const DashboardAnalysisPage = React.lazy(() => import('@/pages/dashboard/analysis'));
-const CreatedListsPage = React.lazy(() => import('@/pages/lists'));
-const ListsItemPage = React.lazy(() => import('@/pages/lists-item'));
-const QASamplePage = React.lazy(() => import('@/pages/qa-sample-item'));
-const QASamplesTable = React.lazy(() => import('@/pages/qa-samples'));
-const ReportsList = React.lazy(() => import('@/pages/reports'));
-const RiskLevelsConfigurePage = React.lazy(() => import('@/pages/risk-levels/configure'));
-const RiskAlgorithmTable = React.lazy(() => import('@/pages/risk-levels/risk-algorithms'));
-const RiskFactorPage = React.lazy(() => import('@/pages/risk-levels/risk-factors'));
-const RiskFactorItemPage = React.lazy(() => import('@/pages/risk-levels/risk-factors/RiskItem'));
-const RiskFactorsSimulationHistoryPage = React.lazy(
+const RulesItemPage = lazyWithPreload(() => import('src/pages/rules/rules-item'));
+const RulesLibraryItemPage = lazyWithPreload(() => import('src/pages/rules/rules-library-item'));
+const WorkflowsItemPage = lazyWithPreload(() => import('src/pages/workflows/workflows-item-page'));
+const ForbiddenPage = lazyWithPreload(() => import('@/pages/403'));
+const Page404 = lazyWithPreload(() => import('@/pages/404'));
+const AccountsPage = lazyWithPreload(() => import('@/pages/accounts'));
+const AlertItemPage = lazyWithPreload(() => import('@/pages/alert-item'));
+const AuditLogPage = lazyWithPreload(() => import('@/pages/auditlog'));
+const Clueso = lazyWithPreload(() => import('@/pages/auth/clueso'));
+const CaseManagementPage = lazyWithPreload(() => import('@/pages/case-management'));
+const CaseManagementItemPage = lazyWithPreload(() => import('@/pages/case-management-item'));
+const DashboardAnalysisPage = lazyWithPreload(() => import('@/pages/dashboard/analysis'));
+const CreatedListsPage = lazyWithPreload(() => import('@/pages/lists'));
+const ListsItemPage = lazyWithPreload(() => import('@/pages/lists-item'));
+const QASamplePage = lazyWithPreload(() => import('@/pages/qa-sample-item'));
+const QASamplesTable = lazyWithPreload(() => import('@/pages/qa-samples'));
+const ReportsList = lazyWithPreload(() => import('@/pages/reports'));
+const RiskLevelsConfigurePage = lazyWithPreload(() => import('@/pages/risk-levels/configure'));
+const RiskAlgorithmTable = lazyWithPreload(() => import('@/pages/risk-levels/risk-algorithms'));
+const RiskFactorPage = lazyWithPreload(() => import('@/pages/risk-levels/risk-factors'));
+const RiskFactorItemPage = lazyWithPreload(
+  () => import('@/pages/risk-levels/risk-factors/RiskItem'),
+);
+const RiskFactorsSimulationHistoryPage = lazyWithPreload(
   () => import('@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage'),
 );
-const SimulationHistoryResultPage = React.lazy(
+const SimulationHistoryResultPage = lazyWithPreload(
   () =>
     import(
       '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage'
     ),
 );
-const RulesPage = React.lazy(() => import('@/pages/rules'));
-const RuleInstancePage = React.lazy(() => import('@/pages/rules/rule-instance-page'));
-const SimulationHistoryPage = React.lazy(() => import('@/pages/rules/simulation-history'));
-const SimulationHistoryItemPage = React.lazy(() => import('@/pages/rules/simulation-history-item'));
-const SanctionsPage = React.lazy(() => import('@/pages/sanctions'));
-const SettingsPage = React.lazy(() => import('@/pages/settings'));
-const TransactionsListPage = React.lazy(() => import('@/pages/transactions'));
-const TransactionsItemPage = React.lazy(() => import('@/pages/transactions-item'));
-const UsersImport = React.lazy(() => import('@/pages/users-import/UsersImport'));
-const UsersItemPage = React.lazy(() => import('@/pages/users-item'));
-const UsersUsersListPage = React.lazy(() => import('@/pages/users/users-list'));
-const WorkflowsPage = React.lazy(() => import('@/pages/workflows/workflows-page'));
-const WorkflowsCreatePage = React.lazy(() => import('@/pages/workflows/workflows-create-page'));
-const AccountsRolesItemPage = React.lazy(
+const RulesPage = lazyWithPreload(() => import('@/pages/rules'));
+const RuleInstancePage = lazyWithPreload(() => import('@/pages/rules/rule-instance-page'));
+const SimulationHistoryPage = lazyWithPreload(() => import('@/pages/rules/simulation-history'));
+const SimulationHistoryItemPage = lazyWithPreload(
+  () => import('@/pages/rules/simulation-history-item'),
+);
+const SanctionsPage = lazyWithPreload(() => import('@/pages/sanctions'));
+const SettingsPage = lazyWithPreload(() => import('@/pages/settings'));
+const TransactionsListPage = lazyWithPreload(() => import('@/pages/transactions'));
+const TransactionsItemPage = lazyWithPreload(() => import('@/pages/transactions-item'));
+const UsersImport = lazyWithPreload(() => import('@/pages/users-import/UsersImport'));
+const UsersItemPage = lazyWithPreload(() => import('@/pages/users-item'));
+const UsersUsersListPage = lazyWithPreload(() => import('@/pages/users/users-list'));
+const WorkflowsPage = lazyWithPreload(() => import('@/pages/workflows/workflows-page'));
+const WorkflowsCreatePage = lazyWithPreload(
+  () => import('@/pages/workflows/workflows-create-page'),
+);
+const AccountsRolesItemPage = lazyWithPreload(
   () => import('@/pages/accounts/RolesV2/AccountsRolesItemPage'),
 );
-const VersionHistoryPage = React.lazy(() => import('@/components/VersionHistory'));
-const RiskVersionHistoryItem = React.lazy(
+const VersionHistoryPage = lazyWithPreload(() => import('@/components/VersionHistory'));
+const RiskVersionHistoryItem = lazyWithPreload(
   () => import('@/pages/risk-levels/configure/RiskVersionHistoryItem'),
 );
-const RiskFactorVersionHistoryItem = React.lazy(
+const RiskFactorVersionHistoryItem = lazyWithPreload(
   () => import('@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem'),
 );
-const ReportItem = React.lazy(() => import('@/pages/report-item'));
-const TransactionsImportPage = React.lazy(() => import('@/pages/transactions-import'));
+const ReportItem = lazyWithPreload(() => import('@/pages/report-item'));
+const TransactionsImportPage = lazyWithPreload(() => import('@/pages/transactions-import'));
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
