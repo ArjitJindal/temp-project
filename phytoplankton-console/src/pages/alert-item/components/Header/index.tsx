@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { EllipsisOutlined } from '@ant-design/icons';
-import SubHeader from './SubHeader';
+import { AlertStatusWithDropDown } from '../AlertStatusWithDropDown';
 import AiForensicsPdfDownloadButton from './AiForensicsPdfDownloadButton';
+import SubHeader from './SubHeader';
 import s from './index.module.less';
 import Dropdown from '@/components/library/Dropdown';
 import { Alert, Case, Comment } from '@/apis';
@@ -13,7 +14,6 @@ import { ALERT_LIST } from '@/utils/queries/keys';
 import { getAlertUrl, getCaseUrl } from '@/utils/routing';
 import CommentButton from '@/components/CommentButton';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { notEmpty } from '@/utils/array';
 import PriorityTag from '@/components/library/PriorityTag';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
@@ -28,6 +28,7 @@ import {
 } from '@/utils/asyncResource';
 import {
   canMutateEscalatedCases,
+  findLastStatusForInReview,
   isEscalatedCases,
   isEscalatedL2Cases,
   isInReviewCases,
@@ -38,7 +39,7 @@ import { useQaMode } from '@/utils/qa-mode';
 import { useBackUrl } from '@/utils/backUrl';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useAlertDetails } from '@/utils/api/alerts';
+import { useAlertDetails, useAlertStatusChangeMutation } from '@/utils/api/alerts';
 import { useCaseDetails } from '@/utils/api/cases';
 
 interface Props {
@@ -65,6 +66,14 @@ export default function Header(props: Props) {
   const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);
   const aiForensicsRef = useRef<HTMLDivElement>(null);
   const statusChangeRef = useRef<HTMLDivElement>(null);
+
+  const previousStatus = useMemo(() => {
+    return findLastStatusForInReview(alertItem?.statusChanges ?? []);
+  }, [alertItem?.statusChanges]);
+
+  const statusChangeMutation = useAlertStatusChangeMutation(alertId, {
+    onReload: props.onReload,
+  });
 
   const escalationOptions = buildEscalationOptions(
     alertItem,
@@ -102,7 +111,17 @@ export default function Header(props: Props) {
           [
             <PriorityTag key={`alert-priority-tag`} priority={alertItem.priority} />,
             alertItem.alertStatus && (
-              <CaseStatusTag key={`alert-status-tag`} caseStatus={alertItem.alertStatus} />
+              <AlertStatusWithDropDown
+                key={`alert-status-drop-down-${alertItem.alertId}`}
+                alertStatus={alertItem.alertStatus}
+                statusChanges={alertItem.statusChanges ?? []}
+                previousStatus={previousStatus}
+                assignments={alertItem.assignments ?? []}
+                onSelect={(newStatus) => {
+                  statusChangeMutation.mutate(newStatus);
+                }}
+                reviewAssignments={alertItem.reviewAssignments ?? []}
+              />
             ),
           ].filter(notEmpty),
         ),

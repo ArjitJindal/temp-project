@@ -20,9 +20,10 @@ import {
   useCursorQuery,
   CursorPaginationParams,
 } from '../../queries/hooks';
+import { useMutation } from '../../queries/mutations/hooks';
 import { useAuth0User } from '../../user-utils';
 import { HistoryItem, ChecklistCategory, ChecklistItem, HydratedChecklist } from './types';
-import { Alert } from '@/apis';
+import { Alert, AlertStatus } from '@/apis';
 import { useApi } from '@/api';
 import { notFound } from '@/utils/errors';
 import { UseQueryOptions } from '@/utils/api/types';
@@ -34,6 +35,7 @@ import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { parseQuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { QASamplesTableParams } from '@/pages/qa-samples';
 import { getOr, isSuccess } from '@/utils/asyncResource';
+import { message } from '@/components/library/Message';
 
 export function isScreeningAlert(alert: Alert | undefined): boolean {
   return (
@@ -228,6 +230,49 @@ export const useTransactionARS = (transactionId: string) => {
     () => api.getArsValue({ transactionId }),
     {
       enabled: !!transactionId,
+    },
+  );
+};
+
+export const useAlertStatusChangeMutation = (
+  alertId: string | undefined,
+  options?: { onReload?: () => void },
+) => {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    async (newStatus: AlertStatus) => {
+      if (alertId == null) {
+        throw new Error('Alert ID is not defined');
+      }
+      const hideMessage = message.loading('Changing alert status...');
+      try {
+        await api.alertsStatusChange({
+          AlertsStatusUpdateRequest: {
+            alertIds: [alertId],
+            updates: {
+              reason: [],
+              alertStatus: newStatus,
+            },
+          },
+        });
+      } finally {
+        hideMessage();
+      }
+    },
+    {
+      onSuccess: async () => {
+        if (alertId != null) {
+          await queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
+        }
+        await queryClient.invalidateQueries({ queryKey: ALERT_LIST() });
+        message.success('Alert status updated');
+        options?.onReload?.();
+      },
+      onError: (error: Error) => {
+        message.error(`Failed to change alert status: ${error.message}`);
+      },
     },
   );
 };
