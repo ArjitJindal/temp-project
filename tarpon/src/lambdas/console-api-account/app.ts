@@ -17,6 +17,10 @@ import { getSecret, getSecretByName } from '@/utils/secrets-manager'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { SessionsService } from '@/services/sessions'
 import { IntercommUser } from '@/utils/tenant'
+import { Context } from '@/console-api/context'
+import { pickKnownEntityFields } from '@/utils/object'
+import { AccountMinimum } from '@/@types/openapi-internal/AccountMinimum'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -42,7 +46,7 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerMe(async () => await accountsService.getAccount(userId))
 
-    handlers.registerGetAccounts(async (ctx) => {
+    const getAccountsData = async (ctx: Context): Promise<Account[]> => {
       const { tenantId } = ctx
       const accountsService = new AccountsService(
         { auth0Domain, useCache: true },
@@ -57,6 +61,15 @@ export const accountsHandler = lambdaApi()(
       }
 
       return await accountsService.getTenantAccounts(organization)
+    }
+
+    handlers.registerGetAccounts(async (ctx) => {
+      return await getAccountsData(ctx)
+    })
+
+    handlers.registerGetAccountsData(async (ctx) => {
+      const accounts = await getAccountsData(ctx)
+      return pickKnownEntityFields(accounts, AccountMinimum)
     })
 
     handlers.registerAccountsInvite(async (ctx, request) => {

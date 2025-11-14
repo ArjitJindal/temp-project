@@ -4153,6 +4153,20 @@ paths:
               required:
                 - deactivate
         required: true
+  /accounts-data:
+    get:
+      summary: accounts-data
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountMinimum'
+      operationId: get-accounts-data
   /accounts:
     post:
       summary: Account - Invite
@@ -11891,70 +11905,76 @@ components:
       enum:
         - L1
         - L2
-    Account:
-      title: Account
+    AccountMinimum:
       type: object
       properties:
         id:
           type: string
         role:
           type: string
-        email:
-          type: string
-        emailVerified:
-          type: boolean
         name:
-          type: string
-        picture:
           type: string
         blocked:
           type: boolean
         escalationLevel:
           $ref: '#/components/schemas/EscalationLevel'
-        reviewerId:
-          type: string
-        escalationReviewerId:
-          type: string
-        allowTenantDeletion:
-          type: boolean
-        allowedRegions:
-          type: array
-          items:
-            type: string
-        lastLogin:
-          type: number
-        createdAt:
-          type: number
-        lastPasswordReset:
-          type: number
-        blockedReason:
-          type: string
-          enum:
-            - DELETED
-            - DORMANT
-            - BRUTE_FORCE
-            - DEACTIVATED
         isReviewer:
           type: boolean
         demoMode:
           type: boolean
-        staffId:
-          type: string
-        department:
-          type: string
-        orgName:
-          type: string
         tenantId:
           type: string
       required:
         - id
         - role
-        - email
-        - emailVerified
         - name
         - blocked
-        - orgName
         - tenantId
+    Account:
+      allOf:
+        - $ref: '#/components/schemas/AccountMinimum'
+        - type: object
+          title: Account
+          properties:
+            email:
+              type: string
+            emailVerified:
+              type: boolean
+            picture:
+              type: string
+            reviewerId:
+              type: string
+            escalationReviewerId:
+              type: string
+            allowTenantDeletion:
+              type: boolean
+            allowedRegions:
+              type: array
+              items:
+                type: string
+            lastLogin:
+              type: number
+            createdAt:
+              type: number
+            lastPasswordReset:
+              type: number
+            blockedReason:
+              type: string
+              enum:
+                - DELETED
+                - DORMANT
+                - BRUTE_FORCE
+                - DEACTIVATED
+            staffId:
+              type: string
+            department:
+              type: string
+            orgName:
+              type: string
+          required:
+            - email
+            - emailVerified
+            - orgName
     AccountSettings:
       title: AccountSettings
       type: object
