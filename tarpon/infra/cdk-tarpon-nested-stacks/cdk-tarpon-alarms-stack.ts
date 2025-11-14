@@ -34,7 +34,7 @@ import {
 
 const allLambdas = Object.keys(LAMBDAS)
 const allPublicAPILambdas = allLambdas.filter((lambda) =>
-  lambda.startsWith('Public')
+  lambda.includes('Public')
 )
 
 const KINESIS_CONSUMER_LAMBDAS = [

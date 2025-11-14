@@ -13,7 +13,7 @@ import {
 
 const allLambdas = Object.keys(LAMBDAS)
 const allOtherLambdas = allLambdas.filter(
-  (lambda) => !lambda.startsWith('Public')
+  (lambda) => !lambda.includes('Public')
 )
 
 interface LambdaAlarmsProps extends cdk.NestedStackProps {
