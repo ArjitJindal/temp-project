@@ -56,6 +56,7 @@ import { MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE } from '@/constants/clickhous
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { logger } from '@/core/logger'
+import { isStringMasked } from '@/utils/helpers'
 import { TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
@@ -234,6 +235,25 @@ export const tenantsHandler = lambdaApi()(
       // which removes null fields from nested objects
 
       const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
+
+      // Replace masked passwords with actual values from current settings
+      const credsToCheck = [
+        {
+          newCreds: newTenantSettings.sanctions?.dowjonesCreds,
+          currentCreds: tenantSettingsCurrent.sanctions?.dowjonesCreds,
+        },
+        {
+          newCreds: newTenantSettings.sanctions?.lsegCreds,
+          currentCreds: tenantSettingsCurrent.sanctions?.lsegCreds,
+        },
+      ]
+
+      for (const { newCreds, currentCreds } of credsToCheck) {
+        if (newCreds && isStringMasked(newCreds.password)) {
+          newCreds.password = currentCreds?.password
+        }
+      }
+
       const changedTenantSettings: TenantSettings = Object.fromEntries(
         Object.entries(processedSettings).filter(
           ([key, value]) =>

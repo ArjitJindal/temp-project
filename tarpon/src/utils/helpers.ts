@@ -378,3 +378,9 @@ export const getNameStringForAggregation = (
     `LAST_NAME=${name.lastName}`,
   ]).join('|')
 }
+
+export const isStringMasked = (str: string | undefined) =>
+  str && str.length > 0 && /^\*+$/.test(str)
+
+export const maskString = (str: string | undefined) =>
+  str && str.length > 0 ? '*'.repeat(8) : undefined
