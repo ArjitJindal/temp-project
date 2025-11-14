@@ -320,6 +320,7 @@ export function ruleInstanceToFormValuesV8(
           }),
     },
     alertCreationDetailsStep: {
+      alertCreationLogic: ruleInstance.alertCreationLogic ?? 'SINGLE_ALERT',
       alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
       alertCreationInterval: ruleInstance.alertConfig?.alertCreationInterval,
       alertPriority: ruleInstance.casePriority,
@@ -512,6 +513,7 @@ export function formValuesToRuleInstanceV8(
       slaPolicies: alertCreationDetailsStep.slaPolicies,
       defaultAlertStatus: alertCreationDetailsStep.defaultAlertStatus,
     },
+    alertCreationLogic: alertCreationDetailsStep.alertCreationLogic,
     baseCurrency,
     logicEntityVariables: ruleLogicEntityVariables,
     logicAggregationVariables: ruleLogicAggregationVariables,
