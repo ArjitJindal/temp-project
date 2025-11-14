@@ -216,4 +216,4 @@ const QASamplesTable = () => {
   );
 };
 
-export { QASamplesTable };
+export default QASamplesTable;

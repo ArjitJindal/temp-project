@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/browser';
@@ -13,6 +13,8 @@ import './global.less';
 import { getBranding } from '@/utils/branding';
 import { makeUrl } from '@/utils/routing';
 import { NotFoundError } from '@/utils/errors';
+import { PageLoading } from '@/components/PageLoading';
+import { setRoutesRegistry } from '@/utils/routePreload';
 
 interface HttpError {
   code?: number;
@@ -137,7 +139,14 @@ function RedirectWithParams(props: { to: string }) {
 
 function Routing() {
   const routes = useRoutes();
-  return <Routes>{renderRoutes(routes)}</Routes>;
+  useEffect(() => {
+    setRoutesRegistry(routes);
+  }, [routes]);
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <Routes>{renderRoutes(routes)}</Routes>
+    </Suspense>
+  );
 }
 
 const branding = getBranding();

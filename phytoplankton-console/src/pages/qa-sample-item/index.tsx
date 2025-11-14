@@ -28,7 +28,7 @@ import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
 import { useAlertQaSample } from '@/utils/api/alerts';
 
-export const QASamplePage = () => {
+const QASamplePage = () => {
   const { samplingId } = useParams<{ samplingId: string }>() as { samplingId: string };
   const [params, onChangeParams] = useState<TableSearchParams>({
     pageSize: 20,
@@ -191,3 +191,5 @@ export const QASamplePage = () => {
     </Authorized>
   );
 };
+
+export default QASamplePage;
