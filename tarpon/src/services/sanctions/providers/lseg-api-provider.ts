@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { COUNTRIES } from '@flagright/lib/constants'
 import { backOff } from 'exponential-backoff'
 import { SanctionsDataProviders, ProviderConfig } from '../types'
-import { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
+import type { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
 import { LSEG_COUNTRY_CODES } from '../constants/lseg-country-code'
 import { getFuzzinessThreshold } from './utils'
 import {
@@ -31,6 +31,47 @@ import { MediaCheckResultsResponse } from '@/@types/openapi-internal/MediaCheckR
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { SanctionsIdDocument } from '@/@types/openapi-internal/SanctionsIdDocument'
 import { logger } from '@/core/logger'
+import { SanctionsNameMatched } from '@/@types/openapi-internal/SanctionsNameMatched'
+
+interface LSEGRecordDetail {
+  names?: {
+    nameDetails?: Array<{
+      type?: string
+      details?: Array<{ type?: string; value?: string }>
+    }>
+  }
+  connections?: {
+    connectionDetails?: Array<{
+      connectionType?: string
+      referenceId?: string
+      names?: {
+        nameDetails?: Array<{
+          type?: string
+          details?: Array<{ type?: string; value?: string }>
+        }>
+      }
+    }>
+  }
+  sourceReferenceLinks?: {
+    sourceReferenceLinkDetails?: Array<{
+      uri?: string
+    }>
+  }
+  sources?: Array<{ name?: string }>
+  furtherInformation?: {
+    details?: Array<{
+      detailType?: string
+      text?: string
+    }>
+  }
+  roles?: {
+    roleDetails?: Array<{
+      biography?: string
+      effectiveFrom?: string
+      effectiveTo?: string
+    }>
+  }
+}
 
 function getLsegEntityType(
   entityType?: SanctionsSearchRequestEntityType
@@ -166,21 +207,20 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
     return result as R
   }
 
-  private async get<T, R>(url: string, _body: T): Promise<R> {
+  private async get<R>(url: string): Promise<R> {
     const result = await backOff(
       async () => {
         const response = await fetch(url, {
           method: 'GET',
           headers: this.getGetHeaders(url),
         })
-        const r = await response.json()
         if (response.status === 429) {
           throw new Error('Rate limit exceeded for LSEG API')
         }
         if (response.status !== 200) {
           return undefined
         }
-        return r
+        return await response.json()
       },
       {
         startingDelay: 1000,
@@ -197,7 +237,7 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
     caseId: string,
     articleIds: string[]
   ): Promise<MediaCheckResultsResponse> {
-    const url = `https://api.risk.lseg.com/screening/v3/cases/${caseId}/media-check/results/content`
+    const url = `${this.baseUrl}/cases/${caseId}/media-check/results/content`
     const body: { articleIds: string[] } = {
       articleIds: articleIds,
     }
@@ -276,7 +316,7 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
     },
     pageReference?: string
   ): Promise<MediaCheckResultsResponse> {
-    const url = `https://api.risk.lseg.com/screening/v3/cases/${caseId}/media-check/results`
+    const url = `${this.baseUrl}/cases/${caseId}/media-check/results`
     const body: LSEGMediaCheckRequest = {
       baseFilter: {
         smartFilter: true,
@@ -362,11 +402,6 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
             ?.find((name) => name.type === 'PRIMARY')
             ?.details?.find((detail) => detail.type === 'FULL_NAME')?.value ??
           ''
-        const akaNames = compact(
-          entity.names?.flatMap((name) =>
-            name.details?.map((detail) => detail.value)
-          ) ?? []
-        )
         const dateOfBirths = entity.dates?.filter(
           (date) =>
             date.type === 'BIRTH' ||
@@ -376,10 +411,10 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
         const nationality =
           entity.locations
             ?.filter((location) => location.type === 'NATIONALITY')
-            ?.map((location) => location.country?.code) ?? []
+            ?.map((location) => location.country?.name) ?? []
         const allCountryCodes = uniq(
           compact(
-            entity.locations?.map((location) => location.country?.code) ?? []
+            entity.locations?.map((location) => location.country?.name) ?? []
           ).map((c) => LSEG_COUNTRY_CODES[c]) as CountryCode[]
         )
         const gender =
@@ -396,9 +431,9 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
           id: entity.referenceId,
           resourceId: entity.resultId,
           provider: this.provider(),
-          name: primaryName || (akaNames.length > 0 ? akaNames[0] : ''),
-          aka: akaNames,
-          normalizedAka: akaNames,
+          name: primaryName,
+          aka: [],
+          normalizedAka: [],
           entityType: request.entityType === 'PERSON' ? 'PERSON' : 'BUSINESS',
           sanctionSearchTypes: [],
           types: compact(entity.sourceCategories || []),
@@ -410,15 +445,86 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
           countryCodes: allCountryCodes as CountryCode[],
           documents: document,
           gender: gender,
+          matchTypeDetails: (entity.matchedTerms?.map((t) => t.term) ?? []).map(
+            (t) => ({
+              amlTypes: [],
+              matchingName: t ?? '',
+              nameMatches: [
+                {
+                  match_types:
+                    entity.matchScore == 100 ? ['exact_match'] : ['name_fuzzy'],
+                  query_term: request.searchTerm,
+                },
+              ] as SanctionsNameMatched[],
+              secondaryMatches: [],
+              sources: [],
+            })
+          ),
         }
       })
+  }
+
+  public async hydrateSearchResults(
+    refRecords: SanctionsEntity[]
+  ): Promise<SanctionsEntity[]> {
+    const records: SanctionsEntity[] = []
+    for (const refRecord of refRecords) {
+      const record = await this.get<LSEGRecordDetail>(
+        `${this.baseUrl}/references/records/${refRecord.id}`
+      )
+      const aka = uniq(
+        compact<string>(
+          record?.names?.nameDetails?.flatMap((name) =>
+            name.details?.map((detail) => detail.value)
+          ) ?? []
+        )
+      )
+      records.push({
+        ...refRecord,
+        associates: record?.connections?.connectionDetails?.map((c) => {
+          return {
+            association: c?.connectionType,
+            id: c?.referenceId,
+            name:
+              c?.names?.nameDetails
+                ?.find((name) => name.type === 'PRIMARY')
+                ?.details?.find((detail) => detail.type === 'FULL_NAME')
+                ?.value ?? '',
+          }
+        }),
+        screeningSources:
+          record?.sourceReferenceLinks?.sourceReferenceLinkDetails?.map((s) => {
+            return {
+              url: s?.uri,
+              name: s?.uri,
+            }
+          }),
+        types: [
+          ...(refRecord.types ?? []),
+          ...compact(record?.sources?.map((s) => s?.name) ?? []),
+        ],
+        freetext: record?.furtherInformation?.details
+          ?.map((d) => `${d?.detailType}: ${d?.text}`)
+          ?.join('\n'),
+        occupations: record?.roles?.roleDetails?.map((r) => {
+          return {
+            title: r?.biography,
+            dateFrom: r?.effectiveFrom,
+            dateTo: r?.effectiveTo,
+          }
+        }),
+        aka: aka,
+        normalizedAka: aka,
+      })
+    }
+    return records
   }
 
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
     const caseResponse = await this.createCase(request)
-    if (!caseResponse || !caseResponse.caseSystemId) {
+    if (!caseResponse?.caseSystemId) {
       return {
         data: [],
         hitsCount: 0,
@@ -447,6 +553,7 @@ export class LSEGAPIDataProvider implements SanctionsDataProvider {
       providerReferenceIds: caseResponse.caseSystemId
         ? [caseResponse.caseSystemId]
         : [],
+      isNewSearch: caseResponse.caseSystemId ? true : false,
     }
   }
 

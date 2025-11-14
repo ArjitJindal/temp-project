@@ -1025,7 +1025,12 @@ export class CaseCreationService {
               `Search Not found for searchId: ${sanctionsDetail.searchId}`
             )
           }
-          const rawHits = searchResult?.response?.data ?? []
+          const rawHits =
+            (
+              await this.sanctionsSearchRepository.hydrateLSEGApiSearchResults(
+                searchResult
+              )
+            )?.response?.data ?? []
           if (update) {
             const { updatedIds, newIds } =
               await this.sanctionsHitsRepository.mergeHits(

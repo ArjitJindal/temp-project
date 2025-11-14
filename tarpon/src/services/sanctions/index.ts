@@ -378,7 +378,9 @@ export class SanctionsService {
     )
 
     const lsegApiProvider: LSEGAPIDataProvider | undefined =
-      hasFeature('LSEG_API') && request.lsegMediaCheck?.enabled
+      hasFeature('LSEG_API') &&
+      request.lsegMediaCheck?.enabled &&
+      !request.manualSearch
         ? ((await this.getProvider(SanctionsDataProviders.LSEG_API, {
             dynamoDb: this.dynamoDb,
             opensearchClient: this.opensearchClient,
@@ -441,6 +443,9 @@ export class SanctionsService {
       providerReferenceIds: lsegApiProvider
         ? lsegApiSearchResponse?.providerReferenceIds
         : historySearchResponse?.providerReferenceIds,
+      isNewSearch: lsegApiProvider
+        ? lsegApiSearchResponse?.isNewSearch
+        : undefined,
     }
 
     await this.sanctionsSearchRepository.saveSearchResult({
@@ -448,7 +453,9 @@ export class SanctionsService {
       createdAt: createdAt,
       request,
       requestHash: generateChecksum(
-        getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+        getSortedObject(
+          omit(request, ['fuzzinessRange', 'fuzziness', 'lsegMediaCheck'])
+        )
       ),
       dynamoHash,
       response,

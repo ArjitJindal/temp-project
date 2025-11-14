@@ -15657,6 +15657,8 @@ components:
           type: array
           items:
             type: string
+        isNewSearch:
+          type: boolean
       required:
         - hitsCount
         - searchId

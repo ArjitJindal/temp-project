@@ -17,7 +17,12 @@ import {
   sanitizeEntities,
 } from '../providers/utils'
 import { OPENSEARCH_NON_PROJECTED_FIELDS } from '../providers/sanctions-data-fetcher'
-import { ProviderConfig, SanctionsSearchProps } from '../types'
+import {
+  ProviderConfig,
+  SanctionsDataProviders,
+  SanctionsSearchProps,
+} from '../types'
+import { LSEGAPIDataProvider } from '../providers/lseg-api-provider'
 import {
   getMongoDbClient,
   prefixRegexMatchFilter,
@@ -491,6 +496,51 @@ export class SanctionsSearchRepository {
       .updateOne({ _id: result._id }, { $set: { response: updatedResponse } })
     return {
       ...result,
+      response: updatedResponse,
+    }
+  }
+
+  public async hydrateLSEGApiSearchResults(
+    sanctionsSearch: SanctionsSearchHistory | null
+  ): Promise<SanctionsSearchHistory | null> {
+    if (!hasFeature('LSEG_API')) {
+      return sanctionsSearch
+    }
+
+    if (!sanctionsSearch || !sanctionsSearch.response?.isNewSearch) {
+      return sanctionsSearch
+    }
+    const collection = (await this.getMongoDbClient())
+      .db()
+      .collection<SanctionsSearchHistory>(
+        SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+      )
+    const lsegApiProvider = await LSEGAPIDataProvider.build(this.tenantId)
+    const targetRecords = sanctionsSearch.response?.data?.filter(
+      (entity) => entity.provider === SanctionsDataProviders.LSEG_API
+    )
+    if (!targetRecords?.length) {
+      return sanctionsSearch
+    }
+    const hydratedRecords = await lsegApiProvider.hydrateSearchResults(
+      targetRecords
+    )
+    const updatedResponse: SanctionsSearchResponse = {
+      ...sanctionsSearch.response,
+      data: [
+        ...(sanctionsSearch.response?.data ?? []).filter(
+          (entity) => entity.provider !== SanctionsDataProviders.LSEG_API
+        ),
+        ...hydratedRecords,
+      ],
+      isNewSearch: false,
+    }
+    await collection.updateOne(
+      { _id: sanctionsSearch._id },
+      { $set: { response: updatedResponse } }
+    )
+    return {
+      ...sanctionsSearch,
       response: updatedResponse,
     }
   }
