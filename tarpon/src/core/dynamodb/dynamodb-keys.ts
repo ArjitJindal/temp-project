@@ -820,7 +820,7 @@ export const DynamoDbKeys = {
     SortKeyID: tenantId,
   }),
   DEACTIVATION_MARKED_API_KEY: (tenantId: string, apiKeyId: string) => ({
-    PartitionKeyID: `${DEACTIVATION_MARKED_API_KEY_IDENTIFIER}`,
+    PartitionKeyID: `${SHARED_PARTITION_KEY_PREFIX}#${DEACTIVATION_MARKED_API_KEY_IDENTIFIER}`,
     SortKeyID: `${tenantId}#${apiKeyId}`,
   }),
   CLOUDWATCH_LOGS_SYNC_STATE: () => ({
