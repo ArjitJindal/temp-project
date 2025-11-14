@@ -1,10 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import style from './style.module.less';
 import { message } from '@/components/library/Message';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { copyTextToClipboard } from '@/utils/browser';
 import { getErrorMessage } from '@/utils/lang';
+import Link from '@/components/ui/Link';
 
 interface Props {
   alwaysShowCopy?: boolean;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
 import { capitalizeWords, firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors';
@@ -55,6 +55,7 @@ import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
 import RiskFactorsTable from '@/pages/risk-levels/risk-factors/RiskFactorsTable';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import Link from '@/components/ui/Link';
 
 interface Props {
   jobId: string;

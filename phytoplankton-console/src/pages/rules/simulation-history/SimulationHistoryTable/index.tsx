@@ -1,5 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useContext, useMemo, useState } from 'react';
 import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -16,6 +15,7 @@ import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { useRules } from '@/utils/api/rules';
 import { makeUrl } from '@/utils/routing';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
+import Link from '@/components/ui/Link';
 
 export function SimulationHistoryTable(props: { rulesTab: string }) {
   const api = useApi();

@@ -1,7 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import { getUserLink } from '@/utils/api/users/helpers';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
+import Link from '@/components/ui/Link';
 
 interface Props {
   user: Pick<TableUser, 'type' | 'userId'> | null;

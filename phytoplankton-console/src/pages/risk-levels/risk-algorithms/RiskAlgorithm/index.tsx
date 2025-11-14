@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card } from 'antd';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import ProCard from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
-import { Link } from 'react-router-dom';
 import styles from './style.module.less';
 import { getBranding } from '@/utils/branding';
 import { H4, P } from '@/components/ui/Typography';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { makeAsyncComponent } from '@/utils/imports';
+import Link from '@/components/ui/Link';
 
 const branding = getBranding();
 

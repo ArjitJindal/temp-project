@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router';
-import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { TableSearchParams } from '../case-management/types';
 import { QAModal } from '../case-management/QA/Modal';
@@ -27,6 +26,7 @@ import { Authorized } from '@/components/utils/Authorized';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
 import { useAlertQaSample } from '@/utils/api/alerts';
+import Link from '@/components/ui/Link';
 
 const QASamplePage = () => {
   const { samplingId } = useParams<{ samplingId: string }>() as { samplingId: string };

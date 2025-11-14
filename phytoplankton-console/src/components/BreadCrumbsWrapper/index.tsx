@@ -1,6 +1,6 @@
 import React, { forwardRef, useCallback, useImperativeHandle } from 'react';
 import Breadcrumbs, { BreadcrumbItem } from 'src/components/library/Breadcrumbs';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import s from './styles.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
@@ -14,6 +14,7 @@ import {
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { SimulationLocalStorageKey } from '@/store/risk-factors';
+import Link from '@/components/ui/Link';
 
 export type TopRightSectionRef = {
   refetchSimulationCount: () => void;

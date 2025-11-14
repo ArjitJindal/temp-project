@@ -1,8 +1,6 @@
 import cn from 'clsx';
-import React from 'react';
-import { Link } from 'react-router-dom';
 import s from './index.module.less';
-import { preloadRoute } from '@/utils/routePreload';
+import Link from '@/components/ui/Link';
 
 export interface SubMenuItem {
   to: string;
@@ -19,7 +17,7 @@ export default function SubMenu(props: Props) {
   return (
     <div className={cn(s.root)}>
       {items.map((x) => (
-        <Link to={x.to} key={x.title} className={s.item} onMouseEnter={() => preloadRoute(x.to)}>
+        <Link to={x.to} key={x.title} className={s.item}>
           {x.title}
         </Link>
       ))}

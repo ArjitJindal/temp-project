@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import s from './index.module.less';
 import { CaseType, InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -13,6 +12,7 @@ import AddLine from '@/components/ui/icons/Remix/system/add-line.react.svg';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { useCaseTransactionsList } from '@/utils/api/transactions';
+import Link from '@/components/ui/Link';
 
 type Props = {
   caseId: string;
