@@ -37,7 +37,11 @@ import {
   V8TransactionAggregationTask,
   V8LogicAggregationRebuildTask,
   TransactionAggregationTask,
+  EntityData,
+  TimestampSlice,
 } from '@/@types/tranasction/aggregation'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask,
@@ -105,6 +109,36 @@ export async function handleV8TransactionAggregationTask(
   }
 }
 
+async function handleRebuild(
+  ruleEvaluator: LogicEvaluator,
+  aggregationVariable: LogicAggregationVariable,
+  currentTimestamp: number,
+  userId: string | undefined,
+  paymentDetails: PaymentDetails | undefined,
+  entityData: EntityData | undefined,
+  timeRange?: TimestampSlice,
+  totalTimeSlices?: number
+) {
+  if (aggregationVariable.type === 'USER_DETAILS' && userId) {
+    await ruleEvaluator.rebuildUserAggregationVariable(
+      aggregationVariable,
+      currentTimestamp,
+      userId
+    )
+  } else if (aggregationVariable.type !== 'USER_DETAILS') {
+    await ruleEvaluator.rebuildAggregationVariable(
+      aggregationVariable,
+      currentTimestamp,
+      userId,
+      paymentDetails,
+      entityData,
+      timeRange,
+      totalTimeSlices
+    )
+  }
+}
+
+/* To move this to pre-aggregation lambda (currently keeping to consume existing messages in the queue) */
 export async function handleV8PreAggregationTask(
   task: V8LogicAggregationRebuildTask,
   dynamoDb: DynamoDBDocumentClient,
@@ -165,7 +199,8 @@ export async function handleV8PreAggregationTask(
     }
 
     if (!shouldSkipPreAggregation) {
-      await ruleEvaluator.rebuildAggregationVariable(
+      await handleRebuild(
+        ruleEvaluator,
         task.aggregationVariable,
         task.currentTimestamp,
         task.userId,
@@ -213,7 +248,8 @@ export async function handleV8PreAggregationTask(
         `Risk factor ${task.entity.riskFactorId} is changed/deleted. Skipping pre-aggregation.`
       )
     } else {
-      await ruleEvaluator.rebuildAggregationVariable(
+      await handleRebuild(
+        ruleEvaluator,
         task.aggregationVariable,
         task.currentTimestamp,
         task.userId,
@@ -240,7 +276,8 @@ export async function handleV8PreAggregationTask(
       await riskRepository.updateRiskFactorStatus(riskFactor.id, 'ACTIVE')
     }
   } else if (!task.entity) {
-    await ruleEvaluator.rebuildAggregationVariable(
+    await handleRebuild(
+      ruleEvaluator,
       task.aggregationVariable,
       task.currentTimestamp,
       task.userId,

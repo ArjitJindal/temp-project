@@ -355,12 +355,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             })
           })
         }
-        const queue =
-          type === 'USER_DETAILS'
-            ? getSQSQueueUrl(process.env.USER_AGGREGATION_QUEUE_URL)
-            : getSQSQueueUrl(
-                process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string
-              )
+        const queue = getSQSQueueUrl(
+          process.env.PRE_AGGREGATION_QUEUE_URL as string
+        )
         await this.internalBulkSendMesasges(this.dynamoDb, messages, queue)
       }
     }

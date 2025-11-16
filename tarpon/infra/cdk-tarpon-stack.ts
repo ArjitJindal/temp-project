@@ -264,12 +264,13 @@ export class CdkTarponStack extends cdk.Stack {
         retentionPeriod: Duration.days(7),
       }
     )
-    const userAggregationQueue = this.createQueue(
-      SQSQueues.USER_AGGREGATION_QUEUE_NAME.name,
+
+    const preAggregationQueue = this.createQueue(
+      SQSQueues.PRE_AGGREGATION_QUEUE.name,
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
-        fifo: true,
         retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
 
@@ -685,9 +686,6 @@ export class CdkTarponStack extends cdk.Stack {
         IMPORT_BUCKET: importBucketName,
         TMP_BUCKET: tmpBucketName,
         SHARED_ASSETS_BUCKET: sharedAssetsBucketName,
-        USER_AGGREGATION_QUEUE_URL: getSQSQueueName(
-          userAggregationQueue.queueUrl
-        ),
         // sns topics
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         // sqs queues
@@ -740,6 +738,9 @@ export class CdkTarponStack extends cdk.Stack {
         ),
         BATCH_RERUN_USERS_QUEUE_URL: getSQSQueueName(
           batchRerunUsersQueue.queueUrl
+        ),
+        PRE_AGGREGATION_QUEUE_URL: getSQSQueueName(
+          preAggregationQueue.queueUrl
         ),
       },
     }
@@ -829,8 +830,8 @@ export class CdkTarponStack extends cdk.Stack {
             webhookDeliveryQueue.queueArn,
             slackAlertQueue.queueArn,
             transactionAggregationQueue.queueArn,
-            userAggregationQueue.queueArn,
             requestLoggerQueue.queueArn,
+            preAggregationQueue.queueArn,
             notificationQueue.queueArn,
             tarponEventQueue.queueArn,
             secondaryTarponEventQueue.queueArn,
@@ -1235,21 +1236,21 @@ export class CdkTarponStack extends cdk.Stack {
       })
     )
 
-    /* User Aggregation */
-    const { alias: userAggregatorAlias } = createFunction(
+    /* Pre Aggregation Consumer */
+    const { alias: preAggregationConsumer } = createFunction(
       this,
       lambdaExecutionRole,
       {
-        name: StackConstants.USER_AGGREGATION_FUNCTION_NAME,
-        memorySize: this.config.resource.USER_AGGREGATION_LAMBDA?.MEMORY_SIZE,
+        name: StackConstants.PRE_AGGREGATION_CONSUMER_FUNCTION_NAME,
+        memorySize: this.config.resource.PRE_AGGREGATION_LAMBDA.MEMORY_SIZE,
       },
       heavyLibLayer
     )
 
-    userAggregatorAlias.addEventSource(
-      new SqsEventSource(userAggregationQueue, {
+    preAggregationConsumer.addEventSource(
+      new SqsEventSource(preAggregationQueue, {
         batchSize: 1,
-        maxConcurrency: this.config.resource.USER_AGGREGATION_MAX_CONCURRENCY,
+        maxConcurrency: this.config.resource.PRE_AGGREGATION_MAX_CONCURRENCY,
       })
     )
 

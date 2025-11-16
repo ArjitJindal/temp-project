@@ -349,16 +349,12 @@ export type Config = {
       PROVISIONED_CONCURRENCY?: number
     }
     TRANSACTION_AGGREGATION_MAX_CONCURRENCY: number
+    PRE_AGGREGATION_MAX_CONCURRENCY: number
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE?: number
       PROVISIONED_CONCURRENCY?: number
       BATCH_SIZE?: number
     }
-    USER_AGGREGATION_LAMBDA: {
-      MEMORY_SIZE?: number
-      PROVISIONED_CONCURRENCY?: number
-    }
-    USER_AGGREGATION_MAX_CONCURRENCY: number
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
@@ -389,6 +385,9 @@ export type Config = {
     }
     COPILOT_LAMBDA?: {
       MEMORY_SIZE?: number
+    }
+    PRE_AGGREGATION_LAMBDA: {
+      MEMORY_SIZE: number
     }
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean

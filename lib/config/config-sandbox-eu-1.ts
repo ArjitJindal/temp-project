@@ -58,10 +58,7 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     TRANSACTION_AGGREGATION_MAX_CONCURRENCY: 6,
-    USER_AGGREGATION_LAMBDA: {
-      MEMORY_SIZE: 1024,
-    },
-    USER_AGGREGATION_MAX_CONCURRENCY: 6,
+    PRE_AGGREGATION_MAX_CONCURRENCY: 50,
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 512,
     },
@@ -99,6 +96,9 @@ export const config: Config = {
       MEMORY_SIZE: 2048,
     },
     CRON_JOB_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
+    PRE_AGGREGATION_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
     LAMBDA_VPC_ENABLED: true,

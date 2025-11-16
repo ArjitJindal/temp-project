@@ -33,6 +33,9 @@ export const config: Config = {
       MEMORY_LIMIT: 4096,
       ARCHITECTURE: 'arm64',
     },
+    PRE_AGGREGATION_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     CLOUD_WATCH: {
       logRetention: RetentionDays.ONE_YEAR,
     },
@@ -62,11 +65,8 @@ export const config: Config = {
     TRANSACTION_AGGREGATION_LAMBDA: {
       MEMORY_SIZE: 2048,
     },
-    TRANSACTION_AGGREGATION_MAX_CONCURRENCY: 2,
-    USER_AGGREGATION_LAMBDA: {
-      MEMORY_SIZE: 2048,
-    },
-    USER_AGGREGATION_MAX_CONCURRENCY: 2,
+    TRANSACTION_AGGREGATION_MAX_CONCURRENCY: 10,
+    PRE_AGGREGATION_MAX_CONCURRENCY: 100,
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 1024,
     },

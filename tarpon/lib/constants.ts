@@ -206,9 +206,6 @@ export const StackConstants = {
   TRANSACTION_AGGREGATION_FUNCTION_NAME: getResourceNameForTarpon(
     'TransactionAggregationFunction'
   ),
-  USER_AGGREGATION_FUNCTION_NAME: getResourceNameForTarpon(
-    'UserAggregationFunction'
-  ),
   CONSOLE_API_SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSanctionsFunction'
   ),
@@ -359,6 +356,9 @@ export const StackConstants = {
   PRIMARY_ASYNC_RULE_MULTIPLEXER_NAME: getResourceNameForTarpon(
     'PrimaryAsyncRuleMultiplexer'
   ),
+  PRE_AGGREGATION_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'PreAggregationConsumerFunction'
+  ),
 
   // CloudWatch Logs Ingestion
   CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME: getResourceNameForTarpon(
@@ -396,10 +396,6 @@ export const SQSQueues: {
   },
   TRANSACTION_AGGREGATION_QUEUE_NAME: {
     name: getResourceName('TransactionAggregationQueue') + '.fifo',
-    oldestMsgAgeAlarmThresholdMinutes: 120,
-  },
-  USER_AGGREGATION_QUEUE_NAME: {
-    name: getResourceName('UserAggregationQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 120,
   },
   SLACK_ALERT_QUEUE_NAME: {
@@ -474,6 +470,10 @@ export const SQSQueues: {
   ASYNC_RULE_PROCESSOR_QUEUE: {
     name: getResourceName('AsyncRuleProcessorQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 360,
+  },
+  PRE_AGGREGATION_QUEUE: {
+    name: getResourceName('PreAggregationQueue'),
+    oldestMsgAgeAlarmThresholdMinutes: 120,
   },
 }
 
