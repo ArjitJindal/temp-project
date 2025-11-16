@@ -1,25 +1,58 @@
-import * as Sentry from '@sentry/react';
+import { setTags } from '@sentry/react';
 import React, { Profiler, useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Helmet } from 'react-helmet';
-import Providers, { StorybookMockProviders } from './Providers';
+import { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
 import s from './styles.module.less';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
-import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import DemoModeProvider, { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
 import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
 import { getBranding } from '@/utils/branding';
 import { useAuth0User } from '@/utils/user-utils';
 import { recordRenderCommit } from '@/perf/sentryPerf';
 import { useAtfReady } from '@/perf/useAtfReady';
+import AuthProvider from '@/components/AppWrapper/Providers/AuthProvider';
+import ToastsProvider from '@/components/AppWrapper/Providers/ToastsProvider';
+import AntConfigProvider from '@/components/AppWrapper/Providers/AntConfigProvider';
+import QueryClientProvider from '@/components/AppWrapper/Providers/QueryClientProvider';
+import FlagrightUserProvider from '@/components/AppWrapper/Providers/FlagrightUserProvider';
+import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
+import ActiveSessionProvider from '@/components/AppWrapper/Providers/ActiveSessionsProvider';
+import SettingsProvider from '@/components/AppWrapper/Providers/SettingsProvider';
+import SessionTimeoutProvider from '@/components/AppWrapper/Providers/SessionTimeoutDetector';
+import { PostHogProviderWrapper } from '@/components/AppWrapper/Providers/PostHogProvider';
+import { BrowserSupportProvider } from '@/components/AppWrapper/Providers/BrowserSupportProvider';
+import SideBarProvider from '@/components/AppWrapper/Providers/SidebarProvider';
+import { SuperAdminModeProvider } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 
 interface Props {
   children?: React.ReactNode;
 }
 
 const branding = getBranding();
+
+function RouteProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <ActiveSessionProvider>
+      <SettingsProvider>
+        <SessionTimeoutProvider>
+          <PostHogProviderWrapper>
+            <BrowserSupportProvider>
+              <SideBarProvider>
+                <DemoModeProvider>
+                  <SuperAdminModeProvider>{children}</SuperAdminModeProvider>
+                </DemoModeProvider>
+              </SideBarProvider>
+            </BrowserSupportProvider>
+          </PostHogProviderWrapper>
+        </SessionTimeoutProvider>
+      </SettingsProvider>
+    </ActiveSessionProvider>
+  );
+}
 
 function MainContent(props: Props) {
   const [isCollapsed, setCollapsed] = useState(false);
@@ -28,7 +61,7 @@ function MainContent(props: Props) {
   const auth0User = useAuth0User();
 
   useEffect(() => {
-    Sentry.setTags({
+    setTags({
       userId: auth0User?.userId,
       email: auth0User?.verifiedEmail,
       tenantId: auth0User.tenantId,
@@ -79,18 +112,30 @@ function SpecialRoutes(props: Props) {
   }
 
   return (
-    <Providers>
+    <RouteProviders>
       <ErrorBoundary>
         <MainContent {...props} />
       </ErrorBoundary>
-    </Providers>
+    </RouteProviders>
   );
 }
 
 export default function AppWrapper(props: Props) {
   return (
-    <RouterProvider>
-      <SpecialRoutes {...props} />
-    </RouterProvider>
+    <AuthProvider>
+      <ToastsProvider>
+        <AntConfigProvider>
+          <QueryClientProvider>
+            <FlagrightUserProvider>
+              <ApiProvider>
+                <RouterProvider>
+                  <SpecialRoutes {...props} />
+                </RouterProvider>
+              </ApiProvider>
+            </FlagrightUserProvider>
+          </QueryClientProvider>
+        </AntConfigProvider>
+      </ToastsProvider>
+    </AuthProvider>
   );
 }

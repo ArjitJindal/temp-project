@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApi } from '@/api';
 
-export default function ActiveSessionProvider(props: { children: React.ReactNode }) {
+export default function ActiveSessionProvider(props: { children: React.ReactNode }): JSX.Element {
   const api = useApi();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -22,5 +22,5 @@ export default function ActiveSessionProvider(props: { children: React.ReactNode
     }
   }, [navigate, api, isPostLogin]);
 
-  return props.children;
+  return <>{props.children}</>;
 }
