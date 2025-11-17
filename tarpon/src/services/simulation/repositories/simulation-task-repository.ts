@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import memoize from 'lodash/memoize'
 import omit from 'lodash/omit'
 import random from 'lodash/random'
+import pMap from 'p-map'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { demoRuleSimulation } from '../utils/demo-rule-simulation'
 import { demoRiskFactorsV8Simulation } from '../utils/demo-risk-factors-v8-simulation'
@@ -42,6 +43,7 @@ import { SimulationBeaconTransactionResult } from '@/@types/openapi-internal/Sim
 import { SimulationBeaconResultUser } from '@/@types/openapi-internal/SimulationBeaconResultUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { V8RiskSimulationJob } from '@/@types/openapi-internal/V8RiskSimulationJob'
 import { TaskStatusChangeStatusEnum } from '@/@types/openapi-internal/TaskStatusChangeStatusEnum'
 import { tenantSettings } from '@/core/utils/context'
@@ -501,10 +503,15 @@ export class SimulationTaskRepository {
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
     const { riskLevelAlias } = await tenantSettings(this.tenantId)
-    const transactionsData: SimulationBeaconTransactionResult[] = []
-    const users = new Map<string, SimulationBeaconResultUser>()
 
+    const transactionsArray: InternalTransaction[] = []
     for await (const transaction of transactions) {
+      transactionsArray.push(transaction)
+    }
+
+    const taskId = taskIds[0]
+
+    const processTransaction = async (transaction: InternalTransaction) => {
       const [destinationUser, originUser] = await Promise.all([
         transaction.destinationUserId
           ? this.user(transaction.destinationUserId)
@@ -517,8 +524,8 @@ export class SimulationTaskRepository {
       const originMethod = transaction.originPaymentDetails?.method
       const destinationMethod = transaction.destinationPaymentDetails?.method
       const isTransactionHit = Math.random() > 0.5
-      const taskId = taskIds[0]
-      const data: SimulationBeaconTransactionResult = {
+
+      const transactionData: SimulationBeaconTransactionResult = {
         transactionId: transaction.transactionId,
         action: transaction.status,
         hit: isTransactionHit ? 'HIT' : 'NO_HIT',
@@ -582,31 +589,27 @@ export class SimulationTaskRepository {
         riskScore: transaction.arsScore?.arsScore,
       }
 
-      transactionsData.push(data)
-
+      const userResults: SimulationBeaconResultUser[] = []
       const processUser = (
         user: InternalConsumerUser | InternalBusinessUser | undefined
       ) => {
         if (!user) {
           return
         }
-        const userId = user.userId
-        if (!users.has(userId)) {
-          users.set(userId, {
-            userId,
-            riskLevel: getRiskLevelFromScore(
-              riskClassificationValues,
-              user.drsScore?.drsScore ?? null,
-              riskLevelAlias
-            ),
-            riskScore: user.drsScore?.drsScore,
-            hit: isTransactionHit ? 'HIT' : 'NO_HIT',
-            taskId,
-            type: 'BEACON_USER',
-            userName: getUserName(user),
-            userType: user.type,
-          })
-        }
+        userResults.push({
+          userId: user.userId,
+          riskLevel: getRiskLevelFromScore(
+            riskClassificationValues,
+            user.drsScore?.drsScore ?? null,
+            riskLevelAlias
+          ),
+          riskScore: user.drsScore?.drsScore,
+          hit: isTransactionHit ? 'HIT' : 'NO_HIT',
+          taskId,
+          type: 'BEACON_USER',
+          userName: getUserName(user),
+          userType: user.type,
+        })
       }
 
       if (destinationUser) {
@@ -614,6 +617,25 @@ export class SimulationTaskRepository {
       }
       if (originUser) {
         processUser(originUser)
+      }
+
+      return {
+        transactionData,
+        userResults,
+      }
+    }
+
+    const results = await pMap(transactionsArray, processTransaction, {
+      concurrency: 25,
+    })
+
+    const transactionsData = results.map((r) => r.transactionData)
+    const users = new Map<string, SimulationBeaconResultUser>()
+    for (const result of results) {
+      for (const user of result.userResults) {
+        if (!users.has(user.userId)) {
+          users.set(user.userId, user)
+        }
       }
     }
 
