@@ -15163,7 +15163,7 @@ components:
           type: string
         createdAt:
           type: number
-    SanctionsSearchRequest:
+    SanctionsSearchBaseRequest:
       title: SanctionsSearchRequest
       type: object
       properties:
@@ -15173,8 +15173,6 @@ components:
           type: boolean
         isOngoingScreening:
           type: boolean
-        searchTerm:
-          type: string
         existingProviderId:
           type: string
         searchProfileId:
@@ -15275,8 +15273,16 @@ components:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/Address
         lsegMediaCheck:
           $ref: '#/components/schemas/LSEGMediaCheckParameters'
-      required:
-        - searchTerm
+    SanctionsSearchRequest:
+      title: SanctionsSearchRequest
+      allOf:
+        - $ref: '#/components/schemas/SanctionsSearchBaseRequest'
+        - type: object
+          properties:
+            searchTerm:
+              type: string
+          required:
+            - searchTerm
     LSEGMediaCheckParameters:
       title: LSEGMediaCheckParameters
       type: object
@@ -15957,7 +15963,7 @@ components:
         batchId:
           type: string
         request:
-          $ref: '#/components/schemas/SanctionsSearchRequest'
+          $ref: '#/components/schemas/SanctionsSearchBaseRequest'
         createdAt:
           type: number
         updatedAt:
