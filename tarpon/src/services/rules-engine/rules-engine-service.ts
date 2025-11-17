@@ -1177,9 +1177,13 @@ export class RulesEngineService {
       activeRuleInstances,
       { riskLevel: receiverUserRiskLevel },
     ] = await Promise.all([
-      this.getUserRiskLevelAndScore(transaction.originUserId),
+      senderUser
+        ? this.getUserRiskLevelAndScore(transaction.originUserId)
+        : { riskLevel: undefined },
       this.ruleInstanceRepository.getActiveRuleInstances(),
-      this.getUserRiskLevelAndScore(transaction.destinationUserId),
+      receiverUser
+        ? this.getUserRiskLevelAndScore(transaction.destinationUserId)
+        : { riskLevel: undefined },
     ])
 
     const toRunRule = (
