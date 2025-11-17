@@ -86,20 +86,23 @@ describe('Using Assignment filter and assigning cases', () => {
               .its('response.statusCode')
               .should('eq', 200)
               .then(() => {
+                cy.get('[data-cy="rules-filter"]')
+                  .filter(':contains("Assigned to")')
+                  .eq(0)
+                  .should('exist')
+                  .click();
                 cy.waitNothingLoading();
-                cy.get('tbody')
-                  .first()
-                  .should(($element) => {
-                    // Use a custom assertion to check for the absence of "isLoading" in the class
-                    expect($element.attr('class')).not.to.include('isLoading');
-                  })
-                  .then(() => {
-                    cy.get('tr [data-cy="_assignmentName"]').each(($element) => {
-                      cy.wrap($element)
-                        .invoke('text')
-                        .should('contain', 'cypress+admin@flagright.com');
-                    });
-                  });
+                // Wait until all empty assignee dropdowns are gone (assignments are loaded)
+                cy.get(
+                  'tr [data-cy="_assignmentName"] [data-cy~="assignee-dropdown"][data-cy~="empty"]',
+                  {
+                    timeout: 10000,
+                  },
+                ).should('not.exist');
+                // Now check that all assignment cells contain the expected email
+                cy.get('tr [data-cy="_assignmentName"]').each(($element) => {
+                  cy.wrap($element).invoke('text').should('contain', 'cypress+admin@flagright.com');
+                });
               });
           });
         cy.checkNotification([
