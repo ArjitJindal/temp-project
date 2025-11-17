@@ -804,7 +804,7 @@ export class CaseCreationService {
             ruleDescription: hitRule.ruleDescription,
             ruleAction: hitRule.ruleAction,
             ruleHitMeta: updatedRuleHitMeta,
-            ruleNature: hitRule.nature,
+            ruleNature: ruleInstanceMatch?.nature ?? hitRule.nature,
             ruleQueueId: ruleInstanceMatch?.queueId,
             numberOfTransactionsHit: transaction ? 1 : 0,
             transactionIds: transaction ? [transaction.transactionId] : [],

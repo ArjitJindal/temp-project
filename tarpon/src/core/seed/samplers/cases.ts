@@ -4,12 +4,7 @@ import uniqBy from 'lodash/uniqBy'
 import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import {
-  getRuleInstance,
-  transactionRules,
-  userRules,
-  dynamicRules,
-} from '../data/rules'
+import { getRuleInstance, dynamicRules } from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
 import { ID_PREFIXES, TIME_BACK_TO_12_MONTH_WINDOW } from '../data/seeds'
 import { BaseSampler } from './base'
@@ -500,10 +495,7 @@ export class AlertSampler extends BaseSampler<Alert> {
               )
           )
         : [],
-      ruleNature: userRules()
-        .concat(transactionRules(false)) // return normal transaction rules
-        .concat(transactionRules(true)) // return crypto transaction rules
-        .find((p) => p.ruleInstanceId === ruleInstanceId)?.nature,
+      ruleNature: ruleInstance.nature ?? params.ruleHit.nature,
       slaPolicyDetails: slaPolicyDetails,
       ruleHitMeta: ruleHit.ruleHitMeta,
       ruleQueueId: ruleInstance.queueId ?? undefined,
