@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import Button from '../library/Button';
 import Select from '../library/Select';
 import Label from '../library/Label';
+import Skeleton from '../library/Skeleton';
 import Alert from '@/components/library/Alert';
 import Modal from '@/components/library/Modal';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
@@ -105,7 +106,7 @@ export function SarButton(props: UserProps | (CaseProps & { source: string })) {
         </Button>
       ) : (
         // For cases - check case data first
-        <AsyncResourceRenderer resource={caseQueryResult.data}>
+        <Skeleton res={caseQueryResult.data} length={10}>
           {(caseItem) => {
             const noCaseUsers = !caseItem.caseUsers?.origin && !caseItem.caseUsers?.destination;
 
@@ -121,7 +122,7 @@ export function SarButton(props: UserProps | (CaseProps & { source: string })) {
               </Button>
             );
           }}
-        </AsyncResourceRenderer>
+        </Skeleton>
       )}
       {!isDisabled && (
         <Modal

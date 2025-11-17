@@ -17,6 +17,7 @@ import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-ut
 import { notEmpty } from '@/utils/array';
 import PriorityTag from '@/components/library/PriorityTag';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
+import Skeleton from '@/components/library/Skeleton';
 import { SarButton } from '@/components/Sar';
 import CreateCaseConfirmModal from '@/pages/case-management/AlertTable/CreateCaseConfirmModal';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -66,7 +67,6 @@ export default function Header(props: Props) {
   const actionsRes = useActions(caseQueryResults.data, alertItemRes, props.onReload);
   const aiForensicsRef = useRef<HTMLDivElement>(null);
   const statusChangeRef = useRef<HTMLDivElement>(null);
-
   const previousStatus = useMemo(() => {
     return findLastStatusForInReview(alertItem?.statusChanges ?? []);
   }, [alertItem?.statusChanges]);
@@ -263,7 +263,7 @@ function useActions(
     // Comment button
     {
       result.push(
-        <AsyncResourceRenderer resource={caseItemRes}>
+        <Skeleton res={caseItemRes} length={10}>
           {(caseItem) => (
             <AlertsStatusChangeButton
               key={'status-change-button'}
@@ -286,7 +286,7 @@ function useActions(
               }
             />
           )}
-        </AsyncResourceRenderer>,
+        </Skeleton>,
       );
     }
 
