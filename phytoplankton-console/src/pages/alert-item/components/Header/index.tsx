@@ -33,6 +33,7 @@ import {
   isEscalatedCases,
   isEscalatedL2Cases,
   isInReviewCases,
+  statusInReview,
 } from '@/utils/case-utils';
 import { useAuth0User } from '@/utils/user-utils';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
@@ -262,6 +263,8 @@ function useActions(
 
     // Comment button
     {
+      const isInReview = statusInReview(alertItem.alertStatus);
+
       result.push(
         <Skeleton res={caseItemRes} length={10}>
           {(caseItem) => (
@@ -274,6 +277,17 @@ function useActions(
                 alertDetails.refetch();
               }}
               haveModal={true}
+              caseId={caseId}
+              statusTransitions={
+                caseId && !isInReview
+                  ? {
+                      OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                      OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                      ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                      ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                    }
+                  : undefined
+              }
               user={
                 (caseItem?.caseUsers?.origin as TableUser) ||
                 (caseItem?.caseUsers?.destination as TableUser) ||
