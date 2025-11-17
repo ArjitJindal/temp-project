@@ -28,11 +28,7 @@ import {
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { SanctionsRuleResult } from './sanctions-bank-name'
-import {
-  formatConsumerName,
-  formatShareHolderName,
-  isPerson,
-} from '@/utils/helpers'
+import { formatConsumerName, isLegalEntity, isPerson } from '@/utils/helpers'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
@@ -153,13 +149,17 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         dateOfBirth: person.generalDetails.dateOfBirth,
         addresses: person.contactDetails?.addresses,
       })) ?? []),
-      ...(business.shareHolders?.map((person) => ({
+      ...(business.shareHolders?.filter(isPerson).map((person) => ({
         entityType: 'SHAREHOLDER' as const,
-        name: formatShareHolderName(person) || '',
-        dateOfBirth: isPerson(person)
-          ? person.generalDetails.dateOfBirth
-          : person.companyRegistrationDetails?.dateOfRegistration,
+        name: formatConsumerName(person.generalDetails?.name) || '',
+        dateOfBirth: person.generalDetails?.dateOfBirth,
         addresses: person.contactDetails?.addresses,
+      })) ?? []),
+      ...(business.shareHolders?.filter(isLegalEntity).map((shareHolder) => ({
+        entityType: 'LEGAL_NAME' as const,
+        name: shareHolder.companyGeneralDetails.legalName || '',
+        dateOfBirth: shareHolder.companyRegistrationDetails?.dateOfRegistration,
+        addresses: shareHolder.contactDetails?.addresses,
       })) ?? []),
     ].filter((entity) => entity.name && entityTypes.includes(entity.entityType))
     if (!entities.length) {

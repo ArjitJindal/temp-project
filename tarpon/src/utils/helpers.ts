@@ -72,6 +72,12 @@ export const isPerson = (
   return 'generalDetails' in shareHolder
 }
 
+export const isLegalEntity = (
+  shareHolder: Person | LegalEntity
+): shareHolder is LegalEntity => {
+  return !isPerson(shareHolder)
+}
+
 export const formatShareHolderName = (shareHolder: Person | LegalEntity) => {
   if (isPerson(shareHolder)) {
     return formatConsumerName(shareHolder.generalDetails?.name)
