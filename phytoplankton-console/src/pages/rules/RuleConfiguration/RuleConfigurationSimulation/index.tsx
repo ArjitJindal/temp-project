@@ -20,8 +20,6 @@ import {
   formValuesToRuleInstanceV8,
   ruleInstanceToFormValues,
   ruleInstanceToFormValuesV8,
-  useCreateRuleInstance,
-  useUpdateRuleInstance,
 } from '@/pages/rules/utils';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -55,6 +53,7 @@ import {
 } from '@/utils/ruleThreshold';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { usePrevious, useSafeLocalStorageState } from '@/utils/hooks';
+import { useCreateRuleInstance, useUpdateRuleInstance } from '@/utils/api/rules';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;

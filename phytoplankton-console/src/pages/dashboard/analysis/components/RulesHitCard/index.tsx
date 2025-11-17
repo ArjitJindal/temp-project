@@ -11,7 +11,7 @@ import { Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
-import { useRules } from '@/utils/rules';
+import { useRules } from '@/utils/api/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { RULES_HIT_STATS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';

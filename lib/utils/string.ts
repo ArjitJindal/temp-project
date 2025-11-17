@@ -123,3 +123,5 @@ export function normalize(str: string): string {
 export function isLatinScript(str: string): boolean {
   return /^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?\s]+$/.test(str)
 }
+
+export const ADDRESS_SEPARATOR = '{{*}}'

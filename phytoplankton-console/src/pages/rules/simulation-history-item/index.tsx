@@ -10,7 +10,7 @@ import { SIMULATION_JOB } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { SimulationBeaconJob } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useRules } from '@/utils/rules';
+import { useRules } from '@/utils/api/rules';
 import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 
 export default function SimulationHistoryItemPage() {

@@ -19,7 +19,8 @@ export abstract class FlatFileRunner<
       data: T
       schema: FlatFilesRecordsSchema
     },
-    metadata: object
+    metadata: object,
+    entityId?: string
   ): Promise<void> {
     const { data, schema } = recordPayload
     const recordId = `${schema.fileId}:${schema.row}`
@@ -32,7 +33,11 @@ export abstract class FlatFileRunner<
         await this.updateRecordStatus(schema, true)
         return
       }
-      await this._run(data, omit(schema, ['parsedRecord']), metadata)
+      const runMetadata = { ...metadata }
+      if (entityId) {
+        Object.assign(runMetadata, { entityId })
+      }
+      await this._run(data, omit(schema, ['parsedRecord']), runMetadata)
 
       // Update successful record
       await this.updateRecordStatus(schema, true)
@@ -54,7 +59,8 @@ export abstract class FlatFileRunner<
 
   protected async processBatch(
     batch: Array<FlatFilesRecordsSchema>,
-    metadata: object
+    metadata: object,
+    entityId?: string
   ): Promise<void> {
     const sanitizedBatch = (
       await pMap(
@@ -71,7 +77,9 @@ export abstract class FlatFileRunner<
       (v): v is { data: T; schema: FlatFilesRecordsSchema } => v !== undefined
     )
     await Promise.all(
-      sanitizedBatch.map((record) => this.processRecord(record, metadata))
+      sanitizedBatch.map((record) =>
+        this.processRecord(record, metadata, entityId)
+      )
     )
 
     logger.info(`Processed ${batch.length} records`)

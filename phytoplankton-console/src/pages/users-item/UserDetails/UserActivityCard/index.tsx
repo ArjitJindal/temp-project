@@ -1,7 +1,7 @@
 import { flatten } from 'lodash';
 import ActivityCard from '@/components/ActivityCard';
 import { useApi } from '@/api';
-import { CommentType } from '@/utils/user-utils';
+import { CommentType, isPerson } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -88,9 +88,11 @@ export default function UserActivityCard(props: Props) {
             shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
               return {
                 ...shareHolder,
-                attachments: shareHolder.attachments?.filter(
-                  (attachment) => attachment.id !== variables.commentId,
-                ),
+                attachments: isPerson(shareHolder)
+                  ? shareHolder.attachments?.filter(
+                      (attachment) => attachment.id !== variables.commentId,
+                    )
+                  : [],
               };
             }),
             directors: (user as InternalBusinessUser).directors?.map((director) => {

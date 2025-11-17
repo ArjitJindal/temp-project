@@ -1,11 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
-import {
-  formValuesToRuleInstance,
-  ruleInstanceToFormValues,
-  useCreateRuleInstance,
-  useUpdateRuleInstance,
-} from '../../utils';
+import { formValuesToRuleInstance, ruleInstanceToFormValues } from '../../utils';
 import { RuleModeModal } from '../components/RuleModeModal';
 import s from './style.module.less';
 import RuleConfigurationForm, {
@@ -20,7 +15,8 @@ import { Rule, RuleInstance, RuleRunMode } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
+import { isLoading } from '@/utils/asyncResource';
+import { useCreateRuleInstance, useUpdateRuleInstance } from '@/utils/api/rules';
 
 export interface Props {
   rule?: Rule | null;
@@ -160,7 +156,7 @@ export default function RuleConfigurationV2(props: Props) {
               ) : (
                 <Button
                   htmlType="submit"
-                  isLoading={createRuleInstanceMutation.isLoading}
+                  isLoading={isLoading(createRuleInstanceMutation.dataResource)}
                   isDisabled={readOnly}
                   onClick={() => {
                     if (!formRef?.current?.validate()) {
@@ -181,7 +177,7 @@ export default function RuleConfigurationV2(props: Props) {
           {!readOnly && type === 'EDIT' && (
             <Button
               htmlType="submit"
-              isLoading={updateRuleInstanceMutation.isLoading}
+              isLoading={isLoading(updateRuleInstanceMutation.dataResource)}
               isDisabled={readOnly || isValuesSame}
               onClick={() => {
                 formRef?.current?.submit(); // To show errors
@@ -208,9 +204,9 @@ export default function RuleConfigurationV2(props: Props) {
           )}
         </div>
         <RuleModeModal
-          submitRes={getMutationAsyncResource(
-            type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation,
-          )}
+          submitRes={
+            (type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation).dataResource
+          }
           isOpen={isRuleModeModalOpen}
           ruleId={rule?.id || ''}
           onOk={() => {

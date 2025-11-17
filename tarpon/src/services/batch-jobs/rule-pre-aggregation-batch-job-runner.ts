@@ -22,6 +22,7 @@ import {
   getAggregationGranularity,
 } from '../logic-evaluator/engine/utils'
 import { ClickhouseTransactionsRepository } from '../rules-engine/repositories/clickhouse-repository'
+import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import {
   TimestampSlice,
@@ -109,6 +110,7 @@ type PreAggregationTask =
   | { type: 'PAYMENT_DETAILS_ADDRESS'; ids: PaymentDetailsAddressUserInfo[] }
   | { type: 'PAYMENT_DETAILS_EMAIL'; ids: PaymentDetailsEmailUserInfo[] }
   | { type: 'PAYMENT_DETAILS_NAME'; ids: PaymentDetailsNameUserInfo[] }
+  | { type: 'USER_DETAILS'; ids: string[] }
 
 const MAX_CONCURRENCY = 20
 
@@ -119,6 +121,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private mongoTransactionsRepo!: MongoDbTransactionRepository
   private clickhouseTransactionsRepo?: ClickhouseTransactionsRepository
   private totalMessagesLength: number = 0
+  private mongoUserEventsRepo!: UserEventRepository
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     this.dynamoDb = getDynamoDbClient()
     this.mongoDb = await getMongoDbClient()
@@ -134,6 +137,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         tenantId
       )
     }
+    this.mongoUserEventsRepo = new UserEventRepository(tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -332,11 +339,33 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
               })
             }
           )
+        } else if (type === 'USER_DETAILS') {
+          messages = ids.map((id) => {
+            return getAggregationTaskMessage({
+              userKeyId: id,
+              payload: {
+                type: 'PRE_AGGREGATION',
+                userId: id,
+                tenantId: job.tenantId,
+                currentTimestamp: currentTimestamp ?? Date.now(),
+                jobId: this.jobId,
+                entity: entity,
+                aggregationVariable,
+              },
+            })
+          })
         }
-
-        await this.internalBulkSendMesasges(this.dynamoDb, messages)
+        const queue = getSQSQueueUrl(
+          process.env.PRE_AGGREGATION_QUEUE_URL as string
+        )
+        await this.internalBulkSendMesasges(this.dynamoDb, messages, queue)
       }
     }
+
+    await this.jobRepository.incrementMetadataTasksCount(
+      this.jobId,
+      this.totalMessagesLength
+    )
 
     if (this.totalMessagesLength === 0 && entity?.type === 'RULE') {
       logger.info(
@@ -357,10 +386,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
   private async internalBulkSendMesasges(
     dynamoDb: DynamoDBDocumentClient,
-    messages: FifoSqsMessage[]
+    messages: FifoSqsMessage[],
+    queueUrl: string
   ) {
     const dedupMessages = uniqBy(messages, (m) => m.MessageDeduplicationId)
-
     if (envIs('local')) {
       this.totalMessagesLength += dedupMessages.length
       await this.jobRepository.incrementMetadataTasksCount(
@@ -396,31 +425,20 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       }
       this.totalMessagesLength += messagesNotSentYet.length
 
-      await this.jobRepository.incrementMetadataTasksCount(
-        this.jobId,
-        messagesNotSentYet.length
-      )
       const chunkSize = 10
       const messagesToSendChunks = chunk(messagesNotSentYet, chunkSize)
       await pMap(
         messagesToSendChunks,
         async (chunk) => {
-          await bulkSendMessages(
-            sqs,
-            getSQSQueueUrl(
-              process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string
-            ),
-            chunk,
-            async (batch) => {
-              // Mark the messages as sent to avoid being sent again on retries
-              await transientRepository.batchAddKey(
-                batch.map((message) => ({
-                  partitionKeyId: this.jobId,
-                  sortKeyId: (message.MessageDeduplicationId ?? '') as string,
-                }))
-              )
-            }
-          )
+          await bulkSendMessages(sqs, queueUrl, chunk, async (batch) => {
+            // Mark the messages as sent to avoid being sent again on retries
+            await transientRepository.batchAddKey(
+              batch.map((message) => ({
+                partitionKeyId: this.jobId,
+                sortKeyId: (message.MessageDeduplicationId ?? '') as string,
+              }))
+            )
+          })
         },
         { concurrency: MAX_CONCURRENCY }
       )
@@ -680,6 +698,17 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         yield {
           ids: userInfos,
           type: 'PAYMENT_DETAILS_NAME',
+        }
+      }
+    } else if (aggregationVariable.type === 'USER_DETAILS') {
+      const generator = this.mongoUserEventsRepo.getUniqueUserIdsGenerator(
+        timeRange,
+        DEFAULT_CHUNK_SIZE
+      )
+      for await (const data of generator) {
+        yield {
+          ids: data,
+          type: 'USER_DETAILS',
         }
       }
     } else {

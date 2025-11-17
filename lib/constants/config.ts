@@ -2,7 +2,6 @@ import { config as devConfig } from '../config/config-dev'
 import { config as sandboxConfigEu1 } from '../config/config-sandbox-eu-1'
 import { config as sandboxConfigAsia1 } from '../config/config-sandbox-asia-1'
 import { config as prodConfigAsia1 } from '../config/config-prod-asia-1'
-import { config as prodConfigAsia2 } from '../config/config-prod-asia-2'
 import { config as prodConfigAsia3 } from '../config/config-prod-asia-3'
 import { config as prodConfigEu1 } from '../config/config-prod-eu-1'
 import { config as prodConfigEu2 } from '../config/config-prod-eu-2'
@@ -29,7 +28,7 @@ export const CONFIG_MAP = {
   },
   prod: {
     'asia-1': prodConfigAsia1,
-    'asia-2': prodConfigAsia2,
+    // 'asia-2': prodConfigAsia2, // Commented out as we don't support it anymore
     'asia-3': prodConfigAsia3,
     'eu-1': prodConfigEu1,
     'eu-2': prodConfigEu2,

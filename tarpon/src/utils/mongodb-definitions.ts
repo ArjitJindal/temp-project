@@ -38,6 +38,9 @@ import {
   SANCTIONS_COLLECTION,
   SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
+  LSEG_API_MEDIA_CHECK_RESULT_COLLECTION,
+  SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION,
+  SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION,
 } from './mongo-table-names'
 import {
   getAllGlobalSanctionsCollectionDefinition,
@@ -104,7 +107,7 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
         type: 'string',
       },
       yearOfBirth: {
-        type: 'string',
+        type: 'token',
       },
       entityType: {
         type: 'string',
@@ -599,6 +602,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         },
       ],
     },
+    [SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ index: { batchId: 1 }, unique: true }],
+    },
+    [SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ index: { searchTermId: 1 } }],
+    },
     [DELTA_SANCTIONS_COLLECTION(tenantId)]: {
       getIndexes: () => SANCTIONS_INDEX_DEFINITION,
       getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION(true),
@@ -722,6 +731,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_COLLECTION(tenantId)]: {
       getIndexes: () => SANCTIONS_INDEX_DEFINITION,
       getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION(false),
+    },
+    [LSEG_API_MEDIA_CHECK_RESULT_COLLECTION(tenantId)]: {
+      getIndexes: () => [
+        { index: { lsegCaseId: 1 } },
+        { index: { lsegArticleId: 1 } },
+      ],
     },
   }
 }

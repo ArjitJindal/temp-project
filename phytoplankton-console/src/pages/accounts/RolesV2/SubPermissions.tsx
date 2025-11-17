@@ -13,6 +13,7 @@ import {
 import Checkbox from '@/components/library/Checkbox';
 import { AccountRole, Permission, PermissionsAction, StaticPermissionsNode } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
+import { PERMISSIONS_ACTIONS } from '@/apis/models-custom/PermissionsAction';
 
 interface SubPermissionsProps {
   subPermissions: PermissionNode[];
@@ -196,6 +197,7 @@ const SubPermissions = ({
               className={cn(s.permissionRow, {
                 [s.selected]: selectedSubPermission?.id === permission.id,
               })}
+              style={{ cursor: clickable ? 'pointer' : 'default' }}
               onClick={() => {
                 if (clickable) {
                   setSelectedSubPermission((prev) =>
@@ -217,14 +219,16 @@ const SubPermissions = ({
                 <div>{(permission as StaticPermissionsNode).name || ''}</div>
               </div>
               <div className={s.permissionActions}>
-                {availableActions.map((action) => {
+                {PERMISSIONS_ACTIONS.map((action) => {
+                  const isAvailable = availableActions.includes(action);
+
                   const isChecked = isNodeChecked(permission, action);
                   const actionKey = `${action}-${uniqueKey}`;
 
                   return (
                     <div
                       key={actionKey}
-                      className={s.permissionAction}
+                      className={cn(s.permissionAction, !isAvailable && s.isHidden)}
                       onClick={(e) => {
                         e.stopPropagation();
                       }}

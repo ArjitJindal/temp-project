@@ -43,7 +43,7 @@ export type AutoFilterDataType =
       defaultValue?: number;
       displayAs?: 'input' | 'slider';
     }>
-  | WithSharedAutoFilterProps<{ kind: 'dateRange' }>
+  | WithSharedAutoFilterProps<{ kind: 'dateRange'; picker?: 'date' | 'year' }>
   | WithSharedAutoFilterProps<{ kind: 'dateTimeRange'; min?: number }>
   | WithSharedAutoFilterProps<{ kind: 'year' }>
   | WithSharedAutoFilterProps<{

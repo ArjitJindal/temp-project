@@ -1,7 +1,18 @@
+import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants'
+import groupBy from 'lodash/groupBy'
 import { isV8RuleInstance } from '../utils'
+import { UserFilters } from '../filters'
+import {
+  AuxiliaryIndexUserEvent,
+  RulesEngineUserRepositoryInterface,
+  UserEventAttributes,
+} from '../repositories/user-repository-interface'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import dayjs from '@/utils/dayjs'
+import { LogicAggregationTimeWindowGranularity } from '@/@types/openapi-internal/LogicAggregationTimeWindowGranularity'
+import { zipGenerators } from '@/utils/generator'
 import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 
 export function isConsumerUser(user: User | Business): user is User {
@@ -10,6 +21,74 @@ export function isConsumerUser(user: User | Business): user is User {
 
 export function isBusinessUser(user: User | Business): user is Business {
   return (user as Business).legalEntity !== undefined
+}
+
+export async function groupUsersByGranularity<T>(
+  userEvents: AuxiliaryIndexUserEvent[],
+  aggregator: (userEvents: AuxiliaryIndexUserEvent[]) => Promise<T>,
+  granularity: LogicAggregationTimeWindowGranularity
+): Promise<{ [timeKey: string]: T }> {
+  return groupUsers(
+    userEvents,
+    (userEvent) =>
+      getUserStatsTimeGroupLabel(userEvent.timestamp ?? 0, granularity),
+    aggregator
+  )
+}
+
+export async function groupUsers<T>(
+  userEvents: AuxiliaryIndexUserEvent[],
+  iteratee: (userEvents: AuxiliaryIndexUserEvent) => string,
+  aggregator: (userEvents: AuxiliaryIndexUserEvent[]) => Promise<T>
+): Promise<{ [timeKey: string]: T }> {
+  const groups = groupBy(userEvents, iteratee)
+  const newGroups: { [key: string]: T } = {}
+  for (const group in groups) {
+    newGroups[group] = await aggregator(groups[group])
+  }
+  return newGroups
+}
+
+export async function* getUserEventsGenerator(
+  userId: string | undefined,
+  // to change TODO
+  userRepository: RulesEngineUserRepositoryInterface,
+  options: {
+    afterTimestamp: number
+    beforeTimestamp: number
+    filters: UserFilters
+  },
+  attributesToFetch: Array<UserEventAttributes>,
+  isConsumer: boolean
+): AsyncGenerator<{
+  userEvents: AuxiliaryIndexUserEvent[]
+}> {
+  const { beforeTimestamp, afterTimestamp, filters } = options
+  const usersGenerator = userRepository.getGenericUserEventsGenerator(
+    userId,
+    {
+      afterTimestamp,
+      beforeTimestamp,
+    },
+    {
+      userCreationAgeRange: filters.userCreationAgeRange,
+      userType: filters.userType,
+      userAgeRange: filters.userAgeRange,
+      userIds: filters.userIds,
+      userResidenceCountries: filters.userResidenceCountries,
+      userNationalityCountries: filters.userNationalityCountries,
+      userRegistrationCountries: filters.userRegistrationCountries,
+      acquisitionChannels: filters.acquisitionChannels,
+    },
+    attributesToFetch as Array<UserEventAttributes>,
+    isConsumer
+  )
+
+  for await (const data of zipGenerators(usersGenerator, usersGenerator, [])) {
+    yield {
+      userEvents: data[0],
+    }
+  }
 }
 
 export function isOngoingUserRuleInstance(
@@ -36,6 +115,31 @@ export function isOngoingUserRuleInstance(
     )
   }
   return checkForOngoing(ruleInstance.parameters)
+}
+
+export function getUserStatsTimeGroupLabel(
+  timestamp: number,
+  timeGranularity: LogicAggregationTimeWindowGranularity
+): string {
+  switch (timeGranularity) {
+    case 'minute': {
+      const date = dayjs(timestamp)
+      const minuteGroup = Math.floor(date.minute() / MINUTE_GROUP_SIZE)
+      return dayjs(timestamp).format('YYYY-MM-DD-HH') + `-${minuteGroup}`
+    }
+    case 'day':
+      return dayjs(timestamp).format('YYYY-MM-DD')
+    case 'week': {
+      const time = dayjs(timestamp)
+      return `${time.format('YYYY')}-W${time.week()}`
+    }
+    case 'month':
+      return dayjs(timestamp).format('YYYY-MM')
+    case 'year':
+      return dayjs(timestamp).format('YYYY')
+    default:
+      return dayjs(timestamp).format('YYYY-MM-DD-HH')
+  }
 }
 
 export function isRuleInstanceUpdateOrOnboarding(

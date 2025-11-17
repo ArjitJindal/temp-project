@@ -72,9 +72,15 @@ const createSqsClientConfig = (): SQSClientConfig => {
 
 const createSnsClientConfig = (): SNSClientConfig => {
   const region = process.env.AWS_REGION
-
+  const snsEndpoint = process.env.SNS_VPC_ENDPOINT_URL
   return {
     ...(region ? { region } : {}),
+    ...(snsEndpoint
+      ? {
+          endpoint: snsEndpoint,
+          tls: snsEndpoint.startsWith('https'),
+        }
+      : {}),
   }
 }
 

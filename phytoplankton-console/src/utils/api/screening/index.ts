@@ -10,6 +10,9 @@ import {
   SANCTIONS_WHITELIST_SEARCH,
   SCREENING_PROFILES,
   SEARCH_PROFILES,
+  SANCTIONS_BULK_SEARCH,
+  SANCTIONS_BULK_SEARCH_TERM,
+  SANCTIONS_BULK_SEARCH_TERM_HISTORY,
 } from '@/utils/queries/keys';
 import { useCursorQuery, usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -18,10 +21,13 @@ import {
   GenericSanctionsSearchType,
   SearchProfileResponse,
   ScreeningProfileResponse,
+  FileInfo,
 } from '@/apis';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { map } from '@/utils/queries/types';
+import { SanctionsSearchHistoryItem } from '@/apis/models/SanctionsSearchHistoryItem';
 
 export const useDefaultManualScreeningFilters = () => {
   const api = useApi();
@@ -41,7 +47,7 @@ export const useDefaultManualScreeningFilters = () => {
 
 export const useSanctionsSearch = (params) => {
   const api = useApi();
-  return useCursorQuery(SANCTIONS_SEARCH(params), ({ from }) => {
+  const queryResult = useCursorQuery(SANCTIONS_SEARCH(params), ({ from }) => {
     const { createdAt, searchTerm, types, searchedBy, ...rest } = params;
     const [start, end] = createdAt ?? [];
     return api.getSanctionsSearch({
@@ -51,10 +57,17 @@ export const useSanctionsSearch = (params) => {
       types,
       start: from,
       filterSearchedBy: searchedBy,
-      filterManualSearch: true,
       ...rest,
     });
   });
+
+  return map(queryResult, (data) => ({
+    ...data,
+    items: data.items.map((item: SanctionsSearchHistoryItem) => ({
+      ...item,
+      rowKey: item.batchId ? `${item.batchId}-${item._id}` : item._id,
+    })),
+  }));
 };
 
 export const useSanctionsSources = ({
@@ -86,14 +99,14 @@ export const useSanctionsWhitelist = (params) => {
 };
 
 export const useSanctionsScreeningStats = (params) => {
-  const api = useApi({ debounce: 500 });
+  const api = useApi();
   return useQuery(SANCTIONS_SCREENING_STATS(params), () =>
     api.getSanctionsScreeningActivityStats(params),
   );
 };
 
 export const useSanctionsScreeningDetails = (params) => {
-  const api = useApi({ debounce: 500 });
+  const api = useApi();
   return usePaginatedQuery(SANCTIONS_SCREENING_DETAILS(params), async (paginationParams) => {
     const result = await api.getSanctionsScreeningActivityDetails({
       page: params.page,
@@ -114,7 +127,7 @@ export const useSanctionsScreeningDetails = (params) => {
   });
 };
 
-export const useSanctionHitsQuery = (params, alertId?: string, enabled?: boolean) => {
+export const useSanctionHitsQuery = (params, alertId?: string) => {
   const api = useApi();
   const filters = {
     alertId: alertId,
@@ -147,9 +160,6 @@ export const useSanctionHitsQuery = (params, alertId?: string, enabled?: boolean
         ...request,
         start: request.from,
       });
-    },
-    {
-      enabled: enabled !== false,
     },
   );
 };
@@ -296,6 +306,75 @@ export const useSearchProfileMutations = (onRefetch?: () => void) => {
   );
 
   return { updateStatusMutation, deleteSearchProfileMutation, duplicateSearchProfileMutation };
+};
+
+export const useSanctionsBulkSearch = () => {
+  const api = useApi();
+  return useMutation(
+    async ({ file, reason, filters }: { file: FileInfo; reason: string; filters: any }) => {
+      return api.postSanctionsBulkSearch({
+        SanctionsBulkSearchRequest: {
+          file,
+          reason,
+          filters,
+        },
+      });
+    },
+    {
+      onError: (e) => {
+        message.fatal(`Failed to start bulk screening. ${getErrorMessage(e)}`, e);
+      },
+    },
+  );
+};
+
+export const useSanctionsBulkSearchItems = (
+  opts?: {
+    batchId?: string;
+    from?: string;
+    pageSize?: number;
+  },
+  options?: { enabled?: boolean },
+) => {
+  const api = useApi();
+  return useCursorQuery(
+    SANCTIONS_BULK_SEARCH(opts?.batchId, opts),
+    async ({ from }) => {
+      return api.getSanctionsBulkSearch({
+        batchId: opts?.batchId,
+        start: opts?.from ?? from,
+        pageSize: opts?.pageSize,
+      });
+    },
+    { enabled: options?.enabled ?? true },
+  );
+};
+
+export const useSanctionsBulkSearchResultMap = (searchTermId?: string) => {
+  const api = useApi();
+  return useQuery(
+    SANCTIONS_BULK_SEARCH_TERM(searchTermId),
+    async () => api.getSanctionsBulkSearchSearchTermId({ searchTermId: searchTermId ?? '' }),
+    { enabled: !!searchTermId },
+  );
+};
+
+export const useSanctionsBulkSearchTermHistory = (
+  searchTermId: string | undefined,
+  params: { page?: number; pageSize?: number },
+  options?: { enabled?: boolean },
+) => {
+  const api = useApi();
+  return useQuery(
+    SANCTIONS_BULK_SEARCH_TERM_HISTORY(searchTermId, params),
+    () =>
+      api.getSanctionsBulkSearchSearchTermId({
+        searchTermId: searchTermId ?? '',
+        page: params.page,
+        pageSize: params.pageSize,
+      }),
+    { enabled: (!!searchTermId && (options?.enabled ?? true)) || false },
+  );
 };
 
 export const useScreeningProfileMutations = (onRefetch?: () => void) => {

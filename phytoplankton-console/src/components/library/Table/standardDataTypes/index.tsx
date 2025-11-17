@@ -37,9 +37,9 @@ import {
   RuleNature,
   SanctionsHitStatus as ApiSanctionsHitStatus,
   Tag as ApiTag,
+  TenantSettings,
   TransactionState as ApiTransactionState,
   UserState,
-  TenantSettings,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users/helpers';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
@@ -47,9 +47,9 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT, TIME_FORMAT_WITHOUT_SECONDS } from '@/
 import DatePicker from '@/components/ui/DatePicker';
 import TransactionStateDisplay from '@/components/ui/TransactionStateDisplay';
 import {
-  useTransactionStateLabel,
   useRuleActionLabel,
   useSettings,
+  useTransactionStateLabel,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import CurrencySymbol from '@/components/ui/Currency';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -87,26 +87,14 @@ import { PEP_RANKS } from '@/apis/models-custom/PepRank';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
 
-export const UNKNOWN: Required<Omit<FullColumnDataType<unknown>, 'export'>> &
-  Pick<FullColumnDataType<unknown>, 'export'> = {
+export const UNKNOWN: Required<Omit<FullColumnDataType<unknown>, 'export' | 'renderEdit'>> &
+  Pick<FullColumnDataType<unknown>, 'export' | 'renderEdit'> = {
   render: (value): JSX.Element => {
     if (value == null) {
       return <>{value}</>;
     }
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       return <>{`${value}`}</>;
-    }
-    return <>{JSON.stringify(value)}</>;
-  },
-  renderEdit: (context) => {
-    const [value] = context.edit.state;
-    if (
-      value == null ||
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean'
-    ) {
-      return <>{value}</>;
     }
     return <>{JSON.stringify(value)}</>;
   },

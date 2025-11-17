@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import Intercom from '@intercom/messenger-js-sdk';
+import React, { useEffect } from 'react';
+import Intercom, { show } from '@intercom/messenger-js-sdk';
 import { useAuth0User } from '@/utils/user-utils';
+import { useIntercommToken } from '@/utils/api/auth';
+import { isSuccess } from '@/utils/asyncResource';
+import { dayjs } from '@/utils/dayjs';
 
 interface IntercomProviderProps {}
 
-const IntercomComponent: React.FC<IntercomProviderProps> = (props) => {
+const IntercomComponent: React.FC<IntercomProviderProps> = () => {
   const auth0User = useAuth0User();
-  const [isWidgetInitialized, setWidgetInitialization] = useState(false);
+  const intercomToken = useIntercommToken();
+
   useEffect(() => {
     const widgetKey = INTERCOM_WIDGET_KEY;
     if (!widgetKey) {
@@ -14,23 +18,21 @@ const IntercomComponent: React.FC<IntercomProviderProps> = (props) => {
       return;
     }
 
-    if (!isWidgetInitialized) {
+    if (isSuccess(intercomToken.data)) {
       const userData = {
         userId: auth0User.userId,
-        name: auth0User.name ?? undefined,
-        email: auth0User.verifiedEmail ?? undefined,
-        tenantId: auth0User.tenantId,
-        company: auth0User.tenantId,
+        intercom_user_jwt: intercomToken.data.value,
       };
 
       Intercom({
         app_id: widgetKey,
         ...userData,
+        created_at: dayjs().unix(),
       });
 
-      setWidgetInitialization(true);
+      show();
     }
-  }, [isWidgetInitialized, auth0User, props]);
+  }, [intercomToken, auth0User.userId]);
 
   return null;
 };

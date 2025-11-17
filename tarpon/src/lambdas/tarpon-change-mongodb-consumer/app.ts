@@ -18,6 +18,7 @@ import { NangoRepository } from '../../services/nango/repository'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongo-table-names'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -27,7 +28,11 @@ import {
   DbClients,
   StreamConsumerBuilder,
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
-import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
+import {
+  hasFeature,
+  tenantSettings,
+  updateLogMetadata,
+} from '@/core/utils/context'
 import { isDemoTenant } from '@/utils/tenant-id'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
@@ -50,7 +55,7 @@ import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskService } from '@/services/risk'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
-import { envIsNot } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import { CRMRecord } from '@/@types/openapi-internal/CRMRecord'
 import { CRMRecordLink } from '@/@types/openapi-internal/CRMRecordLink'
 import { addNewSubsegment, traceable } from '@/core/xray'
@@ -62,6 +67,8 @@ import { NotificationRepository } from '@/services/notifications/notifications-r
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { LLMLogObject, linkLLMRequestClickhouse } from '@/utils/llms'
 import { DYNAMO_KEYS } from '@/utils/dynamodb'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import {
   applyNewVersion,
   updateInMongoWithVersionCheck,
@@ -69,6 +76,14 @@ import {
 import { WebhookConfiguration } from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
+import { getOngoingScreeningRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
+import { getBusinessUserNames, hasAnyNameChanged } from '@/utils/user'
+import {
+  getSharedOpensearchClient,
+  opensearchUpdateOne,
+} from '@/utils/opensearch-utils'
+import { getUserName } from '@/utils/helpers'
+import { getSearchIndexName } from '@/utils/mongodb-definitions'
 import { getSQSQueueUrl } from '@/utils/sns-sqs-client'
 
 type RuleStats = {
@@ -354,6 +369,64 @@ export class TarponChangeMongoDbConsumer {
       )
     }
     await casesRepo.syncCaseUsers(internalUser)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const deployingRuleInstances =
+      await ruleInstancesRepo.getDeployingRuleInstances()
+    const riskService = new RiskService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    const deployingFactorsSubSegment = await addNewSubsegment(
+      'StreamConsumer',
+      'handleUser deployingFactors'
+    )
+    const deployingFactors = isRiskScoringEnabled
+      ? (await riskService.getAllRiskFactors()).filter(
+          (factor) => factor.status === 'DEPLOYING'
+        )
+      : []
+    deployingFactorsSubSegment?.close()
+    // Update rule and risk factor aggregation data for the user/ events created when the rule is still deploying
+    if (deployingRuleInstances.length > 0 || deployingFactors.length > 0) {
+      const userEventRepository = new UserEventRepository(tenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+      const latestUserEvent = await userEventRepository.getLatestUserEvent(
+        isConsumerUser(internalUser) ? 'CONSUMER' : 'BUSINESS',
+        internalUser.userId
+      )
+      const v8AggregationSubSegment = await addNewSubsegment(
+        'StreamConsumer',
+        'handleTransaction v8Aggregation'
+      )
+      await Promise.all([
+        ...deployingRuleInstances.map(async (ruleInstance) => {
+          if (!runOnV8Engine(ruleInstance)) {
+            return
+          }
+          await logicEvaluator.handleV8Aggregation(
+            'RULES',
+            ruleInstance.logicAggregationVariables ?? [],
+            {
+              user: internalUser,
+              userEvent: latestUserEvent || undefined,
+            }
+          )
+        }),
+        ...deployingFactors.map(async (factor) => {
+          await logicEvaluator.handleV8Aggregation(
+            'RISK',
+            factor.logicAggregationVariables ?? [],
+            {
+              user: internalUser,
+              userEvent: latestUserEvent || undefined,
+            }
+          )
+        }),
+      ])
+      v8AggregationSubSegment?.close()
+    }
 
     const sanctionsScreeningDetailsRepository =
       new SanctionsScreeningDetailsRepository(tenantId, {
@@ -364,6 +437,42 @@ export class TarponChangeMongoDbConsumer {
       newUser.executedRules?.flatMap((rule) => rule.sanctionsDetails ?? []) ??
         []
     )
+
+    // Add user name to opensearch index for ongoing screening
+    const hasOngoingScreeningRule =
+      getOngoingScreeningRuleInstances(
+        activeRuleInstances,
+        hasFeature('RISK_LEVELS')
+      ).length > 0
+    if (
+      envIs('prod') &&
+      hasOngoingScreeningRule &&
+      hasFeature('SANCTIONS') &&
+      hasAnyNameChanged(newUser, oldUser, savedUser.type)
+    ) {
+      const client = await getSharedOpensearchClient()
+      if (savedUser.type === 'BUSINESS') {
+        const businessUserNames = getBusinessUserNames(savedUser)
+        await opensearchUpdateOne(
+          {
+            id: savedUser.userId,
+            ...businessUserNames,
+          },
+          getSearchIndexName(USERS_COLLECTION(tenantId)),
+          client
+        )
+      } else {
+        const consumerUserName = getUserName(savedUser)
+        await opensearchUpdateOne(
+          {
+            id: savedUser.userId,
+            userName: consumerUserName,
+          },
+          getSearchIndexName(USERS_COLLECTION(tenantId)),
+          client
+        )
+      }
+    }
     subSegment?.close()
   }
 
@@ -460,16 +569,17 @@ export class TarponChangeMongoDbConsumer {
           await logicEvaluator.handleV8Aggregation(
             'RULES',
             ruleInstance.logicAggregationVariables ?? [],
-            transaction,
-            transactionEvents
+            {
+              transaction,
+              transactionEvents,
+            }
           )
         }),
         ...deployingFactors.map(async (factor) => {
           await logicEvaluator.handleV8Aggregation(
             'RISK',
             factor.logicAggregationVariables ?? [],
-            transaction,
-            transactionEvents
+            { transaction, transactionEvents }
           )
         }),
       ])

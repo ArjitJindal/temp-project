@@ -142,7 +142,7 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' updated '}
         <Entity {...props} />
-        {'and waiting for approval'}
+        {'and is waiting for approval'}
         <AsyncResourceRenderer resource={isPendingApprovalRes}>
           {(isPendingApproval) =>
             isPendingApproval ? (
@@ -185,7 +185,7 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' updated '}
         <Entity {...props} />
-        {'and waiting for approval'}
+        {'and is waiting for approval'}
         {riskFactorId && (
           <div
             className={s.buttons}
@@ -229,7 +229,7 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' updated '}
         <Entity {...props} />
-        {'and waiting for approval'}
+        {'and is waiting for approval'}
         {approvalId && userId && (
           <div
             className={s.buttons}
@@ -248,6 +248,14 @@ export default function NotificationMessage(props: Props) {
             </Button>
           </div>
         )}
+      </>
+    );
+  } else if (notification.notificationType === 'API_KEY_EXPIRING') {
+    const apiKeyId = notification.entityId;
+
+    return (
+      <>
+        API key <b>'{apiKeyId}'</b> is approaching its deactivation date.
       </>
     );
   } else {
@@ -271,9 +279,11 @@ function Entity(props: Props) {
   } else if (notification.entityType === 'USER') {
     label = 'a user ';
   } else if (notification.entityType === 'RISK_LEVELS') {
-    label = 'a risk levels ';
+    label = 'risk levels ';
   } else if (notification.entityType === 'RISK_FACTORS') {
     label = 'a risk factor ';
+  } else if (notification.entityType === 'API_KEY') {
+    label = 'a api key ';
   } else {
     label = neverReturn(notification.entityType, 'unknown object');
   }
@@ -288,6 +298,16 @@ function Entity(props: Props) {
 
 function EntityId(props: Props) {
   const { notification } = props;
+
+  // For approval notifications, don't show the entity ID as it's not meaningful
+  if (
+    notification.notificationType === 'RISK_CLASSIFICATION_APPROVAL' ||
+    notification.notificationType === 'RISK_FACTORS_APPROVAL' ||
+    notification.notificationType === 'USER_CHANGES_APPROVAL'
+  ) {
+    return null;
+  }
+
   return <b>‘{notification.entityId}’</b>;
 }
 

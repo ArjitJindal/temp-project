@@ -126,3 +126,74 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION = (
     },
   }
 }
+
+export const USER_SEARCH_INDEX_DEFINITION = (
+  aliasName: string
+): Indices_Create_RequestBody => {
+  return {
+    settings: {
+      analysis: {
+        analyzer: {
+          name_analyzer: {
+            type: 'custom',
+            tokenizer: 'standard',
+            filter: [],
+          },
+        },
+      },
+      index: {
+        number_of_shards: 1,
+        number_of_replicas: 1,
+      },
+    },
+    mappings: {
+      dynamic: 'false',
+      properties: {
+        id: { type: 'keyword' },
+        userName: {
+          type: 'text',
+          fields: {
+            fuzzy: {
+              type: 'text',
+              analyzer: 'name_analyzer',
+            },
+            exact: { type: 'keyword' },
+          },
+        },
+        legalEntityName: {
+          type: 'text',
+          fields: {
+            fuzzy: {
+              type: 'text',
+              analyzer: 'name_analyzer',
+            },
+            exact: { type: 'keyword' },
+          },
+        },
+        shareHoldersNames: {
+          type: 'text',
+          fields: {
+            fuzzy: {
+              type: 'text',
+              analyzer: 'name_analyzer',
+            },
+            exact: { type: 'keyword' },
+          },
+        },
+        directorsNames: {
+          type: 'text',
+          fields: {
+            fuzzy: {
+              type: 'text',
+              analyzer: 'name_analyzer',
+            },
+            exact: { type: 'keyword' },
+          },
+        },
+      },
+    },
+    aliases: {
+      [aliasName]: {},
+    },
+  }
+}

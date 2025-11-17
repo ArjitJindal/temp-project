@@ -2,11 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import s from './index.module.less';
 import { dayjs } from '@/utils/dayjs';
 import Modal from '@/components/library/Modal';
-import Button from '@/components/library/Button';
 import TextArea from '@/components/library/TextArea';
 import NumberInput from '@/components/library/NumberInput';
 import Select from '@/components/library/Select';
-import Alert from '@/components/library/Alert';
+import Toggle from '@/components/library/Toggle';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevel } from '@/utils/risk-levels';
@@ -62,53 +61,41 @@ export default function CraLockModal(props: Props) {
 
   const [editMode, setEditMode] = useState<ModalMode>(mode);
 
-  // Initialize duration based on existing lock or tenant default
-  const initialDuration = useMemo(() => {
-    if (lockData?.lockedAt && lockData?.lockExpiresAt) {
-      // Calculate existing lock duration in hours
-      const durationMs = lockData.lockExpiresAt - lockData.lockedAt;
-      const durationHours = Math.round(durationMs / (1000 * 60 * 60));
-      return durationHours > 0 ? durationHours : settings.craLockTimerHours || 24;
-    }
-    return settings.craLockTimerHours || 24;
-  }, [lockData, settings.craLockTimerHours]);
-
-  // Convert hours to best display unit (days if evenly divisible by 24, hours otherwise)
-  const getDisplayValue = (hours: number) => {
-    if (hours % 24 === 0 && hours >= 24) {
-      return { value: hours / 24, unit: 'days' as const };
-    }
-    return { value: hours, unit: 'hours' as const };
-  };
-
-  // Initialize with appropriate unit based on duration
-  const initialDisplay = useMemo(() => {
-    return getDisplayValue(initialDuration);
-  }, [initialDuration]);
-
-  const [durationValue, setDurationValue] = useState<number>(initialDuration);
-  const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>(initialDisplay.unit);
+  const [hasExpiration, setHasExpiration] = useState<boolean>(false);
+  const [durationDays, setDurationDays] = useState<number>(1);
   const [reason, setReason] = useState('');
 
-  // Reset modal state when opened
+  // Reset modal state when opened - calculate fresh values each time
   useEffect(() => {
     if (isOpen) {
       setEditMode(mode);
       setReason('');
-      const display = getDisplayValue(initialDuration);
-      setDurationValue(initialDuration); // Always store as hours internally
-      setDurationUnit(display.unit); // Set appropriate unit for display
       setRiskLevel(selectedRiskLevel); // Reset risk level for unified mode
-    }
-  }, [isOpen, mode, initialDuration, selectedRiskLevel]);
 
-  // Convert hours to display value based on unit
-  const displayDuration = useMemo(() => {
-    if (durationUnit === 'days') {
-      return durationValue / 24; // Clean division since unit should only be 'days' for multiples of 24
+      // Calculate initial values based on current state
+      // Only treat as existing lock if we're in unlock/edit mode (isLocked = true)
+      if (isLocked && lockData?.lockedAt && lockData?.lockExpiresAt) {
+        // Existing lock with expiration - editing it
+        const durationMs = lockData.lockExpiresAt - lockData.lockedAt;
+        const existingDurationDays = Math.round(durationMs / (1000 * 60 * 60 * 24));
+        const finalDays =
+          existingDurationDays > 0 ? existingDurationDays : settings.craLockTimerDays || 1;
+        setDurationDays(finalDays);
+        setHasExpiration(true);
+      } else if (isLocked && lockData?.lockedAt && !lockData?.lockExpiresAt) {
+        // Existing perpetual lock - default to OFF (perpetual)
+        const finalDays = settings.craLockTimerDays || 1;
+        setDurationDays(finalDays);
+        setHasExpiration(false);
+      } else {
+        // New lock - default to expiration if tenant default is set, otherwise perpetual
+        const defaultDays = settings.craLockTimerDays || 1;
+        setDurationDays(defaultDays);
+        // Default to ON if tenant has default expiration set, otherwise OFF (perpetual)
+        setHasExpiration(settings.craLockTimerDays != null);
+      }
     }
-    return durationValue;
-  }, [durationValue, durationUnit]);
+  }, [isOpen, mode, lockData, settings.craLockTimerDays, selectedRiskLevel, isLocked]);
 
   const handleDurationChange = (value: number | undefined) => {
     if (!value) {
@@ -116,8 +103,7 @@ export default function CraLockModal(props: Props) {
     }
     // Only allow positive integers
     const intValue = Math.max(1, Math.floor(Math.abs(value)));
-    const hours = durationUnit === 'days' ? intValue * 24 : intValue;
-    setDurationValue(hours);
+    setDurationDays(intValue);
   };
 
   const getTitle = () => {
@@ -137,7 +123,7 @@ export default function CraLockModal(props: Props) {
 
   const getButtonText = () => {
     if (isUnifiedMode) {
-      return 'Update and Lock';
+      return 'Update and lock';
     }
 
     switch (editMode) {
@@ -152,21 +138,20 @@ export default function CraLockModal(props: Props) {
   const getReasonPlaceholder = () => {
     switch (editMode) {
       case 'lock':
-        return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam';
+        return 'Write a narrative explaining the risk level override reason.';
       case 'unlock':
-        return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam';
+        return 'Write a narrative explaining the risk level unlock reason.';
       case 'edit':
-        return 'Add a reason for the updates made';
+        return 'Write a narrative explaining the change in risk level lock duration.';
     }
   };
 
   const handleConfirm = () => {
-    // Calculate releaseAt timestamp from displayed duration (not internal durationValue)
+    // Calculate releaseAt timestamp
+    // For perpetual locks (hasExpiration = false), releaseAt is undefined
     let releaseAt: number | undefined = undefined;
-    if (editMode !== 'unlock' && displayDuration) {
-      // Convert displayed duration to hours based on current unit
-      const hoursFromDisplay = durationUnit === 'days' ? displayDuration * 24 : displayDuration;
-      const durationMs = hoursFromDisplay * 60 * 60 * 1000; // Convert hours to milliseconds
+    if (editMode !== 'unlock' && hasExpiration && durationDays) {
+      const durationMs = durationDays * 24 * 60 * 60 * 1000; // Convert days to milliseconds
       releaseAt = Date.now() + durationMs;
     }
 
@@ -187,7 +172,11 @@ export default function CraLockModal(props: Props) {
 
   const showDurationInputs = editMode === 'lock' || editMode === 'edit';
   const showExistingDates = editMode === 'unlock';
-  const hasExpirationData = lockData?.lockedAt && lockData?.lockExpiresAt;
+  const hasExpirationData = lockData?.lockExpiresAt; // Lock exists with expiration
+  const isPerpetualLock = isLocked && !lockData?.lockExpiresAt; // Lock exists but no expiration
+
+  // Check if trying to lock perpetually when already locked perpetually (no-op)
+  const isNoOpPerpetualLock = isPerpetualLock && editMode === 'lock' && !hasExpiration;
 
   return (
     <Modal
@@ -198,7 +187,7 @@ export default function CraLockModal(props: Props) {
       onOk={handleConfirm}
       okProps={{
         isLoading: isLoading,
-        isDisabled: !reason.trim() || (isUnifiedMode && !riskLevel),
+        isDisabled: !reason.trim() || (isUnifiedMode && !riskLevel) || isNoOpPerpetualLock,
       }}
     >
       <div className={s.container}>
@@ -209,24 +198,31 @@ export default function CraLockModal(props: Props) {
               CRA risk level <span className={s.requiredAsterisk}>*</span>
             </label>
             <RiskLevelSwitch value={riskLevel} onChange={setRiskLevel} />
-            {lockData?.currentRiskLevel && (
-              <div style={{ marginTop: '8px' }}>
-                <Alert type="INFO">
-                  Current risk level: <strong>{lockData.currentRiskLevel}</strong>
-                  {hasExpirationData && (
-                    <span> • Locked until: {formatDate(lockData.lockExpiresAt)}</span>
-                  )}
-                </Alert>
-              </div>
-            )}
           </div>
         )}
 
-        {/* From Field */}
+        {/* Set Expiration Toggle - only show in lock/edit mode */}
+        {showDurationInputs && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Toggle
+              value={hasExpiration}
+              onChange={(enabled) => {
+                setHasExpiration(enabled ?? false);
+                if (enabled && !durationDays) {
+                  // Use tenant default if set, otherwise fall back to 1 day
+                  setDurationDays(settings.craLockTimerDays || 1);
+                }
+              }}
+            />
+            <span>Set expiration</span>
+          </div>
+        )}
+
+        {/* From - To Fields */}
         <div className={s.fieldRow}>
           <div className={s.fieldColumn}>
             <label className={s.fieldLabel}>
-              From <span className={s.requiredAsterisk}>*</span>
+              Lock from <span className={s.requiredAsterisk}>*</span>
             </label>
             {showExistingDates ? (
               <Select
@@ -256,78 +252,72 @@ export default function CraLockModal(props: Props) {
               To <span className={s.requiredAsterisk}>*</span>
             </label>
             {showDurationInputs ? (
-              <div className={s.durationInputs}>
-                <div className={s.durationValue}>
-                  <NumberInput
-                    value={displayDuration}
-                    onChange={handleDurationChange}
-                    min={1}
-                    max={
-                      durationUnit === 'days'
-                        ? MAX_CRA_LOCK_DURATION_DAYS
-                        : MAX_CRA_LOCK_DURATION_DAYS * 24
-                    }
-                  />
+              hasExpiration ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ flex: 1 }}>
+                    <NumberInput
+                      value={durationDays}
+                      onChange={handleDurationChange}
+                      min={1}
+                      max={MAX_CRA_LOCK_DURATION_DAYS}
+                    />
+                  </div>
+                  <span>days</span>
                 </div>
-                <div className={s.durationUnit}>
-                  <Select
-                    value={durationUnit}
-                    onChange={(value) => {
-                      const newUnit = value as 'hours' | 'days';
-                      if (newUnit) {
-                        setDurationUnit(newUnit);
-                        // Convert the current value when switching units
-                        if (newUnit === 'days' && durationUnit === 'hours') {
-                          // Only convert if hours are divisible by 24 and >= 24
-                          if (durationValue >= 24 && durationValue % 24 === 0) {
-                            // Keep the current hour value, just changing display unit
-                          } else {
-                            // Reset to 1 day (24 hours) if can't convert cleanly
-                            setDurationValue(24);
-                          }
-                        } else if (newUnit === 'hours' && durationUnit === 'days') {
-                          // No conversion needed since durationValue is already in hours
-                        }
-                      }
-                    }}
-                    options={[
-                      { value: 'hours', label: 'hours' },
-                      { value: 'days', label: 'days' },
-                    ]}
-                    allowClear={false}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className={s.unlockActions}>
+              ) : (
                 <Select
-                  value={
-                    hasExpirationData ? formatDate(lockData?.lockExpiresAt) : 'No expiration set'
-                  }
-                  options={[
-                    {
-                      value: hasExpirationData
-                        ? formatDate(lockData?.lockExpiresAt)
-                        : 'No expiration set',
-                      label: hasExpirationData
-                        ? formatDate(lockData?.lockExpiresAt)
-                        : 'No expiration set',
-                    },
-                  ]}
+                  value="Perpetual"
+                  options={[{ value: 'Perpetual', label: 'Perpetual' }]}
                   isDisabled
                   allowClear={false}
                 />
-                <Button type="TETRIARY" onClick={() => setEditMode('edit')}>
-                  {hasExpirationData ? 'Edit expiry' : 'Set expiry'}
-                </Button>
-              </div>
+              )
+            ) : (
+              <Select
+                value={
+                  hasExpirationData
+                    ? formatDate(lockData?.lockExpiresAt)
+                    : isPerpetualLock
+                    ? 'Perpetual'
+                    : 'No expiration set'
+                }
+                options={[
+                  {
+                    value: hasExpirationData
+                      ? formatDate(lockData?.lockExpiresAt)
+                      : isPerpetualLock
+                      ? 'Perpetual'
+                      : 'No expiration set',
+                    label: hasExpirationData
+                      ? formatDate(lockData?.lockExpiresAt)
+                      : isPerpetualLock
+                      ? 'Perpetual'
+                      : 'No expiration set',
+                  },
+                ]}
+                isDisabled
+                allowClear={false}
+              />
             )}
           </div>
         </div>
 
-        {/* Info Alert for Edit Mode */}
-        {editMode === 'edit' && (
-          <Alert type="INFO">Editing the expiry would override previous configuration</Alert>
+        {/* Edit expiry link - show below From/To in unlock mode */}
+        {!showDurationInputs && (
+          <div>
+            <a
+              onClick={() => {
+                setEditMode('edit');
+                // When setting expiry on a perpetual lock, default toggle to ON for convenience
+                if (isPerpetualLock) {
+                  setHasExpiration(true);
+                }
+              }}
+              style={{ color: '#1890ff', cursor: 'pointer', fontSize: '14px' }}
+            >
+              {hasExpirationData ? 'Edit expiry' : 'Set expiry'}
+            </a>
+          </div>
         )}
 
         {/* Reason Field */}
@@ -341,6 +331,7 @@ export default function CraLockModal(props: Props) {
             placeholder={getReasonPlaceholder()}
             rows={4}
             minHeight="100px"
+            noResize
           />
         </div>
       </div>

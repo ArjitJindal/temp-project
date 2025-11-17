@@ -18,7 +18,7 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
   config: Config
   lambdaExecutionRole: IRole
   functionProps: Partial<FunctionProps>
-  zendutyCloudWatchTopic: Topic
+  zendutyCloudWatchTopic?: Topic
 }
 
 export class CdkTarponPythonStack extends cdk.NestedStack {

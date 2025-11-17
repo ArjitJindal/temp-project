@@ -1,16 +1,7 @@
+import { ApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import { Workflow } from './index'
 import { RoleService } from '@/services/roles'
 import { AccountsService } from '@/services/accounts'
-import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
-import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
-import { UserUpdateApprovalWorkflow } from '@/@types/openapi-internal/UserUpdateApprovalWorkflow'
-import { WorkflowType } from '@/@types/openapi-internal/WorkflowType'
-import { FLAGRIGHT_SYSTEM_USER } from '@/utils/user'
-
-type ApprovalWorkflow =
-  | RiskLevelApprovalWorkflow
-  | RiskFactorsApprovalWorkflow
-  | UserUpdateApprovalWorkflow
 
 interface AutoSkipResult {
   shouldSkip: boolean
@@ -28,23 +19,6 @@ function isApprovalWorkflow(workflow: Workflow): workflow is ApprovalWorkflow {
   )
 }
 
-export async function createDefaultWorkflow(
-  workflowType: WorkflowType
-): Promise<Workflow> {
-  const defaultWorkflow: Workflow = {
-    id: '_default',
-    workflowType: workflowType as any,
-    version: Date.now(),
-    name: `Default ${workflowType} Workflow`,
-    description: `Default workflow for approving ${workflowType} changes`,
-    author: FLAGRIGHT_SYSTEM_USER,
-    enabled: true,
-    approvalChain: ['reviewer'],
-  }
-
-  return defaultWorkflow
-}
-
 /**
  * Determines if the proposer should skip the first approval step
  * @param proposerId - The ID of the user who proposed the change (createdBy)
@@ -55,7 +29,7 @@ export async function createDefaultWorkflow(
  */
 export async function shouldSkipFirstApprovalStep(
   proposerId: string,
-  workflow: Workflow,
+  workflow: ApprovalWorkflow,
   tenantId: string,
   dynamoDb: any
 ): Promise<AutoSkipResult> {
@@ -84,7 +58,7 @@ export async function shouldSkipFirstApprovalStep(
 
     // Get role service and check if proposer has the first approver role
     const roleService = RoleService.getInstance(dynamoDb)
-    const usersWithFirstApproverRole = await roleService.getUsersByRoleName(
+    const usersWithFirstApproverRole = await roleService.getUsersByRole(
       firstApproverRole,
       tenant
     )

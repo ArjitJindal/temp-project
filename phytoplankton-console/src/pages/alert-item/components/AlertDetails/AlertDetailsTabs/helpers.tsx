@@ -1,16 +1,18 @@
 import React, { useMemo } from 'react';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
+import { ADDRESS_SEPARATOR } from '@flagright/lib/utils';
 import styles from './index.module.less';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
 import TransactionsTab from './TransactionsTab';
 import CommentsTab from './CommentsTab';
 import ActivityTab from './ActivityTab';
+import { MediaCheckArticlesTab } from './MediaCheckArticlesTab';
 import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
-import { ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL } from '@/utils/queries/keys';
 import { SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 import { isSuccess } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
@@ -46,6 +48,7 @@ import CRMRecords from '@/pages/users-item/UserDetails/CRMMonitoring/CRMRecords'
 import CRMDataComponent from '@/pages/users-item/UserDetails/CRMMonitoring/CRMResponse';
 import Tooltip from '@/components/library/Tooltip';
 import { useCaseDetails } from '@/utils/api/cases';
+import { getPaymentDetailsIdString } from '@/utils/payments';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -60,6 +63,7 @@ export enum AlertTabs {
   TRANSACTION_INSIGHTS = 'transaction-insights',
   EXPECTED_TRANSACTION_LIMITS = 'expected-transaction-limits',
   CRM = 'crm',
+  MEDIA_CHECK_ARTICLES = 'media-check-articles',
 }
 
 const DEFAULT_TAB_LISTS: AlertTabs[] = [
@@ -79,6 +83,7 @@ const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.AI_FORENSICS,
   AlertTabs.MATCH_LIST,
   AlertTabs.CLEARED_MATCH_LIST,
+  AlertTabs.MEDIA_CHECK_ARTICLES,
   AlertTabs.CHECKLIST,
   AlertTabs.TRANSACTIONS,
   AlertTabs.COMMENTS,
@@ -156,6 +161,8 @@ export function useChangeSanctionsHitsStatusMutation(): {
       },
       onSuccess: async (_, variables) => {
         message.success(`Done!`);
+        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
+
         for (const { alertId } of variables.toChange) {
           await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
         }
@@ -243,6 +250,8 @@ export function useAlertTabs(props: Props): TabItem[] {
 
   const caseQueryResult = useCaseDetails(alert.caseId ?? undefined);
   const userQueryResult = useUserDetails(caseUserId);
+
+  const isMediaCheckArticlesEnabled = useFeatureEnabled('LSEG_API');
 
   const tabs: TabItem[] = useMemo(() => {
     return tabList
@@ -343,6 +352,13 @@ export function useAlertTabs(props: Props): TabItem[] {
             ),
           };
         }
+        if (tab === AlertTabs.MEDIA_CHECK_ARTICLES && isMediaCheckArticlesEnabled) {
+          return {
+            title: 'Media check articles',
+            key: tab,
+            children: <MediaCheckArticlesTab alert={alert} />,
+          };
+        }
         if (tab === AlertTabs.USER_DETAILS) {
           return {
             title: `${firstLetterUpper(settings.userAlias)} details`,
@@ -373,10 +389,67 @@ export function useAlertTabs(props: Props): TabItem[] {
           };
         }
         if (tab === AlertTabs.TRANSACTION_INSIGHTS) {
+          if (!isSuccess(caseQueryResult.data)) {
+            return null;
+          }
+          const caseItem = caseQueryResult.data.value;
+          let entityId: string = '';
+
+          switch (caseItem.subjectType) {
+            case 'USER': {
+              const user =
+                caseItem?.caseUsers?.origin ?? caseItem?.caseUsers?.destination ?? undefined;
+              entityId = user?.userId ?? '';
+              break;
+            }
+            case 'PAYMENT': {
+              const pm =
+                caseItem?.paymentDetails?.origin ??
+                caseItem?.paymentDetails?.destination ??
+                undefined;
+
+              const paymentId = pm ? getPaymentDetailsIdString(pm) : '';
+              entityId = paymentId === '-' ? '' : paymentId;
+              break;
+            }
+            case 'NAME': {
+              entityId = caseItem?.name?.origin ?? caseItem?.name?.destination ?? '';
+              break;
+            }
+            case 'ADDRESS': {
+              const address =
+                caseItem?.address?.origin ?? caseItem?.address?.destination ?? undefined;
+              // don't change the order in which we concat the addresses, they are seperated based on this order during filtering
+              entityId = address
+                ? [
+                    address.addressLines.length > 0
+                      ? address.addressLines.join(ADDRESS_SEPARATOR)
+                      : '',
+                    address.city ?? '',
+                    address.state ?? '',
+                    address.postcode ?? '',
+                    address.country ?? '',
+                  ].join(ADDRESS_SEPARATOR)
+                : '';
+              break;
+            }
+            case 'EMAIL': {
+              entityId = caseItem?.email?.origin ?? caseItem?.email?.destination ?? '';
+              break;
+            }
+            default:
+          }
+
           return {
             title: 'Transaction insights',
             key: tab,
-            children: <InsightsCard userId={caseUserId} />,
+            children: (
+              <InsightsCard
+                userId={caseUserId}
+                caseSubject={caseItem.subjectType}
+                entityId={entityId}
+              />
+            ),
             captureEvents: true,
           };
         }
@@ -453,6 +526,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     settings.crmIntegrationName,
     isFreshDeskCrmEnabled,
     isEmbedded,
+    isMediaCheckArticlesEnabled,
   ]);
 
   return tabs;

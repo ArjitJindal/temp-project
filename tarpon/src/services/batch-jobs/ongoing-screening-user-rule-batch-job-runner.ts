@@ -28,6 +28,19 @@ import { getSearchIndexName } from '@/utils/mongodb-definitions'
 import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
+export const getOngoingScreeningRuleInstances = (
+  ruleInstances: readonly RuleInstance[],
+  isRiskLevelsEnabled: boolean
+) => {
+  return ruleInstances.filter((ruleInstance) => {
+    const schedule = ruleInstance.userRuleRunCondition?.schedule
+    if (schedule) {
+      return false
+    }
+    return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
+  })
+}
+
 export async function getOngoingScreeningUserRuleInstances(
   tenantId: string,
   dynamoDb?: DynamoDBDocumentClient
@@ -40,17 +53,11 @@ export async function getOngoingScreeningUserRuleInstances(
     dynamoDb,
   })
 
-  const ruleInstances = (
-    await ruleInstanceRepository.getActiveRuleInstances('USER')
-  ).filter((ruleInstance) => {
-    const schedule = ruleInstance.userRuleRunCondition?.schedule
-    if (schedule) {
-      return false
-    }
-    return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
-  })
+  const ruleInstances = await ruleInstanceRepository.getActiveRuleInstances(
+    'USER'
+  )
 
-  return ruleInstances
+  return getOngoingScreeningRuleInstances(ruleInstances, isRiskLevelsEnabled)
 }
 
 @traceable

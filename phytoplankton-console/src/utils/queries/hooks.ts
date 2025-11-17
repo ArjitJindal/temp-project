@@ -28,10 +28,14 @@ export function useQuery<
     'queryKey' | 'queryFn' | 'initialData'
   > & { initialData?: () => undefined; backgroundFetch?: boolean },
 ): QueryResult<TData> {
-  const results = useQueryRQ<TQueryFnData, string, TData, TQueryKey>(queryKey, queryFn, options);
+  const { backgroundFetch, ...rqOptions } = options ?? {};
+  const results = useQueryRQ<TQueryFnData, string, TData, TQueryKey>(queryKey, queryFn, {
+    ...(rqOptions as any),
+    ...(backgroundFetch === false ? { keepPreviousData: false } : {}),
+  });
   return convertQueryResult(results, {
     isQueryEnabled: options?.enabled ?? true,
-    backgroundFetch: options?.backgroundFetch ?? false,
+    backgroundFetchEnabled: backgroundFetch !== false,
   });
 }
 
@@ -46,7 +50,6 @@ export function useQueries<T>({
   return results.map((x: any) =>
     convertQueryResult(x, {
       isQueryEnabled: true,
-      backgroundFetch: false,
     }),
   );
 }
@@ -70,35 +73,42 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
   results: UseQueryResult<TData, string>,
   params: {
     isQueryEnabled: boolean;
-    backgroundFetch: boolean;
+    backgroundFetchEnabled?: boolean;
   },
 ): QueryResult<TData> {
-  const { isQueryEnabled, backgroundFetch } = params;
+  const { isQueryEnabled, backgroundFetchEnabled = true } = params;
   if (!isQueryEnabled) {
     return {
       data: init(),
       refetch: results.refetch,
     };
   }
-  if (results.isLoading) {
-    return {
-      data: loading<TData>(results.data ?? null),
-      refetch: results.refetch,
-    };
+  if (results.status === 'loading' || results.isFetching) {
+    const hasPreviousData = results.data != null;
+    if (backgroundFetchEnabled && hasPreviousData) {
+      return {
+        data: success<TData>(results.data as TData),
+        refetch: results.refetch,
+        isRefreshing: true,
+      };
+    }
+    if (results.status === 'loading') {
+      return {
+        data: loading<TData>(null),
+        refetch: results.refetch,
+        isRefreshing: false,
+      };
+    }
+    // When backgroundFetchEnabled is false and we're fetching without prior data
+    if (!backgroundFetchEnabled && results.isFetching) {
+      return {
+        data: loading<TData>(null),
+        refetch: results.refetch,
+        isRefreshing: false,
+      };
+    }
   }
-  if (results.isFetching && !backgroundFetch) {
-    return {
-      data: loading<TData>(results.data),
-      refetch: results.refetch,
-    };
-  }
-  if (results.isSuccess) {
-    return {
-      data: success<TData>(results.data),
-      refetch: results.refetch,
-    };
-  }
-  if (results.isError) {
+  if (results.status === 'error') {
     let error = results.error as any;
     while (error) {
       if (error instanceof NotFoundError) {
@@ -112,7 +122,11 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
       refetch: results.refetch,
     };
   }
-  throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
+  return {
+    data: success<TData>(results.data as TData),
+    refetch: results.refetch,
+    isRefreshing: results.isFetching,
+  };
 }
 
 export type PaginatedData<T> = {

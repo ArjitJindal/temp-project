@@ -1,9 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { CommonParams, TableColumn, TableRefType } from '@/components/library/Table/types';
 import { RuleMLModel } from '@/apis';
@@ -13,10 +9,9 @@ import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
 import Tag from '@/components/library/Tag';
 import Tooltip from '@/components/library/Tooltip';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
-import { message } from '@/components/library/Message';
 import Toggle from '@/components/library/Toggle';
-import { useAuth0User, useHasMinimumPermission } from '@/utils/user-utils';
+import { useHasMinimumPermission } from '@/utils/user-utils';
+import { usePaginatedRuleMlModels, useUpdateRuleMlModel } from '@/utils/api/rules';
 
 interface TableSearchParams extends CommonParams {
   modelId?: string;
@@ -25,49 +20,12 @@ interface TableSearchParams extends CommonParams {
 }
 
 export const MlModelsPage = () => {
-  const api = useApi();
   const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
   });
-  const auth0User = useAuth0User();
 
-  const queryResult = usePaginatedQuery(
-    MACHINE_LEARNING_MODELS(params),
-    async (_paginationParams) => {
-      const result = await api.getRuleMlModels({
-        modelId: params.modelId,
-        modelType: params.modelType,
-        modelName: params.modelName,
-      });
-      return {
-        items: result,
-        total: result.length,
-      };
-    },
-  );
-
-  const updateModelMutation = useMutation(
-    async (mlModel: RuleMLModel) => {
-      await api.updateRuleMlModelModelId({
-        modelId: mlModel.id,
-        RuleMLModel: mlModel,
-      });
-      return mlModel;
-    },
-    {
-      onSuccess: (mlModel) => {
-        message.success(`Model ${mlModel.enabled ? 'enabled' : 'disabled'} successfully`, {
-          details: `${capitalizeNameFromEmail(auth0User?.name || '')} ${
-            mlModel.enabled ? 'enabled' : 'disabled'
-          } the model ${mlModel.id}`,
-        });
-        queryResult.refetch();
-      },
-      onError: (error: Error) => {
-        message.error(`Error: ${error.message}`);
-      },
-    },
-  );
+  const queryResult = usePaginatedRuleMlModels(params);
+  const updateModelMutation = useUpdateRuleMlModel(() => queryResult.refetch());
 
   const hasWriteAccess = useHasMinimumPermission(['write:::rules/ai-models/*']);
 

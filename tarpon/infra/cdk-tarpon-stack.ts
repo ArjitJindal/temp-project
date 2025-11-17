@@ -6,6 +6,7 @@ import {
   BillingMode,
   ITable,
   Table,
+  TableProps,
 } from 'aws-cdk-lib/aws-dynamodb'
 import {
   BlockPublicAccess,
@@ -135,6 +136,8 @@ import {
 import { siloDataTenants } from '@flagright/lib/constants/silo-data-tenants'
 import { Domain, EngineVersion } from 'aws-cdk-lib/aws-opensearchservice'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
+import { CdkTarponDynamoDBAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-dynamodb-alarms-stack'
+import { CdkTarponLambdaAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-lambda-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
 import {
@@ -168,7 +171,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
-const enableFargateBatchJob = false
+const enableFargateBatchJob = true
 const FEATURE = 'feature'
 
 const FEATURES = {
@@ -179,11 +182,15 @@ const FEATURES = {
 // TODO make this equal to !isQaEnv before merge
 const deployKinesisConsumer = !isQaEnv()
 
+type ExtendedFlagrightRegion = FlagrightRegion | 'asia-2'
+
 export class CdkTarponStack extends cdk.Stack {
   config: Config
-  zendutyCloudWatchTopic: Topic
+  zendutyCloudWatchTopic?: Topic
   functionProps: Partial<FunctionProps>
   sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
+  snsInterfaceVpcEndpoint?: InterfaceVpcEndpoint | null
+  isMinimumInfraStack: boolean = false
 
   private addTagsToResource(
     resource: IConstruct,
@@ -199,28 +206,32 @@ export class CdkTarponStack extends cdk.Stack {
       env: config.env,
     })
     this.config = config
+    this.isMinimumInfraStack =
+      config.env.region === 'asia-2' && config.stage === 'prod'
 
     /**
      * SQS & SNS
      */
 
-    const ZendutyCloudWatchTopic = new Topic(
-      this,
-      StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
-      {
-        displayName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
-        topicName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
-      }
-    )
-    this.zendutyCloudWatchTopic = ZendutyCloudWatchTopic
+    if (!this.isMinimumInfraStack) {
+      const ZendutyCloudWatchTopic = new Topic(
+        this,
+        StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+        {
+          displayName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+          topicName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+        }
+      )
+      this.zendutyCloudWatchTopic = ZendutyCloudWatchTopic
 
-    new Subscription(this, StackConstants.ZENDUTY_SUBSCRIPTION_NAME, {
-      topic: this.zendutyCloudWatchTopic,
-      endpoint: config.application.ZENDUTY_WEBHOOK_URL
-        ? config.application.ZENDUTY_WEBHOOK_URL
-        : '',
-      protocol: SubscriptionProtocol.HTTPS,
-    })
+      new Subscription(this, StackConstants.ZENDUTY_SUBSCRIPTION_NAME, {
+        topic: this.zendutyCloudWatchTopic,
+        endpoint: config.application.ZENDUTY_WEBHOOK_URL
+          ? config.application.ZENDUTY_WEBHOOK_URL
+          : '',
+        protocol: SubscriptionProtocol.HTTPS,
+      })
+    }
 
     const actionProcessingQueue = this.createQueue(
       SQSQueues.ACTION_PROCESSING_QUEUE_NAME.name,
@@ -251,6 +262,15 @@ export class CdkTarponStack extends cdk.Stack {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         fifo: true,
         retentionPeriod: Duration.days(7),
+      }
+    )
+
+    const preAggregationQueue = this.createQueue(
+      SQSQueues.PRE_AGGREGATION_QUEUE.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
 
@@ -444,29 +464,32 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * DynamoDB
      */
+
+    const enableContributorInsights: boolean = !this.isMinimumInfraStack
+
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.TARPON,
       tarponStream,
       true,
-      true
+      enableContributorInsights
     )
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.TARPON_RULE,
       undefined,
       undefined,
-      true
+      enableContributorInsights
     )
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.HAMMERHEAD,
       tarponStream,
       undefined,
-      true
+      enableContributorInsights
     )
     this.createDynamodbTable(
       DYNAMODB_TABLE_NAMES.TRANSIENT,
       undefined,
       true,
-      true
+      enableContributorInsights
     )
     // Currently only creating for eu-2
     if (config.region === 'eu-2' && envIs('prod')) {
@@ -474,7 +497,7 @@ export class CdkTarponStack extends cdk.Stack {
         DYNAMODB_TABLE_NAMES.AGGREGATION,
         undefined,
         true,
-        true
+        enableContributorInsights
       )
     }
 
@@ -716,6 +739,9 @@ export class CdkTarponStack extends cdk.Stack {
         BATCH_RERUN_USERS_QUEUE_URL: getSQSQueueName(
           batchRerunUsersQueue.queueUrl
         ),
+        PRE_AGGREGATION_QUEUE_URL: getSQSQueueName(
+          preAggregationQueue.queueUrl
+        ),
       },
     }
 
@@ -726,7 +752,7 @@ export class CdkTarponStack extends cdk.Stack {
     // On production the role name was set without a suffix, it's dangerous for us
     // to change without downtime.
     if (
-      (this.config.stage === 'prod' && config.region !== 'asia-2') ||
+      (this.config.stage === 'prod' && !this.isMinimumInfraStack) ||
       (this.config.stage === 'sandbox' && config.region !== 'eu-1')
     ) {
       lambdaRoleName += `-${config.region}`
@@ -805,6 +831,7 @@ export class CdkTarponStack extends cdk.Stack {
             slackAlertQueue.queueArn,
             transactionAggregationQueue.queueArn,
             requestLoggerQueue.queueArn,
+            preAggregationQueue.queueArn,
             notificationQueue.queueArn,
             tarponEventQueue.queueArn,
             secondaryTarponEventQueue.queueArn,
@@ -913,6 +940,7 @@ export class CdkTarponStack extends cdk.Stack {
       vpc,
       vpcCidr
     )
+    this.snsInterfaceVpcEndpoint = this.createSnsVpcEndpoint(vpc, vpcCidr)
 
     Metric.grantPutMetricData(lambdaExecutionRole)
     Metric.grantPutMetricData(lambdaExecutionRoleWithLogsListing)
@@ -1150,7 +1178,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
     secondaryAsyncRule.addEventSource(
       new SqsEventSource(secondaryAsyncRuleQueue, {
-        maxConcurrency: 5,
+        maxConcurrency: 700,
         batchSize: 1,
       })
     )
@@ -1205,6 +1233,24 @@ export class CdkTarponStack extends cdk.Stack {
         batchSize: 1,
         maxConcurrency:
           this.config.resource.TRANSACTION_AGGREGATION_MAX_CONCURRENCY,
+      })
+    )
+
+    /* Pre Aggregation Consumer */
+    const { alias: preAggregationConsumer } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PRE_AGGREGATION_CONSUMER_FUNCTION_NAME,
+        memorySize: this.config.resource.PRE_AGGREGATION_LAMBDA.MEMORY_SIZE,
+      },
+      heavyLibLayer
+    )
+
+    preAggregationConsumer.addEventSource(
+      new SqsEventSource(preAggregationQueue, {
+        batchSize: 1,
+        maxConcurrency: this.config.resource.PRE_AGGREGATION_MAX_CONCURRENCY,
       })
     )
 
@@ -1318,15 +1364,18 @@ export class CdkTarponStack extends cdk.Stack {
         heavyLibLayer
       )
     const batchJobRunnerLogGroupName = batchJobRunnerHandler.logGroup
-    createFinCENSTFPConnectionAlarm(
-      this,
-      this.zendutyCloudWatchTopic,
-      batchJobRunnerLogGroupName,
-      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
-        'Alarm',
-      StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
-        'Metric'
-    )
+
+    if (this.zendutyCloudWatchTopic) {
+      createFinCENSTFPConnectionAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        batchJobRunnerLogGroupName,
+        StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
+          'Alarm',
+        StackConstants.CONSOLE_API_FINCEN_SFTP_CONNECTION_ERROR_ALARM_NAME +
+          'Metric'
+      )
+    }
     let ecsBatchJobTask: Chain | null = null
     if (!isQaEnv() || enableFargateBatchJob) {
       const fargateBatchJobTaskDefinition = createFargateTaskDefinition(
@@ -1501,7 +1550,8 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Cron jobs */
-    if (!isDevUserStack) {
+    // do not run cron jobs for asia-2 region or on dev user stack
+    if (!this.isMinimumInfraStack && !isDevUserStack) {
       // Monthly
       const { func: cronJobMonthlyHandler } = createFunction(
         this,
@@ -1555,7 +1605,10 @@ export class CdkTarponStack extends cdk.Stack {
       let triggerMinute: string = '0'
 
       if (envIs('prod') && config.region) {
-        const triggerTime: Record<FlagrightRegion, Record<string, string>> = {
+        const triggerTime: Record<
+          ExtendedFlagrightRegion,
+          Record<string, string>
+        > = {
           'eu-1': { hour: '22', minute: '15' }, // 10:15 PM UTC
           'eu-2': { hour: '00', minute: '15' }, // 12:00 AM UTC
           'asia-2': { hour: '18', minute: '45' }, // 06:45 PM UTC
@@ -1586,6 +1639,7 @@ export class CdkTarponStack extends cdk.Stack {
       apiMetricsRule.addTarget(new LambdaFunctionTarget(cronJobDailyHandler))
 
       // Every ten minutes
+
       const { func: cronJobTenMinuteHandler } = createFunction(
         this,
         lambdaExecutionRole,
@@ -1620,7 +1674,7 @@ export class CdkTarponStack extends cdk.Stack {
         let minute = '0'
 
         if (envIs('prod') && config.region) {
-          const triggerTime: Record<FlagrightRegion, string> = {
+          const triggerTime: Record<ExtendedFlagrightRegion, string> = {
             'eu-1': '0',
             'eu-2': '5',
             'asia-2': '10',
@@ -1785,13 +1839,15 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.zendutyCloudWatchTopic,
-      publicApiLogGroup,
-      StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicApi.restApiName
-    )
+    if (this.zendutyCloudWatchTopic) {
+      createAPIGatewayThrottlingAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        publicApiLogGroup,
+        StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
+        publicApi.restApiName
+      )
+    }
 
     // Public Console API
     const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
@@ -1803,13 +1859,15 @@ export class CdkTarponStack extends cdk.Stack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      this.zendutyCloudWatchTopic,
-      publicConsoleApiLogGroup,
-      StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
-      publicConsoleApi.restApiName
-    )
+    if (this.zendutyCloudWatchTopic) {
+      createAPIGatewayThrottlingAlarm(
+        this,
+        this.zendutyCloudWatchTopic,
+        publicConsoleApiLogGroup,
+        StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
+        publicConsoleApi.restApiName
+      )
+    }
 
     if (isDevUserStack) {
       const apiKey = ApiKey.fromApiKeyId(this, `api-key`, getQaApiKeyId())
@@ -1882,12 +1940,29 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     // Nested stacks
-    if (!isDevUserStack) {
+    if (!isDevUserStack && this.zendutyCloudWatchTopic) {
       new CdkTarponAlarmsStack(this, `${config.stage}-tarpon-alarms`, {
         config,
         batchJobStateMachineArn: batchJobStateMachine.stateMachineArn,
         zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       })
+
+      new CdkTarponDynamoDBAlarmsStack(
+        this,
+        `${config.stage}-tarpon-dynamodb-alarms`,
+        {
+          config,
+          zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
+        }
+      )
+
+      new CdkTarponLambdaAlarmsStack(
+        this,
+        `${config.stage}-tarpon-lambda-alarms`,
+        {
+          zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
+        }
+      )
 
       if (this.config.region !== 'me-1' && this.config.region !== 'asia-3') {
         new CdkBudgetStack(this, `${config.stage}-tarpon-budget`, {
@@ -2416,7 +2491,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (isDevUserStack) {
       return Table.fromTableName(this, tableName, tableName)
     }
-    const tableProps: any = {
+    const tableProps: TableProps = {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
       sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
@@ -2425,7 +2500,7 @@ export class CdkTarponStack extends cdk.Stack {
       billingMode: this.config.resource.DYNAMODB
         .BILLING_MODE as unknown as BillingMode,
       kinesisStream,
-      pointInTimeRecovery: true,
+      pointInTimeRecovery: !this.isMinimumInfraStack,
       removalPolicy:
         this.config.stage === 'dev'
           ? RemovalPolicy.DESTROY
@@ -2458,6 +2533,111 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     return stream
+  }
+
+  private createSqsInterfaceVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null
+  ): InterfaceVpcEndpoint | null {
+    return this.createInterfaceVpcEndpoint(
+      vpc,
+      vpcCidr,
+      InterfaceVpcEndpointAwsService.SQS,
+      {
+        endpointName: 'SqsInterfaceEndpoint',
+        endpointSecurityGroupName: 'SqsInterfaceEndpointSecurityGroup',
+        description: 'Security group for SQS Interface Endpoint',
+      },
+      { Name: 'SqsInterfaceEndpoint', Service: 'SQS' }
+    )
+  }
+
+  private createSnsVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null
+  ): InterfaceVpcEndpoint | null {
+    return this.createInterfaceVpcEndpoint(
+      vpc,
+      vpcCidr,
+      InterfaceVpcEndpointAwsService.SNS,
+      {
+        endpointName: 'SnsInterfaceEndpoint',
+        endpointSecurityGroupName: 'SnsInterfaceEndpointSecurityGroup',
+        description: 'Security group for SNS Interface Endpoint',
+      },
+      { Name: 'SnsInterfaceEndpoint', Service: 'SNS' }
+    )
+  }
+
+  private createInterfaceVpcEndpoint(
+    vpc: Vpc | null,
+    vpcCidr: string | null,
+    service: InterfaceVpcEndpointAwsService,
+    options: {
+      endpointName: string
+      endpointSecurityGroupName: string
+      description: string
+    },
+    tags: { Name: string; Service: string }
+  ): InterfaceVpcEndpoint | null {
+    if (
+      !vpc ||
+      !this.config.resource.LAMBDA_VPC_ENABLED ||
+      (envIsNot('prod') && envIsNot('sandbox'))
+    ) {
+      return null
+    }
+
+    const privateSubnets = vpc.selectSubnets({
+      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+      onePerAz: true,
+    })
+
+    const endpointSecurityGroup = new SecurityGroup(
+      this,
+      getResourceNameForTarpon(options.endpointSecurityGroupName),
+      {
+        vpc,
+        allowAllOutbound: true,
+        description: options.description,
+      }
+    )
+
+    if (vpcCidr) {
+      endpointSecurityGroup.addIngressRule(
+        Peer.ipv4(vpcCidr),
+        Port.tcp(443),
+        'Allow HTTPS from within VPC'
+      )
+    }
+
+    const interfaceVpcEndpoint = vpc.addInterfaceEndpoint(
+      getResourceNameForTarpon(options.endpointName),
+      {
+        service,
+        subnets: { subnets: privateSubnets.subnets },
+        securityGroups: [endpointSecurityGroup],
+        privateDnsEnabled: true,
+      }
+    )
+
+    this.addTagsToResource(endpointSecurityGroup, {
+      Name: options.endpointSecurityGroupName,
+      Stage: this.config.stage,
+    })
+
+    this.addTagsToResource(interfaceVpcEndpoint, {
+      ...tags,
+      Stage: this.config.stage,
+    })
+
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
+      new CfnOutput(this, `${tags.Service} Interface VPC Endpoint ID`, {
+        value: interfaceVpcEndpoint.vpcEndpointId,
+      })
+    }
+
+    return interfaceVpcEndpoint
   }
 
   private createKinesisEventSource(
@@ -2551,74 +2731,12 @@ export class CdkTarponStack extends cdk.Stack {
     return s3VpcEndpoint
   }
 
-  private createSqsInterfaceVpcEndpoint(
-    vpc: Vpc | null,
-    vpcCidr: string | null
-  ): InterfaceVpcEndpoint | null {
-    if (
-      !vpc ||
-      !this.config.resource.LAMBDA_VPC_ENABLED ||
-      (envIsNot('prod') && envIsNot('sandbox'))
-    ) {
-      return null
-    }
-
-    const privateSubnets = vpc.selectSubnets({
-      subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-      onePerAz: true, // prevents multiple subnets in the same AZ trying to attach the same endpoint
-    })
-
-    const sqsEndpointSecurityGroup = new SecurityGroup(
-      this,
-      getResourceNameForTarpon('SqsInterfaceEndpointSecurityGroup'),
-      {
-        vpc,
-        allowAllOutbound: true,
-        description: 'Security group for SQS Interface Endpoint',
-      }
-    )
-
-    if (vpcCidr) {
-      sqsEndpointSecurityGroup.addIngressRule(
-        Peer.ipv4(vpcCidr),
-        Port.tcp(443),
-        'Allow HTTPS from within VPC'
-      )
-    }
-
-    const sqsInterfaceVpcEndpoint = vpc.addInterfaceEndpoint(
-      getResourceNameForTarpon('SqsInterfaceEndpoint'),
-      {
-        service: InterfaceVpcEndpointAwsService.SQS,
-        subnets: { subnets: privateSubnets.subnets },
-        securityGroups: [sqsEndpointSecurityGroup],
-        privateDnsEnabled: true,
-      }
-    )
-
-    this.addTagsToResource(sqsEndpointSecurityGroup, {
-      Name: 'SqsInterfaceEndpointSecurityGroup',
-      Stage: this.config.stage,
-    })
-
-    this.addTagsToResource(sqsInterfaceVpcEndpoint, {
-      Name: 'SqsInterfaceEndpoint',
-      Service: 'SQS',
-      Stage: this.config.stage,
-    })
-
-    if (this.config.resource.LAMBDA_VPC_ENABLED) {
-      new CfnOutput(this, 'SQS Interface VPC Endpoint ID', {
-        value: sqsInterfaceVpcEndpoint.vpcEndpointId,
-      })
-    }
-
-    return sqsInterfaceVpcEndpoint
-  }
-
   private createMongoAtlasVpc() {
     // Enable VPC forsandbox, and prod stages
-    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
+    if (
+      (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') ||
+      this.isMinimumInfraStack
+    ) {
       return {
         vpc: null,
         vpcCidr: null,

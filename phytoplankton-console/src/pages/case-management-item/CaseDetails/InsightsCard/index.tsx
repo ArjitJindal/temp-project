@@ -9,11 +9,11 @@ import InsightCard from './components/InsightCard';
 import * as Card from '@/components/ui/Card';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TransactionsList from '@/pages/case-management-item/CaseDetails/InsightsCard/TransactionsList';
-import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
+import { CaseSubjectType, SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
+import { QueryResult } from '@/utils/queries/types';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { dayjs } from '@/utils/dayjs';
 import { useTransactionStats } from '@/utils/api/transactions';
-import { QueryResult } from '@/utils/queries/types';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -24,11 +24,13 @@ export const FIXED_API_PARAMS = {
 
 interface Props {
   userId: string;
+  caseSubject?: CaseSubjectType;
+  entityId?: string;
   title?: string;
 }
 
 export default function InsightsCard(props: Props) {
-  const { userId } = props;
+  const { userId, caseSubject, entityId } = props;
   const settings = useSettings();
   const [selectorParams, setSelectorParams] = useState<Params>({
     selectedRuleActions: [],
@@ -38,6 +40,8 @@ export default function InsightsCard(props: Props) {
     currency: (settings?.defaultValues?.currency ?? 'USD') as unknown as Currency,
     aggregateBy: 'status' as AggregateByField,
     timeRange: [dayjs().subtract(3, 'month'), dayjs()],
+    caseSubject: caseSubject,
+    entityId: entityId,
   });
   const statsQueryResult = useTransactionStats({
     type: 'by-type',

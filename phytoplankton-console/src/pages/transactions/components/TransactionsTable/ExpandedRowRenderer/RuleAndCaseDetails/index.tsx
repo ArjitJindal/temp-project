@@ -10,7 +10,7 @@ import { P } from '@/components/ui/Typography';
 import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useRuleOptions } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/api/rules';
 import { PRIORITY } from '@/components/library/Table/standardDataTypes';
 import { usePaginatedAlertList } from '@/utils/api/alerts';
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;

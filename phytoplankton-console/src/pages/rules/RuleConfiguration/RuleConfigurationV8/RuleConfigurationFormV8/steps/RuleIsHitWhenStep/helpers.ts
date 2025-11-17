@@ -175,8 +175,9 @@ export function useRuleLogicBuilderConfig(
     ...(entityVariablesToShow ?? []),
   ]);
   const configResChanged = useIsChanged(ruleLogicConfigsRes);
+  const isVarsTypeChanged = useIsChanged(entityVariableTypes);
   useEffect(() => {
-    if (!(configResChanged || variablesChanged)) {
+    if (!(configResChanged || variablesChanged || isVarsTypeChanged)) {
       return;
     }
     setResult(
@@ -357,8 +358,8 @@ export function useRuleLogicBuilderConfig(
     entityVariablesToShow,
     mlVariables,
     settings,
+    isVarsTypeChanged,
   ]);
-
   return result;
 }
 

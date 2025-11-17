@@ -96,14 +96,16 @@ components:
               type: string
               enum: [alert]
 
-    BaseApprovalWorkflow:
+    # Unified approval workflow type for all approval workflows
+    ApprovalWorkflow:
       allOf:
         - $ref: '#/components/schemas/BaseWorkflow'
         - type: object
           properties:
             workflowType:
               type: string
-              enum: [risk-levels-approval, risk-factors-approval, rule-approval]
+              enum: [change-approval]
+              description: Unified workflow type for all approval workflows
             approvalChain:
               type: array
               items:
@@ -112,50 +114,6 @@ components:
           required:
             - workflowType
             - approvalChain
-
-    RiskLevelApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/BaseApprovalWorkflow'
-        - type: object
-          properties:
-            workflowType:
-              type: string
-              enum: [risk-levels-approval]
-          required:
-            - workflowType
-
-    RiskFactorsApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/BaseApprovalWorkflow'
-        - type: object
-          properties:
-            workflowType:
-              type: string
-              enum: [risk-factors-approval]
-          required:
-            - workflowType
-
-    UserUpdateApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/BaseApprovalWorkflow'
-        - type: object
-          properties:
-            workflowType:
-              type: string
-              enum: [user-update-approval]
-          required:
-            - workflowType
-
-    RuleApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/BaseApprovalWorkflow'
-        - type: object
-          properties:
-            workflowType:
-              type: string
-              enum: [rule-approval]
-          required:
-            - workflowType
 
     WorkflowResponse:
       type: object
@@ -170,21 +128,11 @@ components:
       oneOf:
         - $ref: '#/components/schemas/CaseWorkflow'
         - $ref: '#/components/schemas/AlertWorkflow'
-        - $ref: '#/components/schemas/RiskLevelApprovalWorkflow'
-        - $ref: '#/components/schemas/RiskFactorsApprovalWorkflow'
-        - $ref: '#/components/schemas/RuleApprovalWorkflow'
+        - $ref: '#/components/schemas/ApprovalWorkflow'
 
     WorkflowType:
       type: string
-      enum:
-        [
-          case,
-          alert,
-          risk-levels-approval,
-          risk-factors-approval,
-          user-update-approval,
-          rule-approval,
-        ]
+      enum: [case, alert, change-approval]
 
     # Creation schemas for AWS API Gateway compatibility
     CreateBaseWorkflow:
@@ -205,7 +153,7 @@ components:
         - description
         - enabled
 
-    CreateBaseApprovalWorkflow:
+    CreateApprovalWorkflow:
       allOf:
         - $ref: '#/components/schemas/CreateBaseWorkflow'
         - type: object
@@ -217,22 +165,6 @@ components:
               description: List of roles that are part of the approval chain
           required:
             - approvalChain
-
-    CreateRiskLevelApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
-
-    CreateUserUpdateApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
-
-    CreateRuleApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
-
-    CreateRiskFactorsApprovalWorkflow:
-      allOf:
-        - $ref: '#/components/schemas/CreateBaseApprovalWorkflow'
 
     CreateBaseCaseAlertWorkflow:
       allOf:

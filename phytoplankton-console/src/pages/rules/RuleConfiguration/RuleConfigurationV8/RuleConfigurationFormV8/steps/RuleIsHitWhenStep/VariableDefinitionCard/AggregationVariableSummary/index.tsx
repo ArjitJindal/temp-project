@@ -77,7 +77,7 @@ export default function AggregationVariableSummary({
         : 'sender or receiver '
       : '';
   let userLabel = '';
-  if (type === 'USER_TRANSACTIONS') {
+  if (type === 'USER_TRANSACTIONS' || type === 'USER_DETAILS') {
     userLabel = settings.userAlias ?? 'user';
   } else if (type === 'PAYMENT_DETAILS_TRANSACTIONS') {
     userLabel = 'payment ID';
@@ -96,7 +96,10 @@ export default function AggregationVariableSummary({
     'of',
     aggFieldLabel ? <b key="agg-field-label">{aggFieldLabel}</b> : undefined,
     aggFieldLabel ? 'in' : undefined,
-    <b key="text-direction-label">{txDirectionLabel} transactions</b>,
+    <b key="text-direction-label">
+      {type === 'USER_DETAILS' ? '' : txDirectionLabel}{' '}
+      {type === 'USER_DETAILS' ? 'user events' : 'transactions'}
+    </b>,
     aggGroupByFieldLabel ? (
       <span key="agg-group-by-field-label">
         (with the same <b>{aggGroupByFieldLabel}</b>)
@@ -109,7 +112,11 @@ export default function AggregationVariableSummary({
     </b>,
     lastNEntities ? (
       <>
-        for last <b key="last-n-entities"> {lastNEntities} transactions</b>
+        for last{' '}
+        <b key="last-n-entities">
+          {' '}
+          {lastNEntities} {type === 'USER_DETAILS' ? 'user events' : 'transactions'}
+        </b>
       </>
     ) : (
       <>

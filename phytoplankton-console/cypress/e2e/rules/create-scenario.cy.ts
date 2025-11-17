@@ -40,7 +40,7 @@ describe('Create scenario', () => {
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
     cy.wait('@ruleLogicConfig', { timeout: 120000 }).then((interception) => {
       expect(interception.response?.statusCode).to.oneOf([200, 304]);
-      createAggregationVariable('Variable 2', 'type');
+      createAggregationVariable('Variable 2', 'type', type);
       if (type === 'USER') {
         createEntityVariable('User ID', type);
       } else {
@@ -72,14 +72,14 @@ describe('Create scenario', () => {
         const ruleInstanceId = interception.response?.body?.id;
         cy.message('A new rule has been created successfully').should('exist');
         cy.messageBody(`rule ${ruleInstanceId}`).should('exist');
-        editRule(ruleInstanceId);
+        editRule(ruleInstanceId, type);
         cy.visit(`/rules/my-rules/${ruleInstanceId}`);
         cy.deleteRuleInstance(ruleInstanceId);
       });
     });
   }
 
-  function editRule(ruleInstanceId: string) {
+  function editRule(ruleInstanceId: string, type: 'TRANSACTION' | 'USER') {
     cy.visit('/rules/my-rules');
     cy.get('td[data-cy="ruleId"]', { timeout: 15000 }).each((element, index) => {
       const ruleId = element[0].innerText;
@@ -93,7 +93,11 @@ describe('Create scenario', () => {
           checkConditionsCount(2, 'HIGH');
           checkConditionsCount(2, 'VERY_HIGH');
           checkConditionsCount(2, 'VERY_LOW');
-          createAggregationVariable('Variable 3', 'transaction id');
+          if (type === 'TRANSACTION') {
+            createAggregationVariable('Variable 3', 'transaction id', type);
+          } else {
+            createAggregationVariable('Variable 3', 'user id', type);
+          }
           addCondition('Variable 3', 10, true);
           cy.get('input[data-cy="rule-action-selector"]').eq(1).click();
           cy.get('[data-cy="apply-to-risk-levels"]').click();
@@ -144,11 +148,19 @@ describe('Create scenario', () => {
     cy.get('button[data-cy="modal-ok"]').first().click();
   }
 
-  function createAggregationVariable(variableName, variableAggregateField) {
+  function createAggregationVariable(
+    variableName,
+    variableAggregateField,
+    type: 'TRANSACTION' | 'USER',
+  ) {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
     cy.get('[role="menuitem"]').contains('Aggregate variable').click();
     cy.get('input[data-cy="variable-name-v8"]').type(`${variableName}`).blur();
-    cy.get('input[data-cy="variable-tx-direction-v8"]').eq(0).click();
+    if (type === 'TRANSACTION') {
+      cy.get('input[data-cy="variable-tx-direction-v8"]').eq(0).click();
+    } else if (type === 'USER') {
+      cy.get('input[data-cy="variable-type-v8"]').eq(1).click();
+    }
     cy.get('[data-cy="variable-aggregate-field-v8"]')
       .click()
       .type(`${variableAggregateField}`)

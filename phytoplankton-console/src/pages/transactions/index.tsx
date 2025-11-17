@@ -71,7 +71,7 @@ const TableList = () => {
 
   const { queryResult, countQueryResult } = usePaginatedTransactionList(params);
 
-  const flatImportEnabled = useFeatureEnabled('FLAT_FILES_IMPORT_TRANSACTIONS');
+  const flatImportEnabled = useFeatureEnabled('FLAT_FILES_IMPORT');
 
   return (
     <PageWrapper

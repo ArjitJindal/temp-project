@@ -44,6 +44,11 @@ export type BulkApplyMarkerTransactionData = {
   transactionId: string
   direction: 'origin' | 'destination'
 }[]
+
+export type BulkApplyMarkerUserData = {
+  userId: string
+}[]
+
 export const TIME_SLICE_COUNT = 5
 // Increment this version when we need to invalidate all existing aggregations.
 const GLOBAL_AGG_VERSION = 'v1'
@@ -260,6 +265,36 @@ export class AggregationRepository {
       })
     await batchWrite(this.dynamoDb, writeRequests, this.aggregationDynamoTable)
   }
+  public async bulkMarkUserEventApplied(
+    aggregationVariable: LogicAggregationVariable,
+    applyMarkerUserData: BulkApplyMarkerUserData
+  ) {
+    const writeRequests: BatchWriteRequestInternal[] = applyMarkerUserData.map(
+      (data) => {
+        const keys =
+          DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_USER_EVENT_MARKER(
+            this.tenantId,
+            getAggVarHash(aggregationVariable) +
+              this.getBackfillVersionSuffix(),
+            data.userId
+          )
+        const request = {
+          PutRequest: {
+            Item: {
+              ...keys,
+              ttl: this.getUpdatedTtlAttribute(aggregationVariable),
+            },
+          },
+        }
+        return request
+      }
+    )
+    await batchWrite(
+      this.dynamoDb,
+      writeRequests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
+  }
 
   public async setTransactionApplied(
     aggregationVariable: LogicAggregationVariable,
@@ -281,6 +316,24 @@ export class AggregationRepository {
     await this.dynamoDb.send(new PutCommand(putItemInput))
   }
 
+  public async setUserEventApplied(
+    aggregationVariable: LogicAggregationVariable,
+    eventId: string
+  ): Promise<void> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_USER_EVENT_MARKER(
+          this.tenantId,
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
+          eventId
+        ),
+        ttl: this.getUpdatedTtlAttribute(aggregationVariable),
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+  }
+
   public async isTransactionApplied(
     aggregationVariable: LogicAggregationVariable,
     direction: 'origin' | 'destination',
@@ -293,6 +346,23 @@ export class AggregationRepository {
         direction,
         getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
         transactionId
+      ),
+      ConsistentRead: true,
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    return Boolean(result.Item)
+  }
+
+  public async isUserEventApplied(
+    aggregationVariable: LogicAggregationVariable,
+    eventId: string
+  ): Promise<boolean> {
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_USER_EVENT_MARKER(
+        this.tenantId,
+        getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
+        eventId
       ),
       ConsistentRead: true,
     }
@@ -341,6 +411,27 @@ export class AggregationRepository {
       ),
     }
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+  }
+  public async setUserAggregationVariableReady(
+    aggregationVariable: LogicAggregationVariable,
+    userKeyId: string,
+    lastTransactionTimestamp: number
+  ): Promise<void> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
+          this.tenantId,
+          userKeyId,
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix()
+        ),
+        lastTransactionTimestamp,
+        ttl: this.backfillNamespace
+          ? this.getBackfillTTL()
+          : Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds(),
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
   }
 
   public async isAggregationVariableReady(

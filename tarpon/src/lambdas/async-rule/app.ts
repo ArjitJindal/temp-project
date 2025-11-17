@@ -228,7 +228,8 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
             const lockKeys =
               isConcurrentAsyncRulesEnabled &&
               envIsNot('test', 'local') &&
-              !isMultiplexed
+              !isMultiplexed &&
+              tenantId !== '4c9cdf0251'
                 ? getLockKeys(record.body)
                 : []
 

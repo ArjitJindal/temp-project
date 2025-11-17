@@ -39,7 +39,7 @@ import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntit
 import { SourceDocument } from '@/@types/openapi-internal/SourceDocument'
 import { generateHashFromString } from '@/utils/object'
 import { hasFeature, tenantSettings } from '@/core/utils/context'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 
 const pipelineAsync = promisify(pipeline)
 
@@ -638,7 +638,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
     runFullLoad?: boolean
   ) {
     const opensearchClient = hasFeature('OPEN_SEARCH')
-      ? await getOpensearchClient()
+      ? await getSharedOpensearchClient()
       : undefined
     const types = this.getEntityTypesToLoad(entityType)
     const fullExtractPersonRepo = this.getFullExtractRepo(

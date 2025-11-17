@@ -165,6 +165,8 @@ export const useTransactionStats = ({
     referenceCurrency,
     afterTimestamp: selectorParams.timeRange?.[0]?.valueOf(),
     beforeTimestamp: selectorParams.timeRange?.[1]?.valueOf(),
+    caseSubject: selectorParams.caseSubject,
+    entityId: selectorParams.entityId,
   };
   return useQuery(
     TRANSACTIONS_STATS(type, { ...selectorParams, referenceCurrency, userId }),

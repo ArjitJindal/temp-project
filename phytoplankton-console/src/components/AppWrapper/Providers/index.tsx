@@ -15,7 +15,6 @@ import { PostHogProviderWrapper } from './PostHogProvider';
 import SessionTimeoutProvider from './SessionTimeoutDetector';
 import ActiveSessionProvider from './ActiveSessionsProvider';
 import StatementsProviderMock from './mocks/StatementsProvider';
-import CluesoTokenProvider from './CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
 import ToastsProvider from '@/components/AppWrapper/Providers/ToastsProvider';
 
@@ -54,7 +53,6 @@ const AllProviders = withProviders(
   SideBarProvider,
   DemoModeProvider,
   SuperAdminModeProvider,
-  CluesoTokenProvider,
 );
 export function StorybookMockProviders(props: Props) {
   return <StoryBookProviders>{props.children}</StoryBookProviders>;

@@ -1,15 +1,15 @@
 import React from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useRuleQueue } from '../../../rules/util';
 import Tooltip from '@/components/library/Tooltip';
 import Tag from '@/components/library/Tag';
+import { useRuleQueue } from '@/utils/api/rules';
 
 interface Props {
   queueId?: string;
 }
 
 const RuleQueueTag: React.FC<Props> = ({ queueId }) => {
-  const [ruleQueue, isLoading] = useRuleQueue(queueId);
+  const { ruleQueue, isLoading } = useRuleQueue(queueId ?? '');
   return (
     <Tag>
       {isLoading ? (

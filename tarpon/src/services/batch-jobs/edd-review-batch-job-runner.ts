@@ -14,7 +14,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3'
-import { marked } from 'marked'
+// import { marked } from 'marked'
 import { v4 as uuidv4 } from 'uuid'
 import { ReportRepository } from '../sar/repositories/report-repository'
 import { PDFExtractionService } from '../pdf-extraction'
@@ -35,7 +35,12 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3Client } from '@/utils/s3'
 import { getSecretByName } from '@/utils/secrets-manager'
-import { getAddress, getPersonName, getUserName } from '@/utils/helpers'
+import {
+  formatShareHolderName,
+  getAddress,
+  getPersonName,
+  getUserName,
+} from '@/utils/helpers'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { logger } from '@/core/logger'
 import { ModelTier } from '@/utils/llms/base-service'
@@ -57,6 +62,7 @@ import { Report } from '@/@types/openapi-internal/Report'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { LegalEntity } from '@/@types/openapi-internal/LegalEntity'
 
 type TransactionAmountData = TransactionAmountAggregates
 
@@ -127,7 +133,11 @@ interface MemoizedData {
   sanctionsInformation: Partial<SanctionsHit>[]
   management: Record<
     string,
-    { name: string; directors: Person[]; shareholders: Person[] }
+    {
+      name: string
+      directors: Person[]
+      shareholders: (Person | LegalEntity)[]
+    }
   >
   auth0User: Account | null
   sars: Report[]
@@ -667,7 +677,11 @@ export class EddReviewBatchJobRunner extends BatchJobRunner {
   ) {
     const management: Record<
       string,
-      { name: string; directors: Person[]; shareholders: Person[] }
+      {
+        name: string
+        directors: Person[]
+        shareholders: (Person | LegalEntity)[]
+      }
     > = {}
 
     if (parentUser) {
@@ -1134,7 +1148,7 @@ export class EddReviewBatchJobRunner extends BatchJobRunner {
         name: m.name,
         directorNames: m.directors.map((d) => getPersonName(d)).join(', '),
         shareholderNames: m.shareholders
-          .map((s) => getPersonName(s))
+          .map((s) => formatShareHolderName(s))
           .join(', '),
       }
     })
@@ -1169,7 +1183,7 @@ export class EddReviewBatchJobRunner extends BatchJobRunner {
     }
 
     const shareHolders = compact(
-      user.shareHolders?.map((s) => getPersonName(s))
+      user.shareHolders?.map((s) => formatShareHolderName(s))
     )
 
     const directors = compact(user.directors?.map((d) => getPersonName(d)))
@@ -1757,7 +1771,11 @@ ${financialInformationText}
 
       Object.values(management).forEach((m) => {
         namesToSearch.push(...m.directors.map((d) => getPersonName(d)))
-        namesToSearch.push(...m.shareholders.map((s) => getPersonName(s)))
+        namesToSearch.push(
+          ...(m.shareholders
+            .map((s) => formatShareHolderName(s))
+            .filter((s) => s !== undefined) as string[])
+        )
       })
 
       const uniqNamesToSearch = uniq(namesToSearch).filter((n) => n !== '-')
@@ -1899,6 +1917,7 @@ ${financialInformationText}
         .map((r) => `- [${r.title}](${r.url})`)
         .join('\n')}
       `
+      const { default: marked } = await import('marked')
       const html = await marked.parse(finalText)
 
       this.executionLogs.push(

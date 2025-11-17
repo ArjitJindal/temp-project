@@ -14,7 +14,7 @@ import { AllParams, TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Tag from '@/components/library/Tag';
 import Id from '@/components/ui/Id';
-import { useRules } from '@/utils/rules';
+import { useRules } from '@/utils/api/rules';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { SANCTIONS_SCREENING_ENTITYS } from '@/apis/models-custom/SanctionsScreeningEntity';
 import { BOOLEAN } from '@/components/library/Table/standardDataTypes';

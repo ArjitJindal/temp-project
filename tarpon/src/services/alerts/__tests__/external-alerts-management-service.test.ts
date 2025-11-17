@@ -3,7 +3,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { CaseRepository } from '@/services/cases/repository'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { AlertCreationRequest } from '@/@types/openapi-public-management/AlertCreationRequest'
 import {
   getTestTransaction,

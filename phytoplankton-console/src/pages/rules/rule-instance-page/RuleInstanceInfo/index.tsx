@@ -7,12 +7,7 @@ import {
   humanizeConstant,
 } from '@flagright/lib/utils/humanize';
 import { setUserAlias } from '@flagright/lib/utils/userAlias';
-import {
-  getRuleInstanceDisplayId,
-  isShadowRule,
-  isV8RuleInstance,
-  useUpdateRuleInstance,
-} from '../../utils';
+import { getRuleInstanceDisplayId, isShadowRule, isV8RuleInstance } from '../../utils';
 import { canSimulate } from '../../my-rules';
 import { RuleStatusSwitch } from '../../components/RuleStatusSwitch';
 import s from './styles.module.less';
@@ -41,6 +36,7 @@ import AccountTag from '@/components/AccountTag';
 import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useUpdateRuleInstance } from '@/utils/api/rules';
 
 interface Props {
   ruleInstance: RuleInstance;

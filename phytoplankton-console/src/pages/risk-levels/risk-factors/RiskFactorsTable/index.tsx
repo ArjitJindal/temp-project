@@ -212,6 +212,7 @@ export default function RiskFactorsTable(props: Props) {
             activeIterationIndex={activeIterationIndex}
           />
         )}
+        key={selectedSection}
       />
     </>
   );

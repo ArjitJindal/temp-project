@@ -1,17 +1,5 @@
 import uniq from 'lodash/uniq'
-import {
-  userStatsColumns,
-  userStatsMVQuery,
-} from './queries/user-stats-clickhouse'
-import {
-  transactionStatsColumns,
-  getTransactionStatsClickhouseMVQuery,
-} from './queries/transaction-stats-clickhouse'
-import { ruleStatsTransactionsMVQuery } from './queries/rule-stats-clickhouse'
-import {
-  investigationTimesStatsColumns,
-  getCreateInvestigationTimesStatsClickhouseMVQuery,
-} from './queries/investgation-times-stats-clickhouse'
+import { ADDRESS_SEPARATOR } from '@flagright/lib/utils'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
@@ -53,6 +41,46 @@ const generatePaymentDetailColumns = (prefix: string) =>
           `${prefix}PaymentDetails_${field} String MATERIALIZED JSONExtractString(data, '${prefix}PaymentDetails', '${field}')`
       )
   )
+
+const generatePaymentDetailAddressColums = () => {
+  // example materialed key originPaymentDetails_address_bankAddress -> Origin address1{{*}}Origin address2{{*}}city1{{*}}{{*}}{{*}}
+  // address field will change based on payment method id
+  return ['origin', 'destination']
+    .map((direction) => {
+      const addressFields = ['address', 'shippingAddress', 'bankAddress']
+      return addressFields.map((addressField) => {
+        return `${direction}PaymentDetails_address_${addressField} String MATERIALIZED
+      trimBoth(
+        replaceRegexpAll(
+          concat(
+            arrayStringConcat(
+              JSONExtract(data, '${direction}PaymentDetails', '${addressField}', 'addressLines', 'Array(String)'),
+              '${ADDRESS_SEPARATOR}'
+            ),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.city'), ''),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.state'), ''),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.postcode'), ''),
+            '${ADDRESS_SEPARATOR}',
+            COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.${addressField}.country'), '')
+          ),
+          '\\s+', ' '
+        )
+      )
+      `
+      })
+    })
+    .flat()
+}
+
+const generatePaymentDetailEmailColums = () => {
+  // example materialed key originPaymentDetails_email -> baran@flagright.com
+  return ['origin', 'destination'].map((direction) => {
+    return `${direction}PaymentDetails_email String MATERIALIZED COALESCE(JSON_VALUE(data, '$.${direction}PaymentDetails.emailId'), '')`
+  })
+}
 
 export const userNameMaterilizedColumn = `username String MATERIALIZED 
         IF(
@@ -275,6 +303,10 @@ const sharedTransactionMaterializedColumns = [
   `createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')`,
   `updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')`,
   `paymentApprovalTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'paymentApprovalTimestamp')`,
+
+  // columns for filtering based on caseSubjectType
+  ...generatePaymentDetailAddressColums(),
+  ...generatePaymentDetailEmailColums(),
 ]
 
 const businessIndustryMaterializedColumn = (
@@ -359,66 +391,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         orderBy: 'id',
         table:
           CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
-      },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .TRANSACTION_MONTHLY_STATS.viewName,
-        columns: transactionStatsColumns.map((c) => `${c.name} ${c.type}`),
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        table:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .TRANSACTION_MONTHLY_STATS.table,
-        query: getTransactionStatsClickhouseMVQuery(
-          'toStartOfMonth(toDateTime(timestamp / 1000))'
-        ),
-      },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .TRANSACTION_DAILY_STATS.viewName,
-        columns: transactionStatsColumns.map((c) => `${c.name} ${c.type}`),
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        table:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .TRANSACTION_DAILY_STATS.table,
-        query: getTransactionStatsClickhouseMVQuery(
-          'toDate(toDateTime(timestamp / 1000))'
-        ),
-      },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .TRANSACTION_HOURLY_STATS.viewName,
-        columns: transactionStatsColumns.map((c) => `${c.name} ${c.type}`),
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        table:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .TRANSACTION_HOURLY_STATS.table,
-        query: getTransactionStatsClickhouseMVQuery(
-          'toStartOfHour(toDateTime(timestamp / 1000))'
-        ),
-      },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .RULE_STATS_HOURLY.viewName,
-        columns: ['time DateTime', 'ruleId String', 'ruleInstanceId String'],
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: '(time, ruleId, ruleInstanceId)',
-        table:
-          CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews
-            .RULE_STATS_HOURLY.table,
-        query: ruleStatsTransactionsMVQuery(
-          'toStartOfHour(toDateTime(timestamp / 1000))'
-        ),
       },
       {
         viewName:
@@ -541,6 +513,17 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `hitRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
         JSONExtract(JSONExtractRaw(data, 'hitRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
       `linkedEntities_parentUserId String MATERIALIZED JSONExtractString(data, 'linkedEntities', 'parentUserId')`,
+      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+        arrayMap(
+          x -> (
+            JSONExtractString(x, 'ruleInstanceId'),
+            JSONExtractString(x, 'ruleId')
+          ),
+          arrayFilter(
+            x -> JSONExtractBool(x, 'isShadow') != true,
+            JSONExtractArrayRaw(data, 'hitRules')
+          )
+        )`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -591,54 +574,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         primaryKey: 'id',
         orderBy: 'id',
       },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_MONTHLY_STATS
-            .viewName,
-        columns: userStatsColumns.map((c) => `${c.name} ${c.type}`),
-        table:
-          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_MONTHLY_STATS
-            .table,
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        query: (tenantId) =>
-          userStatsMVQuery(
-            'toStartOfMonth(toDateTime(timestamp / 1000))',
-            tenantId
-          ),
-      },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_DAILY_STATS
-            .viewName,
-        columns: userStatsColumns.map((c) => `${c.name} ${c.type}`),
-        table:
-          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_DAILY_STATS.table,
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        query: (tenantId) =>
-          userStatsMVQuery('toDate(toDateTime(timestamp / 1000))', tenantId),
-      },
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_HOURLY_STATS
-            .viewName,
-        columns: userStatsColumns.map((c) => `${c.name} ${c.type}`),
-
-        table:
-          CLICKHOUSE_DEFINITIONS.USERS.materializedViews.USER_HOURLY_STATS
-            .table,
-        engine: 'SummingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        query: (tenantId) =>
-          userStatsMVQuery(
-            'toStartOfHour(toDateTime(timestamp / 1000))',
-            tenantId
-          ),
-      },
     ],
     mongoIdColumn: true,
     optimize: true,
@@ -659,26 +594,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         splitByChar(',', JSON_VALUE(data, '$.reason')),
         []
       )`,
-      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-      arrayMap(x -> (
-        JSONExtractString(x, 'ruleInstanceId'),
-        JSONExtractString(x, 'ruleId')
-      ),
-      arrayFilter(
-        x -> JSONExtractBool(x, 'isShadow') != true,
-        JSONExtractArrayRaw(data, 'executedRules')
-      )
-    )`,
-      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-    arrayMap(x -> (
-      JSONExtractString(x, 'ruleInstanceId'),
-      JSONExtractString(x, 'ruleId')
-    ),
-    arrayFilter(
-      x -> JSONExtractBool(x, 'isShadow') != true,
-      JSONExtractArrayRaw(data, 'hitRules')
-    )
-  )`,
     ],
   },
   {
@@ -691,26 +606,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     mongoIdColumn: true,
     materializedColumns: [
       "userId String MATERIALIZED JSON_VALUE(data, '$.userId')",
-      `nonShadowExecutedRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-      arrayMap(x -> (
-        JSONExtractString(x, 'ruleInstanceId'),
-        JSONExtractString(x, 'ruleId')
-      ),
-      arrayFilter(
-        x -> JSONExtractBool(x, 'isShadow') != true,
-        JSONExtractArrayRaw(data, 'executedRules')
-      )
-    )`,
-      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
-    arrayMap(x -> (
-      JSONExtractString(x, 'ruleInstanceId'),
-      JSONExtractString(x, 'ruleId')
-    ),
-    arrayFilter(
-      x -> JSONExtractBool(x, 'isShadow') != true,
-      JSONExtractArrayRaw(data, 'hitRules')
-    )
-  )`,
     ],
   },
   {
@@ -744,7 +639,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         ruleChecklistTemplateId String,
         ruleChecklistItemId Array(String),
         qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)),
-        ruleNature String
+        ruleNature String,
+        tags Array(Tuple(key String, value String))
       )) MATERIALIZED
         arrayMap(x -> CAST((
           JSONExtractString(x, 'alertId'),
@@ -765,26 +661,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractString(x, 'ruleChecklistTemplateId'),
           JSONExtractArrayRaw(x, 'ruleChecklist', 'checklistItemId'),
           JSONExtract(x, 'qaAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))'),
-          JSONExtractString(x, 'ruleNature')
-        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String)'),
+          JSONExtractString(x, 'ruleNature'),
+          JSONExtract(x, 'tags', 'Array(Tuple(key String, value String))')
+        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, policyStatus String, elapsedTime UInt64, timeToWarning UInt64, timeToBreach UInt64, updatedAt UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleNature String, tags Array(Tuple(key String, value String)))'),
         JSONExtractArrayRaw(data, 'alerts'))`,
-    ],
-    materializedViews: [
-      {
-        viewName:
-          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
-            .INVESTIGATION_TIMES_HOURLY_STATS.viewName,
-        columns: investigationTimesStatsColumns.map(
-          (c) => `${c.name} ${c.type}`
-        ),
-        engine: 'ReplacingMergeTree',
-        primaryKey: 'time',
-        orderBy: 'time',
-        table:
-          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
-            .INVESTIGATION_TIMES_HOURLY_STATS.table,
-        query: getCreateInvestigationTimesStatsClickhouseMVQuery,
-      },
     ],
   },
   {
@@ -908,7 +788,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       },
     ],
   },
-
   {
     table: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
     idColumn: CLICKHOUSE_ID_COLUMN_MAP[ClickhouseTableNames.Reports],

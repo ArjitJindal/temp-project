@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
-import { useRuleQueues } from '@/components/rules/util';
+import { useRuleQueues } from '@/utils/api/rules';
 
 export function RuleQueueInputField<FormValues extends { queueId?: string }>(props: {
   label?: string;

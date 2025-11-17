@@ -11,7 +11,7 @@ import { dayjs } from '@/utils/dayjs';
 import { Case } from '@/apis';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
-import { useRuleOptions } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/api/rules';
 import { useAuth0User } from '@/utils/user-utils';
 import { getStatuses } from '@/utils/case-utils';
 import { QueryResult } from '@/utils/queries/types';

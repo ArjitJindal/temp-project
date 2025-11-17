@@ -12,7 +12,7 @@ const REGION_TENANT_CONFIGS: { [key: string]: Auth0TenantConfig[] } = {
 
 export function getAuth0TenantConfigs(
   stage: Stage,
-  region?: FlagrightRegion
+  region?: FlagrightRegion | 'asia-2'
 ): Auth0TenantConfig[] {
   switch (stage) {
     case 'local': {

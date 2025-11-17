@@ -94,6 +94,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'SHARED_LOCKS'
   // TO IMPLEMENT
   | 'V8_LOGIC_USER_TIME_AGGREGATION'
+  | 'V8_LOGIC_USER_TIME_AGGREGATION_USER_EVENT_MARKER'
   | 'V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER'
   | 'V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER'
   | 'AVG_ARS_VALUE_ITEM'
@@ -420,33 +421,37 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteRiskFactorsApprovals.bind(this),
         order: 26,
       },
+      DRS_LOCK_ITEM: {
+        method: this.deleteDrsLockItems.bind(this),
+        order: 27,
+      },
       WEBHOOK_CONFIGURATION: {
         method: this.deleteWebhooks.bind(this),
         order: 28,
       },
       USERS_PROPOSAL: {
         method: this.deleteUsersProposal.bind(this),
-        order: 28,
+        order: 29,
       },
       SANCTIONS_SEARCH_BATCH_JOB_STATUS: {
         method: this.deleteSanctionsSearchBatchJobStatus.bind(this),
-        order: 29,
+        order: 30,
       },
       SANCTIONS_WHITELIST_BATCH_JOB_STATUS: {
         method: this.deleteSanctionsWhitelistBatchJobStatus.bind(this),
-        order: 30,
+        order: 31,
       },
       SANCTION_SEARCHES: {
         method: this.deleteSanctionSearches.bind(this),
-        order: 31,
+        order: 32,
       },
       SANCTIONS_WHITELIST_ENTITIES: {
         method: this.deleteSanctionsWhitelistEntities.bind(this),
-        order: 32,
+        order: 33,
       },
-      DRS_LOCK_ITEM: {
-        method: this.deleteDrsLockItems.bind(this),
-        order: 27,
+      DEACTIVATION_MARKED_API_KEY: {
+        method: this.deleteApiKey.bind(this),
+        order: 34,
       },
     }
 
@@ -459,6 +464,20 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     for (const key of dynamoDbKeysToDeleteArray) {
       await key.method(tenantId)
     }
+  }
+
+  private async deleteApiKey(tenantId: string) {
+    const partitionKeyId = DynamoDbKeys.DEACTIVATION_MARKED_API_KEY(
+      tenantId,
+      ''
+    ).PartitionKeyID
+
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    )
   }
 
   private async deleteCrmRecords(tenantId: string) {

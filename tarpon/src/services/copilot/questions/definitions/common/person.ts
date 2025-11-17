@@ -1,3 +1,4 @@
+import { LegalEntity } from '@/@types/openapi-internal/LegalEntity'
 import { Person } from '@/@types/openapi-internal/Person'
 import { TableHeadersColumnTypeEnum } from '@/@types/openapi-internal/TableHeaders'
 
@@ -10,6 +11,17 @@ export const personToRow = (person: Person): (string | undefined)[] => {
     person.generalDetails.countryOfNationality,
     person.generalDetails.dateOfBirth,
     person.generalDetails.gender,
+  ]
+}
+
+export const legalEntityToRow = (
+  legalEntity: LegalEntity
+): (string | undefined)[] => {
+  return [
+    legalEntity.companyGeneralDetails?.legalName,
+    legalEntity.companyRegistrationDetails?.registrationCountry,
+    legalEntity.companyRegistrationDetails?.dateOfRegistration,
+    legalEntity.companyRegistrationDetails?.registrationIdentifier,
   ]
 }
 

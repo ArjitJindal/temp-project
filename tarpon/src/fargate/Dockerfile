@@ -1,4 +1,6 @@
-FROM --platform=linux/arm64 node:20-alpine
+ARG platform=linux/arm64
+FROM --platform=${platform} node:20-alpine
+
 WORKDIR /usr/src/app
 
 COPY index.js .

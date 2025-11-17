@@ -7,6 +7,7 @@ import Label from '@/components/library/Label';
 import Toggle from '@/components/library/Toggle';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
+import Slider from '@/components/library/Slider';
 
 const MODES: Props<null>['mode'][] = ['SINGLE', 'MULTIPLE', 'DYNAMIC', 'MULTIPLE_DYNAMIC'];
 const SIZES: Props<null>['size'][] = ['DEFAULT', 'LARGE'];
@@ -186,7 +187,7 @@ export default function (): JSX.Element {
         }}
       >
         {([state, setState]) => (
-          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}>
+          <PropertyMatrix yLabel="mode" y={MODES}>
             {(_, mode) => (
               <Component<string>
                 mode={mode}
@@ -212,12 +213,7 @@ export default function (): JSX.Element {
         initialState={{ value: 'option1', values: ['option1', 'option2'] }}
       >
         {([state, setState]) => (
-          <PropertyMatrix
-            xLabel="isEmpty"
-            yLabel="mode"
-            x={[true, false] as const}
-            y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
-          >
+          <PropertyMatrix xLabel="isEmpty" yLabel="mode" x={[true, false] as const} y={MODES}>
             {(isEmpty, mode) => (
               <Component
                 mode={mode}
@@ -247,7 +243,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'Error'} initialState={{}}>
         {([state, setState]) => (
-          <PropertyMatrix yLabel="mode" y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}>
+          <PropertyMatrix yLabel="mode" y={MODES}>
             {(isEmpty, mode) => (
               <Component
                 mode={mode}
@@ -316,12 +312,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'Fixed width'}>
         {([state, setState]) => (
-          <PropertyMatrix
-            xLabel={'width'}
-            x={[200, '100px', '50%']}
-            yLabel="mode"
-            y={['SINGLE', 'MULTIPLE', 'DYNAMIC'] as const}
-          >
+          <PropertyMatrix xLabel={'width'} x={[200, '100px', '50%']} yLabel="mode" y={MODES}>
             {(width, mode) => (
               <Component
                 width={width}
@@ -443,6 +434,92 @@ export default function (): JSX.Element {
                 />
               )}
             </PropertyMatrix>
+          </>
+        )}
+      </UseCase>
+      <UseCase
+        title={'Tags stack in limited size container'}
+        initialState={{
+          width: 150,
+          values: ['option1', 'option2', 'option3'],
+        }}
+      >
+        {([state, setState]) => (
+          <>
+            <Label label={'Container width'}>
+              <Slider
+                min={50}
+                max={700}
+                value={state.width}
+                mode={'SINGLE'}
+                onChange={(value) => {
+                  setState({
+                    ...state,
+                    width: value,
+                  });
+                }}
+              />
+            </Label>
+            <div
+              style={{
+                maxWidth: state.width,
+                border: '2px dashed red',
+                padding: 10,
+                boxSizing: 'content-box',
+              }}
+            >
+              <Component<string>
+                mode={'MULTIPLE'}
+                isLoading={state.isLoading}
+                placeholder={'Placeholder example'}
+                tagsStack={true}
+                value={state.values}
+                allowClear={state.allowClear}
+                isCopyable={state.isCopyable}
+                isError={state.isError}
+                options={[
+                  { value: 'option1', label: 'First option' },
+                  { value: 'option2', label: 'Second option' },
+                  {
+                    value: 'option3',
+                    label:
+                      'Third option, very, very, very, very, very, very, very, very, very long text here',
+                  },
+                  { value: 'option4', label: 'Second option a little longer' },
+                  { value: 'option5', label: 'Short' },
+                  { value: 'option6', label: 'This should be long enough to overflow' },
+                  { value: 'option7', label: 'Last one' },
+                ]}
+                onChange={(newValue) => {
+                  setState((prevState) => ({
+                    ...prevState,
+                    ['values']: newValue,
+                  }));
+                }}
+                tagRenderer={(props) => {
+                  return (
+                    <div
+                      style={{
+                        whiteSpace: 'nowrap',
+                        background: props.isHovered ? '#70a5fb' : '#cfe1fe',
+                        opacity: props.isDisabled ? 0.5 : 1,
+                        border: '5px solid transparent',
+                        borderColor: props.isHovered
+                          ? '#1169f9'
+                          : props.isOnTop
+                          ? '#4187fa'
+                          : '#87b3fb',
+                        borderRadius: '4px',
+                        padding: '0 4px',
+                        fontSize: '12px',
+                      }}
+                    >
+                      {props.option.label}
+                    </div>
+                  );
+                }}
+              />
+            </div>
           </>
         )}
       </UseCase>

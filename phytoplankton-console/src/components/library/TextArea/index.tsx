@@ -18,6 +18,7 @@ export interface Props extends InputProps<string> {
   minHeight?: string;
   isSuccess?: boolean;
   description?: string;
+  noResize?: boolean;
 }
 
 function TextArea(props: Props, ref: React.Ref<TextAreaRef>) {
@@ -36,6 +37,7 @@ function TextArea(props: Props, ref: React.Ref<TextAreaRef>) {
     minHeight,
     isSuccess,
     description,
+    noResize,
   } = props;
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -66,7 +68,7 @@ function TextArea(props: Props, ref: React.Ref<TextAreaRef>) {
         ref={inputRef}
         onFocus={onFocus || undefined}
         onBlur={onBlur || undefined}
-        style={{ minHeight }}
+        style={{ minHeight, ...(noResize ? { resize: 'none' } : {}) }}
       />
       {description && <div className={s.description}>{description}</div>}
     </div>

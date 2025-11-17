@@ -163,6 +163,10 @@ export const featureDescriptions: Record<
     title: 'LSEG',
     description: 'Enables using LSEG for sanctions',
   },
+  LSEG_API: {
+    title: 'LSEG API',
+    description: 'Enable LSEG API for screening.',
+  },
   OPEN_SANCTIONS: {
     title: 'Open sanctions',
     description: 'Use OpenSanctions as the sanctions data provider.',
@@ -287,10 +291,10 @@ export const featureDescriptions: Record<
     tag: FeatureTag.ENG,
     description: 'Aggregate on custom fields such as name, email, or address.',
   },
-  FLAT_FILES_IMPORT_TRANSACTIONS: {
-    title: 'Flat files import for transactions (WIP)',
+  FLAT_FILES_IMPORT: {
+    title: 'Flat files import',
     tag: FeatureTag.WIP,
-    description: 'Enables button for importing transactions from  flat files',
+    description: 'Enables button for importing transactions and screening from  flat files',
   },
   MULTIPLEX_ASYNC_RULES_TX: {
     title: 'Multiplex async rules',
@@ -496,16 +500,32 @@ export default function SuperAdminPanel() {
   }, [tenantsDeletionQueryResult.data]);
   const mutateTenantSettings = useUpdateTenantSettings();
   const reloadUpdatedSettings = useReloadTenantSettings();
+  const validateSettings = (settings: Partial<TenantSettings>): string | undefined => {
+    if (settings.features?.includes('DOW_JONES')) {
+      if (
+        !settings.sanctions?.dowjonesCreds?.username ||
+        !settings.sanctions?.dowjonesCreds?.password
+      ) {
+        return 'Dow Jones credentials are required';
+      }
+    }
+  };
   const handleSave = async () => {
     setSaveClicked(true);
-    mutateTenantSettings.mutate({
+    const tenantSettings: Partial<TenantSettings> = {
       ...(features && { features }),
       ...(limits && { limits }),
       sanctions: sanctionsSettings,
       crmIntegrationName,
       sarJurisdictions,
       chatbotName: chatbot,
-    });
+    };
+    const error = validateSettings(tenantSettings);
+    if (error) {
+      message.error(error);
+      return;
+    }
+    mutateTenantSettings.mutate(tenantSettings);
   };
   const showModal = () => {
     setIsModalVisible(true);

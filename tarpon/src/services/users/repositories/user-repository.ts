@@ -32,6 +32,7 @@ import omit from 'lodash/omit'
 import set from 'lodash/set'
 import uniq from 'lodash/uniq'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import pickBy from 'lodash/pickBy'
 import {
   getUsersFilterByRiskLevel,
   insertRiskScores,
@@ -96,9 +97,23 @@ import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
-import { batchGet, upsertSaveDynamo } from '@/utils/dynamodb'
+import {
+  batchGet,
+  dynamoDbQueryHelper,
+  paginateQueryGenerator,
+  upsertSaveDynamo,
+} from '@/utils/dynamodb'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 import { LinkerService } from '@/services/linker'
+import {
+  AuxiliaryIndexUserEvent,
+  RulesEngineUserRepositoryInterface,
+  TimeRange,
+  UserEventAttributes,
+  UsersFilterOptions,
+} from '@/services/rules-engine/repositories/user-repository-interface'
+import { mergeObjects } from '@/utils/object'
+import { userEventTimeRangeRuleFilterPredicate } from '@/services/rules-engine/user-filters/utils/helpers'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { UserApproval } from '@/@types/openapi-internal/UserApproval'
 import { runLocalChangeHandler } from '@/utils/local-change-handler'
@@ -113,7 +128,7 @@ type Params = OptionalPaginationParams &
   }
 
 @traceable
-export class UserRepository {
+export class UserRepository implements RulesEngineUserRepositoryInterface {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
@@ -170,7 +185,10 @@ export class UserRepository {
 
   public async getMongoUsersPaginate(
     params: OptionalPagination<Params>,
-    mapper: (user: InternalUser) => AllUsersTableItem,
+    mapper: (
+      user: InternalUser,
+      trimNameComponents?: boolean
+    ) => AllUsersTableItem,
     userType?: UserType,
     options?: { projection?: Document }
   ): Promise<AllUsersTableItem[]> {
@@ -259,7 +277,9 @@ export class UserRepository {
         })
       : users
 
-    return updatedItems.map(mapper)
+    return updatedItems.map((user: InternalUser) => {
+      return mapper(user, true)
+    })
   }
 
   public async getMongoUsersCount(
@@ -1559,6 +1579,330 @@ export class UserRepository {
     )
   }
 
+  public async *getGenericUserEventsGenerator(
+    userId: string | undefined,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexUserEvent>> {
+    if (userId) {
+      yield* this.getUserEventsGenerator(
+        userId,
+        timeRange,
+        filterOptions,
+        attributesToFetch,
+        isConsumer
+      )
+    } else {
+      yield []
+    }
+  }
+
+  public async *getUserEventsGenerator(
+    userId: string,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexUserEvent>> {
+    yield* this.getDynamoDBUserEventsGenerator(
+      isConsumer
+        ? DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId).PartitionKeyID
+        : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId)
+            .PartitionKeyID,
+      timeRange,
+      filterOptions,
+      attributesToFetch,
+      isConsumer
+    )
+  }
+
+  private async *getDynamoDBUserEventsGenerator(
+    partitionKeyId: string,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): AsyncGenerator<Array<AuxiliaryIndexUserEvent>> {
+    const generator = paginateQueryGenerator(
+      this.dynamoDb,
+      this.getUserEventsQuery(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        uniq([...attributesToFetch, 'timestamp']),
+        isConsumer
+      )
+    )
+
+    for await (const data of generator) {
+      const userEvents = (data.Items?.map((item) => {
+        const source = isConsumer
+          ? item.updatedConsumerUserAttributes
+          : item.updatedBusinessUserAttributes
+
+        return source
+          ? {
+              ...source,
+              userId: item.userId,
+              timestamp: item.timestamp
+                ? new Date(item.timestamp).getTime()
+                : undefined,
+            }
+          : {
+              ...omit(item, ['PartitionKeyID', 'SortKeyID']),
+              userId: item.userId,
+              timestamp: item.timestamp
+                ? new Date(item.timestamp).getTime()
+                : undefined,
+            }
+      }) || []) as Array<AuxiliaryIndexUserEvent>
+
+      const userEventTimeRange = filterOptions.userEventTimeRange
+
+      yield userEventTimeRange
+        ? userEvents.filter(
+            (userEvent) =>
+              userEvent.timestamp &&
+              userEventTimeRangeRuleFilterPredicate(
+                userEvent.timestamp,
+                userEventTimeRange
+              )
+          )
+        : userEvents
+    }
+  }
+
+  private getUserEventsQuery(
+    partitionKeyId: string,
+    timeRange: TimeRange,
+    filterOptions: UsersFilterOptions,
+    attributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): QueryCommandInput {
+    const userFilterQuery = this.getUserEventsFilterQueryInput(
+      filterOptions,
+      attributesToFetch,
+      isConsumer
+    )
+    //TODO
+    const queryInput: QueryCommandInput = dynamoDbQueryHelper({
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      filterExpression: userFilterQuery.FilterExpression,
+      expressionAttributeNames: userFilterQuery.ExpressionAttributeNames,
+      expressionAttributeValues: userFilterQuery.ExpressionAttributeValues,
+      scanIndexForward: false,
+      projectionExpression: userFilterQuery.ProjectionExpression,
+      partitionKey: partitionKeyId,
+      sortKey: {
+        from: `${timeRange.afterTimestamp}`,
+        to: `${timeRange.beforeTimestamp - 1}`,
+      },
+    })
+
+    return queryInput
+  }
+
+  private getUserEventsFilterQueryInput(
+    filterOptions: UsersFilterOptions = {},
+    rawAttributesToFetch: Array<UserEventAttributes>,
+    isConsumer: boolean
+  ): Partial<QueryCommandInput> {
+    const attributesToFetch = [...rawAttributesToFetch]
+    if (
+      attributesToFetch.length > 0 &&
+      !attributesToFetch.includes('timestamp')
+    ) {
+      attributesToFetch.push('timestamp')
+    }
+
+    const prefix = isConsumer
+      ? '#updatedConsumerUserAttributes'
+      : '#updatedBusinessUserAttributes'
+
+    const buildParams = <T>(
+      values: T[] | undefined,
+      key: string
+    ): [string, T][] | undefined =>
+      values?.map((val, index) => [`:${key}${index}`, val])
+
+    const buildKeys = (params?: [string, any][]) => params?.map((p) => p[0])
+
+    const userIdsParams = buildParams(filterOptions.userIds, 'userIds')
+    const userIdsKeys = buildKeys(userIdsParams)
+
+    const userResidenceCountriesParams = buildParams(
+      filterOptions.userResidenceCountries,
+      'userResidenceCountries'
+    )
+    const userResidenceCountriesKeys = buildKeys(userResidenceCountriesParams)
+
+    const userNationalityCountriesParams = buildParams(
+      filterOptions.userNationalityCountries,
+      'userNationalityCountries'
+    )
+    const userNationalityCountriesKeys = buildKeys(
+      userNationalityCountriesParams
+    )
+
+    const userRegistrationCountriesParams = buildParams(
+      filterOptions.userRegistrationCountries,
+      'userRegistrationCountries'
+    )
+    const userRegistrationCountriesKeys = buildKeys(
+      userRegistrationCountriesParams
+    )
+
+    const acquisitionChannelsParams = buildParams(
+      filterOptions.acquisitionChannels,
+      'acquisitionChannels'
+    )
+    const acquisitionChannelsKeys = buildKeys(acquisitionChannelsParams)
+
+    const consumerUserSegmentsParams = buildParams(
+      filterOptions.consumerUserSegments,
+      'consumerUserSegments'
+    )
+    const consumerUserSegmentsKeys = buildKeys(consumerUserSegmentsParams)
+
+    const businessUserSegmentsParams = buildParams(
+      filterOptions.businessUserSegments,
+      'businessUserSegments'
+    )
+    const businessUserSegmentsKeys = buildKeys(businessUserSegmentsParams)
+
+    const kycStatusParams = buildParams(filterOptions.kycStatus, 'kycStatus')
+    const kycStatusKeys = buildKeys(kycStatusParams)
+
+    const userStatusParams = buildParams(filterOptions.userStatus, 'userStatus')
+    const userStatusKeys = buildKeys(userStatusParams)
+
+    const userTagsParams = Object.entries(filterOptions.userTags || {}).flatMap(
+      ([tagKey, tagValues]) =>
+        tagValues.map((tagValue, index) => [
+          `:userTags_${tagKey}_${index}`,
+          tagValue,
+        ])
+    )
+    const userTagsKeys = userTagsParams?.map((params) => params[0])
+
+    const filters: string[] = []
+
+    if (userIdsKeys?.length) {
+      filters.push(`${prefix}.#userId IN (${userIdsKeys.join(',')})`)
+    }
+    if (userResidenceCountriesKeys?.length) {
+      filters.push(
+        `${prefix}.#userResidenceCountry IN (${userResidenceCountriesKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (userNationalityCountriesKeys?.length) {
+      filters.push(
+        `${prefix}.#userNationalityCountry IN (${userNationalityCountriesKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (userRegistrationCountriesKeys?.length) {
+      filters.push(
+        `${prefix}.#userRegistrationCountry IN (${userRegistrationCountriesKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (acquisitionChannelsKeys?.length) {
+      filters.push(
+        `${prefix}.#acquisitionChannel IN (${acquisitionChannelsKeys.join(
+          ','
+        )})`
+      )
+    }
+    if (isConsumer && consumerUserSegmentsKeys?.length) {
+      filters.push(
+        `${prefix}.#userSegment IN (${consumerUserSegmentsKeys.join(',')})`
+      )
+    }
+    if (!isConsumer && businessUserSegmentsKeys?.length) {
+      filters.push(
+        `${prefix}.#userSegment IN (${businessUserSegmentsKeys.join(',')})`
+      )
+    }
+    if (kycStatusKeys?.length) {
+      filters.push(`${prefix}.#kycStatus IN (${kycStatusKeys.join(',')})`)
+    }
+    if (userStatusKeys?.length) {
+      filters.push(`${prefix}.#userStatus IN (${userStatusKeys.join(',')})`)
+    }
+    if (userTagsKeys?.length) {
+      filters.push(`${prefix}.#userTags IN (${userTagsKeys.join(',')})`)
+    }
+
+    const filterExpression = isEmpty(filters)
+      ? undefined
+      : filters.map((f) => (filters.length > 1 ? `(${f})` : f)).join(' AND ')
+
+    const expressionAttributeNames = mergeObjects(
+      pickBy(
+        {
+          '#updatedConsumerUserAttributes': 'updatedConsumerUserAttributes',
+          '#updatedBusinessUserAttributes': 'updatedBusinessUserAttributes',
+          '#userCreationAgeRange': 'userCreationAgeRange',
+          '#userType': 'userType',
+          '#userAgeRange': 'userAgeRange',
+          '#userId': 'userId',
+          '#userResidenceCountry': 'userResidenceCountry',
+          '#userNationalityCountry': 'userNationalityCountry',
+          '#userRegistrationCountry': 'userRegistrationCountry',
+          '#acquisitionChannel': 'acquisitionChannel',
+          '#userSegment': 'userSegment',
+          '#kycStatus': 'kycStatus',
+          '#userStatus': 'userStatus',
+          '#userTags': 'userTags',
+          '#timestamp': 'timestamp',
+          '#createdTimestamp': 'createdTimestamp',
+        },
+        (_value, key) => filterExpression?.includes(key)
+      ),
+      attributesToFetch &&
+        Object.fromEntries(attributesToFetch.map((name) => [`#${name}`, name]))
+    ) as Record<string, string>
+
+    return {
+      FilterExpression: filterExpression,
+      ExpressionAttributeNames: isEmpty(expressionAttributeNames)
+        ? undefined
+        : {
+            ...omit(expressionAttributeNames, ['#userId']),
+            '#uid': 'userId',
+            [isConsumer
+              ? '#updatedConsumerUserAttributes'
+              : '#updatedBusinessUserAttributes']: isConsumer
+              ? 'updatedConsumerUserAttributes'
+              : 'updatedBusinessUserAttributes',
+          },
+      ExpressionAttributeValues: isEmpty(filters)
+        ? undefined
+        : {
+            ...Object.fromEntries(userIdsParams || []),
+            ...Object.fromEntries(userResidenceCountriesParams || []),
+            ...Object.fromEntries(userNationalityCountriesParams || []),
+            ...Object.fromEntries(userRegistrationCountriesParams || []),
+            ...Object.fromEntries(acquisitionChannelsParams || []),
+            ...Object.fromEntries(consumerUserSegmentsParams || []),
+            ...Object.fromEntries(businessUserSegmentsParams || []),
+            ...Object.fromEntries(kycStatusParams || []),
+            ...Object.fromEntries(userStatusParams || []),
+            ...Object.fromEntries(userTagsParams || []),
+          },
+      ProjectionExpression: isEmpty(attributesToFetch)
+        ? undefined
+        : `#uid, ${prefix}, #timestamp, #createdTimestamp`,
+    }
+  }
+
   public async updateAvgTrsScoreOfUser(
     userId: string,
     avgArsScore: AverageArsScore
@@ -2068,9 +2412,11 @@ export class UserRepository {
   /**
    * Bulk updates all pending user approvals to use a new workflow reference and reset approval step to 0
    * This is used when a workflow is updated to restart all pending approval flows
+   *
+   * Note: With unified change-approval workflows, a single workflow can be used for multiple user fields.
+   * This method updates ALL user approvals that reference the old workflow, regardless of which field
+   * they're for. The WorkflowService determines which workflow is used before calling this method.
    */
-  // TODO: the logic of this method needs to be updated once implementing
-  //       workflow builder and workflows are referenced by their id in tenant settings
   async bulkUpdateUserApprovalsWorkflow(newWorkflowRef: {
     id: string
     version: number
@@ -2078,35 +2424,31 @@ export class UserRepository {
     console.log(`Updating user approvals workflow to:`, newWorkflowRef)
 
     // Use a query with a filter to find items that need updating
+    // This will find all user approvals that either:
+    // 1. Don't have a workflow ref (shouldn't happen in practice)
+    // 2. Have a different workflow ID
+    // 3. Have the same workflow ID but different version
     const result = await this.dynamoDb.send(
       new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         KeyConditionExpression: 'PartitionKeyID = :pk',
         FilterExpression:
-          'attribute_not_exists(workflowRef) OR workflowRef.id <> :newWorkflowId OR workflowRef.version <> :newWorkflowVersion',
+          'attribute_exists(workflowRef) AND (workflowRef.id = :oldWorkflowId OR (workflowRef.id = :newWorkflowId AND workflowRef.version <> :newWorkflowVersion))',
         ExpressionAttributeValues: {
           ':pk': DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '').PartitionKeyID,
+          ':oldWorkflowId': newWorkflowRef.id, // Find approvals using this workflow (any version)
           ':newWorkflowId': newWorkflowRef.id,
           ':newWorkflowVersion': newWorkflowRef.version,
         },
       })
     )
 
-    // get the field associated to the workflowRef
-    const userField = newWorkflowRef.id.split('_').pop()
-    console.log(`User field:`, userField)
-
-    // filter the result to only include items where the user field is not null
-    const filteredResult = result.Items?.filter((item) => {
-      const proposedChanges = item.proposedChanges
-      return proposedChanges.some((change) => change.field === userField)
-    })
-
-    if (!filteredResult || !filteredResult.length) {
+    if (!result.Items || !result.Items.length) {
+      console.log('No user approvals found that need updating')
       return 0
     }
 
-    console.log(`Filtered result:`, filteredResult.length)
+    console.log(`Found ${result.Items.length} user approval(s) to update`)
 
     console.log(
       `User approvals query result:`,
@@ -2114,12 +2456,14 @@ export class UserRepository {
         {
           partitionKey: DynamoDbKeys.USERS_PROPOSAL(this.tenantId, '')
             .PartitionKeyID,
-          totalItems: filteredResult.length,
-          items: filteredResult.map((item) => ({
+          totalItems: result.Items.length,
+          items: result.Items.map((item) => ({
             SortKeyID: item.SortKeyID,
             workflowRef: item.workflowRef,
             approvalStep: item.approvalStep,
-            proposedChanges: item.proposedChanges.map((change) => change.field),
+            proposedChanges: item.proposedChanges.map(
+              (change: any) => change.field
+            ),
           })),
         },
         null,
@@ -2131,8 +2475,8 @@ export class UserRepository {
     const batchSize = 25
     let updatedCount = 0
 
-    for (let i = 0; i < filteredResult.length; i += batchSize) {
-      const batch = filteredResult.slice(i, i + batchSize)
+    for (let i = 0; i < result.Items.length; i += batchSize) {
+      const batch = result.Items.slice(i, i + batchSize)
 
       const batchWriteInput = {
         RequestItems: {

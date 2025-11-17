@@ -7,12 +7,10 @@ import TextInput from '@/components/library/TextInput';
 import Select from '@/components/library/Select';
 import Modal from '@/components/library/Modal';
 import Tooltip from '@/components/library/Tooltip';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Tag from '@/components/library/Tag';
 import AiForensicsLogo from '@/components/ui/AiForensicsLogo';
-import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
+import { useRuleMlModels } from '@/utils/api/rules';
 
 type FormRuleMlVariable = {
   name?: string;
@@ -34,10 +32,7 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
   onUpdate,
   onCancel,
 }) => {
-  const api = useApi();
-  const queryResult = useQuery(MACHINE_LEARNING_MODELS(), async () => {
-    return await api.getRuleMlModels();
-  });
+  const queryResult = useRuleMlModels();
   const [formValues, setFormValues] = useState<FormRuleMlVariable>({
     modelKey: variable?.key,
     name: variable?.name,

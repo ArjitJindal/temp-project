@@ -261,6 +261,11 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   }
 
   try {
+    await deactivateApiKeys(tenantInfos, dynamoDb, mongoDb)
+  } catch (e) {
+    logger.error(`Failed to delete api keys: ${(e as Error)?.message}`, e)
+  }
+  try {
     for (const tenant of tenantInfos) {
       await getDeployingRuleInstances(tenant, { dynamoDb, mongoDb })
     }
@@ -650,6 +655,20 @@ async function rerunRiskScoring(
       `Skipping risk scoring rerun for tenant ${tenantId} with frequency ${frequency} - conditions not met`
     )
   }
+}
+
+async function deactivateApiKeys(
+  tenantInfos: TenantInfo[],
+  dynamoDb: DynamoDBDocumentClient,
+  mongoDb: MongoClient
+) {
+  // WARNING: shouldn't use for any other operation as we are using flagright tenant id
+  const tenantService = new TenantService(FLAGRIGHT_TENANT_ID, {
+    mongoDb,
+    dynamoDb,
+  })
+
+  await tenantService.deactivateApiKeyMarkedForDeletion(tenantInfos)
 }
 
 async function getDeployingRuleInstances(

@@ -115,12 +115,96 @@ export class TenantRepository {
   public async createOrUpdateTenantSettings(
     newTenantSettings: Partial<TenantSettings>
   ): Promise<Partial<TenantSettings>> {
+    // Handle nested workflowSettings updates atomically
+    let updateExpression = ''
+    const expressionAttributeNames: Record<string, string> = {}
+    const expressionAttributeValues: Record<string, any> = {}
+    const removeExpression: string[] = []
+
+    if (newTenantSettings.workflowSettings) {
+      const workflowSettings = newTenantSettings.workflowSettings
+      const setExpressions: string[] = []
+
+      // Build cleaned workflowSettings object with only non-null values
+      // This approach avoids REMOVE operations which fail if paths don't exist
+      const cleanedWorkflowSettings: Record<string, any> = {}
+      for (const [key, value] of Object.entries(workflowSettings)) {
+        if (value === null || value === undefined) {
+          // Skip null/undefined values - they will be removed by setting the cleaned object
+          continue
+        } else if (typeof value === 'object' && !Array.isArray(value)) {
+          // Nested object - include only non-null values
+          const cleanedObject = Object.fromEntries(
+            Object.entries(value).filter(
+              ([, v]) => v !== null && v !== undefined
+            )
+          )
+          if (Object.keys(cleanedObject).length > 0) {
+            cleanedWorkflowSettings[key] = cleanedObject
+          }
+        } else {
+          // Simple value - include it
+          cleanedWorkflowSettings[key] = value
+        }
+      }
+
+      // SET the entire workflowSettings object (this will remove null fields naturally)
+      if (Object.keys(cleanedWorkflowSettings).length > 0) {
+        setExpressions.push(`#ws = :ws`)
+        expressionAttributeNames['#ws'] = 'workflowSettings'
+        expressionAttributeValues[':ws'] = cleanedWorkflowSettings
+      } else {
+        // If all values are null, remove the entire workflowSettings attribute
+        removeExpression.push(`#ws`)
+        expressionAttributeNames['#ws'] = 'workflowSettings'
+      }
+
+      if (setExpressions.length > 0) {
+        updateExpression = `SET ${setExpressions.join(', ')}`
+      }
+      if (removeExpression.length > 0) {
+        updateExpression +=
+          (updateExpression ? ' ' : '') +
+          `REMOVE ${removeExpression.join(', ')}`
+      }
+
+      // Remove workflowSettings from newTenantSettings to handle it separately
+      const { workflowSettings: _, ...otherSettings } = newTenantSettings
+
+      // Handle other settings if any
+      if (Object.keys(otherSettings).length > 0) {
+        const otherUpdate = getUpdateAttributesUpdateItemInput(otherSettings)
+        updateExpression = updateExpression
+          ? `${updateExpression}, ${otherUpdate.UpdateExpression.replace(
+              'SET ',
+              ''
+            )}`
+          : otherUpdate.UpdateExpression
+        Object.assign(
+          expressionAttributeValues,
+          otherUpdate.ExpressionAttributeValues
+        )
+      }
+    } else {
+      // No workflowSettings, use standard update
+      const update = getUpdateAttributesUpdateItemInput(newTenantSettings)
+      updateExpression = update.UpdateExpression
+      Object.assign(expressionAttributeValues, update.ExpressionAttributeValues)
+    }
+
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
-
-      ...getUpdateAttributesUpdateItemInput(newTenantSettings),
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues:
+        Object.keys(expressionAttributeValues).length > 0
+          ? expressionAttributeValues
+          : undefined,
+      ExpressionAttributeNames:
+        Object.keys(expressionAttributeNames).length > 0
+          ? expressionAttributeNames
+          : undefined,
     }
 
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))

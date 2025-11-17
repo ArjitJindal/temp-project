@@ -10,6 +10,13 @@ export class SanctionsCounterPartyRule extends PaymentDetailsScreeningRuleBase {
   public async computeRule() {
     const hitRules: RuleHitResult = []
 
+    const hasUser = this.senderUser || this.receiverUser
+    if (!hasUser) {
+      return {
+        ruleHitResult: hitRules,
+      }
+    }
+
     if (this.senderUser && this.receiverUser) {
       return {
         ruleHitResult: hitRules,

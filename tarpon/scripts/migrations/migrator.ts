@@ -10,8 +10,7 @@ import { initializeEnvVars, loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { migrateAllTenants, syncFeatureFlags } from './utils/tenant'
 import { syncAccountsLocally } from './always-run/sync-accounts'
-import { syncClickhouseTables } from './always-run/sync-clickhouse-v2'
-import { syncPermissions } from './always-run/sync-permissions'
+import { syncClickhouseTables } from './always-run/sync-clickhouse'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleService } from '@/services/rules-engine'
@@ -170,7 +169,7 @@ async function syncData() {
   await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()
-  await syncPermissions()
+  // await syncPermissions()
   await migrateAllTenants(async (tenant) => {
     if (isDemoTenant(tenant.id)) {
       return

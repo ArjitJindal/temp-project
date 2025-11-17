@@ -31,7 +31,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_07,
   COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
-import { useRuleOptions } from '@/utils/rules';
+import { useRuleOptions } from '@/utils/api/rules';
 import Select from '@/components/library/Select';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';

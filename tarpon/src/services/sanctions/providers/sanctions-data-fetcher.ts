@@ -55,7 +55,7 @@ import { FuzzinessSetting } from '@/@types/openapi-internal/FuzzinessSetting'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { hasFeature } from '@/core/utils/context'
-import { getOpensearchClient } from '@/utils/opensearch-utils'
+import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsEntityAddress } from '@/@types/openapi-internal/SanctionsEntityAddress'
@@ -531,6 +531,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchYearOfBirthCondition)
       }
     }
+    if (request.yearOfBirthRange) {
+      const matchYearOfBirthRangeCondition = {
+        yearOfBirth: {
+          $gte: `${request.yearOfBirthRange.minYear}`,
+          $lte: `${request.yearOfBirthRange.maxYear}`,
+        },
+      }
+      andConditions.push(matchYearOfBirthRangeCondition)
+    }
     if (request.gender) {
       const matchGenderCondition = {
         gender: {
@@ -689,6 +698,32 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andFilters.push({
           compound: {
             should: yearOfBirthMatch,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      if (minYear && maxYear) {
+        const years = [
+          {
+            range: {
+              path: 'yearOfBirth',
+              gte: `${minYear}`,
+              lte: `${maxYear}`,
+            },
+          },
+          {
+            equals: {
+              value: null,
+              path: 'yearOfBirth',
+            },
+          },
+        ]
+        andFilters.push({
+          compound: {
+            should: years,
             minimumShouldMatch: 1,
           },
         })
@@ -1552,6 +1587,28 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         })
       }
     }
+    if (request.yearOfBirthRange) {
+      const { minYear, maxYear } = request.yearOfBirthRange
+      if (minYear && maxYear) {
+        const yearOfBirthRangeMatch = [
+          {
+            range: {
+              yearOfBirth: {
+                gte: `${minYear}`,
+                lte: `${maxYear}`,
+              },
+            },
+          },
+          { bool: { must_not: { exists: { field: 'yearOfBirth' } } } },
+        ]
+        mustConditions.push({
+          bool: {
+            should: yearOfBirthRangeMatch,
+            minimum_should_match: 1,
+          },
+        })
+      }
+    }
 
     if (request.gender) {
       const genderCondition = [
@@ -1754,7 +1811,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     props: SanctionsSearchPropsWithRequest
   ) {
     const { request } = props
-    const client = this.opensearchClient ?? (await getOpensearchClient())
+    const client = this.opensearchClient ?? (await getSharedOpensearchClient())
     const searchTerm = normalize(request.searchTerm)
     const providers = getDefaultProviders()
     const { shouldConditions, mustConditions } =
@@ -2006,12 +2063,5 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
   async deleteSearch(providerSearchId: string): Promise<void> {
     await this.searchRepository.deleteSearchResult(providerSearchId)
-  }
-
-  async setMonitoring(
-    providerSearchId: string,
-    monitor: boolean
-  ): Promise<void> {
-    await this.searchRepository.setMonitoring(providerSearchId, monitor)
   }
 }

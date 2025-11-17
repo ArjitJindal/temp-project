@@ -9,8 +9,8 @@ import { useApi } from '@/api';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
-import { RULE_STATS, USERS } from '@/utils/queries/keys';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { USERS } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { H4 } from '@/components/ui/Typography';
 import { UserSearchParams } from '@/pages/users/users-list';
@@ -34,6 +34,7 @@ import { dayjs } from '@/utils/dayjs';
 import LineChart from '@/components/charts/Line';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { usePaginatedTransactionList } from '@/utils/api/transactions';
+import { useRuleStats } from '@/utils/api/rules';
 
 const HIT_RATE_SERIES = 'Hit rate';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate';
@@ -54,7 +55,6 @@ const ALL_STATUS = [
 
 export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => {
   const { ruleInstance } = props;
-  const api = useApi();
   const [timeRange, setTimeRange] = useState<WidgetRangePickerValue>(DEFAULT_TIME_RANGE);
   const settings = useSettings();
 
@@ -65,16 +65,12 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
     });
   }, [ruleInstance.createdAt]);
 
-  const analyticsQueryResult = useQuery(
-    RULE_STATS({ ...timeRange, ruleInstanceId: ruleInstance.id }),
-    () => {
-      return api.getRuleInstancesRuleInstanceIdStats({
-        ruleInstanceId: ruleInstance.id as string,
-        afterTimestamp: timeRange.startTimestamp ?? DEFAULT_TIME_RANGE.startTimestamp,
-        beforeTimestamp: timeRange.endTimestamp ?? DEFAULT_TIME_RANGE.endTimestamp,
-      });
-    },
-  );
+  const analyticsQueryResult = useRuleStats({
+    ruleInstanceId: ruleInstance.id,
+    afterTimestamp: timeRange.startTimestamp ?? DEFAULT_TIME_RANGE.startTimestamp,
+    beforeTimestamp: timeRange.endTimestamp ?? DEFAULT_TIME_RANGE.endTimestamp,
+  });
+
   const dataRes = analyticsQueryResult.data;
   const isShadowRule = checkShadowRule(ruleInstance);
   const items: WidgetGroupItem[] = [

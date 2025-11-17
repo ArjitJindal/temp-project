@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
 import isEmpty from 'lodash/isEmpty'
@@ -111,16 +112,15 @@ export class UserManagementService {
   ) {
     const isDrsUpdatable = options?.lockCraRiskLevel !== true
 
-    const riskScoreResult = await this.riskScoringV8Service.handleUserUpdate({
-      user: userPayload,
-      manualRiskLevel: userPayload.riskLevel,
+    const user = await this.verifyUser(
+      userPayload,
+      isConsumerUser ? 'CONSUMER' : 'BUSINESS',
       isDrsUpdatable,
-      manualKrsRiskLevel: userPayload.kycRiskLevel,
-      lockKrs: options?.lockKycRiskLevel,
-    })
-
+      options?.lockKycRiskLevel
+    )
+    const riskScoreResult = user.riskScoreDetails
     const { craRiskScore, craRiskLevel, kycRiskScore, kycRiskLevel } =
-      riskScoreResult
+      riskScoreResult ?? {}
     if (options?.krsOnly) {
       return {
         userId: userPayload.userId,
@@ -133,13 +133,6 @@ export class UserManagementService {
       }
     }
     let craRiskLevelToReturn = craRiskLevel
-
-    const user = await this.verifyUser(
-      userPayload,
-      isConsumerUser ? 'CONSUMER' : 'BUSINESS',
-      riskScoreResult,
-      options?.lockKycRiskLevel
-    )
     if (hasFeature('PNB') && riskScoreResult) {
       craRiskLevelToReturn = getUserRiskScoreDetailsForPNB(
         user.hitRules ?? [],
@@ -167,10 +160,29 @@ export class UserManagementService {
   public async verifyUser(
     userPayload: User | Business,
     type: UserType,
-    riskScoreDetails?: UserRiskScoreDetails,
-    isKrsLocked?: boolean
+    isKrsLocked?: boolean,
+    isDrsUpdatable?: boolean,
+    lockKrs?: boolean
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const isConsumerUser = type === 'CONSUMER'
+
+    const userEvent = {
+      eventId: uuidv4(),
+      timestamp: userPayload.createdTimestamp,
+      userId: userPayload.userId,
+      isKrsLocked,
+      ...(isConsumerUser
+        ? { updatedConsumerUserAttributes: userPayload }
+        : { updatedBusinessUserAttributes: userPayload }),
+    }
+    const riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate({
+      user: userPayload,
+      manualRiskLevel: userPayload.riskLevel,
+      isDrsUpdatable,
+      manualKrsRiskLevel: userPayload.kycRiskLevel,
+      lockKrs: lockKrs,
+      userEvent: userEvent,
+    })
 
     if (userPayload.linkedEntities) {
       try {
@@ -185,9 +197,13 @@ export class UserManagementService {
         throw new BadRequest(e.message)
       }
     }
-
     const { monitoringResult, isAnyAsyncRules } =
-      await this.rulesEngineService.verifyUser(userPayload, 'INITIAL')
+      await this.rulesEngineService.verifyUser(
+        userPayload,
+        userPayload.createdTimestamp,
+        'INITIAL',
+        userEvent
+      )
 
     const userResult = {
       ...userPayload,
@@ -197,56 +213,45 @@ export class UserManagementService {
     if (isConsumerUser) {
       await Promise.all([
         this.userRepository.saveConsumerUser(userResult),
-        this.userEventRepository.saveUserEvent(
-          {
-            timestamp: userResult.createdTimestamp,
-            userId: userResult.userId,
-            updatedConsumerUserAttributes: userResult,
-            isKrsLocked,
-          },
-          'CONSUMER',
-          {
-            ...monitoringResult,
-            riskScoreDetails,
-          }
-        ),
+        this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER', {
+          ...monitoringResult,
+          riskScoreDetails,
+        }),
       ])
     } else {
       await Promise.all([
         this.userRepository.saveBusinessUser(
           userResult as BusinessWithRulesResult
         ),
-        this.userEventRepository.saveUserEvent(
-          {
-            timestamp: userResult.createdTimestamp,
-            userId: userResult.userId,
-            updatedBusinessUserAttributes: userResult as Business,
-            isKrsLocked,
-          },
-          'BUSINESS',
-          {
-            ...monitoringResult,
-            riskScoreDetails,
-          }
-        ),
+        this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS', {
+          ...monitoringResult,
+          riskScoreDetails,
+        }),
       ])
     }
-    // Send async rules tasks after user is saved successfully
-    if (isAnyAsyncRules) {
-      await sendAsyncRuleTasks([
-        {
-          type: 'USER',
-          user: userPayload,
-          tenantId: this.tenantId,
-          userType: type,
-        },
+
+    try {
+      await Promise.all([
+        // Send async rules tasks after user is saved successfully
+        isAnyAsyncRules &&
+          sendAsyncRuleTasks([
+            {
+              type: 'USER',
+              user: userPayload,
+              tenantId: this.tenantId,
+              userType: type,
+            },
+          ]),
       ])
+    } catch (e) {
+      logger.error(e)
     }
+
     await this.listService.syncListsMetadata({
       keys: [userResult.userId],
     })
 
-    return userResult
+    return { ...userResult, riskScoreDetails: riskScoreDetails }
   }
 
   public async validateLinkedEntitiesAndEmitEvent(
@@ -383,6 +388,7 @@ export class UserManagementService {
 
     let riskScoreDetails: UserRiskScoreDetails | undefined
 
+    const eventId = userEvent.eventId || uuidv4()
     if (hasFeature('RISK_SCORING')) {
       riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate({
         user: updatedUser,
@@ -390,6 +396,7 @@ export class UserManagementService {
         isDrsUpdatable,
         manualKrsRiskLevel: updatedAttributes.kycRiskLevel,
         lockKrs: isKrsLocked,
+        userEvent: { ...userEvent, eventId },
       })
     } else if (hasFeature('RISK_LEVELS')) {
       const preDefinedRiskLevel = updatedAttributes?.riskLevel
@@ -404,9 +411,13 @@ export class UserManagementService {
         )
       }
     }
-
     const { monitoringResult, isAnyAsyncRules } =
-      await this.rulesEngineService.verifyUser(updatedUser, 'UPDATE')
+      await this.rulesEngineService.verifyUser(
+        updatedUser,
+        userEvent.timestamp,
+        'UPDATE',
+        { ...userEvent, eventId }
+      )
 
     const updatedUserResult = {
       ...updatedUser,
@@ -418,7 +429,7 @@ export class UserManagementService {
     await Promise.all([
       saveUser(updatedUserResult as UserResultType<T>),
       this.userEventRepository.saveUserEvent(
-        { ...userEvent, isKrsLocked },
+        { ...userEvent, isKrsLocked, eventId },
         userType,
         {
           ...monitoringResult,
@@ -503,7 +514,9 @@ export class UserManagementService {
 
     const { monitoringResult } = await this.rulesEngineService.verifyUser(
       userPayload,
+      userPayload.createdTimestamp,
       'INITIAL',
+      undefined,
       { async: true }
     )
 
@@ -552,7 +565,9 @@ export class UserManagementService {
 
     const { monitoringResult } = await this.rulesEngineService.verifyUser(
       updatedUser,
+      userEvent.timestamp,
       'UPDATE',
+      userEvent,
       { async: true }
     )
 

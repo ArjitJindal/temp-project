@@ -364,6 +364,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         falsePositiveCheckEnabled:
           ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.falsePositiveCheckEnabled,
         frozenStatuses: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
+        alertCreationLogic: ALERT_CREATION_DETAILS_STEP_INITIAL_VALUES.alertCreationLogic,
       },
     };
   }, [

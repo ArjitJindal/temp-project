@@ -189,6 +189,7 @@ export async function bulkVerifyUsers(
   for (const user of users) {
     const { monitoringResult } = await rulesEngine.verifyUser(
       user,
+      user.createdTimestamp,
       ongoingScreeningMode ? 'ONGOING' : 'INITIAL'
     )
     results.push(monitoringResult)
@@ -280,7 +281,11 @@ export function setUpRulesHooks(
         } = getMigratedV8Config(
           libraryRuleV8.id,
           r.defaultParameters,
-          filters
+          filters,
+          {
+            tenantId,
+            dynamoDb: getDynamoDbClient(),
+          }
         ) ?? {}
 
         v8Rule.defaultLogic = logic

@@ -11,7 +11,8 @@ export class FlatFilesRunnerBatchJobRunner extends BatchJobRunner {
       parameters.schema,
       parameters.format,
       parameters.s3Key,
-      parameters.metadata ?? {}
+      parameters.metadata ?? {},
+      parameters.entityId
     )
   }
 }

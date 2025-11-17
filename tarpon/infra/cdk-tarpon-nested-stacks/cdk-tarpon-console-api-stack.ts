@@ -28,7 +28,7 @@ interface ConsoleLambdasProps extends cdk.NestedStackProps {
   config: Config
   lambdaExecutionRole: IRole
   functionProps: Partial<FunctionProps>
-  zendutyCloudWatchTopic: Topic
+  zendutyCloudWatchTopic?: Topic
   domainName?: DomainName
   heavyLibLayer: ILayerVersion
 }
@@ -62,14 +62,15 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       })
     }
 
-    createAPIGatewayThrottlingAlarm(
-      this,
-      zendutyCloudWatchTopic,
-      consoleApiLogGroup,
-      StackConstants.CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME,
-      consoleApi.restApiName
-    )
-
+    if (zendutyCloudWatchTopic) {
+      createAPIGatewayThrottlingAlarm(
+        this,
+        zendutyCloudWatchTopic,
+        consoleApiLogGroup,
+        StackConstants.CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME,
+        consoleApi.restApiName
+      )
+    }
     /* JWT Authorizer */
     const { alias: jwtAuthorizerAlias, func: jwtAuthorizerFunction } =
       createFunction(

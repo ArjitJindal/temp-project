@@ -89,10 +89,11 @@ export class BatchRerunUsersService {
         if (krsScore?.manualRiskLevel) {
           logger.info(`User has manual risk level set`)
         }
-
+        // Todo: Check whether to fetch last event
         const newKrsScore = await riskScoringService.calculateAndUpdateKrsScore(
           user,
           riskClassificationValues,
+          undefined,
           krsScore?.manualRiskLevel,
           krsScore,
           false

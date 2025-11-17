@@ -13,7 +13,6 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
-import Spinner from '@/components/library/Spinner';
 import Skeleton from '@/components/library/Skeleton';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Address from '@/components/ui/Address';
@@ -29,7 +28,7 @@ export default function SubHeader(props: Props) {
 
   const renderLabels = (caseItem: Case | null) => {
     if (caseItem == null) {
-      return <Spinner />;
+      return <Skeleton length={20} />;
     }
 
     return caseItem.subjectType === 'PAYMENT'

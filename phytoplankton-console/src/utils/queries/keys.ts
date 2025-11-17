@@ -3,6 +3,7 @@ import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
 import {
+  CasesUniquesField,
   CrmName,
   GenericSanctionsSearchType,
   ListSubtype,
@@ -173,6 +174,13 @@ export const USERS_UNIQUES = (
     filter?: string;
   } = {},
 ): QueryKey => ['users', 'uniques', field, params];
+export const CASES_UNIQUES = (
+  field: CasesUniquesField,
+  params: {
+    filter?: string;
+    type?: 'CASE' | 'ALERT';
+  } = {},
+): QueryKey => ['cases', 'uniques', field, params.type, params.filter].filter(Boolean);
 export const UNIQUES = (
   type: 'transactions' | 'users',
   field: TransactionsUniquesField | UsersUniquesField,
@@ -234,10 +242,10 @@ export const RULES_HIT_STATS = (
 ): QueryKey => ['rules-hit-stats', dateRange, page, pageSize];
 
 export const RULES_UNIVERSAL_SEARCH = (
-  search: string,
+  search?: string,
   params?: AnyParameters,
   aiSearch?: boolean,
-): QueryKey => ['rules-universal-search', search, params, aiSearch];
+): QueryKey => ['rules-universal-search', search, params, aiSearch].filter(Boolean);
 
 export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey =>
   ['transaction-files', params].filter(Boolean);
@@ -302,6 +310,7 @@ export const SANCTIONS_SEARCH_LIST = (searchIds: string[]): QueryKey => [
   'list-by-ids',
   searchIds,
 ];
+export const SANCTIONS_HITS_ALL = (): QueryKey => ['sanctions', 'hits', 'search'];
 export const SANCTIONS_HITS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',
   'hits',
@@ -314,6 +323,19 @@ export const SANCTIONS_WHITELIST_SEARCH = (params: AnyParameters): QueryKey => [
   'search',
   params,
 ];
+export const SANCTIONS_BULK_SEARCH = (batchId?: string, params?: AnyParameters): QueryKey =>
+  ['sanctions', 'bulk-search', batchId, params].filter(Boolean);
+export const SANCTIONS_BULK_SEARCH_TERM = (searchTermId?: string): QueryKey => [
+  'sanctions',
+  'bulk-search',
+  'term',
+  searchTermId,
+];
+export const SANCTIONS_BULK_SEARCH_TERM_HISTORY = (
+  searchTermId?: string,
+  params?: AnyParameters,
+): QueryKey =>
+  ['sanctions', 'bulk-search', 'term', searchTermId, 'history', params].filter(Boolean);
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
 export const ALERT_CHECKLIST = (alertId: string | undefined): QueryKey => [
   'alerts',
@@ -613,3 +635,12 @@ export const AIF_SEARCH_KEY = (
   variableKey: string,
   debouncedSearch: string,
 ): QueryKey => ['aif-search', questionId, variableKey, debouncedSearch];
+
+export const INTERCOMM_TOKEN = (): QueryKey => ['intercomm', 'token'];
+
+export const MEDIA_CHECK_ARTICLES_SEARCH = (
+  searchId: string | undefined,
+  params: AnyParameters,
+): QueryKey => ['media-check-articles', 'search', searchId ?? 'invalid', params];
+
+export const CLUESO_TOKEN = ['clueso-token'];

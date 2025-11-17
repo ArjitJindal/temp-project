@@ -22,6 +22,7 @@ import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { User } from '@/@types/openapi-internal/User'
+import { UserEvent } from '@/services/rules-engine/repositories/user-repository-interface'
 
 dynamoDbSetupHook()
 withFeatureHook(['RISK_SCORING'])
@@ -840,6 +841,89 @@ describe('V8 Risk scoring ', () => {
             riskFactorId: 'RF3',
           },
         ])
+      })
+    })
+    describe('User KRS with User Aggregation risk factor', () => {
+      setUpRiskFactorsHook(tenantId, [
+        getTestRiskFactor({
+          id: 'RF1',
+          type: 'CONSUMER_USER',
+          logicAggregationVariables: [
+            {
+              includeCurrentEntity: true,
+              type: 'USER_DETAILS',
+              aggregationFieldKey:
+                'CONSUMER_USER:userDetails-name-firstName__SENDER',
+              aggregationFunc: 'UNIQUE_COUNT',
+              key: 'agg:user1',
+              timeWindow: {
+                start: {
+                  units: 1,
+                  granularity: 'day',
+                },
+                end: {
+                  units: 0,
+                  granularity: 'now',
+                },
+              },
+            },
+          ],
+          riskLevelLogic: [
+            {
+              logic: {
+                and: [
+                  {
+                    '>': [{ var: 'agg:user1' }, 1],
+                  },
+                ],
+              },
+              riskLevel: 'LOW',
+              riskScore: 25,
+              weight: 1,
+            },
+          ],
+        }),
+      ])
+      test('Risk factor condition hit with user creation and 1 user event', async () => {
+        const testUser = getTestUser({
+          userDetails: {
+            name: {
+              firstName: 'abc',
+            },
+          },
+        })
+        const initialUserEvent: UserEvent = {
+          eventId: 'test-1',
+          timestamp: testUser.createdTimestamp,
+          userId: testUser.userId,
+          updatedConsumerUserAttributes: {
+            userDetails: { name: { firstName: 'abc' } },
+          },
+        }
+        const initialRiskData = await riskScoringService.handleUserUpdate({
+          user: testUser,
+          userEvent: initialUserEvent,
+        })
+        expect(initialRiskData).toEqual({
+          kycRiskScore: 75,
+          kycRiskLevel: 'HIGH',
+        })
+        const secondUserEvent: UserEvent = {
+          eventId: 'test-2',
+          timestamp: testUser.createdTimestamp + 10,
+          userId: testUser.userId,
+          updatedConsumerUserAttributes: {
+            userDetails: { name: { firstName: 'abc1' } },
+          },
+        }
+        const secondEventRiskData = await riskScoringService.handleUserUpdate({
+          user: { ...testUser, userDetails: { name: { firstName: 'abc1' } } },
+          userEvent: secondUserEvent,
+        })
+        expect(secondEventRiskData).toEqual({
+          kycRiskScore: 25,
+          kycRiskLevel: 'LOW',
+        })
       })
     })
   })

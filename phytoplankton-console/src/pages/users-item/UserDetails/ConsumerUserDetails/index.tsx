@@ -1,5 +1,6 @@
 import Attachments from '../Attachments';
 import LinkedEntitiesTable from '../BusinessUserDetails/LegalEntityDetails/LinkedEntitiesTable';
+import { OtherDetailsCard } from '../shared/OtherDetails';
 import GeneralDetails from './GeneralDetails';
 import MetaData from './MetaData';
 import LegalDocuments from './LegalDocuments';
@@ -54,6 +55,9 @@ export default function ConsumerUserDetails(props: Props) {
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={1} maxHeight={350}>
         <LegalDocuments legalDocuments={user.legalDocuments ?? []} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell columnSpan={1} maxHeight={350}>
+        <OtherDetailsCard user={user} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell columnSpan={1}>
         <Attachments

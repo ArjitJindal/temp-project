@@ -356,6 +356,9 @@ export const StackConstants = {
   PRIMARY_ASYNC_RULE_MULTIPLEXER_NAME: getResourceNameForTarpon(
     'PrimaryAsyncRuleMultiplexer'
   ),
+  PRE_AGGREGATION_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'PreAggregationConsumerFunction'
+  ),
 
   // CloudWatch Logs Ingestion
   CLOUDWATCH_LOGS_INGESTION_FUNCTION_NAME: getResourceNameForTarpon(
@@ -467,6 +470,10 @@ export const SQSQueues: {
   ASYNC_RULE_PROCESSOR_QUEUE: {
     name: getResourceName('AsyncRuleProcessorQueue') + '.fifo',
     oldestMsgAgeAlarmThresholdMinutes: 360,
+  },
+  PRE_AGGREGATION_QUEUE: {
+    name: getResourceName('PreAggregationQueue'),
+    oldestMsgAgeAlarmThresholdMinutes: 120,
   },
 }
 

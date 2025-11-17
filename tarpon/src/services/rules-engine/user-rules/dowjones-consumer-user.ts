@@ -155,8 +155,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         ...getPartialMatchParameters(partialMatch),
         ...(screeningProfileId ? { screeningProfileId } : {}),
       },
-      hitContext,
-      undefined
+      { context: hitContext }
     )
     const sanctionsDetails: SanctionsDetails = {
       name,

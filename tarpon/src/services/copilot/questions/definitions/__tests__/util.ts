@@ -10,7 +10,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AccountsService } from '@/services/accounts'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 jest.mock('@/services/accounts')
 

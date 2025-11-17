@@ -145,7 +145,7 @@ export default function Modal(props: Props) {
             </div>
             {subTitle && (
               <P grey variant="m" fontWeight="normal">
-                {subTitle}{' '}
+                {subTitle}
               </P>
             )}
             {withTabs && (

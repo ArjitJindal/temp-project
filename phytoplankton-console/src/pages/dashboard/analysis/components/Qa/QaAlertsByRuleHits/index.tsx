@@ -8,7 +8,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_STATS_QA_ALERTS_BY_RULE_HIT } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { isSuccess } from '@/utils/asyncResource';
-import { useRules } from '@/utils/rules';
+import { useRules } from '@/utils/api/rules';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DashboardStatsQaAlertsCountByRuleData } from '@/apis/models/DashboardStatsQaAlertsCountByRuleData';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';

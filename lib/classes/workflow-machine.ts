@@ -2,10 +2,7 @@ import {
   BaseCaseAlertWorkflow,
   CaseWorkflow,
   AlertWorkflow,
-  BaseApprovalWorkflow,
-  RiskLevelApprovalWorkflow,
-  RiskFactorsApprovalWorkflow,
-  UserUpdateApprovalWorkflow,
+  ApprovalWorkflow,
 } from '../@types/workflow'
 
 export abstract class BaseWorkflowMachine {
@@ -120,15 +117,16 @@ export class AlertWorkflowMachine extends BaseWorkflowMachine {
   }
 }
 
-export class BaseApprovalWorkflowMachine {
-  protected definition: BaseApprovalWorkflow
+// Unified approval workflow machine for all approval workflows
+export class ApprovalWorkflowMachine {
+  protected definition: ApprovalWorkflow
 
-  constructor(definition: BaseApprovalWorkflow) {
-    BaseApprovalWorkflowMachine.validate(definition)
+  constructor(definition: ApprovalWorkflow) {
+    ApprovalWorkflowMachine.validate(definition)
     this.definition = definition
   }
 
-  public static validate(definition: BaseApprovalWorkflow): void {
+  public static validate(definition: ApprovalWorkflow): void {
     // ensure approvalChain is defined and has at least one role
     if (!definition.approvalChain || definition.approvalChain.length === 0) {
       throw new Error('Approval workflow must have at least one role')
@@ -149,7 +147,7 @@ export class BaseApprovalWorkflowMachine {
     }
   }
 
-  public getDefinition(): BaseApprovalWorkflow {
+  public getDefinition(): ApprovalWorkflow {
     return this.definition
   }
 
@@ -168,32 +166,16 @@ export class BaseApprovalWorkflowMachine {
     return { role: approvalChain[currentStep], isLastStep }
   }
 }
-export class RiskLevelApprovalWorkflowMachine extends BaseApprovalWorkflowMachine {
-  constructor(definition: RiskLevelApprovalWorkflow) {
-    super(definition)
-  }
 
-  public getDefinition(): RiskLevelApprovalWorkflow {
-    return this.definition as RiskLevelApprovalWorkflow
-  }
-}
+// Legacy aliases for backward compatibility - all point to the unified ApprovalWorkflowMachine
+// @deprecated Use ApprovalWorkflowMachine instead
+export const BaseApprovalWorkflowMachine = ApprovalWorkflowMachine
 
-export class RiskFactorsApprovalWorkflowMachine extends BaseApprovalWorkflowMachine {
-  constructor(definition: RiskFactorsApprovalWorkflow) {
-    super(definition)
-  }
+// @deprecated Use ApprovalWorkflowMachine instead
+export const RiskLevelApprovalWorkflowMachine = ApprovalWorkflowMachine
 
-  public getDefinition(): RiskFactorsApprovalWorkflow {
-    return this.definition as RiskFactorsApprovalWorkflow
-  }
-}
+// @deprecated Use ApprovalWorkflowMachine instead
+export const RiskFactorsApprovalWorkflowMachine = ApprovalWorkflowMachine
 
-export class UserUpdateApprovalWorkflowMachine extends BaseApprovalWorkflowMachine {
-  constructor(definition: UserUpdateApprovalWorkflow) {
-    super(definition)
-  }
-
-  public getDefinition(): UserUpdateApprovalWorkflow {
-    return this.definition as UserUpdateApprovalWorkflow
-  }
-}
+// @deprecated Use ApprovalWorkflowMachine instead
+export const UserUpdateApprovalWorkflowMachine = ApprovalWorkflowMachine

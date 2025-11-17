@@ -20,6 +20,7 @@ import {
   DefaultApiDeleteScreeningProfileRequest,
   DefaultApiPostDefaultManualScreeningFiltersRequest,
   DefaultApiGetAcurisCopywritedSourceDownloadUrlRequest,
+  DefaultApiGetMediaCheckArticlesRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { SearchProfileService } from '@/services/search-profile'
 import { ScreeningProfileService } from '@/services/screening-profile'
@@ -28,6 +29,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { DefaultFiltersService } from '@/services/default-filters'
 import { getS3ClientByEvent } from '@/utils/s3'
+import { SanctionsBulkSearchResultMap } from '@/@types/openapi-internal/SanctionsBulkSearchResultMap'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
   async (
@@ -49,7 +51,38 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         searchId: result.searchId,
       }
     })
+    handlers.registerGetSanctionsBulkSearch(async (ctx, request) => {
+      return await sanctionsService.getBulkSearchesWithSearchTerms({
+        pageSize: request.pageSize,
+        fromCursorKey: request.start,
+        sortOrder: request.sortOrder as 'ascend' | 'descend' | undefined,
+        batchId: request.batchId,
+      })
+    })
 
+    handlers.registerGetSanctionsBulkSearchSearchTermId(
+      async (ctx, request) => {
+        const result: SanctionsBulkSearchResultMap | null =
+          await sanctionsService.getBulkSearchResultMap(request.searchTermId)
+        if (!result) {
+          return null
+        }
+        const searchId: string = result.searchId
+        return await sanctionsService.getSearchHistory(
+          searchId,
+          request.page,
+          request.pageSize
+        )
+      }
+    )
+
+    handlers.registerPostSanctionsBulkSearch(async (ctx, request) => {
+      const result = await sanctionsService.createBulkSearch(
+        request.SanctionsBulkSearchRequest,
+        s3
+      )
+      return result as { id: string }
+    })
     handlers.registerGetSanctionsSources(async (ctx, request) => {
       const sources = await sanctionsService.getSanctionsSources(
         request.filterSourceType,
@@ -304,6 +337,12 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
           request,
           s3
         )
+      }
+    )
+
+    handlers.registerGetMediaCheckArticles(
+      async (_ctx, request: DefaultApiGetMediaCheckArticlesRequest) => {
+        return await sanctionsService.getMediaCheckArticles(request)
       }
     )
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
+import { areArraysOfObjectsEqual } from '@flagright/lib/utils';
 import { TableUser } from '../CaseTable/types';
 import { statusToOperationName } from './StatusChangeButton';
 import s from './index.module.less';
@@ -26,7 +27,6 @@ import { useUsers } from '@/utils/api/auth';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { useReasons } from '@/utils/reasons';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
-import { useDispositionApprovalWarnings } from '@/utils/api/workflows';
 
 export interface FormValues {
   reasons: string[];
@@ -149,18 +149,30 @@ export default function StatusChangeModal(props: Props) {
 
   // Check if approval workflows require a reason (only if feature is enabled)
   const isUserChangesApprovalEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
-  const approvalWarnings = useDispositionApprovalWarnings();
-  const requiresReasonForApprovals =
-    isUserChangesApprovalEnabled &&
-    (approvalWarnings.hasFieldsRequiringApproval || approvalWarnings.hasFieldsWithAutoApproval);
+  const tenantSettings = useSettings();
 
   const actionReasonValidator = () => {
     // Require reason if KYC/User status details are being changed (existing logic)
     const requiresReasonForStatusChanges =
       formState.values.kycStatusDetails || formState.values.userStateDetails;
 
+    // should reason be mandatory for eodd changes
+    const isEoddWorkflowPresent = tenantSettings.workflowSettings?.userApprovalWorkflows?.eoddDate;
+    const isEoddChanged = formState.values.eoddDate;
+    const requiresReasonForEodd =
+      isUserChangesApprovalEnabled && isEoddChanged && isEoddWorkflowPresent;
+
+    // should reason be mandatory for pep changes
+    const isPepWorkflowPresent = tenantSettings.workflowSettings?.userApprovalWorkflows?.PepStatus;
+    const isPepChanged = !areArraysOfObjectsEqual(
+      formState.values.screeningDetails?.pepStatus ?? [],
+      initialValues.screeningDetails?.pepStatus ?? [],
+    );
+    const requiresReasonForPep =
+      isUserChangesApprovalEnabled && isPepChanged && isPepWorkflowPresent;
+
     // Require reason if any field changes need approval workflow (only when feature is enabled)
-    if (requiresReasonForStatusChanges || requiresReasonForApprovals) {
+    if (requiresReasonForStatusChanges || requiresReasonForEodd || requiresReasonForPep) {
       return notEmpty;
     }
 

@@ -2,6 +2,7 @@ import isEmpty from 'lodash/isEmpty'
 import pickBy from 'lodash/pickBy'
 import zip from 'lodash/zip'
 import { expandCountryGroup } from '@flagright/lib/constants/countries'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { LegacyFilters, TransactionHistoricalFilters } from '../filters'
 import { TransactionsVelocityRuleParameters } from '../transaction-rules/transactions-velocity'
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../transaction-rules/multiple-senders-within-time-period-base'
@@ -28,6 +29,7 @@ import { TransactionsPatternPercentageRuleParameters } from '../transaction-rule
 import { SamePaymentDetailsParameters } from '../transaction-rules/same-payment-details'
 import { BlacklistPaymentdetailsRuleParameters } from '../transaction-rules/blacklist-payment-details'
 import { PaymentMethodNameRuleParameter } from '../transaction-rules/payment-method-name-levensthein-distance'
+import { BlacklistTransactionMatchedFieldRuleParameters } from '../transaction-rules/blacklist-transaction-related-value'
 import { TransactionsRoundValueVelocityRuleParameters } from '../transaction-rules/transactions-round-value-velocity'
 import {
   getFiltersConditions,
@@ -53,7 +55,11 @@ export type RuleMigrationConfig = {
 export function getMigratedV8Config(
   ruleId: string,
   parameters: any = {},
-  filters: LegacyFilters = {}
+  filters: LegacyFilters = {},
+  context?: {
+    tenantId: string
+    dynamoDb: DynamoDBDocumentClient
+  }
 ): RuleMigrationConfig | null {
   const migrationFunc = V8_CONVERSION[ruleId]
 
@@ -66,7 +72,10 @@ export function getMigratedV8Config(
   ) as TransactionHistoricalFilters
   let result
   if (migrationFunc) {
-    result = migrationFunc(parameters)
+    // For R-132, we need to pass context through parameters
+    const paramsWithContext =
+      ruleId === 'R-132' ? { ...parameters, context } : parameters
+    result = migrationFunc(paramsWithContext)
   }
   const {
     filterConditions,
@@ -1999,6 +2008,335 @@ const V8_CONVERSION: Readonly<
       alertCreationDirection: 'AUTO',
     }
   },
+  'R-132': (params: BlacklistTransactionMatchedFieldRuleParameters) => {
+    const { blacklistId } = params
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    const conditions: any[] = []
+    // User ID
+    conditions.push({
+      'op:contains_in_lists_subtype': [
+        {
+          var: 'TRANSACTION:originUserId',
+        },
+        blacklistId,
+        'USER_ID',
+      ],
+    })
+    conditions.push({
+      'op:contains_in_lists_subtype': [
+        {
+          var: 'TRANSACTION:destinationUserId',
+        },
+        blacklistId,
+        'USER_ID',
+      ],
+    })
+    // Card Fingerprint Number
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-cardFingerprint__BOTH',
+            },
+            blacklistId,
+            'CARD_FINGERPRINT_NUMBER',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'CARD',
+          ],
+        },
+      ],
+    })
+
+    // IBAN Number
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-IBAN__BOTH',
+            },
+            blacklistId,
+            'IBAN_NUMBER',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'IBAN',
+          ],
+        },
+      ],
+    })
+
+    // ACH Account Number
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-accountNumber__BOTH',
+            },
+            blacklistId,
+            'ACH_ACCOUNT_NUMBER',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'ACH',
+          ],
+        },
+      ],
+    })
+
+    // SWIFT Account Number
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-accountNumber__BOTH',
+            },
+            blacklistId,
+            'SWIFT_ACCOUNT_NUMBER',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'SWIFT',
+          ],
+        },
+      ],
+    })
+
+    // BIC
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-BIC__BOTH',
+            },
+            blacklistId,
+            'BIC',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'IBAN',
+          ],
+        },
+      ],
+    })
+
+    // BANK_SWIFT_CODE
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-swiftCode__BOTH',
+            },
+            blacklistId,
+            'BANK_SWIFT_CODE',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'SWIFT',
+          ],
+        },
+      ],
+    })
+
+    // BANK_ACCOUNT_NUMBER
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-accountNumber__BOTH',
+            },
+            blacklistId,
+            'BANK_ACCOUNT_NUMBER',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'GENERIC_BANK_ACCOUNT',
+          ],
+        },
+      ],
+    })
+
+    // UPI_IDENTIFYING_NUMBER
+    conditions.push({
+      and: [
+        {
+          'op:contains_in_lists_subtype': [
+            {
+              var: 'TRANSACTION:paymentDetails-upiID__BOTH',
+            },
+            blacklistId,
+            'UPI_IDENTIFYING_NUMBER',
+          ],
+        },
+        {
+          '==': [
+            {
+              var: 'TRANSACTION:paymentDetails-method__BOTH',
+            },
+            'UPI',
+          ],
+        },
+      ],
+    })
+
+    // COUNTRY
+    conditions.push({
+      or: [
+        {
+          and: [
+            {
+              'op:contains_in_lists_subtype': [
+                {
+                  var: 'TRANSACTION:paymentDetails-cardIssuedCountry__BOTH',
+                },
+                blacklistId,
+                'COUNTRY',
+              ],
+            },
+            {
+              '==': [
+                {
+                  var: 'TRANSACTION:paymentDetails-method__BOTH',
+                },
+                'CARD',
+              ],
+            },
+          ],
+        },
+        {
+          and: [
+            {
+              'op:contains_in_lists_subtype': [
+                {
+                  var: 'TRANSACTION:paymentDetails-bankAddress-country__BOTH',
+                },
+                blacklistId,
+                'COUNTRY',
+              ],
+            },
+            {
+              or: [
+                {
+                  '==': [
+                    {
+                      var: 'TRANSACTION:paymentDetails-method__BOTH',
+                    },
+                    'ACH',
+                  ],
+                },
+                {
+                  '==': [
+                    {
+                      var: 'TRANSACTION:paymentDetails-method__BOTH',
+                    },
+                    'SWIFT',
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          and: [
+            {
+              'op:contains_in_lists_subtype': [
+                {
+                  var: 'TRANSACTION:paymentDetails-shippingAddress-country__BOTH',
+                },
+                blacklistId,
+                'COUNTRY',
+              ],
+            },
+            {
+              '==': [
+                {
+                  var: 'TRANSACTION:paymentDetails-method__BOTH',
+                },
+                'CHECK',
+              ],
+            },
+          ],
+        },
+        {
+          and: [
+            {
+              'op:contains_in_lists_subtype': [
+                {
+                  var: 'TRANSACTION:paymentDetails-country__BOTH',
+                },
+                blacklistId,
+                'COUNTRY',
+              ],
+            },
+            {
+              or: [
+                {
+                  '==': [
+                    {
+                      var: 'TRANSACTION:paymentDetails-method__BOTH',
+                    },
+                    'IBAN',
+                  ],
+                },
+                {
+                  '==': [
+                    {
+                      var: 'TRANSACTION:paymentDetails-method__BOTH',
+                    },
+                    'GENERIC_BANK_ACCOUNT',
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    return {
+      logic: { or: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
+    }
+  },
+
   'R-55': (params: SameUserUsingTooManyPaymentIdentifiersParameters) => {
     const { uniquePaymentIdentifiersCountThreshold, timeWindow } = params
     const logicAggregationVariables: LogicAggregationVariable[] = []

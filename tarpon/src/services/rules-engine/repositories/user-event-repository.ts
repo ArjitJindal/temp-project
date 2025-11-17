@@ -4,8 +4,12 @@ import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
   GetCommand,
+  QueryCommand,
+  QueryCommandInput,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
+import { TimeRange } from './transaction-repository-interface'
+import { UserEvent } from './user-repository-interface'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery, upsertSaveDynamo } from '@/utils/dynamodb'
@@ -214,7 +218,7 @@ export class UserEventRepository {
     return this.getUserEventsByType(userId, 'BUSINESS')
   }
 
-  private async getUserEventsByType(
+  public async getUserEventsByType(
     userId: string,
     type: UserType
   ): Promise<ReadonlyArray<ConsumerUserEvent | BusinessUserEvent>> {
@@ -261,6 +265,33 @@ export class UserEventRepository {
     }
 
     return Item as ConsumerUserEvent | BusinessUserEvent
+  }
+
+  public async getLatestUserEvent(
+    type: UserType,
+    userId: string
+  ): Promise<
+    ConsumerUserEventWithRulesResult | BusinessUserEventWithRulesResult | null
+  > {
+    const primaryKey =
+      type === 'CONSUMER'
+        ? DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId).PartitionKeyID
+        : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId).PartitionKeyID
+
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
+      ExpressionAttributeValues: {
+        ':PartitionKeyID': primaryKey,
+      },
+      ScanIndexForward: false,
+      Limit: 1,
+    }
+    const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
+    if (!Items) {
+      return null
+    }
+    return Items[0] as ConsumerUserEvent | BusinessUserEvent
   }
 
   /**
@@ -327,6 +358,48 @@ export class UserEventRepository {
       // Log error but don't fail
       console.error('Error fetching latest user event timestamp:', error)
       return null
+    }
+  }
+
+  public async *getUniqueUserIdsGenerator(
+    timeRange: TimeRange,
+    chunkSize: number
+  ): AsyncGenerator<string[]> {
+    const collection = this.mongoDb
+      .db()
+      .collection<UserEvent>(USER_EVENTS_COLLECTION(this.tenantId))
+    const cursor = collection
+      .aggregate(
+        [
+          {
+            $match: {
+              timestamp: {
+                $gte: timeRange.afterTimestamp,
+                $lt: timeRange.beforeTimestamp,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: '$userId',
+            },
+          },
+        ],
+        { allowDiskUse: true }
+      )
+      .batchSize(chunkSize * 2)
+
+    let results: string[] = []
+    for await (const idData of cursor) {
+      results.push(idData._id)
+
+      if (results.length >= chunkSize) {
+        yield results
+        results = []
+      }
+    }
+    if (results.length > 0) {
+      yield results
     }
   }
 }

@@ -14,6 +14,7 @@ import { PaymentDetailsName } from '@/utils/helpers'
 import dayjs from '@/utils/dayjs'
 import { Address } from '@/@types/openapi-public/Address'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { LSEGMediaCheckParameters } from '@/@types/openapi-internal/LSEGMediaCheckParameters'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -111,6 +112,19 @@ export function getEnablePhoneticMatchingParameters(
   return {
     enablePhoneticMatching,
   }
+}
+
+export function getLSEGMediaCheckParameters(
+  lsegMediaCheck?: LSEGMediaCheckParameters
+): {
+  lsegMediaCheck?: LSEGMediaCheckParameters
+} {
+  if (hasFeature('LSEG_API') && lsegMediaCheck?.enabled) {
+    return {
+      lsegMediaCheck,
+    }
+  }
+  return {}
 }
 
 export function getStopwordSettings(stopwords?: string[]): {

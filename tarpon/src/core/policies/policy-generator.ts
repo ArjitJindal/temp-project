@@ -38,16 +38,7 @@ export default class PolicyBuilder {
     })
     this.statements.push({
       Effect: 'Allow',
-      Action: [
-        'dynamodb:GetItem',
-        'dynamodb:BatchGetItem',
-        'dynamodb:Scan',
-        'dynamodb:Query',
-        'dynamodb:ConditionCheckItem',
-        'dynamodb:PutItem',
-        'dynamodb:UpdateItem',
-        'dynamodb:DeleteItem',
-      ],
+      Action: ['dynamodb:*'],
       Resource: ['arn:aws:dynamodb:*:*:table/*'],
       Condition: {
         'ForAllValues:StringLike': {

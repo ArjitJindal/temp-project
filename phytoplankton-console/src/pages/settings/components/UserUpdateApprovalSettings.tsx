@@ -2,41 +2,20 @@ import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsCard from '@/components/library/SettingsCard';
 import Select from '@/components/library/Select';
-import { useHasResources } from '@/utils/user-utils';
-import { useRoles, useSettingsData } from '@/utils/api/auth';
-import {
-  useFeatureEnabled,
-  useUpdateTenantSettings,
-} from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useApi } from '@/api';
+import { useUpdateTenantSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { message } from '@/components/library/Message';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import Button from '@/components/library/Button';
-import {
-  CreateWorkflowType,
-  UserUpdateApprovalWorkflow,
-  WorkflowSettingsUserApprovalWorkflows,
-} from '@/apis';
-import { formatRoleName } from '@/pages/accounts/utils';
-import { useQuery } from '@/utils/queries/hooks';
+import { WorkflowSettingsUserApprovalWorkflows } from '@/apis';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import {
-  SETTINGS,
-  USER_CHANGES_PROPOSALS,
-  WORKFLOWS_ITEMS,
-  WORKFLOWS_ITEMS_ALL,
-} from '@/utils/queries/keys';
-import { all, AsyncResource, getOr, isLoading, loading, map, success } from '@/utils/asyncResource';
+import { SETTINGS, USER_CHANGES_PROPOSALS, WORKFLOWS_ITEMS_ALL } from '@/utils/queries/keys';
+import { getOr, isLoading } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { InputProps } from '@/components/library/Form';
 import Alert from '@/components/library/Alert';
-import ArrowRightLineIcon from '@/components/ui/icons/Remix/system/arrow-right-line.react.svg';
-import { notEmpty } from '@/utils/array';
 import { useDeepEqualEffect } from '@/utils/hooks';
-
-const MAX_ROLES_LIMIT = 3;
+import { useUserApprovalSettings, useWorkflowListByType } from '@/utils/api/workflows';
 
 type TableDataRow = {
   field: keyof WorkflowSettingsUserApprovalWorkflows;
@@ -44,32 +23,17 @@ type TableDataRow = {
 
 const columnHelper = new ColumnHelper<TableDataRow>();
 
-const WORKFLOW_IDS: {
-  [field in keyof WorkflowSettingsUserApprovalWorkflows]: string;
-} = {
-  Cra: '_default_Cra',
-  CraLock: '_default_CraLock',
-  eoddDate: '_default_eoddDate',
-  PepStatus: '_default_PepStatus',
-};
-
 type Values = {
-  [key in keyof WorkflowSettingsUserApprovalWorkflows]: string[];
-};
-
-export type UserWorkflowSettings = {
-  [key in keyof WorkflowSettingsUserApprovalWorkflows]: UserUpdateApprovalWorkflow | null;
+  [key in keyof WorkflowSettingsUserApprovalWorkflows]: string | null;
 };
 
 export const UserUpdateApprovalSettings: React.FC = () => {
-  const api = useApi();
   const queryClient = useQueryClient();
 
   const [state, setState] = useState<Values>({
-    Cra: [],
-    CraLock: [],
-    eoddDate: [],
-    PepStatus: [],
+    Cra: null,
+    eoddDate: null,
+    PepStatus: null,
   });
 
   const [originalState, setOriginalState] = useState<Values>(state);
@@ -80,10 +44,9 @@ export const UserUpdateApprovalSettings: React.FC = () => {
     const data = getOr(currentApprovalSettingsRes, null);
     if (data) {
       const newState: Values = {
-        Cra: data.Cra?.approvalChain ?? [],
-        CraLock: data.CraLock?.approvalChain ?? [],
-        eoddDate: data.eoddDate?.approvalChain ?? [],
-        PepStatus: data.PepStatus?.approvalChain ?? [],
+        Cra: data.Cra?.id ?? null,
+        eoddDate: data.eoddDate?.id ?? null,
+        PepStatus: data.PepStatus?.id ?? null,
       };
       setState(newState);
       setOriginalState(newState);
@@ -99,19 +62,8 @@ export const UserUpdateApprovalSettings: React.FC = () => {
       const current = state[field];
       const original = originalState[field];
 
-      // Ensure both arrays exist and are arrays
-      if (!Array.isArray(current) || !Array.isArray(original)) {
-        continue;
-      }
-
-      // Check if arrays have different lengths
-      if (current.length !== original.length) {
-        changes.push(field);
-        continue;
-      }
-
       // Check if any roles have changed (deep comparison)
-      const hasChanges = current.some((role, index) => role !== original[index]);
+      const hasChanges = current != original;
       if (hasChanges) {
         changes.push(field);
       }
@@ -127,36 +79,12 @@ export const UserUpdateApprovalSettings: React.FC = () => {
     async () => {
       const closeMessage = message.loading('Applying changes...');
       try {
-        // Only update workflows for fields that have changed
-        for (const field of changedFields) {
-          const roles = state[field];
-          const workflowId = WORKFLOW_IDS[field as keyof WorkflowSettingsUserApprovalWorkflows];
-
-          if (roles && roles.length > 0 && workflowId) {
-            const payload: CreateWorkflowType = {
-              userUpdateApprovalWorkflow: {
-                name: `User Update Approval - Reviewer Workflow - "${field}" field`,
-                description:
-                  'Single-step user approval workflow where a reviewer role can approve or reject user change proposals',
-                enabled: true,
-                approvalChain: roles as string[],
-              },
-            };
-            await api.postWorkflowVersion({
-              workflowType: 'user-update-approval',
-              workflowId: workflowId,
-              CreateWorkflowType: payload,
-            });
-          }
-        }
-
         await mutateTenantSettings.mutateAsync({
           workflowSettings: {
             userApprovalWorkflows: {
-              Cra: state['Cra']?.length ? WORKFLOW_IDS['Cra'] : undefined,
-              CraLock: state['CraLock']?.length ? WORKFLOW_IDS['CraLock'] : undefined,
-              eoddDate: state['eoddDate']?.length ? WORKFLOW_IDS['eoddDate'] : undefined,
-              PepStatus: state['PepStatus']?.length ? WORKFLOW_IDS['PepStatus'] : undefined,
+              Cra: state['Cra'] || undefined,
+              eoddDate: state['eoddDate'] || undefined,
+              PepStatus: state['PepStatus'] || undefined,
             },
           },
         });
@@ -168,7 +96,7 @@ export const UserUpdateApprovalSettings: React.FC = () => {
     {
       onSuccess: async () => {
         message.success('User approval roles updated successfully');
-        await queryClient.invalidateQueries(WORKFLOWS_ITEMS_ALL('user-update-approval'));
+        await queryClient.invalidateQueries(WORKFLOWS_ITEMS_ALL('change-approval'));
         // Update original state after successful save
         setOriginalState(state);
         // Invalidate proposal since we change proposal when change role
@@ -191,10 +119,12 @@ export const UserUpdateApprovalSettings: React.FC = () => {
     return null;
   }, []);
 
+  const workflowsQueryResult = useWorkflowListByType('change-approval');
+
   return (
     <SettingsCard
-      title="User updates approval role"
-      description="Configure the approval chain for every supported user attribute"
+      title="User updates approval workflow"
+      description="Configure the approval workflow for every supported user attribute"
     >
       <AsyncResourceRenderer resource={currentApprovalSettingsRes}>
         {() => (
@@ -207,12 +137,7 @@ export const UserUpdateApprovalSettings: React.FC = () => {
                   toolsOptions={false}
                   pagination={false}
                   data={{
-                    items: [
-                      { field: 'Cra' },
-                      { field: 'CraLock' },
-                      { field: 'eoddDate' },
-                      { field: 'PepStatus' },
-                    ],
+                    items: [{ field: 'Cra' }, { field: 'eoddDate' }, { field: 'PepStatus' }],
                   }}
                   columns={[
                     columnHelper.display({
@@ -220,17 +145,22 @@ export const UserUpdateApprovalSettings: React.FC = () => {
                       render: (item) => getFieldName(item.field),
                     }),
                     columnHelper.display({
-                      title: 'Roles',
+                      title: 'Workflow',
                       render: (item) => {
                         const isFieldChanged = changedFields.includes(item.field);
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <RoleList
+                            <Select
+                              isLoading={isLoading(workflowsQueryResult.data)}
                               value={state[item.field]}
+                              options={getOr(workflowsQueryResult.data, []).map((workflow) => ({
+                                label: workflow.id + ': ' + workflow.name,
+                                value: workflow.id,
+                              }))}
                               onChange={(newValue) => {
                                 setState((prev) => ({
                                   ...prev,
-                                  [item.field]: newValue ?? [],
+                                  [item.field]: newValue ?? null,
                                 }));
                               }}
                             />
@@ -283,178 +213,10 @@ export const UserUpdateApprovalSettings: React.FC = () => {
   );
 };
 
-/*
-  Helpers
- */
-function RoleList(props: InputProps<string[]>) {
-  const { value, onChange } = props;
-
-  const { rolesList, isLoading: isLoadingRoles } = useRoles();
-  const permissions = useHasResources(['write:::users/user-overview/*']);
-
-  // Create role options from fetched roles
-  const roleOptions = useMemo(() => {
-    return rolesList.map((role) => ({
-      label: formatRoleName(role.name), // Show formatted readable name
-      value: role.name, // Send role name to backend
-      isDisabled: value?.includes(role.name),
-    }));
-  }, [rolesList, value]);
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
-      }}
-    >
-      {value?.map((role, i) => {
-        const isRoleMissing = !roleOptions.some((x) => x.value === role);
-        return (
-          <SelectWrapper key={`${role}-${i}`}>
-            <Select
-              mode="SINGLE"
-              options={
-                isRoleMissing
-                  ? [
-                      {
-                        value: role,
-                        label: `Unknown role: ${role}`,
-                        isDisabled: true,
-                      },
-                      ...roleOptions,
-                    ]
-                  : roleOptions
-              }
-              value={role}
-              isLoading={isLoadingRoles}
-              isDisabled={!permissions || isLoadingRoles}
-              isError={isRoleMissing}
-              onChange={(newRole) => {
-                if (newRole) {
-                  onChange?.(value.map((x, index) => (index === i ? newRole : x)));
-                } else {
-                  onChange?.(value.filter((_, index) => index !== i));
-                }
-              }}
-              placeholder="Select a role"
-            />
-            {i < MAX_ROLES_LIMIT - 1 && (
-              <ArrowRightLineIcon style={{ width: '16px', color: '#666666' }} />
-            )}
-          </SelectWrapper>
-        );
-      })}
-      {(value == null || value.length < MAX_ROLES_LIMIT) && (
-        <SelectWrapper>
-          <Select
-            mode="SINGLE"
-            options={roleOptions}
-            isLoading={isLoadingRoles}
-            isDisabled={!permissions || isLoadingRoles}
-            onChange={(newRole) => {
-              if (newRole) {
-                onChange?.([...(value ?? []), newRole]);
-              }
-            }}
-            placeholder="Select a role"
-          />
-        </SelectWrapper>
-      )}
-    </div>
-  );
-}
-
-function SelectWrapper(props: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        display: 'inline-flex',
-        gap: '8px',
-        alignItems: 'center',
-        minWidth: '150px',
-        maxWidth: '300px',
-      }}
-    >
-      {props.children}
-    </div>
-  );
-}
-
-export function useUserApprovalSettings(): AsyncResource<UserWorkflowSettings> {
-  const api = useApi();
-
-  const { data: tenantSettingsRes } = useSettingsData();
-
-  const fieldsToWorkflowIdRes = map(
-    tenantSettingsRes,
-    (tenantSettings): WorkflowSettingsUserApprovalWorkflows => {
-      const userApprovalWorkflows = tenantSettings.workflowSettings?.userApprovalWorkflows;
-      if (userApprovalWorkflows == null) {
-        return {};
-      }
-      return userApprovalWorkflows;
-    },
-  );
-
-  const workflowIdsRes = map(fieldsToWorkflowIdRes, (fieldToWorkflowIds): string[] =>
-    Object.values(fieldToWorkflowIds).filter(notEmpty),
-  );
-  const workflowIds = getOr(workflowIdsRes, []);
-
-  const isApprovalWorkflowsEnabled = useFeatureEnabled('USER_CHANGES_APPROVAL');
-
-  const { data: workflowsRes } = useQuery(
-    WORKFLOWS_ITEMS('user-update-approval', workflowIds),
-    async (): Promise<UserUpdateApprovalWorkflow[]> => {
-      return await Promise.all(
-        workflowIds.map(async (workflowId) => {
-          const workflow = await api.getWorkflowById({
-            workflowType: 'user-update-approval',
-            workflowId: workflowId,
-          });
-          return workflow as unknown as UserUpdateApprovalWorkflow;
-        }),
-      );
-    },
-    {
-      enabled: isApprovalWorkflowsEnabled,
-    },
-  );
-
-  return useMemo(() => {
-    if (!isApprovalWorkflowsEnabled) {
-      return success({});
-    }
-    if (isLoading(workflowIdsRes) || isLoading(workflowsRes)) {
-      return loading();
-    }
-    return map(
-      all([fieldsToWorkflowIdRes, workflowsRes]),
-      ([fieldsToWorkflowId, workflows]): UserWorkflowSettings => {
-        const allWorkflows: UserWorkflowSettings = {};
-        for (const [field, workflowId] of Object.entries(fieldsToWorkflowId)) {
-          if (workflowId != null) {
-            const workflow = workflows.find((workflow) => workflow.id === workflowId);
-            if (workflow == null) {
-              throw new Error(`Workflow ${workflowId} not found`);
-            }
-            allWorkflows[field] = workflow;
-          }
-        }
-        return allWorkflows;
-      },
-    );
-  }, [workflowIdsRes, workflowsRes, isApprovalWorkflowsEnabled, fieldsToWorkflowIdRes]);
-}
-
 function getFieldName(field: keyof WorkflowSettingsUserApprovalWorkflows): string {
   switch (field) {
     case 'Cra':
       return 'CRA';
-    case 'CraLock':
-      return 'CRA lock';
     case 'eoddDate':
       return 'EODD';
     case 'PepStatus':

@@ -2,19 +2,15 @@ import React, { useMemo, useState } from 'react';
 import style from './style.module.less';
 import { RulesSearchBar } from './RulesSearchBar';
 import { Rule } from '@/apis';
-import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { CommonParams, SortingParamsItem, TableColumn } from '@/components/library/Table/types';
 import RecommendedTag from '@/components/library/Tag/RecommendedTag';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { GET_RULES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getBranding } from '@/utils/branding';
 import { useHasResources } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { ENUM, LONG_TEXT, RULE_ACTION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { RULE_ACTION_VALUES } from '@/utils/rules';
 import RuleChecksForTag from '@/components/library/RuleChecksForTag';
 import { getOr } from '@/utils/asyncResource';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -23,6 +19,7 @@ import { OverviewToolTip } from '@/components/OverviewToolTip';
 import Tag from '@/components/library/Tag';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import DynamicRuleTag from '@/components/library/Tag/DynamicRuleTag';
+import { usePaginatedRules } from '@/utils/api/rules';
 
 interface RulesTableParams extends CommonParams {}
 
@@ -95,7 +92,6 @@ const Random3Reasons = () => {
 
 export const RulesTable: React.FC<Props> = (props) => {
   const { onViewRule, onEditRule, onCreateRule, simulationMode, onScenarioClick } = props;
-  const api = useApi();
   const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
   const isV8Enabled = useFeatureEnabled('RULES_ENGINE_V8');
 
@@ -278,32 +274,7 @@ export const RulesTable: React.FC<Props> = (props) => {
     pagination: false,
   });
 
-  const rulesResult = usePaginatedQuery(GET_RULES(params), async (_paginationParams) => {
-    const rules = await api.getRules();
-    const result = [...rules];
-    if (params.sort.length > 0) {
-      const [key, order] = params.sort[0];
-      result.sort((a, b) => {
-        let result = 0;
-        if (key === 'id') {
-          result = parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]);
-        } else if (key === 'defaultAction') {
-          result =
-            RULE_ACTION_VALUES.indexOf(a.defaultAction) -
-            RULE_ACTION_VALUES.indexOf(b.defaultAction);
-        } else {
-          result = a[key] > b[key] ? 1 : -1;
-        }
-        result *= order === 'descend' ? -1 : 1;
-        return result;
-      });
-    }
-
-    return {
-      items: result,
-      total: rules.length,
-    };
-  });
+  const rulesResult = usePaginatedRules(params);
 
   // todo: implement in a better way
   // const isExistingUser = useLocalStorageState('rule-active-tab');

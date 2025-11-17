@@ -515,7 +515,14 @@ export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProp
           ruleType={ruleType}
           variable={editingVariable.variable}
           isNew={isNewVariable}
-          entityVariables={entityVariableDefinitions}
+          entityVariables={entityVariableDefinitions.filter((v) =>
+            ruleType === 'USER' && entity
+              ? entity === v.entity ||
+                v.entity === 'USER' ||
+                v.entity === 'TRANSACTION' ||
+                v.entity === 'TRANSACTION_EVENT'
+              : true,
+          )}
           readOnly={readOnly}
           onUpdate={handleUpdateAggVariable}
           onCancel={handleCancelEditVariable}

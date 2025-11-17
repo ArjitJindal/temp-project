@@ -38,7 +38,7 @@ export function array<Value, Item = unknown>(
 
 export function callRender<T>(sourceType: ColumnDataType<T>, value: T): JSX.Element {
   const render = sourceType.render ?? UNKNOWN.render;
-  return render(value, {
+  return render?.(value, {
     value,
     item: null,
   });

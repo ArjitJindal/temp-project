@@ -2462,6 +2462,16 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        productsEnabled:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductsEnabled'
+    ProductsEnabled:
+      title: ProductsEnabled
+      type: object
+      properties:
+        productName:
+          type: string
     ConsumerUserSegment:
       title: ConsumerUserSegment
       type: string
@@ -4544,7 +4554,9 @@ components:
             Shareholders (beneficiaries) of the company that hold at least 25%
             ownership. Can be another company or an individual
           items:
-            $ref: '#/components/schemas/Person'
+            oneOf:
+              - $ref: '#/components/schemas/Person'
+              - $ref: '#/components/schemas/LegalEntity'
         directors:
           type: array
           description: Director(s) of the company. Must be at least one
@@ -4603,6 +4615,10 @@ components:
         updateCount:
           x-fern-ignore: true
           type: number
+        productsEnabled:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductsEnabled'
     BusinessUserMonitoringResult:
       title: BusinessUserMonitoringResult
       type: object

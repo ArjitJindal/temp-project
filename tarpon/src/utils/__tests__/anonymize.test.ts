@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from 'mongodb'
 import { isValidEmail } from '@flagright/lib/utils'
-import { DEFAULT_CASE_AGGREGATES } from '../case'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { anonymize } from '@/utils/anonymize'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'

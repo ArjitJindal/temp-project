@@ -14,6 +14,7 @@ interface RuleStatusSwitchProps {
 
 export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleStatusSwitchProps) => {
   const canWriteRules = useHasResources(['write:::rules/my-rules/*']);
+  const canWriteRiskFactors = useHasResources(['write:::risk-scoring/risk-factors/*']);
   const { entity, type = 'RULE', onToggle, isDisabled = false } = props;
   const isDeploying = entity.status === 'DEPLOYING';
   const tooltipText = isDeploying
@@ -27,7 +28,7 @@ export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleSta
     <Tooltip title={tooltipText} placement="top">
       <Toggle
         isLoading={isDeploying}
-        isDisabled={!canWriteRules || justDeploying || isDisabled}
+        isDisabled={(!canWriteRules && !canWriteRiskFactors) || justDeploying || isDisabled}
         value={entity.status !== 'INACTIVE'}
         onChange={(newValue) => {
           onToggle?.(newValue ?? false);

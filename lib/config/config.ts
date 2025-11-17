@@ -289,7 +289,7 @@ export type FlagrightCPUArchitecture = 'arm64' | 'x86_64'
 
 export type Config = {
   stage: Stage
-  region?: FlagrightRegion
+  region?: FlagrightRegion | 'asia-2' // Added it since asia-2 is not supported anymore
   env: Environment
   resource: {
     CLOUD_WATCH: {
@@ -349,6 +349,7 @@ export type Config = {
       PROVISIONED_CONCURRENCY?: number
     }
     TRANSACTION_AGGREGATION_MAX_CONCURRENCY: number
+    PRE_AGGREGATION_MAX_CONCURRENCY: number
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE?: number
       PROVISIONED_CONCURRENCY?: number
@@ -384,6 +385,9 @@ export type Config = {
     }
     COPILOT_LAMBDA?: {
       MEMORY_SIZE?: number
+    }
+    PRE_AGGREGATION_LAMBDA: {
+      MEMORY_SIZE: number
     }
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean

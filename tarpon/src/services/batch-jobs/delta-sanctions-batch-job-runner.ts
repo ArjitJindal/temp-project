@@ -23,7 +23,7 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import {
   deleteDocumentsByVersion,
   deleteIndexAfterDataLoad,
-  getOpensearchClient,
+  getSharedOpensearchClient,
   isOpensearchAvailableInRegion,
   syncOpensearchIndex,
 } from '@/utils/opensearch-utils'
@@ -34,7 +34,7 @@ export class DeltaSanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const openSearchClient = isOpensearchAvailableInRegion()
-      ? await getOpensearchClient()
+      ? await getSharedOpensearchClient()
       : undefined
     await runDeltaSanctionsDataFetchJob(job, client, dynamoDb, openSearchClient)
     if (openSearchClient) {

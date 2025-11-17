@@ -31,7 +31,7 @@ import {
 import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 import { FormValues } from '@/components/CommentEditor';
 import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelist';
-import { CommentType } from '@/utils/user-utils';
+import { CommentType, isPerson } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import Alert from '@/components/library/Alert';
 import { useUserDetails, useUserUpdates } from '@/utils/api/users';
@@ -86,12 +86,17 @@ export default function UserItem() {
           ...user,
           comments: [...(user?.comments ?? []), newComment],
           shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
-            if (shareHolder.userId === personId) {
+            if (isPerson(shareHolder) && shareHolder.userId === personId) {
               return shareHolder;
             }
+
+            // TODO: Handle Attachments for Legal Entities
             return {
               ...shareHolder,
-              attachments: [...(shareHolder.attachments ?? []), newComment as PersonAttachment],
+              attachments: [
+                ...(isPerson(shareHolder) ? shareHolder.attachments ?? [] : []),
+                newComment as PersonAttachment,
+              ],
             };
           }),
           directors: (user as InternalBusinessUser).directors?.map((director) => {

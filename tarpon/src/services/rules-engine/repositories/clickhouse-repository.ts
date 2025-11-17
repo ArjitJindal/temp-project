@@ -22,8 +22,12 @@ import {
 import { DEFAULT_PAGE_SIZE } from '@/constants/pagination'
 import { OptionalPagination } from '@/@types/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
-import { CLICKHOUSE_DEFINITIONS } from '@/constants/clickhouse/definitions'
-import { getSortedData } from '@/utils/clickhouse/utils'
+import {
+  getPaymentDetailAddressFilter,
+  getPaymentDetailEmailFilter,
+  getPaymentDetailMethodFilter,
+  getSortedData,
+} from '@/utils/clickhouse/utils'
 import { executeClickhouseQuery } from '@/utils/clickhouse/execute'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -38,12 +42,12 @@ import { OriginFundsInfo } from '@/@types/openapi-internal/OriginFundsInfo'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
-import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
 
 type StatsByType = {
   transactionType: string
@@ -88,6 +92,65 @@ export class ClickhouseTransactionsRepository {
   ): Promise<{ whereClause: string; countWhereClause: string }> {
     const whereConditions: string[] = []
 
+    const subjectType = params.caseSubject
+
+    if (subjectType) {
+      // if caseId is present we need to filter transactions according to subject type of case
+      const entityId = params.entityId ?? ''
+
+      let filters: {
+        origin: string[]
+        destination: string[]
+      } = {
+        origin: [],
+        destination: [],
+      }
+
+      switch (subjectType) {
+        case 'USER': {
+          params.filterUserId = entityId
+          break
+        }
+        case 'PAYMENT': {
+          filters = getPaymentDetailMethodFilter(entityId)
+          params.filterOriginPaymentMethodId = undefined
+          params.filterDestinationPaymentMethodId = undefined
+          break
+        }
+        case 'ADDRESS': {
+          filters = getPaymentDetailAddressFilter(entityId)
+          break
+        }
+        case 'EMAIL': {
+          filters = getPaymentDetailEmailFilter(entityId)
+          break
+        }
+        case 'NAME': {
+          // overidding paymentDetailName filter
+          params.filterPaymentDetailName = entityId
+          break
+        }
+        default:
+      }
+
+      const combinedFilters = [...filters.origin, ...filters.destination].join(
+        ' OR '
+      )
+      if (combinedFilters.length > 0) {
+        whereConditions.push(`(${combinedFilters})`)
+      }
+    }
+
+    const sortField = params.sortField ?? 'timestamp'
+    const timestampFilterField =
+      sortField === 'timestamp' && params.sortOrder === 'descend'
+        ? 'negative_timestamp'
+        : 'timestamp'
+    const gteCondition =
+      timestampFilterField === 'negative_timestamp' ? '<=' : '>='
+    const lteCondition =
+      timestampFilterField === 'negative_timestamp' ? '>=' : '<='
+    const multiplier = timestampFilterField === 'negative_timestamp' ? -1 : 1
     if (params.filterId) {
       whereConditions.push(`id ILIKE '%${params.filterId}%'`)
     }
@@ -134,6 +197,9 @@ export class ClickhouseTransactionsRepository {
       beforeTimestamp: number | null | undefined,
       timestampField: string
     ) => {
+      const isTimestampField =
+        timestampField === 'timestamp' ||
+        timestampField === 'negative_timestamp'
       let timestampFilterCount = 0
       if (afterTimestamp != null && beforeTimestamp != null) {
         const afterDate = new Date(afterTimestamp)
@@ -144,36 +210,45 @@ export class ClickhouseTransactionsRepository {
         const beforePartition =
           beforeDate.getFullYear() * 100 + (beforeDate.getMonth() + 1)
 
-        if (afterPartition === beforePartition) {
-          whereConditions.push(
-            `toYYYYMM(toDateTime(${timestampField} / 1000)) = ${afterPartition}`
-          )
-        } else {
-          whereConditions.push(
-            `toYYYYMM(toDateTime(${timestampField} / 1000)) >= ${afterPartition}`
-          )
-          whereConditions.push(
-            `toYYYYMM(toDateTime(${timestampField} / 1000)) <= ${beforePartition}`
-          )
+        if (isTimestampField) {
+          if (afterPartition === beforePartition) {
+            whereConditions.push(
+              `toYYYYMM(toDateTime(timestamp / 1000)) = ${afterPartition}`
+            )
+          } else {
+            whereConditions.push(
+              `toYYYYMM(toDateTime(timestamp / 1000)) >= ${afterPartition}`
+            )
+            whereConditions.push(
+              `toYYYYMM(toDateTime(timestamp / 1000)) <= ${beforePartition}`
+            )
+          }
         }
 
-        whereConditions.push(`${timestampField} >= ${afterTimestamp}`)
-        whereConditions.push(`${timestampField} <= ${beforeTimestamp}`)
-
-        if (timestampField === 'timestamp') {
+        whereConditions.push(
+          `${timestampField} ${gteCondition} ${multiplier * afterTimestamp}`
+        )
+        whereConditions.push(
+          `${timestampField} ${lteCondition} ${multiplier * beforeTimestamp}`
+        )
+        if (isTimestampField) {
           timestampFilterCount += 2
         }
       } else {
         if (afterTimestamp != null) {
-          whereConditions.push(`${timestampField} >= ${afterTimestamp}`)
-          if (timestampField === 'timestamp') {
+          whereConditions.push(
+            `${timestampField} ${gteCondition} ${multiplier * afterTimestamp}`
+          )
+          if (isTimestampField) {
             timestampFilterCount++
           }
         }
 
         if (beforeTimestamp != null) {
-          whereConditions.push(`${timestampField} <= ${beforeTimestamp}`)
-          if (timestampField === 'timestamp') {
+          whereConditions.push(
+            `${timestampField} ${lteCondition} ${multiplier * beforeTimestamp}`
+          )
+          if (isTimestampField) {
             timestampFilterCount++
           }
         }
@@ -185,7 +260,7 @@ export class ClickhouseTransactionsRepository {
     const timestampFilterCount = addTimestampFiltering(
       params.afterTimestamp,
       params.beforeTimestamp,
-      'timestamp'
+      timestampFilterField
     )
 
     // Add payment approval timestamp filtering
@@ -341,13 +416,12 @@ export class ClickhouseTransactionsRepository {
       whereConditions.push(`
         id IN (
           SELECT DISTINCT transactionId 
-          FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName} 
+          FROM ${ClickhouseTableNames.TransactionEvents} 
           WHERE (${reasonConditions})
           AND length(reasons) > 0
         )
       `)
     }
-
     const queryWhereConditions = [...whereConditions]
     if (
       queryWhereConditions.length === timestampFilterCount &&
@@ -368,13 +442,21 @@ export class ClickhouseTransactionsRepository {
 
       queryWhereConditions.length = 0 // Clear the array
       if (afterTimestamp > 0) {
-        queryWhereConditions.push(`timestamp >= ${afterTimestamp}`)
+        queryWhereConditions.push(
+          `${timestampFilterField} ${gteCondition} ${
+            multiplier * afterTimestamp
+          }`
+        )
       }
-      queryWhereConditions.push(`timestamp <= ${beforeTimestamp}`)
+      queryWhereConditions.push(
+        `${timestampFilterField} ${lteCondition} ${
+          multiplier * beforeTimestamp
+        }`
+      )
     }
     if (params.afterTimestamp === null) {
-      whereConditions.push('timestamp != 0')
-      queryWhereConditions.push('timestamp != 0')
+      whereConditions.push(`${timestampFilterField} != 0`)
+      queryWhereConditions.push(`${timestampFilterField} != 0`)
     }
 
     return {
@@ -394,7 +476,7 @@ export class ClickhouseTransactionsRepository {
       await this.getTransactionsWhereConditions(params)
 
     let sortField = params.sortField ?? 'timestamp'
-    const sortOrder = params.sortOrder ?? 'ascend'
+    let sortOrder = params.sortOrder ?? 'ascend'
     const page = params.page ?? 1
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
 
@@ -456,15 +538,20 @@ export class ClickhouseTransactionsRepository {
       'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
       ars_score: 'arsScore',
     }
-
+    const originalSortOrder = sortOrder
     if (sortField in sortFieldMapper) {
       sortField = sortFieldMapper[sortField]
     }
-
+    let tableName = ClickhouseTableNames.Transactions
+    if (sortOrder === 'descend' && sortField === 'timestamp') {
+      sortOrder = 'ascend'
+      sortField = 'negative_timestamp'
+      tableName = ClickhouseTableNames.TransactionsDesc
+    }
     const data = await offsetPaginateClickhouse<TransactionTableItem>(
       this.clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      ClickhouseTableNames.TransactionsByid,
+      tableName,
       { page, pageSize, sortField, sortOrder },
       whereClause,
       columnsProjection,
@@ -537,7 +624,7 @@ export class ClickhouseTransactionsRepository {
     const sortedTransactions = getSortedData<TransactionTableItem>({
       data: data.items,
       sortField,
-      sortOrder,
+      sortOrder: originalSortOrder,
       groupByField: 'transactionId',
       groupBySortField: 'updatedAt',
     })
@@ -557,7 +644,7 @@ export class ClickhouseTransactionsRepository {
     const { whereClause } = await this.getTransactionsWhereConditions(params)
 
     let sortField = params.sortField ?? 'timestamp'
-    const sortOrder = params.sortOrder ?? 'ascend'
+    let sortOrder = params.sortOrder ?? 'ascend'
     const page = params.page ?? 1
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
 
@@ -622,14 +709,20 @@ export class ClickhouseTransactionsRepository {
       ars_score: 'arsScore',
     }
     const originalSortField = sortField
+    const originalSortOrder = sortOrder
     if (sortField in sortFieldMapper) {
       sortField = sortFieldMapper[sortField]
     }
-
+    let tableName = ClickhouseTableNames.Transactions
+    if (sortOrder === 'descend' && sortField === 'timestamp') {
+      sortOrder = 'ascend'
+      sortField = 'negative_timestamp'
+      tableName = ClickhouseTableNames.TransactionsDesc
+    }
     const items = await getClickhouseDataOnly<TransactionTableItem>(
       this.clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      ClickhouseTableNames.TransactionsByid,
+      tableName,
       { page, pageSize, sortField, sortOrder },
       whereClause,
       columnsProjection,
@@ -702,7 +795,7 @@ export class ClickhouseTransactionsRepository {
     const sortedTransactions = getSortedData<TransactionTableItem>({
       data: items,
       sortField: originalSortField,
-      sortOrder,
+      sortOrder: originalSortOrder,
       groupByField: 'transactionId',
       groupBySortField: 'updatedAt',
     })
@@ -719,10 +812,13 @@ export class ClickhouseTransactionsRepository {
     const { countWhereClause } = await this.getTransactionsWhereConditions(
       params
     )
-
+    let tableName = ClickhouseTableNames.Transactions
+    if (params.sortOrder === 'descend' && params.sortField === 'timestamp') {
+      tableName = ClickhouseTableNames.TransactionsDesc
+    }
     const count = await getClickhouseCountOnly(
       this.clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      tableName,
       '1',
       countWhereClause
     )
@@ -734,8 +830,14 @@ export class ClickhouseTransactionsRepository {
     params: DefaultApiGetTransactionsStatsByTypeRequest,
     exchangeRateWithUsd: number
   ): Promise<StatsByType[]> {
-    const { pageSize, sortField, sortOrder } = params
-
+    const pageSize = params.pageSize
+    let { sortField, sortOrder } = params
+    let tableName = ClickhouseTableNames.Transactions
+    if (sortOrder === 'descend' && sortField === 'timestamp') {
+      sortOrder = 'ascend'
+      sortField = 'negative_timestamp'
+      tableName = ClickhouseTableNames.TransactionsDesc
+    }
     const { whereClause } = await this.getTransactionsWhereConditions(params)
     let paginationClause = ''
     if (pageSize) {
@@ -747,7 +849,7 @@ export class ClickhouseTransactionsRepository {
     const query = `
       WITH txn AS (
         SELECT type as transactionType, originAmountDetails_amountInUsd
-        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+        FROM ${tableName} FINAL
         WHERE ${whereClause} 
         ${paginationClause}
       )
@@ -772,31 +874,6 @@ export class ClickhouseTransactionsRepository {
     return result
   }
 
-  public async getTransactionAmountAggregates(
-    params: DefaultApiGetTransactionsListRequest
-  ): Promise<TransactionAmountAggregates> {
-    const { whereClause } = await this.getTransactionsWhereConditions(params)
-
-    const query = `
-      SELECT 
-        round(sum(originAmountDetails_amountInUsd), 2) as totalOriginAmount,
-        round(sum(CASE WHEN type = 'DEPOSIT' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalDeposits,
-        round(sum(CASE WHEN type = 'LOAN' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalLoans,
-        round(sum(CASE WHEN type = 'LOAN' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalLoanBalance,
-        count() as totalTransactions,
-        count(DISTINCT originPaymentMethodId) as totalAccounts  
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
-      WHERE ${whereClause}
-    `
-
-    const result = await executeClickhouseQuery<TransactionAmountAggregates[]>(
-      this.clickhouseClient,
-      query
-    )
-
-    return result[0]
-  }
-
   public async getAverageByMethodTable(
     params: DefaultApiGetTransactionsListRequest
   ): Promise<
@@ -810,7 +887,7 @@ export class ClickhouseTransactionsRepository {
         originPaymentMethod as method,
         1 as inLast12Months,
         avg(originAmountDetails_amountInUsd) as average
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      FROM ${ClickhouseTableNames.Transactions} FINAL
       WHERE ${whereClause}
         AND toStartOfMonth(toDateTime(timestamp / 1000)) >= toStartOfMonth(now() - INTERVAL 12 MONTH)
       GROUP BY method
@@ -823,7 +900,7 @@ export class ClickhouseTransactionsRepository {
         originPaymentMethod as method,
         0 as inLast12Months,
         avg(originAmountDetails_amountInUsd) as average
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      FROM ${ClickhouseTableNames.Transactions} FINAL
       WHERE ${whereClause}
       GROUP BY method
       ORDER BY method
@@ -861,7 +938,14 @@ export class ClickhouseTransactionsRepository {
     params: DefaultApiGetTransactionsStatsByTimeRequest,
     exchangeRateWithUsd: number
   ): Promise<TransactionsStatsByTimeResponse['data']> {
-    const { pageSize, sortField, sortOrder } = params
+    const pageSize = params.pageSize
+    let { sortField, sortOrder } = params
+    let tableName = ClickhouseTableNames.Transactions
+    if (sortOrder === 'descend' && sortField === 'timestamp') {
+      sortOrder = 'ascend'
+      sortField = 'negative_timestamp'
+      tableName = ClickhouseTableNames.TransactionsDesc
+    }
     let sortClause = ''
     if (sortField && sortOrder) {
       sortClause = `ORDER BY ${sortField} ${
@@ -879,7 +963,7 @@ export class ClickhouseTransactionsRepository {
     const minMaxQuery = `
       WITH txn AS (
         SELECT timestamp
-        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+        FROM ${tableName}
         WHERE ${whereClause} 
         ${paginationClause}
       )
@@ -913,7 +997,7 @@ export class ClickhouseTransactionsRepository {
       labelFormat = '%m/%d %H:00'
     }
     if (sortClause) {
-      if (sortField === 'timestamp') {
+      if (sortField === 'timestamp' || sortField === 'negative_timestamp') {
         sortClause = `ORDER BY label ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}`
       }
     }
@@ -936,7 +1020,7 @@ export class ClickhouseTransactionsRepository {
         count() as count,
         sum(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as amount,
         ${aggregateByField} as aggregateBy
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
+      FROM ${tableName} FINAL
       WHERE ${whereClause}
       GROUP BY label, aggregateBy
       ${paginationClause}
@@ -1007,7 +1091,7 @@ export class ClickhouseTransactionsRepository {
 
       const query = `
     SELECT ${identifierColumns.join(', ')}
-    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+    FROM ${ClickhouseTableNames.Transactions}
     WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
         timeRange.beforeTimestamp
       }
@@ -1075,7 +1159,7 @@ export class ClickhouseTransactionsRepository {
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
     const query = `
 SELECT ${userField} 
-FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+FROM ${ClickhouseTableNames.Transactions} 
 WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp} 
 AND ${userField} != ''
 LIMIT 1 BY ${userField}`
@@ -1135,7 +1219,7 @@ LIMIT 1 BY ${userField}`
   ): AsyncGenerator<string[]> {
     const query = `
     SELECT JSONExtractString(data, '${direction.toLowerCase()}PaymentDetails', 'emailId') as emailId 
-    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+    FROM ${ClickhouseTableNames.Transactions} 
     WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
       timeRange.beforeTimestamp
     } 
@@ -1236,7 +1320,7 @@ LIMIT 1 BY ${userField}`
           ? `JSONExtractRaw(data, '${paymentDetailsField}', '${addressField}', '${field}') as ${field}`
           : `JSONExtractString(data, '${paymentDetailsField}', '${addressField}', '${field}') as ${field}`
       ).join(', ')} 
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+      FROM ${ClickhouseTableNames.Transactions} 
       WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
         timeRange.beforeTimestamp
       } 
@@ -1347,7 +1431,7 @@ LIMIT 1 BY ${userField}`
           (field) =>
             `JSONExtractString(data, '${paymentDetailsField}', '${nameField}', '${field}') as ${field}`
         ).join(', ')} 
-        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+        FROM ${ClickhouseTableNames.Transactions} 
         WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
           timeRange.beforeTimestamp
         } 
@@ -1398,7 +1482,7 @@ LIMIT 1 BY ${userField}`
         // For other payment methods, extract the entire name field as string
         const query = `
         SELECT JSONExtractString(data, '${paymentDetailsField}', '${nameField}') as name
-        FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} 
+        FROM ${ClickhouseTableNames.Transactions} 
         WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp} 
         AND ${paymentDetailMethodField} = '${paymentMethod}'
         AND JSONHas(data, '${paymentDetailsField}', '${nameField}')

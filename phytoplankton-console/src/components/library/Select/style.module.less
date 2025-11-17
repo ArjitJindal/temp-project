@@ -11,6 +11,7 @@
 .root {
   min-width: 80px;
   height: 100%;
+  overflow: hidden;
 
   &.size-DEFAULT {
     .sizeProps(
@@ -124,6 +125,10 @@
     .tagWrapper {
       opacity: 0.2;
     }
+
+    .rightIcons {
+      background: @figma-vars--tokens-colorBackgroundDisabled;
+    }
   }
 
   &:not(.isDisabled) {
@@ -207,6 +212,9 @@
   display: flex;
   align-items: center;
   pointer-events: none;
+  height: 100%;
+  z-index: 1;
+  background: white;
 }
 
 .rightIcon {
@@ -335,7 +343,9 @@
   }
 
   .rightIcons {
-    right: @h-padding;
+    right: 0;
+    padding-right: @h-padding;
+    padding-left: @h-padding;
     gap: @h-padding;
   }
 }

@@ -116,7 +116,7 @@ export const getStatusStats = (
       count(*) FILTER(WHERE statusChange.caseStatus = 'CLOSED') as closedBy,
       count(*) FILTER(WHERE statusChange.caseStatus = 'ESCALATED') as escalatedBy,
       count(*) FILTER(WHERE statusChange.caseStatus IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')) as inProgress
-    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
     ARRAY JOIN statusChanges AS statusChange
     WHERE statusChange.userId != ''
       AND statusChange.caseStatus IN ('CLOSED', 'ESCALATED', 'OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')
@@ -134,7 +134,7 @@ export const getStatusStats = (
       count(*) FILTER(WHERE statusChange.caseStatus = 'CLOSED') as closedBy,
       count(*) FILTER(WHERE statusChange.caseStatus = 'ESCALATED') as escalatedBy,
       count(*) FILTER(WHERE statusChange.caseStatus IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')) as inProgress
-    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
     ARRAY JOIN alerts AS alert
     ARRAY JOIN alert.statusChanges as statusChange
     WHERE statusChange.userId != ''
@@ -165,7 +165,7 @@ export const getAssignmentStats = (
         formatDateTime(toDateTime(assignment.timestamp/1000), '%Y-%m-%d %H:00:00') as date,
         caseStatus as status,
         count(*) as assignedTo
-      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
       ARRAY JOIN assignments as assignment
       WHERE assignment.assigneeUserId != ''
       ${timeConditions.length > 0 ? `AND ${timeConditions.join(' AND ')}` : ''}
@@ -180,7 +180,7 @@ export const getAssignmentStats = (
       formatDateTime(toDateTime(assignment.timestamp/1000), '%Y-%m-%d %H:00:00') as date,
       alert.alertStatus as status,
       count(*) as assignedTo
-    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
     ARRAY JOIN alerts AS alert
     ARRAY JOIN alert.assignments as assignment
     WHERE assignment.assigneeUserId != ''
@@ -219,7 +219,7 @@ export const getClosedBySystem = (
           x -> x.caseStatus = 'CLOSED',
           alert.statusChanges
         ) as lastStatusChange
-      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
       ARRAY JOIN statusChanges AS statusChange
       Array JOIN alerts as alert
       WHERE statusChange.caseStatus = 'CLOSED'
@@ -273,7 +273,7 @@ export const getClosedBySystem = (
       formatDateTime(toDateTime(caseStatusChange.timestamp/1000), '%Y-%m-%d %H:00:00') as date,
       statusChange.caseStatus as status,
       count(*) as closedBySystem
-    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} FINAL
     ARRAY JOIN statusChanges AS caseStatusChange
     ARRAY JOIN alerts AS alert
     ARRAY JOIN alert.statusChanges as statusChange

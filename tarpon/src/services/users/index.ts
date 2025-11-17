@@ -17,8 +17,8 @@ import uniq from 'lodash/uniq'
 import uniqBy from 'lodash/uniqBy'
 import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
-import { UserUpdateApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
-import { UserUpdateApprovalWorkflow } from '@flagright/lib/@types/workflow'
+import { ApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
+import { ApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import has from 'lodash/has'
 import pickBy from 'lodash/pickBy'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -73,7 +73,7 @@ import { CommentRequest } from '@/@types/openapi-public-management/CommentReques
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { CaseRepository } from '@/services/cases/repository'
-import { formatConsumerName, getUserName } from '@/utils/helpers'
+import { formatConsumerName, getUserName, isPerson } from '@/utils/helpers'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import { getClickhouseClient } from '@/utils/clickhouse/client'
@@ -111,6 +111,12 @@ import { shouldSkipFirstApprovalStep } from '@/services/workflow/approval-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { RiskService } from '@/services/risk'
+
+interface CraProposalValue {
+  riskLevel?: RiskLevel
+  isUpdatable?: boolean
+  releaseAt?: number
+}
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -1002,7 +1008,8 @@ export class UserService {
   }
 
   private mapAllUserToTableItem(
-    user: InternalUser | InternalBusinessUser | InternalConsumerUser
+    user: InternalUser | InternalBusinessUser | InternalConsumerUser,
+    trimNameComponents: boolean = false
   ): AllUsersTableItem {
     return {
       isRiskLevelLocked: !user.drsScore?.isUpdatable,
@@ -1010,7 +1017,7 @@ export class UserService {
       kycStatus: user.kycStatusDetails?.status,
       krsScore: user.krsScore?.krsScore,
       createdTimestamp: user.createdTimestamp,
-      name: getUserName(user),
+      name: getUserName(user, trimNameComponents),
       userState: user.userStateDetails?.state,
       type: user.type,
       drsScore: user.drsScore?.drsScore,
@@ -1410,12 +1417,13 @@ export class UserService {
         (attachment) => !attachment.deletedAt || attachment.deletedAt === null
       ) ?? []
     const shareHoldersAttachment: PersonAttachment[] =
-      user.shareHolders?.flatMap(
-        (shareHolder) =>
-          shareHolder.attachments?.filter(
-            (attachment) =>
-              !attachment.deletedAt || attachment.deletedAt === null
-          ) ?? []
+      user.shareHolders?.flatMap((shareHolder) =>
+        isPerson(shareHolder)
+          ? shareHolder.attachments?.filter(
+              (attachment) =>
+                !attachment.deletedAt || attachment.deletedAt === null
+            ) ?? []
+          : []
       ) ?? []
     const directorsAttachment: PersonAttachment[] =
       user.directors?.flatMap(
@@ -1473,10 +1481,12 @@ export class UserService {
       shareHolders: user.shareHolders?.map((shareHolder) => {
         return {
           ...shareHolder,
-          attachments: shareHolder.attachments?.filter(
-            (attachment) =>
-              !attachment.deletedAt || attachment.deletedAt === null
-          ),
+          attachments: isPerson(shareHolder)
+            ? shareHolder.attachments?.filter(
+                (attachment) =>
+                  !attachment.deletedAt || attachment.deletedAt === null
+              ) ?? []
+            : [],
         }
       }),
       directors: user.directors?.map((director) => {
@@ -2279,12 +2289,14 @@ export class UserService {
     }
     let shareHolderId: string | undefined = undefined
     user?.shareHolders?.forEach((shareHolder) =>
-      shareHolder.attachments?.forEach((a) => {
-        shareHolderId = shareHolder.userId
-        if (a.id === commentId) {
-          attachment = a
-        }
-      })
+      isPerson(shareHolder)
+        ? shareHolder.attachments?.forEach((a) => {
+            shareHolderId = shareHolder.userId
+            if (a.id === commentId) {
+              attachment = a
+            }
+          })
+        : undefined
     )
     if (attachment && shareHolderId) {
       if (attachment.files && attachment.files.length > 0) {
@@ -2511,10 +2523,10 @@ export class UserService {
     }
 
     // Workflow exists - proceed with normal approval process
-    const workflow = await this.workflowService.getWorkflow(
-      'user-update-approval',
+    const workflow = (await this.workflowService.getWorkflow(
+      'change-approval',
       workflowId
-    )
+    )) as ApprovalWorkflow
 
     // Check if the proposer should skip the first approval step
     const autoSkipResult = await shouldSkipFirstApprovalStep(
@@ -2649,74 +2661,66 @@ export class UserService {
     proposedChanges: any[]
   ): Promise<void> {
     // Handle CRA fields through the risk service
-    // Cra = risk level value, CraLock = isUpdatable flag
+    // Cra now contains an object with riskLevel, isUpdatable, and optional releaseAt (like PEP status)
     const craChange = proposedChanges.find((change) => change.field === 'Cra')
-    const craLockChange = proposedChanges.find(
-      (change) => change.field === 'CraLock'
-    )
 
-    // Handle CRA level changes (requires account to be unlocked)
     if (craChange) {
       const riskService = new RiskService(this.tenantId, {
         dynamoDb: this.dynamoDb,
         mongoDb: this.mongoDb,
       })
 
-      // Check if the account is currently locked
+      // Unwrap the CRA object (like PEP status)
+      const craValue = craChange.value as CraProposalValue
+      const newRiskLevel = craValue.riskLevel
+      const newIsUpdatable = craValue.isUpdatable
+      const releaseAt = craValue.releaseAt
+
       const currentRiskAssignment = await riskService.getRiskAssignment(userId)
-      if (currentRiskAssignment?.isUpdatable === false) {
+
+      // Determine if risk level is being changed (only if riskLevel is provided)
+      const currentEffectiveRiskLevel =
+        currentRiskAssignment?.manualRiskLevel ||
+        currentRiskAssignment?.derivedRiskLevel
+      const isRiskLevelChanging =
+        newRiskLevel !== undefined && currentEffectiveRiskLevel !== newRiskLevel
+
+      if (currentRiskAssignment?.isUpdatable === false && isRiskLevelChanging) {
         throw new BadRequest(
           'Cannot change CRA level when the account is locked. Please unlock the account first.'
         )
       }
 
-      const newRiskLevel = craChange.value as RiskLevel
-      const newIsUpdatable =
-        (craLockChange?.value as boolean) ??
-        currentRiskAssignment?.isUpdatable ??
-        true
-
-      await riskService.createOrUpdateRiskAssignment(
-        userId,
-        newRiskLevel,
-        newIsUpdatable
-      )
-      console.log(
-        `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${newIsUpdatable}`
-      )
-    }
-
-    // Handle CRA lock changes (independent of CRA level)
-    if (craLockChange) {
-      const riskService = new RiskService(this.tenantId, {
-        dynamoDb: this.dynamoDb,
-        mongoDb: this.mongoDb,
-      })
-
-      const newIsUpdatable = craLockChange.value as boolean
-
-      // Check for releaseAt timestamp in proposed changes (for approval workflow)
-      const releaseAtChange = proposedChanges.find(
-        (change) => change.field === 'CraLockReleaseAt'
-      )
-      const releaseAt = releaseAtChange?.value as number | undefined
-
-      await riskService.updateRiskAssignmentLock(
-        userId,
-        newIsUpdatable,
-        releaseAt
-      )
-      console.log(
-        `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
-      )
+      // If risk level is provided and changing, use createOrUpdateRiskAssignment
+      // If only lock status is changing, use updateRiskAssignmentLock
+      if (isRiskLevelChanging && newRiskLevel) {
+        const isUpdatable =
+          newIsUpdatable ?? currentRiskAssignment?.isUpdatable ?? true
+        await riskService.createOrUpdateRiskAssignment(
+          userId,
+          newRiskLevel,
+          isUpdatable,
+          releaseAt
+        )
+        console.log(
+          `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${isUpdatable}, releaseAt=${releaseAt}`
+        )
+      } else if (newIsUpdatable !== undefined) {
+        // Only lock status is changing
+        await riskService.updateRiskAssignmentLock(
+          userId,
+          newIsUpdatable,
+          releaseAt
+        )
+        console.log(
+          `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
+        )
+      }
     }
 
     // Handle other fields through the standard updateUser method
     const otherFields = proposedChanges.filter(
-      (change) =>
-        change.field !== 'Cra' &&
-        change.field !== 'CraLock' &&
-        change.field !== 'CraLockReleaseAt'
+      (change) => change.field !== 'Cra'
     )
 
     if (otherFields.length > 0) {
@@ -2854,12 +2858,12 @@ export class UserService {
     }
 
     const workflow = await this.workflowService.getWorkflowVersion(
-      'user-update-approval',
+      'change-approval',
       wRef.id,
-      wRef.version.toString()
+      wRef.version
     )
-    const workflowMachine = new UserUpdateApprovalWorkflowMachine(
-      workflow as UserUpdateApprovalWorkflow
+    const workflowMachine = new ApprovalWorkflowMachine(
+      workflow as ApprovalWorkflow
     )
 
     // ensure the user performing the action has the role referenced in the current step of the workflow

@@ -492,13 +492,36 @@ function replaceStraightQuotes(text) {
 
 Cypress.Commands.add('checkNotification', (statements: string[]) => {
   cy.loginByRole('admin');
-  cy.get('div[data-cy="notifications"]').click();
-  cy.waitNothingLoading();
-  cy.get('div[data-cy="notification-message"]').then(($elements) => {
-    const texts = $elements.map((_index, el) => Cypress.$(el).text()).get();
-    const found = statements.every((statement) => texts.includes(replaceStraightQuotes(statement)));
-    expect(found).to.be.true;
-  });
+  const maxTries = 5;
+  const waitTime = 1000; // ms
+
+  const checkNotificationRecursive = (tries: number) => {
+    if (tries >= maxTries) {
+      throw new Error('Notification not found after ' + maxTries + ' attempts');
+    }
+
+    cy.log(`Trying to get notification for attempt ${tries + 1}/${maxTries}`);
+    cy.wait(waitTime * tries);
+    cy.visit('/');
+    cy.waitNothingLoading();
+    cy.get('div[data-cy="notifications"]').click();
+    cy.waitNothingLoading();
+    cy.get('div[data-cy="notification-message"]').then(($elements) => {
+      const texts = $elements.map((_index, el) => Cypress.$(el).text()).get();
+      const found = statements.every((statement) =>
+        texts.includes(replaceStraightQuotes(statement)),
+      );
+      if (found) {
+        cy.log('Notification found!');
+        expect(found).to.be.true;
+      } else {
+        cy.log('Notification not found, retrying...');
+        checkNotificationRecursive(tries + 1);
+      }
+    });
+  };
+
+  checkNotificationRecursive(0);
 });
 
 Cypress.Commands.add('deleteRuleInstance', (ruleInstanceId: string) => {

@@ -197,6 +197,143 @@ export async function cursorPaginate<T extends Document>(
   }
 }
 
+export type AggregateSortField = {
+  field: string
+  direction: 1 | -1
+  type?: 'string' | 'number' | 'objectId'
+}
+
+export async function cursorPaginateAggregate<T extends Document>(
+  collection: Collection<T>,
+  basePipeline: Document[],
+  options: {
+    pageSize?: number
+    fromCursorKey?: string
+    sort: AggregateSortField[]
+    projection?: Document
+  }
+): Promise<CursorPaginationResponse<WithId<T>>> {
+  const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE
+  const sort = options.sort
+
+  // Add sort stage
+  const sortStage: Record<string, 1 | -1> = {}
+  for (const s of sort) {
+    sortStage[s.field] = s.direction
+  }
+
+  const pipeline: Document[] = [...basePipeline]
+
+  // Decode cursor
+  const raw = options.fromCursorKey
+    ? Buffer.from(options.fromCursorKey, 'base64').toString('ascii')
+    : ''
+  if (raw) {
+    const parts = raw.split(PAGINATION_CURSOR_KEY_SEPERATOR)
+
+    // Build lexicographic $or conditions based on sort fields
+    const orConditions: Document[] = []
+
+    for (let i = 0; i < sort.length; i++) {
+      const cond: any = {}
+      // Equality on previous fields
+      for (let j = 0; j < i; j++) {
+        const equalVal = parseCursorValue(parts[j], sort[j].type)
+        if (equalVal !== undefined) {
+          cond[sort[j].field] = equalVal
+        }
+      }
+      // Comparator on current field
+      const cmpVal = parseCursorValue(parts[i], sort[i].type)
+      if (cmpVal !== undefined) {
+        const op = sort[i].direction === 1 ? '$gt' : '$lt'
+        cond[sort[i].field] = { [op]: cmpVal }
+        orConditions.push(cond)
+      }
+    }
+
+    if (orConditions.length) {
+      pipeline.push({ $match: { $or: orConditions } })
+    }
+  }
+
+  pipeline.push({ $sort: sortStage })
+  if (options.projection) {
+    pipeline.push({ $project: options.projection })
+  }
+  pipeline.push({
+    $facet: {
+      items: [{ $limit: pageSize + 1 }],
+      count: [{ $group: { _id: null, count: { $sum: 1 } } }],
+    },
+  })
+
+  const [result] = await collection.aggregate(pipeline).toArray()
+  const items = (result?.items as WithId<T>[]) || []
+  const totalCount: number = result?.count?.[0]?.count ?? 0
+
+  const hasNext = items.length > pageSize
+  if (hasNext) {
+    items.pop()
+  }
+
+  let next = ''
+  if (hasNext && items.length > 0) {
+    const last = items[items.length - 1] as any
+    const encoded = encodeAggregateCursor(last, sort)
+    next = encoded
+  }
+
+  return {
+    items,
+    next,
+    prev: '',
+    last: '',
+    hasNext,
+    hasPrev: Boolean(options.fromCursorKey),
+    count: totalCount,
+    limit: COUNT_QUERY_LIMIT,
+    pageSize,
+  }
+}
+
+function parseCursorValue(
+  raw: string | undefined,
+  type: AggregateSortField['type']
+) {
+  if (raw == null) {
+    return undefined
+  }
+  if (type === 'number') {
+    const n = Number(raw)
+    return Number.isNaN(n) ? undefined : n
+  }
+  if (type === 'objectId') {
+    try {
+      return new ObjectId(raw)
+    } catch {
+      return undefined
+    }
+  }
+  // string default
+  return raw
+}
+
+function encodeAggregateCursor(item: any, sort: AggregateSortField[]): string {
+  const parts = sort.map((s) => {
+    const v = item[s.field]
+    if (v == null) {
+      return ''
+    }
+    if (s.type === 'objectId') {
+      return v.toString?.() ?? String(v)
+    }
+    return String(v)
+  })
+  const raw = parts.join(PAGINATION_CURSOR_KEY_SEPERATOR)
+  return encodeCursor(raw)
+}
+
 async function getPrevCursor<T>(
   prevFind: FindCursor<WithId<T>>,
   query: CursorPaginationParams

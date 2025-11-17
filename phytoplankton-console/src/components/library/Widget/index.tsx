@@ -90,6 +90,7 @@ export function DownloadButton(props: {
           tableOptions: tableOptions ? [tableOptions] : [],
           reportTitle: tableTitle,
           orientation: 'portrait',
+          addPageNumber: true,
         });
         message.success('Data export finished', {
           details: 'Download should start in a moment.',

@@ -60,7 +60,8 @@ export abstract class FlatFileBaseRunner<
 
   protected abstract processBatch(
     batch: Array<FlatFilesRecordsSchema>,
-    metadata: object
+    metadata: object,
+    entityId?: string
   ): Promise<void>
 
   protected parseRecord(record: FlatFilesRecordsSchema): T {
@@ -162,7 +163,11 @@ export abstract class FlatFileBaseRunner<
     }
   }
 
-  public async run(s3Key: string, metadata: object): Promise<void> {
+  public async run(
+    s3Key: string,
+    metadata: object,
+    entityId?: string
+  ): Promise<void> {
     try {
       const records = this.flatFilesRecords.objects
         .filter({
@@ -179,14 +184,14 @@ export abstract class FlatFileBaseRunner<
         currentBatch.push(record)
 
         if (currentBatch.length >= batchSize) {
-          await this.processBatch(currentBatch, metadata)
+          await this.processBatch(currentBatch, metadata, entityId)
           currentBatch = []
         }
       }
 
       // Process remaining records
       if (currentBatch.length > 0) {
-        await this.processBatch(currentBatch, metadata)
+        await this.processBatch(currentBatch, metadata, entityId)
       }
     } catch (error) {
       logger.error('Error in FlatFileBaseRunner.run', {

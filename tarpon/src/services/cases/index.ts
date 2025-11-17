@@ -25,10 +25,8 @@ import { ListService } from '../list'
 import { getPaymentMethodId } from '@/utils/payment-details'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
-import {
-  CaseRepository,
-  MAX_TRANSACTION_IN_A_CASE,
-} from '@/services/cases/repository'
+import { CaseRepository } from '@/services/cases/repository'
+import { MAX_TRANSACTION_IN_A_CASE } from '@/constants/case-creation'
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import {
@@ -99,6 +97,7 @@ import {
 import { getUserUpdateRequest } from '@/utils/case'
 import { CommentsResponseItem } from '@/@types/openapi-internal/CommentsResponseItem'
 import { updateUserDetails } from '@/utils/user-update-utils'
+import { CasesUniquesField } from '@/@types/openapi-internal/CasesUniquesField'
 
 // Custom AuditLogReturnData types
 type CaseUpdateAuditLogReturnData = AuditLogReturnData<
@@ -1548,5 +1547,13 @@ export class CaseService extends CaseAlertsCommonService {
       result: undefined,
       entities: auditLogEntity,
     }
+  }
+
+  public async getUniques(params: {
+    field: CasesUniquesField
+    filter?: string
+    type: 'CASE' | 'ALERT'
+  }): Promise<string[]> {
+    return await this.caseRepository.getUniques(params)
   }
 }

@@ -843,37 +843,62 @@ export class RiskRepository {
         ? releaseAt
         : undefined
 
-    const lockExpirationFields =
-      isUpdatable === false && lockExpiresAt
-        ? {
-            lockedAt: now,
-            lockExpiresAt,
-          }
-        : {}
-
-    const newDrsRiskValue: DrsScore = {
-      manualRiskLevel: riskLevel,
-      createdAt: now,
-      isUpdatable: isUpdatable ?? true,
-      drsScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
-      userId,
-      transactionId: 'MANUAL_UPDATE',
-      triggeredBy: getTriggerSource(),
-      prevDrsScore: previousDrsScore?.drsScore,
-      ...lockExpirationFields,
-    }
-
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
-    await upsertSaveDynamo(
-      this.dynamoDb,
-      {
-        entity: { ...newDrsRiskValue },
-        key: primaryKey,
-        tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      },
-      { versioned: true }
-    )
+    // Build update expression based on lock state
+    const drsScore = getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+    const triggeredBy = getTriggerSource()
+    const prevDrsScore = previousDrsScore?.drsScore
+
+    let updateExpression =
+      'SET manualRiskLevel = :manualRiskLevel, drsScore = :drsScore, isUpdatable = :isUpdatable, transactionId = :transactionId, triggeredBy = :triggeredBy, createdAt = :createdAt, updatedAt = :updatedAt'
+    const expressionAttributeValues: Record<string, any> = {
+      ':manualRiskLevel': riskLevel,
+      ':drsScore': drsScore,
+      ':isUpdatable': isUpdatable ?? true,
+      ':transactionId': 'MANUAL_UPDATE',
+      ':triggeredBy': triggeredBy,
+      ':createdAt': now,
+      ':updatedAt': now,
+    }
+
+    if (prevDrsScore !== undefined) {
+      updateExpression += ', prevDrsScore = :prevDrsScore'
+      expressionAttributeValues[':prevDrsScore'] = prevDrsScore
+    }
+
+    // Handle lock fields based on state
+    if (isUpdatable === false) {
+      // Locking
+      updateExpression += ', lockedAt = :lockedAt'
+      expressionAttributeValues[':lockedAt'] = now
+
+      if (lockExpiresAt) {
+        // Locking with expiration
+        updateExpression += ', lockExpiresAt = :lockExpiresAt'
+        expressionAttributeValues[':lockExpiresAt'] = lockExpiresAt
+      } else {
+        // Perpetual lock - remove lockExpiresAt if it exists
+        updateExpression += ' REMOVE lockExpiresAt'
+      }
+    } else {
+      // Unlocking - remove both lock fields
+      updateExpression += ' REMOVE lockedAt, lockExpiresAt'
+    }
+
+    const updateInput: UpdateCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: primaryKey,
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    }
+
+    const result = await this.dynamoDb.send(new UpdateCommand(updateInput))
+
+    if (!result.Attributes) {
+      throw new Error(`Failed to update manual risk level for user ${userId}`)
+    }
 
     // Create inverse index lock item if locking with expiration
     if (isUpdatable === false && lockExpiresAt) {
@@ -906,6 +931,8 @@ export class RiskRepository {
       await handleLocalHammerheadChangeCapture(this.tenantId, primaryKey)
     }
 
+    const updatedDrsScore = result.Attributes as DrsScore
+
     logger.debug(
       `Manual risk level updated for user ${userId} to ${riskLevel}${
         lockExpiresAt
@@ -914,7 +941,7 @@ export class RiskRepository {
       }`
     )
 
-    return newDrsRiskValue
+    return updatedDrsScore
   }
 
   public async augmentRiskLevel<T extends { arsScore?: ArsScore }>(

@@ -21,40 +21,15 @@ export interface AlertWorkflow extends BaseCaseAlertWorkflow {
   workflowType: 'alert'
 }
 
-export interface BaseApprovalWorkflow {
+// Unified approval workflow type for all approval workflows
+// All approval workflows use the 'change-approval' workflowType
+export interface ApprovalWorkflow {
   id: string
-  workflowType:
-    | 'risk-levels-approval'
-    | 'risk-factors-approval'
-    | 'user-update-approval'
-    | 'rule-approval'
+  workflowType: 'change-approval'
   version: number
   name: string
   description?: string
   author: string
   enabled: boolean
   approvalChain: string[]
-}
-
-export interface RiskLevelApprovalWorkflow {
-  id: string
-  workflowType: 'risk-levels-approval'
-  version: number
-  name: string
-  description?: string
-  author: string
-  enabled: boolean
-  approvalChain: string[]
-}
-
-export interface RiskFactorsApprovalWorkflow extends BaseApprovalWorkflow {
-  workflowType: 'risk-factors-approval'
-}
-
-export interface RuleApprovalWorkflow extends BaseApprovalWorkflow {
-  workflowType: 'rule-approval'
-}
-
-export interface UserUpdateApprovalWorkflow extends BaseApprovalWorkflow {
-  workflowType: 'user-update-approval'
 }

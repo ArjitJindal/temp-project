@@ -7,7 +7,11 @@ import { CURRENCIES_SELECT_OPTIONS, MINUTE_GROUP_SIZE } from '@flagright/lib/con
 import { canAggregateMinute } from '@flagright/lib/rules-engine';
 import { getAllValuesByKey } from '@flagright/lib/utils';
 import VariableFilters from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableFilters';
-import { isTransactionAmountVariable, isTransactionOriginOrDestinationVariable } from '../helpers';
+import {
+  isTransactionAmountVariable,
+  isTransactionOriginOrDestinationVariable,
+  isUserSenderOrReceiverVariable,
+} from '../helpers';
 import s from './style.module.less';
 import AggregationVariableSummary from './AggregationVariableSummary';
 import * as Card from '@/components/ui/Card';
@@ -56,6 +60,8 @@ interface AggregationVariableFormProps {
   onCancel: () => void;
 }
 
+type AggregationType = 'TRANSACTION' | 'USER';
+
 const USER_DIRECTION_OPTIONS: Array<{ value: LogicAggregationUserDirection; label: string }> = [
   { value: 'SENDER', label: 'Sender' },
   { value: 'RECEIVER', label: 'Receiver' },
@@ -69,9 +75,12 @@ const TX_DIRECTION_OPTIONS: Array<{ value: LogicAggregationTransactionDirection;
     { value: 'SENDING_RECEIVING', label: 'Both' },
   ];
 
-const AGGREGATE_TARGET_OPTIONS = [
+const AGGREGATE_TARGET_OPTIONS = (aggregationType: AggregationType) => [
   { value: 'TIME', label: 'Time' },
-  { value: 'LAST_N', label: "Last 'N' transactions" },
+  {
+    value: 'LAST_N',
+    label: `Last 'N' ${aggregationType === 'TRANSACTION' ? 'transactions' : 'details'}`,
+  },
 ];
 
 const BOOLEAN_OPTIONS = [
@@ -209,6 +218,9 @@ export const AggregationVariableFormContent: React.FC<
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [formValues, setFormValues] = formValuesState;
+  const [aggregationType, setAggregationType] = useState<'TRANSACTION' | 'USER'>(
+    formValues.type === 'USER_DETAILS' ? 'USER' : 'TRANSACTION',
+  );
   const [aggregateByLastN, setAggregateByLastN] = useState(!!formValues.lastNEntities);
   const settings = useSettings();
   const hasCustomAggregationFields = useFeatureEnabled('CUSTOM_AGGREGATION_FIELDS');
@@ -227,6 +239,10 @@ export const AggregationVariableFormContent: React.FC<
         ]
       : []),
   ];
+  const VARIABLE_TYPE_OPTIONS: Array<{ value: AggregationType; label: string }> = [
+    { value: 'TRANSACTION', label: 'Transaction' },
+    { value: 'USER', label: 'User' },
+  ];
 
   const aggregateFieldOptions = useMemo(() => {
     return entityVariables
@@ -234,6 +250,19 @@ export const AggregationVariableFormContent: React.FC<
       .map((v) => ({
         value: v.key,
         // NOTE: Remove redundant namespace prefix as we only show transaction variables
+        label: varLabelWithoutNamespace(v.uiDefinition.label),
+      }));
+  }, [entityVariables]);
+  const aggregateFieldOptionsforUser = useMemo(() => {
+    return entityVariables
+      .filter(
+        (v) =>
+          (v.entity === 'USER' || v.entity === 'CONSUMER_USER' || v.entity === 'BUSINESS_USER') &&
+          isUserSenderOrReceiverVariable(v.key),
+      )
+      .map((v) => ({
+        value: v.key,
+        // NOTE: Remove redundant namespace prefix as we only show user variables
         label: varLabelWithoutNamespace(v.uiDefinition.label),
       }));
   }, [entityVariables]);
@@ -272,6 +301,24 @@ export const AggregationVariableFormContent: React.FC<
         label: varLabelWithoutNamespace(v.uiDefinition.label),
       }));
   }, [entityVariables, formValues.aggregationFieldKey]);
+
+  const aggregateGroupByFieldOptionsForUser = useMemo(() => {
+    return entityVariables
+      .filter(
+        (v) =>
+          (v.entity === 'USER' || v.entity === 'CONSUMER_USER' || v.entity === 'BUSINESS_USER') &&
+          isUserSenderOrReceiverVariable(v.key) &&
+          v.valueType === 'string' &&
+          v.key !== formValues.aggregationFieldKey &&
+          v.key !== 'USER:userId',
+      )
+      .map((v) => ({
+        value: v.key,
+        // NOTE: Remove redundant namespace prefix as we only show user variables
+        label: varLabelWithoutNamespace(v.uiDefinition.label),
+      }));
+  }, [entityVariables, formValues.aggregationFieldKey]);
+
   const secondaryAggregationKeyOptions = useMemo(() => {
     if (!formValues.aggregationFieldKey) {
       return [];
@@ -492,21 +539,45 @@ export const AggregationVariableFormContent: React.FC<
       <PropertyColumns>
         <Label label="Variable type" required={{ value: true, showHint: !readOnly }}>
           <SelectionGroup
-            value={'TRANSACTION'}
+            value={aggregationType ?? (formValues.type === 'USER_DETAILS' ? 'USER' : 'TRANSACTION')}
             mode={'SINGLE'}
-            options={[{ value: 'TRANSACTION', label: 'Transaction' }]}
+            options={(() => {
+              switch (ruleType) {
+                case 'TRANSACTION':
+                  return VARIABLE_TYPE_OPTIONS.filter((option) => option.value === 'TRANSACTION');
+                default:
+                  return VARIABLE_TYPE_OPTIONS;
+              }
+            })()}
+            onChange={(aggregationType) => {
+              setAggregationType(aggregationType as 'TRANSACTION' | 'USER');
+              handleUpdateForm({
+                type: aggregationType === 'USER' ? 'USER_DETAILS' : 'USER_TRANSACTIONS',
+              });
+            }}
+            testName="variable-type-v8"
             isDisabled={readOnly}
           />
         </Label>
-        {ruleType === 'TRANSACTION' && (
-          <Label label="Check transactions for" required={{ value: true, showHint: !readOnly }}>
-            <Select<LogicAggregationType>
-              mode="SINGLE"
-              value={formValues.type}
+        {(ruleType === 'TRANSACTION' || (ruleType === 'USER' && aggregationType === 'USER')) && (
+          <Label
+            label={
+              ruleType === 'USER' && aggregationType === 'USER'
+                ? 'Check user details for'
+                : 'Check for transactions'
+            }
+            required={{ value: true, showHint: !readOnly }}
+          >
+            <SelectionGroup
+              mode={'SINGLE'}
+              options={
+                ruleType === 'USER' ? [{ value: 'USER_DETAILS', label: 'User' }] : TYPE_OPTIONS
+              }
+              value={(aggregationType === 'USER' ? 'USER_DETAILS' : undefined) ?? formValues.type}
               onChange={(type) => handleUpdateForm({ type })}
-              options={TYPE_OPTIONS}
+              testName="variable-type-v8"
               isDisabled={readOnly}
-              testId="variable-type-v8"
+              // testId="variable-type-v8"
             />
           </Label>
         )}
@@ -525,23 +596,25 @@ export const AggregationVariableFormContent: React.FC<
             />
           </Label>
         )}
-        <Label
-          label={`Check for ${
-            formValues.type === 'USER_TRANSACTIONS'
-              ? `${settings.userAlias} transactions`
-              : 'transactions'
-          }'s past transaction direction`}
-          required={{ value: true, showHint: !readOnly }}
-        >
-          <SelectionGroup
-            value={formValues.transactionDirection ?? 'SENDING_RECEIVING'}
-            onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
-            mode={'SINGLE'}
-            options={TX_DIRECTION_OPTIONS}
-            testName="variable-tx-direction-v8"
-            isDisabled={readOnly}
-          />
-        </Label>
+        {ruleType === 'TRANSACTION' && (
+          <Label
+            label={`Check for ${
+              formValues.type === 'USER_TRANSACTIONS'
+                ? `${settings.userAlias} transactions`
+                : 'transactions'
+            }'s past transaction direction`}
+            required={{ value: true, showHint: !readOnly }}
+          >
+            <SelectionGroup
+              value={formValues.transactionDirection ?? 'SENDING_RECEIVING'}
+              onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
+              mode={'SINGLE'}
+              options={TX_DIRECTION_OPTIONS}
+              testName="variable-tx-direction-v8"
+              isDisabled={readOnly}
+            />
+          </Label>
+        )}
         <>
           <Label
             label={
@@ -558,7 +631,11 @@ export const AggregationVariableFormContent: React.FC<
                 handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
               }
               mode="SINGLE"
-              options={aggregateFieldOptions}
+              options={
+                aggregationType === 'TRANSACTION'
+                  ? aggregateFieldOptions
+                  : aggregateFieldOptionsforUser
+              }
               isDisabled={readOnly}
             />
           </Label>
@@ -647,7 +724,11 @@ export const AggregationVariableFormContent: React.FC<
               handleUpdateForm({ aggregationGroupByFieldKey })
             }
             mode="SINGLE"
-            options={aggregateGroupByFieldOptions}
+            options={
+              aggregationType === 'TRANSACTION'
+                ? aggregateGroupByFieldOptions
+                : aggregateGroupByFieldOptionsForUser
+            }
             isDisabled={readOnly}
           />
         </Label>
@@ -711,7 +792,7 @@ export const AggregationVariableFormContent: React.FC<
               );
             }}
             mode={'SINGLE'}
-            options={AGGREGATE_TARGET_OPTIONS}
+            options={AGGREGATE_TARGET_OPTIONS(aggregationType)}
             testName="aggregate-target-v8"
           />
         </Label>
@@ -751,8 +832,16 @@ export const AggregationVariableFormContent: React.FC<
         )}
         {aggregateByLastN && (
           <Label
-            label="Transactions count"
-            hint="Can aggregate up to last 10 transactions."
+            label={
+              ruleType === 'USER' && aggregationType === 'USER'
+                ? 'User details update count'
+                : 'Transactions count'
+            }
+            hint={
+              ruleType === 'USER' && aggregationType === 'USER'
+                ? 'Can aggregate up to last 10 user details updates.'
+                : 'Can aggregate up to last 10 transactions.'
+            }
             required={{ value: true, showHint: !readOnly }}
           >
             <NumberInput
@@ -765,7 +854,7 @@ export const AggregationVariableFormContent: React.FC<
             />
           </Label>
         )}
-        {!aggregateByLastN && (
+        {!aggregateByLastN && aggregationType !== 'USER' && (
           <Label
             label="Use event timestamp for aggregation"
             hint="When enabled, transaction event timestamps will be used for time-based aggregation instead of transaction timestamp."
@@ -795,13 +884,11 @@ export const AggregationVariableFormContent: React.FC<
           ) : (
             <Label label="Filters">
               <VariableFilters
-                entityVariableTypes={[
-                  'TRANSACTION',
-                  'TRANSACTION_EVENT',
-                  'BUSINESS_USER',
-                  'CONSUMER_USER',
-                  'USER',
-                ]}
+                entityVariableTypes={
+                  aggregationType === 'TRANSACTION'
+                    ? ['TRANSACTION', 'TRANSACTION_EVENT']
+                    : ['USER', 'CONSUMER_USER', 'BUSINESS_USER']
+                }
                 formValuesState={[formValues, setFormValues]}
                 ruleType={ruleType}
                 readOnly={readOnly}
@@ -834,6 +921,7 @@ export const AggregationVariableForm = (props: AggregationVariableFormProps) => 
   const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(() => {
     // For other rules, keep existing behavior
     return {
+      type: 'USER_TRANSACTIONS',
       ...variable,
       includeCurrentEntity: variable.includeCurrentEntity ?? true,
     };

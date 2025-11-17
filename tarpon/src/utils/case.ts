@@ -15,12 +15,6 @@ import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusU
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 
-export const DEFAULT_CASE_AGGREGATES: CaseAggregates = {
-  destinationPaymentMethods: [],
-  originPaymentMethods: [],
-  tags: [],
-}
-
 export const generateCaseAggreates = (
   transactions: InternalTransaction[],
   existingCaseAggregates: CaseAggregates,

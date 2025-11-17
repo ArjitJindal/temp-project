@@ -25,6 +25,7 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { Action } from '@/services/sanctions/providers/types'
 import { logger } from '@/core/logger'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
+import { UserSearchEntity } from '@/@types/openapi-internal/UserSearchEntity'
 
 export async function getDomainEndpoint(
   stage: string,
@@ -108,6 +109,38 @@ function getLocalClient(): Client {
   return client
 }
 
+export async function opensearchUpdateOne(
+  entity: Partial<UserSearchEntity>,
+  indexName: string,
+  client: Client
+) {
+  if (!(await checkIndexExists(client, indexName))) {
+    return
+  }
+  await client.index({
+    index: indexName,
+    id: entity.id,
+    body: entity,
+  })
+}
+
+export async function bulkUpdateUserSearch(
+  data: UserSearchEntity[],
+  indexName: string,
+  client: Client
+) {
+  for (const entities of chunk(data, 100)) {
+    const operations: Bulk_RequestBody = entities.map((entity) => {
+      return [
+        { update: { _index: indexName, _id: entity.id } },
+        { doc: entity, doc_as_upsert: true },
+      ]
+    })
+    await client.bulk({
+      body: operations,
+    })
+  }
+}
 export async function bulkUpdate(
   provider: SanctionsDataProviderName,
   data: [Action, Partial<SanctionsEntity>][],

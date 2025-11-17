@@ -29,6 +29,7 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { MAXIMUM_EXPORT_ITEMS } from '@/utils/data-export';
 import { QueryResult } from '@/utils/queries/types';
 import { DATE_TIME_FORMAT } from '@/components/library/DateRangePicker/DateTimeTextInput';
+import { isPerson } from '@/utils/user-utils';
 
 export const drsTableHeaders = [
   'CRA risk score',
@@ -217,8 +218,12 @@ function getUserRegistrationDetails(legalEntity: LegalEntity): ReportItem[] {
   ];
 }
 
-function getPersonDetails(shareHolders: Array<Person>): ReportItem[] {
+function getPersonDetails(shareHolders: Array<Person | LegalEntity>): ReportItem[] {
   return shareHolders?.flatMap((shareHolder, index) => {
+    if (!isPerson(shareHolder)) {
+      return getLegalEntityDetails(shareHolder);
+    }
+
     const name = shareHolder?.generalDetails?.name;
     return [
       {
@@ -240,6 +245,42 @@ function getPersonDetails(shareHolders: Array<Person>): ReportItem[] {
       },
     ];
   });
+}
+
+function getLegalEntityDetails(legalEntity: LegalEntity): ReportItem[] {
+  return [
+    {
+      title: 'Legal entity name',
+      value: legalEntity.companyGeneralDetails?.legalName ?? '-',
+    },
+    {
+      title: 'Registration country',
+      value: legalEntity.companyRegistrationDetails?.registrationCountry
+        ? COUNTRIES[legalEntity.companyRegistrationDetails?.registrationCountry]
+        : '-',
+    },
+    {
+      title: 'Business industry',
+      value:
+        legalEntity.companyGeneralDetails?.businessIndustry
+          ?.map((item) => humanizeAuto(item))
+          .join(', ') ?? '-',
+    },
+    {
+      title: 'Main products and services',
+      value:
+        legalEntity.companyGeneralDetails?.mainProductsServicesSold
+          ?.map((item) => humanizeAuto(item))
+          .join(', ') ?? '-',
+    },
+    {
+      title: 'Operating countries',
+      value:
+        legalEntity.companyGeneralDetails?.operatingCountries
+          ?.map((item) => COUNTRIES[item])
+          .join(', ') ?? '-',
+    },
+  ];
 }
 
 export const getUserWidgetTable = (

@@ -2,7 +2,7 @@ import { Fragment, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
-import { UserApproval, UserProposedChange, WorkflowSettingsUserApprovalWorkflows } from '@/apis';
+import { UserApproval, UserProposedChange, RiskLevel } from '@/apis';
 import Modal from '@/components/library/Modal';
 import Table from '@/components/library/Table';
 import {
@@ -16,10 +16,9 @@ import {
 } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
-import { neverReturn } from '@/utils/lang';
 import { useWorkflows, WorkflowItem } from '@/utils/api/workflows';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
+import { useCurrentUserId } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';
 import { notEmpty } from '@/utils/array';
 import Button from '@/components/library/Button';
@@ -31,15 +30,27 @@ import {
   USER_CHANGES_PROPOSALS_BY_ID,
   USERS_ITEM,
 } from '@/utils/queries/keys';
-import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { PepStatusValue } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
-import { FormValues as ScreeningDetailsFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import Skeleton from '@/components/library/Skeleton';
 import { dayjs } from '@/utils/dayjs';
 import AccountTag from '@/components/AccountTag';
+import { useRoles } from '@/utils/api/auth';
+import { useCurrentUserRoleId } from '@/utils/role-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+
+interface CraProposalValue {
+  riskLevel?: RiskLevel;
+  isUpdatable?: boolean;
+  releaseAt?: number;
+}
+
+interface PepStatusProposalValue {
+  pepStatus?: string;
+  sanctionsStatus?: boolean;
+  adverseMediaStatus?: boolean;
+}
 
 type RowItem = UserProposedChange & { key: string; comment: string; author: string };
 
@@ -53,12 +64,11 @@ interface Props {
 }
 
 export default function UserPendingApprovalsModal(props: Props) {
-  const { userId, requiredResources, pendingProposalsRes, isOpen, onCancel, onSuccess, ...rest } =
-    props;
+  const { userId, requiredResources, pendingProposalsRes, isOpen, onCancel, onSuccess } = props;
 
   const pendingProposals = getOr(pendingProposalsRes, []);
   const workflowsQueryResults = useWorkflows(
-    'user-update-approval',
+    'change-approval',
     pendingProposals.map((x) => x.workflowRef),
   );
 
@@ -191,7 +201,7 @@ export default function UserPendingApprovalsModal(props: Props) {
           }
         </AsyncResourceRenderer>
         <Skeleton res={pendingProposalsRes}>
-          {(pendingProposals) => <ChangesDetails {...rest} pendingProposals={pendingProposals} />}
+          {(pendingProposals) => <ChangesDetails pendingProposals={pendingProposals} />}
         </Skeleton>
       </div>
     </Modal>
@@ -211,54 +221,30 @@ function useColumns() {
         key: 'field',
         title: 'Parameter',
         type: {
-          render: (value) => (
-            <>{getFieldName(value as keyof WorkflowSettingsUserApprovalWorkflows)}</>
-          ),
+          render: (value) => <>{getFieldName(value as string)}</>,
         },
       }),
       columnHelper.simple<'value'>({
         key: 'value',
         title: 'New value',
+        defaultWidth: 300,
         type: {
           ...UNKNOWN,
           render: (value, context) => {
             const { item } = context;
 
-            const field = item.field as keyof WorkflowSettingsUserApprovalWorkflows;
+            const field = item.field as string;
+
             if (field === 'PepStatus') {
-              const screeningDetails = item.value as ScreeningDetailsFormValues;
               return (
                 <ErrorBoundary>
-                  <EntityPropertiesCard
-                    title={'Screening details'}
-                    columnTemplate={`auto auto`}
-                    items={[
-                      {
-                        label: 'PEP Status',
-                        value: <PepStatusValue pepStatus={screeningDetails.pepStatus} />, // check this
-                      },
-                      {
-                        label: 'Sanctions status',
-                        value:
-                          screeningDetails.sanctionsStatus === undefined
-                            ? '-'
-                            : screeningDetails.sanctionsStatus
-                            ? 'Yes'
-                            : 'No',
-                      },
-                      {
-                        label: 'Adverse media status',
-                        value:
-                          screeningDetails.adverseMediaStatus === undefined
-                            ? '-'
-                            : screeningDetails.adverseMediaStatus
-                            ? 'Yes'
-                            : 'No',
-                      },
-                    ]}
-                  />
+                  <PepStatusValue pepStatus={value} />
                 </ErrorBoundary>
               );
+            } else if (field === 'SanctionsStatus') {
+              return <>{value === undefined ? '-' : value ? 'Yes' : 'No'}</>;
+            } else if (field === 'AdverseMediaStatus') {
+              return <>{value === undefined ? '-' : value ? 'Yes' : 'No'}</>;
             } else if (field === 'eoddDate') {
               const dateValue = item.value as number | string | null;
               if (!dateValue) {
@@ -272,12 +258,16 @@ function useColumns() {
 
               // If it's already a date string
               return <>{dayjs(dateValue).format('DD MMM YYYY')}</>;
-            } else if (field === 'CraLock') {
-              const isUpdatable = value;
-              return <>{isUpdatable ? 'Unlocked' : 'Locked'}</>;
             } else if (field === 'Cra') {
-              const newLevel = value;
-              return <>{getRiskLevelLabel(newLevel, settings).riskLevelLabel}</>;
+              return <>{getRiskLevelLabel(value, settings).riskLevelLabel}</>;
+            } else if (field === 'CraLock') {
+              return <>{value ? 'Unlocked' : 'Locked'}</>;
+            } else if (field === 'CraLockReleaseAt') {
+              const timestamp = value as number;
+              if (!timestamp) {
+                return <>-</>;
+              }
+              return <>{dayjs(timestamp).format('DD MMM YYYY, HH:mm')}</>;
             }
 
             return UNKNOWN.render(value, context);
@@ -313,13 +303,92 @@ function ChangesDetails(props: { pendingProposals: UserApproval[] }) {
       columns={columns}
       data={{
         items: pendingProposals.flatMap(({ id, comment, createdBy, proposedChanges }) =>
-          proposedChanges.map((change, i) => {
-            return {
-              ...change,
-              key: `${id}_${i}`,
-              comment: comment,
-              author: createdBy,
-            };
+          proposedChanges.flatMap((change, i) => {
+            // Unwind CRA object into separate rows
+            if (change.field === 'Cra') {
+              const craValue = change.value as CraProposalValue;
+              const rows: RowItem[] = [];
+
+              if (craValue.riskLevel !== undefined) {
+                rows.push({
+                  field: 'Cra',
+                  value: craValue.riskLevel,
+                  key: `${id}_${i}_riskLevel`,
+                  comment: comment,
+                  author: createdBy,
+                });
+              }
+
+              if (craValue.isUpdatable !== undefined) {
+                rows.push({
+                  field: 'CraLock',
+                  value: craValue.isUpdatable,
+                  key: `${id}_${i}_isUpdatable`,
+                  comment: comment,
+                  author: createdBy,
+                });
+              }
+
+              if (craValue.releaseAt) {
+                rows.push({
+                  field: 'CraLockReleaseAt',
+                  value: craValue.releaseAt,
+                  key: `${id}_${i}_releaseAt`,
+                  comment: comment,
+                  author: createdBy,
+                });
+              }
+
+              return rows;
+            }
+
+            // Unwind PEP status object into separate rows
+            if (change.field === 'PepStatus') {
+              const pepValue = change.value as PepStatusProposalValue;
+              const rows: RowItem[] = [];
+
+              if (pepValue.pepStatus !== undefined) {
+                rows.push({
+                  field: 'PepStatus',
+                  value: pepValue.pepStatus,
+                  key: `${id}_${i}_pepStatus`,
+                  comment: comment,
+                  author: createdBy,
+                });
+              }
+
+              if (pepValue.sanctionsStatus !== undefined) {
+                rows.push({
+                  field: 'SanctionsStatus',
+                  value: pepValue.sanctionsStatus,
+                  key: `${id}_${i}_sanctionsStatus`,
+                  comment: comment,
+                  author: createdBy,
+                });
+              }
+
+              if (pepValue.adverseMediaStatus !== undefined) {
+                rows.push({
+                  field: 'AdverseMediaStatus',
+                  value: pepValue.adverseMediaStatus,
+                  key: `${id}_${i}_adverseMediaStatus`,
+                  comment: comment,
+                  author: createdBy,
+                });
+              }
+
+              return rows;
+            }
+
+            // Return other fields as-is
+            return [
+              {
+                ...change,
+                key: `${id}_${i}`,
+                comment: comment,
+                author: createdBy,
+              },
+            ];
           }),
         ),
       }}
@@ -342,24 +411,28 @@ function useErrors(
   }[]
 > {
   const currentUserId = useCurrentUserId();
-  const currentRole = useAccountRawRole();
+  const currentUserRoleId = useCurrentUserRoleId();
+  const { roles: rolesRes } = useRoles();
 
   return useMemo(() => {
-    if (!isSuccess(pendingProposalsRes) || !isSuccess(workflowsRes)) {
+    if (!isSuccess(pendingProposalsRes) || !isSuccess(workflowsRes) || !isSuccess(rolesRes.data)) {
       return loading();
     }
     const pendingProposals = pendingProposalsRes.value;
     const workflows = workflowsRes.value;
+    const roles = rolesRes.data.value.items;
 
     return success(
       pendingProposals
         .map((pendingProposal, i) => {
           const workflow = workflows[i];
-          if (workflow.workflowType !== 'user-update-approval') {
+          if (workflow.workflowType !== 'change-approval') {
             throw new Error('Invalid workflow type');
           }
-          const currentStepRole = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
-          const isRoleMatching = currentRole === currentStepRole;
+          const currentStepRoleId = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
+          const currentStepRoleName =
+            roles.find((r) => r.id === currentStepRoleId)?.name ?? currentStepRoleId;
+          const isRoleMatching = currentUserRoleId === currentStepRoleId;
           const isCurrentUserAuthor = currentUserId === pendingProposal.createdBy;
           if (isCurrentUserAuthor) {
             const isCancelUnavailable =
@@ -369,7 +442,7 @@ function useErrors(
               rejectBlocked: true,
               cancelBlocked: isCancelUnavailable,
               messages: [
-                `Before your changes take effect, they need to be approved by a user with a "${currentStepRole}" role`,
+                `Before your changes take effect, they need to be approved by a user with a "${currentStepRoleName}" role`,
                 ...(isCancelUnavailable
                   ? [
                       'This proposal has already passed first approval step, it is not possible to discard it now',
@@ -382,7 +455,9 @@ function useErrors(
               acceptBlocked: true,
               rejectBlocked: true,
               cancelBlocked: true,
-              messages: [`You need to have a "${currentStepRole}" role to approve these changes`],
+              messages: [
+                `You need to have a "${currentStepRoleName}" role to approve these changes`,
+              ],
             };
           }
           return {
@@ -394,19 +469,26 @@ function useErrors(
         })
         .filter(notEmpty),
     );
-  }, [pendingProposalsRes, workflowsRes, currentUserId, currentRole]);
+  }, [pendingProposalsRes, workflowsRes, currentUserId, currentUserRoleId, rolesRes.data]);
 }
 
-function getFieldName(field: keyof WorkflowSettingsUserApprovalWorkflows): string {
+function getFieldName(field: string): string {
   switch (field) {
     case 'Cra':
-      return 'CRA';
+      return 'CRA level';
     case 'CraLock':
-      return 'CRA lock';
+      return 'CRA lock status';
+    case 'CraLockReleaseAt':
+      return 'CRA auto-unlock';
     case 'eoddDate':
       return 'EODD';
     case 'PepStatus':
       return 'PEP status';
+    case 'SanctionsStatus':
+      return 'Sanctions status';
+    case 'AdverseMediaStatus':
+      return 'Adverse media status';
+    default:
+      return field;
   }
-  return neverReturn(field, field);
 }

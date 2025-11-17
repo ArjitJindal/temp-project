@@ -12,6 +12,7 @@ import {
   FUZZY_ADDRESS_MATCHING_SCHEMA,
   ENABLE_SHORT_NAME_MATCHING_SCHEMA,
   ENABLE_PHONETIC_MATCHING_SCHEMA,
+  LSEG_MEDIA_CHECK_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -22,6 +23,7 @@ import {
   getPartialMatchParameters,
   getStopwordSettings,
   getEnablePhoneticMatchingParameters,
+  getLSEGMediaCheckParameters,
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
@@ -33,12 +35,15 @@ import { getDefaultProviders } from '@/services/sanctions/utils'
 import { UserRuleStage } from '@/@types/openapi-internal/UserRuleStage'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
+import { LSEGMediaCheckParameters } from '@/@types/openapi-internal/LSEGMediaCheckParameters'
 
 export type GenericScreeningValues =
   | 'NATIONALITY'
   | 'YOB'
   | 'GENDER'
   | 'ADDRESS'
+
+export type TimeWindowGranularity = 'now' | 'all_time' | 'year' | 'month'
 export type GenericSanctionsConsumerUserRuleParameters = {
   screeningTypes?: GenericSanctionsSearchType[]
   fuzzinessRange: {
@@ -56,6 +61,7 @@ export type GenericSanctionsConsumerUserRuleParameters = {
   fuzzyAddressMatching?: boolean
   enableShortNameMatching?: boolean
   enablePhoneticMatching?: boolean
+  lsegMediaCheck?: LSEGMediaCheckParameters
 }
 
 export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSanctionsConsumerUserRuleParameters> {
@@ -89,6 +95,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
             'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
         partialMatch: PARTIAL_MATCH_SCHEMA,
+        lsegMediaCheck: LSEG_MEDIA_CHECK_SCHEMA(),
         stopwords: STOPWORDS_OPTIONAL_SCHEMA(),
         isActive: IS_ACTIVE_SCHEMA,
         screeningProfileId: SCREENING_PROFILE_ID_SCHEMA(),
@@ -118,6 +125,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
       fuzzyAddressMatching,
       enableShortNameMatching,
       enablePhoneticMatching,
+      lsegMediaCheck,
     } = this.parameters
     const user = this.user as User
     if (
@@ -198,9 +206,9 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         ),
         ...getEnableShortNameMatchingParameters(enableShortNameMatching),
         ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
+        ...getLSEGMediaCheckParameters(lsegMediaCheck),
       },
-      hitContext,
-      undefined
+      { context: hitContext }
     )
     const sanctionsDetails: SanctionsDetails = {
       name,

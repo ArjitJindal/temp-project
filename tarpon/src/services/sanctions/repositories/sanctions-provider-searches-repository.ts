@@ -58,24 +58,6 @@ export class SanctionsProviderSearchRepository {
     })
   }
 
-  async setMonitoring(
-    providerSearchId: string,
-    monitor: boolean
-  ): Promise<void> {
-    const sanctionsProviderCollection =
-      await this.getSanctionProviderCollection()
-    await sanctionsProviderCollection.updateOne(
-      {
-        providerSearchId,
-      },
-      {
-        $set: {
-          monitor,
-        },
-      }
-    )
-  }
-
   private async getSanctionProviderCollection(): Promise<
     Collection<SanctionsProviderResponse>
   > {

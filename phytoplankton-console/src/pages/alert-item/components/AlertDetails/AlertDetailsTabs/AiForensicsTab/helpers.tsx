@@ -7,7 +7,7 @@ import {
   QuestionResponseRuleHit,
   QuestionResponseSkeleton,
 } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
-import { useRules } from '@/utils/rules';
+import { useRules } from '@/utils/api/rules';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useUserDetails } from '@/utils/api/users';
 

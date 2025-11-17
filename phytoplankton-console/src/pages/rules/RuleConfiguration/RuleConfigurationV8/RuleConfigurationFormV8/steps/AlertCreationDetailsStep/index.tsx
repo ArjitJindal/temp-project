@@ -1,3 +1,4 @@
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import { AlertAssignedToInput } from './AlertAssignedToInput/input';
 import { RuleQueueInputField } from './RuleQueueInput';
@@ -14,12 +15,14 @@ import {
   Priority,
   RuleType,
   DefaultAlertStatusForCaseCreation,
+  AlertCreationLogic,
 } from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { AlertCreatedForEnum, RULE_CASE_PRIORITY, getAlertCreatedFor } from '@/pages/rules/utils';
 import Select from '@/components/library/Select';
 import * as Card from '@/components/ui/Card';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { ALERT_CREATION_LOGICS } from '@/apis/models-custom/AlertCreationLogic';
 
 export interface FormValues {
   alertPriority: Priority;
@@ -35,6 +38,7 @@ export interface FormValues {
   frozenStatuses: DerivedStatus[];
   slaPolicies?: string[];
   defaultAlertStatus?: DefaultAlertStatusForCaseCreation;
+  alertCreationLogic?: AlertCreationLogic;
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
@@ -43,6 +47,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
   alertCreationInterval: {
     type: 'INSTANTLY',
   },
+  alertCreationLogic: 'SINGLE_ALERT',
   falsePositiveCheckEnabled: 'false',
   alertAssigneesType: 'EMAIL',
   frozenStatuses: [],
@@ -88,6 +93,24 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                         mode="MULTIPLE"
                         options={getAlertCreatedFor(settings, isCustomAggregationEnabled)}
                         {...inputProps}
+                      />
+                    )}
+                  </InputField>
+                  <InputField<FormValues, 'alertCreationLogic'>
+                    name={'alertCreationLogic'}
+                    label={'Alert creation logic'}
+                    description={'Select the logic for creating the alert.'}
+                    labelProps={{ required: true }}
+                  >
+                    {(inputProps) => (
+                      <Select<AlertCreationLogic>
+                        mode="SINGLE"
+                        options={ALERT_CREATION_LOGICS.map((logic) => ({
+                          value: logic,
+                          label: humanizeConstant(logic),
+                        }))}
+                        {...inputProps}
+                        value={inputProps.value ?? 'SINGLE_ALERT'}
                       />
                     )}
                   </InputField>

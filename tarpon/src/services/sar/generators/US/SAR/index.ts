@@ -7,7 +7,6 @@ import { XMLBuilder, XMLParser } from 'fast-xml-parser'
 import chunk from 'lodash/chunk'
 import cloneDeep from 'lodash/cloneDeep'
 import isEqual from 'lodash/isEqual'
-import last from 'lodash/last'
 import omit from 'lodash/omit'
 import pick from 'lodash/pick'
 import SftpClient from 'ssh2-sftp-client'
@@ -51,6 +50,7 @@ import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 import dayjs from '@/utils/dayjs'
 import {
   Party,
+  PartyNameType,
   SuspiciousActivityType,
 } from '@/services/sar/generators/US/SAR/resources/EFL_SARXBatchSchema.type'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -94,6 +94,16 @@ const attributesWithCorrectOrder = [
   'fc2:FormTypeCode',
   'fc2:Activity',
 ]
+function replaceNullWithUndefined<T>(object: T): T {
+  return JSON.parse(
+    JSON.stringify(object, (k, v) => {
+      if (v === null) {
+        return undefined
+      }
+      return v
+    })
+  )
+}
 function removeEmptyStringAndTrailingSpaces<T>(object: T): T {
   return JSON.parse(
     JSON.stringify(object, (k, v) => {
@@ -161,7 +171,10 @@ export class UsSarReportGenerator implements ReportGenerator {
     const users: (InternalConsumerUser | InternalBusinessUser)[] =
       Object.values(usersMap)
 
-    const subjects: Party[] = []
+    type SubjectType = Omit<Party, 'PartyName'> & {
+      PartyName?: PartyNameType
+    }
+    const subjects: SubjectType[] = []
     for (const user of users) {
       const contactDetails =
         user.type === 'CONSUMER'
@@ -192,7 +205,7 @@ export class UsSarReportGenerator implements ReportGenerator {
           ),
           PartyName:
             user.userDetails && user.userDetails.name != null
-              ? [partyNameByConsumerName(user.userDetails.name)]
+              ? partyNameByConsumerName(user.userDetails.name)
               : undefined,
           FemaleGenderIndicator: indicator(user.userDetails?.gender === 'F'),
           MaleGenderIndicator: indicator(user.userDetails?.gender === 'M'),
@@ -203,12 +216,10 @@ export class UsSarReportGenerator implements ReportGenerator {
           ...sharedDetails,
           ActivityPartyTypeCode: ActivityPartyTypeCodes.SUBJECT,
           PartyName: user?.legalEntity?.companyGeneralDetails
-            ? [
-                partyNameByCompanyGeneralDetails(
-                  user?.legalEntity?.companyGeneralDetails
-                ),
-              ]
-            : [],
+            ? partyNameByCompanyGeneralDetails(
+                user?.legalEntity?.companyGeneralDetails
+              )
+            : undefined,
         })
       }
     }
@@ -364,6 +375,119 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
   }
 
+  private suspiciousAcitvityType = (value: any) => {
+    if (!value) {
+      return
+    }
+    const validMapping = {
+      1: [111, 112, 106, 113, 114, 1999],
+      7: [701, 7999],
+      3: [
+        320, 322, 321, 301, 304, 305, 323, 308, 309, 324, 310, 325, 312, 3999,
+      ],
+      12: [1201, 1202, 1203, 1204, 12999],
+      8: [
+        801, 824, 820, 821, 804, 805, 822, 806, 807, 808, 809, 823, 812, 8999,
+      ],
+      4: [401, 402, 403, 409, 404, 405, 4999],
+      9: [
+        920, 901, 917, 921, 904, 926, 927, 905, 922, 924, 907, 908, 909, 910,
+        925, 928, 911, 913, 9999,
+      ],
+      5: [501, 502, 504, 505, 506, 507, 5999],
+      6: [601, 608, 603, 604, 609, 6999],
+      10: [1005, 1001, 1006, 1003, 1007, 10999],
+      11: [1101, 1102, 11999],
+    }
+    const type = value.SuspiciousActivityTypeID
+    const subType = value.SuspiciousActivitySubtypeID
+    const description = value.OtherSuspiciousActivityTypeText
+    const isOther = subType && subType % 1000 === 999
+
+    if (type) {
+      const isValidSubType = validMapping[type].some((t) => t == subType)
+
+      if (!isValidSubType) {
+        throw new BadRequest(
+          'Invalid sub type for suspicious activity classification'
+        )
+      }
+
+      if (isOther && !description) {
+        throw new BadRequest('Description is required when subtype is other')
+      }
+      if (!isOther) {
+        delete value.OtherSuspiciousActivityTypeText
+      }
+    }
+  }
+
+  private organizationClassifcationTypeSubType = (
+    activityTypeCode: number,
+    value: any
+  ) => {
+    if (!value) {
+      return
+    }
+    const type = value.OrganizationTypeID
+    const subType = value.OrganizationSubtypeID
+    const typeOtherDesc = value.OtherOrganizationTypeText
+    const subTypeOtherDesc = value.OtherOrganizationSubTypeText
+
+    const type34InvalidOtherType = [534, 528, 529]
+    const validMapping = {
+      1: [101, 102, 103, 1999],
+      5: [
+        535, 541, 504, 513, 514, 540, 539, 533, 542, 503, 534, 528, 529, 508,
+        5999,
+      ],
+    }
+
+    if (type === 1) {
+      if (subType && subType !== 1999) {
+        delete value.OtherOrganizationSubTypeText
+        if (!validMapping[1].some((t) => t == subType)) {
+          throw new BadRequest(
+            'Organization classification invalid other type for type Casino/Card club'
+          )
+        }
+      } else if (subType === 1999 && !subTypeOtherDesc) {
+        throw new BadRequest(
+          'Organization classification other type description required'
+        )
+      }
+    } else if (type === 5) {
+      if (subType && subType !== 5999) {
+        delete value.OtherOrganizationSubTypeText
+        if (
+          !validMapping[5].some((t) => t == subType) ||
+          (activityTypeCode === 34 &&
+            type34InvalidOtherType.indexOf(subType) > 0)
+        ) {
+          throw new BadRequest(
+            'Organization classification invalid other type for type Securities/Futures'
+          )
+        }
+      } else if (subType === 5999 && !subTypeOtherDesc) {
+        throw new BadRequest(
+          'Organization classification other type description required'
+        )
+      }
+    } else if (subType) {
+      throw new BadRequest(
+        'Organization classification other type is required for only Casino/Card club and Securities/Futures types'
+      )
+    } else if (type === 999) {
+      if (!typeOtherDesc) {
+        throw new BadRequest(
+          'Organization classification type description required'
+        )
+      }
+    } else {
+      delete value.OtherOrganizationTypeText
+    }
+  }
+
   private transform(reportParams: ReportParameters): object {
     // If EFilingPriorDocumentNumber passed, InitialReportIndicator should not be set
     if (reportParams.report.generalInfo?.EFilingPriorDocumentNumber) {
@@ -458,6 +582,11 @@ export class UsSarReportGenerator implements ReportGenerator {
           }
         : undefined,
     ].filter(Boolean)
+    reportParams.report?.filingInstitution.OrganizationClassificationTypeSubtypeType?.forEach(
+      (org) => {
+        this.organizationClassifcationTypeSubType(30, org)
+      }
+    )
     reportParams.report.filingInstitution = omit(
       reportParams.report.filingInstitution,
       'AlternateName',
@@ -513,6 +642,11 @@ export class UsSarReportGenerator implements ReportGenerator {
             }
           : undefined,
       ].filter(Boolean)
+      reportParams.report?.filingInstitution?.OrganizationClassificationTypeSubtype?.forEach(
+        (org) => {
+          this.organizationClassifcationTypeSubType(34, org)
+        }
+      )
       return omit(
         financialInstitution,
         'AlternateName',
@@ -534,7 +668,19 @@ export class UsSarReportGenerator implements ReportGenerator {
       subject.PartyName = [
         subject.PartyName
           ? {
-              ...(subject.PartyName[0] ?? subject.PartyName),
+              RawIndividualFirstName: subject.PartyName.RawIndividualFirstName,
+              RawEntityIndividualLastName:
+                subject.PartyName.RawEntityIndividualLastName,
+              RawIndividualMiddleName:
+                subject.PartyName.RawIndividualMiddleName,
+              RawIndividualNameSuffixText:
+                subject.PartyName.RawIndividualNameSuffixText,
+              ...(subject.PartyName.RawIndividualFirstName
+                ? { FirstNameUnknownIndicator: 'Y' }
+                : {}),
+              ...(subject.PartyName.RawEntityIndividualLastName
+                ? { EntityLastNameUnknownIndicator: 'Y' }
+                : {}),
               PartyNameTypeCode: 'L',
             }
           : undefined,
@@ -548,14 +694,24 @@ export class UsSarReportGenerator implements ReportGenerator {
               TINUnknownIndicator: 'Y',
             },
       ]
-      subject.PartyIdentification?.forEach((partyIdentification) => {
-        if (
-          partyIdentification.PartyIdentificationTypeCode &&
-          partyIdentification.PartyIdentificationNumberText
-        ) {
-          validPartyIdentification.push(partyIdentification)
-        }
-      })
+      if (subject.PartyIdentification?.length === 0) {
+        validPartyIdentification.push({
+          IdentificationPresentUnknownIndicator: 'Y',
+        })
+      } else {
+        subject.PartyIdentification?.forEach((partyIdentification) => {
+          if (partyIdentification.PartyIdentificationTypeCode !== 999) {
+            validPartyIdentification.push(partyIdentification)
+          } else if (
+            partyIdentification.PartyIdentificationTypeCode === 999 &&
+            partyIdentification.OtherPartyIdentificationTypeText
+          ) {
+            validPartyIdentification.push(partyIdentification)
+          } else {
+            throw new BadRequest('Invalid subject party identification')
+          }
+        })
+      }
       subject.PartyIdentification = validPartyIdentification
       return omit(subject, 'AlternateName', 'FlagrightPartyIdentificationTin')
     })
@@ -580,9 +736,16 @@ export class UsSarReportGenerator implements ReportGenerator {
       reportParams.transactionMetadata?.suspiciousActivity
     )
 
+    suspiciousActivity?.SuspiciousActivityClassification.forEach((sa) => {
+      this.suspiciousAcitvityType(sa)
+    })
+
     return removeEmptyStringAndTrailingSpaces({
       EFilingBatchXML: {
         Activity: {
+          '@TotalAmount': reportParams?.report?.totalAmount ?? 0,
+          '@AttachmentCount': 0,
+          '@ActivityAttachmentCount': 0,
           Party: parties,
           SuspiciousActivity: suspiciousActivity,
           ...reportParams.report.generalInfo,
@@ -620,15 +783,19 @@ export class UsSarReportGenerator implements ReportGenerator {
     return constructedReportParams
   }
   public async generate(
-    reportParams: ReportParameters
+    reportParams: ReportParameters,
+    report: Report
   ): Promise<GenerateResult> {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@',
       ignoreAttributes: false,
     })
-    const xmlContent = builder.build(this.transform(cloneDeep(reportParams)))
+    const xmlContent = builder.build(
+      this.transform(replaceNullWithUndefined(cloneDeep(reportParams)))
+    )
     // NOTE: In aws lambda, we can only write files to /tmp
-    const outputFile = `${path.join('/tmp', 'input.xml')}`
+    const outputFile = `${path.join('/tmp', `${report.id}.xml`)}`
+    console.log(outputFile)
 
     fs.writeFileSync(outputFile, xmlContent)
 
@@ -678,14 +845,13 @@ export class UsSarReportGenerator implements ReportGenerator {
         errorMsg.slice(validationIndex).replace(VALIDATION_PREFIX, '')
       )
     }
-    fs.rmSync(outputFile)
     return {
       type: 'STRING',
       value: newXmlFile,
     }
   }
 
-  private callFinCenBinary(...args: string[]): string {
+  public callFinCenBinary(...args: string[]): string {
     const command = [FINCEN_BINARY, ...args].join(' ')
 
     try {
@@ -764,7 +930,6 @@ export class UsSarReportGenerator implements ReportGenerator {
         'YYYYMMDDhhmmss'
       )}.${creds.username}.xml`
       const localFilePath = `${path.join('/tmp', `${report.id}.xml`)}`
-      fs.writeFileSync(localFilePath, last(report.revisions)?.output ?? '')
 
       // uploading file to sftp
       await sftp.fastPut(

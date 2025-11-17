@@ -40,6 +40,7 @@ import { formatConsumerName, getAddressString } from '@/utils/helpers'
 
 export const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
+const USER_EVENT_ID_PREFIX = 'user-event:'
 const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
 const QUESTION_ID_PREFIX = 'question:'
@@ -100,6 +101,8 @@ export const DYNAMO_CLICKHOUSE_KEY_IDENTIFIER =
   '#dynamo-clickhouse-console-backfill'
 export const CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER =
   'clickhouse-sync-checksum'
+export const DEACTIVATION_MARKED_API_KEY_IDENTIFIER =
+  'deactivation-marked-api-keys'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -496,6 +499,14 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#rule-agg#${direction}#${version}#${transactionId}`,
     SortKeyID: '1',
   }),
+  V8_LOGIC_USER_TIME_AGGREGATION_USER_EVENT_MARKER: (
+    tenantId: string,
+    version: string,
+    eventId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#rule-agg#${version}#${USER_EVENT_ID_PREFIX}${eventId}`,
+    SortKeyID: '1',
+  }),
   // TODO (V8): Improve user key ID format for V8 only
   V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER: (
     tenantId: string,
@@ -807,6 +818,10 @@ export const DynamoDbKeys = {
   CLICKHOUSE_SYNC_CHECKSUM: (tenantId: string) => ({
     PartitionKeyID: `${CLICKHOUSE_SYNC_CHECKSUM_KEY_IDENTIFIER}`,
     SortKeyID: tenantId,
+  }),
+  DEACTIVATION_MARKED_API_KEY: (tenantId: string, apiKeyId: string) => ({
+    PartitionKeyID: `${SHARED_PARTITION_KEY_PREFIX}#${DEACTIVATION_MARKED_API_KEY_IDENTIFIER}`,
+    SortKeyID: `${tenantId}#${apiKeyId}`,
   }),
   CLOUDWATCH_LOGS_SYNC_STATE: () => ({
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#cloudwatch_logs_sync`,

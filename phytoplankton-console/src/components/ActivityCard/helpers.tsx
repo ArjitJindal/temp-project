@@ -160,23 +160,96 @@ export const getCreateStatement = (
     }
     case 'DRS_RISK_LEVEL': {
       const riskLevelLockChange = !!log.newImage?.isUpdatable !== !!log.oldImage?.isUpdatable;
-      const riskLevelUpdatebleStatus = log.newImage?.isUpdatable ? 'unlocked' : 'locked';
+      const wasLocked = log.oldImage?.isUpdatable === false;
+      const isNowLocked = log.newImage?.isUpdatable === false;
       const newRiskScore = log.newImage?.drsScore;
+      const oldRiskScore = log.oldImage?.drsScore;
+      const riskScoreChanged = newRiskScore !== oldRiskScore;
       const newRiskLevel =
         newRiskScore != null ? getRiskLevelFromScore(riskClassificationValues, newRiskScore) : null;
       const displayRiskLevel = newRiskLevel ? getRiskLevelLabelWithAlias(newRiskLevel) : null;
+      const comment = log.logMetadata?.comment;
 
-      return riskLevelLockChange ? (
-        <>
-          Risk level <b>{riskLevelUpdatebleStatus}</b> by <b>{userName}</b>
-        </>
-      ) : displayRiskLevel ? (
-        <>
-          Risk level changed to <b>{displayRiskLevel.toLowerCase()}</b> by <b>{userName}</b>
-        </>
-      ) : (
-        <></>
-      );
+      // Check for lock timer information
+      const lockExpiresAt = log.newImage?.lockExpiresAt;
+      const lockedAt = log.newImage?.lockedAt;
+      const oldLockExpiresAt = log.oldImage?.lockExpiresAt;
+      const hasTimer = isNowLocked && lockExpiresAt && lockedAt;
+      const timerDuration = hasTimer
+        ? Math.round((lockExpiresAt - lockedAt) / (1000 * 60 * 60 * 24))
+        : null;
+      const timerChanged = lockExpiresAt !== oldLockExpiresAt;
+
+      // Determine action type
+      if (riskLevelLockChange) {
+        const action = isNowLocked ? (wasLocked ? 'updated' : 'locked') : 'unlocked';
+        return (
+          <>
+            Risk level{' '}
+            {riskScoreChanged && displayRiskLevel && isNowLocked && (
+              <>
+                changed to <b>{displayRiskLevel.toLowerCase()}</b> and{' '}
+              </>
+            )}
+            <b>{action}</b> by <b>{userName}</b>
+            {hasTimer && timerDuration && (
+              <>
+                {' '}
+                for{' '}
+                <b>
+                  {timerDuration} {timerDuration === 1 ? 'day' : 'days'}
+                </b>
+              </>
+            )}
+            {comment && (
+              <>
+                {' '}
+                • Reason: <i>{comment}</i>
+              </>
+            )}
+          </>
+        );
+      } else if (isNowLocked && timerChanged) {
+        // Lock timer was updated without changing lock status
+        return (
+          <>
+            Risk level lock <b>updated</b> by <b>{userName}</b>
+            {hasTimer && timerDuration ? (
+              <>
+                {' '}
+                for{' '}
+                <b>
+                  {timerDuration} {timerDuration === 1 ? 'day' : 'days'}
+                </b>
+              </>
+            ) : (
+              <>
+                {' '}
+                to <b>perpetual</b>
+              </>
+            )}
+            {comment && (
+              <>
+                {' '}
+                • Reason: <i>{comment}</i>
+              </>
+            )}
+          </>
+        );
+      } else if (riskScoreChanged && displayRiskLevel) {
+        return (
+          <>
+            Risk level changed to <b>{displayRiskLevel.toLowerCase()}</b> by <b>{userName}</b>
+            {comment && (
+              <>
+                {' '}
+                • Reason: <i>{comment}</i>
+              </>
+            )}
+          </>
+        );
+      }
+      return <></>;
     }
     case 'USER_STATUS_CHANGE': {
       const currentUserStatus = log.newImage?.userStateDetails?.state;

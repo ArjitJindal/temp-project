@@ -4,19 +4,16 @@ import { useDebounce } from 'ahooks';
 import { replaceMagicKeyword } from '@flagright/lib/utils/object';
 import { DEFAULT_CURRENCY_KEYWORD } from '@flagright/lib/constants/currency';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { Rule, RuleNature, Feature as FeatureName, FilterTags } from '@/apis';
+import { Rule, RuleNature, FilterTags } from '@/apis';
 import { FilterProps } from '@/components/library/Filter/types';
 import SearchBar from '@/components/library/SearchBar';
 import { ItemGroup, Item } from '@/components/library/SearchBar/SearchBarDropdown';
-import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
-import { RULES_UNIVERSAL_SEARCH } from '@/utils/queries/keys';
+import { useRulesSearch } from '@/utils/api/rules';
 import { AsyncResource, getOr, isLoading, isSuccess, success } from '@/utils/asyncResource';
 import { useFeatures, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Option } from '@/components/library/Select';
 import { useDeepEqualEffect, useSafeLocalStorageState } from '@/utils/hooks';
 import { FILTER_TAGSS } from '@/apis/models-custom/FilterTags';
-
 type Props = {
   rules: Rule[];
   onSelectedRule: (rule: Rule) => void;
@@ -48,7 +45,7 @@ const countFilters = (filters: RuleUniversalSearchFilters) => {
 export const RulesSearchBar = (props: Props) => {
   const { rules, onSelectedRule, onScenarioClick } = props;
   const settings = useSettings();
-  const features = useFeatures();
+  useFeatures();
 
   const [universalSearchFilterParams, setUniversalSearchFilterParams] =
     useState<RuleUniversalSearchFilters>(DEFAULT_FILTER_PARAMS);
@@ -114,8 +111,6 @@ export const RulesSearchBar = (props: Props) => {
     setSearch(newValue);
   }, []);
 
-  const api = useApi();
-
   const recentSearchesObj = useMemo(() => {
     const itemGroups: ItemGroup[] = [
       {
@@ -135,97 +130,22 @@ export const RulesSearchBar = (props: Props) => {
 
   const [aiSearchedFilters, setAISearchedData] = useState<RuleUniversalSearchFilters>();
 
-  const searchQueryResult = useQuery<ItemGroup[]>(RULES_UNIVERSAL_SEARCH(''), async () => {
-    if (!debouncedSearch && isAllFiltersEmpty) {
-      return recentSearchesObj;
-    }
+  const isAiFiltersIncreased = !!(
+    isAIEnabled &&
+    aiSearchedFilters &&
+    countFilters(universalSearchFilterParams) > countFilters(aiSearchedFilters)
+  );
 
-    const isAiFiltersIncreased =
-      isAIEnabled &&
-      aiSearchedFilters &&
-      countFilters(universalSearchFilterParams) > countFilters(aiSearchedFilters)
-        ? true
-        : false;
-
-    const sendFilters = !isAIEnabled || isAiFiltersIncreased;
-
-    const rulesSearchResult = await api.getRulesSearch({
-      queryStr: debouncedSearch || '',
-      filterTypology: sendFilters ? universalSearchFilterParams.typologies : [],
-      filterChecksFor: sendFilters ? universalSearchFilterParams.checksFor : [],
-      filterNature: sendFilters ? universalSearchFilterParams.defaultNature : [],
-      filterTypes: sendFilters
-        ? Array.isArray(universalSearchFilterParams.types)
-          ? universalSearchFilterParams.types
-          : [universalSearchFilterParams.types]
-        : [],
-      filterTags: sendFilters ? universalSearchFilterParams.tags : [],
-      isAISearch: isAIEnabled,
-      disableGptSearch: isAIEnabled && isAiFiltersIncreased,
-    });
-    const filterRulesByFeatures = (rules: Rule[]) =>
-      rules.filter(({ requiredFeatures }) =>
-        (requiredFeatures ?? []).every((f) => features.includes(f as FeatureName)),
-      );
-
-    if (rulesSearchResult.bestSearches) {
-      rulesSearchResult.bestSearches = filterRulesByFeatures(rulesSearchResult.bestSearches);
-    }
-
-    if (rulesSearchResult.otherSearches) {
-      rulesSearchResult.otherSearches = filterRulesByFeatures(rulesSearchResult.otherSearches);
-    }
-    const result = replaceMagicKeyword<typeof rulesSearchResult>(
-      rulesSearchResult,
-      DEFAULT_CURRENCY_KEYWORD,
-      settings.defaultValues?.currency ?? 'USD',
-    );
-
-    const bestMatches = result.bestSearches;
-    const otherMatches = result.otherSearches;
-
-    const data = [
-      ...(bestMatches.length > 0
-        ? [
-            {
-              title: 'Best matches',
-              items: bestMatches.map((rule) => ({
-                itemDescription: rule.description,
-                itemId: rule.id,
-                itemName: rule.name,
-              })),
-            },
-          ]
-        : []),
-      ...(otherMatches.length > 0
-        ? [
-            {
-              title: 'Other matches',
-              items: otherMatches.map((rule) => ({
-                itemDescription: rule.description,
-                itemId: rule.id,
-                itemName: rule.name,
-              })),
-            },
-          ]
-        : []),
-    ];
-
-    const filters = {
-      typologies: rulesSearchResult?.filtersApplied?.typologies || [],
-      checksFor: rulesSearchResult?.filtersApplied?.checksFor || [],
-      defaultNature: rulesSearchResult?.filtersApplied?.ruleNature || [],
-      types: rulesSearchResult?.filtersApplied?.types || [],
-      tags: rulesSearchResult.filtersApplied?.tags || [],
-    };
-
-    if (isAIEnabled) {
-      setAISearchedData(filters);
-    }
-
-    setUniversalSearchFilterParams((prev) => ({ ...prev, ...filters }));
-
-    return data;
+  const searchQueryResult = useRulesSearch({
+    query: debouncedSearch,
+    isAllFiltersEmpty,
+    isAiFiltersIncreased,
+    isAIEnabled,
+    universalSearchFilterParams,
+    recentSearchesObj,
+    onFiltersFromAI: setAISearchedData,
+    onUpdateFilters: (filters) =>
+      setUniversalSearchFilterParams((prev) => ({ ...prev, ...filters })),
   });
 
   useDeepEqualEffect(() => {

@@ -55,8 +55,8 @@ import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviders } from '@/services/sanctions/types'
 import { disableLocalChangeHandler } from '@/utils/local-change-handler'
+import { DEFAULT_CASE_AGGREGATES } from '@/constants/case-creation'
 import { AlertCreationLogic } from '@/@types/openapi-internal/AlertCreationLogic'
-import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
@@ -1180,6 +1180,7 @@ describe('Cases (User hit)', () => {
 describe('Screening user rules', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setupRules(TEST_TENANT_ID, { ruleType: 'USER' })
+  setupUsers(TEST_TENANT_ID)
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: `TRANSACTION-R-0`,
@@ -1205,7 +1206,7 @@ describe('Screening user rules', () => {
       const transaction = getTestTransaction({
         transactionId: '111',
         originUserId: TEST_USER_1.userId,
-        originPaymentDetails: {
+        destinationPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -1216,7 +1217,7 @@ describe('Screening user rules', () => {
           transactionReferenceField: 'DEPOSIT',
           '3dsDone': true,
         },
-        destinationPaymentDetails: {
+        originPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -1255,7 +1256,7 @@ describe('Screening user rules', () => {
       const transaction = getTestTransaction({
         transactionId: '222',
         originUserId: TEST_USER_1.userId,
-        originPaymentDetails: {
+        destinationPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -1267,7 +1268,7 @@ describe('Screening user rules', () => {
           '3dsDone': true,
         },
         destinationUserId: undefined,
-        destinationPaymentDetails: {
+        originPaymentDetails: {
           method: 'CARD',
           nameOnCard: {
             firstName: 'Vladimir',
@@ -2796,6 +2797,100 @@ describe('Test counterparty alerts', () => {
 
     console.log(JSON.stringify(caseCreationResult4[1].alerts, null, 2))
     console.log(JSON.stringify(caseCreationResult4[0].alerts, null, 2))
+  })
+})
+
+describe('Test case creation with too many alerts', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpUsersHooks(TEST_TENANT_ID, [TEST_USER_1, TEST_USER_2])
+  setupRules(TEST_TENANT_ID, {
+    rulesCount: 2,
+  })
+
+  test('should split case when it has more than 1000 alerts', async () => {
+    const { caseCreationService } = await getServices(TEST_TENANT_ID)
+    MockDate.set(TODAY)
+
+    // Create a transaction that will hit the rule
+    const transaction = getTestTransaction({
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: TEST_USER_2.userId,
+    })
+
+    // Create an existing case with 999 alerts (just under the limit)
+    const existingCase: Case = {
+      caseUsers: {
+        origin: { userId: TEST_USER_1.userId },
+      },
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
+      caseTransactionsIds: [transaction.transactionId],
+      caseTransactionsCount: 1,
+      alerts: Array.from({ length: 999 }, (_: number, index: number) => ({
+        alertId: `A-${index}`,
+        alertStatus: 'OPEN',
+        alertType: 'TRANSACTION',
+        alertCreatedFor: ['USER'],
+        createdTimestamp: Date.now(),
+        ruleInstanceId: `R-1.${index}`,
+        ruleName: 'R-1',
+        ruleDescription: 'R-1',
+        ruleCreatedAt: Date.now(),
+        ruleUpdatedAt: Date.now(),
+        ruleCreatedBy: TEST_USER_1.userId,
+        numberOfTransactionsHit: 1,
+        priority: 'P1',
+        ruleAction: 'FLAG',
+        transactionIds: [transaction.transactionId],
+      })),
+      createdTimestamp: Date.now(),
+      latestTransactionArrivalTimestamp: Date.now(),
+      caseType: 'SYSTEM',
+    }
+
+    const { caseService } = await getServices(TEST_TENANT_ID)
+    await caseService.caseRepository.addCaseMongo(existingCase)
+
+    // Now create a transaction that will add more alerts to exceed 1000
+    const newTransaction = getTestTransaction({
+      originUserId: TEST_USER_1.userId,
+      destinationUserId: TEST_USER_2.userId,
+    })
+
+    const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+      newTransaction,
+    ])
+    const [result] = results
+
+    const subjects = await caseCreationService.getTransactionSubjects({
+      ...newTransaction,
+      ...result,
+    })
+
+    const cases = await caseCreationService.handleTransaction(
+      {
+        ...newTransaction,
+        ...result,
+      },
+      await getHitRuleInstances(TEST_TENANT_ID, result),
+      subjects
+    )
+
+    // The case should be split because it now has more than 1000 alerts
+    expect(cases.length).toBe(3)
+
+    // Check that the original case has exactly 1000 alerts
+    const originalCase = cases.find((c) => c.caseId === 'C-1')
+    expect(originalCase?.alerts).toHaveLength(1000)
+
+    // Check that there's a new case with the excess alerts
+    const newCase = cases.find((c) => c.caseId === 'C-2')
+    expect(newCase).toBeDefined()
+    expect(newCase?.alerts?.length).toEqual(1)
+    expect(newCase?.relatedCases).toContain('C-1')
+
+    const thirdCase = cases.find((c) => c.caseId === 'C-3')
+    expect(thirdCase).toBeDefined()
+    expect(thirdCase?.alerts?.length).toEqual(2)
   })
 })
 

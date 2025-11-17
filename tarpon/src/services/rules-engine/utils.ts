@@ -43,6 +43,7 @@ import { isDemoTenant } from '@/utils/tenant-id'
 import { sanitiseBucketedKey } from '@/core/dynamodb/key-utils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { User } from '@/@types/openapi-public/User'
 
 export function getSenderKeys(
   tenantId: string,
@@ -326,6 +327,10 @@ export function getNonUserReceiverKeys(
         }
       )
     : null
+}
+
+export function getUserKeyId(tenantId: string, user: User): string | undefined {
+  return DynamoDbKeys.USER_AGGREGATION(tenantId, user.userId)?.PartitionKeyID
 }
 
 export function getAggregatedRuleStatus(

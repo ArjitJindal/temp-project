@@ -4,10 +4,8 @@ import memoize from 'lodash/memoize'
 import { v4 as uuid } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { hasResources, Resource } from '@flagright/lib/utils'
-import {
-  RiskLevelApprovalWorkflowMachine,
-  RiskFactorsApprovalWorkflowMachine,
-} from '@flagright/lib/classes/workflow-machine'
+import { ApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine'
+import { ApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import { AccountsService } from '../accounts'
 import { RoleService } from '../roles'
 import { NotificationsChannels } from './notifications-channels'
@@ -32,6 +30,7 @@ import { CaseStatusUpdate } from './subscriptions/case-status-update'
 import { RiskClassificationApproval } from './subscriptions/risk-classification-approval'
 import { RiskFactorsApproval } from './subscriptions/risk-factors-approval'
 import { UserChangesApproval } from './subscriptions/user-changes-approval'
+import { ApiKeyExpiring } from './subscriptions/api-key-expiring'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { traceable } from '@/core/xray'
@@ -42,14 +41,8 @@ import {
   PartialNotification,
 } from '@/@types/notifications'
 import { Account } from '@/@types/openapi-internal/Account'
-import { RiskLevelApprovalWorkflow } from '@/@types/openapi-internal/RiskLevelApprovalWorkflow'
-import { RiskFactorsApprovalWorkflow } from '@/@types/openapi-internal/RiskFactorsApprovalWorkflow'
 import { WorkflowService } from '@/services/workflow'
-import { RiskClassificationConfigApproval } from '@/@types/openapi-internal/RiskClassificationConfigApproval'
-import { RiskFactorApproval } from '@/@types/openapi-internal/RiskFactorApproval'
-import { UserApproval } from '@/@types/openapi-internal/UserApproval'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { UserUpdateApprovalWorkflow } from '@/@types/openapi-internal/UserUpdateApprovalWorkflow'
+import { WorkflowRef } from '@/@types/openapi-internal/WorkflowRef'
 
 @traceable
 export class NotificationsService {
@@ -122,47 +115,39 @@ export class NotificationsService {
       new RiskClassificationApproval(),
       new RiskFactorsApproval(),
       new UserChangesApproval(),
+      new ApiKeyExpiring(),
     ]
+
+    // Mapping from notification type to entity type for approval notifications
+    const approvalNotificationMap: Record<
+      string,
+      'RISK_LEVELS' | 'RISK_FACTORS' | 'USER'
+    > = {
+      RISK_CLASSIFICATION_APPROVAL: 'RISK_LEVELS',
+      RISK_FACTORS_APPROVAL: 'RISK_FACTORS',
+      USER_CHANGES_APPROVAL: 'USER',
+    }
 
     for (const subscription of subscriptions) {
       if (await subscription.toSend(payload)) {
         const notification = await subscription.getNotification(payload)
         if (notification) {
-          // Special handling for risk classification approval notifications
-          if (
-            notification.notificationType === 'RISK_CLASSIFICATION_APPROVAL'
-          ) {
-            const enhancedNotification =
-              await this.enhanceRiskClassificationApprovalNotification(
-                notification,
-                payload as NotificationRawPayload<RiskClassificationConfigApproval>
-              )
-            if (enhancedNotification) {
-              notifications.push(enhancedNotification)
-            }
-          } else if (
-            notification.notificationType === 'RISK_FACTORS_APPROVAL'
-          ) {
-            const enhancedNotification =
-              await this.enhanceRiskFactorsApprovalNotification(
-                notification,
-                payload as NotificationRawPayload<RiskFactorApproval>
-              )
-            if (enhancedNotification) {
-              notifications.push(enhancedNotification)
-            }
-          } else if (
-            notification.notificationType === 'USER_CHANGES_APPROVAL'
-          ) {
-            const enhancedNotification =
-              await this.enhanceUserChangesApprovalNotification(
-                notification,
-                payload as NotificationRawPayload<UserApproval>
-              )
+          // Check if this is an approval notification that needs enhancement
+          const entityType =
+            approvalNotificationMap[notification.notificationType]
+
+          if (entityType) {
+            // Enhance approval notification with workflow information
+            const enhancedNotification = await this.enhanceApprovalNotification(
+              notification,
+              payload as NotificationRawPayload<any>,
+              entityType
+            )
             if (enhancedNotification) {
               notifications.push(enhancedNotification)
             }
           } else {
+            // Non-approval notification, add as-is
             notifications.push(notification)
           }
         }
@@ -172,9 +157,22 @@ export class NotificationsService {
     return notifications
   }
 
-  private async enhanceRiskClassificationApprovalNotification(
+  /**
+   * Generic method to enhance approval notifications for any approval type
+   * Handles risk classification, risk factors, and user changes approvals
+   *
+   * This method:
+   * 1. Fetches the workflow definition from the approval's workflowRef
+   * 2. Uses ApprovalWorkflowMachine to determine the next step role
+   * 3. Finds all users with that role
+   * 4. Returns an enhanced notification with the recipient list
+   */
+  private async enhanceApprovalNotification<
+    T extends { workflowRef?: WorkflowRef; approvalStep?: number }
+  >(
     notification: PartialNotification,
-    payload: NotificationRawPayload<RiskClassificationConfigApproval>
+    payload: NotificationRawPayload<T>,
+    entityType: 'RISK_LEVELS' | 'RISK_FACTORS' | 'USER'
   ): Promise<PartialNotification | undefined> {
     const approval = payload.newImage
     if (!approval?.workflowRef) {
@@ -188,86 +186,18 @@ export class NotificationsService {
     })
 
     const workflow = await workflowService.getWorkflowVersion(
-      'risk-levels-approval',
+      'change-approval',
       approval.workflowRef.id,
-      approval.workflowRef.version.toString()
+      approval.workflowRef.version
     )
 
-    const workflowMachine = new RiskLevelApprovalWorkflowMachine(
-      workflow as RiskLevelApprovalWorkflow
+    const workflowMachine = new ApprovalWorkflowMachine(
+      workflow as ApprovalWorkflow
     )
 
-    // Get the next step in the approval chain
-    const pendingStep = workflowMachine.getApprovalStep(approval.approvalStep)
-
-    // Get users with the required role for the next step
-    const roleService = RoleService.getInstance(this.dynamoDb)
-    const accountsService = AccountsService.getInstance(this.dynamoDb)
-    const tenant = await accountsService.getTenantById(this.tenantId)
-
-    if (!tenant) {
-      return
-    }
-
-    const usersWithRole = await roleService.getUsersByRoleName(
-      pendingStep.role,
-      tenant
-    )
-    const userIds = usersWithRole.map((user) => user.id)
-
-    if (userIds.length === 0) {
-      return
-    }
-
-    return {
-      ...notification,
-      entityType: 'RISK_LEVELS',
-      recievers: userIds,
-      notificationData: {
-        ...notification.notificationData,
-        approval: {
-          ...(notification.notificationData as any).approval,
-          nextStepRole: pendingStep.role,
-          isLastStep: pendingStep.isLastStep,
-        },
-      },
-      metadata: {
-        ...notification.metadata,
-      },
-    }
-  }
-
-  // TODO: I think enhanceRiskClassificationApprovalNotification and
-  //       enhanceRiskFactorsApprovalNotification can be merged into
-  //       a single genericfunction.
-  private async enhanceRiskFactorsApprovalNotification(
-    notification: PartialNotification,
-    payload: NotificationRawPayload<RiskFactorApproval>
-  ): Promise<PartialNotification | undefined> {
-    const approval = payload.newImage
-    if (!approval?.workflowRef) {
-      return
-    }
-
-    // Get the workflow definition to determine the next step role
-    const workflowService = new WorkflowService(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
-    })
-
-    const workflow = await workflowService.getWorkflowVersion(
-      'risk-factors-approval',
-      approval.workflowRef.id,
-      approval.workflowRef.version.toString()
-    )
-
-    const workflowMachine = new RiskFactorsApprovalWorkflowMachine(
-      workflow as RiskFactorsApprovalWorkflow
-    )
-
-    // Get the next step in the approval chain
+    // Get the next step in the approval chain (default to 0 if not provided)
     const pendingStep = workflowMachine.getApprovalStep(
-      approval.approvalStep as number
+      approval.approvalStep ?? 0
     )
 
     // Get users with the required role for the next step
@@ -279,11 +209,10 @@ export class NotificationsService {
       return
     }
 
-    const usersWithRole = await roleService.getUsersByRoleName(
+    const usersWithRole = await roleService.getUsersByRole(
       pendingStep.role,
       tenant
     )
-
     const userIds = usersWithRole.map((user) => user.id)
 
     if (userIds.length === 0) {
@@ -292,7 +221,7 @@ export class NotificationsService {
 
     return {
       ...notification,
-      entityType: 'RISK_FACTORS',
+      entityType,
       recievers: userIds,
       notificationData: {
         ...notification.notificationData,
@@ -300,131 +229,6 @@ export class NotificationsService {
           ...(notification.notificationData as any).approval,
           nextStepRole: pendingStep.role,
           isLastStep: pendingStep.isLastStep,
-        },
-      },
-      metadata: {
-        ...notification.metadata,
-      },
-    }
-  }
-
-  // TODO: I think enhanceRiskClassificationApprovalNotification,
-  //       enhanceRiskFactorsApprovalNotification, and
-  //       enhanceUserChangesApprovalNotification can be merged into
-  //       a single generic function.
-  private async enhanceUserChangesApprovalNotification(
-    notification: PartialNotification,
-    payload: NotificationRawPayload<UserApproval>
-  ): Promise<PartialNotification | undefined> {
-    const approval = payload.newImage
-    if (!approval?.workflowRef) {
-      return
-    }
-
-    // Get the workflow definition to determine the next step role
-    const workflowService = new WorkflowService(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
-    })
-
-    const workflow = await workflowService.getWorkflowVersion(
-      'user-update-approval',
-      approval.workflowRef.id,
-      approval.workflowRef.version.toString()
-    )
-
-    // For user approval workflows, we need to get the field-specific workflow
-    // The workflow ID is stored in the tenant settings for each field
-    const accountsService = AccountsService.getInstance(this.dynamoDb)
-    const tenant = await accountsService.getTenantById(this.tenantId)
-
-    if (!tenant) {
-      return
-    }
-
-    // Get tenant settings to access workflow configurations
-    const tenantRepository = new TenantRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-    const tenantSettings = await tenantRepository.getTenantSettings()
-
-    // Get the field from the proposed changes
-    const field = approval.proposedChanges[0]?.field
-    if (!field) {
-      return
-    }
-
-    // Get the workflow ID directly from tenant settings
-    // The field names in userApprovalWorkflows match the field names in proposedChanges
-    const workflowId =
-      tenantSettings?.workflowSettings?.userApprovalWorkflows?.[field]
-    console.log(
-      `User approval notification: field=${field}, workflowId=${workflowId}, tenantSettings.workflowSettings=${JSON.stringify(
-        tenantSettings?.workflowSettings
-      )}`
-    )
-
-    if (!workflowId) {
-      console.log(
-        `User approval notification: No workflow found for field ${field}. Notification will not be sent.`
-      )
-      return
-    }
-
-    const fieldWorkflow = await workflowService.getWorkflowVersion(
-      'user-update-approval',
-      workflowId,
-      workflow.version.toString()
-    )
-
-    // Cast to UserUpdateApprovalWorkflow to access approvalChain
-    const userUpdateWorkflow = fieldWorkflow as UserUpdateApprovalWorkflow // Type assertion needed since Workflow is generic
-
-    // Get the current step in the approval process
-    const currentStep = approval.approvalStep
-    const approvalChain = userUpdateWorkflow.approvalChain
-
-    // Check if we're at a valid step
-    if (currentStep >= approvalChain.length) {
-      console.log(
-        `User approval notification: Approval step ${currentStep} is beyond the approval chain length ${approvalChain.length}`
-      )
-      return
-    }
-
-    // Get the role required for the current step
-    const currentStepRole = approvalChain[currentStep]
-    const isLastStep = currentStep === approvalChain.length - 1
-
-    // Get users with the required role for the current step
-    const roleService = RoleService.getInstance(this.dynamoDb)
-    const usersWithRole = await roleService.getUsersByRoleName(
-      currentStepRole,
-      tenant
-    )
-    const userIds = usersWithRole.map((user) => user.id)
-
-    if (userIds.length === 0) {
-      console.log(
-        `User approval notification: No users found with role ${currentStepRole} for step ${currentStep}`
-      )
-      return
-    }
-
-    console.log(
-      `User approval notification: Sending notification to users with role ${currentStepRole} for step ${currentStep} (isLastStep: ${isLastStep})`
-    )
-
-    return {
-      ...notification,
-      entityType: 'USER',
-      recievers: userIds,
-      notificationData: {
-        ...notification.notificationData,
-        approval: {
-          ...(notification.notificationData as any).approval,
-          nextStepRole: currentStepRole,
-          isLastStep: isLastStep,
         },
       },
       metadata: {
@@ -449,6 +253,7 @@ export class NotificationsService {
     const USER_DETAILS_READ: Resource = `read:::users/user-details/*`
     const RISK_LEVELS_READ: Resource = `read:::risk-scoring/risk-levels/*`
     const RISK_FACTORS_READ: Resource = `read:::risk-scoring/risk-factors/*`
+    const API_KEY_READ: Resource = `read:::settings/developers/api-keys/*`
     const notificationTypeToPermission: Record<NotificationType, Resource[]> = {
       ALERT_ASSIGNMENT: [CASE_OVERVIEW_READ],
       CASE_ASSIGNMENT: [CASE_OVERVIEW_READ],
@@ -468,6 +273,7 @@ export class NotificationsService {
       RISK_CLASSIFICATION_APPROVAL: [RISK_LEVELS_READ],
       RISK_FACTORS_APPROVAL: [RISK_FACTORS_READ],
       USER_CHANGES_APPROVAL: [USER_DETAILS_READ],
+      API_KEY_EXPIRING: [API_KEY_READ],
     }
 
     const [allUsers, allRoles] = await Promise.all([

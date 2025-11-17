@@ -59,19 +59,16 @@ export default function TagsStack<Value extends Comparable>(props: Props<Value>)
       for (let i = 0; i < tagsStackContainerEl.children.length; i++) {
         const element = tagsStackContainerEl.children[i];
         if (element instanceof HTMLElement) {
-          if (i === 0) {
-            minWidth = element.offsetWidth;
-          }
           const rightBorderPosition = element.offsetLeft + element.offsetWidth;
           const isOverflow =
             rightBorderPosition > tagsStackContainerSize?.width - HIDDEN_TAGS_INFO_PADDING;
           if (isOverflow) {
-            setTagsFit(i);
+            setTagsFit(Math.max(1, i));
             break;
           }
         }
         if (i === tagsStackContainerEl.childNodes.length - 1) {
-          setTagsFit(tagsStackContainerEl.childNodes.length);
+          setTagsFit(Math.max(1, tagsStackContainerEl.childNodes.length));
         }
       }
       setMinWidth(minWidth);

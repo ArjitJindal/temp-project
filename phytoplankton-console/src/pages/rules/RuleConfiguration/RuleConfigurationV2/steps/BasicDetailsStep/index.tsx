@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FrozenStatusesInput } from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/FrozenStatusInput';
 import { RangeValue } from 'rc-picker/es/interface';
-import { COUNTERPARTY_RULES } from '@flagright/lib/constants';
 import StepHeader from '../../StepHeader';
 import SlaPolicyInput from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/SlaPolicyInput';
 import { DefaultAlertStatusInput } from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/DefaultAlertStatusInput';
@@ -111,7 +110,7 @@ export default function BasicDetailsStep(props: Props) {
     } else if (activeTab === 'investigation_checklist') {
       return <ChecklistDetails />;
     } else if (activeTab === 'alert_creation_details') {
-      return <AlertCreationDetails {...props} />;
+      return <AlertCreationDetails />;
     }
   }, [activeTab, props]);
 
@@ -321,8 +320,7 @@ function SimulationIterationDetails() {
   );
 }
 
-function AlertCreationDetails(props: Props) {
-  const { rule } = props;
+function AlertCreationDetails() {
   const settings = useSettings();
   const isCustomAggregationEnabled = useFeatureEnabled('CUSTOM_AGGREGATION_FIELDS');
   const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
@@ -355,22 +353,20 @@ function AlertCreationDetails(props: Props) {
               />
             )}
           </InputField>
-          {COUNTERPARTY_RULES.includes(rule.id) && (
-            <InputField<FormValues, 'alertCreationLogic'>
-              name={'alertCreationLogic'}
-              label={'Alert creation logic'}
-              labelProps={{ required: { value: true, showHint: true } }}
-            >
-              {(inputProps) => (
-                <Select<AlertCreationLogic>
-                  mode="SINGLE"
-                  options={ALERT_CREATION_LOGICS}
-                  {...inputProps}
-                  value={inputProps.value ?? 'SINGLE_ALERT'}
-                />
-              )}
-            </InputField>
-          )}
+          <InputField<FormValues, 'alertCreationLogic'>
+            name={'alertCreationLogic'}
+            label={'Alert creation logic'}
+            labelProps={{ required: { value: true, showHint: true } }}
+          >
+            {(inputProps) => (
+              <Select<AlertCreationLogic>
+                mode="SINGLE"
+                options={ALERT_CREATION_LOGICS}
+                {...inputProps}
+                value={inputProps.value ?? 'SINGLE_ALERT'}
+              />
+            )}
+          </InputField>
         </div>
         <DefaultAlertStatusInput />
         <FrozenStatusesInput />

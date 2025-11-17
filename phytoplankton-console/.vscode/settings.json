@@ -4,5 +4,6 @@
     "source.fixAll.eslint": "explicit"
   },
   "git.autofetch": true,
-  "git.autofetchPeriod": 180
+  "git.autofetchPeriod": 180,
+  "typescript.tsserver.maxTsServerMemory": 8192
 }

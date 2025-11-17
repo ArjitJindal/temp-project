@@ -16,7 +16,7 @@ import { LAMBDAS } from '@lib/lambdas'
 import { StackConstants } from '@lib/constants'
 import { Config } from '@flagright/lib/config/config'
 import { Duration, Fn } from 'aws-cdk-lib'
-import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import { ExtendedFlagrightRegion } from '@flagright/lib/constants/deploy'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { InterfaceVpcEndpoint } from 'aws-cdk-lib/aws-ec2'
 
@@ -28,7 +28,7 @@ export type InternalFunctionProps = {
 }
 
 /* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
-const LAMBDA_LAYER_ARN_BY_REGION: Record<FlagrightRegion, string> = {
+const LAMBDA_LAYER_ARN_BY_REGION: Record<ExtendedFlagrightRegion, string> = {
   'asia-1':
     'arn:aws:lambda:ap-southeast-1:580247275435:layer:LambdaInsightsExtension:38',
   'asia-2':
@@ -181,22 +181,13 @@ function createLambdaFunction(
   // This is needed to allow using ${Function.Arn} in openapi.yaml
   ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
 
-  // Add SQS VPC endpoint URL if it exists
+  // Add SQS and SNS VPC endpoint URLs if they exist
   // We do this after function creation to avoid passing tokens through nested stack parameters
   const contextWithVpcEndpoint = context as Construct & {
     config: Config
     functionProps: Partial<FunctionProps>
     sqsInterfaceVpcEndpoint?: InterfaceVpcEndpoint
-  }
-  if (contextWithVpcEndpoint.sqsInterfaceVpcEndpoint) {
-    // VPC endpoint DNS entries are in format: "hostedZoneId:dnsName"
-    // We need to extract just the DNS name (after the colon)
-    const firstDnsEntry = Fn.select(
-      0,
-      contextWithVpcEndpoint.sqsInterfaceVpcEndpoint.vpcEndpointDnsEntries
-    )
-    const dnsName = Fn.select(1, Fn.split(':', firstDnsEntry))
-    func.addEnvironment('SQS_VPC_ENDPOINT_URL', `https://${dnsName}`)
+    snsInterfaceVpcEndpoint?: InterfaceVpcEndpoint
   }
 
   let lambdaOptions: {
@@ -208,6 +199,27 @@ function createLambdaFunction(
     version: func.currentVersion,
     provisionedConcurrentExecutions: provisionedConcurrency,
   }
+
+  const vpcEndpoints = new Map<string, InterfaceVpcEndpoint>()
+  if (contextWithVpcEndpoint.sqsInterfaceVpcEndpoint) {
+    vpcEndpoints.set(
+      'SQS_VPC_ENDPOINT_URL',
+      contextWithVpcEndpoint.sqsInterfaceVpcEndpoint
+    )
+  }
+  if (contextWithVpcEndpoint.snsInterfaceVpcEndpoint) {
+    vpcEndpoints.set(
+      'SNS_VPC_ENDPOINT_URL',
+      contextWithVpcEndpoint.snsInterfaceVpcEndpoint
+    )
+  }
+
+  vpcEndpoints.forEach((endpoint, envName) => {
+    const dnsEntry = Fn.select(0, endpoint.vpcEndpointDnsEntries)
+    const dnsName = Fn.select(1, Fn.split(':', dnsEntry))
+    func.addEnvironment(envName, `https://${dnsName}`)
+  })
+
   // Check for autoscaling lambda - currrently only transaction lambda
   if (autoScalingLambdaNames.includes(name)) {
     lambdaOptions = {

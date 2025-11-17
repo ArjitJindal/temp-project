@@ -36,6 +36,7 @@ import { getDefaultTimezone, Timezone } from '@/utils/dayjs'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { DynamoRolesRepository } from '@/services/roles/repository/dynamo'
 import { PermissionStatements } from '@/@types/openapi-internal/PermissionStatements'
+import { maskString } from '@/utils/helpers'
 
 type LogMetaData = {
   tenantId?: string
@@ -495,7 +496,11 @@ export function sanitizeTenantSettings(
       ...settings.sanctions,
       dowjonesCreds: {
         ...settings.sanctions.dowjonesCreds,
-        password: '*'.repeat(settings.sanctions.dowjonesCreds.password.length),
+        password: maskString(settings.sanctions.dowjonesCreds.password),
+      },
+      lsegCreds: {
+        ...settings.sanctions.lsegCreds,
+        password: maskString(settings.sanctions.lsegCreds?.password),
       },
     },
   }

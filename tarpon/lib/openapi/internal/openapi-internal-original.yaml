@@ -1444,6 +1444,14 @@ paths:
             type: number
           in: query
           name: beforePaymentApprovalTimestamp
+        - schema:
+            $ref: '#/components/schemas/CaseSubjectType'
+          in: query
+          name: caseSubject
+        - schema:
+            type: string
+          in: query
+          name: entityId
     post:
       summary: Flat file upload transaction
       operationId: post-transaction-flat-file-upload
@@ -1692,6 +1700,14 @@ paths:
           in: query
           name: referenceCurrency
           required: true
+        - schema:
+            $ref: '#/components/schemas/CaseSubjectType'
+          in: query
+          name: caseSubject
+        - schema:
+            type: string
+          in: query
+          name: entityId
   /transactions/stats/by-time:
     get:
       summary: Transaction - Stats
@@ -1769,6 +1785,14 @@ paths:
               - originCurrency
           in: query
           name: aggregateBy
+        - schema:
+            $ref: '#/components/schemas/CaseSubjectType'
+          in: query
+          name: caseSubject
+        - schema:
+            type: string
+          in: query
+          name: entityId
   /users/{userId}/crm:
     get:
       summary: CRM Account - List
@@ -2233,6 +2257,23 @@ paths:
           in: query
           name: responseType
           description: Type of response - 'data' for table data only, 'count' for count only
+    post:
+      summary: Users - Flat File Upload
+      operationId: post-users-flat-file-upload
+      tags: []
+      x-flagright:
+        resources:
+          - write:::users/user-overview
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserFlatFileUploadRequest'
+        required: true
+    parameters: []
   /users-preview:
     get:
       summary: All Users - List (Lite)
@@ -2285,23 +2326,6 @@ paths:
             type: boolean
           in: query
           name: includeCasesCount
-    post:
-      summary: Users - Flat File Upload
-      operationId: post-users-flat-file-upload
-      tags: []
-      x-flagright:
-        resources:
-          - write:::users/user-overview
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserFlatFileUploadRequest'
-        required: true
-    parameters: []
   /users/{userId}/comments:
     parameters:
       - schema:
@@ -2822,6 +2846,41 @@ paths:
                 items:
                   type: string
       operationId: get-users-uniques
+  /cases/uniques:
+    get:
+      summary: Cases - Unique values for different fields
+      tags: []
+      x-flagright:
+        resources:
+          - read:::case-management/case-overview
+      parameters:
+        - name: field
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/CasesUniquesField'
+        - name: filter
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - CASE
+              - ALERT
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      operationId: get-cases-uniques
   /users/{userId}/update-proposal:
     post:
       summary: User Approval - Create Proposal
@@ -4094,6 +4153,20 @@ paths:
               required:
                 - deactivate
         required: true
+  /accounts-data:
+    get:
+      summary: accounts-data
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountMinimum'
+      operationId: get-accounts-data
   /accounts:
     post:
       summary: Account - Invite
@@ -6984,6 +7057,120 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SanctionsSourceListResponse'
+  /sanctions/bulk-search:
+    post:
+      summary: Bulk search Sanctions
+      operationId: post-sanctions-bulk-search
+      x-flagright:
+        resources:
+          - write:::screening/manual-screening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionsBulkSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                required:
+                  - id
+    get:
+      summary: Get bulk search Sanctions
+      operationId: get-sanctions-bulk-search
+      x-flagright:
+        resources:
+          - write:::screening/manual-screening
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SanctionsBulkSearchResponse'
+                  next:
+                    type: string
+                  prev:
+                    type: string
+                  hasNext:
+                    type: boolean
+                  hasPrev:
+                    type: boolean
+                  count:
+                    type: number
+                  limit:
+                    type: number
+                  last:
+                    type: string
+                  pageSize:
+                    type: number
+                required:
+                  - items
+                  - next
+                  - prev
+                  - hasNext
+                  - hasPrev
+                  - count
+                  - limit
+                  - last
+      parameters:
+        - schema:
+            type: string
+          name: batchId
+          in: query
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: number
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          name: sortOrder
+          in: query
+  /sanctions/bulk-search/search-term/{searchTermId}:
+    get:
+      summary: Get search result for a search term
+      tags: []
+      x-flagright:
+        resources:
+          - read:::screening/manual-screening
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSearchHistory'
+      parameters:
+        - schema:
+            type: string
+          name: searchTermId
+          in: path
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: page
+        - schema:
+            type: number
+          in: query
+          name: pageSize
+      operationId: get-sanctions-bulk-search-$-searchTermId
   /sanctions/search:
     post:
       summary: Search Sanctions
@@ -7335,6 +7522,40 @@ paths:
                 required:
                   - url
       description: Get a presigned URL for downloading a file
+  /sanctions/media-check/articles:
+    get:
+      summary: Get media check articles
+      tags: []
+      operationId: get-media-check-articles
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaCheckArticleResponse'
+      parameters:
+        - schema:
+            type: string
+          name: searchId
+          in: query
+          required: true
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          in: query
+          name: fromCursorKey
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: sortField
   /webhooks/auth0:
     post:
       summary: Receive webhook events from Auth0
@@ -8627,6 +8848,33 @@ paths:
             schema:
               $ref: '#/components/schemas/FlatFileTemplateRequest'
         required: true
+  /rotate-api-key:
+    post:
+      summary: Rotate api key
+      operationId: rotate-api-key
+      x-flagright:
+        resources:
+          - write:::settings/developers/api-keys
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateApiKeyRequest'
+        required: true
+  /intercomm-token:
+    get:
+      summary: Generate intercomm JWT token
+      operationId: get-intercomm-token
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntercommTokenResponse'
 components:
   schemas:
     FilterCondition:
@@ -8778,6 +9026,9 @@ components:
           description:
             Timestamp (Unix epoch ms) when CRA lock should expire (only used
             when isUpdatable is false)
+        comment:
+          type: string
+          description: Optional comment/reason for the risk assignment or lock change
     DynamoDbClickhouseBackfillBatchJobEntity:
       title: DynamoDbClickhouseBackfillBatchJobEntity
       type: string
@@ -8806,6 +9057,7 @@ components:
         - TRANSACTIONS_UPLOAD
         - BULK_ALERT_CLOSURE
         - BULK_SANCTIONS_HITS_UPDATE
+        - BULK_MANUAL_SCREENING
     FlatFileProgressResponse:
       title: FlatFileProgressResponse
       type: object
@@ -8846,6 +9098,14 @@ components:
       required:
         - schema
         - format
+    RotateApiKeyRequest:
+      title: RotateApiKeyRequest
+      type: object
+      properties:
+        apiKeyId:
+          type: string
+      required:
+        - apiKeyId
     FlatFileTemplateResponse:
       title: FlatFileTemplateResponse
       type: object
@@ -8859,6 +9119,14 @@ components:
       required:
         - keys
         - formatString
+    IntercommTokenResponse:
+      title: IntercommTokenResponse
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
     CaseClosure:
       title: CaseClosure
       type: object
@@ -9395,6 +9663,7 @@ components:
         - op:!contains_in_lists
         - op:similar_to_in_lists
         - op:!similar_to_in_lists
+        - op:contains_in_lists_subtype
     LogicFunction:
       title: LogicFunction
       type: object
@@ -9441,6 +9710,7 @@ components:
       enum:
         - USER_TRANSACTIONS
         - PAYMENT_DETAILS_TRANSACTIONS
+        - USER_DETAILS
         - PAYMENT_DETAILS_ADDRESS
         - PAYMENT_DETAILS_NAME
         - PAYMENT_DETAILS_EMAIL
@@ -10259,11 +10529,16 @@ components:
           type: number
         updatedAt:
           type: number
+        deactivationTimestamp:
+          type: number
+        enabled:
+          type: boolean
       required:
         - id
         - key
         - createdAt
         - updatedAt
+        - enabled
     CrmSummary:
       title: CrmSummary
       type: object
@@ -11745,70 +12020,76 @@ components:
       enum:
         - L1
         - L2
-    Account:
-      title: Account
+    AccountMinimum:
       type: object
       properties:
         id:
           type: string
         role:
           type: string
-        email:
-          type: string
-        emailVerified:
-          type: boolean
         name:
-          type: string
-        picture:
           type: string
         blocked:
           type: boolean
         escalationLevel:
           $ref: '#/components/schemas/EscalationLevel'
-        reviewerId:
-          type: string
-        escalationReviewerId:
-          type: string
-        allowTenantDeletion:
-          type: boolean
-        allowedRegions:
-          type: array
-          items:
-            type: string
-        lastLogin:
-          type: number
-        createdAt:
-          type: number
-        lastPasswordReset:
-          type: number
-        blockedReason:
-          type: string
-          enum:
-            - DELETED
-            - DORMANT
-            - BRUTE_FORCE
-            - DEACTIVATED
         isReviewer:
           type: boolean
         demoMode:
           type: boolean
-        staffId:
-          type: string
-        department:
-          type: string
-        orgName:
-          type: string
         tenantId:
           type: string
       required:
         - id
         - role
-        - email
-        - emailVerified
         - name
         - blocked
-        - orgName
         - tenantId
+    Account:
+      allOf:
+        - $ref: '#/components/schemas/AccountMinimum'
+        - type: object
+          title: Account
+          properties:
+            email:
+              type: string
+            emailVerified:
+              type: boolean
+            picture:
+              type: string
+            reviewerId:
+              type: string
+            escalationReviewerId:
+              type: string
+            allowTenantDeletion:
+              type: boolean
+            allowedRegions:
+              type: array
+              items:
+                type: string
+            lastLogin:
+              type: number
+            createdAt:
+              type: number
+            lastPasswordReset:
+              type: number
+            blockedReason:
+              type: string
+              enum:
+                - DELETED
+                - DORMANT
+                - BRUTE_FORCE
+                - DEACTIVATED
+            staffId:
+              type: string
+            department:
+              type: string
+            orgName:
+              type: string
+          required:
+            - email
+            - emailVerified
+            - orgName
     AccountSettings:
       title: AccountSettings
       type: object
@@ -12049,14 +12330,14 @@ components:
             - DAILY
             - WEEKLY
             - MONTHLY
-        craLockTimerHours:
+        craLockTimerDays:
           type: number
-          minimum: 1
-          maximum: 8760
+          minimum: 0
+          maximum: 10000
           description:
-            Default duration in hours for CRA locks. Used as the default value
-            when users lock CRAs. When undefined/omitted, no default is provided
-            and users must specify duration.
+            Default duration in days for CRA locks. When set (>= 1), it's
+            suggested as default CRA Lock expiry. When set to 0, the setting is
+            unset (perpetual lock is suggested).
         narrativeMode:
           $ref: '#/components/schemas/NarrativeMode'
         allowManualNarrativeModeUpdates:
@@ -12110,17 +12391,29 @@ components:
     WorkflowSettings:
       type: object
       properties:
+        riskLevelsApprovalWorkflow:
+          type: string
+          description:
+            ID of the change-approval workflow to use for risk level changes.
+            Use empty string to unset.
+        riskFactorsApprovalWorkflow:
+          type: string
+          description:
+            ID of the change-approval workflow to use for risk factor changes.
+            Use empty string to unset.
         userApprovalWorkflows:
           type: object
+          description: Map of user field names to change-approval workflow IDs
           properties:
             Cra:
               type: string
-            CraLock:
-              type: string
+              nullable: true
             eoddDate:
               type: string
+              nullable: true
             PepStatus:
               type: string
+              nullable: true
     UserApprovalUpdateRequest:
       type: object
       title: UserApprovalUpdateRequest
@@ -13194,8 +13487,9 @@ components:
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
-        - FLAT_FILES_IMPORT_TRANSACTIONS
+        - FLAT_FILES_IMPORT
         - MULTIPLEX_ASYNC_RULES_TX
+        - LSEG_API
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
@@ -14612,6 +14906,7 @@ components:
         - open-sanctions
         - acuris
         - lseg
+        - lseg-api
     SanctionsDataProviderScreeningInfo:
       title: SanctionsDataProviderScreeningInfo
       type: object
@@ -14841,7 +15136,34 @@ components:
         - BUSINESS
         - BANK
         - EXTERNAL_USER
-    SanctionsSearchRequest:
+    SanctionsBulkSearchRequest:
+      title: SanctionsBulkSearchRequest
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/FileInfo'
+        filters:
+          $ref: '#/components/schemas/SanctionsSearchRequest'
+        reason:
+          type: string
+      required:
+        - file
+        - reason
+    SanctionsBulkSearchResponse:
+      title: SanctionsBulkSearchResponse
+      type: object
+      properties:
+        searchTermId:
+          type: string
+        searchTerm:
+          type: string
+        reason:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: number
+    SanctionsSearchBaseRequest:
       title: SanctionsSearchRequest
       type: object
       properties:
@@ -14851,8 +15173,6 @@ components:
           type: boolean
         isOngoingScreening:
           type: boolean
-        searchTerm:
-          type: string
         existingProviderId:
           type: string
         searchProfileId:
@@ -14881,6 +15201,13 @@ components:
             $ref: '#/components/schemas/OccupationCode'
         yearOfBirth:
           type: number
+        yearOfBirthRange:
+          type: object
+          properties:
+            minYear:
+              type: number
+            maxYear:
+              type: number
         types:
           type: array
           items:
@@ -14944,8 +15271,43 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/Address
-      required:
-        - searchTerm
+        lsegMediaCheck:
+          $ref: '#/components/schemas/LSEGMediaCheckParameters'
+    SanctionsSearchRequest:
+      title: SanctionsSearchRequest
+      allOf:
+        - $ref: '#/components/schemas/SanctionsSearchBaseRequest'
+        - type: object
+          properties:
+            searchTerm:
+              type: string
+          required:
+            - searchTerm
+    LSEGMediaCheckParameters:
+      title: LSEGMediaCheckParameters
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        timeWindow:
+          type: object
+          properties:
+            startGranularity:
+              $ref: '#/components/schemas/TimeWindowGranularity'
+            endGranularity:
+              $ref: '#/components/schemas/TimeWindowGranularity'
+            startUnits:
+              type: number
+            endUnits:
+              type: number
+    TimeWindowGranularity:
+      title: TimeWindowGranularity
+      type: string
+      enum:
+        - now
+        - all_time
+        - year
+        - month
     ListSearchProfileResponse:
       title: ListSearchProfileResponse
       type: object
@@ -15039,6 +15401,13 @@ components:
             $ref: '#/components/schemas/GenericSanctionsSearchType'
         yearOfBirth:
           type: number
+        yearOfBirthRange:
+          type: object
+          properties:
+            minYear:
+              type: number
+            maxYear:
+              type: number
         documentId:
           type: array
           items:
@@ -15063,6 +15432,13 @@ components:
             $ref: '#/components/schemas/GenericSanctionsSearchType'
         yearOfBirth:
           type: number
+        yearOfBirthRange:
+          type: object
+          properties:
+            minYear:
+              type: number
+            maxYear:
+              type: number
         documentId:
           type: array
           items:
@@ -15445,6 +15821,12 @@ components:
           type: number
         totalPages:
           type: number
+        providerReferenceIds:
+          type: array
+          items:
+            type: string
+        isNewSearch:
+          type: boolean
       required:
         - hitsCount
         - searchId
@@ -15471,7 +15853,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SanctionsSearchHistory'
+            $ref: '#/components/schemas/SanctionsSearchHistoryItem'
       required:
         - hasPrev
         - prev
@@ -15481,6 +15863,36 @@ components:
         - count
         - limit
         - last
+    SearchTypeHistory:
+      title: SearchTypeHistory
+      type: object
+      properties:
+        screeningType:
+          type: string
+          enum:
+            - SEARCH
+            - BATCH
+        batchId:
+          type: string
+        searchTermId:
+          type: string
+        searchedAt:
+          type: number
+    SanctionsSearchHistoryItem:
+      title: SanctionsSearchHistoryItem
+      allOf:
+        - $ref: '#/components/schemas/SanctionsSearchHistory'
+        - type: object
+          properties:
+            screeningType:
+              type: string
+              enum:
+                - SEARCH
+                - BATCH
+            batchId:
+              type: string
+            searchTermId:
+              type: string
     SanctionsSearchHistory:
       title: SanctionsSearchHistory
       type: object
@@ -15505,6 +15917,10 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
         requestHash:
           type: string
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchTypeHistory'
         metadata:
           type: object
           properties:
@@ -15520,6 +15936,54 @@ components:
         - provider
         - request
         - createdAt
+    SanctionsBulkSearchResultMap:
+      title: SanctionsBulkSearchResultMap
+      type: object
+      properties:
+        batchId:
+          type: string
+        searchTermId:
+          type: string
+        searchId:
+          type: string
+        searchTerm:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - batchId
+        - searchId
+        - searchTermId
+    SanctionsBulkSearchHistory:
+      title: SanctionsBulkSearchHistory
+      type: object
+      properties:
+        batchId:
+          type: string
+        request:
+          $ref: '#/components/schemas/SanctionsSearchBaseRequest'
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        reason:
+          type: string
+        createdBy:
+          type: string
+      required:
+        - batchId
+        - reason
+        - request
+    SanctionsBulkUploadSchema:
+      title: SanctionsBulkUploadSchema
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
     SanctionsSearchMonitoring:
       title: SanctionsSearchMonitoring
       type: object
@@ -16014,6 +16478,26 @@ components:
         - id
         - name
         - entityType
+    UserSearchEntity:
+      title: UserSearchEntity
+      type: object
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        legalEntityName:
+          type: string
+        shareHoldersNames:
+          type: array
+          items:
+            type: string
+        directorsNames:
+          type: array
+          items:
+            type: string
+      required:
+        - id
     SanctionsField:
       type: object
       properties:
@@ -16096,6 +16580,747 @@ components:
             - gender
             - documentId
             - yearOfBirth
+    MediaCheckArticleResponseItem:
+      type: object
+      properties:
+        lsegCaseId:
+          type: string
+        lsegArticleId:
+          type: string
+        id:
+          type: string
+        articleSummary:
+          $ref: '#/components/schemas/MediaCheckArticleSummary'
+        articleContent:
+          $ref: '#/components/schemas/MediaCheckArticleContent'
+    MediaCheckArticleResponse:
+      type: object
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckArticleResponseItem'
+      required:
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
+    MediaCheckCaseDetails:
+      type: object
+      required:
+        - smartFilter
+      properties:
+        smartFilter:
+          type: boolean
+    ProviderType:
+      type: string
+      description: Provider type enumeration.
+      enum:
+        - WATCHLIST
+        - PASSPORT_CHECK
+        - MEDIA_CHECK
+        - CLIENT_WATCHLIST
+        - UBO_CHECK
+    CaseEntityType:
+      type: string
+      description: Case Entity Type Enumeration.
+      enum:
+        - INDIVIDUAL
+        - ORGANISATION
+        - VESSEL
+        - UNSPECIFIED
+    ScreeningResultCollection:
+      type: object
+      required:
+        - results
+        - name
+        - providerTypes
+        - groupId
+        - entityType
+      properties:
+        caseId:
+          type: string
+        name:
+          type: string
+        providerTypes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ProviderType'
+        groupId:
+          type: string
+        entityType:
+          $ref: '#/components/schemas/CaseEntityType'
+        caseSystemId:
+          type: string
+        caseScreeningState:
+          type: object
+          properties:
+            WATCHLIST:
+              type: string
+            MEDIA_CHECK:
+              type: string
+          required:
+            - WATCHLIST
+            - MEDIA_CHECK
+        lifecycleState:
+          type: string
+          enum:
+            - ARCHIVED
+            - UNARCHIVED
+        creationDate:
+          type: string
+        modificationDate:
+          type: string
+        nameTransposition:
+          type: boolean
+        outstandingActions:
+          type: boolean
+        lastScreenedDatesByProviderType:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 255
+        lastIndexDatesByProviderType:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 255
+        providerTypeDetails:
+          $ref: '#/components/schemas/MediaCheckCaseDetails'
+        caseRating:
+          type: string
+          enum:
+            - NO_RISK
+            - LOW
+            - MEDIUM
+            - HIGH
+            - UNKNOWN
+            - NOT_RATED
+        parentCaseSystemId:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbstractScreeningResult'
+        caseResultsSummary:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CaseResultsSummary'
+    CaseResultsSummary:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - NOT_SCREENED
+            - SCREENED
+        totalMatches:
+          type: integer
+          format: int64
+        reviewRequiredCount:
+          type: integer
+          format: int64
+        reviewRequired:
+          type: boolean
+        unresolved:
+          type: integer
+          format: int64
+        resolvedPositive:
+          type: integer
+          format: int64
+        resolvedPossible:
+          type: integer
+          format: int64
+        resolvedFalse:
+          type: integer
+          format: int64
+        resolvedUnspecified:
+          type: integer
+          format: int64
+    MatchedTerm:
+      type: object
+      properties:
+        term:
+          type: string
+        type:
+          type: string
+          enum:
+            - PRIMARY
+            - AKA
+            - AKAENHANCED
+            - FKA
+            - DBA
+            - MAIDEN
+            - LANG_VARIATION
+            - PREVIOUS
+            - VEHICLE_ID
+            - LOW_QUALITY_AKA
+            - NATIVE_AKA
+            - DOCUMENT_ID
+    RecordDate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - INITIAL_PUBLISHED_DATE
+            - LAST_PUBLISHED_DATE
+        value:
+          type: string
+    RecordType:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - COUNTRY
+            - INDIVIDUAL
+            - ORGANISATION
+            - VESSEL
+            - PORT
+            - WEBSITE
+            - AIRCRAFT
+            - GEOGRAPHY
+        recordSubTypes:
+          type: array
+          items:
+            type: string
+    RecordGender:
+      type: object
+      properties:
+        value:
+          type: string
+          default: UNKNOWN
+          enum:
+            - MALE
+            - FEMALE
+            - UNKNOWN
+    RecordEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - ACQUISTION_DATE
+            - BANKRUPTCY_DATE
+            - BIRTH
+            - CALCULATED_YOB
+            - CESSATION_DATE
+            - COMMENCEMENT_DATE
+            - DEATH
+            - DECEASED_DATE
+            - INCORP_DATE
+            - NATIONALISATION_DATE
+            - PRIVATISATION_DATE
+            - REGISTRATION_DATE
+            - REPORTED_DOB
+        value:
+          type: string
+    RecordLocation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - AFFILIATION
+            - AGENCY
+            - BRANCH
+            - COMMISSION
+            - FINANCIAL_HQ
+            - HQ
+            - ISSUER
+            - LOCATION
+            - NATIONALITY
+            - OPERATESIN
+            - OWNERSHIP
+            - PEP
+            - POB
+            - POD
+            - REGISTEREDIN
+            - RESIDENT
+            - UNDETERMINED
+            - VESSELFLAG
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - FREE_TEXT
+                  - REGION
+                  - STREET
+                  - CITY
+                  - STATE_OR_PROVINCE
+                  - POSTCODE
+              value:
+                type: string
+        country:
+          type: object
+          required:
+            - code
+            - name
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+    RecordName:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - PRIMARY
+            - AKA
+            - AKAENHANCED
+            - FKA
+            - DBA
+            - MAIDEN
+            - LANG_VARIATION
+            - PREVIOUS
+            - VEHICLE_ID
+            - LOW_QUALITY_AKA
+            - NATIVE_AKA
+            - DOCUMENT_ID
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - FULL_NAME
+                  - FIRST_NAME
+                  - LAST_NAME
+                  - PREFIX
+                  - ORIGINAL_NAME
+                  - SUFFIX
+              value:
+                type: string
+    RecordIdentityDocument:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        expiryDate:
+          type: string
+        issueDate:
+          type: string
+        issuer:
+          type: string
+        idCategory:
+          type: object
+          properties:
+            type:
+              type: string
+            name:
+              type: string
+        entityTypes:
+          type: array
+          items:
+            type: string
+        value:
+          type: string
+    AbstractScreeningResult:
+      type: object
+      required:
+        - referenceId
+      properties:
+        genders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordGender'
+        entityType:
+          enum:
+            - INDIVIDUAL
+            - ORGANISATION
+        recordDates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordDate'
+        recordType:
+          $ref: '#/components/schemas/RecordType'
+        dates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordEvent'
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordLocation'
+        names:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordName'
+        identifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecordIdentityDocument'
+        resultId:
+          type: string
+        referenceId:
+          type: string
+        matchStrength:
+          type: string
+          enum:
+            - WEAK
+            - MEDIUM
+            - STRONG
+            - EXACT
+        matchScore:
+          type: number
+        matchedTerms:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedTerm'
+        submittedTerm:
+          type: string
+        providerType:
+          $ref: '#/components/schemas/ProviderType'
+        sources:
+          type: array
+          items:
+            type: string
+        sourceCategories:
+          type: array
+          items:
+            type: string
+        creationDate:
+          type: string
+        modificationDate:
+          type: string
+        lastAlertDate:
+          type: string
+    AbstractCase:
+      type: object
+      properties:
+        caseId:
+          type: string
+        name:
+          type: string
+        providerTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderType'
+        caseScreeningState:
+          type: object
+          properties:
+            WATCHLIST:
+              type: string
+              enum:
+                - ANONYMOUS
+                - ONGOING
+                - INITIAL
+            MEDIA_CHECK:
+              type: string
+              enum:
+                - ANONYMOUS
+                - ONGOING
+                - INITIAL
+        nameTransposition:
+          type: boolean
+    NewCase:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AbstractCase'
+        - type: object
+          required:
+            - name
+            - groupId
+            - entityType
+            - providerTypes
+          properties:
+            parentCaseSystemId:
+              type: string
+            groupId:
+              type: string
+            entityType:
+              $ref: '#/components/schemas/CaseEntityType'
+    LSEGCaseCreationRequest:
+      title: LSEGMediaCheckSearchRequest
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/NewCase'
+        - type: object
+          properties:
+            startScreeningDate:
+              type: string
+            endScreeningDate:
+              type: string
+    MediaCheckSortCriterion:
+      type: object
+      properties:
+        columnName:
+          type: string
+          enum:
+            - publicationDate
+        order:
+          type: string
+          enum:
+            - ASCENDING
+            - DESCENDING
+    MediaCheckResultsPagination:
+      properties:
+        itemsPerPage:
+          minimum: 1
+          maximum: 100
+          default: 100
+          type: integer
+          format: int32
+        pageReference:
+          type: string
+    LSEGMediaCheckRequest:
+      type: object
+      properties:
+        drilldownKeys:
+          type: array
+          items:
+            type: string
+        baseFilter:
+          $ref: '#/components/schemas/MediaCheckBaseFilter'
+        sort:
+          $ref: '#/components/schemas/MediaCheckSortCriterion'
+        pagination:
+          $ref: '#/components/schemas/MediaCheckResultsPagination'
+        facets:
+          $ref: '#/components/schemas/MediaCheckFacetsRequest'
+    MediaCheckFacetsRequest:
+      type: object
+      properties:
+        publicationTypes:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+        phases:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+        geographies:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+        topics:
+          $ref: '#/components/schemas/MediaCheckRegularFacetRequest'
+    MediaCheckRegularFacetRequest:
+      type: object
+      properties:
+        limit:
+          minimum: 1
+          maximum: 100
+          type: integer
+          format: int32
+    MediaCheckPublicationDateRange:
+      type: object
+      properties:
+        min:
+          type: string
+        max:
+          type: string
+    MediaCheckBaseFilter:
+      type: object
+      properties:
+        publicationDate:
+          $ref: '#/components/schemas/MediaCheckPublicationDateRange'
+        query:
+          type: string
+        reviewRequiredArticles:
+          type: boolean
+          default: true
+        smartFilter:
+          type: boolean
+        deduplicatedArticles:
+          type: string
+          enum:
+            - STRICT
+            - COMPOSITE
+            - DISABLED
+    MediaCheckResultsPaginationReference:
+      type: object
+      properties:
+        current:
+          type: string
+        first:
+          type: string
+        last:
+          type: string
+        next:
+          type: string
+        previous:
+          type: string
+    MediaCheckResultsPaginationResponse:
+      type: object
+      properties:
+        itemsPerPage:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        pageReferences:
+          $ref: '#/components/schemas/MediaCheckResultsPaginationReference'
+    MediaCheckPublicationDetails:
+      type: object
+      properties:
+        code:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        publicationTypes:
+          type: array
+          items:
+            type: string
+        regions:
+          type: array
+          items:
+            type: string
+        sectors:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+    MediaCheckArticleSummary:
+      type: object
+      properties:
+        articleId:
+          type: string
+        articleFound:
+          type: boolean
+        contentType:
+          type: string
+        language:
+          type: string
+        publicationDate:
+          type: string
+        publication:
+          $ref: '#/components/schemas/MediaCheckPublicationDetails'
+        author:
+          type: string
+        topics:
+          type: array
+          items:
+            type: string
+        phases:
+          type: array
+          items:
+            type: string
+        duplicatesKey:
+          type: string
+        title:
+          type: string
+        snippet:
+          type: string
+        geographies:
+          type: array
+          items:
+            type: string
+        wordCount:
+          type: integer
+          format: int32
+    MediaCheckArticleContent:
+      type: object
+      properties:
+        content:
+          type: string
+        copyrightHolder:
+          type: string
+        copyrightNotice:
+          type: string
+    MediaCheckResult:
+      type: object
+      properties:
+        articleContent:
+          $ref: '#/components/schemas/MediaCheckArticleContent'
+        articleSummary:
+          $ref: '#/components/schemas/MediaCheckArticleSummary'
+    MediaCheckResultsResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/MediaCheckResultsPaginationResponse'
+        totalResultCount:
+          type: integer
+          format: int64
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckResult'
+        facets:
+          $ref: '#/components/schemas/MediaCheckFacetsResponse'
+    MediaCheckFacetsResponse:
+      type: object
+      properties:
+        publicationTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        geographies:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckRegularFacetResponse'
+        matchingEntities:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaCheckMatchingEntitiesFacetResponse'
+    MediaCheckRegularFacetResponse:
+      type: object
+      properties:
+        drilldownKey:
+          type: string
+        facetLabel:
+          type: string
+        articleCount:
+          type: integer
+          format: int64
+    MediaCheckMatchingEntitiesFacetResponse:
+      type: object
+      properties:
+        drilldownKey:
+          type: string
+        facetLabel:
+          type: string
+        articleCount:
+          type: integer
+          format: int64
+        matchStrength:
+          type: number
+          format: double
     Auth0WebhookEvent:
       title: Auth0WebhookEvent
       type: object
@@ -16282,6 +17507,12 @@ components:
         - 314A_INDIVIDUAL
         - 314A_BUSINESS
         - TRANSACTION_TYPES
+    CasesUniquesField:
+      title: CasesUniquesField
+      type: string
+      enum:
+        - TAGS_KEY
+        - TAGS_VALUE
     ProductType:
       title: ProductType
       type: string
@@ -16447,6 +17678,8 @@ components:
         - CALCULATE
         - UPDATE
         - ESCALATE
+        - ROTATE
+        - APPROACHING_DEACTIVATION
     Page:
       title: Page
       type: number
@@ -16521,6 +17754,7 @@ components:
             - USER_VIEW
             - RULE_INSTANCES
             - RULE_LIBRARY
+            - API_KEY_ROTATE
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
@@ -18458,6 +19692,7 @@ components:
         - RISK_CLASSIFICATION_APPROVAL
         - RISK_FACTORS_APPROVAL
         - USER_CHANGES_APPROVAL
+        - API_KEY_EXPIRING
     NotificationChannels:
       title: NotificationChannels
       type: string
@@ -18597,6 +19832,7 @@ components:
             - USER
             - RISK_LEVELS
             - RISK_FACTORS
+            - API_KEY
         notificationData:
           type: object
         consoleNotificationStatuses:

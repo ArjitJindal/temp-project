@@ -11,7 +11,7 @@ export const PRODUCTION_REGIONS: FlagrightRegion[] = Object.keys(
 ) as FlagrightRegion[]
 
 export const DEPLOY_STAGES: DeployStage[] = ['dev', 'sandbox', 'prod']
-
+export type ExtendedFlagrightRegion = FlagrightRegion | 'asia-2'
 export type Env = Stage | `${Stage}:${FlagrightRegion}`
 
 /**
@@ -19,7 +19,7 @@ export type Env = Stage | `${Stage}:${FlagrightRegion}`
  */
 export const FLAGRIGHT_TO_AWS_REGION: Record<FlagrightRegion, string> = {
   'asia-1': 'ap-southeast-1',
-  'asia-2': 'ap-south-1',
+  // 'asia-2': 'ap-south-1', // Commented out as we don't support it anymore
   'asia-3': 'ap-east-1',
   'au-1': 'ap-southeast-2',
   'eu-1': 'eu-central-1',

@@ -33,6 +33,8 @@ import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
 import SimulationHistoryPage from '@/pages/rules/simulation-history';
 import SimulationHistoryItemPage from '@/pages/rules/simulation-history-item';
 import SanctionsPage from '@/pages/sanctions';
+import ImportHistoryPage from '@/pages/sanctions/import-history';
+import BulkScreeningItemPage from '@/pages/sanctions/bulk-screening/item';
 import SettingsPage from '@/pages/settings';
 import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
@@ -619,6 +621,22 @@ export function useRoutes(): RouteItem[] {
                 path: '/screening/manual-screening/:searchId',
                 component: SanctionsPage,
                 name: 'search-history-item',
+              },
+              {
+                path: '/screening/import-history',
+                component: ImportHistoryPage,
+                name: 'import-history',
+              },
+              {
+                path: '/screening/imports',
+                component: ImportHistoryPage,
+                name: 'import-history-alias',
+                hideInMenu: true,
+              },
+              {
+                path: '/screening/bulk-search/:searchTermId',
+                component: BulkScreeningItemPage,
+                name: 'bulk-search-item',
               },
             ]
           : [],

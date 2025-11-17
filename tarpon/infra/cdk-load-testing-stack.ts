@@ -20,7 +20,7 @@ import {
 
 export type StackProps = {
   stage: Stage
-  region?: FlagrightRegion
+  region?: Omit<FlagrightRegion, 'asia-2'>
   env: Environment
 }
 export class CdkLoadTestingStack extends Stack {

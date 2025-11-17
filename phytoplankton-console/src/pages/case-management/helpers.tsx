@@ -10,16 +10,17 @@ import { PAYMENT_APPROVAL_START_TIMESTAMP } from '@flagright/lib/utils';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
 import { getPolicyTime } from './components/SlaStatus/SlaPolicyDetails';
+import CaseTagSearchButton from './components/CaseTagSearchButton';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
-import { isRuleAction, isTransactionState, useRuleOptions } from '@/utils/rules';
+import { isRuleAction, isTransactionState } from '@/utils/rules';
+import { useRuleOptions, useRuleQueues } from '@/utils/api/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import TransactionTagSearchButton from '@/pages/transactions/components/TransactionTagSearchButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
@@ -36,7 +37,6 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useRuleQueues } from '@/components/rules/util';
 import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { useDerivedStatusesFromPermissions } from '@/utils/permissions/case-permission-filter';
 import { useDerivedAlertStatusesFromPermissions } from '@/utils/permissions/alert-permission-filter';
@@ -259,6 +259,7 @@ export const paymentApprovalQueryAdapter: Adapter<TransactionsTableParams> = {
 
 export const useCaseAlertFilters = (
   filterIds?: string[],
+  type: 'CASE' | 'ALERT' = 'CASE',
 ): ExtraFilterProps<TableSearchParams>[] => {
   const settings = useSettings();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
@@ -366,7 +367,8 @@ export const useCaseAlertFilters = (
       key: 'tagKey',
       title: 'Tags',
       renderer: ({ params, setParams }) => (
-        <TransactionTagSearchButton
+        <CaseTagSearchButton
+          type={type}
           initialState={{
             key: params.tagKey ?? null,
             value: params.tagValue ?? null,

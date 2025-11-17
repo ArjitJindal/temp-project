@@ -181,7 +181,11 @@ export class RuleInstanceRepository {
     const migratedData = getMigratedV8Config(
       ruleId,
       ruleInstance.parameters,
-      ruleInstance.filters
+      ruleInstance.filters,
+      {
+        tenantId: this.tenantId,
+        dynamoDb: this.dynamoDb,
+      }
     )
     if (!migratedData) {
       return
@@ -200,7 +204,11 @@ export class RuleInstanceRepository {
           const migratedDataByRiskLevel = getMigratedV8Config(
             ruleId,
             params,
-            ruleInstance.filters
+            ruleInstance.filters,
+            {
+              tenantId: this.tenantId,
+              dynamoDb: this.dynamoDb,
+            }
           )
           if (!migratedDataByRiskLevel) {
             v2RiskLevelLogic = {

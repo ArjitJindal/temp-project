@@ -22,3 +22,5 @@ export function getFiscalYearStart(
 
   return fiscalYearStart
 }
+
+export const INTERCOMM_TOKEN_EXPIRY_TIME = 1 * 60 * 60 * 1000 // 1h

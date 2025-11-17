@@ -172,7 +172,6 @@ function useProgressResource(
         }
         return 60000;
       },
-      backgroundFetch: true,
     },
   );
   return ongoingImportsProgressQueryResult.data;

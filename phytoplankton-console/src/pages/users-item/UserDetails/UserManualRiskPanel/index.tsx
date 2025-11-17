@@ -44,6 +44,12 @@ interface Props {
   userId: string;
 }
 
+interface CraProposalValue {
+  riskLevel?: RiskLevel;
+  isUpdatable?: boolean;
+  releaseAt?: number;
+}
+
 export default function UserManualRiskPanel(props: Props) {
   const { userId } = props;
   const api = useApi();
@@ -107,9 +113,12 @@ export default function UserManualRiskPanel(props: Props) {
     ) ?? undefined;
 
   const craChangesStrategyRes = useUserFieldChangesStrategy('Cra');
-  const craLockChangesStrategyRes = useUserFieldChangesStrategy('CraLock');
 
-  const { data: pendingProposals } = useUserChangesPendingApprovals(userId, ['CraLock', 'Cra']);
+  const { data: pendingProposals } = useUserChangesPendingApprovals(userId, ['Cra']);
+
+  // Check if approval workflow is enabled for Cra (which includes CRA Lock)
+  const isApprovalWorkflowEnabled =
+    isSuccess(craChangesStrategyRes) && craChangesStrategyRes.value === 'APPROVE';
 
   const lockingAndUnlockingMutation = useMutation<
     unknown,
@@ -134,20 +143,18 @@ export default function UserManualRiskPanel(props: Props) {
         throw new Error(`Comment is required`);
       }
 
+      // Bundle only the fields that are changing (lock status and optional timer)
+      const craValue: CraProposalValue = {
+        isUpdatable: vars.isUpdatable,
+        releaseAt: vars.releaseAt,
+      };
+
       const proposedChanges = [
         {
-          field: 'CraLock',
-          value: vars.isUpdatable,
+          field: 'Cra',
+          value: craValue,
         },
       ];
-
-      // Add releaseAt field if provided (for timer feature support)
-      if (vars.releaseAt) {
-        proposedChanges.push({
-          field: 'CraLockReleaseAt',
-          value: vars.releaseAt as any,
-        });
-      }
 
       const approvalResponse = await api.postUserApprovalProposal({
         userId: userId,
@@ -178,6 +185,7 @@ export default function UserManualRiskPanel(props: Props) {
             ),
             isUpdatable: vars.isUpdatable,
             releaseAt: vars.releaseAt,
+            comment: vars.comment,
           },
         });
         setSyncState(success(response));
@@ -228,29 +236,19 @@ export default function UserManualRiskPanel(props: Props) {
           throw new Error('Comment is required');
         }
 
-        // Create proposals with both CRA risk level and lock changes
+        // Bundle all CRA fields into a single object (like PEP status)
+        const craValue: CraProposalValue = {
+          riskLevel: newRiskLevel,
+          isUpdatable: hasTimerFeature || hasApprovalFeature ? false : true, // Lock when timer/approval enabled
+          releaseAt: releaseAt,
+        };
+
         const proposedChanges = [
           {
             field: 'Cra',
-            value: newRiskLevel,
+            value: craValue,
           },
         ];
-
-        // Add CRA lock change for unified behavior (Scenarios 2 & 4)
-        if (hasTimerFeature || hasApprovalFeature) {
-          proposedChanges.push({
-            field: 'CraLock',
-            value: false as any, // Lock the CRA (isUpdatable: false)
-          });
-
-          // Add release time if provided (timer feature)
-          if (releaseAt) {
-            proposedChanges.push({
-              field: 'CraLockReleaseAt',
-              value: releaseAt as any,
-            });
-          }
-        }
 
         const approvalResponse = await api.postUserApprovalProposal({
           userId: userId,
@@ -273,6 +271,7 @@ export default function UserManualRiskPanel(props: Props) {
             riskLevel: newRiskLevel,
             isUpdatable: false, // Always lock when setting CRA level
             releaseAt: releaseAt, // Include timer if provided
+            comment: comment,
           },
         });
         setSyncState(success(response));
@@ -296,7 +295,8 @@ export default function UserManualRiskPanel(props: Props) {
   });
 
   const lockedByPendingProposals =
-    !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+    isApprovalWorkflowEnabled &&
+    (!isSuccess(pendingProposals) || pendingProposals.value.length > 0);
 
   // Extract lock data for the modal
   const lockData: CraLockModalData | undefined = useMemo(() => {
@@ -334,7 +334,7 @@ export default function UserManualRiskPanel(props: Props) {
       });
     } else {
       // Lock-only mode
-      const craLockStrategy = getOr(craLockChangesStrategyRes, 'DIRECT');
+      const craLockStrategy = getOr(craChangesStrategyRes, 'DIRECT');
       lockingAndUnlockingMutation.mutate({
         changesStrategy: craLockStrategy,
         isUpdatable: data.isUpdatable,
@@ -383,12 +383,10 @@ export default function UserManualRiskPanel(props: Props) {
         {({ onClick }) => (
           <RiskLevelSwitch
             isDisabled={
-              isLocked ||
               isLoading(syncState) ||
               isLoading(craChangesStrategyRes) ||
               isFailed(syncState) ||
-              !canUpdateManualRiskLevel ||
-              lockedByPendingProposals
+              !canUpdateManualRiskLevel
             }
             value={
               !isSuccess(queryResult.data)
@@ -402,12 +400,12 @@ export default function UserManualRiskPanel(props: Props) {
                     defaultRiskLevel,
                   )
             }
-            onChange={onClick}
+            onChange={isLocked ? undefined : onClick}
           />
         )}
       </Confirm>
 
-      {isSuccess(queryResult.data) && isSuccess(craLockChangesStrategyRes) && (
+      {isSuccess(queryResult.data) && (
         <Tooltip
           title={
             lockedByPendingProposals
@@ -424,11 +422,11 @@ export default function UserManualRiskPanel(props: Props) {
               'These changes should be approved before they are applied. Please, add a comment with the reason for the change.'
             }
             res={lockingAndUnlockingMutation.dataResource}
-            skipConfirm={craLockChangesStrategyRes.value !== 'APPROVE'}
+            skipConfirm={getOr(craChangesStrategyRes, 'DIRECT') !== 'APPROVE'}
             commentRequired={true}
             onConfirm={({ args: isUpdatable, comment }) => {
               lockingAndUnlockingMutation.mutate({
-                changesStrategy: craLockChangesStrategyRes.value,
+                changesStrategy: getOr(craChangesStrategyRes, 'DIRECT'),
                 isUpdatable,
                 comment,
               });
@@ -442,7 +440,7 @@ export default function UserManualRiskPanel(props: Props) {
               const isLockBuzy =
                 isLoading(syncState) ||
                 isLoading(lockingAndUnlockingMutation.dataResource) ||
-                isLoading(craLockChangesStrategyRes);
+                isLoading(craChangesStrategyRes);
               const classNames = cn(s.lockIcon, {
                 [s.isLoading]: isLockBuzy,
                 [s.isDisabled]: lockedByPendingProposals,

@@ -23,6 +23,18 @@ export type Tenant = {
   auth0Domain: string
 }
 
+export type IntercommUser = {
+  user_id: string
+  name?: string
+  email?: string
+  company: {
+    id: string
+    name?: string
+    created_at?: string
+  }
+  Role?: string
+}
+
 export const isWhitelabeledTenantFromSettings = (
   settings: Pick<TenantSettings, 'auth0Domain'>
 ): boolean => {

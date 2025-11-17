@@ -1,7 +1,7 @@
 import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useAccountRawRole, useCurrentUserId } from '@/utils/user-utils';
+import { useCurrentUserId } from '@/utils/user-utils';
 import { useWorkflow } from '@/utils/api/workflows';
 import { RiskFactorApproval, RiskFactorsApprovalRequestActionEnum } from '@/apis';
 import Alert from '@/components/library/Alert';
@@ -14,6 +14,7 @@ import { StatePair } from '@/utils/state';
 import Label from '@/components/library/Label';
 import Toggle from '@/components/library/Toggle';
 import { neverReturn } from '@/utils/lang';
+import { useRoleNameFromId, useIsCurrentUserRole } from '@/utils/role-utils';
 
 type Props = {
   riskFactorId: string;
@@ -27,102 +28,135 @@ const requiredResources: Resource[] = ['write:::risk-scoring/risk-factors/*'];
 export default function ApprovalHeader(props: Props) {
   const { riskFactorId, pendingProposal, showProposalState, onProposalActionSuccess } = props;
   const currentUserId = useCurrentUserId();
-  const currentRole = useAccountRawRole();
 
   const [showProposal, setShowProposal] = showProposalState;
 
-  const workflowsQueryResult = useWorkflow('risk-factors-approval', pendingProposal.workflowRef);
+  const workflowsQueryResult = useWorkflow('change-approval', pendingProposal.workflowRef);
   const sendProposalActionMutation = useSendProposalActionMutation(onProposalActionSuccess);
 
   return (
     <AsyncResourceRenderer resource={workflowsQueryResult.data}>
       {(workflow) => {
-        const currentStepRole = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
-        const isRoleMatching = currentRole === currentStepRole;
+        const currentStepRoleId = workflow.approvalChain[pendingProposal.approvalStep ?? 0];
         const isCurrentUserAuthor = currentUserId === pendingProposal.createdBy;
 
         return (
-          <div className={s.root}>
-            <div className={s.top}>
-              <InformationAlert
-                currentStepRole={currentStepRole}
-                isRoleMatching={isRoleMatching}
-                isCurrentUserAuthor={isCurrentUserAuthor}
-                pendingProposal={pendingProposal}
-              />
-
-              <div className={s.buttons}>
-                {isCurrentUserAuthor && (
-                  <Confirm
-                    text={'Are you sure you want to cancel this proposal?'}
-                    onConfirm={() => {
-                      sendProposalActionMutation.mutate({ riskFactorId, action: 'cancel' });
-                    }}
-                  >
-                    {({ onClick }) => {
-                      const isRejectUnavailable =
-                        pendingProposal.approvalStep != null && pendingProposal.approvalStep > 0;
-                      let tooltipMessage: string | null = null;
-                      if (isRejectUnavailable) {
-                        tooltipMessage =
-                          'This proposal has already passed first approval step, it is not possible to discard it now';
-                      }
-                      return (
-                        <Tooltip trigger={'hover'} title={tooltipMessage}>
-                          <Button
-                            type="DANGER"
-                            onClick={onClick}
-                            isDisabled={isRejectUnavailable}
-                            isLoading={isLoading(sendProposalActionMutation.dataResource)}
-                          >
-                            Discard proposal
-                          </Button>
-                        </Tooltip>
-                      );
-                    }}
-                  </Confirm>
-                )}
-                {isRoleMatching && (
-                  <>
-                    <Button
-                      type="PRIMARY"
-                      onClick={() => {
-                        sendProposalActionMutation.mutate({ riskFactorId, action: 'accept' });
-                      }}
-                      requiredResources={requiredResources}
-                      isLoading={isLoading(sendProposalActionMutation.dataResource)}
-                    >
-                      Accept
-                    </Button>
-                    <Button
-                      type="DANGER"
-                      onClick={() => {
-                        sendProposalActionMutation.mutate({ riskFactorId, action: 'reject' });
-                      }}
-                      requiredResources={requiredResources}
-                      isLoading={isLoading(sendProposalActionMutation.dataResource)}
-                    >
-                      Reject
-                    </Button>
-                  </>
-                )}
-                {pendingProposal.action === 'update' && (
-                  <Label label={'Show proposed changes'} position={'RIGHT'}>
-                    <Toggle
-                      value={showProposal}
-                      onChange={() => {
-                        setShowProposal((x) => !x);
-                      }}
-                    />
-                  </Label>
-                )}
-              </div>
-            </div>
-            <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
-          </div>
+          <ApprovalHeaderInner
+            riskFactorId={riskFactorId}
+            pendingProposal={pendingProposal}
+            showProposal={showProposal}
+            setShowProposal={setShowProposal}
+            currentStepRoleId={currentStepRoleId}
+            isCurrentUserAuthor={isCurrentUserAuthor}
+            sendProposalActionMutation={sendProposalActionMutation}
+          />
         );
       }}
     </AsyncResourceRenderer>
+  );
+}
+
+function ApprovalHeaderInner(props: {
+  riskFactorId: string;
+  pendingProposal: RiskFactorApproval;
+  showProposal: boolean;
+  setShowProposal: (value: boolean) => void;
+  currentStepRoleId: string;
+  isCurrentUserAuthor: boolean;
+  sendProposalActionMutation: any;
+}) {
+  const {
+    riskFactorId,
+    pendingProposal,
+    showProposal,
+    setShowProposal,
+    currentStepRoleId,
+    isCurrentUserAuthor,
+    sendProposalActionMutation,
+  } = props;
+
+  const currentStepRoleName = useRoleNameFromId(currentStepRoleId);
+  const isRoleMatching = useIsCurrentUserRole(currentStepRoleId);
+
+  return (
+    <div className={s.root}>
+      <div className={s.top}>
+        <InformationAlert
+          currentStepRole={currentStepRoleName}
+          isRoleMatching={isRoleMatching}
+          isCurrentUserAuthor={isCurrentUserAuthor}
+          pendingProposal={pendingProposal}
+        />
+
+        <div className={s.buttons}>
+          {isCurrentUserAuthor && (
+            <Confirm
+              text={'Are you sure you want to cancel this proposal?'}
+              onConfirm={() => {
+                sendProposalActionMutation.mutate({ riskFactorId, action: 'cancel' });
+              }}
+            >
+              {({ onClick }) => {
+                const isRejectUnavailable =
+                  pendingProposal.approvalStep != null && pendingProposal.approvalStep > 0;
+                let tooltipMessage: string | null = null;
+                if (isRejectUnavailable) {
+                  tooltipMessage =
+                    'This proposal has already passed first approval step, it is not possible to discard it now';
+                }
+                return (
+                  <Tooltip trigger={'hover'} title={tooltipMessage}>
+                    <Button
+                      type="DANGER"
+                      onClick={onClick}
+                      isDisabled={isRejectUnavailable}
+                      isLoading={isLoading(sendProposalActionMutation.dataResource)}
+                    >
+                      Discard proposal
+                    </Button>
+                  </Tooltip>
+                );
+              }}
+            </Confirm>
+          )}
+          {isRoleMatching && (
+            <>
+              <Button
+                type="PRIMARY"
+                onClick={() => {
+                  sendProposalActionMutation.mutate({ riskFactorId, action: 'accept' });
+                }}
+                requiredResources={requiredResources}
+                isLoading={isLoading(sendProposalActionMutation.dataResource)}
+              >
+                Accept
+              </Button>
+              <Button
+                type="DANGER"
+                onClick={() => {
+                  sendProposalActionMutation.mutate({ riskFactorId, action: 'reject' });
+                }}
+                requiredResources={requiredResources}
+                isLoading={isLoading(sendProposalActionMutation.dataResource)}
+              >
+                Reject
+              </Button>
+            </>
+          )}
+          {pendingProposal.action === 'update' && (
+            <Label label={'Show proposed changes'} position={'RIGHT'}>
+              <Toggle
+                value={showProposal}
+                onChange={() => {
+                  setShowProposal(!showProposal);
+                }}
+              />
+            </Label>
+          )}
+        </div>
+      </div>
+      <Alert type={'INFO'}>Author`s comment: {pendingProposal.comment}</Alert>
+    </div>
   );
 }
 
@@ -158,14 +192,4 @@ function InformationAlert(props: {
     message = neverReturn(pendingProposal.action, 'There are changes pending approval');
   }
   return <Alert type="WARNING">{message}</Alert>;
-  // return <Alert type="WARNING">
-  //   {isCurrentUserAuthor &&
-  //     `Your changes are pending approval. It must be approved by a user with the "${currentStepRole}" role`}
-  //   {!isCurrentUserAuthor &&
-  //     isRoleMatching &&
-  //     `There is a pending proposal for risk classification, you need to accept or reject it.`}
-  //   {!isCurrentUserAuthor &&
-  //     !isRoleMatching &&
-  //     `There is a pending proposal for risk classification. You need to have a "${currentStepRole}" role to reject or approve it.`}
-  // </Alert>
 }

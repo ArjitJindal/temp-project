@@ -54,6 +54,7 @@ export const ConsoleApiPathToLambda: any = {
   '/tenants/secondary-queue-tenants':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+  '/accounts-data': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/change_tenant':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/settings':
@@ -258,6 +259,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
   '/auditlog': StackConstants.CONSOLE_API_AUDIT_LOG_FUNCTION_NAME,
   '/cases': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/cases/uniques': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/users/{userId}/caseIds':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/transactions': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
@@ -306,9 +308,14 @@ export const ConsoleApiPathToLambda: any = {
   '/webhooks/auth0': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/webhooks/nango': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/bulk-search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/bulk-search/search-term/{searchTermId}':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/hits/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/media-check/articles':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/whitelist': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/hits/status': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/activity/stats':
@@ -370,6 +377,8 @@ export const ConsoleApiPathToLambda: any = {
   // TODO: rename CONSOLE_API_WORKFLOWS_CASE_FUNCTION_NAME to make it generic
   '/sanctions/acuris-copywrited-source/download':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/rotate-api-key': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/intercomm-token': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

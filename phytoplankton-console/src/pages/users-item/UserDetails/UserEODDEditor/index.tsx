@@ -78,7 +78,9 @@ function HeaderTools(props: {
   const changesStrategyRes = useUserFieldChangesStrategy('eoddDate');
 
   const lockedByPendingProposals =
-    !isSuccess(pendingProposals) || pendingProposals.value.length > 0;
+    isSuccess(changesStrategyRes) &&
+    changesStrategyRes.value === 'APPROVE' &&
+    (!isSuccess(pendingProposals) || pendingProposals.value.length > 0);
 
   const eoodChangeMutation = useEODDChangeMutation(user, changesStrategyRes);
   return (

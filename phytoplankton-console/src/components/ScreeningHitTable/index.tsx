@@ -49,7 +49,7 @@ export interface TableSearchParams {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirth?: number;
+  yearOfBirthRange?: [string, string];
   entityType?: SanctionsSearchRequestEntityType;
   gender?: 'MALE' | 'FEMALE' | 'UNKNOWN';
   countryOfResidence?: Array<string>;
@@ -292,13 +292,13 @@ export default function SanctionsSearchTable(props: Props) {
       ? [
           {
             title: params?.entityType === 'PERSON' ? 'Year of birth' : 'Year of incorporation',
-            key: 'yearOfBirth',
+            key: 'yearOfBirthRange',
             renderer: {
-              kind: 'year',
+              kind: 'dateRange' as const,
+              picker: 'year' as const,
             },
-            showFilterByDefault:
-              params?.entityType === 'PERSON' || params?.entityType === 'BUSINESS',
-          } as ExtraFilterProps<TableSearchParams>,
+            showFilterByDefault: ['PERSON', 'BUSINESS'].includes(params?.entityType ?? ''),
+          },
           {
             title: 'Gender',
             key: 'gender',
@@ -466,7 +466,7 @@ export default function SanctionsSearchTable(props: Props) {
 
     if (isScreeningProfileEnabled) {
       if (restrictedByPermission.has(key)) {
-        const defaults = getOr(defaultManualScreeningFilters.data, null) as any;
+        const defaults = getOr(defaultManualScreeningFilters.data, null);
         const value = defaults?.[key];
         const isSet = value != null && (!Array.isArray(value) || value.length > 0);
         if (isSet) {
@@ -475,7 +475,7 @@ export default function SanctionsSearchTable(props: Props) {
       }
       if (key === 'screeningProfileId') {
         const screeningProfiles = getOr(screeningProfilesResult.data, { items: [], total: 0 });
-        const profiles = (screeningProfiles.items ?? []) as any[];
+        const profiles = screeningProfiles.items ?? [];
         const hasDefault = Array.isArray(profiles) && profiles.some((p) => p?.isDefault);
         if (hasDefault) {
           return true;
@@ -484,7 +484,7 @@ export default function SanctionsSearchTable(props: Props) {
     } else {
       if (key === 'searchProfileId') {
         const searchProfilesRes = getOr(searchProfileResult.data, { items: [], total: 0 });
-        const profiles = (searchProfilesRes.items ?? []) as any[];
+        const profiles = searchProfilesRes.items ?? [];
         const hasDefault = Array.isArray(profiles) && profiles.some((p) => p?.isDefault);
         if (hasDefault) {
           return true;

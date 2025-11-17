@@ -184,7 +184,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
         const parsedValues = parseSearchString<Value>(
           availableOptions,
           searchString,
-          mode !== 'MULTIPLE_DYNAMIC',
+          !searchString.includes(SEPARATOR),
         );
         newValue = uniq([...((value as Value[]) ?? []), ...parsedValues] as Value[]);
       } else if (mode === 'SINGLE' || mode === 'DYNAMIC' || mode == null) {
@@ -561,6 +561,9 @@ function RenderValue<Value extends Comparable>(
     const tagsStackParams: TagsStackParams<Value> =
       typeof props.tagsStack === 'boolean' ? { enabled: props.tagsStack } : props.tagsStack;
     if (tagsStackParams.enabled) {
+      if (allOptions.length === 0) {
+        return <></>;
+      }
       return (
         <TagsStack
           params={tagsStackParams}

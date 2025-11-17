@@ -88,11 +88,13 @@ export default class SubjectIdentificationBusinessUserRule extends UserRule<Subj
                 entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
               ),
             },
-            hitContext,
             {
-              providerName: 'list',
-              listId,
-              stage: this.stage,
+              context: hitContext,
+              providerOverrides: {
+                providerName: 'list',
+                listId,
+                stage: this.stage,
+              },
             }
           )
           if (result.hitsCount > 0) {

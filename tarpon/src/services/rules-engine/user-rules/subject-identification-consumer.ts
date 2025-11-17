@@ -78,8 +78,10 @@ export default class SubjectIdentificationConsumerUser extends UserRule<SubjectI
         monitoring: { enabled: false },
         listVersion,
       },
-      hitContext,
-      { providerName: 'list', listId, stage: this.stage }
+      {
+        context: hitContext,
+        providerOverrides: { providerName: 'list', listId, stage: this.stage },
+      }
     )
     if (result.hitsCount > 0) {
       hitResult.push({

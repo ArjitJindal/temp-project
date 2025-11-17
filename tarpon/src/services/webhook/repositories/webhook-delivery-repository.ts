@@ -88,47 +88,12 @@ export class WebhookDeliveryRepository {
     webhookId: string,
     params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
   ): Promise<any[]> {
-    const matchStage: any = {
-      $match: { webhookId },
-    }
-
-    if (params.filterStatus != null) {
-      matchStage.$match.success = params.filterStatus === 'true'
-    }
-
-    if (
-      params.filterEventCreatedAtAfterTimestamp != null ||
-      params.filterEventCreatedAtBeforeTimestamp != null
-    ) {
-      matchStage.$match.eventCreatedAt = {}
-      if (params.filterEventCreatedAtAfterTimestamp != null) {
-        matchStage.$match.eventCreatedAt.$gte =
-          params.filterEventCreatedAtAfterTimestamp
-      }
-      if (params.filterEventCreatedAtBeforeTimestamp != null) {
-        matchStage.$match.eventCreatedAt.$lte =
-          params.filterEventCreatedAtBeforeTimestamp
-      }
-    }
-
-    if (
-      params.filterEventDeliveredAtAfterTimestamp != null ||
-      params.filterEventDeliveredAtBeforeTimestamp != null
-    ) {
-      matchStage.$match.deliveredAt = {}
-      if (params.filterEventDeliveredAtAfterTimestamp != null) {
-        matchStage.$match.deliveredAt.$gte =
-          params.filterEventDeliveredAtAfterTimestamp
-      }
-      if (params.filterEventDeliveredAtBeforeTimestamp != null) {
-        matchStage.$match.deliveredAt.$lte =
-          params.filterEventDeliveredAtBeforeTimestamp
-      }
-    }
-
-    if (params.filterEventType != null) {
-      matchStage.$match.event = params.filterEventType as WebhookEventType
-    }
+    // Use the same filter logic as getWebhookDeliveryAttemptsFilter
+    const filter = await this.getWebhookDeliveryAttemptsFilter(
+      webhookId,
+      params
+    )
+    const matchStage = { $match: filter }
 
     return [
       matchStage,
@@ -152,6 +117,7 @@ export class WebhookDeliveryRepository {
           eventCreatedAt: '$parent.eventCreatedAt',
           request: '$parent.request',
           response: '$parent.response',
+          entityId: '$parent.entityId',
           overallSuccess: { $gt: ['$hasSuccess', 0] },
           attempts: {
             $sortArray: {

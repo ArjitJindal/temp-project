@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import createHttpError from 'http-errors'
 import jwt from 'jsonwebtoken'
+import { INTERCOMM_TOKEN_EXPIRY_TIME } from '@flagright/lib/utils/time'
 import { AccountsService } from '@/services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -12,9 +13,14 @@ import {
   JWTAuthorizerResult,
 } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { getSecretByName } from '@/utils/secrets-manager'
+import { getSecret, getSecretByName } from '@/utils/secrets-manager'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { SessionsService } from '@/services/sessions'
+import { IntercommUser } from '@/utils/tenant'
+import { Context } from '@/console-api/context'
+import { pickKnownEntityFields } from '@/utils/object'
+import { AccountMinimum } from '@/@types/openapi-internal/AccountMinimum'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -40,7 +46,7 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerMe(async () => await accountsService.getAccount(userId))
 
-    handlers.registerGetAccounts(async (ctx) => {
+    const getAccountsData = async (ctx: Context): Promise<Account[]> => {
       const { tenantId } = ctx
       const accountsService = new AccountsService(
         { auth0Domain, useCache: true },
@@ -55,6 +61,15 @@ export const accountsHandler = lambdaApi()(
       }
 
       return await accountsService.getTenantAccounts(organization)
+    }
+
+    handlers.registerGetAccounts(async (ctx) => {
+      return await getAccountsData(ctx)
+    })
+
+    handlers.registerGetAccountsData(async (ctx) => {
+      const accounts = await getAccountsData(ctx)
+      return pickKnownEntityFields(accounts, AccountMinimum)
     })
 
     handlers.registerAccountsInvite(async (ctx, request) => {
@@ -149,6 +164,39 @@ export const accountsHandler = lambdaApi()(
     handlers.registerResetAccountMfa(async (ctx, request) => {
       return await accountsService.resetMfa(ctx.tenantId, request.accountId)
     })
+
+    handlers.registerGetIntercommToken(async (ctx, _) => {
+      const { userId, tenantId } = ctx
+      const intercommSecret = await getSecret<{
+        key: string
+      }>('intercomm')
+
+      const accountsService = new AccountsService(
+        { auth0Domain, useCache: true },
+        { dynamoDb }
+      )
+
+      const user = await accountsService.getAccount(userId)
+      const organization = await accountsService.getTenantById(tenantId)
+      const userData: IntercommUser = {
+        user_id: userId,
+        name: user?.name,
+        email: user?.email,
+        company: {
+          id: tenantId,
+          name: organization?.orgName,
+          created_at: organization?.tenantCreatedAt,
+        },
+        Role: user?.role,
+      }
+
+      const intercommToken = jwt.sign(userData, intercommSecret.key, {
+        expiresIn: INTERCOMM_TOKEN_EXPIRY_TIME,
+      })
+
+      return { token: intercommToken }
+    })
+
     return await handlers.handle(event)
   }
 )

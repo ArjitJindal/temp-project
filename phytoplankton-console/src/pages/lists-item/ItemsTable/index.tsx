@@ -181,7 +181,7 @@ function isEditSaveDisabled(
   return !(fieldsValid && (didMetaChange || didReasonChange || didKeyChange));
 }
 
-const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
+export const DEFAULT_LIST_DATA: CursorPaginatedData<TableItem> = {
   items: [],
   count: 0,
   limit: 0,
