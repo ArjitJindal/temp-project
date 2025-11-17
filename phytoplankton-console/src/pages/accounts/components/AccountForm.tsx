@@ -92,7 +92,12 @@ export default function AccountForm(props: Props) {
         ...defaultState,
         role: editAccount?.role || 'admin',
         email: editAccount?.email || '',
-        name: editAccount?.name && editAccount.name !== editAccount.email ? editAccount.name : '',
+        name:
+          editAccount?.name &&
+          editAccount.name.trim() !== '' &&
+          editAccount.name !== editAccount.email
+            ? editAccount.name.trim()
+            : undefined,
         staffId: editAccount?.staffId || '',
         department: editAccount?.department || '',
       };

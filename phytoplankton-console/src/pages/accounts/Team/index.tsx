@@ -148,16 +148,19 @@ export default function Team() {
                   defaultWidth: 220,
                   type: {
                     render(name, _context) {
+                      const account = _context.item;
+                      const displayName = name && name !== account.email ? name : null;
                       return (
                         <div className={s.name}>
                           <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                            {!name ? '-' : name}
+                            {!displayName ? '-' : displayName}
                           </P>
                         </div>
                       );
                     },
-                    stringify(value, _item) {
-                      return !value ? '-' : value;
+                    stringify(value, item) {
+                      const displayName = value && value !== item.email ? value : null;
+                      return !displayName ? '-' : displayName;
                     },
                   },
                 }),
