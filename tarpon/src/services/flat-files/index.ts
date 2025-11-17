@@ -20,6 +20,7 @@ import { FlatFileBaseRunner } from './baseRunner'
 import { TransactionUploadRunner } from './batchRunner/transaction-upload'
 import { BulkAlertClosureRunner } from './runner/bulk-alert-closure'
 import { BulkSanctionsHitsUpdateRunner } from './runner/bulk-sanctions-hits-update'
+import { BulkSanctionsSearchRunner } from './batchRunner/bulk-sanctions-search'
 import { ErrorRecord } from './utils'
 import { FlatFileSchema } from '@/@types/openapi-internal/FlatFileSchema'
 import { traceable } from '@/core/xray'
@@ -72,6 +73,7 @@ const ModelCompoundPrimaryKey: Record<
   TRANSACTIONS_UPLOAD: ['transactionId'],
   BULK_ALERT_CLOSURE: ['alertId'],
   BULK_SANCTIONS_HITS_UPDATE: ['sanctionsHitId'],
+  BULK_MANUAL_SCREENING: [],
 }
 
 const FlatFileSchemaToModel: Record<
@@ -96,6 +98,8 @@ const FlatFileSchemaToModel: Record<
     new BulkAlertClosureRunner(tenantId, connections),
   BULK_SANCTIONS_HITS_UPDATE: (tenantId, connections) =>
     new BulkSanctionsHitsUpdateRunner(tenantId, connections),
+  BULK_MANUAL_SCREENING: (tenantId, connections) =>
+    new BulkSanctionsSearchRunner(tenantId, connections),
 }
 
 const FlatFileFormatToModel: Record<
@@ -227,10 +231,11 @@ export class FlatFilesService {
     schema: FlatFileSchema,
     format: FlatFileTemplateFormat,
     s3Key: string,
-    metadata: object
+    metadata: object,
+    entityId?: string
   ) {
     const runnerInstance = await this.getRunnerInstance(schema)
-    await runnerInstance.run(s3Key, metadata)
+    await runnerInstance.run(s3Key, metadata, entityId)
     const model = await this.getModel(schema, metadata)
     await this.getErroredRows(s3Key, schema, format, model, metadata)
   }

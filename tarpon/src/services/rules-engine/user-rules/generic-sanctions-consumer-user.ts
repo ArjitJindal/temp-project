@@ -208,8 +208,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
         ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
         ...getLSEGMediaCheckParameters(lsegMediaCheck),
       },
-      hitContext,
-      undefined
+      { context: hitContext }
     )
     const sanctionsDetails: SanctionsDetails = {
       name,

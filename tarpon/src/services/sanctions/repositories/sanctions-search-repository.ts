@@ -1,4 +1,4 @@
-import { MongoClient, Filter, UpdateFilter } from 'mongodb'
+import { MongoClient, Filter, UpdateFilter, Document } from 'mongodb'
 import isNil from 'lodash/isNil'
 import omitBy from 'lodash/omitBy'
 import { Search_Response } from '@opensearch-project/opensearch/api'
@@ -8,6 +8,7 @@ import {
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import padStart from 'lodash/padStart'
 import { getDefaultProviders } from '../utils'
 import {
   deriveMatchingDetails,
@@ -29,13 +30,23 @@ import {
   sendMessageToMongoUpdateConsumer,
 } from '@/utils/mongodb-utils'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongo-table-names'
+import {
+  SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION,
+  SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION,
+  SANCTIONS_SEARCHES_COLLECTION,
+} from '@/utils/mongo-table-names'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
-import { cursorPaginate } from '@/utils/pagination'
+import {
+  cursorPaginate,
+  cursorPaginateAggregate,
+  AggregateSortField,
+} from '@/utils/pagination'
+import { MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { CursorPaginationResponse } from '@/@types/pagination'
 import { traceable } from '@/core/xray'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { generateChecksum } from '@/utils/object'
@@ -47,6 +58,12 @@ import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { CounterRepository } from '@/services/counter/repository'
+import { SanctionsBulkSearchHistory } from '@/@types/openapi-internal/SanctionsBulkSearchHistory'
+import { SanctionsBulkSearchResultMap } from '@/@types/openapi-internal/SanctionsBulkSearchResultMap'
+import { getContext } from '@/core/utils/context-storage'
+import { SanctionsBulkSearchResponse } from '@/@types/openapi-internal/SanctionsBulkSearchResponse'
+import { SearchTypeHistory } from '@/@types/openapi-internal/SearchTypeHistory'
 
 @traceable
 export class SanctionsSearchRepository {
@@ -80,8 +97,20 @@ export class SanctionsSearchRepository {
     requestHash?: string
     dynamoHash?: string
     screeningEntity?: 'USER' | 'TRANSACTION'
+    batchId?: string
+    screeningType?: 'SEARCH' | 'BATCH'
+    searchTermId?: string
   }): Promise<void> {
-    const { provider, request, response, createdAt, updatedAt } = props
+    const {
+      provider,
+      request,
+      response,
+      createdAt,
+      updatedAt,
+      batchId,
+      screeningType,
+      searchTermId,
+    } = props
     const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
     const updateMessage: UpdateFilter<SanctionsSearchHistory> = {
       $set: {
@@ -101,6 +130,18 @@ export class SanctionsSearchRepository {
     if (props.screeningEntity) {
       updateMessage.$addToSet = {
         'metadata.screeningEntity': props.screeningEntity,
+      }
+    }
+    if (batchId || screeningType || searchTermId) {
+      const historyEntry: SearchTypeHistory = {
+        ...(screeningType && { screeningType }),
+        ...(batchId && { batchId }),
+        ...(searchTermId && { searchTermId }),
+        searchedAt: Date.now(),
+      }
+      updateMessage.$push = {
+        ...updateMessage.$push,
+        history: historyEntry,
       }
     }
     if (props.dynamoHash) {
@@ -179,6 +220,150 @@ export class SanctionsSearchRepository {
     }
   }
 
+  public async saveBulkSearchRequest(
+    request: SanctionsSearchRequest,
+    reason: string
+  ): Promise<string> {
+    const db = (await this.getMongoDbClient()).db()
+    // Generate a new sequential counter specific to sanctions bulk searches
+    const counterRepository = new CounterRepository(this.tenantId, {
+      mongoDb: await this.getMongoDbClient(),
+      dynamoDb: this.dynamoDb,
+    })
+    const counter = await counterRepository.getNextCounterAndUpdate(
+      'SanctionsBulkSearch'
+    )
+    const batchId = `BS-${padStart(counter.toString(), 3, '0')}`
+    const now = Date.now()
+    await db
+      .collection<SanctionsBulkSearchHistory>(
+        SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION(this.tenantId)
+      )
+      .insertOne({
+        batchId: batchId,
+        request: request,
+        reason: reason,
+        createdBy: getContext()?.user?.id,
+        createdAt: now,
+        updatedAt: now,
+      })
+    return batchId
+  }
+
+  public async getBulkSearchHistory(
+    batchId: string
+  ): Promise<SanctionsBulkSearchHistory | null> {
+    const db = (await this.getMongoDbClient()).db()
+    return db
+      .collection<SanctionsBulkSearchHistory>(
+        SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION(this.tenantId)
+      )
+      .findOne({ batchId })
+  }
+
+  public async getBulkSearchHistories(
+    batchIds: string[]
+  ): Promise<SanctionsBulkSearchHistory[]> {
+    const db = (await this.getMongoDbClient()).db()
+    return db
+      .collection<SanctionsBulkSearchHistory>(
+        SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION(this.tenantId)
+      )
+      .find({ batchId: { $in: batchIds } })
+      .toArray()
+  }
+  public async saveBulkSearchResultMap(
+    batchId: string,
+    searchId: string,
+    searchTermId: string,
+    searchTerm: string
+  ): Promise<void> {
+    const db = (await this.getMongoDbClient()).db()
+    await db
+      .collection<SanctionsBulkSearchResultMap>(
+        SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION(this.tenantId)
+      )
+      .insertOne({
+        batchId,
+        searchId,
+        searchTermId,
+        searchTerm,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+  }
+  public async getBulkSearchResultMap(
+    searchTermId: string
+  ): Promise<SanctionsBulkSearchResultMap | null> {
+    const db = (await this.getMongoDbClient()).db()
+    return db
+      .collection<SanctionsBulkSearchResultMap>(
+        SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION(this.tenantId)
+      )
+      .findOne(
+        { searchTermId },
+        { projection: { searchTermId: 1, searchId: 1 } }
+      )
+  }
+
+  public async getBulkSearchesWithSearchTerms(params: {
+    pageSize?: number
+    fromCursorKey?: string
+    sortOrder?: 'ascend' | 'descend'
+    batchId?: string
+  }): Promise<CursorPaginationResponse<SanctionsBulkSearchResponse>> {
+    const db = (await this.getMongoDbClient()).db()
+    const resultMapCollection = db.collection<SanctionsBulkSearchResultMap>(
+      SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION(this.tenantId)
+    )
+
+    // Primary call: paginate directly on RESULT_MAP collection
+    const resultMapFilter: Filter<SanctionsBulkSearchResultMap> = params.batchId
+      ? { batchId: params.batchId }
+      : {}
+    const resultMapPaginated = await cursorPaginate(
+      resultMapCollection,
+      resultMapFilter,
+      {
+        pageSize: params.pageSize ?? 20,
+        sortField: 'createdAt',
+        fromCursorKey: params.fromCursorKey,
+        sortOrder: params.sortOrder ?? 'descend',
+      }
+    )
+
+    // Get unique batchIds from paginated results
+    const batchIds = [
+      ...new Set(resultMapPaginated.items.map((item) => item.batchId)),
+    ]
+
+    // Fetch reason and createdBy from HISTORY collection for these batchIds
+    const historyDocs = (await this.getBulkSearchHistories(
+      batchIds
+    )) as SanctionsBulkSearchHistory[]
+
+    // Create a map for quick lookup
+    const historyMap = new Map(historyDocs.map((doc) => [doc.batchId, doc]))
+
+    // Stitch together: result map data + history data
+    const stitchedResults: SanctionsBulkSearchResponse[] =
+      resultMapPaginated.items.map((item) => {
+        const history = historyMap.get(item.batchId)
+        const response = new SanctionsBulkSearchResponse()
+        response.searchTermId = item.searchTermId
+        response.searchTerm = item.searchTerm
+        response.reason = history?.reason ?? ''
+        response.createdBy = history?.createdBy
+        response.createdAt = item.createdAt
+        return response
+      })
+
+    return {
+      ...resultMapPaginated,
+      items: stitchedResults,
+      pageSize: params.pageSize ?? 20,
+    }
+  }
   public async getSearchResultByParams(params: {
     provider: SanctionsDataProviderName
     request: SanctionsSearchRequest
@@ -320,16 +505,42 @@ export class SanctionsSearchRepository {
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
 
-    return cursorPaginate(
-      collection,
-      this.getSanctionsSearchHistoryCondition(params),
+    const basePipeline: Document[] = [
+      { $match: this.getSanctionsSearchHistoryCondition(params) },
       {
-        pageSize: params.pageSize ? (params.pageSize as number) : 20,
-        sortField: 'createdAt',
-        fromCursorKey: params.start,
-        sortOrder: 'descend',
-      }
-    )
+        $unwind: {
+          path: '$history',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          screeningType: '$history.screeningType',
+          batchId: '$history.batchId',
+          searchTermId: '$history.searchTermId',
+          searchedAt: '$history.searchedAt',
+        },
+      },
+    ]
+
+    const sort: AggregateSortField[] = [
+      { field: 'createdAt', direction: -1, type: 'number' },
+      { field: '_id', direction: -1, type: 'objectId' },
+      { field: 'searchedAt', direction: -1, type: 'number' },
+    ]
+    const pageSize = params.pageSize
+      ? Math.min(params.pageSize as number, MAX_PAGE_SIZE)
+      : DEFAULT_PAGE_SIZE
+
+    return cursorPaginateAggregate(collection, basePipeline, {
+      pageSize,
+      fromCursorKey: params.start,
+      sort,
+      // Exclude large fields that aren't needed in the response
+      // 'response' is set to undefined in getSearchHistory anyway
+      // 'history' is already unwound and flattened into individual fields
+      projection: { history: 0, response: 0 },
+    })
   }
 
   public async getSearchHistory(

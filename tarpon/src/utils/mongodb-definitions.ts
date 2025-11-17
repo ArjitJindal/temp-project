@@ -39,6 +39,8 @@ import {
   SANCTIONS_SOURCE_DOCUMENTS_GLOBAL_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
   LSEG_API_MEDIA_CHECK_RESULT_COLLECTION,
+  SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION,
+  SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION,
 } from './mongo-table-names'
 import {
   getAllGlobalSanctionsCollectionDefinition,
@@ -599,6 +601,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           partialFilterExpression: { transactionId: { $exists: true } },
         },
       ],
+    },
+    [SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ index: { batchId: 1 }, unique: true }],
+    },
+    [SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ index: { searchTermId: 1 } }],
     },
     [DELTA_SANCTIONS_COLLECTION(tenantId)]: {
       getIndexes: () => SANCTIONS_INDEX_DEFINITION,

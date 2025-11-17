@@ -203,7 +203,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               ...getEnableShortNameMatchingParameters(enableShortNameMatching),
               ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
             },
-            hitContext
+            { context: hitContext }
           )
           const resultDetails: SanctionsDetails = {
             name: entity.name ?? '',

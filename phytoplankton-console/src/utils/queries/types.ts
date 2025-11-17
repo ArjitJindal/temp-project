@@ -28,6 +28,7 @@ export function map<T, R>(
 ): QueryResult<R> {
   const { paginate, data, refetch, isRefreshing } = res;
   return {
+    ...res,
     data: ar.map(data, fn, loadingFn),
     refetch,
     isRefreshing,

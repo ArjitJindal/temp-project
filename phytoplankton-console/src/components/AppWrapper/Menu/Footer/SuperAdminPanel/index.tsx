@@ -291,10 +291,10 @@ export const featureDescriptions: Record<
     tag: FeatureTag.ENG,
     description: 'Aggregate on custom fields such as name, email, or address.',
   },
-  FLAT_FILES_IMPORT_TRANSACTIONS: {
-    title: 'Flat files import for transactions (WIP)',
+  FLAT_FILES_IMPORT: {
+    title: 'Flat files import',
     tag: FeatureTag.WIP,
-    description: 'Enables button for importing transactions from  flat files',
+    description: 'Enables button for importing transactions and screening from  flat files',
   },
   MULTIPLEX_ASYNC_RULES_TX: {
     title: 'Multiplex async rules',

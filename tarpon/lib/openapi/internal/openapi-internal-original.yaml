@@ -7057,6 +7057,120 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SanctionsSourceListResponse'
+  /sanctions/bulk-search:
+    post:
+      summary: Bulk search Sanctions
+      operationId: post-sanctions-bulk-search
+      x-flagright:
+        resources:
+          - write:::screening/manual-screening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionsBulkSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                required:
+                  - id
+    get:
+      summary: Get bulk search Sanctions
+      operationId: get-sanctions-bulk-search
+      x-flagright:
+        resources:
+          - write:::screening/manual-screening
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SanctionsBulkSearchResponse'
+                  next:
+                    type: string
+                  prev:
+                    type: string
+                  hasNext:
+                    type: boolean
+                  hasPrev:
+                    type: boolean
+                  count:
+                    type: number
+                  limit:
+                    type: number
+                  last:
+                    type: string
+                  pageSize:
+                    type: number
+                required:
+                  - items
+                  - next
+                  - prev
+                  - hasNext
+                  - hasPrev
+                  - count
+                  - limit
+                  - last
+      parameters:
+        - schema:
+            type: string
+          name: batchId
+          in: query
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: number
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          name: sortOrder
+          in: query
+  /sanctions/bulk-search/search-term/{searchTermId}:
+    get:
+      summary: Get search result for a search term
+      tags: []
+      x-flagright:
+        resources:
+          - read:::screening/manual-screening
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSearchHistory'
+      parameters:
+        - schema:
+            type: string
+          name: searchTermId
+          in: path
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: page
+        - schema:
+            type: number
+          in: query
+          name: pageSize
+      operationId: get-sanctions-bulk-search-$-searchTermId
   /sanctions/search:
     post:
       summary: Search Sanctions
@@ -8943,6 +9057,7 @@ components:
         - TRANSACTIONS_UPLOAD
         - BULK_ALERT_CLOSURE
         - BULK_SANCTIONS_HITS_UPDATE
+        - BULK_MANUAL_SCREENING
     FlatFileProgressResponse:
       title: FlatFileProgressResponse
       type: object
@@ -13372,7 +13487,7 @@ components:
         - CHATBOT
         - CUSTOM_AGGREGATION_FIELDS
         - EDD
-        - FLAT_FILES_IMPORT_TRANSACTIONS
+        - FLAT_FILES_IMPORT
         - MULTIPLEX_ASYNC_RULES_TX
         - LSEG_API
       description: ''
@@ -15021,6 +15136,33 @@ components:
         - BUSINESS
         - BANK
         - EXTERNAL_USER
+    SanctionsBulkSearchRequest:
+      title: SanctionsBulkSearchRequest
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/FileInfo'
+        filters:
+          $ref: '#/components/schemas/SanctionsSearchRequest'
+        reason:
+          type: string
+      required:
+        - file
+        - reason
+    SanctionsBulkSearchResponse:
+      title: SanctionsBulkSearchResponse
+      type: object
+      properties:
+        searchTermId:
+          type: string
+        searchTerm:
+          type: string
+        reason:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: number
     SanctionsSearchRequest:
       title: SanctionsSearchRequest
       type: object
@@ -15705,7 +15847,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SanctionsSearchHistory'
+            $ref: '#/components/schemas/SanctionsSearchHistoryItem'
       required:
         - hasPrev
         - prev
@@ -15715,6 +15857,36 @@ components:
         - count
         - limit
         - last
+    SearchTypeHistory:
+      title: SearchTypeHistory
+      type: object
+      properties:
+        screeningType:
+          type: string
+          enum:
+            - SEARCH
+            - BATCH
+        batchId:
+          type: string
+        searchTermId:
+          type: string
+        searchedAt:
+          type: number
+    SanctionsSearchHistoryItem:
+      title: SanctionsSearchHistoryItem
+      allOf:
+        - $ref: '#/components/schemas/SanctionsSearchHistory'
+        - type: object
+          properties:
+            screeningType:
+              type: string
+              enum:
+                - SEARCH
+                - BATCH
+            batchId:
+              type: string
+            searchTermId:
+              type: string
     SanctionsSearchHistory:
       title: SanctionsSearchHistory
       type: object
@@ -15739,6 +15911,10 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
         requestHash:
           type: string
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchTypeHistory'
         metadata:
           type: object
           properties:
@@ -15754,6 +15930,54 @@ components:
         - provider
         - request
         - createdAt
+    SanctionsBulkSearchResultMap:
+      title: SanctionsBulkSearchResultMap
+      type: object
+      properties:
+        batchId:
+          type: string
+        searchTermId:
+          type: string
+        searchId:
+          type: string
+        searchTerm:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - batchId
+        - searchId
+        - searchTermId
+    SanctionsBulkSearchHistory:
+      title: SanctionsBulkSearchHistory
+      type: object
+      properties:
+        batchId:
+          type: string
+        request:
+          $ref: '#/components/schemas/SanctionsSearchRequest'
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        reason:
+          type: string
+        createdBy:
+          type: string
+      required:
+        - batchId
+        - reason
+        - request
+    SanctionsBulkUploadSchema:
+      title: SanctionsBulkUploadSchema
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
     SanctionsSearchMonitoring:
       title: SanctionsSearchMonitoring
       type: object

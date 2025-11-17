@@ -4,7 +4,7 @@ import { humanizeCamelCase } from '@flagright/lib/utils/humanize';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, CommonParams, TableColumn } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
+import { SanctionsSearchHistoryItem } from '@/apis/models/SanctionsSearchHistoryItem';
 import Id from '@/components/ui/Id';
 import { Dayjs } from '@/utils/dayjs';
 import DatePicker from '@/components/ui/DatePicker';
@@ -39,40 +39,68 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
 
   const queryResults = useSanctionsSearch(params);
 
-  const helper = new ColumnHelper<SanctionsSearchHistory>();
-  const columns: TableColumn<SanctionsSearchHistory>[] = [
-    // Data fields
-    helper.simple<'createdAt'>({
-      title: 'Created',
-      key: 'createdAt',
-      type: DATE_TIME,
-      // NOTE: No filtering here. Time filter is handled by the extra tools.
-      filtering: false,
+  const helper = new ColumnHelper<SanctionsSearchHistoryItem & { rowKey: string }>();
+  const columns: TableColumn<SanctionsSearchHistoryItem & { rowKey: string }>[] = [
+    helper.simple<'screeningType'>({
+      title: 'Type',
+      key: 'screeningType',
+      type: {
+        render: (value) => <>{value === 'BATCH' ? 'Batch screening' : 'Search'}</>,
+        stringify: (value) => (value === 'BATCH' ? 'Batch screening' : 'Search'),
+      },
     }),
     helper.simple<'request.searchTerm'>({
       title: 'Search term',
       key: 'request.searchTerm',
       type: {
-        render: (searchTerm, { item: entity }) => (
-          <Id to={sanctionsSearchLink(entity._id)}>{searchTerm}</Id>
-        ),
-        stringify(value, item) {
-          return item.request.searchTerm;
-        },
-        link: (value, item) => sanctionsSearchLink(item._id),
+        render: (searchTerm, { item }) =>
+          item.screeningType === 'BATCH' && item.searchTermId ? (
+            <Id to={`/screening/bulk-search/${item.searchTermId}`}>{searchTerm}</Id>
+          ) : (
+            <Id to={sanctionsSearchLink(item._id)}>{searchTerm}</Id>
+          ),
+        stringify: (_, item) => item.request.searchTerm,
+        link: (_, item) =>
+          item.screeningType === 'BATCH' && item.searchTermId
+            ? `/screening/bulk-search/${item.searchTermId}`
+            : sanctionsSearchLink(item._id),
       },
     }),
+    helper.derived({
+      title: 'Import ID',
+      value: (item): unknown => item.searchTermId,
+      type: {
+        render: (value, { item }) => (
+          <>
+            {item.screeningType === 'BATCH' && value ? (
+              <Id to={`/screening/bulk-search/${String(value)}`}>{String(value)}</Id>
+            ) : (
+              '-'
+            )}
+          </>
+        ),
+        stringify: (value, item) => (item.screeningType === 'BATCH' ? String(value ?? '-') : '-'),
+        link: (value, item) =>
+          item.screeningType === 'BATCH' && value
+            ? `/screening/bulk-search/${String(value)}`
+            : undefined,
+      },
+    }),
+    helper.simple<'createdAt'>({
+      title: 'Created at',
+      key: 'createdAt',
+      type: DATE_TIME,
+      filtering: false,
+    }),
     helper.simple<'searchedBy'>({
-      title: 'Searched by',
+      title: 'By',
       key: 'searchedBy',
       type: {
-        render: (userId) => {
-          return (
-            <div style={{ overflowWrap: 'anywhere' }}>
-              <AccountTag accountId={userId} />
-            </div>
-          );
-        },
+        render: (userId) => (
+          <div style={{ overflowWrap: 'anywhere' }}>
+            <AccountTag accountId={userId} />
+          </div>
+        ),
       },
     }),
   ];
@@ -118,10 +146,11 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   return (
     <>
       <QueryResultsTable
-        rowKey="createdAt"
+        rowKey="rowKey"
         queryResults={queryResults}
         params={params}
         onChangeParams={handleChangeParams}
+        sizingMode="FULL_WIDTH"
         columns={columns}
         fitHeight
         pagination

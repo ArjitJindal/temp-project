@@ -308,6 +308,9 @@ export const ConsoleApiPathToLambda: any = {
   '/webhooks/auth0': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/webhooks/nango': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/bulk-search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/bulk-search/search-term/{searchTermId}':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/hits/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,

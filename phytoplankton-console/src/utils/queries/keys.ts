@@ -323,6 +323,19 @@ export const SANCTIONS_WHITELIST_SEARCH = (params: AnyParameters): QueryKey => [
   'search',
   params,
 ];
+export const SANCTIONS_BULK_SEARCH = (batchId?: string, params?: AnyParameters): QueryKey =>
+  ['sanctions', 'bulk-search', batchId, params].filter(Boolean);
+export const SANCTIONS_BULK_SEARCH_TERM = (searchTermId?: string): QueryKey => [
+  'sanctions',
+  'bulk-search',
+  'term',
+  searchTermId,
+];
+export const SANCTIONS_BULK_SEARCH_TERM_HISTORY = (
+  searchTermId?: string,
+  params?: AnyParameters,
+): QueryKey =>
+  ['sanctions', 'bulk-search', 'term', searchTermId, 'history', params].filter(Boolean);
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
 export const ALERT_CHECKLIST = (alertId: string | undefined): QueryKey => [
   'alerts',

@@ -21,12 +21,15 @@ import { MongoClient } from 'mongodb'
 import {
   GetObjectCommand,
   HeadObjectCommand,
+  S3,
   S3Client,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Upload } from '@aws-sdk/lib-storage'
 import { Client } from '@opensearch-project/opensearch/.'
 import { StackConstants } from '@lib/constants'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { S3Service } from '../aws/s3-service'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
@@ -67,6 +70,10 @@ import {
   SanctionsSearchResponse,
   SanctionsSourceListResponse,
   SourceDocument,
+  SanctionsBulkSearchRequest,
+  SanctionsBulkSearchHistory,
+  SanctionsBulkSearchResultMap,
+  SanctionsBulkSearchResponse,
   MediaCheckArticleResponse,
   MediaCheckArticleResponseItem,
 } from '@/@types/openapi-internal/all'
@@ -92,6 +99,7 @@ import { SANCTIONS_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/Sa
 import { REL_SOURCE_RELEVANCES } from '@/@types/openapi-internal-custom/RELSourceRelevance'
 import { getSharedOpensearchClient } from '@/utils/opensearch-utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getS3Client } from '@/utils/s3'
 import { LSEG_API_MEDIA_CHECK_RESULT_COLLECTION } from '@/utils/mongo-table-names'
 import { cursorPaginate } from '@/utils/pagination'
 
@@ -314,13 +322,87 @@ export class SanctionsService {
     return result.Item?.isBackfillDone === true
   }
 
+  public async createBulkSearch(
+    request: SanctionsBulkSearchRequest,
+    s3?: S3
+  ): Promise<{ id: string }> {
+    const batchId = await this.sanctionsSearchRepository.saveBulkSearchRequest(
+      request.filters as SanctionsSearchRequest,
+      request.reason
+    )
+    const file = request.file
+    const s3Client = s3 ?? getS3Client()
+
+    const { TMP_BUCKET, DOCUMENT_BUCKET } = process.env as {
+      TMP_BUCKET: string
+      DOCUMENT_BUCKET: string
+    }
+
+    const s3Service = new S3Service(s3Client, {
+      tmpBucketName: TMP_BUCKET,
+      documentBucketName: DOCUMENT_BUCKET,
+    })
+    const files = await s3Service.copyFlatFilesToPermanentBucket([file])
+    await sendBatchJobCommand({
+      tenantId: this.tenantId,
+      type: 'FLAT_FILES_VALIDATION',
+      parameters: {
+        entityId: batchId,
+        format: 'CSV',
+        s3Key: files[0].s3Key,
+        schema: 'BULK_MANUAL_SCREENING',
+      },
+    })
+    return { id: batchId }
+  }
+
+  public async getBulkSearch(
+    batchId: string
+  ): Promise<SanctionsBulkSearchHistory | null> {
+    return this.sanctionsSearchRepository.getBulkSearchHistory(batchId)
+  }
+
+  public async saveBulkSearchResultMap(
+    batchId: string,
+    searchId: string,
+    searchTermId: string,
+    searchTerm: string
+  ): Promise<void> {
+    return this.sanctionsSearchRepository.saveBulkSearchResultMap(
+      batchId,
+      searchId,
+      searchTermId,
+      searchTerm
+    )
+  }
+
+  public async getBulkSearchResultMap(
+    searchTermId: string
+  ): Promise<SanctionsBulkSearchResultMap | null> {
+    return this.sanctionsSearchRepository.getBulkSearchResultMap(searchTermId)
+  }
+
+  public async getBulkSearchesWithSearchTerms(params: {
+    pageSize?: number
+    fromCursorKey?: string
+    sortOrder?: 'ascend' | 'descend'
+    batchId?: string
+    searchTermId?: string
+    searchedBy?: string
+  }): Promise<CursorPaginationResponse<SanctionsBulkSearchResponse>> {
+    return this.sanctionsSearchRepository.getBulkSearchesWithSearchTerms(params)
+  }
+
   public async search(
     request: SanctionsSearchRequest,
-    context?: SanctionsHitContext & {
-      isOngoingScreening?: boolean
-    },
-    providerOverrides?: ProviderConfig,
-    screeningEntity: 'USER' | 'TRANSACTION' = 'USER'
+    options?: {
+      context?: SanctionsHitContext & { isOngoingScreening?: boolean }
+      providerOverrides?: ProviderConfig
+      screeningEntity?: 'USER' | 'TRANSACTION'
+      batchId?: string
+      searchTermId?: string
+      searchedBy?: string
+    }
   ): Promise<SanctionsSearchResponse> {
     if (!this.opensearchClient && hasFeature('OPEN_SEARCH')) {
       this.opensearchClient = await getSharedOpensearchClient()
@@ -337,6 +419,11 @@ export class SanctionsService {
         createdAt: Date.now(),
       }
     }
+
+    const context = options?.context
+    const providerOverrides = options?.providerOverrides
+    const screeningEntity = options?.screeningEntity ?? 'USER'
+    const batchId = options?.batchId
 
     const providers = getDefaultProviders()
     const providerName = providerOverrides?.providerName || providers[0]
@@ -459,7 +546,8 @@ export class SanctionsService {
       ),
       dynamoHash,
       response,
-      searchedBy: !context ? getContext()?.user?.id : undefined,
+      searchedBy:
+        options?.searchedBy ?? (!context ? getContext()?.user?.id : undefined),
       hitContext: context,
       providerConfigHash:
         providerOverrides && providerOverrides.stage && !hasFeature('DOW_JONES')
@@ -474,6 +562,9 @@ export class SanctionsService {
             screeningEntity,
           }
         : {}),
+      batchId,
+      screeningType: batchId ? 'BATCH' : 'SEARCH',
+      searchTermId: options?.searchTermId,
     })
 
     if (context && context.ruleInstanceId && context.isOngoingScreening) {

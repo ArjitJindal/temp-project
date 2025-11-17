@@ -25,12 +25,13 @@ const DEFAULT_ALLOWED_TYPES = [
 interface Props extends InputProps<FileInfo[]> {
   singleFile?: boolean;
   size?: 'SMALL' | 'LARGE';
-  info?: string;
+  info?: React.ReactNode | string;
   listType?: 'comment' | 'attachment';
   setUploading?: (uploading: boolean) => void;
   required?: boolean;
   accept?: string[]; // file mime types to accept, e.g. ["image/jpeg", "image/png", "application/pdf"]
   onShowErrorMessages?: (errors: string[]) => void;
+  title?: React.ReactNode | string;
 }
 
 export default function FilesDraggerInput(props: Props) {
@@ -45,6 +46,7 @@ export default function FilesDraggerInput(props: Props) {
     accept = DEFAULT_ALLOWED_TYPES,
     onShowErrorMessages,
     isDisabled,
+    title,
   } = props;
   const acceptExtensions = accept.map((mimetype) => mime.getExtension(mimetype)).filter(notEmpty);
   const info =
@@ -131,7 +133,7 @@ export default function FilesDraggerInput(props: Props) {
           <UploadIcon className={s.icon} />
           <div className={cn(s.title, size === 'SMALL' ? s.alignItemsStart : '')}>
             <div className={s.title1}>
-              Click or drag file to this area to upload
+              {title || 'Click or drag file to this area to upload'}
               {required && <span className={s.required}> *</span>}
             </div>
             <div className={cn(s.title2, size === 'SMALL' ? s.textAlignStart : '')}>{info}</div>

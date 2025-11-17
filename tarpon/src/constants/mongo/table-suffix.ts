@@ -21,6 +21,8 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   ARS_SCORE: 'action-risk-values',
   SANCTIONS_SCREENING_DETAILS: 'sanctions-screening-details',
   SANCTIONS_SCREENING_DETAILS_V2: 'sanctions-screening-details-v2',
+  SANCTIONS_BULK_SEARCHES: 'sanctions-bulk-searches',
+  SANCTIONS_BULK_SEARCHES_RESULT_MAP: 'sanctions-bulk-searches-result-map',
   REPORTS: 'report',
   NOTIFICATIONS: 'notifications',
   JOBS: 'jobs',

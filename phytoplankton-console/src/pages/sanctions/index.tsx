@@ -5,6 +5,7 @@ import { SearchResultTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import { SanctionsScreeningActivity } from './activity';
 import s from './style.module.less';
+import BulkScreeningDialog from './bulk-screening';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -54,15 +55,18 @@ const SanctionsPage: React.FC = () => {
   return (
     <PageWrapper
       header={
-        <Breadcrumbs
-          items={[
-            { title: 'Screening', to: '/screening/manual-screening' },
-            { title: humanizeAuto(type), to: `/screening/${type}` },
-            ...(searchTerm
-              ? [{ title: searchTerm, to: `/screening/manual-screening/${searchTerm}` }]
-              : []),
-          ]}
-        />
+        <div className={s.customHeader}>
+          <Breadcrumbs
+            items={[
+              { title: 'Screening', to: '/screening/manual-screening' },
+              { title: humanizeAuto(type), to: `/screening/${type}` },
+              ...(searchTerm
+                ? [{ title: searchTerm, to: `/screening/manual-screening/${searchTerm}` }]
+                : []),
+            ]}
+          />
+          <BulkScreeningDialog />
+        </div>
       }
     >
       <PageTabs

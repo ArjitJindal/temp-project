@@ -190,9 +190,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               ...getEnableShortNameMatchingParameters(enableShortNameMatching),
               ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
             },
-            hitContext,
-            undefined,
-            'TRANSACTION'
+            { context: hitContext, screeningEntity: 'TRANSACTION' }
           )
           return {
             sanctionsDetails: {
@@ -238,9 +236,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
                 bankInfo.address ? [bankInfo.address] : undefined
               ),
             },
-            hitContext,
-            undefined,
-            'TRANSACTION'
+            { context: hitContext, screeningEntity: 'TRANSACTION' }
           )
           return {
             sanctionsDetails: {

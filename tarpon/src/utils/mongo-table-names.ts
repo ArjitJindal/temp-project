@@ -228,6 +228,16 @@ export const SANCTIONS_SCREENING_DETAILS_V2_COLLECTION = (tenantId: string) => {
   return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS_V2}`
 }
 
+export const SANCTIONS_BULK_SEARCHES_HISTORY_COLLECTION = (
+  tenantId: string
+) => {
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_BULK_SEARCHES}`
+}
+export const SANCTIONS_BULK_SEARCHES_RESULT_MAP_COLLECTION = (
+  tenantId: string
+) => {
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_BULK_SEARCHES_RESULT_MAP}`
+}
 export const AUDITLOG_COLLECTION = (tenantId: string) => {
   return `${tenantId}-auditlog`
 }

@@ -29,6 +29,8 @@ export type CounterEntity =
   | 'RiskLevel'
   | 'ScreeningDetails'
   | 'RiskFactors'
+  | 'SanctionsBulkSearch'
+  | 'SanctionsBulkSearchTerm'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',

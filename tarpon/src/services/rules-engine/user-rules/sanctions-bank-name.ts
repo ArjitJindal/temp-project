@@ -204,7 +204,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
               ...getEnableShortNameMatchingParameters(enableShortNameMatching),
               ...getEnablePhoneticMatchingParameters(enablePhoneticMatching),
             },
-            hitContext
+            { context: hitContext }
           )
           const sanctionsDetails: SanctionsDetails = {
             name: bankName,
