@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
-import { captureException } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import toast, { ToastPosition } from 'react-hot-toast';
 import s from './index.module.less';
 import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -60,7 +60,7 @@ export const fatal: ShowNotificationWithOptionalError = (
   if (!errorsCaptured.includes(message?.toString() || '') && process.env.ENV_NAME !== 'local') {
     errorsCaptured.push(message?.toString() || ''); // prevent duplicate errors
     if (error instanceof Error) {
-      captureException(error);
+      Sentry.captureException(error);
     }
   }
   return open(message, 'ERROR', {

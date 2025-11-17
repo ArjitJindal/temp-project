@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { init, Replay } from '@sentry/react';
+import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/browser';
 import { Navigate, Route, Routes, useParams } from 'react-router';
 import { Debug } from '@sentry/integrations';
@@ -26,13 +26,13 @@ interface HttpError {
   [key: string]: any;
 }
 
-init({
+Sentry.init({
   dsn: SENTRY_DSN,
   release: process.env.RELEASE,
   integrations: [
     new BrowserTracing(),
     new Debug(),
-    new Replay({
+    new Sentry.Replay({
       block: ['.sentry-block, [data-sentry-block=true]'],
       unblock: ['.sentry-unblock, [data-sentry-allow=true], [data-sentry-unblock=true]'],
       unmask: ['.sentry-unmask, [data-sentry-allow=true], [data-sentry-unmask=true]'],
