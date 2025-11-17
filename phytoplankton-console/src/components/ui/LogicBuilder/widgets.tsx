@@ -25,6 +25,7 @@ import {
   deserializeCountries,
   getFieldOptions,
   isAnyInOpreator,
+  isSimilarToOpreator,
   omitCountryGroups,
   serializeCountries,
 } from './widget-utils';
@@ -800,7 +801,7 @@ const customFieldWidget: FieldWidget<Config> = {
       if (!lhsOnly && !rhsOnly && !isAnyInOpreator(props.operator)) {
         return true;
       }
-      return rhsOnly && isAnyInOpreator(props.operator);
+      return rhsOnly && (isAnyInOpreator(props.operator) || isSimilarToOpreator(props.operator));
     });
     const finalOptions = options.map((x) => ({ label: x.label, value: x.path }));
     const finalValue = options.find((x) => x.path === props.value)?.path ?? undefined;

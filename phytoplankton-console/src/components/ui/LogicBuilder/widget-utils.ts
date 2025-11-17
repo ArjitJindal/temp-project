@@ -49,3 +49,6 @@ export const getFieldOptions = (fields: object, selectedField, fieldType?: strin
 export const isAnyInOpreator = (operator) => {
   return operator === 'select_any_in' || operator === 'select_not_any_in';
 };
+export const isSimilarToOpreator = (operator) => {
+  return operator === 'op:similarto' || operator === 'op:!similarto';
+};
