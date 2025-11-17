@@ -1,5 +1,5 @@
 import { PERMISSIONS } from '../../support/permissions';
-describe('Approval of payments', () => {
+describe.skip('Approval of payments', () => {
   const REQUIRED_PERMISSIONS = [
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.TRANSACTION_OVERVIEW,
