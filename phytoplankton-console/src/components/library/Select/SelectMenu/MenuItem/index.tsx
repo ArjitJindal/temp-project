@@ -9,6 +9,7 @@ import { getOptionLabelNode } from '@/components/library/Select/helpers';
 
 type OptionGroup<Value extends Comparable = string> = {
   kind: 'GROUP';
+  id: string;
   label: string;
   options: Option<Value>[];
 };
@@ -18,12 +19,14 @@ export type OptionOrGroup<Value extends Comparable = string> = Option<Value> | O
 type Props<Value extends Comparable = string> = {
   showCheckboxes: boolean;
   optionOrGroup: OptionOrGroup<Value>;
+  highlightedOption?: Value | null;
   selectedValues: Value[];
   onSelectOption: (value: Value, option: Option<Value>) => void;
+  onHoverOption?: (value: Value | null) => void;
 };
 
 export default function MenuItem<Value extends Comparable = string>(props: Props<Value>) {
-  const { showCheckboxes, optionOrGroup, selectedValues, onSelectOption } = props;
+  const { showCheckboxes, optionOrGroup, selectedValues, onSelectOption, onHoverOption } = props;
   if ('kind' in optionOrGroup && optionOrGroup.kind === 'GROUP') {
     return (
       <OptionGroup
@@ -36,14 +39,17 @@ export default function MenuItem<Value extends Comparable = string>(props: Props
   }
   const option = optionOrGroup as Option<Value>;
   const isSelected = selectedValues.includes(option.value);
+  const isHighlighted = props.highlightedOption === option.value;
   return (
     <OptionItem
       showCheckbox={showCheckboxes}
       option={option}
       isSelected={isSelected}
+      isHighlighted={isHighlighted}
       onClick={() => {
         onSelectOption(option.value, option);
       }}
+      onHoverOption={onHoverOption}
     />
   );
 }
@@ -54,7 +60,9 @@ export default function MenuItem<Value extends Comparable = string>(props: Props
 function OptionItem<Value extends Comparable = string>(props: {
   showCheckbox?: boolean;
   option: Option<Value>;
+  onHoverOption?: (value: Value | null) => void;
   isNested?: boolean;
+  isHighlighted?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
 }) {
@@ -67,10 +75,22 @@ function OptionItem<Value extends Comparable = string>(props: {
   }
   return (
     <MenuItemContainer
+      id={`menu-item-container-option-${props.option.value}`}
       isInteractive={true}
       isDisabled={props.option.isDisabled}
       isNested={props.isNested}
       isSelected={props.isSelected}
+      isHighlighted={props.isHighlighted}
+      onMouseLeave={() => {
+        if (props.onHoverOption) {
+          props.onHoverOption(null);
+        }
+      }}
+      onMouseEnter={() => {
+        if (props.onHoverOption) {
+          props.onHoverOption(props.option.value);
+        }
+      }}
       onClick={props.onClick}
     >
       <div
@@ -95,6 +115,8 @@ function OptionItem<Value extends Comparable = string>(props: {
 }
 
 function OptionGroup<Value extends Comparable = string>(props: {
+  highlightedOption?: Value;
+  onHoverOption?: (value: Value | null) => void;
   group: OptionGroup<Value>;
   selectedValues: Value[];
   onSelectOption: (value: Value, option: Option<Value>) => void;
@@ -102,7 +124,7 @@ function OptionGroup<Value extends Comparable = string>(props: {
 }) {
   return (
     <>
-      <MenuItemContainer>
+      <MenuItemContainer id={`menu-item-container-group-${props.group.id}`}>
         <div className={s.groupLabel}>{props.group.label}</div>
       </MenuItemContainer>
       {props.group.options.map((option) => {
@@ -113,7 +135,9 @@ function OptionGroup<Value extends Comparable = string>(props: {
             showCheckbox={props.showCheckboxes}
             option={option}
             isNested={true}
+            isHighlighted={props.highlightedOption === option.value}
             isSelected={isSelected}
+            onHoverOption={props.onHoverOption}
             onClick={() => {
               props.onSelectOption(option.value, option);
             }}

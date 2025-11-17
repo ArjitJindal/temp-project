@@ -1,5 +1,13 @@
 import cn from 'clsx';
-import React, { ReactSVGElement, useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import React, {
+  ReactSVGElement,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   autoUpdate,
   flip,
@@ -12,7 +20,7 @@ import {
 } from '@floating-ui/react';
 import { uniq } from 'lodash';
 import s from './style.module.less';
-import SelectMenu from './SelectMenu';
+import SelectMenu, { SelectMenuRef } from './SelectMenu';
 import {
   DEFAULT_TAG_RENDERER,
   filterOption,
@@ -137,10 +145,15 @@ export default function Select<Value extends Comparable = string>(props: Props<V
 
   const [searchText, setSearchText] = useState<string | undefined>(undefined);
 
+  const [mouseHighlightingEnabled, setMouseHighlightingEnabled] = useState<boolean>(true);
+  const [highlightedValue, setHighlightedValue] = useState<Value | null>(null);
+  const menuRef = useRef<SelectMenuRef<Value>>();
+
   const handleChangeSearchText = useCallback(
     (text) => {
       setSearchText(text);
       onSearch?.(text);
+      setHighlightedValue(null);
     },
     [onSearch],
   );
@@ -213,8 +226,17 @@ export default function Select<Value extends Comparable = string>(props: Props<V
       if (!isOpen && searchText != null && searchText !== '') {
         applySearchStringValue(searchText, props.value);
       }
+      if (isOpen) {
+        if (props.mode === 'DYNAMIC' || props.mode === 'SINGLE' || props.mode == null) {
+          const value = (props.value ?? null) as Value | null;
+          setHighlightedValue(value);
+          if (value != null) {
+            menuRef.current?.scrollToOption(value);
+          }
+        }
+      }
     },
-    [applySearchStringValue, props.value, searchText],
+    [applySearchStringValue, props.value, props.mode, searchText],
   );
 
   const { refs, floatingStyles, context, update } = useFloating({
@@ -356,6 +378,125 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     return `select-portal-${props.testId ?? id}`;
   }, [props.testId, id]);
 
+  const handleSelectOption = useCallback(
+    (selectedValue: Value, option: Option<Value>, onlyAdd: boolean = false) => {
+      if (props.mode === 'SINGLE' || !('mode' in props) || props.mode === undefined) {
+        props.onChange?.(selectedValue);
+        setIsOpen(false);
+        handleChangeSearchText('');
+      } else if (props.mode === 'MULTIPLE') {
+        const newValue = props.value?.includes(selectedValue)
+          ? onlyAdd
+            ? props.value
+            : props.value?.filter((v) => v !== selectedValue)
+          : [...(props.value ?? []), selectedValue];
+        props.onChange?.(newValue);
+      } else if (props.mode === 'MULTIPLE_DYNAMIC') {
+        const current = Array.isArray(props.value) ? props.value : [];
+        const newValue = current.includes(selectedValue)
+          ? onlyAdd
+            ? current
+            : current.filter((v) => v !== selectedValue)
+          : [...current, selectedValue];
+        props.onChange?.(newValue as string[]);
+      } else if (props.mode === 'DYNAMIC') {
+        if (option.isVirtual) {
+          setVirtualOptions((prev) => {
+            if (prev.some((x) => compare(x.value, selectedValue))) {
+              return prev;
+            }
+            return [...prev, { label: selectedValue, value: selectedValue, isVirtual: true }];
+          });
+        }
+        const newValue = selectedValue?.toString() ?? '';
+        setIsOpen(false);
+        handleChangeSearchText('');
+        props.onChange?.(newValue);
+      }
+    },
+    [props, handleChangeSearchText],
+  );
+
+  // Using global handler, since we also need to handle keyboard events when search input is out of
+  // focus, but popup is still open (for example, in MULTIPLE mode). Also, using global handler only
+  // in open state to reduce the number of global event listeners.
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const handler = (e) => {
+      if (e.key === 'Tab') {
+        handleOpenChange(false);
+      } else if (e.key === 'Enter') {
+        const highlightedOption =
+          highlightedValue != null && optionsToShow.find((x) => compare(x.value, highlightedValue));
+        if (highlightedOption) {
+          // It feels more natural to apply highlighted option by enter, but not to uncheck it
+          handleSelectOption(highlightedValue, highlightedOption, true);
+        }
+        e.preventDefault();
+        handleOpenChange(false);
+      } else if (e.key === 'Escape') {
+        setSearchText('');
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        let nextIndex: number = 0;
+        if (highlightedValue != null) {
+          nextIndex = optionsToShow.findIndex((x) => compare(x.value, highlightedValue)) + 1;
+        }
+        if (nextIndex >= optionsToShow.length) {
+          nextIndex = 0;
+        }
+        const nextOption = optionsToShow[nextIndex];
+        if (nextOption) {
+          setHighlightedValue(nextOption.value);
+          if (menuRef.current) {
+            menuRef.current.scrollToOption(nextOption.value);
+          }
+        }
+        setMouseHighlightingEnabled(false);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        let prevIndex: number = -1;
+        if (highlightedValue != null) {
+          prevIndex = optionsToShow.findIndex((x) => compare(x.value, highlightedValue)) - 1;
+        }
+        if (prevIndex < 0) {
+          prevIndex = optionsToShow.length - 1;
+        }
+        const prevOption = optionsToShow[prevIndex];
+
+        if (prevOption) {
+          setHighlightedValue(prevOption.value);
+          if (menuRef.current) {
+            menuRef.current.scrollToOption(prevOption.value);
+          }
+        }
+        setMouseHighlightingEnabled(false);
+      } else if (e.key === 'Space' || e.key === ' ') {
+        const highlightedOption =
+          highlightedValue != null && optionsToShow.find((x) => compare(x.value, highlightedValue));
+        if (highlightedOption) {
+          e.preventDefault();
+          handleSelectOption(highlightedValue, highlightedOption);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => {
+      window.removeEventListener('keydown', handler);
+    };
+  }, [
+    isOpen,
+    highlightedValue,
+    handleSelectOption,
+    optionsToShow,
+    applySearchStringValue,
+    searchText,
+    handleOpenChange,
+    mode,
+  ]);
+
   return (
     <>
       {!hiddenDropdown && (
@@ -366,9 +507,19 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             {...getFloatingProps()}
             className={cn(s.menuWrapper, { [s.isOpen]: isOpen })}
             data-cy={cn(`select-menu-wrapper`, isOpen && 'open')}
+            onMouseMove={
+              mouseHighlightingEnabled
+                ? undefined
+                : () => {
+                    setMouseHighlightingEnabled(true);
+                  }
+            }
           >
             {optionsToShow.length > 0 ? (
               <SelectMenu<Value>
+                ref={menuRef}
+                highlightedOption={highlightedValue}
+                onHoverOption={mouseHighlightingEnabled ? setHighlightedValue : undefined}
                 options={optionsToShow}
                 selectedValues={
                   (Array.isArray(props.value)
@@ -377,40 +528,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
                     ? [props.value]
                     : []) as Value[]
                 }
-                onSelectOption={(selectedValue, option) => {
-                  if (props.mode === 'SINGLE' || !('mode' in props) || props.mode === undefined) {
-                    props.onChange?.(selectedValue);
-                    setIsOpen(false);
-                    handleChangeSearchText('');
-                  } else if (props.mode === 'MULTIPLE') {
-                    const newValue = props.value?.includes(selectedValue)
-                      ? props.value?.filter((v) => v !== selectedValue)
-                      : [...(props.value ?? []), selectedValue];
-                    props.onChange?.(newValue);
-                  } else if (props.mode === 'MULTIPLE_DYNAMIC') {
-                    const current = Array.isArray(props.value) ? props.value : [];
-                    const newValue = current.includes(selectedValue)
-                      ? current.filter((v) => v !== selectedValue)
-                      : [...current, selectedValue];
-                    props.onChange?.(newValue as string[]);
-                  } else if (props.mode === 'DYNAMIC') {
-                    if (option.isVirtual) {
-                      setVirtualOptions((prev) => {
-                        if (prev.some((x) => compare(x.value, selectedValue))) {
-                          return prev;
-                        }
-                        return [
-                          ...prev,
-                          { label: selectedValue, value: selectedValue, isVirtual: true },
-                        ];
-                      });
-                    }
-                    const newValue = selectedValue?.toString() ?? '';
-                    setIsOpen(false);
-                    handleChangeSearchText('');
-                    props.onChange?.(newValue);
-                  }
-                }}
+                onSelectOption={handleSelectOption}
                 showCheckboxes={props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC'}
               />
             ) : (
@@ -476,6 +594,15 @@ export default function Select<Value extends Comparable = string>(props: Props<V
             selectedOptions={selectedOptions}
           />
           <input
+            name={props.name}
+            type={'hidden'}
+            value={
+              props.mode === 'MULTIPLE' || props.mode === 'MULTIPLE_DYNAMIC'
+                ? (props.value ?? []).map((x: Value | string): string => `${x ?? ''}`)
+                : `${props.value ?? ''}`
+            }
+          />
+          <input
             type="text"
             onFocus={() => {
               setIsFocused(true);
@@ -496,19 +623,22 @@ export default function Select<Value extends Comparable = string>(props: Props<V
               if (value.includes(SEPARATOR)) {
                 applySearchStringValue(value, props.value);
               }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Tab') {
-                handleOpenChange(false);
-              } else if (e.key === 'Enter') {
-                if (isOpen && searchText != null && searchText !== '') {
-                  applySearchStringValue(searchText, props.value);
-                }
-                handleOpenChange(!isOpen);
-              } else if (e.key === 'Escape') {
-                setSearchText('');
+              if (!isOpen) {
+                handleOpenChange(true);
               }
             }}
+            onKeyDown={
+              isOpen
+                ? undefined
+                : (e) => {
+                    // Handling keys for opening popup here since global handle is disabled when popup
+                    // is closed
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      handleOpenChange(true);
+                    }
+                  }
+            }
           />
           <div className={s.rightIcons}>
             {showCopyIcon && (

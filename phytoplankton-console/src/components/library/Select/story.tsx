@@ -7,6 +7,7 @@ import Label from '@/components/library/Label';
 import Toggle from '@/components/library/Toggle';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
+import Button from '@/components/library/Button';
 import Slider from '@/components/library/Slider';
 
 const MODES: Props<null>['mode'][] = ['SINGLE', 'MULTIPLE', 'DYNAMIC', 'MULTIPLE_DYNAMIC'];
@@ -18,7 +19,11 @@ export default function (): JSX.Element {
       <UseCase
         title={'Menu: basic case'}
         initialBgColor={'#F5F5F5'}
-        initialState={{ showCheckboxes: false, selectedValues: ['v1', 'v4'] }}
+        initialState={{
+          showCheckboxes: false,
+          selectedValues: ['v1', 'v4'],
+          highlightedOption: 'v2',
+        }}
       >
         {([state, setState]) => (
           <>
@@ -31,6 +36,10 @@ export default function (): JSX.Element {
               />
             </Label>
             <SelectMenu
+              highlightedOption={state.highlightedOption}
+              onHoverOption={(value) => {
+                setState(() => ({ ...state, highlightedOption: value }));
+              }}
               showCheckboxes={state.showCheckboxes}
               selectedValues={state.selectedValues}
               onSelectOption={(value) => {
@@ -101,6 +110,7 @@ export default function (): JSX.Element {
               options={[
                 {
                   kind: 'GROUP',
+                  id: 'groupA',
                   label: 'Group A',
                   options: [
                     { value: 'v11', label: 'Item A.1' },
@@ -110,6 +120,7 @@ export default function (): JSX.Element {
                 },
                 {
                   kind: 'GROUP',
+                  id: 'groupB',
                   label: 'Group B',
                   options: [
                     { value: 'v21', label: 'Item B.1' },
@@ -730,6 +741,86 @@ export default function (): JSX.Element {
               Placeholder to test page scrolling when opening a select
             </div>
           </>
+        )}
+      </UseCase>
+      <UseCase
+        title={'Using inside of the form'}
+        initialState={{
+          lastSubmittedValue: undefined,
+        }}
+      >
+        {([state, setState]) => (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const data = new FormData(e.currentTarget);
+              const result = {};
+              data.forEach((value, key) => {
+                result[key] = value;
+              });
+              setState((prevState) => ({
+                ...prevState,
+                lastSubmittedValue: {
+                  timestamp: new Date().toISOString(),
+                  formValues: result,
+                },
+              }));
+            }}
+          >
+            <PropertyMatrix yLabel="mode" y={MODES}>
+              {(_, mode) => (
+                <Component
+                  name={`select-${mode}`}
+                  allowClear={state.allowClear}
+                  placeholder={`${mode} select`}
+                  options={[
+                    { value: 'option1', label: 'Option #1' },
+                    {
+                      value: 'option2',
+                      label:
+                        'Option #2 with a very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very, very long title',
+                    },
+                    { value: 'option3', label: 'Option #3' },
+                    { value: 'option4', label: 'Option #4' },
+                    { value: 'option5', label: 'Option #5' },
+                    { value: 'option6', label: 'Option #6' },
+                    { value: 'option7', label: 'Option #7' },
+                    { value: 'option8', label: 'Option #8' },
+                    { value: 'option9', label: 'Option #9' },
+                    { value: 'option10', label: 'Option #10, also a very long title' },
+                    { value: 'option11', label: 'Option #11' },
+                    { value: 'option12', label: 'Option #12' },
+                    { value: 'option13', label: 'Option #13' },
+                    { value: 'option14', label: 'Option #14' },
+                    { value: 'option15', label: 'Option #15' },
+                    { value: 'option16', label: 'Option #16' },
+                  ]}
+                  value={mode === 'SINGLE' || mode === 'DYNAMIC' ? state.value1 : state.value2}
+                  onChange={(newValue) => {
+                    setState((prevState) => ({
+                      ...prevState,
+                      [mode === 'SINGLE' || mode === 'DYNAMIC' ? 'value1' : 'value2']: newValue,
+                    }));
+                  }}
+                  mode={mode}
+                />
+              )}
+            </PropertyMatrix>
+            {state.lastSubmittedValue && (
+              <pre
+                style={{
+                  background: '#fffee8',
+                  border: '1px dashed rgb(213, 206, 162)',
+                  padding: '1rem',
+                  fontSize: '10px',
+                  margin: '10px 0',
+                }}
+              >
+                {JSON.stringify(state.lastSubmittedValue, null, 2)}
+              </pre>
+            )}
+            <Button htmlType="submit">Submit</Button>
+          </form>
         )}
       </UseCase>
     </>

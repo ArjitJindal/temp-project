@@ -46,7 +46,7 @@ import { CounterRepository } from '../counter/repository'
 import { BatchRerunUsersService } from '../batch-users-rerun'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
-import { TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
+import { TenantSettingName, DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ScreeningProfileService } from '@/services/screening-profile'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
@@ -88,7 +88,6 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { auditLog } from '@/utils/audit-log'
 import { AuditLogActionEnum } from '@/@types/openapi-internal/AuditLogActionEnum'
 import {

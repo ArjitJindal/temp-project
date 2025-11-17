@@ -92,6 +92,7 @@ export default function Tag(props: Props) {
                 return (
                   <Tooltip key={key} title={typeof disabled === 'string' ? disabled : undefined}>
                     <button
+                      type="button"
                       disabled={disabled === true || typeof disabled === 'string'}
                       className={s.action}
                       onClick={(e) => {
