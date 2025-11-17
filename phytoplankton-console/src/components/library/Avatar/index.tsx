@@ -1,11 +1,10 @@
 import cn from 'clsx';
 import s from './index.module.less';
-import { Account } from '@/apis';
-import { getDisplayedUserInfo } from '@/utils/user-utils';
+import { AnyAccount, getDisplayedUserInfo } from '@/utils/user-utils';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 interface Props {
-  user: Account | null;
+  user: AnyAccount | null;
   size?: 'small' | 'large' | 'medium' | 'xs';
   isLoading?: boolean;
 }

@@ -184,5 +184,6 @@ export function userToAccount(user: GetUsers200ResponseOneOfInner): Account {
     demoMode: user.user_metadata?.demoMode ?? false,
     staffId: user.user_metadata?.staffId,
     department: user.user_metadata?.department,
+    isFlagrightUser: email?.endsWith('@flagright.com') ?? false,
   }
 }

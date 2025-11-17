@@ -22,6 +22,7 @@ import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg
 import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import Confirm from '@/components/utils/Confirm';
 import { useAlertQaSampling } from '@/utils/api/alerts';
+import { getAccountUserName } from '@/utils/user-utils';
 
 interface TableItem extends AlertsQaSampling {}
 
@@ -102,7 +103,7 @@ const QASamplesTable = () => {
         key: 'createdBy',
         type: {
           stringify: (value) => {
-            return value ? users[value]?.email : '';
+            return value ? getAccountUserName(users[value]) : '';
           },
           render: (value) => <AccountTag accountId={value} />,
         },

@@ -12,7 +12,7 @@ import { useApi } from '@/api';
 import { AlertStatusUpdateRequest, CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useCurrentUser } from '@/utils/user-utils';
+import { getAccountUserName, useAuth0User, useCurrentUser } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
 import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import {
@@ -130,10 +130,7 @@ export default function AlertsStatusChangeModal(props: Props) {
         }
       } else {
         // Has reviewer - show review message for PNB maker/checker workflow
-        const reviewer =
-          users[currentUser.reviewerId]?.name ||
-          users[currentUser.reviewerId]?.email ||
-          currentUser.reviewerId;
+        const reviewer = getAccountUserName(users[currentUser.reviewerId]);
 
         if (childCaseId) {
           message.warn(
@@ -239,10 +236,7 @@ export default function AlertsStatusChangeModal(props: Props) {
       }
 
       if (showReview && currentUser.reviewerId) {
-        const reviewer =
-          users[currentUser.reviewerId]?.name ||
-          users[currentUser.reviewerId]?.email ||
-          currentUser.reviewerId;
+        const reviewer = getAccountUserName(users[currentUser.reviewerId]);
 
         // Mixed batch: show success for sanctions, review for non-sanctions
         if (hasSanctions && hasNonSanctions) {

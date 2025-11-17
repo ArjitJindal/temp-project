@@ -24,7 +24,6 @@ import {
   Comment,
   SanctionsHitStatus,
   CaseStatusChange,
-  Account,
   Alert,
 } from '@/apis';
 import { useApi } from '@/api';
@@ -45,7 +44,7 @@ import { getAlertUrl, makeUrl } from '@/utils/routing';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useHasResources } from '@/utils/user-utils';
+import { AnyAccount, isFullAccount, useAuth0User, useHasResources } from '@/utils/user-utils';
 import { useUsers, useAccounts } from '@/utils/api/auth';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
@@ -186,7 +185,7 @@ interface Props<ModalProps> {
 function getCheckerAction(
   statusChanges: CaseStatusChange[],
   accountMap: {
-    [accountId: string]: Account;
+    [accountId: string]: AnyAccount;
   },
 ) {
   if (statusChanges && statusChanges.length >= 2) {
@@ -272,7 +271,7 @@ const santiziedMakerComment = (comment?: Comment) => {
 
 export function getLatestMakerComment(
   comments: Comment[],
-  accounts: { [accountId: string]: Account },
+  accounts: { [accountId: string]: AnyAccount },
 ): Comment | undefined {
   let latestMakerComment: Comment | undefined = undefined,
     commentTime = 0;
@@ -720,7 +719,14 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             type: {
               ...ASSIGNMENTS,
               stringify: (value) => {
-                return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
+                return `${
+                  value
+                    ?.map((x) => {
+                      const user = users[x.assigneeUserId];
+                      return isFullAccount(user) ? user.email : user.id;
+                    })
+                    .join(',') ?? ''
+                }`;
               },
               render: (assignments, { item: entity }) => {
                 return (

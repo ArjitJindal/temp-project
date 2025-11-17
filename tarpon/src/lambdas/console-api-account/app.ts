@@ -69,7 +69,9 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerGetAccountsData(async (ctx) => {
       const accounts = await getAccountsData(ctx)
-      return pickKnownEntityFields(accounts, AccountMinimum)
+      return accounts.map((account) =>
+        pickKnownEntityFields(account, AccountMinimum)
+      )
     })
 
     handlers.registerAccountsInvite(async (ctx, request) => {

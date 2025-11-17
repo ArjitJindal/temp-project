@@ -2,6 +2,7 @@ import React from 'react';
 import AccountCircleOutline from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import { useUsers } from '@/utils/api/auth';
 import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuickFilter';
+import { getAccountUserName } from '@/utils/user-utils';
 
 interface Props {
   initialState: string[];
@@ -15,7 +16,7 @@ export default function ActivityByFilterButton(props: Props) {
     ? []
     : Object.values(users).map((user) => ({
         value: user.id,
-        label: user.name ?? user.email ?? user.id,
+        label: getAccountUserName(user),
       }));
   return (
     <ListQuickFilter

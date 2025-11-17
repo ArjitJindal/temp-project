@@ -7,7 +7,7 @@ import InputField from '@/components/library/Form/InputField';
 import { AssignmentSelect } from '@/pages/accounts/components/AssignmentSelect';
 import { RoleSelect } from '@/pages/accounts/components/RoleSelect';
 import RadioGroup from '@/components/ui/RadioGroup';
-import { Account } from '@/apis';
+import { AnyAccount } from '@/utils/user-utils';
 
 export type SecondPersonType = 'ROLE' | 'ACCOUNT';
 
@@ -27,7 +27,7 @@ interface Props<FormValues, Key extends keyof FormValues> {
   assignmentsPlaceholder: string;
   roleLabel: string;
   rolePlaceholder: string;
-  assignmentsCustomFilter?: (option: Account) => boolean;
+  assignmentsCustomFilter?: (option: AnyAccount) => boolean;
 }
 
 export default function SecondPersonFields<FormValues, Key extends keyof FormValues>(

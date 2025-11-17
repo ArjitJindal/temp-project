@@ -3,8 +3,14 @@ import { Resource } from '@flagright/lib/utils';
 import cn from 'clsx';
 import s from './index.module.less';
 import Avatar from '@/components/library/Avatar';
-import { getDisplayedUserInfo, useHasResources, useSortedUsers } from '@/utils/user-utils';
-import { Account, Assignment } from '@/apis';
+import {
+  AnyAccount,
+  getDisplayedUserInfo,
+  isFullAccount,
+  useHasResources,
+  useSortedUsers,
+} from '@/utils/user-utils';
+import { Assignment } from '@/apis';
 import AccountTag from '@/components/AccountTag';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import Select from '@/components/library/Select';
@@ -18,7 +24,7 @@ interface Props {
   onChange?: (assignees: string[]) => Promise<void>;
   maxAssignees?: number;
   placeholder?: string;
-  customFilter?: (option: Account) => boolean;
+  customFilter?: (option: AnyAccount) => boolean;
   mutationRes?: AsyncResource;
   requiredResources?: Resource[];
 }
@@ -51,7 +57,7 @@ const AssigneesDropdownContent: React.FC<Props> = ({
         <span data-cy={'user-name'}>{user.name}</span>
       </div>
     ),
-    searchText: `${user.name} ${user.email}`,
+    searchText: `${user.name}${isFullAccount(user) ? ` ${user.email}` : ''}`,
   }));
 
   const tagsStackParams = useMemo(() => {

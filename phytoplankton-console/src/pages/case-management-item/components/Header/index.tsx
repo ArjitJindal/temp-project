@@ -18,7 +18,7 @@ import {
   statusEscalatedL2,
   statusInReview,
 } from '@/utils/case-utils';
-import { useAuth0User, useHasResources, useUser } from '@/utils/user-utils';
+import { useCurrentUser, useCurrentUserId, useHasResources } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
@@ -136,8 +136,8 @@ export default function Header(props: Props) {
   const backUrl = useBackUrl();
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const navigate = useNavigate();
-  const user = useAuth0User();
-  const userAccount = useUser(user.userId);
+  const userId = useCurrentUserId();
+  const userAccount = useCurrentUser();
   const isReopenEnabled = useHasResources(['write:::case-management/case-reopen/*']);
 
   const api = useApi();
@@ -174,10 +174,10 @@ export default function Header(props: Props) {
     }
     return canMutateEscalatedCases(
       { [caseId ?? '']: caseItem },
-      user.userId,
+      userId,
       isMultiLevelEscalationEnabled,
     );
-  }, [caseId, caseItem, isMultiLevelEscalationEnabled, user.userId]);
+  }, [caseId, caseItem, isMultiLevelEscalationEnabled, userId]);
   const statusChangeMutation = useMutation(
     async (newStatus: CaseStatus) => {
       if (caseId == null) {

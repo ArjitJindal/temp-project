@@ -22,7 +22,7 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import { useCurrentUser } from '@/utils/user-utils';
+import { getAccountUserName, useCurrentUser } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { useReasons } from '@/utils/reasons';
@@ -284,7 +284,7 @@ export default function StatusChangeModal(props: Props) {
                 initialValue={formState.values.comment || ''}
                 mentionsEnabled={isMentionsEnabled}
                 mentionsList={Object.keys(users).map((userId) => ({
-                  label: users[userId].email,
+                  label: getAccountUserName(users[userId]),
                   id: users[userId].id,
                 }))}
                 onChange={(v) =>

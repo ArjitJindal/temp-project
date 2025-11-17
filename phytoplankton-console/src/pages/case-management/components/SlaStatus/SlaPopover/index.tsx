@@ -6,13 +6,14 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { SLA_POLICY } from '@/utils/queries/keys';
 import { getOr } from '@/utils/asyncResource';
-import { Case, Alert, Account } from '@/apis';
+import { Alert, Case } from '@/apis';
+import { AnyAccount } from '@/utils/user-utils';
 
 interface Props {
   slaPolicyDetail: SLAPolicyStatusDetails;
   index: number;
   entity: Case | Alert;
-  accounts: Account[];
+  accounts: AnyAccount[];
 }
 
 function SlaPopover(props: Props) {

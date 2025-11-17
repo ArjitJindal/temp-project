@@ -218,7 +218,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       })
     )
 
-    return role.Item?.statements as PermissionStatements[]
+    return (role.Item?.statements ?? []) as PermissionStatements[]
   }
 
   public async deleteRole(id: string) {

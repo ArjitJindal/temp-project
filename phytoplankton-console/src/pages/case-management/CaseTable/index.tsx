@@ -16,8 +16,8 @@ import {
   Comment,
 } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
-import { useAuth0User, useHasResources } from '@/utils/user-utils';
-import { useUsers, useAccounts } from '@/utils/api/auth';
+import { isFullAccount, useAuth0User, useHasResources } from '@/utils/user-utils';
+import { useAccounts, useUsers } from '@/utils/api/auth';
 import {
   AllParams,
   DerivedColumn,
@@ -299,7 +299,14 @@ function CaseTable<FirstModalProps, SecondModalProps>(
         type: {
           ...ASSIGNMENTS,
           stringify: (value) => {
-            return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
+            return `${
+              value
+                ?.map((x) => {
+                  const user = users[x.assigneeUserId];
+                  return isFullAccount(user) ? user.email : user.id;
+                })
+                .join(',') ?? ''
+            }`;
           },
           render: (__, { item: entity }) => {
             return (

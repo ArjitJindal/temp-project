@@ -3,12 +3,13 @@ import s from './styles.module.less';
 import SlaPopover from './SlaPopover';
 import { SLAPolicyStatusDetails } from './SlaPolicyDetails';
 import { SLAPolicyDetails } from '@/apis/models/SLAPolicyDetails';
-import { Case, Alert, Account } from '@/apis';
+import { Alert, Case } from '@/apis';
+import { AnyAccount } from '@/utils/user-utils';
 
 interface Props {
   slaPolicyDetails?: Array<SLAPolicyDetails>;
   entity: Case | Alert;
-  accounts: Account[];
+  accounts: AnyAccount[];
 }
 
 function SlaStatus(props: Props) {

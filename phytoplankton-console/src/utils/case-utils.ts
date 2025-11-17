@@ -2,12 +2,16 @@ import { every, intersection, map, some, uniq } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { areArraysOfObjectsEqual } from '@flagright/lib/utils';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
-import { FLAGRIGHT_SYSTEM_USER, getDisplayedUserInfo } from './user-utils';
+import {
+  AnyAccount,
+  FLAGRIGHT_SYSTEM_USER,
+  getAccountUserName,
+  getDisplayedUserInfo,
+} from './user-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { dayjs } from '@/utils/dayjs';
 import { neverReturn } from '@/utils/lang';
 import {
-  Account,
   Alert,
   AlertStatus,
   AlertStatusUpdateRequest,
@@ -55,7 +59,7 @@ export function isStatusInReview(status: CaseStatus | undefined): boolean {
 
 export const getAssigneeName = (
   users: {
-    [userId: string]: Account;
+    [userId: string]: AnyAccount;
   },
   assigneeIds: string[] | undefined,
   caseStatus: CaseStatus | undefined,
@@ -67,7 +71,7 @@ export const getAssigneeName = (
         ? users[assigneeId]?.escalationLevel === 'L2'
         : users[assigneeId]?.escalationLevel !== 'L2';
     })
-    .map((id) => users[id]?.name ?? users[id]?.email ?? id)
+    .map((id) => getAccountUserName(users[id]) ?? id)
     .join(', ');
 };
 
@@ -262,7 +266,7 @@ export const getStatuses = (
   return selectedStatus;
 };
 
-export function commentsToString(comments: Comment[], users: { [userId: string]: Account }) {
+export function commentsToString(comments: Comment[], users: { [userId: string]: AnyAccount }) {
   return comments?.reduce((commentData, comment, currentIndex) => {
     commentData += `${comment.body}`;
     commentData += comment.createdAt
@@ -284,7 +288,7 @@ export function commentsToString(comments: Comment[], users: { [userId: string]:
 export function casesCommentsGenerator(
   comments: Comment[],
   alerts: Alert[],
-  users: { [userId: string]: Account },
+  users: { [userId: string]: AnyAccount },
   type?: 'STATUS_CHANGE',
 ) {
   const filteredComments = comments?.filter((comment) => comment.type === type);
@@ -354,7 +358,7 @@ export function getEscalationLevel(assignments: Assignment[]): 'L1' | 'L2' | und
 // tells if a user can be assigned to a case/alert based on the status and the user's escalation level
 export function canAssignToUser(
   status: CaseStatus | AlertStatus,
-  user: Account,
+  user: AnyAccount,
   isMultiLevelEscalationEnabled: boolean,
 ): boolean {
   const isItemInReview = statusInReview(status);

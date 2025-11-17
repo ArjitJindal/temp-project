@@ -11,7 +11,7 @@ import { useApi } from '@/api';
 import { CaseStatusUpdate, PEPStatus } from '@/apis';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
-import { useAuth0User, useCurrentUser } from '@/utils/user-utils';
+import { getAccountUserName, useAuth0User, useCurrentUser } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
 import {
   getAssigneeName,
@@ -57,9 +57,7 @@ export default function CasesStatusChangeModal(props: Props) {
 
         if (caseData.caseStatus?.startsWith('IN_REVIEW_')) {
           const reviewer =
-            users[currentUser.reviewerId]?.name ||
-            users[currentUser.reviewerId]?.email ||
-            currentUser.reviewerId;
+            getAccountUserName(users[currentUser.reviewerId]) || currentUser.reviewerId;
 
           message.warn(
             `${pluralize('Case', props.entityIds.length, true)} ${props.entityIds.join(', ')} ${
@@ -151,9 +149,7 @@ export default function CasesStatusChangeModal(props: Props) {
         if (wentToReview && currentUser?.reviewerId) {
           // Case went to review
           const reviewer =
-            users[currentUser.reviewerId]?.name ||
-            users[currentUser.reviewerId]?.email ||
-            currentUser.reviewerId;
+            getAccountUserName(users[currentUser.reviewerId]) || currentUser.reviewerId;
 
           let reviewMessageText = `${pluralize(
             'Case',
