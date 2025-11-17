@@ -1,9 +1,10 @@
 import React, { useContext } from 'react';
 import { hasResources, Resource } from '@flagright/lib/utils';
 import { getBranding } from './branding';
-import { Account, LegalEntity, Permission, PermissionStatements, Person } from '@/apis';
-import { useSettings, useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { useUsers } from '@/utils/api/auth';
+import { Account, LegalEntity, AccountMinimum, Permission, PermissionStatements, Person } from '@/apis';
+import { useResources, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useMe, useUsers } from '@/utils/api/auth';
+import { getOr } from '@/utils/asyncResource';
 
 export enum CommentType {
   COMMENT,
@@ -55,6 +56,7 @@ export const SYSTEM_USERS: Account[] = [
     blocked: false,
     orgName: 'flagright',
     tenantId: 'flagright',
+    isFlagrightUser: true,
   },
   {
     name: API_USER,
@@ -66,10 +68,29 @@ export const SYSTEM_USERS: Account[] = [
     blocked: false,
     orgName: 'flagright',
     tenantId: 'flagright',
+    isFlagrightUser: true,
   },
 ];
 
 export const NAMESPACE = 'https://flagright.com';
+
+export type AnyAccount = Account | AccountMinimum;
+
+export function isFullAccount(account: AnyAccount | null | undefined): account is Account {
+  if (account == null) {
+    return false;
+  }
+  return 'email' in account;
+}
+
+export function isMinimumAccount(
+  account: AnyAccount | null | undefined,
+): account is AccountMinimum {
+  if (account == null) {
+    return false;
+  }
+  return !isFullAccount(account);
+}
 
 export function clearAuth0LocalStorage() {
   const auth0Key = Object.keys(window.localStorage).find((key) => key.includes('@auth0'));
@@ -87,9 +108,8 @@ export function useAuth0User(): FlagrightAuth0User {
 }
 
 export function useCurrentUser(): Account | null {
-  const { users } = useUsers();
-  const userId = useCurrentUserId();
-  return users[userId];
+  const queryResult = useMe();
+  return getOr(queryResult.data, null);
 }
 
 export function useCurrentUserId(): string {
@@ -188,29 +208,31 @@ export function parseUserRole(role: string | null): UserRole {
       return UserRole.USER;
   }
 }
-export function getUserRole(user: FlagrightAuth0User | Account | null): UserRole {
+export function getUserRole(user: FlagrightAuth0User | AnyAccount | null): UserRole {
   return parseUserRole(user?.role ?? null);
 }
 
-export function isSuperAdmin(user: FlagrightAuth0User | Account | null) {
+export function isSuperAdmin(user: FlagrightAuth0User | AnyAccount | null) {
   return isAtLeast(user, UserRole.ROOT);
 }
 
-export function isAbove(user: FlagrightAuth0User | Account | null, role: UserRole) {
+export function isAbove(user: FlagrightAuth0User | AnyAccount | null, role: UserRole) {
   return ROLES_ORDER.indexOf(getUserRole(user)) < ROLES_ORDER.indexOf(role);
 }
 
-export function isAtLeast(user: FlagrightAuth0User | Account | null, role: UserRole) {
+export function isAtLeast(user: FlagrightAuth0User | AnyAccount | null, role: UserRole) {
   if (ROLES_ORDER.indexOf(getUserRole(user)) > ROLES_ORDER.indexOf(role)) {
     return false;
   }
   if (role === UserRole.ROOT && user) {
-    const email = 'verifiedEmail' in user ? user.verifiedEmail : user.email;
-
-    const isFlagrightEmail = email?.endsWith('@flagright.com') ?? false;
-
-    if (!isFlagrightEmail) {
-      return false;
+    if ('isFlagrightUser' in user) {
+      return user.isFlagrightUser ?? false;
+    }
+    if ('verifiedEmail' in user) {
+      const isFlagrightUser = user.verifiedEmail?.endsWith('@flagright.com') ?? false;
+      if (!isFlagrightUser) {
+        return false;
+      }
     }
   }
   return true;
@@ -230,7 +252,7 @@ export function useUserName(userId: string | null | undefined): string {
   return users[userId]?.name ?? userId ?? `Unknown ${settings.userAlias}`;
 }
 
-export function useUser(userId: string | null | undefined): Account | null {
+export function useUser(userId: string | null | undefined): AnyAccount | null {
   const { users, isLoading } = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
 
   if (isLoading || !userId) {
@@ -259,7 +281,7 @@ export function useSortedUsers(
     includeBlockedUsers: false,
     includeSystemUsers: false,
   },
-): [Account[], boolean] {
+): [AnyAccount[], boolean] {
   const currentUser = useAuth0User();
   const { users, isLoading } = useUsers(options);
   return [
@@ -282,26 +304,46 @@ export const isFlagrightInternalUser = (user: FlagrightAuth0User) => {
   return user.verifiedEmail?.endsWith('@flagright.com') ?? false;
 };
 
-const getAccountUserName = (account: Account | undefined, defaultStr?: string): string => {
+export const getAccountUserName = (
+  account: AnyAccount | undefined,
+  defaultStr?: string,
+): string => {
   if (account == null && defaultStr != null) {
     return defaultStr;
   }
-  return (account?.name || account?.email || account?.id) + (account?.blocked ? ' (Deleted)' : '');
+  return (
+    (account?.name || (isFullAccount(account) ? account.email : null) || account?.id) +
+    (account?.blocked ? ' (Deleted)' : '')
+  );
 };
 
 export function isSystemUser(id: string): boolean {
   return SYSTEM_USERS.some((systemUser) => systemUser.id === id);
 }
 
-export function getDisplayedUserInfo(account?: Account | null): { name: string; avatar?: string } {
+export function getDisplayedUserInfo(account?: AnyAccount | null): {
+  name: string;
+  avatar?: string;
+} {
   const branding = getBranding();
   if (account && isSystemUser(account.id)) {
-    return { name: account.name ?? account.email ?? account.id, avatar: branding.systemAvatarUrl };
+    let name: string;
+    if (account.name) {
+      name = account.name;
+    } else if (isFullAccount(account)) {
+      name = account.email;
+    } else {
+      name = account.id;
+    }
+    return { name: name, avatar: branding.systemAvatarUrl };
   }
   if (!account || isSuperAdmin(account) || account.role === UserRole.WHITELABEL_ROOT) {
     return { name: `${branding.companyName} System`, avatar: branding.systemAvatarUrl };
   }
-  return { name: getAccountUserName(account), avatar: account.picture };
+  return {
+    name: getAccountUserName(account),
+    avatar: isFullAccount(account) ? account.picture : undefined,
+  };
 }
 
 export function getAvatarText(name: string): string {

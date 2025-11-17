@@ -1,7 +1,7 @@
 import { flatten } from 'lodash';
 import ActivityCard from '@/components/ActivityCard';
 import { useApi } from '@/api';
-import { CommentType, isPerson } from '@/utils/user-utils';
+import { AnyAccount, CommentType, isPerson } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
@@ -15,7 +15,6 @@ import {
 } from '@/components/ActivityCard/helpers';
 import {
   AuditLog,
-  Account,
   InternalConsumerUser,
   InternalBusinessUser,
   Comment,
@@ -169,14 +168,14 @@ export default function UserActivityCard(props: Props) {
 
 const getLogData = (
   logs: AuditLog[],
-  users: { [userId: string]: Account },
+  users: { [userId: string]: AnyAccount },
   type: 'USER' | 'CASE',
   riskClassificationValues: RiskClassificationScore[],
   riskLevelAlias: AliasMapping,
 ): LogItemData[] => {
   const logItemData: LogItemData[] = logs
     .map((log, index) => {
-      let currentUser: Account | null = null;
+      let currentUser: AnyAccount | null = null;
       if (log?.user?.id && users[log?.user?.id]) {
         currentUser = users[log?.user?.id];
       }

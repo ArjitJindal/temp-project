@@ -13,7 +13,7 @@ export default function Avatar() {
     </span>
   );
 
-  if (!user || !user.name) {
+  if (!user) {
     return loading;
   }
 

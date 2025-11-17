@@ -8,9 +8,10 @@ import NotificationsDrawer from '@/components/AppWrapper/Menu/Notifications/Noti
 import Button from '@/components/library/Button';
 import Select from '@/components/library/Select';
 import { useUsers } from '@/utils/api/auth';
-import { NotificationType, Account } from '@/apis';
+import { NotificationType } from '@/apis';
 import { success } from '@/utils/asyncResource';
 import { neverReturn } from '@/utils/lang';
+import { AnyAccount } from '@/utils/user-utils';
 
 export default function (): JSX.Element {
   const { users } = useUsers();
@@ -146,7 +147,7 @@ export default function (): JSX.Element {
   );
 }
 
-function sampleNotification(notificationType: NotificationType, users: Account[]) {
+function sampleNotification(notificationType: NotificationType, users: AnyAccount[]) {
   const usersList = Object.values(users);
   const randomUser1 = usersList[Math.floor(Math.random() * usersList.length)];
   const randomUser2 = usersList[Math.floor(Math.random() * usersList.length)];

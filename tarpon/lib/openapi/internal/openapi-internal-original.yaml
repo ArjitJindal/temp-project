@@ -12035,10 +12035,16 @@ components:
           $ref: '#/components/schemas/EscalationLevel'
         isReviewer:
           type: boolean
+        reviewerId:
+          type: string
+        escalationReviewerId:
+          type: string
         demoMode:
           type: boolean
         tenantId:
           type: string
+        isFlagrightUser:
+          type: boolean
       required:
         - id
         - role

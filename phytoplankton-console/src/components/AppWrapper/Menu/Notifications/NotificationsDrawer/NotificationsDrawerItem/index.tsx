@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router';
 import s from './index.module.less';
 import NotificationMessage from './NotificationMessage';
 import Avatar from '@/components/library/Avatar';
-import { Account, Notification as NotificationBase } from '@/apis';
+import { Notification as NotificationBase } from '@/apis';
 import { dayjs, TIME_FORMAT_WITHOUT_SECONDS, duration } from '@/utils/dayjs';
 import { Mutation } from '@/utils/queries/types';
+import { AnyAccount } from '@/utils/user-utils';
 
 export type Notification = NotificationBase;
 
@@ -22,7 +23,7 @@ interface Props {
     unknown
   >;
   users: {
-    [userId: string]: Account;
+    [userId: string]: AnyAccount;
   };
 }
 

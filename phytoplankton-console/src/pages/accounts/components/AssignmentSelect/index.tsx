@@ -1,11 +1,12 @@
 import React from 'react';
-import { Account, Assignment } from '@/apis';
+import { Assignment } from '@/apis';
 import { AssigneesDropdown } from '@/components/AssigneesDropdown';
 import { InputProps } from '@/components/library/Form';
+import { AnyAccount } from '@/utils/user-utils';
 
 interface Props extends InputProps<string[]> {
   placeholder?: string;
-  customFilter?: (option: Account) => boolean;
+  customFilter?: (option: AnyAccount) => boolean;
 }
 
 export function AssignmentSelect(props: Props) {

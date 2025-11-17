@@ -1,12 +1,12 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import Avatar from '@/components/library/Avatar';
-import { Account } from '@/apis';
 import Tag from '@/components/library/Tag';
+import { AnyAccount } from '@/utils/user-utils';
 
 interface Props {
   userId: string;
-  users: { [userId: string]: Account };
+  users: { [userId: string]: AnyAccount };
   loadingUsers: boolean;
 }
 

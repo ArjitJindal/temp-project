@@ -3,11 +3,11 @@ import { capitalize, has } from 'lodash';
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { LogItemData } from './LogCard/LogContainer/LogItem';
-import { Account, Assignment, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
+import { Assignment, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { formatDuration, getDuration } from '@/utils/time-utils';
-import { getDisplayedUserInfo } from '@/utils/user-utils';
+import { AnyAccount, getAccountUserName, getDisplayedUserInfo } from '@/utils/user-utils';
 import { statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import Avatar from '@/components/library/Avatar';
@@ -30,13 +30,13 @@ export const isActionDelete = (log: AuditLog): boolean => {
 
 export const getCreateStatement = (
   log: AuditLog,
-  users: { [userId: string]: Account },
+  users: { [userId: string]: AnyAccount },
   type: 'USER' | 'CASE',
   riskClassificationValues: Array<RiskClassificationScore>,
   riskLevelAlias: Record<string, string> = {},
 ): ReactElement | null => {
   const user = log.user?.id ? users[log.user?.id] : undefined;
-  const userName = user ? (user.role === 'root' ? 'system' : user.name ?? user.email) : 'system';
+  const userName = user ? (user.role === 'root' ? 'system' : getAccountUserName(user)) : 'system';
   const entityType = log.type;
   const entityId = log.entityId;
   const subtype = extractSubtype(log) as AuditLog['subtype'];
@@ -344,7 +344,7 @@ export const extractSubtype = (log: AuditLog): string | undefined => {
   return undefined;
 };
 
-export const getAssignee = (newImage: any, users: { [userId: string]: Account }) => {
+export const getAssignee = (newImage: any, users: { [userId: string]: AnyAccount }) => {
   const assignments: Assignment[] = has<{
     reviewAssignments?: Assignment[];
     assignments?: Assignment[];
@@ -376,7 +376,7 @@ export const handleEscalatedStatus = (
   makerUserName: string,
   checkerUserName: string,
   type: 'USER' | 'CASE',
-  users: { [userId: string]: Account },
+  users: { [userId: string]: AnyAccount },
 ) => {
   const entityType = log.type === 'ALERT' ? checkIfTransactions(log) : log.type;
   const entityId = entityType === 'TRANSACTION' ? getEscalatedTransactions(log) : [log.entityId];
@@ -776,13 +776,13 @@ export const getEscalatedTransactions = (log: AuditLog) => {
 
 export const getLogData = function (
   logs: AuditLog[],
-  users: { [userId: string]: Account },
+  users: { [userId: string]: AnyAccount },
   type: 'USER' | 'CASE',
   riskClassificationValues: Array<RiskClassificationScore>,
 ): LogItemData[] {
   const logItemData: LogItemData[] = logs
     .map((log) => {
-      let currentUser: Account | null = null;
+      let currentUser: AnyAccount | null = null;
       if (log?.user?.id && users[log?.user?.id]) {
         currentUser = users[log?.user?.id];
       }

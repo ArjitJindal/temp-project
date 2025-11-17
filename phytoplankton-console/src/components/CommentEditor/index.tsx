@@ -15,6 +15,8 @@ import { Hint } from '@/components/library/Form/InputField';
 import { uploadFile } from '@/utils/file-uploader';
 import { useUsers } from '@/utils/api/auth';
 import { getErrorMessage } from '@/utils/lang';
+import { isFullAccount } from '@/utils/user-utils';
+import { notNullish } from '@/utils/array';
 
 export const MAX_COMMENT_LENGTH = 10000;
 
@@ -142,10 +144,18 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
           }}
           placeholder={placeholder}
           mentionsEnabled={isMentionsEnabled}
-          mentionsList={Object.keys(users).map((userId) => ({
-            label: users[userId].email,
-            id: users[userId].id,
-          }))}
+          mentionsList={Object.keys(users)
+            .map((userId) => {
+              const user = users[userId];
+              if (!isFullAccount(user)) {
+                return null;
+              }
+              return {
+                label: user.email,
+                id: user.id,
+              };
+            })
+            .filter(notNullish)}
           editorHeight={editorHeight}
           onDropFiles={handleFilesUpload}
         />

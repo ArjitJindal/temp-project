@@ -27,6 +27,7 @@ import { Authorized } from '@/components/utils/Authorized';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
 import { useAlertQaSample } from '@/utils/api/alerts';
+import { getAccountUserName } from '@/utils/user-utils';
 
 export const QASamplePage = () => {
   const { samplingId } = useParams<{ samplingId: string }>() as { samplingId: string };
@@ -162,10 +163,7 @@ export const QASamplePage = () => {
                         Created by -
                       </P>
                       <Avatar user={users[sample.createdBy as string]} size="xs" />
-                      <P variant="s">
-                        {users[sample.createdBy as string]?.name ||
-                          users[sample.createdBy as string]?.email}
-                      </P>
+                      <P variant="s">{getAccountUserName(users[sample.createdBy])}</P>
                     </div>
                     <div className={s.cardBottomItem}>
                       <P variant="s" grey>

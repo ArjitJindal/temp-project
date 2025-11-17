@@ -17,7 +17,7 @@ import {
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
-import { useAuth0User } from '@/utils/user-utils';
+import { AnyAccount, getAccountUserName, useAuth0User } from '@/utils/user-utils';
 import TextInput from '@/components/library/TextInput';
 import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
@@ -38,7 +38,7 @@ interface Props {
   onSuccess: () => void;
   isVisibile: boolean;
   onChangeVisibility: (isVisible: boolean) => void;
-  accounts: Account[];
+  accounts: AnyAccount[];
 }
 
 type ReviewPermission = 'MAKER' | 'CHECKER' | 'ESCALATION_L1' | 'ESCALATION_L2';
@@ -353,7 +353,7 @@ export default function AccountForm(props: Props) {
               if (values?.reviewPermissions !== 'CHECKER') {
                 const associatedMakers = accounts
                   .filter((account) => account.reviewerId === accountId)
-                  .map((account) => account.email)
+                  .map((account) => getAccountUserName(account))
                   .join(', ');
                 return `This checker is assigned to the following makers: ${associatedMakers}. Please reassign these makers before changing the role.`;
               }
@@ -368,7 +368,7 @@ export default function AccountForm(props: Props) {
                       account.escalationReviewerId === accountId &&
                       account.escalationLevel === 'L1',
                   )
-                  .map((account) => account.email)
+                  .map((account) => getAccountUserName(account))
                   .join(', ');
                 return `This escalation L2 is assigned to the following escalation L1 users: ${associatedEscalationL1}. Please reassign these users before changing the role.`;
               }

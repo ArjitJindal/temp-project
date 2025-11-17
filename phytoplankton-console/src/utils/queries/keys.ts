@@ -89,6 +89,9 @@ export const TRANSACTIONS_EVENTS_FIND = (transactionId: string, params: any): Qu
   params,
 ];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
+export const ACCOUNT_LIST_FULL = (): QueryKey => ['accounts', 'list', 'full'];
+export const ACCOUNT_LIST_ANY = (): QueryKey => ['accounts', 'list', 'any'];
+export const ACCOUNT_CURRENT = (): QueryKey => ['accounts', 'current'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const CRM_ACCOUNT = (userId: string): QueryKey => ['crmaccount', userId];
 export const CRM_RECORDS = (

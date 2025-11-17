@@ -8,6 +8,7 @@ import Alert from '@/components/library/Alert';
 import { useRoles, useUsers } from '@/utils/api/auth';
 
 import { useFieldState } from '@/components/library/Form/utils/hooks';
+import { getAccountUserName } from '@/utils/user-utils';
 
 export function AlertAssignedToInput() {
   const alertAssigneesTypeFieldState = useFieldState<FormValues>('alertAssigneesType');
@@ -16,7 +17,10 @@ export function AlertAssignedToInput() {
   const { rolesList } = useRoles();
   const options = useMemo(() => {
     if (alertAssigneesTypeFieldState.value === 'EMAIL') {
-      return Object.values(users).map((user) => ({ label: user?.email, value: user?.id }));
+      return Object.values(users).map((user) => ({
+        label: getAccountUserName(user),
+        value: user?.id,
+      }));
     } else {
       return rolesList
         .map((role) => ({ label: capitalize(role.name) ?? '', value: role.id ?? '' }))

@@ -22,8 +22,9 @@ import NarrativesSelectStatusChange from '@/pages/case-management/components/Nar
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
-import { useHasResources } from '@/utils/user-utils';
+import { isFullAccount, useHasResources } from '@/utils/user-utils';
 import { useUsers } from '@/utils/api/auth';
+import { notNullish } from '@/utils/array';
 
 export const OTHER_REASON: string = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
@@ -235,10 +236,18 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
                 }}
                 placeholder={placeholder}
                 mentionsEnabled={isMentionsEnabled}
-                mentionsList={Object.keys(users).map((userId) => ({
-                  label: users[userId].email,
-                  id: users[userId].id,
-                }))}
+                mentionsList={Object.keys(users)
+                  .map((userId) => {
+                    const user = users[userId];
+                    if (!isFullAccount(user)) {
+                      return null;
+                    }
+                    return {
+                      label: user.email,
+                      id: user.id,
+                    };
+                  })
+                  .filter(notNullish)}
               />
             </>
           )}

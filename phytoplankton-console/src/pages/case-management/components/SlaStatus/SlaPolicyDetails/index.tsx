@@ -7,7 +7,6 @@ import { H5, P } from '@/components/ui/Typography';
 import { SLAPolicy } from '@/apis/models/SLAPolicy';
 import { dayjs, duration } from '@/utils/dayjs';
 import {
-  Account,
   Alert,
   AlertStatus,
   Case,
@@ -21,6 +20,7 @@ import {
 } from '@/apis';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { statusEscalatedL2, statusEscalated, isStatusInReview } from '@/utils/case-utils';
+import { AnyAccount } from '@/utils/user-utils';
 
 export interface SLAPolicyStatusDetails extends SLAPolicyDetails {
   policyStatus: SLAPolicyStatus;
@@ -29,7 +29,7 @@ interface Props {
   slaPolicyDetail: SLAPolicyStatusDetails;
   policy?: SLAPolicy;
   entity: Case | Alert;
-  accounts: Account[];
+  accounts: AnyAccount[];
 }
 
 export const statusClass = {
@@ -100,7 +100,7 @@ export function operatorCheck(operator: NumberOperators, lhs: number, rhs: numbe
 
 export function matchPolicyRoleConditions(
   policyConfiguration: SLAPolicyConfiguration,
-  accounts: Account[],
+  accounts: AnyAccount[],
 ): boolean {
   if (!policyConfiguration.accountRoles || policyConfiguration.accountRoles.length === 0) {
     return true;
@@ -147,8 +147,8 @@ export function matchPolicyStatusConditions(
   statusCount: number,
   policyConfiguration: SLAPolicyConfiguration,
   accounts: {
-    makerAccounts: Account[];
-    reviewerAccounts: Account[];
+    makerAccounts: AnyAccount[];
+    reviewerAccounts: AnyAccount[];
   },
 ): boolean {
   const { makerAccounts, reviewerAccounts } = accounts;
@@ -193,7 +193,7 @@ export function matchPolicyStatusConditions(
 export async function getPolicyTime(
   policy: SLAPolicy,
   entity: Case | Alert,
-  accounts: Account[],
+  accounts: AnyAccount[],
 ): Promise<string> {
   try {
     const makerAccounts = entity.assignments

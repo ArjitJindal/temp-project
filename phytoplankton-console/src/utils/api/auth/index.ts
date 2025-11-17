@@ -8,7 +8,9 @@ import { INTERCOMM_TOKEN_EXPIRY_TIME } from '@flagright/lib/utils/time';
 import { getCookie } from './helper';
 import { useQuery } from '@/utils/queries/hooks';
 import {
-  ACCOUNT_LIST,
+  ACCOUNT_LIST_ANY,
+  ACCOUNT_LIST_FULL,
+  ACCOUNT_CURRENT,
   CLUESO_TOKEN,
   INTERCOMM_TOKEN,
   PERMISSIONS_STATEMENTS,
@@ -18,18 +20,21 @@ import {
   USER_INFO,
 } from '@/utils/queries/keys';
 import {
+  AnyAccount,
   FlagrightAuth0User,
   isAtLeast,
   NAMESPACE,
   parseUserRole,
   SYSTEM_USERS,
   useAuth0User,
+  useHasMinimumPermission,
   UserRole,
 } from '@/utils/user-utils';
 import { Account, ApiException, Permission } from '@/apis';
 import { useApi } from '@/api';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { dayjs } from '@/utils/dayjs';
+import { QueryResult } from '@/utils/queries/types';
 
 export const useFlagrightUser = () => {
   const { getAccessTokenSilently } = useAuth0();
@@ -99,13 +104,53 @@ export const useRoles = () => {
   };
 };
 
-export const useAccounts = () => {
+export const useFullAccounts = () => {
   const api = useApi();
   return useQuery(
-    ACCOUNT_LIST(),
+    ACCOUNT_LIST_FULL(),
     async () => {
       try {
         return await api.getAccounts();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
+};
+
+export const useAccounts = (): QueryResult<AnyAccount[]> => {
+  const hasFullAccountsPermission = useHasMinimumPermission(['read:::accounts/overview/*']);
+  const api = useApi();
+  return useQuery(
+    ACCOUNT_LIST_ANY(),
+    async () => {
+      try {
+        if (hasFullAccountsPermission) {
+          return await api.getAccounts();
+        }
+        return await api.getAccountsData();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    },
+    {
+      staleTime: Infinity,
+    },
+  );
+};
+
+export const useMe = (): QueryResult<Account> => {
+  const api = useApi();
+  return useQuery(
+    ACCOUNT_CURRENT(),
+    async () => {
+      try {
+        return await api.me();
       } catch (e) {
         console.error(e);
         return [];
@@ -194,8 +239,9 @@ export const useAuthUpdates = () => {
   const queryClient = useQueryClient();
 
   const updateAccounts = useCallback(
-    (updater: Updater<Account[] | undefined>) => {
-      queryClient.setQueryData(ACCOUNT_LIST(), updater);
+    (updater: Updater<AnyAccount[] | undefined>) => {
+      queryClient.setQueryData(ACCOUNT_LIST_ANY(), updater);
+      queryClient.setQueryData(ACCOUNT_LIST_FULL(), updater);
     },
     [queryClient],
   );

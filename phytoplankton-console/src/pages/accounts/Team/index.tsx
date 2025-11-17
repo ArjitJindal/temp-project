@@ -5,7 +5,13 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
 import { ResetUserMfa } from '../components/ResetUserMfa';
 import s from './index.module.less';
-import { parseUserRole, useAuth0User, useHasResources, UserRole } from '@/utils/user-utils';
+import {
+  AnyAccount,
+  parseUserRole,
+  useAuth0User,
+  useHasResources,
+  UserRole,
+} from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { Account } from '@/apis';
@@ -29,11 +35,11 @@ import { QueryResult } from '@/utils/queries/types';
 import { isSuccess, loading, success } from '@/utils/asyncResource';
 import { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';
-import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { useAccounts, useAuthUpdates } from '@/utils/api/auth';
+import { useAuthUpdates, useFullAccounts } from '@/utils/api/auth';
+import { ACCOUNT_LIST } from '@/utils/queries/keys';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -43,7 +49,8 @@ export default function Team() {
   const [deletedUserId, setDeletedUserId] = useState<string | null>(null);
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   let messageVar: CloseMessage | null = null;
-  const allAccountsResult = useAccounts();
+  const allAccountsResult = useFullAccounts();
+
   const queryClient = useQueryClient();
   const isNewFeaturesEnabled = useFeatureEnabled('NEW_FEATURES');
   const accountsResult: QueryResult<PaginatedData<Account>> = useMemo(() => {
@@ -100,7 +107,7 @@ export default function Team() {
     },
     {
       onSuccess: (data: Account, { deactivate }) => {
-        updateAccounts((oldData: Account[] | undefined) => {
+        updateAccounts((oldData: AnyAccount[] | undefined) => {
           return oldData?.map((account) => {
             if (account.id === data.id) {
               return { ...account, blocked: data.blocked, blockedReason: data.blockedReason };

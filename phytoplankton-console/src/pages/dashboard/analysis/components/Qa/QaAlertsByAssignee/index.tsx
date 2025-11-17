@@ -13,6 +13,7 @@ import { WidgetProps } from '@/components/library/Widget/types';
 import { useUsers } from '@/utils/api/auth';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { map, getOr, isSuccess } from '@/utils/asyncResource';
+import { getAccountUserName } from '@/utils/user-utils';
 
 interface Props extends WidgetProps {}
 
@@ -63,7 +64,7 @@ const QaAlertsByAssignee = (props: Props) => {
         const dataToExport = getOr(itemsRes, []).map((item) => {
           return {
             accountId: `${item.accountId}`,
-            name: users?.[item.accountId]?.name ?? users?.[item.accountId]?.email ?? item.accountId,
+            name: getAccountUserName(users?.[item.accountId]),
             alertsAssignedForQa: item.alertsAssignedForQa,
             alertsQAed: item.alertsQaedByAssignee,
           };
@@ -94,10 +95,7 @@ const QaAlertsByAssignee = (props: Props) => {
                       ? ((item.alertsQaedByAssignee / item.alertsAssignedForQa) * 100).toFixed(2)
                       : '0';
                     return {
-                      label:
-                        users?.[item.accountId]?.name ??
-                        users?.[item.accountId]?.email ??
-                        item.accountId,
+                      label: getAccountUserName(users?.[item.accountId]),
                       value: parseFloat(percentage),
                       info: (
                         <span>

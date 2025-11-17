@@ -24,14 +24,7 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
-import {
-  Account,
-  ChecklistStatus,
-  DerivedStatus,
-  PaymentMethod,
-  SLAPolicy,
-  SLAPolicyStatus,
-} from '@/apis';
+import { ChecklistStatus, DerivedStatus, PaymentMethod, SLAPolicy, SLAPolicyStatus } from '@/apis';
 import { isValidTableListViewEnum } from '@/apis/models-custom/TableListViewEnum';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
@@ -49,6 +42,7 @@ import { TransactionsTableParams } from '@/pages/transactions/components/Transac
 import { useCombinedReasons } from '@/utils/reasons';
 import { useUsersUniques } from '@/utils/api/users';
 import { getOr } from '@/utils/asyncResource';
+import { AnyAccount } from '@/utils/user-utils';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -587,7 +581,7 @@ export const useCaseAlertFilters = (
 export const getSlaColumnsForExport = <T extends ColumnHelper<any>>(
   helper: T,
   slaPolicies: SLAPolicy[],
-  accounts: Account[],
+  accounts: AnyAccount[],
 ) => {
   const columns = range(0, MAX_SLA_POLICIES_PER_ENTITY).flatMap((i) => [
     helper.simple<'slaPolicyDetails'>({

@@ -3,13 +3,12 @@ import cn from 'clsx';
 import s from './index.module.less';
 import Tooltip from '@/components/library/Tooltip';
 import Button from '@/components/library/Button';
-import { Account } from '@/apis';
-import { useSortedUsers } from '@/utils/user-utils';
+import { AnyAccount, isFullAccount, useSortedUsers } from '@/utils/user-utils';
 
 interface Props {
-  onSelect: (account: Account) => void;
+  onSelect: (account: AnyAccount) => void;
   isDisabled?: boolean;
-  userFilter?: (account: Account) => boolean;
+  userFilter?: (account: AnyAccount) => boolean;
   tooltip?: string;
 }
 
@@ -28,7 +27,11 @@ export default function AssignToButton(props: Props) {
           }}
         >
           <div className={cn(s.item)} data-cy="assignment-option">
-            <img className={s.userPicture} src={account.picture} alt="User picture" />
+            <img
+              className={s.userPicture}
+              src={isFullAccount(account) ? account.picture : undefined}
+              alt="User picture"
+            />
             {account.name}
           </div>
         </AntMenu.Item>

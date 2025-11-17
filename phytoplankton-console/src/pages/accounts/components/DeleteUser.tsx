@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Account, AccountDeletePayload } from '@/apis';
-import { FlagrightAuth0User, UserRole } from '@/utils/user-utils';
+import { AccountDeletePayload } from '@/apis';
+import { AnyAccount, FlagrightAuth0User, getAccountUserName, UserRole } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import Modal from '@/components/library/Modal';
@@ -12,9 +12,9 @@ import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-2-line
 import Confirm from '@/components/utils/Confirm';
 
 interface DeleteUserProps {
-  item: Account;
+  item: AnyAccount;
   user: FlagrightAuth0User;
-  accounts: Account[];
+  accounts: AnyAccount[];
   onSuccess: () => void;
   setDeletedUserId: (id: string) => void;
 }
@@ -69,7 +69,7 @@ export function DeleteUser(props: DeleteUserProps) {
       if (isReviewerIdAlreadyUsed) {
         const associatedMakers = accounts
           .filter((account) => account.reviewerId === item.id)
-          .map((account) => account.email)
+          .map((account) => getAccountUserName(account))
           .join(', ');
         message.error(
           `This checker is assigned to the following makers: ${associatedMakers}. Please reassign these makers before deleting the checker.`,
@@ -88,7 +88,7 @@ export function DeleteUser(props: DeleteUserProps) {
             (account) =>
               account.escalationReviewerId === item.id && account.escalationLevel === 'L1',
           )
-          .map((account) => account.email)
+          .map((account) => getAccountUserName(account))
           .join(', ');
         message.error(
           `This escalation L2 is assigned to the following escalation L1 users: ${associatedEscalationL1}. Please reassign these users before deleting the escalation L2.`,
@@ -163,10 +163,10 @@ export function DeleteUser(props: DeleteUserProps) {
               options={accounts
                 .filter((account) => account.id !== item.id)
                 .map((account) => ({
-                  label: account.email,
+                  label: getAccountUserName(account),
                   value: account.id,
                 }))}
-              placeholder="Select an account Email ID"
+              placeholder="Select an account"
               mode="SINGLE"
               onChange={(value) => setReassignTo(value ?? null)}
               value={reassignTo}
