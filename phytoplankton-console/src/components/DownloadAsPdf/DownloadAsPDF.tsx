@@ -305,9 +305,11 @@ const DownloadAsPDF = async (props: Props) => {
         position += reportTitle ? 16 : 0;
         if (!addRecurringPages) {
           const canvas = await html2canvas(input, {
-            scale: Math.min(2, (window as any).devicePixelRatio || 2),
+            scale: Math.min(4, Math.max(2, (window as any).devicePixelRatio || 2)),
             useCORS: true,
             backgroundColor: '#ffffff',
+            logging: false,
+            allowTaint: false,
           });
           const imgData = canvas.toDataURL('image/png');
           const remainingHeight = pageHeight - position - 10;
@@ -334,7 +336,13 @@ const DownloadAsPDF = async (props: Props) => {
           });
           position = position + imgHeight + 10;
         } else {
-          const canvas = await html2canvas(input);
+          const canvas = await html2canvas(input, {
+            scale: Math.min(4, Math.max(2, (window as any).devicePixelRatio || 2)),
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            allowTaint: false,
+          });
 
           const imgData = canvas.toDataURL('image/png');
           imgHeight = (canvas.height * pageWidth) / canvas.width;

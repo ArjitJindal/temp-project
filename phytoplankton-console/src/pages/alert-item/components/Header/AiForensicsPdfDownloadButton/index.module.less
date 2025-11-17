@@ -8,6 +8,9 @@
   background-color: white;
   padding: 20px;
   z-index: -9999;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .pdfPage {
@@ -15,6 +18,8 @@
   background-color: white;
   padding: 90px 20px 20px 20px;
   min-height: 800px;
+  transform: translateZ(0);
+  will-change: contents;
 }
 
 .pdfHeader {
