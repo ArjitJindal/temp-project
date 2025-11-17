@@ -6,6 +6,7 @@ import { UserRule } from './rule'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
+import { isPerson } from '@/utils/helpers'
 
 type ChecksFor = 'nationality' | 'residence' | 'registration'
 
@@ -67,13 +68,18 @@ export default class UserOnboardedFromHighRiskCountry extends UserRule<UserOnboa
         businessUser.legalEntity.companyRegistrationDetails?.registrationCountry
 
       const shareHoldersCountriesOfNationality = compact(
-        businessUser?.shareHolders?.map(
-          (shareHolder) => shareHolder.generalDetails.countryOfNationality
+        businessUser?.shareHolders?.map((shareHolder) =>
+          isPerson(shareHolder)
+            ? shareHolder.generalDetails.countryOfNationality
+            : shareHolder.companyRegistrationDetails?.registrationCountry
         )
       )
+
       const shareHoldersResidenceCountries = compact(
-        businessUser?.shareHolders?.map(
-          (shareHolder) => shareHolder.generalDetails.countryOfResidence
+        businessUser?.shareHolders?.map((shareHolder) =>
+          isPerson(shareHolder)
+            ? shareHolder.generalDetails.countryOfResidence
+            : shareHolder.companyRegistrationDetails?.taxResidenceCountry
         )
       )
 

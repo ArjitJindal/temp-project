@@ -5,11 +5,13 @@ import { USERS_COLLECTION } from '@/utils/mongo-table-names'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import {
+  legalEntityToRow,
   personColumns,
   personToRow,
 } from '@/services/copilot/questions/definitions/common/person'
 import { searchUser } from '@/services/copilot/questions/definitions/common/search'
 import { queryUsername } from '@/services/copilot/questions/definitions/util'
+import { isPerson } from '@/utils/helpers'
 
 export const Shareholders: TableQuestion<{ userId: string }> = {
   type: 'TABLE',
@@ -28,7 +30,11 @@ export const Shareholders: TableQuestion<{ userId: string }> = {
       .findOne({ userId })
     const items =
       result?.type === 'BUSINESS' && result.shareHolders
-        ? result.shareHolders.map(personToRow)
+        ? result.shareHolders.map((shareHolder) =>
+            isPerson(shareHolder)
+              ? personToRow(shareHolder)
+              : legalEntityToRow(shareHolder)
+          )
         : []
     return {
       data: {

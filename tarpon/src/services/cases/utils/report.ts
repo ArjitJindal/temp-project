@@ -21,7 +21,7 @@ import { Person } from '@/@types/openapi-internal/Person'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import { PaymentMethod } from '@/@types/openapi-internal/PaymentMethod'
 import { MissingUser } from '@/@types/openapi-internal/MissingUser'
-import { formatConsumerName, getUserName } from '@/utils/helpers'
+import { formatConsumerName, getUserName, isPerson } from '@/utils/helpers'
 import dayjs, { duration } from '@/utils/dayjs'
 import { AccountsService } from '@/services/accounts'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -39,6 +39,7 @@ import { WalletDetails } from '@/@types/openapi-internal/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-internal/CheckDetails'
 import { CashDetails } from '@/@types/openapi-internal/CashDetails'
 import { NPPDetails } from '@/@types/openapi-public/NPPDetails'
+import { LegalEntity } from '@/@types/openapi-internal/LegalEntity'
 
 interface ReportParams {
   afterTimestamp: number
@@ -678,32 +679,116 @@ function exportFinantialDetails(user: InternalBusinessUser) {
   ]
 }
 
-function exportPerson(person: Person): Item[] {
-  const { generalDetails, tags } = person
-  return [
-    {
-      section: 'General details',
-      children: [
-        ['First name', formatConsumerName(generalDetails.name)],
-        ['Date of birth', generalDetails.dateOfBirth],
-        ['Gender', generalDetails.gender],
-        [
-          'Country of residence',
-          exportCountry(generalDetails.countryOfResidence),
+function exportPerson(person: Person | LegalEntity): Item[] {
+  if (isPerson(person)) {
+    const { generalDetails, tags } = person
+    return [
+      {
+        section: 'General details',
+        children: [
+          ['First name', formatConsumerName(generalDetails.name)],
+          ['Date of birth', generalDetails.dateOfBirth],
+          ['Gender', generalDetails.gender],
+          [
+            'Country of residence',
+            exportCountry(generalDetails.countryOfResidence),
+          ],
+          [
+            'Country of nationality',
+            exportCountry(generalDetails.countryOfNationality),
+          ],
+          ...exportTags(tags),
         ],
-        [
-          'Country of nationality',
-          exportCountry(generalDetails.countryOfNationality),
+      },
+      {
+        section: 'Contact details',
+        children: exportContactDetails(person.contactDetails),
+      },
+      ...exportLegalDocuments(person.legalDocuments ?? []),
+    ]
+  } else {
+    // LegalEntity
+    const { companyGeneralDetails } = person
+    return [
+      {
+        section: 'General details',
+        children: [
+          ['Legal name', companyGeneralDetails?.legalName],
+          [
+            'Business industry',
+            companyGeneralDetails?.businessIndustry?.join(STRING_JOINER),
+          ],
+          [
+            'Main products and services',
+            companyGeneralDetails?.mainProductsServicesSold?.join(
+              STRING_JOINER
+            ),
+          ],
+          [
+            'Operating countries',
+            companyGeneralDetails?.operatingCountries
+              ?.map((code) => exportCountry(code))
+              .filter(notEmpty)
+              .join(STRING_JOINER),
+          ],
+          ['Alias', companyGeneralDetails?.alias?.join(STRING_JOINER)],
+          ['User segment', companyGeneralDetails?.userSegment],
+          [
+            'User registration status',
+            companyGeneralDetails?.userRegistrationStatus,
+          ],
+          ...exportTags(companyGeneralDetails?.tags),
         ],
-        ...exportTags(tags),
-      ],
-    },
-    {
-      section: 'Contact details',
-      children: exportContactDetails(person.contactDetails),
-    },
-    ...exportLegalDocuments(person.legalDocuments ?? []),
-  ]
+      },
+      {
+        section: 'Contact details',
+        children: exportContactDetails(person.contactDetails),
+      },
+      ...(person.companyFinancialDetails
+        ? [
+            {
+              section: 'Financial details',
+              children: [
+                [
+                  'Expected total transaction volume per month',
+                  `${person.companyFinancialDetails?.expectedTransactionAmountPerMonth?.amountValue?.toLocaleString()} ${
+                    person.companyFinancialDetails
+                      ?.expectedTransactionAmountPerMonth?.amountCurrency
+                  }`,
+                ],
+                [
+                  'Expected revenue per month',
+                  `${person.companyFinancialDetails?.expectedTurnoverPerMonth?.amountValue?.toLocaleString()} ${
+                    person.companyFinancialDetails?.expectedTurnoverPerMonth
+                      ?.amountCurrency
+                  }`,
+                ],
+                ...exportTags(person.companyFinancialDetails?.tags),
+              ],
+            },
+          ]
+        : []),
+      ...(person.companyRegistrationDetails
+        ? [
+            {
+              section: 'Registration details',
+              children: exportAnything(person.companyRegistrationDetails),
+            },
+          ]
+        : []),
+      ...(person.reasonForAccountOpening?.length
+        ? [
+            [
+              'Reason for opening account',
+              person.reasonForAccountOpening.join(STRING_JOINER),
+            ],
+          ]
+        : []),
+      ...(person.sourceOfFunds?.length
+        ? [['Source of funds', person.sourceOfFunds.join(STRING_JOINER)]]
+        : []),
+    ]
+  }
 }
 
 function exportSavedPaymentDetails(

@@ -73,7 +73,7 @@ import { CommentRequest } from '@/@types/openapi-public-management/CommentReques
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { CaseRepository } from '@/services/cases/repository'
-import { formatConsumerName, getUserName } from '@/utils/helpers'
+import { formatConsumerName, getUserName, isPerson } from '@/utils/helpers'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
 import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
 import { getClickhouseClient } from '@/utils/clickhouse/client'
@@ -1417,12 +1417,13 @@ export class UserService {
         (attachment) => !attachment.deletedAt || attachment.deletedAt === null
       ) ?? []
     const shareHoldersAttachment: PersonAttachment[] =
-      user.shareHolders?.flatMap(
-        (shareHolder) =>
-          shareHolder.attachments?.filter(
-            (attachment) =>
-              !attachment.deletedAt || attachment.deletedAt === null
-          ) ?? []
+      user.shareHolders?.flatMap((shareHolder) =>
+        isPerson(shareHolder)
+          ? shareHolder.attachments?.filter(
+              (attachment) =>
+                !attachment.deletedAt || attachment.deletedAt === null
+            ) ?? []
+          : []
       ) ?? []
     const directorsAttachment: PersonAttachment[] =
       user.directors?.flatMap(
@@ -1480,10 +1481,12 @@ export class UserService {
       shareHolders: user.shareHolders?.map((shareHolder) => {
         return {
           ...shareHolder,
-          attachments: shareHolder.attachments?.filter(
-            (attachment) =>
-              !attachment.deletedAt || attachment.deletedAt === null
-          ),
+          attachments: isPerson(shareHolder)
+            ? shareHolder.attachments?.filter(
+                (attachment) =>
+                  !attachment.deletedAt || attachment.deletedAt === null
+              ) ?? []
+            : [],
         }
       }),
       directors: user.directors?.map((director) => {
@@ -2286,12 +2289,14 @@ export class UserService {
     }
     let shareHolderId: string | undefined = undefined
     user?.shareHolders?.forEach((shareHolder) =>
-      shareHolder.attachments?.forEach((a) => {
-        shareHolderId = shareHolder.userId
-        if (a.id === commentId) {
-          attachment = a
-        }
-      })
+      isPerson(shareHolder)
+        ? shareHolder.attachments?.forEach((a) => {
+            shareHolderId = shareHolder.userId
+            if (a.id === commentId) {
+              attachment = a
+            }
+          })
+        : undefined
     )
     if (attachment && shareHolderId) {
       if (attachment.files && attachment.files.length > 0) {

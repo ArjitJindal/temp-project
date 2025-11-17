@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { hasResources, Resource } from '@flagright/lib/utils';
 import { getBranding } from './branding';
-import { Account, Permission, PermissionStatements } from '@/apis';
+import { Account, LegalEntity, Permission, PermissionStatements, Person } from '@/apis';
 import { useSettings, useResources } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useUsers } from '@/utils/api/auth';
 
@@ -314,4 +314,8 @@ export function getAvatarText(name: string): string {
   const lastInitial = words.length > 1 ? words[words.length - 1][0] : '';
 
   return firstInitial + lastInitial;
+}
+
+export function isPerson(shareHolder: Person | LegalEntity): shareHolder is Person {
+  return 'generalDetails' in shareHolder;
 }

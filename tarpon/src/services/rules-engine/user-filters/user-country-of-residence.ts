@@ -4,6 +4,7 @@ import { UserRuleFilter } from './filter'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { expandCountryGroup } from '@/utils/countries'
+import { isPerson } from '@/utils/helpers'
 
 export type UserCountryOfResidenceRuleFilterParameter = {
   userResidenceCountries?: string[]
@@ -44,7 +45,11 @@ export class UserCountryOfResidenceRuleFilter extends UserRuleFilter<UserCountry
       ) ||
         businessUser.shareHolders?.some((item) =>
           userResidenceCountries?.some(
-            (x) => x === item.generalDetails?.countryOfResidence
+            (x) =>
+              x ===
+              (isPerson(item)
+                ? item.generalDetails?.countryOfResidence
+                : item.companyRegistrationDetails?.registrationCountry)
           )
         ) ||
         businessUser.directors?.some((item) =>

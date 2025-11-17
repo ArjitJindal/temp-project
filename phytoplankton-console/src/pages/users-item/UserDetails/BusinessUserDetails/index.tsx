@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { CommentType } from '../../../../utils/user-utils';
+import { CommentType, isPerson } from '../../../../utils/user-utils';
 import LegalEntityDetails from './LegalEntityDetails';
 import Persons from './PersonsCard';
-import { Comment, InternalBusinessUser } from '@/apis';
+import LegalEntityCard from './LegalEntityCard';
+import { Comment, InternalBusinessUser, LegalEntity } from '@/apis';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import { useAuth0User } from '@/utils/user-utils';
 
@@ -34,13 +35,20 @@ export default function BusinessUserDetails(props: Props) {
         <LegalEntityDetails user={user} onNewComment={onNewComment} />
       )}
       {activeTab === 'SHAREHOLDERS' && (
-        <Persons
-          persons={user.shareHolders}
-          userId={user.userId}
-          personType="SHAREHOLDER"
-          currentUserId={currentUser.userId}
-          onNewComment={onNewComment}
-        />
+        <>
+          <Persons
+            persons={user.shareHolders?.filter(isPerson)}
+            userId={user.userId}
+            personType="SHAREHOLDER"
+            currentUserId={currentUser.userId}
+            onNewComment={onNewComment}
+          />
+          <LegalEntityCard
+            legalEntities={(
+              user.shareHolders?.filter((shareHolder) => !isPerson(shareHolder)) as LegalEntity[]
+            ).map((shareHolder) => shareHolder)}
+          />
+        </>
       )}
       {activeTab === 'DIRECTORS' && (
         <Persons

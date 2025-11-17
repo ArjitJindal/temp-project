@@ -28,7 +28,11 @@ import {
 } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { SanctionsRuleResult } from './sanctions-bank-name'
-import { formatConsumerName } from '@/utils/helpers'
+import {
+  formatConsumerName,
+  formatShareHolderName,
+  isPerson,
+} from '@/utils/helpers'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
@@ -151,8 +155,10 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       })) ?? []),
       ...(business.shareHolders?.map((person) => ({
         entityType: 'SHAREHOLDER' as const,
-        name: formatConsumerName(person.generalDetails?.name) || '',
-        dateOfBirth: person.generalDetails?.dateOfBirth,
+        name: formatShareHolderName(person) || '',
+        dateOfBirth: isPerson(person)
+          ? person.generalDetails.dateOfBirth
+          : person.companyRegistrationDetails?.dateOfRegistration,
         addresses: person.contactDetails?.addresses,
       })) ?? []),
     ].filter((entity) => entity.name && entityTypes.includes(entity.entityType))

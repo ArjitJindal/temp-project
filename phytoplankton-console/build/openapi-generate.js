@@ -99,6 +99,19 @@ function replacePermission(paths) {
   }
 }
 
+function replacePersonAndLegalEntity(paths) {
+  for (const path of paths) {
+    if (!fs.existsSync(path)) {
+      continue;
+    }
+    const newText = fs
+      .readFileSync(path)
+      .toString()
+      .replace("import { Person | LegalEntity } from './Person | LegalEntity';", '');
+    fs.writeFileSync(path, newText);
+  }
+}
+
 function replaceSimulationGetResponse(paths) {
   for (const path of paths) {
     if (!fs.existsSync(path)) {
@@ -193,6 +206,14 @@ fi`);
     'src/apis/apis/DefaultApi.ts',
     'src/apis/models/SimulationGetResponse.ts',
     'src/apis/models/SimulationRiskLevelsAndRiskFactorsResultResponse.ts',
+  ]);
+  replacePersonAndLegalEntity([
+    'src/apis/models/BatchBusinessUserWithRulesResult.ts',
+    'src/apis/models/Business.ts',
+    'src/apis/models/BusinessOptional.ts',
+    'src/apis/models/BusinessWithRulesResult.ts',
+    'src/apis/models/InternalBusinessUser.ts',
+    'src/apis/models/InternalUser.ts',
   ]);
 
   exec('npx prettier --write src/apis');

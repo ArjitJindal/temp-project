@@ -75,7 +75,11 @@ import { EMPLOYMENT_STATUSS } from '@/@types/openapi-internal-custom/EmploymentS
 import { PEP_RANKS } from '@/@types/openapi-public-custom/PepRank'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { formatConsumerName, getUserName } from '@/utils/helpers'
+import {
+  formatConsumerName,
+  formatShareHolderName,
+  getUserName,
+} from '@/utils/helpers'
 
 export const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']
 
@@ -368,7 +372,7 @@ ET\n`
     } else {
       const businessUser = user as InternalBusinessUser
       const shareHolders = businessUser.shareHolders?.map((shareHolder) =>
-        formatConsumerName(shareHolder?.generalDetails?.name)
+        formatShareHolderName(shareHolder)
       )
       const directors = businessUser.directors?.map((director) =>
         formatConsumerName(director?.generalDetails?.name)

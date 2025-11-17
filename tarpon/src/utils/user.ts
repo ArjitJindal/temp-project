@@ -1,6 +1,6 @@
 import compact from 'lodash/compact'
 import isEqual from 'lodash/isEqual'
-import { formatConsumerName } from './helpers'
+import { formatConsumerName, isPerson } from './helpers'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import {
   DefaultApiPostBatchBusinessUserEventsRequest,
@@ -33,7 +33,9 @@ export const getBusinessUserNames = (user: BusinessWithRulesResult) => {
     legalEntityName: user.legalEntity.companyGeneralDetails.legalName,
     shareHoldersNames: compact(
       user.shareHolders?.map((shareHolder) =>
-        formatConsumerName(shareHolder.generalDetails?.name)
+        isPerson(shareHolder)
+          ? formatConsumerName(shareHolder.generalDetails?.name)
+          : shareHolder.companyGeneralDetails.legalName
       )
     ),
     directorsNames: compact(

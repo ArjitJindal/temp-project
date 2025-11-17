@@ -16,6 +16,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { Address } from '@/@types/openapi-public/Address'
 import { Person } from '@/@types/openapi-public/Person'
+import { LegalEntity } from '@/@types/openapi-internal/LegalEntity'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -63,6 +64,19 @@ export function formatConsumerName(
     return undefined
   }
   return result
+}
+
+export const isPerson = (
+  shareHolder: Person | LegalEntity
+): shareHolder is Person => {
+  return 'generalDetails' in shareHolder
+}
+
+export const formatShareHolderName = (shareHolder: Person | LegalEntity) => {
+  if (isPerson(shareHolder)) {
+    return formatConsumerName(shareHolder.generalDetails?.name)
+  }
+  return shareHolder.companyGeneralDetails?.legalName
 }
 
 export function neverReturn<T>(obj: never, defaultValue: T): T {
