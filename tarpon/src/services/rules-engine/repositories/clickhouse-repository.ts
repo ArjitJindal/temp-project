@@ -997,7 +997,7 @@ export class ClickhouseTransactionsRepository {
       labelFormat = '%m/%d %H:00'
     }
     if (sortClause) {
-      if (sortField === 'timestamp') {
+      if (sortField === 'timestamp' || sortField === 'negative_timestamp') {
         sortClause = `ORDER BY label ${sortOrder === 'ascend' ? 'ASC' : 'DESC'}`
       }
     }
@@ -1020,7 +1020,7 @@ export class ClickhouseTransactionsRepository {
         count() as count,
         sum(originAmountDetails_amountInUsd) * ${exchangeRateWithUsd} as amount,
         ${aggregateByField} as aggregateBy
-      FROM ${ClickhouseTableNames.Transactions} FINAL
+      FROM ${tableName} FINAL
       WHERE ${whereClause}
       GROUP BY label, aggregateBy
       ${paginationClause}
