@@ -76,6 +76,7 @@ import {
   SanctionsBulkSearchResponse,
   MediaCheckArticleResponse,
   MediaCheckArticleResponseItem,
+  SanctionsSearchBaseRequest,
 } from '@/@types/openapi-internal/all'
 import { SanctionsDataProvider } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
@@ -327,7 +328,7 @@ export class SanctionsService {
     s3?: S3
   ): Promise<{ id: string }> {
     const batchId = await this.sanctionsSearchRepository.saveBulkSearchRequest(
-      request.filters as SanctionsSearchRequest,
+      request.filters as SanctionsSearchBaseRequest,
       request.reason
     )
     const file = request.file

@@ -15143,7 +15143,7 @@ components:
         file:
           $ref: '#/components/schemas/FileInfo'
         filters:
-          $ref: '#/components/schemas/SanctionsSearchRequest'
+          $ref: '#/components/schemas/SanctionsSearchBaseRequest'
         reason:
           type: string
       required:

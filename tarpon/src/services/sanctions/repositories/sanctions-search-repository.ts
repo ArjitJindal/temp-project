@@ -64,6 +64,7 @@ import { SanctionsBulkSearchResultMap } from '@/@types/openapi-internal/Sanction
 import { getContext } from '@/core/utils/context-storage'
 import { SanctionsBulkSearchResponse } from '@/@types/openapi-internal/SanctionsBulkSearchResponse'
 import { SearchTypeHistory } from '@/@types/openapi-internal/SearchTypeHistory'
+import { SanctionsSearchBaseRequest } from '@/@types/openapi-internal/SanctionsSearchBaseRequest'
 
 @traceable
 export class SanctionsSearchRepository {
@@ -221,7 +222,7 @@ export class SanctionsSearchRepository {
   }
 
   public async saveBulkSearchRequest(
-    request: SanctionsSearchRequest,
+    request: SanctionsSearchBaseRequest,
     reason: string
   ): Promise<string> {
     const db = (await this.getMongoDbClient()).db()
