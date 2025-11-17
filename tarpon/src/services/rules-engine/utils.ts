@@ -654,6 +654,9 @@ export async function sendAsyncRuleTasks(
     .filter((task) => task.type.endsWith('_BATCH'))
     .map((task) => {
       let messageDeduplicationId = ''
+      let messageGroupId = isConcurrentAsyncRulesEnabled
+        ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
+        : task.tenantId
       if (task.type === 'TRANSACTION_BATCH') {
         messageDeduplicationId = sanitizeDeduplicationId(
           `TB-${task.transaction.transactionId}`
@@ -668,6 +671,7 @@ export async function sendAsyncRuleTasks(
         messageDeduplicationId = sanitizeDeduplicationId(
           `UB-${task.user.userId}`
         )
+        messageGroupId = task.user.userId
       } else if (task.type === 'USER_EVENT_BATCH') {
         messageDeduplicationId = sanitizeDeduplicationId(
           `UEB-${task.userEvent.userId}-${
@@ -675,9 +679,6 @@ export async function sendAsyncRuleTasks(
           }`
         )
       }
-      const messageGroupId = isConcurrentAsyncRulesEnabled
-        ? getAsyncRuleMessageGroupId(task, task.tenantId === '4c9cdf0251')
-        : task.tenantId
       return {
         MessageBody: JSON.stringify(task),
         QueueUrl: getSQSQueueUrl(process.env.BATCH_ASYNC_RULE_QUEUE_URL),
