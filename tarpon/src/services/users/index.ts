@@ -21,6 +21,7 @@ import { ApprovalWorkflowMachine } from '@flagright/lib/classes/workflow-machine
 import { ApprovalWorkflow } from '@flagright/lib/@types/workflow'
 import has from 'lodash/has'
 import pickBy from 'lodash/pickBy'
+import { KycStatus } from 'flagright/api'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
@@ -393,6 +394,10 @@ export class UserService {
         },
         registrationCountry: data.registrationCountry as CountryCode,
         registrationIdentifier: data.registrationIdentifier as string,
+        kycStatus: data.kycStatus as KycStatus,
+        kycStatusReason: data.kycStatusReason as string,
+        userState: data.userState as UserState,
+        userStateReason: data.userStateReason as string,
       }
     }
 
