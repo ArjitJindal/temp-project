@@ -500,16 +500,32 @@ export default function SuperAdminPanel() {
   }, [tenantsDeletionQueryResult.data]);
   const mutateTenantSettings = useUpdateTenantSettings();
   const reloadUpdatedSettings = useReloadTenantSettings();
+  const validateSettings = (settings: Partial<TenantSettings>): string | undefined => {
+    if (settings.features?.includes('DOW_JONES')) {
+      if (
+        !settings.sanctions?.dowjonesCreds?.username ||
+        !settings.sanctions?.dowjonesCreds?.password
+      ) {
+        return 'Dow Jones credentials are required';
+      }
+    }
+  };
   const handleSave = async () => {
     setSaveClicked(true);
-    mutateTenantSettings.mutate({
+    const tenantSettings: Partial<TenantSettings> = {
       ...(features && { features }),
       ...(limits && { limits }),
       sanctions: sanctionsSettings,
       crmIntegrationName,
       sarJurisdictions,
       chatbotName: chatbot,
-    });
+    };
+    const error = validateSettings(tenantSettings);
+    if (error) {
+      message.error(error);
+      return;
+    }
+    mutateTenantSettings.mutate(tenantSettings);
   };
   const showModal = () => {
     setIsModalVisible(true);
