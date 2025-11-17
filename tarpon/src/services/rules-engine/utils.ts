@@ -720,3 +720,13 @@ export function mergeUserTags(
   })
   return newTagsToUpdate
 }
+
+export function isNewHitRule(
+  hitRule: HitRulesDetails,
+  oldHitRule?: HitRulesDetails
+): boolean {
+  if (!oldHitRule) {
+    return true
+  }
+  return oldHitRule.executedAt !== hitRule.executedAt
+}

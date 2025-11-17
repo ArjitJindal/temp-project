@@ -41,7 +41,11 @@ import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRul
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { filterLiveRules, runOnV8Engine } from '@/services/rules-engine/utils'
+import {
+  filterLiveRules,
+  isNewHitRule,
+  runOnV8Engine,
+} from '@/services/rules-engine/utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { UserService } from '@/services/users'
@@ -346,6 +350,12 @@ export class TarponChangeMongoDbConsumer {
         !hitRule.ruleHitMeta?.isOngoingScreeningHit &&
         activeRuleInstances.some(
           (ruleInstance) => ruleInstance.id === hitRule.ruleInstanceId
+        ) &&
+        isNewHitRule(
+          hitRule,
+          oldUser?.hitRules?.find(
+            (oldHitRule) => oldHitRule.ruleInstanceId === hitRule.ruleInstanceId
+          )
         )
     )
     // NOTE: This is a workaround to avoid creating redundant cases. In 748200a, we update
