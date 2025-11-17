@@ -561,6 +561,9 @@ function RenderValue<Value extends Comparable>(
     const tagsStackParams: TagsStackParams<Value> =
       typeof props.tagsStack === 'boolean' ? { enabled: props.tagsStack } : props.tagsStack;
     if (tagsStackParams.enabled) {
+      if (allOptions.length === 0) {
+        return <></>;
+      }
       return (
         <TagsStack
           params={tagsStackParams}
