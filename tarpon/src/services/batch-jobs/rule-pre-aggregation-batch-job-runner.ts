@@ -362,6 +362,11 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       }
     }
 
+    await this.jobRepository.incrementMetadataTasksCount(
+      this.jobId,
+      this.totalMessagesLength
+    )
+
     if (this.totalMessagesLength === 0 && entity?.type === 'RULE') {
       logger.info(
         `No tasks to pre-aggregate. Switching rule instance ${entity.ruleInstanceId} to ACTIVE.`
@@ -420,10 +425,6 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       }
       this.totalMessagesLength += messagesNotSentYet.length
 
-      await this.jobRepository.incrementMetadataTasksCount(
-        this.jobId,
-        messagesNotSentYet.length
-      )
       const chunkSize = 10
       const messagesToSendChunks = chunk(messagesNotSentYet, chunkSize)
       await pMap(
