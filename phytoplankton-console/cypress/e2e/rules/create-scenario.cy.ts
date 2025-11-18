@@ -49,9 +49,9 @@ describe('Create scenario', () => {
       cy.get('button[data-cy="add-logic-v8"]').click();
       cy.waitNothingLoading();
       if (type === 'USER') {
-        addCondition('Variable 1', '123', true, true);
+        addCondition('Variable 1', '123', true);
       } else {
-        addCondition('Variable 1', 'Deposit', true, true);
+        addCondition('Variable 1', 'Deposit', true);
       }
       addCondition('Variable 2', 5, false);
       cy.get('[data-cy~="apply-to-risk-levels"]').click();
@@ -116,21 +116,16 @@ describe('Create scenario', () => {
     });
   }
 
-  function addCondition(variableName, value, isFirst, isValueSelect = false) {
+  function addCondition(variableName, value, isFirst) {
     if (!isFirst) {
       cy.contains('button', 'Add condition').click();
     }
     cy.get('.query-builder .group-or-rule-container')
       .last()
       .within(() => {
-        cy.get('[data-cy="logic-variable"] [data-cy~="input"]').click().type(`${variableName}`);
-        cy.get('div[data-cy="label"]').contains('Variable').click();
-        cy.get('[data-cy="logic-variable"] [data-cy~="input"]').click(); // this ensures that value is selected
+        cy.singleSelect('[data-cy="logic-variable"] [data-cy~="input"]', variableName);
         cy.get('[data-cy="value-source"] [data-cy~="input"]').click().type(`${value}`);
         cy.get('div[data-cy="label"]').contains('Variable').click();
-        if (isValueSelect) {
-          cy.get('[data-cy="value-source"] [data-cy~="input"]').click(); // this ensures that value is selected
-        }
       });
   }
   /* eslint-disable cypress/no-unnecessary-waiting */
