@@ -159,19 +159,6 @@ export class CSPScriptLoader {
       document.head.appendChild(script);
     });
   }
-
-  /**
-   * Load Freshworks widget in a CSP-compliant way
-   */
-  static async loadFreshworksWidget(widgetId: string): Promise<void> {
-    // Ensure the script source is whitelisted in CSP
-    const scriptSrc = `https://widget.freshworks.com/widgets/${widgetId}.js`;
-
-    // Set widget settings before loading
-    (window as any).fwSettings = { widget_id: widgetId, locale: 'en' };
-
-    await this.loadScript(scriptSrc);
-  }
 }
 
 /**

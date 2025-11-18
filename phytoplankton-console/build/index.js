@@ -141,12 +141,7 @@ async function main() {
       'https://eu-assets.i.posthog.com',
       'blob:',
     ],
-    styleSrc: [
-      "'self'",
-      "'unsafe-inline'",
-      'https://fonts.googleapis.com',
-      'https://widget.freshworks.com/',
-    ],
+    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     imgSrc: [
       "'self'",
       'data:',
@@ -159,7 +154,6 @@ async function main() {
       'https://js.intercomcdn.com/',
       'https://downloads.intercomcdn.com',
       'https://static.intercomassets.com',
-      'https://widget.freshworks.com',
     ],
     fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://fonts.intercomcdn.com'],
     connectSrc: [
@@ -175,8 +169,6 @@ async function main() {
       'https://i1.wp.com',
       'https://js.intercomcdn.com/*',
       'wss://nexus-websocket-a.intercom.io/',
-      'https://widget.freshworks.com',
-      'https://flagright.freshdesk.com',
       'https://internet-up-realtime.intercom-messenger.com',
     ],
     frameSrc: [
@@ -187,8 +179,6 @@ async function main() {
       'https://api-iam.intercom.io',
       'https://i1.wp.com',
       'https://js.intercomcdn.com/*',
-      'https://widget.freshworks.com',
-      'https://flagright.freshdesk.com',
     ],
     objectSrc: ["'none'"],
     baseUri: ["'self'"],
