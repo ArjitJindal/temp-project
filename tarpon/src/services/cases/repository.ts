@@ -1998,7 +1998,6 @@ export class CaseRepository {
       pipeline.push(
         {
           $match: {
-            type: params.type,
             tag: { $ne: null },
           },
         },
@@ -2011,7 +2010,6 @@ export class CaseRepository {
       pipeline.push(
         {
           $match: {
-            type: params.type,
             ...(params.filter ? { tag: params.filter } : {}),
             value: { $ne: null },
           },
