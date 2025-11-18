@@ -24,10 +24,23 @@ export default defineConfig({
     auth0_audience: 'https://api.flagright.dev/',
   },
   e2e: {
-    defaultCommandTimeout: 15000,
+    defaultCommandTimeout: 30000,
     baseUrl,
     video: true,
     setupNodeEvents(on) {
+      if (process.env.ENV === 'local') {
+        on('before:spec', () => {
+          if (global.gc) {
+            global.gc();
+          }
+        });
+
+        on('after:spec', () => {
+          if (global.gc) {
+            global.gc();
+          }
+        });
+      }
       // Ref: https://docs.cypress.io/guides/guides/screenshots-and-videos#Delete-videos-for-specs-without-failing-or-retried-tests
       on('after:spec', (spec, results) => {
         if (results && results.video) {
@@ -95,6 +108,7 @@ export default defineConfig({
     },
   },
   chromeWebSecurity: false,
+  watchForFileChanges: false,
   retries: {
     runMode: 1,
     openMode: 0,

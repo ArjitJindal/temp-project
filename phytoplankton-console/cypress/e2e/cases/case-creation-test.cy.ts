@@ -57,13 +57,10 @@ describe('Case Creation test', () => {
 
       cy.publicApiHandler('POST', 'transactions', requestBody);
 
-      const baseWaitTime = 3000;
-
-      const checkForCreatedCase = (attempt = 1, baseWaitTime = 3000) => {
+      const checkForCreatedCase = (attempt = 1, waitTime = 1000) => {
         if (attempt > 5) {
           throw new Error('Failed to find created case after 5 attempts');
         }
-        const waitTime = baseWaitTime * Math.pow(2, attempt - 1);
         // eslint-disable-next-line cypress/no-unnecessary-waiting
         cy.wait(waitTime); // Give it some time to create the case
         cy.visit(
@@ -83,7 +80,7 @@ describe('Case Creation test', () => {
           expect(Array.isArray(ruleIds)).to.be.true;
           expect(ruleIds.every((id) => typeof id === 'string')).to.be.true;
           if (!ruleIds.includes(ruleInstanceId)) {
-            checkForCreatedCase(attempt + 1, baseWaitTime);
+            checkForCreatedCase(attempt + 1, 3000 * Math.pow(3, attempt - 1));
             return;
           }
 
@@ -99,7 +96,7 @@ describe('Case Creation test', () => {
         });
       };
 
-      checkForCreatedCase(1, baseWaitTime);
+      checkForCreatedCase(1, 0);
 
       cy.contains(originUserId).should('exist');
       cy.contains(destinationUserId).should('exist');

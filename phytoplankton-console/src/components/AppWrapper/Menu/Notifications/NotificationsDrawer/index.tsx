@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { InfiniteData } from '@tanstack/query-core/src/types';
+import cn from 'clsx';
 import s from './index.module.less';
 import Drawer from '@/components/library/Drawer';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -143,7 +144,10 @@ export default function NotificationsDrawer(props: Props) {
           )}
         </div>
         <div className={s.scrollContainer}>
-          <div className={s.items}>
+          <div
+            className={s.items}
+            data-cy={cn('notifications-drawer-items', !hasNext && 'no-more')}
+          >
             {notifications.length === 0 && !isNotificationsLoading && (
               <div className={s.empty}>
                 {tab === 'UNREAD'

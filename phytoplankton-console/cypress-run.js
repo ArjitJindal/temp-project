@@ -219,7 +219,7 @@ async function getCypressCreds() {
   const headlessFlag =
     type === 'run' ? (process.env.CI === 'true' ? '--headless' : '--headed') : '';
 
-  if (process.env.ENV === 'local') {
+  if (process.env.ENV === 'local' && process.env.CI !== 'true') {
     const isLocalConsoleRunning = (await detectPort(8001)) !== 8001;
     const isLocalTarponRunning = (await detectPort(3002)) !== 3002;
     if (!isLocalConsoleRunning) {

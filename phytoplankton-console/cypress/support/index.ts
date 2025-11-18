@@ -79,6 +79,7 @@ declare global {
       selectAntDropdownByLabel(label: string): Chainable<Element>;
       verifyModalOpen(title?: string): Chainable<Element>;
       assertLoading(): Chai.Assertion;
+      scrollDownUntil(selector: string, checkF: (el: JQuery<Element>) => boolean): Chainable<void>;
     }
   }
 }

@@ -56,7 +56,7 @@ async function filterAndProcessActionTasks(
           return false
         }
         const instance = instanceIdMap[alert.ruleInstanceId]
-        return isV2RuleInstance(instance) ? false : true // To only process V8 rule instances
+        return !instance || isV2RuleInstance(instance) ? false : true // To only process V8 rule instances
       })
       .map((val) => {
         const alert = alerts.find((alert) => alert.alertId === val.entityId)

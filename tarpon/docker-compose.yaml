@@ -30,6 +30,7 @@ services:
       - '9000:9000'
     volumes:
       - clickhouse_data:/var/lib/clickhouse-server
+      - clickhouse_data_main:/var/lib/clickhouse
     privileged: true
 
   swagger-ui:
@@ -144,6 +145,7 @@ volumes:
   mongo_data:
   mongo_conf:
   clickhouse_data:
+  clickhouse_data_main:
   opensearch-data1:
   opensearch-data2:
   opensearch-data3:

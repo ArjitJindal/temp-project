@@ -12,6 +12,7 @@ import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.s
 import Link from '@/components/ui/Link';
 import { copyTextToClipboard } from '@/utils/browser';
 import { getErrorMessage } from '@/utils/lang';
+import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
 
 const errorsCaptured: string[] = [];
 
@@ -87,6 +88,7 @@ export const loading: ShowNotification = (
   return open(message, 'LOADING', {
     ...options,
     position: 'top-center',
+    duration: Infinity,
   });
 };
 
@@ -197,6 +199,7 @@ export function MessageBody(props: {
         isVisible != null && s.isAnimationEnabled,
         !isVisible && s.isHidden,
         (options?.details || options?.link) && s.largeMessage,
+        type === 'LOADING' && CY_LOADING_FLAG_CLASS,
       )}
       data-sentry-allow={type === 'ERROR'}
       data-cy="toast-body"
