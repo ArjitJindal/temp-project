@@ -115,25 +115,50 @@ export class TenantRepository {
   public async createOrUpdateTenantSettings(
     newTenantSettings: Partial<TenantSettings>
   ): Promise<Partial<TenantSettings>> {
-    // Handle nested workflowSettings updates atomically
-    let updateExpression = ''
+    const setExpressions: string[] = []
+    const removeExpressions: string[] = []
     const expressionAttributeNames: Record<string, string> = {}
     const expressionAttributeValues: Record<string, any> = {}
-    const removeExpression: string[] = []
 
-    if (newTenantSettings.workflowSettings) {
-      const workflowSettings = newTenantSettings.workflowSettings
-      const setExpressions: string[] = []
+    // Handle workflowSettings separately (needs special handling for nested objects)
+    const { workflowSettings, ...otherSettings } = newTenantSettings
 
-      // Build cleaned workflowSettings object with only non-null values
-      // This approach avoids REMOVE operations which fail if paths don't exist
-      const cleanedWorkflowSettings: Record<string, any> = {}
+    if (workflowSettings !== undefined) {
+      // Read existing workflowSettings to merge with new values
+      const existingSettings = await this.getTenantSettings([
+        'workflowSettings',
+      ])
+      const existingWorkflowSettings = existingSettings.workflowSettings || {}
+
+      // Merge new workflowSettings with existing ones
+      // Special handling: userApprovalWorkflows should be replaced entirely, not merged
+      const mergedWorkflowSettings: Record<string, any> = {
+        ...existingWorkflowSettings,
+      }
+
+      // Apply new settings, replacing userApprovalWorkflows entirely if provided
       for (const [key, value] of Object.entries(workflowSettings)) {
+        if (
+          key === 'userApprovalWorkflows' &&
+          value !== null &&
+          value !== undefined
+        ) {
+          // Replace entirely - don't merge with existing
+          mergedWorkflowSettings[key] = value
+        } else {
+          // For other fields, merge normally
+          mergedWorkflowSettings[key] = value
+        }
+      }
+
+      // Clean merged workflowSettings: remove null/undefined values and nested null values
+      const cleanedWorkflowSettings: Record<string, any> = {}
+      for (const [key, value] of Object.entries(mergedWorkflowSettings)) {
         if (value === null || value === undefined) {
-          // Skip null/undefined values - they will be removed by setting the cleaned object
           continue
-        } else if (typeof value === 'object' && !Array.isArray(value)) {
-          // Nested object - include only non-null values
+        }
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          // For nested objects, just filter out null/undefined values (don't merge again)
           const cleanedObject = Object.fromEntries(
             Object.entries(value).filter(
               ([, v]) => v !== null && v !== undefined
@@ -143,60 +168,58 @@ export class TenantRepository {
             cleanedWorkflowSettings[key] = cleanedObject
           }
         } else {
-          // Simple value - include it
           cleanedWorkflowSettings[key] = value
         }
       }
 
-      // SET the entire workflowSettings object (this will remove null fields naturally)
+      // Either SET or REMOVE workflowSettings based on whether it has any values
+      expressionAttributeNames['#ws'] = 'workflowSettings'
       if (Object.keys(cleanedWorkflowSettings).length > 0) {
-        setExpressions.push(`#ws = :ws`)
-        expressionAttributeNames['#ws'] = 'workflowSettings'
+        setExpressions.push('#ws = :ws')
         expressionAttributeValues[':ws'] = cleanedWorkflowSettings
       } else {
-        // If all values are null, remove the entire workflowSettings attribute
-        removeExpression.push(`#ws`)
-        expressionAttributeNames['#ws'] = 'workflowSettings'
+        removeExpressions.push('#ws')
+      }
+    }
+
+    // Handle all other settings using the standard update function
+    if (Object.keys(otherSettings).length > 0) {
+      const otherUpdate = getUpdateAttributesUpdateItemInput(otherSettings)
+
+      // Extract SET expressions from the other update (format: "SET key1 = :key1, key2 = :key2")
+      const otherSetClause = otherUpdate.UpdateExpression.replace(
+        /^SET\s+/,
+        ''
+      ).trim()
+      if (otherSetClause) {
+        setExpressions.push(otherSetClause)
       }
 
-      if (setExpressions.length > 0) {
-        updateExpression = `SET ${setExpressions.join(', ')}`
-      }
-      if (removeExpression.length > 0) {
-        updateExpression +=
-          (updateExpression ? ' ' : '') +
-          `REMOVE ${removeExpression.join(', ')}`
-      }
+      Object.assign(
+        expressionAttributeValues,
+        otherUpdate.ExpressionAttributeValues
+      )
+    }
 
-      // Remove workflowSettings from newTenantSettings to handle it separately
-      const { workflowSettings: _, ...otherSettings } = newTenantSettings
+    // Build the final UpdateExpression
+    const updateExpressionParts: string[] = []
+    if (setExpressions.length > 0) {
+      updateExpressionParts.push(`SET ${setExpressions.join(', ')}`)
+    }
+    if (removeExpressions.length > 0) {
+      updateExpressionParts.push(`REMOVE ${removeExpressions.join(', ')}`)
+    }
 
-      // Handle other settings if any
-      if (Object.keys(otherSettings).length > 0) {
-        const otherUpdate = getUpdateAttributesUpdateItemInput(otherSettings)
-        updateExpression = updateExpression
-          ? `${updateExpression}, ${otherUpdate.UpdateExpression.replace(
-              'SET ',
-              ''
-            )}`
-          : otherUpdate.UpdateExpression
-        Object.assign(
-          expressionAttributeValues,
-          otherUpdate.ExpressionAttributeValues
-        )
-      }
-    } else {
-      // No workflowSettings, use standard update
-      const update = getUpdateAttributesUpdateItemInput(newTenantSettings)
-      updateExpression = update.UpdateExpression
-      Object.assign(expressionAttributeValues, update.ExpressionAttributeValues)
+    if (updateExpressionParts.length === 0) {
+      // No updates to perform
+      return newTenantSettings
     }
 
     const updateItemInput: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
-      UpdateExpression: updateExpression,
+      UpdateExpression: updateExpressionParts.join(' '),
       ExpressionAttributeValues:
         Object.keys(expressionAttributeValues).length > 0
           ? expressionAttributeValues
