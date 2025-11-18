@@ -7,6 +7,7 @@ import PageWrapper from '@/components/PageWrapper';
 import Breadcrumbs from '@/components/library/Breadcrumbs';
 import { useSafeLocalStorageState } from '@/utils/hooks';
 import { useRuleDetails } from '@/utils/api/rules';
+import { notEmpty } from '@/utils/array';
 
 export default function RulesLibraryItemPage() {
   const { id: ruleId } = useParams<'id'>();
@@ -25,7 +26,7 @@ export default function RulesLibraryItemPage() {
               title: 'Rules',
               to: '/rules',
             },
-            {
+            ruleId !== 'create' && {
               title: 'Templates',
               to: '/rules/rules-library',
             },
@@ -37,7 +38,7 @@ export default function RulesLibraryItemPage() {
                 : 'Configure',
               to: makeUrl(`/rules/rules-library/:id`, { id: ruleId }),
             },
-          ]}
+          ].filter(notEmpty)}
         />
       }
     >
