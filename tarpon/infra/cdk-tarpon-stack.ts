@@ -171,7 +171,7 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 // SQS max receive count cannot go above 1000
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
-const enableFargateBatchJob = true
+const enableFargateBatchJob = false
 const FEATURE = 'feature'
 
 const FEATURES = {
