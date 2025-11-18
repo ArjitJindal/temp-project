@@ -47,7 +47,14 @@ import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { logger } from '@/core/logger'
 import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { TransactionAggregates } from '@/@types/copilot/attributeBuilder'
+import {
+  TransactionAggregatesQueryResult,
+  FirstTransactionQueryResult,
+  TransactionIdQueryResult,
+} from '@/@types/clickhouse'
 import { ClickhouseTableNames } from '@/@types/clickhouse/table-names'
+import { TransactionAmountAggregates } from '@/@types/tranasction/transaction-list'
 
 type StatsByType = {
   transactionType: string
@@ -826,6 +833,133 @@ export class ClickhouseTransactionsRepository {
     return count
   }
 
+  /**
+   * Gets transaction aggregates by IDs for copilot attribute building
+   * Returns aggregated statistics directly from ClickHouse
+   */
+  async getTransactionAggregatesByIds(
+    alertIds: string[],
+    transactionIds: string[]
+  ): Promise<TransactionAggregates> {
+    const EMPTY_TRANSACTION_AGGREGATES: TransactionAggregates = {
+      count: 0,
+      minOriginAmountInUSD: null,
+      maxOriginAmountInUSD: null,
+      totalOriginAmountInUSD: 0,
+      minDestinationAmountInUSD: null,
+      maxDestinationAmountInUSD: null,
+      totalDestinationAmountInUSD: 0,
+      firstPaymentAmountInUSD: null,
+      firstTransactionCurrency: null,
+      transactionIds: [],
+    }
+
+    const DEFAULT_AGGREGATES_RESULT: TransactionAggregatesQueryResult = {
+      count: 0,
+      minOriginAmountInUSD: null,
+      maxOriginAmountInUSD: null,
+      totalOriginAmountInUSD: null,
+      minDestinationAmountInUSD: null,
+      maxDestinationAmountInUSD: null,
+      totalDestinationAmountInUSD: null,
+    }
+
+    const DEFAULT_FIRST_TRANSACTION_RESULT: FirstTransactionQueryResult = {
+      firstPaymentAmountInUSD: null,
+      firstTransactionCurrency: null,
+    }
+
+    const TRANSACTION_IDS_LIMIT = 20
+
+    if (!transactionIds.length) {
+      return EMPTY_TRANSACTION_AGGREGATES
+    }
+
+    const tableName = ClickhouseTableNames.Transactions
+
+    const [aggregates, firstTransaction, transactionIdsResult] =
+      await Promise.all([
+        executeClickhouseQuery<TransactionAggregatesQueryResult[]>(
+          this.clickhouseClient,
+          {
+            query: `
+            SELECT
+              count() as count,
+              min(originAmountDetails_amountInUsd) as minOriginAmountInUSD,
+              max(originAmountDetails_amountInUsd) as maxOriginAmountInUSD,
+              sum(originAmountDetails_amountInUsd) as totalOriginAmountInUSD,
+              min(destinationAmountDetails_amountInUsd) as minDestinationAmountInUSD,
+              max(destinationAmountDetails_amountInUsd) as maxDestinationAmountInUSD,
+              sum(destinationAmountDetails_amountInUsd) as totalDestinationAmountInUSD
+            FROM ${tableName} FINAL
+            WHERE ${
+              alertIds.length === 1
+                ? `has(alertIds, '${alertIds[0]}')`
+                : `hasAny(alertIds, ['${alertIds.join("','")}'])`
+            } AND timestamp != 0
+          `,
+            format: 'JSONEachRow',
+          }
+        ),
+        executeClickhouseQuery<FirstTransactionQueryResult[]>(
+          this.clickhouseClient,
+          {
+            query: `
+              SELECT
+                originAmountDetails_amountInUsd as firstPaymentAmountInUSD,
+                JSONExtractString(data, 'originAmountDetails', 'transactionCurrency') as firstTransactionCurrency
+              FROM ${tableName} FINAL
+              WHERE ${
+                alertIds.length === 1
+                  ? `has(alertIds, '${alertIds[0]}')`
+                  : `hasAny(alertIds, ['${alertIds.join("','")}'])`
+              } AND timestamp != 0
+              ORDER BY timestamp ASC
+              LIMIT 1
+            `,
+            format: 'JSONEachRow',
+          }
+        ),
+        executeClickhouseQuery<TransactionIdQueryResult[]>(
+          this.clickhouseClient,
+          {
+            query: `
+            SELECT id as transactionId
+            FROM ${tableName} FINAL
+            WHERE ${
+              alertIds.length === 1
+                ? `has(alertIds, '${alertIds[0]}')`
+                : `hasAny(alertIds, ['${alertIds.join("','")}'])`
+            } AND timestamp != 0
+            ORDER BY timestamp ASC
+            LIMIT ${TRANSACTION_IDS_LIMIT}
+          `,
+            format: 'JSONEachRow',
+          }
+        ),
+      ])
+
+    const agg = aggregates[0] ?? DEFAULT_AGGREGATES_RESULT
+
+    const first = firstTransaction[0] ?? DEFAULT_FIRST_TRANSACTION_RESULT
+
+    return {
+      count: agg.count,
+      minOriginAmountInUSD: agg.minOriginAmountInUSD,
+      maxOriginAmountInUSD: agg.maxOriginAmountInUSD,
+      totalOriginAmountInUSD: agg.totalOriginAmountInUSD ?? 0,
+      minDestinationAmountInUSD: agg.minDestinationAmountInUSD,
+      maxDestinationAmountInUSD: agg.maxDestinationAmountInUSD,
+      totalDestinationAmountInUSD: agg.totalDestinationAmountInUSD ?? 0,
+      firstPaymentAmountInUSD: first.firstPaymentAmountInUSD,
+      firstTransactionCurrency: first.firstTransactionCurrency,
+      transactionIds:
+        agg.count < TRANSACTION_IDS_LIMIT
+          ? transactionIdsResult.map((r) => r.transactionId)
+          : [],
+    }
+  }
+
   public async getStatsByType(
     params: DefaultApiGetTransactionsStatsByTypeRequest,
     exchangeRateWithUsd: number
@@ -872,6 +1006,31 @@ export class ClickhouseTransactionsRepository {
     )
 
     return result
+  }
+
+  public async getTransactionAmountAggregates(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<TransactionAmountAggregates> {
+    const { whereClause } = await this.getTransactionsWhereConditions(params)
+
+    const query = `
+      SELECT 
+        round(sum(originAmountDetails_amountInUsd), 2) as totalOriginAmount,
+        round(sum(CASE WHEN type = 'DEPOSIT' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalDeposits,
+        round(sum(CASE WHEN type = 'LOAN' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalLoans,
+        round(sum(CASE WHEN type = 'LOAN' THEN originAmountDetails_amountInUsd ELSE 0 END), 2) as totalLoanBalance,
+        count() as totalTransactions,
+        count(DISTINCT originPaymentMethodId) as totalAccounts  
+      FROM ${ClickhouseTableNames.Transactions} FINAL
+      WHERE ${whereClause}
+    `
+
+    const result = await executeClickhouseQuery<TransactionAmountAggregates[]>(
+      this.clickhouseClient,
+      query
+    )
+
+    return result[0]
   }
 
   public async getAverageByMethodTable(

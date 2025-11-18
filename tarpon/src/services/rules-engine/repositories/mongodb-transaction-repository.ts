@@ -90,6 +90,7 @@ import { Address } from '@/@types/openapi-public/Address'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { EntityData } from '@/@types/tranasction/aggregation'
+import { TransactionAggregates } from '@/@types/copilot/attributeBuilder'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -1039,6 +1040,214 @@ export class MongoDbTransactionRepository
     const cursor = collection.find(query, { projection })
 
     return await cursor.toArray()
+  }
+
+  /**
+   * Gets transaction aggregates by IDs for copilot attribute building
+   * Returns aggregated statistics directly from MongoDB
+   * Note: Amounts are in their original currencies and need to be converted to USD in application
+   */
+  async getTransactionAggregatesByIds(
+    alertIds: string[],
+    transactionIds: string[]
+  ): Promise<TransactionAggregates> {
+    const EMPTY_TRANSACTION_AGGREGATES: TransactionAggregates = {
+      count: 0,
+      minOriginAmountInUSD: null,
+      maxOriginAmountInUSD: null,
+      totalOriginAmountInUSD: 0,
+      minDestinationAmountInUSD: null,
+      maxDestinationAmountInUSD: null,
+      totalDestinationAmountInUSD: 0,
+      firstPaymentAmountInUSD: null,
+      firstTransactionCurrency: null,
+      transactionIds: [],
+    }
+
+    const TRANSACTION_IDS_LIMIT = 20
+
+    if (!transactionIds.length) {
+      return EMPTY_TRANSACTION_AGGREGATES
+    }
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalTransaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+
+    // Get aggregates grouped by currency (since we need to convert to USD)
+    const aggregatesPipeline = [
+      {
+        $match: {
+          ...(alertIds.length > 0
+            ? { alertId: { $in: alertIds } }
+            : { transactionId: { $in: transactionIds } }),
+        },
+      },
+      {
+        $facet: {
+          originAggregates: [
+            {
+              $match: {
+                'originAmountDetails.transactionAmount': { $exists: true },
+              },
+            },
+            {
+              $group: {
+                _id: '$originAmountDetails.transactionCurrency',
+                min: { $min: '$originAmountDetails.transactionAmount' },
+                max: { $max: '$originAmountDetails.transactionAmount' },
+                sum: { $sum: '$originAmountDetails.transactionAmount' },
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          destinationAggregates: [
+            {
+              $match: {
+                'destinationAmountDetails.transactionAmount': { $exists: true },
+              },
+            },
+            {
+              $group: {
+                _id: '$destinationAmountDetails.transactionCurrency',
+                min: { $min: '$destinationAmountDetails.transactionAmount' },
+                max: { $max: '$destinationAmountDetails.transactionAmount' },
+                sum: { $sum: '$destinationAmountDetails.transactionAmount' },
+                count: { $sum: 1 },
+              },
+            },
+          ],
+          firstTransaction: [
+            {
+              $sort: { createdAt: 1 },
+            },
+            {
+              $limit: 1,
+            },
+            {
+              $project: {
+                originAmountDetails: 1,
+                destinationAmountDetails: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+          allTransactions: [
+            {
+              $sort: { createdAt: 1 },
+            },
+            {
+              $limit: TRANSACTION_IDS_LIMIT,
+            },
+            {
+              $project: {
+                transactionId: 1,
+              },
+            },
+          ],
+          totalCount: [
+            {
+              $count: 'count',
+            },
+          ],
+        },
+      },
+    ]
+
+    const result = await collection.aggregate(aggregatesPipeline).next()
+
+    if (!result) {
+      return EMPTY_TRANSACTION_AGGREGATES
+    }
+
+    const count = result.totalCount?.[0]?.count || 0
+    const firstTransaction = result.firstTransaction?.[0]
+    const transactionIdsList =
+      count < TRANSACTION_IDS_LIMIT
+        ? (result.allTransactions || []).map((t: any) => t.transactionId)
+        : []
+
+    // Convert aggregates to USD using CurrencyService
+    const currencyService = new CurrencyService(this.dynamoDb)
+    const exchangeRates = await currencyService.getExchangeData()
+
+    // Convert origin aggregates to USD
+    let minOriginAmountInUSD: number | null = null
+    let maxOriginAmountInUSD: number | null = null
+    let totalOriginAmountInUSD = 0
+
+    for (const agg of result.originAggregates || []) {
+      const currency = agg._id
+      const exchangeRate = exchangeRates.rates[currency]
+      if (!exchangeRate) {
+        continue
+      }
+
+      const minUSD = agg.min / exchangeRate
+      const maxUSD = agg.max / exchangeRate
+      const sumUSD = agg.sum / exchangeRate
+
+      minOriginAmountInUSD = minOriginAmountInUSD
+        ? Math.min(minOriginAmountInUSD, minUSD)
+        : minUSD
+      maxOriginAmountInUSD = maxOriginAmountInUSD
+        ? Math.max(maxOriginAmountInUSD, maxUSD)
+        : maxUSD
+      totalOriginAmountInUSD += sumUSD
+    }
+
+    // Convert destination aggregates to USD
+    let minDestinationAmountInUSD: number | null = null
+    let maxDestinationAmountInUSD: number | null = null
+    let totalDestinationAmountInUSD = 0
+
+    for (const agg of result.destinationAggregates || []) {
+      const currency = agg._id
+      const exchangeRate = exchangeRates.rates[currency]
+      if (!exchangeRate) {
+        continue
+      }
+
+      const minUSD = agg.min / exchangeRate
+      const maxUSD = agg.max / exchangeRate
+      const sumUSD = agg.sum / exchangeRate
+
+      minDestinationAmountInUSD = minDestinationAmountInUSD
+        ? Math.min(minDestinationAmountInUSD, minUSD)
+        : minUSD
+      maxDestinationAmountInUSD = maxDestinationAmountInUSD
+        ? Math.max(maxDestinationAmountInUSD, maxUSD)
+        : maxUSD
+      totalDestinationAmountInUSD += sumUSD
+    }
+
+    // Get first payment amount in USD
+    let firstPaymentAmountInUSD: number | null = null
+    let firstTransactionCurrency: string | null = null
+
+    if (firstTransaction?.originAmountDetails) {
+      firstTransactionCurrency =
+        firstTransaction.originAmountDetails.transactionCurrency
+      const converted = await currencyService.getTargetCurrencyAmount(
+        firstTransaction.originAmountDetails,
+        'USD'
+      )
+      firstPaymentAmountInUSD = converted.transactionAmount
+    }
+
+    return {
+      count,
+      minOriginAmountInUSD,
+      maxOriginAmountInUSD,
+      totalOriginAmountInUSD,
+      minDestinationAmountInUSD,
+      maxDestinationAmountInUSD,
+      totalDestinationAmountInUSD,
+      firstPaymentAmountInUSD,
+      firstTransactionCurrency,
+      transactionIds: transactionIdsList,
+    }
   }
 
   public async getTransactionsWithoutArsScoreCursor(timestamps: {

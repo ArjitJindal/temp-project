@@ -9,7 +9,21 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { CurrencyExchangeUSDType } from '@/services/currency'
 
+export type TransactionAggregates = {
+  count: number
+  minOriginAmountInUSD: number | null
+  maxOriginAmountInUSD: number | null
+  totalOriginAmountInUSD: number
+  minDestinationAmountInUSD: number | null
+  maxDestinationAmountInUSD: number | null
+  totalDestinationAmountInUSD: number
+  firstPaymentAmountInUSD: number | null
+  firstTransactionCurrency: string | null
+  transactionIds: string[]
+}
+
 export type InputData = {
+  transactionAggregates?: TransactionAggregates
   transactions?: Pick<
     InternalTransaction,
     | 'transactionId'

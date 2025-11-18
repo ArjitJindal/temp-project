@@ -88,3 +88,23 @@ export type ClickhouseBatchOptions = {
   additionalJoin?: string | string[]
   clickhouseClient: ClickHouseClient
 }
+
+// Transaction aggregate query result types
+export type TransactionAggregatesQueryResult = {
+  count: number
+  minOriginAmountInUSD: number | null
+  maxOriginAmountInUSD: number | null
+  totalOriginAmountInUSD: number | null
+  minDestinationAmountInUSD: number | null
+  maxDestinationAmountInUSD: number | null
+  totalDestinationAmountInUSD: number | null
+}
+
+export type FirstTransactionQueryResult = {
+  firstPaymentAmountInUSD: number | null
+  firstTransactionCurrency: string | null
+}
+
+export type TransactionIdQueryResult = {
+  transactionId: string
+}

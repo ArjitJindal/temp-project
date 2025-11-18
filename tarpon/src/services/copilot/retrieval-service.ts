@@ -13,9 +13,12 @@ import { AttributeSet } from './attributes/attribute-set'
 import { CaseService } from '@/services/cases'
 import { UserService } from '@/services/users'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { ReportService } from '@/services/sar/service'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { isClickhouseEnabled } from '@/utils/clickhouse/checks'
+import { getClickhouseClient } from '@/utils/clickhouse/client'
 import {
   AttributeGenerator,
   DefaultAttributeBuilders,
@@ -30,6 +33,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
+import { TransactionAggregates } from '@/@types/copilot/attributeBuilder'
 
 export class RetrievalService {
   private readonly caseService: CaseService
@@ -233,21 +237,10 @@ export class RetrievalService {
       true
     )
 
-    const [transactions, ruleInstances] = await Promise.all([
-      this.txnRepository.getTransactionsByIds(
-        _case.caseTransactionsIds || [],
-        undefined,
-        {
-          transactionId: 1,
-          originAmountDetails: 1,
-          destinationAmountDetails: 1,
-          createdAt: 1,
-        }
-      ),
-      this.ruleInstanceRepository.getRuleInstancesByIds(
+    const ruleInstances =
+      await this.ruleInstanceRepository.getRuleInstancesByIds(
         ruleInstanceIds.filter((id) => id)
-      ),
-    ])
+      )
 
     const sanctionsHits = await this.getSanctionsHitAttributes(
       _case.alerts || []
@@ -255,8 +248,32 @@ export class RetrievalService {
 
     const exchangeRates = await this.currencyService.getExchangeData()
 
+    // Use aggregates if ClickHouse is enabled, otherwise use MongoDB aggregates
+    let transactionAggregates: TransactionAggregates | undefined
+    if (isClickhouseEnabled()) {
+      const tenantId = this.caseService.tenantId
+      const clickhouseClient = await getClickhouseClient(tenantId)
+      const dynamoDb = this.txnRepository.dynamoDb
+      const clickhouseTxnRepository = new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        dynamoDb,
+        tenantId
+      )
+      transactionAggregates =
+        await clickhouseTxnRepository.getTransactionAggregatesByIds(
+          compact(_case.alerts?.map((a) => a.alertId)),
+          _case.caseTransactionsIds || []
+        )
+    } else {
+      transactionAggregates =
+        await this.txnRepository.getTransactionAggregatesByIds(
+          compact(_case.alerts?.map((a) => a.alertId)),
+          _case.caseTransactionsIds || []
+        )
+    }
+
     return await this.attributeBuilder.getAttributes({
-      transactions,
+      transactionAggregates,
       user,
       _case,
       ruleInstances,
@@ -306,16 +323,14 @@ export class RetrievalService {
       true
     )
 
-    const [transactions, ruleInstances] = await Promise.all([
-      this.txnRepository.getTransactionsByIds(alert?.transactionIds || []),
-      this.ruleInstanceRepository.getRuleInstancesByIds(
-        alert?.ruleInstanceId ? [alert.ruleInstanceId] : []
-      ),
-    ])
+    const ruleInstances =
+      await this.ruleInstanceRepository.getRuleInstancesByIds(
+        compact(uniq([alert?.ruleInstanceId]))
+      )
 
     const exchangeRates = await this.currencyService.getExchangeRates()
 
-    const isAnyScreeningRule = ruleInstances.some(
+    const isAnyScreeningRule = ruleInstances?.some(
       (ri) => ri.nature === 'SCREENING'
     )
 
@@ -326,8 +341,26 @@ export class RetrievalService {
       allScreeningHits = sanctionsHits
     }
 
+    let transactionAggregates: TransactionAggregates | undefined
+
+    if (isClickhouseEnabled()) {
+      const tenantId = this.caseService.tenantId
+      const clickhouseClient = await getClickhouseClient(tenantId)
+      const dynamoDb = this.txnRepository.dynamoDb
+      const clickhouseTxnRepository = new ClickhouseTransactionsRepository(
+        clickhouseClient,
+        dynamoDb,
+        tenantId
+      )
+      transactionAggregates =
+        await clickhouseTxnRepository.getTransactionAggregatesByIds(
+          compact([alert.alertId]),
+          _case.caseTransactionsIds || []
+        )
+    }
+
     return await this.attributeBuilder.getAttributes({
-      transactions,
+      transactionAggregates,
       user,
       ruleInstances,
       reasons,

@@ -303,6 +303,7 @@ const sharedTransactionMaterializedColumns = [
   `createdAt UInt64 MATERIALIZED JSONExtractUInt(data, 'createdAt')`,
   `updatedAt UInt64 MATERIALIZED JSONExtractUInt(data, 'updatedAt')`,
   `paymentApprovalTimestamp UInt64 MATERIALIZED JSONExtractUInt(data, 'paymentApprovalTimestamp')`,
+  `alertIds Array(String) MATERIALIZED JSONExtract(data, 'alertIds', 'Array(String)')`,
 
   // columns for filtering based on caseSubjectType
   ...generatePaymentDetailAddressColums(),
