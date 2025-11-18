@@ -20,6 +20,10 @@ export type FifoSqsMessage = {
   MessageDeduplicationId: string
 }
 
+export type NonFifoSqsMessage = {
+  MessageBody: string
+}
+
 interface SenderClient {
   send: (command: any, options: any) => Promise<any>
 }

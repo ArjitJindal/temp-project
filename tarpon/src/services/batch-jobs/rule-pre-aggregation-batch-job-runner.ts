@@ -41,14 +41,12 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import {
   bulkSendMessages,
-  FifoSqsMessage,
   getSQSClient,
   getSQSQueueUrl,
-  sanitizeDeduplicationId,
+  NonFifoSqsMessage,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
-import { TransientRepository } from '@/core/repositories/transient-repository'
-import dayjs, { duration } from '@/utils/dayjs'
+import dayjs from '@/utils/dayjs'
 import { generateChecksum } from '@/utils/object'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { Address } from '@/@types/openapi-public/Address'
@@ -61,26 +59,12 @@ import { getClickhouseClient } from '@/utils/clickhouse/client'
 const sqs = getSQSClient()
 
 const DEFAULT_CHUNK_SIZE = 1000
-
 function getAggregationTaskMessage(
-  task: TransactionAggregationTaskEntry,
-  sliceCount?: number
-): FifoSqsMessage {
+  task: TransactionAggregationTaskEntry
+): NonFifoSqsMessage {
   const payload = task.payload as V8LogicAggregationRebuildTask
-  const deduplicationId = generateChecksum(
-    `${task.payload?.['jobId'] ? `${task.payload['jobId']}:` : ''}${
-      task.userKeyId
-    }${sliceCount ? `-${sliceCount}` : ''}:${getAggVarHash(
-      payload.aggregationVariable
-    )}`
-  )
-
   return {
     MessageBody: JSON.stringify(payload),
-    MessageGroupId: generateChecksum(
-      `${task.userKeyId}${sliceCount ? `-${sliceCount}` : ''}`
-    ),
-    MessageDeduplicationId: deduplicationId,
   }
 }
 
@@ -213,28 +197,25 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         tenantId
       )
       for await (const { ids, type } of preAggBuilder) {
-        let messages: FifoSqsMessage[] = []
+        let messages: NonFifoSqsMessage[] = []
         if (type === 'USER_TRANSACTIONS') {
           messages = (ids as string[]).flatMap((userId) => {
             if (timeRanges !== null) {
-              return timeRanges.map((range, index) =>
-                getAggregationTaskMessage(
-                  {
-                    userKeyId: userId,
-                    payload: {
-                      type: 'PRE_AGGREGATION',
-                      userId,
-                      tenantId: job.tenantId,
-                      currentTimestamp: currentTimestamp ?? Date.now(),
-                      timeWindow: range,
-                      jobId: this.jobId,
-                      entity,
-                      aggregationVariable,
-                      totalSliceCount: timeRanges.length,
-                    },
+              return timeRanges.map((range) =>
+                getAggregationTaskMessage({
+                  userKeyId: userId,
+                  payload: {
+                    type: 'PRE_AGGREGATION',
+                    userId,
+                    tenantId: job.tenantId,
+                    currentTimestamp: currentTimestamp ?? Date.now(),
+                    timeWindow: range,
+                    jobId: this.jobId,
+                    entity,
+                    aggregationVariable,
+                    totalSliceCount: timeRanges.length,
                   },
-                  index
-                )
+                })
               )
             }
             return getAggregationTaskMessage({
@@ -254,24 +235,21 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           messages = (ids as PaymentDetailsUserInfo[]).flatMap(
             ({ userKeyId, paymentDetails }) => {
               if (timeRanges !== null) {
-                return timeRanges.map((range, index) =>
-                  getAggregationTaskMessage(
-                    {
-                      userKeyId,
-                      payload: {
-                        type: 'PRE_AGGREGATION',
-                        paymentDetails,
-                        tenantId: job.tenantId,
-                        currentTimestamp: currentTimestamp ?? Date.now(),
-                        timeWindow: range,
-                        jobId: this.jobId,
-                        entity,
-                        totalSliceCount: timeRanges.length,
-                        aggregationVariable,
-                      },
+                return timeRanges.map((range) =>
+                  getAggregationTaskMessage({
+                    userKeyId,
+                    payload: {
+                      type: 'PRE_AGGREGATION',
+                      paymentDetails,
+                      tenantId: job.tenantId,
+                      currentTimestamp: currentTimestamp ?? Date.now(),
+                      timeWindow: range,
+                      jobId: this.jobId,
+                      entity,
+                      totalSliceCount: timeRanges.length,
+                      aggregationVariable,
                     },
-                    index
-                  )
+                  })
                 )
               }
               return getAggregationTaskMessage({
@@ -358,7 +336,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         const queue = getSQSQueueUrl(
           process.env.PRE_AGGREGATION_QUEUE_URL as string
         )
-        await this.internalBulkSendMesasges(this.dynamoDb, messages, queue)
+        await this.internalBulkSendMessages(messages, queue)
       }
     }
 
@@ -384,61 +362,25 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private async internalBulkSendMesasges(
-    dynamoDb: DynamoDBDocumentClient,
-    messages: FifoSqsMessage[],
+  private async internalBulkSendMessages(
+    messages: NonFifoSqsMessage[],
     queueUrl: string
   ) {
-    const dedupMessages = uniqBy(messages, (m) => m.MessageDeduplicationId)
+    const dedupMessages = uniqBy(messages, (m) => generateChecksum(m))
+    this.totalMessagesLength += dedupMessages.length
     if (envIs('local')) {
-      this.totalMessagesLength += dedupMessages.length
-      await this.jobRepository.incrementMetadataTasksCount(
-        this.jobId,
-        dedupMessages.length
-      )
       const { handleV8PreAggregationTasks } = await import(
         '@/core/local-handlers/v8-pre-aggregation'
       )
-
       await handleV8PreAggregationTasks(dedupMessages)
     } else {
-      const transientRepository = new TransientRepository(
-        dynamoDb,
-        duration(7, 'day').asSeconds()
-      )
       // Filter the messages that have not been sent yet
-      const messagesNotSentYet: FifoSqsMessage[] = []
-      const messageSentStatusDict = await transientRepository.bulkCheckHasKey(
-        this.jobId,
-        dedupMessages.map((message) =>
-          sanitizeDeduplicationId(message.MessageDeduplicationId)
-        )
-      )
-      for (const message of dedupMessages) {
-        if (
-          !messageSentStatusDict[
-            sanitizeDeduplicationId(message.MessageDeduplicationId)
-          ]
-        ) {
-          messagesNotSentYet.push(message)
-        }
-      }
-      this.totalMessagesLength += messagesNotSentYet.length
-
       const chunkSize = 10
-      const messagesToSendChunks = chunk(messagesNotSentYet, chunkSize)
+      const messagesToSendChunks = chunk(dedupMessages, chunkSize)
       await pMap(
         messagesToSendChunks,
         async (chunk) => {
-          await bulkSendMessages(sqs, queueUrl, chunk, async (batch) => {
-            // Mark the messages as sent to avoid being sent again on retries
-            await transientRepository.batchAddKey(
-              batch.map((message) => ({
-                partitionKeyId: this.jobId,
-                sortKeyId: (message.MessageDeduplicationId ?? '') as string,
-              }))
-            )
-          })
+          await bulkSendMessages(sqs, queueUrl, chunk)
         },
         { concurrency: MAX_CONCURRENCY }
       )

@@ -1,9 +1,9 @@
-import { FifoSqsMessage } from '@/utils/sns-sqs-client'
+import { NonFifoSqsMessage } from '@/utils/sns-sqs-client'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const handleV8PreAggregationTasks = async (
-  messages: FifoSqsMessage[]
+  messages: NonFifoSqsMessage[]
 ) => {
   const { handleV8PreAggregationTask } = await import(
     '@/lambdas/transaction-aggregation/app'

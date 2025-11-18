@@ -735,40 +735,4 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         .metadata?.tasksCount
     ).toBe(2 * TIME_SLICE_COUNT)
   })
-
-  test("doesn't submit pre-aggregation tasks if already submitted before", async () => {
-    const aggregationVariables: LogicAggregationVariable[] = [
-      {
-        key: 'agg:test',
-        type: 'USER_TRANSACTIONS',
-        transactionDirection: 'SENDING',
-        aggregationFieldKey: 'TRANSACTION:transactionId',
-        aggregationFunc: 'COUNT',
-        timeWindow: {
-          start: { units: 1, granularity: 'day' },
-          end: { units: 0, granularity: 'day' },
-        },
-        includeCurrentEntity: true,
-      },
-    ]
-    const { ruleInstanceId } = await setUpAggregationVariables(
-      tenantId,
-      aggregationVariables
-    )
-
-    const jobId = uuidv4()
-    const testJob: BatchJobWithId = {
-      jobId,
-      type: 'RULE_PRE_AGGREGATION',
-      tenantId: tenantId,
-      parameters: {
-        entity: { type: 'RULE', ruleInstanceId },
-        aggregationVariables,
-      },
-    }
-    await jobRunnerHandler(testJob)
-    expect(bulkSendMessagesMock.mock.calls[0][2]).toHaveLength(1)
-    await jobRunnerHandler(testJob)
-    expect(bulkSendMessagesMock.mock.calls[1]).toBeUndefined()
-  })
 })
