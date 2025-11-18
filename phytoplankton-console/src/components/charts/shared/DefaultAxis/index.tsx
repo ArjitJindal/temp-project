@@ -4,14 +4,14 @@ import { ScaleLinear } from 'd3-scale';
 import { AxisBottom as VisxAxisBottom, AxisLeft as VisxAvisLeft } from '@visx/axis';
 import { AxisScale, SharedAxisProps } from '@visx/axis/lib/types';
 import { TextProps } from '@visx/text/lib/Text';
-import { ScaleInput } from '@visx/scale';
+import { NumberLike, ScaleInput } from '@visx/scale';
 import cn from 'clsx';
 import s from './index.module.less';
 import { DEFAULT_AXIS_FONT_STYLE, measureTextSize } from '@/components/charts/shared/text';
 import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { SKELETON_TICK_COMPONENT } from '@/components/charts/BarChart/helpers';
 import { generateEvenTicks } from '@/components/charts/shared/helpers';
-import { DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
+import { DEFAULT_NUMBER_FORMATTER, Formatter } from '@/components/charts/shared/formatting';
 import { BarGrouping } from '@/components/charts/BarChart';
 type Props<Scale extends AxisScale> = SharedAxisProps<Scale> & {
   showSkeleton?: boolean;
@@ -25,6 +25,7 @@ type Props<Scale extends AxisScale> = SharedAxisProps<Scale> & {
     }[],
   ) => Partial<TextProps>;
   grouping?: BarGrouping;
+  tickFormat?: Formatter<NumberLike>;
 };
 
 const MAX_TICK_LINES = 3;
@@ -185,7 +186,7 @@ const Y_MIN_TICKS = 2;
 const Y_MAX_TICKS = 10;
 
 export function DefaultAxisLeft<Scale extends AxisScale>(props: Props<Scale>) {
-  const { showSkeleton = false, tickLabelProps, scale, ...rest } = props;
+  const { showSkeleton = false, tickLabelProps, scale, tickFormat, ...rest } = props;
   const axisColor = showSkeleton ? COLORS_V2_SKELETON_COLOR : COLORS_V2_GRAY_6;
 
   const ticksCount = useMemo(() => {
@@ -210,7 +211,7 @@ export function DefaultAxisLeft<Scale extends AxisScale>(props: Props<Scale>) {
       numTicks={ticksCount}
       tickStroke={axisColor}
       tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : undefined}
-      tickFormat={DEFAULT_NUMBER_FORMATTER}
+      tickFormat={tickFormat ?? DEFAULT_NUMBER_FORMATTER}
       scale={scale}
       tickValues={ticks}
       {...rest}

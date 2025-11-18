@@ -11,6 +11,18 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 
 // Helper function to get currency formatting function based on question ID
 const getCurrencyFormatFunction = (item: QuestionResponseTimeSeries, showAllDecimals: boolean) => {
+  // Check if this is a transaction count (not amount)
+  const isTransactionCount =
+    item.questionId === COPILOT_QUESTIONS.TRANSACTION_COUNT ||
+    item.title?.toLowerCase().includes('transaction count');
+
+  // If it's a transaction count, format as whole number without currency or decimals
+  if (isTransactionCount) {
+    return (value: number): string => {
+      return Math.round(value).toLocaleString();
+    };
+  }
+
   const isTransactionRelated =
     item.questionId === COPILOT_QUESTIONS.TRANSACTION_INSIGHTS ||
     item.title?.toLowerCase().includes('transaction') ||

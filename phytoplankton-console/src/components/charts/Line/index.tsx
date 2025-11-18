@@ -308,6 +308,7 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
             left={0}
             scale={yScale}
             tickLabelProps={() => ({ dx: '-0.25em', dy: '0.25em' })}
+            tickFormat={(value) => formatY(value.valueOf())}
           />
           <DefaultAxisBottom left={0} top={innerHeight} scale={xScale} />
         </Group>
