@@ -285,7 +285,8 @@ export const sanctionsSearchHit = (
   userId?: string,
   ruleInstanceId?: string,
   transactionId?: string,
-  entity?: string
+  entity?: string,
+  status?: SanctionsHitStatus
 ): { hit: SanctionsHit; sanctionsEntity: SanctionsEntity } => {
   const id = uuid4()
   if (!entity) {
@@ -352,7 +353,9 @@ export const sanctionsSearchHit = (
     sanctionSearchTypes: ['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'],
   }
 
-  const status = rng.r(8).pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
+  const hitStatus = status
+    ? status
+    : rng.r(8).pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
 
   const toGetDelta = rng.r(10).randomInt(9) === 0
 
@@ -393,7 +396,7 @@ export const sanctionsSearchHit = (
       .randomInt(999999)
       .toString()
       .padStart(6, '0')}`,
-    status,
+    status: hitStatus,
     hitContext: {
       userId,
       ruleInstanceId,
@@ -474,9 +477,10 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
         userId,
         ruleInstanceId,
         transactionId,
-        entity
+        entity,
+        status
       )
-      return { hit: { ...hit, status }, sanctionsEntity }
+      return { hit, sanctionsEntity }
     }
 
     for (let i = 0; i < clearedHitCount; i++) {
@@ -577,9 +581,10 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchH
         userId,
         ruleInstanceId,
         transactionId,
-        entity
+        entity,
+        status
       )
-      return { hit: { ...hit, status }, sanctionsEntity }
+      return { hit, sanctionsEntity }
     }
 
     for (let i = 0; i < clearedHitCount; i++) {
