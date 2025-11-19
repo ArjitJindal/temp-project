@@ -5,6 +5,7 @@ import SubMenu, { SubMenuItem } from './SubMenu';
 import ChevronDownIcon from './chevron-down.react.svg';
 import Popover from '@/components/ui/Popover';
 import { getBranding } from '@/utils/branding';
+import { preloadRoute } from '@/utils/routePreload';
 
 interface Props {
   to?: string;
@@ -58,6 +59,12 @@ export default function TopLevelLink(props: Props) {
 
   const hasSubmenu = submenu != null && submenu.length > 0;
 
+  const handleMouseEnter = () => {
+    if (to && !isDisabled && !isExternal) {
+      preloadRoute(to);
+    }
+  };
+
   const newChildren: React.ReactNode = (
     <>
       <div className={s.left} data-cy={testName}>
@@ -86,6 +93,7 @@ export default function TopLevelLink(props: Props) {
     resultEl = (
       <ReactRouterNavLink
         {...sharedProps}
+        onMouseEnter={handleMouseEnter}
         className={({ isActive }) =>
           cn(sharedProps.className, isActive && !isActiveHighlightingEnabled && s.isActive)
         }

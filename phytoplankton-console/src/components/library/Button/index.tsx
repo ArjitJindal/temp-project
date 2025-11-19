@@ -1,11 +1,12 @@
 import React, { useImperativeHandle, useRef } from 'react';
 import cn from 'clsx';
-import { Link, LinkProps } from 'react-router-dom';
+import { LinkProps } from 'react-router-dom';
 import { Resource } from '@flagright/lib/utils';
 import s from './index.module.less';
 import { useHasResources } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { CY_LOADING_FLAG_CLASS } from '@/utils/cypress';
+import Link from '@/components/ui/Link';
 
 export type ButtonRef = {
   click: () => void;

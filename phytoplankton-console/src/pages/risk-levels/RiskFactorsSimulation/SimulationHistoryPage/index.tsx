@@ -5,7 +5,7 @@ import { makeUrl } from '@/utils/routing';
 
 const ROOT_PATH = '/risk-levels';
 
-export const SimulationHistoryPage = () => {
+const SimulationHistoryPage = () => {
   const type = 'risk-factors';
 
   const buildUrl = (path: string) => `${ROOT_PATH}/${type}${path}`;
@@ -39,3 +39,5 @@ export const SimulationHistoryPage = () => {
     </Feature>
   );
 };
+
+export default SimulationHistoryPage;

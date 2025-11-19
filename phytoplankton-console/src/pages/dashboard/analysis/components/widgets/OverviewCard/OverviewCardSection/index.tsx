@@ -1,5 +1,4 @@
 import cn from 'clsx';
-import { Link } from 'react-router-dom';
 import s from './styles.module.less';
 import Skeleton from '@/components/library/Skeleton';
 import { AsyncResource, hasValue } from '@/utils/asyncResource';
@@ -7,6 +6,7 @@ import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.reac
 import Warning from '@/components/ui/icons/Remix/system/error-warning-line.react.svg';
 import Tooltip from '@/components/library/Tooltip';
 import { formatNumber, isValidNumber } from '@/utils/number';
+import Link from '@/components/ui/Link';
 
 interface BaseProps {
   title: string | React.ReactNode;

@@ -1,7 +1,6 @@
 import cn from 'clsx';
-import React from 'react';
-import { Link } from 'react-router-dom';
 import s from './index.module.less';
+import Link from '@/components/ui/Link';
 
 export interface SubMenuItem {
   to: string;

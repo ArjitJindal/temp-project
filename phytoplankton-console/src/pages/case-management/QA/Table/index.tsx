@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { UserOutlined } from '@ant-design/icons';
 import { useAlertsSamplingCreateMutation, useAlertsSamplingUpdateMutation } from '../utils';
@@ -36,7 +35,7 @@ import Id from '@/components/ui/Id';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import { useReasons } from '@/utils/reasons';
 import { usePaginatedAlertList } from '@/utils/api/alerts';
-
+import Link from '@/components/ui/Link';
 interface Props {
   params: AllParams<TableSearchParams>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;

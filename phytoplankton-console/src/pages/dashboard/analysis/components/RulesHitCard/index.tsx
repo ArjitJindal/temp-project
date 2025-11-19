@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
-import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { generateAlertsListUrl } from '../HitsPerUserCard/utils';
 import s from './style.module.less';
@@ -21,6 +20,7 @@ import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { formatNumber } from '@/utils/number';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
+import Link from '@/components/ui/Link';
 
 export default function RuleHitCard(props: WidgetProps) {
   const api = useApi();

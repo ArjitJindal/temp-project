@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { isEmpty } from 'lodash';
 import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -36,6 +35,7 @@ import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { Progress } from '@/components/Simulation/Progress';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Link from '@/components/ui/Link';
 
 type Props = {
   onClose: (toClose: boolean) => void;

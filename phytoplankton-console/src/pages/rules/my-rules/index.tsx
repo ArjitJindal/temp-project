@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { capitalizeNameFromEmail } from '@flagright/lib/utils/humanize';
 import { getRuleInstanceDisplayId } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
@@ -32,6 +32,7 @@ import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 import { formatNumber } from '@/utils/number';
+import Link from '@/components/ui/Link';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 

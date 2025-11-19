@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shortId } from '@flagright/lib/utils';
-import { Link } from 'react-router-dom';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import {
   isDirectionlessVariable,
@@ -15,6 +14,7 @@ import NestedSelects, { Option as NestedSelectsOption, RefType } from './NestedS
 import VariableFilters from './VariableFilters';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
+import Link from '@/components/ui/Link';
 import {
   LogicEntityVariable,
   LogicEntityVariableEntityEnum,

@@ -1,5 +1,4 @@
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { firstLetterUpper, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { round } from 'lodash';
@@ -16,6 +15,7 @@ import s from './style.module.less';
 import AggregationVariableSummary from './AggregationVariableSummary';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
+import Link from '@/components/ui/Link';
 import {
   CurrencyCode,
   LogicAggregationFunc,

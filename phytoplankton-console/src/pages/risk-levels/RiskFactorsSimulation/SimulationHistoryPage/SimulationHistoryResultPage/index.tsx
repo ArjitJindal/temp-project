@@ -5,7 +5,7 @@ import { BreadCrumbsWrapper } from '@/components/BreadCrumbsWrapper';
 import { notEmpty } from '@/utils/array';
 import { makeUrl } from '@/utils/routing';
 
-export const SimulationHistoryResultPage = () => {
+const SimulationHistoryResultPage = () => {
   const { jobId } = useParams();
   const { pathname } = useLocation();
 
@@ -55,3 +55,5 @@ export const SimulationHistoryResultPage = () => {
     </Feature>
   );
 };
+
+export default SimulationHistoryResultPage;

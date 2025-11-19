@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
 import pluralize from 'pluralize';
 import { AssigneesDropdown } from '../../../components/AssigneesDropdown';
@@ -106,6 +106,7 @@ import { usePaginatedAlertList } from '@/utils/api/alerts';
 import { useRuleQueues } from '@/utils/api/rules';
 import { getPaymentDetailsIdString } from '@/utils/payments';
 import { getAddressString } from '@/utils/address';
+import Link from '@/components/ui/Link';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: ChecklistStatus | "NOT_QA'd" | undefined;

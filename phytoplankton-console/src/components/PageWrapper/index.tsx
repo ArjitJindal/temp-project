@@ -1,10 +1,10 @@
 import React from 'react';
 import { Col, Row, Typography } from 'antd';
 import cn from 'clsx';
-import { Link } from 'react-router-dom';
 import ErrorBoundary from '../utils/ErrorBoundary';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
+import Link from '@/components/ui/Link';
 
 export const PAGE_WRAPPER_PADDING = 16;
 

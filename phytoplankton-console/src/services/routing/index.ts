@@ -1,48 +1,10 @@
 import { useMemo } from 'react';
-import RulesItemPage from 'src/pages/rules/rules-item';
-import RulesLibraryItemPage from 'src/pages/rules/rules-library-item';
-import WorkflowsItemPage from 'src/pages/workflows/workflows-item-page';
 import { Resource } from '@flagright/lib/utils';
 import { PermissionStatements } from '@/apis';
 import {
   useFeatureEnabled,
   useResources,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import ForbiddenPage from '@/pages/403';
-import Page404 from '@/pages/404';
-import AccountsPage from '@/pages/accounts';
-import AlertItemPage from '@/pages/alert-item';
-import AuditLogPage from '@/pages/auditlog';
-import Clueso from '@/pages/auth/clueso';
-import CaseManagementPage from '@/pages/case-management';
-import CaseManagementItemPage from '@/pages/case-management-item';
-import DashboardAnalysisPage from '@/pages/dashboard/analysis';
-import CreatedListsPage from '@/pages/lists';
-import ListsItemPage from '@/pages/lists-item';
-import { QASamplePage } from '@/pages/qa-sample-item';
-import { QASamplesTable } from '@/pages/qa-samples';
-import ReportsList from '@/pages/reports';
-import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
-import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
-import RiskFactorPage from '@/pages/risk-levels/risk-factors';
-import RiskFactorItemPage from '@/pages/risk-levels/risk-factors/RiskItem';
-import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage';
-import { SimulationHistoryResultPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
-import RulesPage from '@/pages/rules';
-import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
-import SimulationHistoryPage from '@/pages/rules/simulation-history';
-import SimulationHistoryItemPage from '@/pages/rules/simulation-history-item';
-import SanctionsPage from '@/pages/sanctions';
-import ImportHistoryPage from '@/pages/sanctions/import-history';
-import BulkScreeningItemPage from '@/pages/sanctions/bulk-screening/item';
-import SettingsPage from '@/pages/settings';
-import TransactionsListPage from '@/pages/transactions';
-import TransactionsItemPage from '@/pages/transactions-item';
-import UsersImport from '@/pages/users-import/UsersImport';
-import UsersItemPage from '@/pages/users-item';
-import UsersUsersListPage from '@/pages/users/users-list';
-import WorkflowsPage from '@/pages/workflows/workflows-page';
-import WorkflowsCreatePage from '@/pages/workflows/workflows-create-page';
 import { isLeaf, isTree, RouteItem } from '@/services/routing/types';
 import {
   hasMinimumPermission,
@@ -51,12 +13,73 @@ import {
   useHasResources,
 } from '@/utils/user-utils';
 import { useSafeLocalStorageState } from '@/utils/hooks';
-import AccountsRolesItemPage from '@/pages/accounts/RolesV2/AccountsRolesItemPage';
-import VersionHistoryPage from '@/components/VersionHistory';
-import RiskVersionHistoryItem from '@/pages/risk-levels/configure/RiskVersionHistoryItem';
-import RiskFactorVersionHistoryItem from '@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem';
-import ReportItem from '@/pages/report-item';
-import TransactionsImportPage from '@/pages/transactions-import';
+import { lazyWithPreload } from '@/utils/lazyWithPreload';
+
+const ImportHistoryPage = lazyWithPreload(() => import('@/pages/sanctions/import-history'));
+const BulkScreeningItemPage = lazyWithPreload(
+  () => import('@/pages/sanctions/bulk-screening/item'),
+);
+const RulesItemPage = lazyWithPreload(() => import('src/pages/rules/rules-item'));
+const RulesLibraryItemPage = lazyWithPreload(() => import('src/pages/rules/rules-library-item'));
+const WorkflowsItemPage = lazyWithPreload(() => import('src/pages/workflows/workflows-item-page'));
+const ForbiddenPage = lazyWithPreload(() => import('@/pages/403'));
+const Page404 = lazyWithPreload(() => import('@/pages/404'));
+const AccountsPage = lazyWithPreload(() => import('@/pages/accounts'));
+const AlertItemPage = lazyWithPreload(() => import('@/pages/alert-item'));
+const AuditLogPage = lazyWithPreload(() => import('@/pages/auditlog'));
+const Clueso = lazyWithPreload(() => import('@/pages/auth/clueso'));
+const CaseManagementPage = lazyWithPreload(() => import('@/pages/case-management'));
+const CaseManagementItemPage = lazyWithPreload(() => import('@/pages/case-management-item'));
+const DashboardAnalysisPage = lazyWithPreload(() => import('@/pages/dashboard/analysis'));
+const CreatedListsPage = lazyWithPreload(() => import('@/pages/lists'));
+const ListsItemPage = lazyWithPreload(() => import('@/pages/lists-item'));
+const QASamplePage = lazyWithPreload(() => import('@/pages/qa-sample-item'));
+const QASamplesTable = lazyWithPreload(() => import('@/pages/qa-samples'));
+const ReportsList = lazyWithPreload(() => import('@/pages/reports'));
+const RiskLevelsConfigurePage = lazyWithPreload(() => import('@/pages/risk-levels/configure'));
+const RiskAlgorithmTable = lazyWithPreload(() => import('@/pages/risk-levels/risk-algorithms'));
+const RiskFactorPage = lazyWithPreload(() => import('@/pages/risk-levels/risk-factors'));
+const RiskFactorItemPage = lazyWithPreload(
+  () => import('@/pages/risk-levels/risk-factors/RiskItem'),
+);
+const RiskFactorsSimulationHistoryPage = lazyWithPreload(
+  () => import('@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage'),
+);
+const SimulationHistoryResultPage = lazyWithPreload(
+  () =>
+    import(
+      '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage'
+    ),
+);
+const RulesPage = lazyWithPreload(() => import('@/pages/rules'));
+const RuleInstancePage = lazyWithPreload(() => import('@/pages/rules/rule-instance-page'));
+const SimulationHistoryPage = lazyWithPreload(() => import('@/pages/rules/simulation-history'));
+const SimulationHistoryItemPage = lazyWithPreload(
+  () => import('@/pages/rules/simulation-history-item'),
+);
+const SanctionsPage = lazyWithPreload(() => import('@/pages/sanctions'));
+const SettingsPage = lazyWithPreload(() => import('@/pages/settings'));
+const TransactionsListPage = lazyWithPreload(() => import('@/pages/transactions'));
+const TransactionsItemPage = lazyWithPreload(() => import('@/pages/transactions-item'));
+const UsersImport = lazyWithPreload(() => import('@/pages/users-import/UsersImport'));
+const UsersItemPage = lazyWithPreload(() => import('@/pages/users-item'));
+const UsersUsersListPage = lazyWithPreload(() => import('@/pages/users/users-list'));
+const WorkflowsPage = lazyWithPreload(() => import('@/pages/workflows/workflows-page'));
+const WorkflowsCreatePage = lazyWithPreload(
+  () => import('@/pages/workflows/workflows-create-page'),
+);
+const AccountsRolesItemPage = lazyWithPreload(
+  () => import('@/pages/accounts/RolesV2/AccountsRolesItemPage'),
+);
+const VersionHistoryPage = lazyWithPreload(() => import('@/components/VersionHistory'));
+const RiskVersionHistoryItem = lazyWithPreload(
+  () => import('@/pages/risk-levels/configure/RiskVersionHistoryItem'),
+);
+const RiskFactorVersionHistoryItem = lazyWithPreload(
+  () => import('@/pages/risk-levels/risk-factors/RiskFactorVersionHistoryItem'),
+);
+const ReportItem = lazyWithPreload(() => import('@/pages/report-item'));
+const TransactionsImportPage = lazyWithPreload(() => import('@/pages/transactions-import'));
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');

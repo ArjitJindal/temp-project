@@ -1,10 +1,10 @@
 import cn from 'clsx';
 import React, { useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import CollapseButton from './chevrons-left.react.svg';
 import LogoNoText from './logo-no-text.react.svg';
 import s from './index.module.less';
 import { getBranding, isWhiteLabeled } from '@/utils/branding';
+import Link from '@/components/ui/Link';
 
 const branding = getBranding();
 

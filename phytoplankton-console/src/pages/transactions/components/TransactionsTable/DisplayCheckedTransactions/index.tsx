@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
-import { Link } from 'react-router-dom';
 import UserSearchButton from '../../UserSearchButton';
 import s from './styles.module.less';
 import { Alert } from '@/apis';
@@ -14,6 +13,7 @@ import COLORS from '@/components/ui/colors';
 import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
 import { usePaginatedTransactionList } from '@/utils/api/transactions';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Link from '@/components/ui/Link';
 
 type Props = {
   alert: Alert;

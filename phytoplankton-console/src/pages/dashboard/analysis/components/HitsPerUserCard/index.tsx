@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { RangeValue } from 'rc-picker/es/interface';
-import { Link } from 'react-router-dom';
 import pluralize from 'pluralize';
 import { round } from 'lodash';
 import { TableItem } from './types';
@@ -17,6 +16,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DashboardStatsHitsPerUserData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Link from '@/components/ui/Link';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';

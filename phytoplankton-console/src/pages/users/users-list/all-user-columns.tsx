@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-import React from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import { capitalize } from 'lodash';
 import s from './styles.module.less';
@@ -16,6 +14,7 @@ import {
 } from '@/components/library/Table/standardDataTypes';
 import { AllUserTableItem } from '@/pages/users/users-list/data';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
+import Link from '@/components/ui/Link';
 
 export function getAllUserColumns(userAlias?: string): TableColumn<AllUserTableItem>[] {
   const helper = new ColumnHelper<AllUserTableItem>();
