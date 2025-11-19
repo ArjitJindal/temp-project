@@ -522,12 +522,6 @@ export class UserClickhouseRepository {
       filterConditions.push(`id IN ('${escapedIds.join("','")}')`)
     }
 
-    if (params.filterName) {
-      filterConditions.push(
-        `ilike(username, '%${params.filterName.replace(/'/g, "''")}%')`
-      )
-    }
-
     if (params.filterEmail) {
       filterConditions.push(
         `arrayExists(x -> ilike(x, '%${params.filterEmail.replace(
