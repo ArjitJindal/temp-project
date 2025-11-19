@@ -15,6 +15,7 @@ export default function NarrativeInput(props: Props) {
   const { schema, value, onChange, ...inputProps } = props;
   const data = useSarContext<TransactionStepContextValue>();
   const report = data?.report;
+
   return (
     <>
       <TextArea
@@ -36,6 +37,7 @@ export default function NarrativeInput(props: Props) {
               title: schema.title,
               description: schema.description,
               transactionId: data?.metaData.activeTransactionId,
+              reportType: data?.report.reportTypeId,
             },
           }}
         />

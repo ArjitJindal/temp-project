@@ -70,8 +70,11 @@ export function agumentUiSchemaFintracStr(jsonSchema: any) {
   const stateType = 'statecode'
   const emailType = 'emailaddress'
   const urlType = 'url'
+  const suspActivity = 'descriptionofsuspiciousactivity'
+
   Object.entries(jsonSchema).forEach(([key, value]: [string, any]) => {
     const lowerKey = key.toLowerCase()
+
     if (lowerKey.includes(enumType)) {
       value['ui:schema'] = {
         'ui:subtype': 'FINCEN_INDICATOR',
@@ -107,6 +110,12 @@ export function agumentUiSchemaFintracStr(jsonSchema: any) {
       value['ui:schema'] = {
         'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS',
         'ui:value': 'URL',
+      }
+    }
+
+    if (lowerKey.includes(suspActivity)) {
+      value['ui:schema'] = {
+        'ui:subtype': 'NARRATIVE',
       }
     }
 

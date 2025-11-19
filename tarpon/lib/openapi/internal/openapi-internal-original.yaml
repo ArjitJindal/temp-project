@@ -11809,6 +11809,8 @@ components:
               type: string
             transactionId:
               type: string
+            reportType:
+              type: string
     NarrativeResponse:
       title: NarrativeResponse
       type: object

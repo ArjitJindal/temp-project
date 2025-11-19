@@ -41,6 +41,11 @@ export const copilotHandler = lambdaApi({})(
         narrativeMode,
       } = request.NarrativeRequest
 
+      const maxLength =
+        additionalCopilotInfo?.additionalSarInformation?.reportType === 'CA-STR'
+          ? 1000
+          : undefined
+
       const attributes = await retrievalService.getAttributes(
         entityId,
         entityType,
@@ -55,7 +60,8 @@ export const copilotHandler = lambdaApi({})(
         attributes,
         additionalCopilotInfo ?? {},
         narrativeMode,
-        otherReason
+        otherReason,
+        maxLength
       )
     })
 

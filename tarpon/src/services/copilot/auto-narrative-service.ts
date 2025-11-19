@@ -30,7 +30,8 @@ export class AutoNarrativeService {
     attributes: AttributeSet,
     additionalCopilotInfo: AdditionalCopilotInfo,
     narrativeMode: NarrativeMode,
-    otherReason?: string
+    otherReason?: string,
+    maxLength?: number
   ): Promise<NarrativeResponse> {
     const service = await this.getService(
       type,
@@ -76,6 +77,10 @@ export class AutoNarrativeService {
       string += `"You can use markdown if required don't use \`\`\`markdown\`\`\`"`
     } else if (service.textType === 'PLAIN') {
       string += `"You should only output plaintext, no markdown. Please do not include any other text than plaintext."`
+    }
+
+    if (maxLength) {
+      string += `"The output should be strictly less than ${maxLength} characters"`
     }
 
     const completionMessages: Message[] = []

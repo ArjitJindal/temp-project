@@ -25,30 +25,42 @@ export const FintracJsonSchemaResolved = {
           minimum: 1,
           maximum: 99999,
           title: 'Activity sector',
+          description:
+            'Provide the information requested for this field in a factual and concise manner. Include specific identifiers, dates, and supporting details where applicable to assist regulatory review.',
         },
         reportingEntityNumber: {
           title: 'Reporting entity number',
+          description:
+            'Provide details relevant to the overall STR: reference numbers, reporting institution, and any overarching notes.',
           type: 'number',
           minimum: 0,
           maximum: 9999999,
         },
         submittingReportingEntityNumber: {
           title: 'Submitting reporting entity number',
+          description:
+            'Provide details relevant to the overall STR: reference numbers, reporting institution, and any overarching notes.',
           type: 'number',
           minimum: 0,
           maximum: 9999999,
         },
         reportingEntityReportReference: {
           title: 'Reporting entity report reference number',
+          description:
+            'Provide details relevant to the overall STR: reference numbers, reporting institution, and any overarching notes.',
           type: 'string',
           pattern: '^[A-Za-z0-9-_]{1,100}$',
         },
         reportingEntityContactId: {
           type: 'number',
           title: 'Contact identifier',
+          description:
+            'Provide the unique reference or identifier associated with this transaction, person, or internal record.',
         },
         ministerialDirectiveCode: {
           title: 'Ministerial directive',
+          description:
+            'Provide the information requested for this field in a factual and concise manner. Include specific identifiers, dates, and supporting details where applicable to assist regulatory review.',
           type: 'string',
           minLength: 0,
           maxLength: 20,
@@ -69,13 +81,20 @@ export const FintracJsonSchemaResolved = {
       properties: {
         descriptionOfSuspiciousActivity: {
           type: 'string',
+          'ui:schema': {
+            'ui:subtype': 'NARRATIVE',
+          },
           title: 'Description of suspicious activity',
+          description:
+            'Provide a concise description of the suspicious activity. Include who was involved, what occurred, when and where it happened, how it happened, and specific reasons or indicators of suspicion.',
         },
         suspicionTypeCode: {
           type: 'integer',
           minimum: 1,
           maximum: 99999,
           title: 'Suspicion type',
+          description:
+            "Select or enter the appropriate type for this field (e.g., transaction type, account type). If 'Other', provide details.",
         },
         publicPrivatePartnershipProjectNameCodes: {
           type: 'array',
@@ -85,6 +104,8 @@ export const FintracJsonSchemaResolved = {
             maximum: 99999,
           },
           title: 'Public-private partnership project name',
+          description:
+            'Provide the information requested for this field in a factual and concise manner. Include specific identifiers, dates, and supporting details where applicable to assist regulatory review.',
         },
         politicallyExposedPersonIncludedIndicator: {
           type: 'boolean',
@@ -93,6 +114,8 @@ export const FintracJsonSchemaResolved = {
           },
           title:
             "Was an individual's information who you have determined to be a politically exposed person (PEP) included in this report?",
+          description:
+            "Select 'Yes' if the individual is a Politically Exposed Person (PEP). If yes, provide the person's role, country, and basis for classification (e.g., public office held).",
         },
       },
       required: ['publicPrivatePartnershipProjectNameCodes'],
@@ -121,6 +144,8 @@ export const FintracJsonSchemaResolved = {
         ],
       },
       title: 'Related reports',
+      description:
+        'Provide details relevant to the overall STR: reference numbers, reporting institution, and any overarching notes.',
     },
     actionTaken: {
       type: 'object',
@@ -129,6 +154,8 @@ export const FintracJsonSchemaResolved = {
         description: {
           type: 'string',
           title: 'Description of action taken',
+          description:
+            'Describe the actions your organization took in response (e.g., account freeze, transaction blocked, internal referral). Include dates and the person/department that took the action.',
         },
       },
     },
@@ -2673,6 +2700,8 @@ export const FintracJsonSchemaResolved = {
         ],
       },
       title: 'Transaction list',
+      description:
+        'Provide transaction details: date, amount, currency, sender and receiver identifiers (name/account), payment method, and any transaction reference numbers.',
     },
   },
   required: [
