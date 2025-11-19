@@ -248,8 +248,8 @@ export class LinkerService {
       const client = await getClickhouseClient(this.tenantId)
       const usersTable = CLICKHOUSE_DEFINITIONS.USERS.tableName
       const query = `
-      SELECT id
-      FROM ${usersTable} FINAL
+      SELECT distinct id
+      FROM ${usersTable}
       WHERE linkedEntities_parentUserId = '${userId}'`
 
       const result = await executeClickhouseQuery<{ id: string }[]>(
