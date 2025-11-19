@@ -11166,7 +11166,6 @@ components:
       title: ChatbotNames
       type: string
       enum:
-        - FRESHWORK
         - INTERCOMM
     DashboardStatsTransactionsCount:
       type: object

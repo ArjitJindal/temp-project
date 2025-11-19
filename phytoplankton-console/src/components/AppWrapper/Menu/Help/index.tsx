@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { shutdown, show as openIntercommWidget } from '@intercom/messenger-js-sdk';
 import TopLevelLink from '../TopLevelLink';
 import { useFeatureEnabled, useSettings } from '../../Providers/SettingsProvider';
-import FreshworkComponent, { openFreshworksWidget } from './Freshwork';
 import IntercomComponent from './Intercomm';
 import QuestionLineIcon from '@/components/ui/icons/Remix/system/question-line.react.svg';
 import { useI18n } from '@/locales';
@@ -32,18 +31,6 @@ const Help = (props: HelpProps) => {
     }
   }, [hasFeatureChatbot, chatbotName]);
 
-  // const handleChatbotClose = () => {
-  //   switch (chatbotName) {
-  //     case 'INTERCOMM':
-  //       closeIntercommWidget();
-  //       break;
-  //     case 'FRESHWORK':
-  //       closeFreshworksWidget();
-  //       break;
-  //     default:
-  //   }
-  // };
-
   const handleChatbotOpen = () => {
     if (!isWidgetInitialized) {
       setWidgetInitialization(true);
@@ -53,9 +40,6 @@ const Help = (props: HelpProps) => {
       case 'INTERCOMM':
         openIntercommWidget();
         break;
-      case 'FRESHWORK':
-        openFreshworksWidget();
-        break;
       default:
     }
   };
@@ -64,9 +48,6 @@ const Help = (props: HelpProps) => {
     <>
       {hasFeatureChatbot && isWidgetInitialized && chatbotName === 'INTERCOMM' && (
         <IntercomComponent />
-      )}
-      {hasFeatureChatbot && isWidgetInitialized && chatbotName === 'FRESHWORK' && (
-        <FreshworkComponent />
       )}
       <TopLevelLink
         key="help"

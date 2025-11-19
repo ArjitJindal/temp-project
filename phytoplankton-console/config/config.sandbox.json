@@ -13,7 +13,6 @@
     "POSTHOG_API_KEY": "phc_o3AIU7twnvMe1oXKZs8ZWYgVjVrI2BgJILpjvm0DWQY",
     "INTERNAL_POSTHOG_API_KEY": "phc_OKbrVO1aueNvmwJs5VykcH22Y8ji8QRBI41H3mVSr2R",
     "POSTHOG_HOST": "https://eu.i.posthog.com",
-    "INTERCOM_WIDGET_KEY": "mwv4pixl",
-    "FRESHWORK_WIDGET_KEY": 154000003695
+    "INTERCOM_WIDGET_KEY": "mwv4pixl"
   }
 }
