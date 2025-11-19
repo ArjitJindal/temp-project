@@ -1455,7 +1455,7 @@ describe('Screening counterparty alerts R-170', () => {
       destinationPaymentDetails: {
         method: 'CARD',
         nameOnCard: { firstName: 'Aman', lastName: 'Putin' },
-        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29ba',
+        cardFingerprint: '10000000-6411-4519-87a9-ad12eb8a29ba',
         cardIssuedCountry: 'US',
         transactionReferenceField: 'DEPOSIT',
       },
@@ -1493,7 +1493,7 @@ describe('Screening counterparty alerts R-170', () => {
       destinationPaymentDetails: {
         method: 'CARD',
         nameOnCard: { firstName: 'ABCD', lastName: 'Putin' },
-        cardFingerprint: '00000000-6411-4519-87a9-ad12eb8a29b2',
+        cardFingerprint: '10000000-6411-4519-87a9-ad12eb8a29b2',
         cardIssuedCountry: 'US',
         transactionReferenceField: 'DEPOSIT',
       },
@@ -2752,7 +2752,6 @@ describe('Test counterparty alerts', () => {
       })
     )
     expect(caseCreationResult3).toHaveLength(2)
-    console.log(JSON.stringify(caseCreationResult3, null, 2))
     expect(caseCreationResult3[0].alerts).toHaveLength(2)
 
     const transaction4 = getTestTransaction({
@@ -2794,9 +2793,6 @@ describe('Test counterparty alerts', () => {
     expect(caseCreationResult4).toHaveLength(2)
     expect(caseCreationResult4[0].alerts).toHaveLength(2)
     expect(caseCreationResult4[1].alerts).toHaveLength(3)
-
-    console.log(JSON.stringify(caseCreationResult4[1].alerts, null, 2))
-    console.log(JSON.stringify(caseCreationResult4[0].alerts, null, 2))
   })
 })
 
