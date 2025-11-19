@@ -95,7 +95,6 @@ export const transactionsViewHandler = lambdaApi()(
     const { TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
-    const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
     const [rulesEngineService, caseService, transactionService] =
       await Promise.all([
@@ -264,6 +263,7 @@ export const transactionsViewHandler = lambdaApi()(
     })
 
     handlers.registerGetTransactionEvents(async (ctx, req) => {
+      const mongoDb = await getMongoDbClient()
       const transactionEventsRepository = new TransactionEventRepository(
         tenantId,
         { dynamoDb, mongoDb }
