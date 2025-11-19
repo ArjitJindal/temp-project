@@ -23,6 +23,17 @@ const getCurrencyFormatFunction = (item: QuestionResponseTimeSeries, showAllDeci
     };
   }
 
+  // Check if this is a TRS score - always format to 2 decimals
+  const isTrsScore =
+    item.questionId === COPILOT_QUESTIONS.TRS_SCORE ||
+    item.title?.toLowerCase().includes('trs score');
+
+  if (isTrsScore) {
+    return (value: number): string => {
+      return formatNumber(value, { keepDecimals: true, showAllDecimals: false });
+    };
+  }
+
   const isTransactionRelated =
     item.questionId === COPILOT_QUESTIONS.TRANSACTION_INSIGHTS ||
     item.title?.toLowerCase().includes('transaction') ||
