@@ -76,6 +76,7 @@ export const AlertHistory: TableQuestion<Period> = {
         a.alertStatus,
         r.caseStatus,
         r.lastStatusChange?.reason?.join(', ') || '',
+        a.alertId,
         a.updatedAt,
       ]
     })
@@ -113,6 +114,7 @@ export const AlertHistory: TableQuestion<Period> = {
     { name: 'Alert status', columnType: 'TAG' },
     { name: 'Case status', columnType: 'TAG' },
     { name: 'Closing reason', columnType: 'STRING' },
+    { name: 'Comments', columnType: 'MODAL' },
     {
       name: 'Last updated at',
       columnType: 'DATE_TIME',

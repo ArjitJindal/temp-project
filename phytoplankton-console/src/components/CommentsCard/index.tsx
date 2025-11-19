@@ -27,8 +27,8 @@ interface Props {
   id?: string;
   title?: string;
   commentsQuery: AsyncResource<CommentGroup[]>;
-  deleteCommentMutation: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
-  handleAddComment: (
+  deleteCommentMutation?: Mutation<unknown, unknown, { commentId: string; groupId: string }>;
+  handleAddComment?: (
     commentFormValues: CommentEditorFormValues,
     groupId: string,
   ) => Promise<ApiComment>;
@@ -38,12 +38,19 @@ interface Props {
     groupId: string,
     personId?: string,
   ) => void;
+  hideHeader?: boolean;
   writeResources: Resource[];
 }
 
 export default function CommentsCard(props: Props) {
-  const { commentsQuery, deleteCommentMutation, handleAddComment, onCommentAdded, writeResources } =
-    props;
+  const {
+    commentsQuery,
+    deleteCommentMutation,
+    handleAddComment,
+    onCommentAdded,
+    writeResources,
+    hideHeader = false,
+  } = props;
 
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
@@ -83,12 +90,14 @@ export default function CommentsCard(props: Props) {
                     (group) => group.comments.length > 0,
                   );
                   return nonEmptyGroups.map((group) => {
-                    const adaptedMutation = adaptMutationVariables(
-                      deleteCommentMutation,
-                      (variables: { commentId: string }) => {
-                        return { ...variables, groupId: group.id };
-                      },
-                    );
+                    const adaptedMutation = deleteCommentMutation
+                      ? adaptMutationVariables(
+                          deleteCommentMutation,
+                          (variables: { commentId: string }) => {
+                            return { ...variables, groupId: group.id };
+                          },
+                        )
+                      : undefined;
                     const commentsWithReplies = getCommentsWithReplies(group.comments);
 
                     if (nonEmptyGroups.length < 2 && !group.title) {
@@ -97,12 +106,17 @@ export default function CommentsCard(props: Props) {
                           comments={commentsWithReplies}
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
-                          writeResources={writeResources}
-                          hanldeAddComment={(commentFormValues) =>
-                            handleAddComment(commentFormValues, group.id)
+                          writeResources={writeResources ?? []}
+                          hanldeAddComment={
+                            handleAddComment
+                              ? (commentFormValues) => handleAddComment(commentFormValues, group.id)
+                              : undefined
                           }
-                          onCommentAdded={(newComment) =>
-                            onCommentAdded?.(newComment, CommentType.COMMENT, group.id)
+                          onCommentAdded={
+                            onCommentAdded
+                              ? (newComment) =>
+                                  onCommentAdded(newComment, CommentType.COMMENT, group.id)
+                              : undefined
                           }
                           key="comments-component"
                         />
@@ -110,18 +124,23 @@ export default function CommentsCard(props: Props) {
                     }
                     return (
                       <div className={s.group} key={group.title}>
-                        <P bold>{group.title}</P>
+                        {!hideHeader && <P bold>{group.title}</P>}
                         <Comments
                           comments={commentsWithReplies}
                           deleteCommentMutation={adaptedMutation}
                           currentUserId={currentUserId}
-                          hanldeAddComment={(commentFormValues) =>
-                            handleAddComment(commentFormValues, group.id)
+                          hanldeAddComment={
+                            handleAddComment
+                              ? (commentFormValues) => handleAddComment(commentFormValues, group.id)
+                              : undefined
                           }
-                          onCommentAdded={(newComment) =>
-                            onCommentAdded?.(newComment, CommentType.COMMENT, group.id)
+                          onCommentAdded={
+                            onCommentAdded
+                              ? (newComment) =>
+                                  onCommentAdded(newComment, CommentType.COMMENT, group.id)
+                              : undefined
                           }
-                          writeResources={writeResources}
+                          writeResources={writeResources ?? []}
                         />
                       </div>
                     );
@@ -139,10 +158,10 @@ export default function CommentsCard(props: Props) {
 function Comments(props: {
   comments: CommentWithReplies[];
   currentUserId: string;
-  deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
+  deleteCommentMutation?: Mutation<unknown, unknown, { commentId: string }>;
   writeResources: Resource[];
-  hanldeAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment, commentType: CommentType) => void;
+  hanldeAddComment?: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
+  onCommentAdded?: (newComment: ApiComment, commentType: CommentType) => void;
 }) {
   const {
     comments,

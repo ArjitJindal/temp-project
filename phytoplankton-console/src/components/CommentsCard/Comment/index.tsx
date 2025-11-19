@@ -21,11 +21,11 @@ import ConfirmModal from '@/components/utils/Confirm/ConfirmModal';
 interface Props {
   currentUserId: string | undefined;
   comment: CommentWithReplies;
-  deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
+  deleteCommentMutation?: Mutation<unknown, unknown, { commentId: string }>;
   level?: number;
   hasCommentWritePermission: boolean;
-  handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment, commentType: CommentType) => void;
+  handleAddComment?: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
+  onCommentAdded?: (newComment: ApiComment, commentType: CommentType) => void;
 }
 
 export default function Comment(props: Props) {
@@ -55,6 +55,9 @@ export default function Comment(props: Props) {
   const [isDeleting, setDeleting] = useState(false);
 
   const handleClickDelete = async () => {
+    if (!deleteCommentMutation) {
+      return;
+    }
     if (comment.id == null) {
       throw new Error(`Unable to delete comment, id is empty`);
     }
@@ -229,7 +232,7 @@ export default function Comment(props: Props) {
         </div>
         <FilesList files={comment.files ? comment.files : []} />
         <div className={styles.footer}>
-          {areRepliesEnabled && comment.createdAt && level === 1 && (
+          {areRepliesEnabled && comment.createdAt && level === 1 && handleAddComment && (
             <div
               data-cy="comment-created-on"
               className={styles.footerText}
@@ -239,8 +242,10 @@ export default function Comment(props: Props) {
               {replies} {pluralize('Reply', replies)}
             </div>
           )}
-          {level === 1 && areRepliesEnabled && <div className={styles.separator}>.</div>}
-          {areRepliesEnabled && level === 1 && (
+          {level === 1 && areRepliesEnabled && handleAddComment && (
+            <div className={styles.separator}>.</div>
+          )}
+          {areRepliesEnabled && level === 1 && handleAddComment && (
             <div
               data-cy="comment-created-by"
               className={styles.footerText}
@@ -257,11 +262,12 @@ export default function Comment(props: Props) {
           >
             Print
           </div>
-          {currentUserId === comment.userId && level === 1 && areRepliesEnabled && (
-            <div className={styles.separator}>.</div>
-          )}
+          {currentUserId === comment.userId &&
+            level === 1 &&
+            areRepliesEnabled &&
+            handleAddComment && <div className={styles.separator}>.</div>}
 
-          {currentUserId === comment.userId && (
+          {currentUserId === comment.userId && deleteCommentMutation && (
             <>
               <Tooltip key="delete" title="Delete">
                 <span
@@ -284,36 +290,39 @@ export default function Comment(props: Props) {
             </>
           )}
         </div>
-        {level === 1 && areRepliesEnabled && (replies !== 0 || showReplyEditor) && (
-          <div className={cn(styles.repliesContainer, !showReplies ? styles.hideReplies : '')}>
-            {!!comment.replies?.length && (
-              <div className={styles.replyWrapper}>
-                {comment.replies.map((reply) => (
-                  <Comment
-                    comment={reply}
-                    deleteCommentMutation={deleteCommentMutation}
-                    currentUserId={currentUserId}
-                    level={level + 1}
-                    hasCommentWritePermission={hasCommentWritePermission}
-                    handleAddComment={handleAddComment}
-                    onCommentAdded={onCommentAdded}
-                    key={reply.id}
+        {level === 1 &&
+          areRepliesEnabled &&
+          handleAddComment &&
+          (replies !== 0 || showReplyEditor) && (
+            <div className={cn(styles.repliesContainer, !showReplies ? styles.hideReplies : '')}>
+              {!!comment.replies?.length && (
+                <div className={styles.replyWrapper}>
+                  {comment.replies.map((reply) => (
+                    <Comment
+                      comment={reply}
+                      deleteCommentMutation={deleteCommentMutation}
+                      currentUserId={currentUserId}
+                      level={level + 1}
+                      hasCommentWritePermission={hasCommentWritePermission}
+                      handleAddComment={handleAddComment}
+                      onCommentAdded={onCommentAdded}
+                      key={reply.id}
+                    />
+                  ))}
+                </div>
+              )}
+              {showReplyEditor && handleAddComment && (
+                <div className={styles.replyEditor}>
+                  <Avatar user={currentUser} size={'medium'} isLoading={isLoading} />
+                  <Reply
+                    submitRequest={handleAddComment}
+                    onSuccess={(newComment) => onCommentAdded?.(newComment, CommentType.COMMENT)}
+                    parentCommentId={comment.id}
                   />
-                ))}
-              </div>
-            )}
-            {showReplyEditor && (
-              <div className={styles.replyEditor}>
-                <Avatar user={currentUser} size={'medium'} isLoading={isLoading} />
-                <Reply
-                  submitRequest={handleAddComment}
-                  onSuccess={(newComment) => onCommentAdded(newComment, CommentType.COMMENT)}
-                  parentCommentId={comment.id}
-                />
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              )}
+            </div>
+          )}
       </div>
     </div>
   );

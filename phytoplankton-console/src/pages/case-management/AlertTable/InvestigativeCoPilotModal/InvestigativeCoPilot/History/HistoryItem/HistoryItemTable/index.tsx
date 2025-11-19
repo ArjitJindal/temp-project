@@ -17,6 +17,7 @@ import {
   MONEY_CURRENCY,
   COUNTRIES_MULTIPLE,
   STRING_MULTIPLE,
+  MODAL,
   getForneticsEntityId,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType, CommonParams } from '@/components/library/Table/types';
@@ -61,6 +62,10 @@ export const typeAssigner = (
     }
     case 'ID': {
       type = getForneticsEntityId(tenantSettings);
+      break;
+    }
+    case 'MODAL': {
+      type = MODAL as ColumnDataType<any>;
       break;
     }
     case 'TRANSACTION_TYPE': {

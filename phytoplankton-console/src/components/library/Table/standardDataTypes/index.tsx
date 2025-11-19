@@ -86,6 +86,7 @@ import { statusToOperationName } from '@/pages/case-management/components/Status
 import { PEP_RANKS } from '@/apis/models-custom/PepRank';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
+import AlertCommentsModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemTable/AlertCommentsModal';
 
 export const UNKNOWN: Required<Omit<FullColumnDataType<unknown>, 'export' | 'renderEdit'>> &
   Pick<FullColumnDataType<unknown>, 'export' | 'renderEdit'> = {
@@ -289,6 +290,17 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
 export const ID: ColumnDataType<string> = {
   render: (value) => <Id>{value}</Id>,
   stringify: (value) => `${value}`,
+};
+
+export const MODAL: ColumnDataType<string> = {
+  render: (value) => {
+    return (
+      <React.Suspense fallback={<span>{value || '-'}</span>}>
+        {value && <AlertCommentsModal id={value} />}
+      </React.Suspense>
+    );
+  },
+  stringify: (value: any) => value ?? '',
 };
 
 export const ALERT_USER_ID: ColumnDataType<string, TableAlertItem> = {

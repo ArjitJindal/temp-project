@@ -9331,6 +9331,7 @@ components:
             - MONEY_CURRENCY
             - COUNTRY
             - MERCHANT_NAME
+            - MODAL
         columnWidth:
           type: number
         columnId:
