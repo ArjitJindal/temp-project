@@ -4191,6 +4191,9 @@ paths:
     get:
       summary: Account - List
       tags: []
+      x-flagright:
+        resources:
+          - read:::accounts/overview
       responses:
         '200':
           description: OK
