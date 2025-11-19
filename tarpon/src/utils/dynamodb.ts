@@ -665,7 +665,7 @@ export async function cleanUpDynamoDbResources() {
   }
 }
 
-type DynamoDbKey = {
+export type DynamoDbKey = {
   PartitionKeyID: string
   SortKeyID: string
 }

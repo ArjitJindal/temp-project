@@ -1,10 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { COUNTER_COLLECTION } from '@/utils/mongo-table-names'
-import {
-  isClickhouseEnabledInRegion,
-  isClickhouseMigrationEnabled,
-} from '@/utils/clickhouse/checks'
+import { isClickhouseMigrationEnabled } from '@/utils/clickhouse/checks'
 import { DynamoCounterRepository } from '@/services/counter/dynamo-repository'
 import { logger } from '@/core/logger'
 
@@ -79,9 +76,7 @@ export class CounterRepository {
   // if multilpe callers call `getNextCounterAndUpdate` concurrently, we could end up with
   // duplicate counters.
   public async initialize(): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
-      await this.dynamoCounterRepository.initialize()
-    }
+    await this.dynamoCounterRepository.initialize()
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -93,13 +88,10 @@ export class CounterRepository {
   }
 
   public async getNextCounterAndUpdate(entity: CounterEntity): Promise<number> {
-    let counter: number | undefined
-    if (isClickhouseEnabledInRegion()) {
-      counter = await this.dynamoCounterRepository.getNextCounterAndUpdate(
-        entity,
-        1
-      )
-    }
+    const counter = await this.dynamoCounterRepository.getNextCounterAndUpdate(
+      entity,
+      1
+    )
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -126,9 +118,7 @@ export class CounterRepository {
     entity: CounterEntity,
     count: number
   ): Promise<number[]> {
-    if (isClickhouseEnabledInRegion()) {
-      await this.dynamoCounterRepository.getNextCountersAndUpdate(entity, count)
-    }
+    await this.dynamoCounterRepository.getNextCountersAndUpdate(entity, count)
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
@@ -170,9 +160,7 @@ export class CounterRepository {
     entity: CounterEntity,
     count: number
   ): Promise<void> {
-    if (isClickhouseEnabledInRegion()) {
-      await this.dynamoCounterRepository.setCounterValue(entity, count)
-    }
+    await this.dynamoCounterRepository.setCounterValue(entity, count)
     const collectionName = COUNTER_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const collection = db.collection<EntityCounter>(collectionName)
