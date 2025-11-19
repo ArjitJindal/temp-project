@@ -12,6 +12,7 @@ import { useHasResources } from '@/utils/user-utils';
 
 function ReRunTriggerSettings() {
   const settings = useSettings();
+  const [reRunTriggers, setReRunTriggers] = React.useState(settings.reRunRiskScoringTriggers);
 
   const options: { label: string; value: ReRunTrigger }[] = [
     {
@@ -25,6 +26,10 @@ function ReRunTriggerSettings() {
   ];
 
   const updateTenantSettings = useUpdateTenantSettings();
+
+  React.useEffect(() => {
+    setReRunTriggers(settings.reRunRiskScoringTriggers);
+  }, [settings.reRunRiskScoringTriggers]);
   const permissions = useHasResources(['write:::settings/risk-scoring/rerun-trigger-settings/*']);
   return (
     <SettingsCard
@@ -35,9 +40,10 @@ function ReRunTriggerSettings() {
         <SelectionGroup
           mode="MULTIPLE"
           options={options}
-          value={settings.reRunRiskScoringTriggers}
+          value={reRunTriggers}
           onChange={(value) => {
             if (value) {
+              setReRunTriggers(value);
               updateTenantSettings.mutate({ reRunRiskScoringTriggers: value });
             }
           }}
