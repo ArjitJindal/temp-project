@@ -7,6 +7,8 @@ import Avatar from './Avatar';
 import Popover from '@/components/ui/Popover';
 import { useAuth0User } from '@/utils/user-utils';
 import Confirm from '@/components/utils/Confirm';
+import { getCookie } from '@/utils/api/auth/helper';
+import { dayjs } from '@/utils/dayjs';
 
 interface Props {
   isCollapsed: boolean;
@@ -55,6 +57,15 @@ function LogOutButton(props: { isCollapsed: boolean }) {
       title={'Are you sure you want to log out?'}
       text={'You will be returned to the login screen.'}
       onConfirm={() => {
+        // clear intercom token
+        const intercomToken = getCookie('intercomm-token');
+        if (intercomToken) {
+          const expiryTime = dayjs()
+            .subtract(1, 'milliseconds')
+            .utc()
+            .format('ddd, DD MMM YYYY HH:mm:ss [GMT]');
+          document.cookie = `intercomm-token=${intercomToken}; path=/; secure; samesite=strict; Expires=${expiryTime}`;
+        }
         logout({
           returnTo: window.location.origin,
         });
