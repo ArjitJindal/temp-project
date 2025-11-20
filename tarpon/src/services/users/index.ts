@@ -112,6 +112,8 @@ import { shouldSkipFirstApprovalStep } from '@/services/workflow/approval-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { RiskService } from '@/services/risk'
+import { logger } from '@/core/logger'
+import { API_USER } from '@/constants/case-creation'
 
 interface CraProposalValue {
   riskLevel?: RiskLevel
@@ -141,7 +143,12 @@ const USER_STATE_DETAILS_PRIORITY: Record<UserState, number> = {
   CREATED: 6,
 }
 
-export const API_USER = 'API'
+type UpdateFunction = {
+  [K in keyof UpdatableUserDetails]: (
+    triggersOnHit: TriggersOnHit,
+    details: UpdatableUserDetails[K]
+  ) => UpdatableUserDetails[K] | undefined
+}
 
 function internalUserToExternalUser(
   user: InternalBusinessUser | InternalConsumerUser
@@ -617,11 +624,7 @@ export class UserService {
     updates: UpdatableUserDetails
     ruleInstances: UserUpdateRuleInstances
   } {
-    // Improve function types while removing any
-    const updateFunctions: Record<
-      keyof UpdatableUserDetails,
-      (triggersOnHit: TriggersOnHit, details: any) => any
-    > = {
+    const updateFunctions: UpdateFunction = {
       userStateDetails: this.getUserStateDetails,
       kycStatusDetails: this.getKycStatusDetails,
       pepStatus: this.processPepStatusDetails,
@@ -650,7 +653,7 @@ export class UserService {
 
   private processTagDetails(
     triggersOnHit: TriggersOnHit,
-    tagDetails: UserTag[] | undefined
+    tagDetails: UpdatableUserDetails['tags']
   ): UserTag[] | undefined {
     const tags = triggersOnHit.tags
     if (!tags) {
@@ -664,7 +667,7 @@ export class UserService {
 
   private processPepStatusDetails(
     triggersOnHit: TriggersOnHit,
-    pepStatusDetails: PEPStatus[] | undefined
+    pepStatusDetails: UpdatableUserDetails['pepStatus']
   ): PEPStatus[] | undefined {
     const pepStatus = triggersOnHit.pepStatus
     if (pepStatus == null) {
@@ -826,7 +829,7 @@ export class UserService {
 
   private getUserStateDetails(
     triggersOnHit: TriggersOnHit,
-    userStateDetails: UserStateDetailsInternal | undefined
+    userStateDetails: UpdatableUserDetails['userStateDetails']
   ): UserStateDetailsInternal | undefined {
     const triggerUserState = triggersOnHit?.userStateDetails?.state
 
@@ -857,7 +860,7 @@ export class UserService {
 
   private getKycStatusDetails(
     triggersOnHit: TriggersOnHit,
-    kycStatusDetails: KYCStatusDetailsInternal | undefined
+    kycStatusDetails: UpdatableUserDetails['kycStatusDetails']
   ): KYCStatusDetailsInternal | undefined {
     const triggerKycStatus = triggersOnHit?.kycStatusDetails?.status
 
@@ -1649,12 +1652,9 @@ export class UserService {
     updateRequest: UserUpdateRequest
   ): UserUpdateRequest {
     const oldImage: UserUpdateRequest = {}
-    const isBusiness = isBusinessUser(user)
 
     for (const key of Object.keys(updateRequest)) {
-      // Consumer-only fields
       if (
-        !isBusiness &&
         [
           'pepStatus',
           'sanctionsStatus',
@@ -1696,7 +1696,7 @@ export class UserService {
           sanctionsStatus:
             !!updateRequest.sanctionsStatus === updateRequest.sanctionsStatus
               ? updateRequest.sanctionsStatus
-              : (user as User).sanctionsStatus,
+              : user.sanctionsStatus,
         }),
       ...(!isBusiness &&
         updateRequest && {
@@ -1704,7 +1704,7 @@ export class UserService {
             !!updateRequest.adverseMediaStatus ===
             updateRequest.adverseMediaStatus
               ? updateRequest.adverseMediaStatus
-              : (user as User).adverseMediaStatus,
+              : user.adverseMediaStatus,
         }),
       ...(updateRequest.tags && { tags: updateRequest.tags }),
       ...(updateRequest.eoddDate !== undefined && {
@@ -1755,7 +1755,7 @@ export class UserService {
     ruleInstances?: UserUpdateRuleInstances,
     options?: { bySystem?: boolean }
   ) {
-    return updateRequest.pepStatus != null && !isBusinessUser(user)
+    return updateRequest.pepStatus != null
       ? this.handlePostActionsForPepStatusUpdate(user, updateRequest, {
           bySystem: options?.bySystem,
           pepStatusRuleInstance: ruleInstances?.pepStatus,
@@ -1768,7 +1768,7 @@ export class UserService {
     updateRequest: UserUpdateRequest,
     options?: { bySystem?: boolean }
   ) {
-    return updateRequest.sanctionsStatus != null && !isBusinessUser(user)
+    return updateRequest.sanctionsStatus != null
       ? this.handlePostActionsForSanctionsStatusUpdate(user, updateRequest, {
           bySystem: options?.bySystem,
         })
@@ -1780,7 +1780,7 @@ export class UserService {
     updateRequest: UserUpdateRequest,
     options?: { bySystem?: boolean }
   ) {
-    return updateRequest.adverseMediaStatus != null && !isBusinessUser(user)
+    return updateRequest.adverseMediaStatus != null
       ? this.handlePostActionsForAdverseMediaStatusUpdate(user, updateRequest, {
           bySystem: options?.bySystem,
         })
@@ -2663,7 +2663,7 @@ export class UserService {
   private async applyUserApprovalChanges(
     userId: string,
     oldUser: UserWithRulesResult | BusinessWithRulesResult,
-    proposedChanges: any[]
+    proposedChanges: UserProposedChange[]
   ): Promise<void> {
     // Handle CRA fields through the risk service
     // Cra now contains an object with riskLevel, isUpdatable, and optional releaseAt (like PEP status)
@@ -2707,7 +2707,7 @@ export class UserService {
           isUpdatable,
           releaseAt
         )
-        console.log(
+        logger.info(
           `CRA level and lock updated for user ${userId}: riskLevel=${newRiskLevel}, isUpdatable=${isUpdatable}, releaseAt=${releaseAt}`
         )
       } else if (newIsUpdatable !== undefined) {
@@ -2717,7 +2717,7 @@ export class UserService {
           newIsUpdatable,
           releaseAt
         )
-        console.log(
+        logger.info(
           `CRA lock updated for user ${userId}: isUpdatable=${newIsUpdatable}, releaseAt=${releaseAt}`
         )
       }
@@ -2734,21 +2734,19 @@ export class UserService {
       for (const change of otherFields) {
         if (change.field === 'PepStatus') {
           // Handle PepStatus field specially - it contains multiple sub-fields
-          const pepStatusValue = change.value as any
+          const pepStatusValue = change.value
           if (pepStatusValue.pepStatus) {
-            ;(updateRequest as any).pepStatus = pepStatusValue.pepStatus
+            updateRequest.pepStatus = pepStatusValue.pepStatus
           }
           if (pepStatusValue.adverseMediaStatus !== undefined) {
-            ;(updateRequest as any).adverseMediaStatus =
-              pepStatusValue.adverseMediaStatus
+            updateRequest.adverseMediaStatus = pepStatusValue.adverseMediaStatus
           }
           if (pepStatusValue.sanctionsStatus !== undefined) {
-            ;(updateRequest as any).sanctionsStatus =
-              pepStatusValue.sanctionsStatus
+            updateRequest.sanctionsStatus = pepStatusValue.sanctionsStatus
           }
         } else {
           // Apply other changes directly to the update request
-          ;(updateRequest as any)[change.field] = change.value
+          updateRequest[change.field] = change.value
         }
       }
 
@@ -2761,9 +2759,9 @@ export class UserService {
         `Old user before update:`,
         JSON.stringify(
           {
-            pepStatus: (oldUser as any).pepStatus,
-            adverseMediaStatus: (oldUser as any).adverseMediaStatus,
-            sanctionsStatus: (oldUser as any).sanctionsStatus,
+            pepStatus: oldUser.pepStatus,
+            adverseMediaStatus: oldUser.adverseMediaStatus,
+            sanctionsStatus: oldUser.sanctionsStatus,
           },
           null,
           2
@@ -2782,9 +2780,9 @@ export class UserService {
         `User after update:`,
         JSON.stringify(
           {
-            pepStatus: (updatedUser as any)?.pepStatus,
-            adverseMediaStatus: (updatedUser as any)?.adverseMediaStatus,
-            sanctionsStatus: (updatedUser as any)?.sanctionsStatus,
+            pepStatus: updatedUser?.pepStatus,
+            adverseMediaStatus: updatedUser?.adverseMediaStatus,
+            sanctionsStatus: updatedUser?.sanctionsStatus,
           },
           null,
           2

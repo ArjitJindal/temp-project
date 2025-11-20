@@ -12,8 +12,8 @@ import { Comment, InternalConsumerUser } from '@/apis';
 import Tags from '@/pages/users-item/UserDetails/shared/Tags';
 import { CommentType, useAuth0User } from '@/utils/user-utils';
 import PlaceOfBirth from '@/pages/users-item/UserDetails/ConsumerUserDetails/PlaceOfBirth';
-import ScreeningDetails from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails';
 import EmploymentDetails from '@/pages/users-item/UserDetails/ConsumerUserDetails/EmploymentDetails';
+import ScreeningDetails from '@/pages/users-item/UserDetails/ScreeningDetails';
 
 interface Props {
   user: InternalConsumerUser;

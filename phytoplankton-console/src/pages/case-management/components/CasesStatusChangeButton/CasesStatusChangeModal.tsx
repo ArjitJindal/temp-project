@@ -21,7 +21,7 @@ import {
 } from '@/utils/case-utils';
 import { ALERT_CHECKLIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { CaseEscalateTriggerAdvancedOptionsForm } from '@/components/CaseEscalateTriggerAdvancedOptionsForm';
-import { consolidatePEPStatus } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
+import { consolidatePEPStatus } from '@/pages/users-item/UserDetails/ScreeningDetails/PepStatus/utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { makeUrl } from '@/utils/routing';
 

@@ -10,23 +10,19 @@ import {
   CaseStatus,
 } from '@/apis';
 
-type TableConsumerUser = Pick<
-  InternalConsumerUser,
+type SharedTableUserFields =
   | 'type'
-  | 'userDetails'
   | 'userId'
   | 'userStateDetails'
   | 'kycStatusDetails'
   | 'tags'
-  | 'pepStatus'
   | 'sanctionsStatus'
   | 'adverseMediaStatus'
->;
+  | 'pepStatus';
 
-type TableBusinessUser = Pick<
-  InternalBusinessUser,
-  'type' | 'legalEntity' | 'userId' | 'userStateDetails' | 'kycStatusDetails' | 'tags'
->;
+type TableConsumerUser = Pick<InternalConsumerUser, SharedTableUserFields | 'userDetails'>;
+
+type TableBusinessUser = Pick<InternalBusinessUser, SharedTableUserFields | 'legalEntity'>;
 
 export type TableUser = AllUsersTableItem | TableConsumerUser | TableBusinessUser;
 

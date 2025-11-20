@@ -30,7 +30,7 @@ import {
   USER_CHANGES_PROPOSALS_BY_ID,
   USERS_ITEM,
 } from '@/utils/queries/keys';
-import { PepStatusValue } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
+import { PepStatusValue } from '@/pages/users-item/UserDetails/ScreeningDetails/PepStatus';
 import ErrorBoundary from '@/components/utils/ErrorBoundary';
 import Skeleton from '@/components/library/Skeleton';
 import { dayjs } from '@/utils/dayjs';

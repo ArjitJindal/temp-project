@@ -24,8 +24,8 @@ import {
   DerivedStatus,
 } from '@/apis';
 import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
-import { expandPEPStatus } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
-import { PepFormValues } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
+import { expandPEPStatus } from '@/pages/users-item/UserDetails/ScreeningDetails/PepStatus/utils';
+import { PepFormValues } from '@/pages/users-item/UserDetails/ScreeningDetails/PepStatus';
 import { OTHER_REASON } from '@/components/Narrative';
 import { isAllUsersTableItem, TableUser } from '@/pages/case-management/CaseTable/types';
 
@@ -504,7 +504,7 @@ export function getStatusChangeUpdatesFromFormValues<
       updates.tags = areArraysOfObjectsEqual(formValues?.tags ?? [], userDetails?.tags ?? [])
         ? undefined
         : formValues?.tags;
-      if (userDetails && !isAllUsersTableItem(userDetails) && userDetails?.type === 'CONSUMER') {
+      if (userDetails && !isAllUsersTableItem(userDetails)) {
         updates.screeningDetails = {
           sanctionsStatus:
             formValues?.screeningDetails?.sanctionsStatus === userDetails.sanctionsStatus

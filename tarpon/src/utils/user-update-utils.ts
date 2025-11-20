@@ -1,4 +1,6 @@
 import isEmpty from 'lodash/isEmpty'
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Case } from '@/@types/openapi-internal/Case'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
@@ -14,6 +16,7 @@ import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { tenantSettings, hasFeature } from '@/core/utils/context'
 import { getContext } from '@/core/utils/context-storage'
+import { PEPStatus } from '@/@types/openapi-internal/PEPStatus'
 
 export interface UserData {
   caseId: string
@@ -22,14 +25,20 @@ export interface UserData {
 
 export interface UpdateUserDetailsOptions {
   tenantId: string
-  mongoDb: any
-  dynamoDb: any
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
   cases: Case[]
   updates: CaseStatusUpdate | AlertStatusUpdateRequest
   getUserUpdateRequest: (
     updates: CaseStatusUpdate | AlertStatusUpdateRequest,
     userInDb?: InternalUser
   ) => UserUpdateRequest
+}
+
+interface PepProposalValue {
+  pepStatus?: Array<PEPStatus>
+  sanctionsStatus?: boolean
+  adverseMediaStatus?: boolean
 }
 
 /**
@@ -185,10 +194,10 @@ function categorizeFields(
 
     if (hasWorkflow) {
       // Field needs approval
-      ;(approvalFields as any)[fieldName] = value
+      approvalFields[fieldName] = value
     } else {
       // Field can be applied directly
-      ;(directFields as any)[fieldName] = value
+      directFields[fieldName] = value
     }
   }
 
@@ -229,7 +238,7 @@ async function createApprovalProposals(
         fieldName === 'sanctionsStatus'
       ) {
         // Group PEP-related fields into a single proposal
-        const pepStatusValue: any = {}
+        const pepStatusValue: PepProposalValue = {}
 
         if (approvalFields.pepStatus !== undefined) {
           pepStatusValue.pepStatus = approvalFields.pepStatus

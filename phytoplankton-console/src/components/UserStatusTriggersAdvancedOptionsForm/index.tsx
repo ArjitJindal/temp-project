@@ -23,7 +23,7 @@ import {
   RuleType,
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
-import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
+import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ScreeningDetails/PepStatus';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getOr, isLoading } from '@/utils/asyncResource';
 import { useLists } from '@/utils/api/lists';

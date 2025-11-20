@@ -22,7 +22,7 @@ import {
   statusEscalatedL2,
 } from '@/utils/case-utils';
 import { CaseEscalateTriggerAdvancedOptionsForm } from '@/components/CaseEscalateTriggerAdvancedOptionsForm';
-import { consolidatePEPStatus } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus/utils';
+import { consolidatePEPStatus } from '@/pages/users-item/UserDetails/ScreeningDetails/PepStatus/utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { makeUrl } from '@/utils/routing';
 

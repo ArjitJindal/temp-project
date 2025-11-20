@@ -7,7 +7,7 @@ import TextArea from '../library/TextArea';
 import s from './style.module.less';
 import { UpdateUserTags } from './components/UpdateUserTags';
 import { UpdateUserDetails } from './components/UpdateuserDetails/UpdateUserDetails';
-import { ScreeningDetailsUpdateForm } from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/UpdateForm';
+import { ScreeningDetailsUpdateForm } from '@/pages/users-item/UserDetails/ScreeningDetails/UpdateForm';
 import { DispositionApprovalWarnings } from '@/components/DispositionApprovalWarnings';
 import { KYCStatus, KYCAndUserStatusChangeReason, UserState } from '@/apis';
 import { FormValues } from '@/pages/case-management/components/StatusChangeModal';

@@ -133,42 +133,34 @@ export const getUserUpdateRequest = (
   if (pepStatus) {
     isPepStatusChanged = !areArraysOfObjectsEqual(userPepStatusInDb, pepStatus)
   }
-  const updateObject: UserUpdateRequest = {
-    ...(updates.kycStatusDetails?.status && {
-      kycStatusDetails: {
-        status: updates.kycStatusDetails.status,
-        reason: updates.kycStatusDetails.reason,
-        description: updates.kycStatusDetails.description,
-      },
-    }),
-    ...(updates.userStateDetails?.state && {
-      userStateDetails: {
-        state: updates.userStateDetails.state,
-        reason: updates.userStateDetails.reason,
-        description: updates.userStateDetails.description,
-      },
-    }),
-    ...(eoddDate && {
-      eoddDate,
-    }),
-    ...(isUserTagsChanged &&
-      tags && {
-        tags: tags,
-      }),
-    ...(isPepStatusChanged &&
-      screeningDetails?.pepStatus && {
-        pepStatus: screeningDetails.pepStatus,
-      }),
-    ...(screeningDetails &&
-      !!screeningDetails.sanctionsStatus ===
-        screeningDetails.sanctionsStatus && {
-        sanctionsStatus: screeningDetails.sanctionsStatus,
-      }),
-    ...(screeningDetails &&
-      !!screeningDetails.adverseMediaStatus ===
-        screeningDetails.adverseMediaStatus && {
-        adverseMediaStatus: screeningDetails.adverseMediaStatus,
-      }),
+  const updateObject: UserUpdateRequest = {}
+
+  if (updates.kycStatusDetails?.status) {
+    updateObject.kycStatusDetails = { ...updates.kycStatusDetails }
+  }
+
+  if (updates.userStateDetails?.state) {
+    updateObject.userStateDetails = { ...updates.userStateDetails }
+  }
+
+  if (eoddDate) {
+    updateObject.eoddDate = eoddDate
+  }
+
+  if (isUserTagsChanged && tags) {
+    updateObject.tags = tags
+  }
+
+  if (isPepStatusChanged && screeningDetails?.pepStatus) {
+    updateObject.pepStatus = screeningDetails.pepStatus
+  }
+
+  if (screeningDetails?.sanctionsStatus !== undefined) {
+    updateObject.sanctionsStatus = screeningDetails.sanctionsStatus
+  }
+
+  if (screeningDetails?.adverseMediaStatus !== undefined) {
+    updateObject.adverseMediaStatus = screeningDetails.adverseMediaStatus
   }
 
   return updateObject

@@ -4,6 +4,7 @@ import Tags from '../../shared/Tags';
 import SavedPaymentDetailsCard from '../../shared/SavedPaymentDetailsCard';
 import Attachment from '../../Attachments';
 import { OtherDetailsCard } from '../../shared/OtherDetails';
+import ScreeningDetails from '../../ScreeningDetails';
 import GeneralDetailsCard from './GeneralDetailsCard';
 import RegistrationDetailsCard from './RegistrationDetailsCard';
 import FinancialDetailsCard from './FinancialDetailsCard';
@@ -49,6 +50,7 @@ export default function LegalEntityDetails(props: Props) {
               key={'contact-details-card'}
             />,
             <MerchantCategoryCodeCard user={user} key="merchant-category-code-card" />,
+            <ScreeningDetails key="screening-details" user={user} />,
           ]}
         />
       </EntityInfoGrid.Cell>

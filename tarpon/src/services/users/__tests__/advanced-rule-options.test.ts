@@ -226,9 +226,8 @@ describe('Advanced Rule Options Tests', () => {
     const mongoBusiness = await userRepo.getMongoUser('business1')
 
     expect(business?.tags).toEqual([{ key: 'test-tag', value: 'test-value' }])
-    const body = mongoBusiness?.comments?.[0]?.body.concat(
-      mongoBusiness?.comments?.[1]?.body
-    )
+    const body =
+      mongoBusiness?.comments?.map((comment) => comment.body).join('') || ''
 
     expect(body).toEqual(
       expect.stringContaining(

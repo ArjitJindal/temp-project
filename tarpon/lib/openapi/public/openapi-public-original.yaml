@@ -4619,6 +4619,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProductsEnabled'
+        pepStatus:
+          type: array
+          items:
+            $ref: '#/components/schemas/PEPStatus'
+        sanctionsStatus:
+          type: boolean
+          description: Whether the user is sanctioned
+        adverseMediaStatus:
+          type: boolean
+          description: Whether the user is in the adverse media list
     BusinessUserMonitoringResult:
       title: BusinessUserMonitoringResult
       type: object

@@ -136,7 +136,7 @@ export class CaseRepository {
     if (await this.isTenantMigratedToDynamo) {
       const c = await this.dynamoCaseRepository.getCaseById(caseId)
       return c
-        ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
+        ? { caseId: c.caseId as string, caseStatus: c?.caseStatus }
         : null
     }
     const db = this.mongoDb.db()
@@ -145,9 +145,7 @@ export class CaseRepository {
       { caseId },
       { projection: { caseId: 1, caseStatus: 1 } }
     )
-    return c
-      ? { caseId: c.caseId as string, caseStatus: (c as any)?.caseStatus }
-      : null
+    return c ? { caseId: c.caseId as string, caseStatus: c?.caseStatus } : null
   }
 
   /**

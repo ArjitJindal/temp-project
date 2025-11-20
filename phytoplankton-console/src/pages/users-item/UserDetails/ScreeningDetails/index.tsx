@@ -3,15 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ScreeningDetailsUpdateForm } from './UpdateForm';
 import s from './index.module.less';
 import { consolidatePEPStatus, expandPEPStatus } from './PepStatus/utils';
+import { PepFormValues, PepStatusValue } from './PepStatus';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import {
-  PepFormValues,
-  PepStatusValue,
-} from '@/pages/users-item/UserDetails/ConsumerUserDetails/ScreeningDetails/PepStatus';
-import { InternalConsumerUser, PEPStatus, UserUpdateRequest } from '@/apis';
+import { InternalUser, PEPStatus, UserUpdateRequest } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import Modal from '@/components/library/Modal';
 import EditIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
@@ -27,8 +24,13 @@ import { useUserChangesPendingApprovals } from '@/utils/api/users';
 import PendingApprovalTag from '@/components/library/Tag/PendingApprovalTag';
 import UserPendingApprovalsModal from '@/components/ui/UserPendingApprovalsModal';
 
+type UserScreeningDetails = Pick<
+  InternalUser,
+  'userId' | 'pepStatus' | 'sanctionsStatus' | 'adverseMediaStatus'
+>;
+
 interface Props {
-  user: InternalConsumerUser;
+  user: UserScreeningDetails;
   columns?: number;
 }
 
@@ -60,7 +62,7 @@ const getUpdatesFromLocalStorage = (userId: string): FormValues | null => {
   return null;
 };
 
-const deriveScreeningDetails = (user: InternalConsumerUser) => {
+const deriveScreeningDetails = (user: UserScreeningDetails) => {
   return {
     sanctionsStatus:
       user.sanctionsStatus === undefined ? undefined : user.sanctionsStatus ? true : false,
@@ -70,7 +72,7 @@ const deriveScreeningDetails = (user: InternalConsumerUser) => {
   };
 };
 
-const getInitialValue = (user: InternalConsumerUser) => {
+const getInitialValue = (user: UserScreeningDetails) => {
   const localStorageScreeningDetails = getUpdatesFromLocalStorage(user.userId);
   if (localStorageScreeningDetails) {
     return localStorageScreeningDetails;
