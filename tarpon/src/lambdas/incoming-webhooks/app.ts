@@ -19,6 +19,8 @@ import {
   verifyInternalProxyWebhook,
 } from '@/utils/internal-proxy'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { SlackLinearService } from '@/services/slack-linear'
+import { SlackWebhookEvent } from '@/@types/openapi-internal/SlackWebhookEvent'
 
 export const webhooksHandler = lambdaApi()(
   async (
@@ -248,6 +250,47 @@ export const webhooksHandler = lambdaApi()(
         }
       }
     })
+
+    if (event.resource === '/webhooks/slack') {
+      const parsedBody = JSON.parse(event.body || '{}') as SlackWebhookEvent
+      const reaction = parsedBody.event.reaction
+      const channel = parsedBody.event.item.channel
+      const eligibleChannels = ['C087X970F1D', 'C079S07QR7F'] as const
+      const eligibleReactions = ['ticket'] as const
+
+      if (!eligibleReactions.includes(reaction)) {
+        logger.warn(`Reaction ${reaction} is not eligible`)
+        return
+      }
+      // channels can be ['C087X970F1D','C079S07QR7F']
+      if (!eligibleChannels.includes(channel)) {
+        logger.warn(`Channel ${channel} is not eligible`)
+        return
+      }
+
+      const slackLinearService = new SlackLinearService()
+      const ticketId = await slackLinearService.extractTicketIdFromSlackEvent(
+        parsedBody
+      )
+
+      if (!ticketId) {
+        throw new Forbidden('Ticket ID not found')
+      }
+      const result = await slackLinearService.processSlackWebhook(parsedBody, {
+        updateLinearIssue: {
+          issueId: ticketId,
+          projectName: 'Console Polishing',
+          statusName: 'todo',
+        },
+      })
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          ticketId: result.ticketId,
+        }),
+      }
+    }
 
     return await handlers.handle(event)
   }

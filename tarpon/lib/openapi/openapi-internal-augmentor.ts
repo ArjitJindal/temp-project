@@ -379,6 +379,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/rotate-api-key': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/intercomm-token': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+  '/webhooks/slack': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(
@@ -392,6 +393,7 @@ const openapi = getAugmentedOpenapi(
       '/webhooks/auth0',
       '/webhooks/nango',
       '/webhooks/internal-proxy',
+      '/webhooks/slack',
     ],
     allowedOrigins: getAllowedOrigins(),
   }

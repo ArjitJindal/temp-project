@@ -7601,6 +7601,24 @@ paths:
       responses:
         '200':
           description: OK
+  /webhooks/slack:
+    post:
+      summary: Receive webhook events from Slack
+      tags: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlackWebhookEvent'
+        required: true
+      operationId: post-webhook-slack
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlackWebhookEventResponse'
   /simulation:
     post:
       summary: Create new simulation task
@@ -9308,6 +9326,34 @@ components:
             - AUTOCOMPLETE
             - SEARCH
             - SCREENING_DETAIL_FILTER
+    SlackWebhookEvent:
+      title: SlackWebhookEvent
+      type: object
+      properties:
+        token:
+          type: string
+        challenge:
+          type: string
+        type:
+          type: string
+        event:
+          type: object
+        event_id:
+          type: string
+        event_time:
+          type: integer
+        team_id:
+          type: string
+        api_app_id:
+          type: string
+        authed_users:
+          type: object
+    SlackWebhookEventResponse:
+      title: SlackWebhookEventResponse
+      type: object
+      properties:
+        challenge:
+          type: string
     TableHeaders:
       title: TableHeaders
       type: object
