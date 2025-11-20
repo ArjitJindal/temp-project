@@ -48,6 +48,7 @@ import { UpdateTransactionStatusBatchJobRunner } from './update-transaction-stat
 import { BackfillSearchHitsBatchJobRunner } from './backfill-search-hits-batch-job-runner'
 import { BackfillWhitelistEntitiesBatchJobRunner } from './backfill-whitelist-entities-batch-job-runner'
 import { FetchLsegMediaCheckResultsBatchJobRunner } from './fetch-lseg-media-check-data-batch-job-runner'
+import { BackfillOpensearchUsersIndexBatchJobRunner } from './backfill-opensearch-users-index'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -168,6 +169,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new UpdateTransactionStatusBatchJobRunner(jobId),
     FETCH_LSEG_MEDIA_CHECK_RESULTS: (jobId) =>
       new FetchLsegMediaCheckResultsBatchJobRunner(jobId),
+    BACKFILL_OPENSEARCH_USERS_INDEX: (jobId) =>
+      new BackfillOpensearchUsersIndexBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

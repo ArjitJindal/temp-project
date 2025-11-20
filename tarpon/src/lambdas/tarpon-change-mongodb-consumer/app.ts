@@ -77,7 +77,10 @@ import {
   applyNewVersion,
   updateInMongoWithVersionCheck,
 } from '@/utils/downstream-version'
-import { WebhookConfiguration } from '@/@types/openapi-internal/all'
+import {
+  UserSearchEntity,
+  WebhookConfiguration,
+} from '@/@types/openapi-internal/all'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { SanctionsScreeningDetailsRepository } from '@/services/sanctions/repositories/sanctions-screening-details-repository'
 import { getOngoingScreeningRuleInstances } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
@@ -463,7 +466,7 @@ export class TarponChangeMongoDbConsumer {
       const client = await getSharedOpensearchClient()
       if (savedUser.type === 'BUSINESS') {
         const businessUserNames = getBusinessUserNames(savedUser)
-        await opensearchUpdateOne(
+        await opensearchUpdateOne<UserSearchEntity>(
           {
             id: savedUser.userId,
             ...businessUserNames,
@@ -473,7 +476,7 @@ export class TarponChangeMongoDbConsumer {
         )
       } else {
         const consumerUserName = getUserName(savedUser)
-        await opensearchUpdateOne(
+        await opensearchUpdateOne<UserSearchEntity>(
           {
             id: savedUser.userId,
             userName: consumerUserName,

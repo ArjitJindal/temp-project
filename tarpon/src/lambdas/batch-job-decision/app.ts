@@ -86,6 +86,7 @@ export const jobDecisionHandler = async (
     SCREENING_ALERTS_EXPORT: 'FARGATE',
     CRA_LOCK_UNTIMER: 'LAMBDA',
     UPDATE_TRANSACTION_STATUS: 'FARGATE',
+    BACKFILL_OPENSEARCH_USERS_INDEX: 'FARGATE',
   }
 
   return {

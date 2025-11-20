@@ -136,7 +136,7 @@ export class BatchJobRepository {
     }
     const collection = JOBS_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
-    const filters = {
+    const filters: Filter<WithId<BatchJobInDb>> = {
       type,
       'latestStatus.status': { $in: ['PENDING', 'IN_PROGRESS'] },
       ...(subFilter ? subFilter : {}),

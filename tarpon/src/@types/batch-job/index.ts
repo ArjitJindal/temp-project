@@ -514,6 +514,11 @@ export type SanctionsScreeningDetailsMigrationBatchJob = {
   tenantId: string
 }
 
+export type BackfillOpensearchUsersIndexBatchJob = {
+  type: 'BACKFILL_OPENSEARCH_USERS_INDEX'
+  tenantId: string
+}
+
 export type GoCardlessBackfillBatchJob = {
   type: 'GO_CARDLESS_BACKFILL'
   tenantId: string
@@ -658,6 +663,7 @@ export type BatchJob =
   | BackfillSearchHitsBatchJob
   | BackfillWhitelistEntitiesBatchJob
   | FetchLsegMediaCheckResultsBatchJob
+  | BackfillOpensearchUsersIndexBatchJob
 
 /* CRA Lock Timer */
 export type CraLockUntimerBatchJob = {

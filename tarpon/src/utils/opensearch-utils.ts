@@ -109,8 +109,8 @@ function getLocalClient(): Client {
   return client
 }
 
-export async function opensearchUpdateOne(
-  entity: Partial<UserSearchEntity>,
+export async function opensearchUpdateOne<T extends { id: string }>(
+  entity: Partial<T>,
   indexName: string,
   client: Client
 ) {
