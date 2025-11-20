@@ -52,7 +52,9 @@ describe('Escalate a case from case-details', () => {
     cy.waitNothingLoading();
     // Close the case
     selectCase(['ESCALATED']);
-    cy.get('[data-cy="update-status-button"]').eq(0).should('exist').click();
+    cy.waitNothingLoading();
+    cy.waitSkeletonLoader();
+    cy.get('[data-cy="update-status-button"]').contains('Close').should('exist').click();
     cy.intercept('PATCH', '**/cases/statusChange').as('case');
     cy.multiSelect('.ant-modal-body', 'False positive', {
       fullOptionMatch: true,
@@ -66,7 +68,9 @@ describe('Escalate a case from case-details', () => {
     // Re-open the case
 
     selectCase(['CLOSED']);
-    cy.get('[data-cy="update-status-button"]').contains('Re-Open').eq(0).should('exist').click();
+    cy.waitNothingLoading();
+    cy.waitSkeletonLoader();
+    cy.get('[data-cy="update-status-button"]').contains('Re-Open').should('exist').click();
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@case').its('response.statusCode').should('eq', 200);
   });

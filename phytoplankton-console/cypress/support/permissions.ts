@@ -15,6 +15,7 @@ const CASE_OVERVIEW: PermissionStatements[] = [
     resources: [
       'frn:console:cypress-tenant:::case-management/case-overview/*',
       'frn:console:cypress-tenant:::case-management/case-assignment/*',
+      'frn:console:cypress-tenant:::case-management/case-status/*',
     ],
   },
 ];
